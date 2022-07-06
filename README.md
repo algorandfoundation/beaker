@@ -34,8 +34,8 @@ from beaker import Application, handle
 
 class MySickApp(Application):
 
-    @handle
-    def add_ints(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+    @handler
+    def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
         return output.set(a.get() + b.get())
 
 ```
@@ -85,14 +85,14 @@ print(f"Created app with id: {app_id} and address: {app_addr}")
 
 ```
 
-Thats it! The `ApplicationClient` handles constructing the ApplicationCallTransaction with the appropriate parameters, signs it with the `signer` passed, and submits it to the network.  Once called the app_client has its internal `app_id` set so subsequent calls are directed to that app id. The initial constructor may also be passed an app_id if one is already deployed. 
+Thats it! The `ApplicationClient` handles constructing the ApplicationCallTransaction with the appropriate parameters, signs it with the `signer` passed, and submits it to the network.  Once called the app_client has its internal `app_id` set so subsequent calls are directed to that app id. The initial constructor may also be passed an app_id if one is already deployed. Methods for `delete` and `update` are also available. 
 
 
 Now we can call the method we defined
 
 ```py
 
-result = app_client.call(signer, msa.add_ints.method_spec(), [2,3])
+result = app_client.call(signer, msa.add.method_spec(), [2,3])
 print(result.abi_results[0].return_value) # 5
 
 ```
@@ -114,22 +114,22 @@ class MySickAppState(ApplicationState):
 class MySickApp(Application):
     app_state: Final[MySickAppState] = MySickAppState()
 
-    @handle
+    @handler
     def increment(*, output: abi.Uint64):
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1))
+            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1)),
             output.set(MySickApp.app_state.counter)
         )
 
-    @handle
-    def decrement(*, output: abi.Uint64)
+    @handler
+    def decrement(*, output: abi.Uint64):
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter - Int(1))
+            MySickApp.app_state.counter.set(MySickApp.app_state.counter - Int(1)),
             output.set(MySickApp.app_state.counter)
         )
 ```
 
-These methods may be called in the same way as the `add_ints` method above. Note that you can refer to the state using the class name. Using `set` we can overwite the value that is currently stored.
+These methods may be called in the same way as the `add` method above. Note that you can refer to the state using the class name. Using `set` we can overwite the value that is currently stored.
 
 But what if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
 
@@ -138,10 +138,10 @@ But what if we only want certain callers to be allowed? Lets add a parameter to 
 
     #...
 
-    @handle(authorize=Authorize.only(Global.creator_address()))
+    @handler(authorize=Authorize.only(Global.creator_address()))
     def increment(*, output: abi.Uint64):
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1))
+            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1)),
             output.set(MySickApp.app_state.counter)
         )
 ```
@@ -176,7 +176,7 @@ class MySickApp(Application):
     @handler
     def add_tag(tag: abi.String):
         # Set `tag:$tag` to 1
-        return MySickApp.acct_state.tags(tag.get()).set(Int(1))
+        return MySickApp.acct_state.tags(tag.get()).set(Txn.sender(), Int(1))
 
 ```
 

@@ -229,7 +229,7 @@ class DynamicLocalStateValue:
                 raise Exception("key generator must evaluate to bytes")
             self.key_generator = key_gen
 
-    def __call__(self, key_seed: Expr):
+    def __call__(self, key_seed: Expr) -> "LocalStateValue":
         key = key_seed
         if self.key_generator is not None:
             key = self.key_generator(key)
