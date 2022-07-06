@@ -66,17 +66,15 @@ from algosdk.atomic_transaction_composer import  AccountTransactionSigner
 
 from beaker import ApplicationClient 
 
-# Connect to local sandbox
-token = "a"*64
-host = "http://localhost:4001"
-client = AlgodClient(token, host)
-
-# Instantiate our app
-msa = MySickApp()
-
 # definition of get_account omitted but you get the idea 
 addr, private_key = get_account()
 signer = AccountTransactionSigner(private_key)
+
+# Connect to local sandbox
+client = AlgodClient("a"*64, "http://localhost:4001")
+
+# Instantiate our app
+msa = MySickApp()
 
 # Create an app client with he client and an instance of the app
 app_client = ApplicationClient(client, msa)
