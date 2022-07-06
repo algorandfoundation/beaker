@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name="Beaker",
+    name="beaker",
     version="0.0.1dev",
     packages=[
         "beaker",
