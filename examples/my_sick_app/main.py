@@ -1,6 +1,3 @@
-import base64
-
-from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.atomic_transaction_composer import *
 
@@ -27,15 +24,13 @@ def demo():
     app_id, app_addr, txid = app_client.create(signer)
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-
-    result = app_client.call(signer, app.add.method_spec(), [2,3])    
+    result = app_client.call(signer, app.add.method_spec(), [2, 3])
     print(result.abi_results[0].return_value)
 
-
-    result = app_client.call(signer, app.increment.method_spec())    
+    result = app_client.call(signer, app.increment.method_spec())
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, app.decrement.method_spec())    
+    result = app_client.call(signer, app.decrement.method_spec())
     print(result.abi_results[0].return_value)
 
 

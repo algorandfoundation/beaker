@@ -17,6 +17,8 @@ First install Beaker:
 
 ## Quick Start
 
+See `examples/my_sick_app` for runnable source
+
 First, create a class to represent your application and specify the `beaker.Application` as its parent. 
 
 ```py
