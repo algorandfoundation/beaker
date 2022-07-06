@@ -90,6 +90,7 @@ class GlobalStateValue(Expr):
         static: bool = False,
         descr: str = None,
     ):
+        super().__init__()
 
         if key is not None:
             if key.type_of() != TealType.bytes:
@@ -165,6 +166,9 @@ class GlobalStateValue(Expr):
 
     def get_else(self, val: Expr) -> Expr:
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
+
+    def is_default(self) -> Expr:
+        return self.get() == self.default
 
 
 class AccountState:
@@ -281,3 +285,6 @@ class LocalStateValue:
             (v := App.localGetEx(acct, Int(0), self.key)),
             If(v.hasValue(), v.value(), val),
         )
+
+    def is_default(self, acct: Expr) -> Expr:
+        return self.get(acct) == self.default
