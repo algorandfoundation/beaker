@@ -129,7 +129,9 @@ class MySickApp(Application):
         )
 ```
 
-These methods may be called in the same way as the `add` method above. Note that you can refer to the state using the class name. Using `set` we can overwite the value that is currently stored.
+These methods may be called in the same way as the `add` method above. 
+
+Note that you refer to the state using the class name. Using `set` we can overwrite the value that is currently stored.
 
 But what if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
 
@@ -146,7 +148,12 @@ But what if we only want certain callers to be allowed? Lets add a parameter to 
         )
 ```
 
-This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  Other pre-defined Authorized checks are for whether or not the sender holds a given asset and whether or not they're opted in to some app. 
+This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
+
+Other pre-defined Authorized checks are: 
+
+- `Authorize.has_token(asset_id)` for whether or not the sender holds >0 of a given asset
+- `Authorize.opted_in(app_id)`  for whether or not they're opted in to a given app 
 
 The `handler` decorator accepts several other parameters:
 
