@@ -15,20 +15,37 @@ First install Beaker:
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
-## Quick Start
+## Use 
 
-See `examples/my_sick_app` for runnable source
+See [examples](/examples/) for runnable source
 
-First, create a class to represent your application and specify the `beaker.Application` as its parent. 
+First, create a class to represent your application as a subclass of the beaker `Application`. 
 
 ```py
 from beaker import Application
 
 class MySickApp(Application):
-    ...
+    pass 
 ```
 
-Now, add a method to be handled by your application. This is done by tagging a valid PyTeal ABI method with with the `handle` decorator. More on this later.
+This is a full application, though it doesn't do much.
+
+Instantiate it and take a look at some of the resulting fields. 
+
+```py
+
+import json
+
+msa = MySickApp()
+print(f"Approval program: {msa.approval_program}")
+print(f"Clear program: {msa.clear_program}")
+print(f"Contract Spec: {json.dumps(msa.contract.dictify())}")
+
+```
+
+Nice!  This is already enough to provide the TEAL programs and ABI specification.
+
+We can add a method to be handled by the application. This is done by tagging a valid PyTeal ABI method with with the `handler` decorator. More on this later.
 
 ```py
 from pyteal import *
@@ -42,22 +59,10 @@ class MySickApp(Application):
 
 ```
 
-Now instantiate it and take a look at some of the resulting fields.
+This adds an ABI method with signature `add(uint64,uint64)uint64` to our application. The python method should return an `Expr` of some kind to be invoked when the handler is called. 
 
-```py
 
-import json
-
-msa = MySickApp()
-print(f"Approval program: {msa.approval_program}")
-print(f"Clear program: {msa.clear_program}")
-print(f"Contract Spec: {json.dumps(msa.contract.dictify())}")
-
-```
-
-Nice!
-
-Lets now deploy our contract
+Lets now deploy our contract using an `ApplicationClient`.
 
 ```py
 
@@ -80,15 +85,17 @@ msa = MySickApp()
 app_client = ApplicationClient(client, msa)
 
 # Call the `create` method, passing the signer. 
-app_id, app_addr, txid = app_client.create(signer)
+app_id, app_addr, tx_id = app_client.create(signer)
 print(f"Created app with id: {app_id} and address: {app_addr}")
 
 ```
 
-Thats it! The `ApplicationClient` handles constructing the ApplicationCallTransaction with the appropriate parameters, signs it with the `signer` passed, and submits it to the network.  Once called the app_client has its internal `app_id` set so subsequent calls are directed to that app id. The initial constructor may also be passed an app_id if one is already deployed. Methods for `delete` and `update` are also available. 
+Thats it! The `ApplicationClient` handles constructing the ApplicationCallTransaction with the appropriate parameters, signs it with the `signer` passed, and submits it to the network.  
+
+Once created, subsequent calls to the app_client are directed to the `app_id`. The constructor may also be passed an app_id if one is already deployed.  Methods for `delete` and `update` are also available. 
 
 
-Now we can call the method we defined
+We can call the method we defined in our `Application`
 
 ```py
 
@@ -97,7 +104,7 @@ print(result.abi_results[0].return_value) # 5
 
 ```
 
-Here we use the `app_client.call` method, pass the signer and the `Method` object which is available through the Application object and provides the information for the client to encode the arguments appropriately.
+Here we use the `call` method, passing the signer, the `Method` object, and any args necessary. The args passed may be of any type but must match the definition of the `Method`. 
 
 Lets go back and add some application state (global state in Algorand parlance). 
 
@@ -108,7 +115,7 @@ from beaker import ApplicationState, GlobalStateValue
 class MySickAppState(ApplicationState):
     counter = GlobalStateValue(
         stack_type=TealType.uint64,
-        descr="A counter for showing how to use application state",
+        descr="A counter meant to show use of application state",
     )
 
 class MySickApp(Application):
@@ -129,9 +136,10 @@ class MySickApp(Application):
         )
 ```
 
-These methods may be called in the same way as the `add` method above. 
+These methods may be called in the same way as the `add` method above.  Using `set` we can overwrite the value that is currently stored.
 
-Note that you refer to the state using the class name. Using `set` we can overwrite the value that is currently stored.
+> Note that you refer to the state using the class name. 
+
 
 But what if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
 
@@ -161,7 +169,7 @@ The `handler` decorator accepts several other parameters:
 - `read_only` - Really just a place holder until arc22 is merged
 
 
-We can also specify Account state and even account for dynamic state
+We can also specify Account state and even allow for dynamic state keys.
 
 ```py
 from beaker import AccountState, LocalStateValue
@@ -187,5 +195,7 @@ class MySickApp(Application):
 
 ```
 
-That's it for now. Please file issues with ideas or descriptions of how this might not work for your use case.
+That's it for now. 
+
+*Please file issues with ideas or descriptions of how this might not work for your use case.*
 
