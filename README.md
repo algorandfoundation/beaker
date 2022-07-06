@@ -144,4 +144,39 @@ But what if we only want certain callers to be allowed? Lets add a parameter to 
         )
 ```
 
-This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false. 
+This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  Other pre-defined Authorized checks are for whether or not the sender holds a given asset and whether or not they're opted in to some app. 
+
+The `handler` decorator accepts several other parameters:
+
+- `method_config` - See the PyTeal definition for more, but tl;dr it allows you to specify which OnCompletes may handle different modes (call/create/none/all)
+- `read_only` - Really just a place holder until arc22 is merged
+
+
+We can also specify Account state and even account for dynamic state
+
+```py
+from beaker import AccountState, LocalStateValue
+
+class MySickAcctState(AccountState):
+    nickname=LocalStateValue(stack_type=TealType.bytes, descr="What this user prefers to be called")
+    tags=DynamicLocalStateValue(
+        stack_type=TealType.bytes,
+        max_keys=10,
+        key_gen=Subroutine(TealType.uint64, name='make_key')(
+            lambda v: Concat(Bytes("tag:"), v)
+        )
+    )
+
+class MySickApp(Application):
+
+    acct_state: Final[MySickAcctState] = MySickAcctState()
+
+    @handler
+    def add_tag(tag: abi.String):
+        # Set `tag:$tag` to 1
+        return MySickApp.acct_state.tags(tag.get()).set(Int(1))
+
+```
+
+That's it for now. Please file issues with ideas or descriptions of how this might not work for your use case.
+
