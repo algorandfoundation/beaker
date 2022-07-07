@@ -26,6 +26,7 @@ class MySickApp(Application):
     app_state: Final[MySickAppState] = MySickAppState()
     acct_state: Final[MySickAcctState] = MySickAcctState()
 
+    # Overrides the default 
     @bare_handler(no_op=CallConfig.CREATE)
     def create():
         return MySickApp.app_state.initialize()
