@@ -3,7 +3,7 @@ Beaker
 
 ![Beaker](beaker.png)
 
-Beaker is a smart contract development framework for PyTeal inspired by Flask
+Beaker is a smart contract development framework for [PyTeal](https://github.com/algorand/pyteal) inspired by Flask
 
 *Experimental - subject to change* 
 
@@ -105,18 +105,22 @@ print(result.abi_results[0].return_value) # 5
 
 ```
 
-Here we use the `call` method, passing the signer, the `Method` object, and any args necessary. The args passed may be of any type but must match the definition of the `Method`. 
+Here we use the `call` method, passing the signer, the [Method](https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/method.html#algosdk.abi.method.Method) object, and any args necessary. The args passed may be of any type but must match the definition of the `Method`. 
 
-Lets go back and add some application state (global state in Algorand parlance). 
+Lets go back and add some application state (Global State in Algorand parlance). 
 
 ```py
 
 from beaker import ApplicationState, GlobalStateValue
 
+# Subclass of ApplicationState
 class MySickAppState(ApplicationState):
     counter = GlobalStateValue(
         stack_type=TealType.uint64,
         descr="A counter meant to show use of application state",
+        # key=Bytes("counter"), specify a key to override the field name  
+        # default=Int(5), specify a default value to initialize the state value to
+        # static=True, flag as a value that should not change
     )
 
 class MySickApp(Application):
@@ -175,14 +179,16 @@ We can also specify Account state and even allow for dynamic state keys.
 ```py
 from beaker import AccountState, LocalStateValue
 
+@Subroutine(TealType.bytes)
+def make_tag_key(tag):
+    return Concat(Bytes("tag:"), tag)
+
 class MySickAcctState(AccountState):
     nickname=LocalStateValue(stack_type=TealType.bytes, descr="What this user prefers to be called")
     tags=DynamicLocalStateValue(
         stack_type=TealType.bytes,
         max_keys=10,
-        key_gen=Subroutine(TealType.uint64, name='make_key')(
-            lambda v: Concat(Bytes("tag:"), v)
-        )
+        key_gen=make_tag_key
     )
 
 class MySickApp(Application):

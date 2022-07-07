@@ -11,6 +11,7 @@ client = get_client()
 addr, sk = get_accounts()[0]
 signer = AccountTransactionSigner(sk)
 
+
 def demo():
     # Initialize Application from amm.py
     app = MySickApp()

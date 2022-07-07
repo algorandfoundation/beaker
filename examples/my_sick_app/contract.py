@@ -11,15 +11,14 @@ class MySickAppState(ApplicationState):
     )
 
 
+@Subroutine(TealType.bytes)
+def make_tag_key(tag):
+    return Concat(Bytes("tag:"), tag)
+
+
 class MySickAcctState(AccountState):
     nickname = LocalStateValue(TealType.bytes, default=Bytes("j. doe"))
-    tags = DynamicLocalStateValue(
-        TealType.uint64,
-        max_keys=10,
-        key_gen=Subroutine(TealType.bytes, name="make_key")(
-            lambda v: Concat(Bytes("tag:"), v)
-        ),
-    )
+    tags = DynamicLocalStateValue(TealType.uint64, max_keys=10, key_gen=make_tag_key)
 
 
 class MySickApp(Application):
