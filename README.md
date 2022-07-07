@@ -72,13 +72,12 @@ from beaker import ApplicationClient
 
 from beaker.sandbox import get_accounts, get_client
 
-# Connect to local sandbox
-client = get_client()
-
 # Get the accounts from the sandbox KMD 
 addr, private_key = get_accounts().pop()
 signer = AccountTransactionSigner(private_key)
 
+# Get algod client for local sandbox
+client = get_client()
 
 # Instantiate our app
 msa = MySickApp()
