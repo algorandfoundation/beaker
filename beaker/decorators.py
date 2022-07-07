@@ -22,14 +22,15 @@ from pyteal import (
     TealType,
     Txn,
     TxnField,
-    OnComplete
 )
 
 HandlerFunc = Callable[..., Expr]
 _handler_config_attr: Final[str] = "__handler_config__"
 
 
-def get_handler_config(fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction) -> dict[str, Any]:
+def get_handler_config(
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
+) -> dict[str, Any]:
     handler_config = {}
     if hasattr(fn, _handler_config_attr):
         handler_config = getattr(fn, _handler_config_attr)
@@ -37,7 +38,9 @@ def get_handler_config(fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction)
     return handler_config
 
 
-def add_handler_config(fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, key: str, val: Any):
+def add_handler_config(
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, key: str, val: Any
+):
     handler_config = get_handler_config(fn)
     handler_config[key] = val
     setattr(fn, _handler_config_attr, handler_config)
@@ -137,22 +140,40 @@ def _on_complete(mc: MethodConfig):
 def bare_handler(
     no_op: CallConfig = None,
     opt_in: CallConfig = None,
-    clear_state: CallConfig=None,
-    delete_application: CallConfig=None,
-    update_application: CallConfig=None,
-    close_out: CallConfig=None,
+    clear_state: CallConfig = None,
+    delete_application: CallConfig = None,
+    update_application: CallConfig = None,
+    close_out: CallConfig = None,
 ):
-    def _impl(fn: HandlerFunc)->OnCompleteAction:
+    def _impl(fn: HandlerFunc) -> OnCompleteAction:
         fn = Subroutine(TealType.none)(fn)
         return BareCallActions(
-            no_op = OnCompleteAction(action=fn, call_config=no_op) if no_op is not None else None,
-            delete_application = OnCompleteAction(action=fn, call_config=delete_application) if delete_application is not None else None,
-            update_application = OnCompleteAction(action=fn, call_config=update_application) if update_application is not None else None,
-            opt_in = OnCompleteAction(action=fn, call_config=opt_in)if opt_in is not None else None,
-            close_out = OnCompleteAction(action=fn, call_config=close_out) if close_out is not None else None,
-            clear_state = OnCompleteAction(action=fn, call_config=delete_application) if clear_state is not None else None,
+            no_op=OnCompleteAction(action=fn, call_config=no_op)
+            if no_op is not None
+            else None,
+            delete_application=OnCompleteAction(
+                action=fn, call_config=delete_application
+            )
+            if delete_application is not None
+            else None,
+            update_application=OnCompleteAction(
+                action=fn, call_config=update_application
+            )
+            if update_application is not None
+            else None,
+            opt_in=OnCompleteAction(action=fn, call_config=opt_in)
+            if opt_in is not None
+            else None,
+            close_out=OnCompleteAction(action=fn, call_config=close_out)
+            if close_out is not None
+            else None,
+            clear_state=OnCompleteAction(action=fn, call_config=delete_application)
+            if clear_state is not None
+            else None,
         )
+
     return _impl
+
 
 def internal(return_type: TealType):
     """internal can be used to wrap a subroutine that is defined inside an application class"""

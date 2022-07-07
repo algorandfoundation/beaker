@@ -49,7 +49,7 @@ class Application:
         self.bare_calls = [c.__dict__ for c in attrs if isinstance(c, BareCallActions)]
         bare_handlers = {}
         for bm in self.bare_calls:
-            for k,v in bm.items():
+            for k, v in bm.items():
                 if v is None:
                     continue
 
