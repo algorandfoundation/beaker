@@ -57,8 +57,6 @@ class Application:
 
                 bare_handlers[k] = v
 
-        print(bare_handlers)
-
         self.router = Router(type(self).__name__, BareCallActions(**bare_handlers))
 
         self.methods = [c for c in attrs if isinstance(c, ABIReturnSubroutine)]
