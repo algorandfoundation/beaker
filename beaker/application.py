@@ -9,6 +9,7 @@ from pyteal import (
     CallConfig,
     Expr,
     Global,
+    OptimizeOptions,
     Reject,
     Router,
     TealInputError,
@@ -67,7 +68,11 @@ class Application:
             self.approval_program,
             self.clear_program,
             self.contract,
-        ) = self.router.compile_program(version=MAX_TEAL_VERSION)
+        ) = self.router.compile_program(
+            version=MAX_TEAL_VERSION,
+            assemble_constants=True,
+            optimize=OptimizeOptions(scratch_slots=True),
+        )
 
     @bare_handler(no_op=CallConfig.CREATE)
     def create():
