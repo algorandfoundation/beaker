@@ -9,13 +9,12 @@ from pyteal import (
     CallConfig,
     Expr,
     Global,
-    MethodConfig,
-    OnCompleteAction,
+    Reject,
     Router,
     TealInputError,
 )
 
-from .decorators import bare_handler, get_handler_config, handler
+from .decorators import bare_handler, get_handler_config
 from .application_schema import AccountState, ApplicationState
 
 
@@ -78,8 +77,8 @@ class Application:
 
     @bare_handler(update_application=CallConfig.ALL)
     def update():
-        return Approve()
+        return Reject()
 
     @bare_handler(delete_application=CallConfig.ALL)
     def delete():
-        return Approve()
+        return Reject()
