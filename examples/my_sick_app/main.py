@@ -3,17 +3,16 @@ from algosdk.atomic_transaction_composer import *
 
 from contract import MySickApp
 from beaker import ApplicationClient
+from beaker.sandbox import get_client, get_accounts
 
-from sandbox import get_accounts
 
 
-client = AlgodClient("a" * 64, "http://localhost:4001")
+client = get_client()
 
+addr, sk = get_accounts()[0]
+signer = AccountTransactionSigner(sk)
 
 def demo():
-    addr, sk = get_accounts()[0]
-    signer = AccountTransactionSigner(sk)
-
     # Initialize Application from amm.py
     app = MySickApp()
 
