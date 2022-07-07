@@ -5,35 +5,35 @@ from beaker import *
 from beaker.decorators import bare_handler
 
 
-class MySickAppState(ApplicationState):
-    counter = GlobalStateValue(
-        stack_type=TealType.uint64,
-        descr="A counter for showing how to use application state",
-    )
-
-
 @Subroutine(TealType.bytes)
 def make_tag_key(tag: abi.String):
     return Concat(Bytes("tag:"), tag.get())
 
 
-class MySickAcctState(AccountState):
-    nickname = LocalStateValue(TealType.bytes, default=Bytes("j. doe"))
-    tags = DynamicLocalStateValue(TealType.uint64, max_keys=10, key_gen=make_tag_key)
-
-
 class MySickApp(Application):
-    app_state: Final[MySickAppState] = MySickAppState()
-    acct_state: Final[MySickAcctState] = MySickAcctState()
 
-    # Overrides the default 
+    # App state
+    counter: Final[GlobalStateValue] = GlobalStateValue(
+        stack_type=TealType.uint64,
+        descr="A counter for showing how to use application state",
+    )
+
+    # Account state
+    nickname: Final[LocalStateValue] = LocalStateValue(
+        TealType.bytes, default=Bytes("j. doe")
+    )
+    tags: Final[LocalStateValue] = DynamicLocalStateValue(
+        TealType.uint64, max_keys=10, key_gen=make_tag_key
+    )
+
+    # Overrides the default
     @bare_handler(no_op=CallConfig.CREATE)
     def create():
-        return MySickApp.app_state.initialize()
+        return MySickApp.initialize_app_state()
 
     @bare_handler(opt_in=CallConfig.CALL)
     def opt_in():
-        return MySickApp.acct_state.initialize(Txn.sender())
+        return MySickApp.initialize_account_state(Txn.sender())
 
     @handler
     def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):

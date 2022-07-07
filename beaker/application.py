@@ -16,7 +16,14 @@ from pyteal import (
 )
 
 from .decorators import bare_handler, get_handler_config
-from .application_schema import AccountState, ApplicationState
+from .application_schema import (
+    AccountState,
+    ApplicationState,
+    DynamicLocalStateValue,
+    LocalStateValue,
+    GlobalStateValue,
+    DynamicGlobalStateValue,
+)
 
 
 class EmptyAppState(ApplicationState):
@@ -30,9 +37,6 @@ class EmptyAccountState(AccountState):
 class Application:
     """Application should be subclassed to add functionality"""
 
-    app_state: ApplicationState = EmptyAppState()
-    acct_state: AccountState = EmptyAccountState()
-
     # Convenience constant fields
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
@@ -40,11 +44,27 @@ class Application:
     bare_methods: BareCallActions
 
     def __init__(self):
-        attrs = [
-            getattr_static(self, m)
+        attrs = {
+            m: getattr_static(self, m)
             for m in list(set(dir(self.__class__)) - set(dir(super())))
             if not m.startswith("__")
-        ]
+        }
+
+        self.acct_state = AccountState({
+            k:v
+            for k,v in attrs.items()
+            if isinstance(v, LocalStateValue) or isinstance(v, DynamicLocalStateValue)
+        })
+
+        self.app_state = ApplicationState({
+            k:v 
+            for k,v in attrs.items()
+            if isinstance(v, GlobalStateValue) or isinstance(v, DynamicGlobalStateValue)
+        })
+
+
+        print(self.app_state.__dict__)
+        print(self.acct_state.__dict__)
 
         self.bare_calls = [c.__dict__ for c in attrs if isinstance(c, BareCallActions)]
         bare_handlers = {}
