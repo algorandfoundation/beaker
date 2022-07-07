@@ -43,8 +43,11 @@ def demo():
     asset_b = create_asset(addr, sk, "B")
     print(f"Created asset a/b with ids: {asset_a}/{asset_b}")
 
+    contract = {m.name: m for m in app.contract.methods}
+
     # Call app to create pool token
-    result = app_client.call(signer, app.bootstrap.method_spec(), [asset_a, asset_b])
+    print(contract["bootstrap"])
+    result = app_client.call(signer, contract["bootstrap"], [asset_a, asset_b])
     pool_token = result.abi_results[0].return_value
     print(f"Created pool token with id: {pool_token}")
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
@@ -67,7 +70,7 @@ def demo():
     print("Funding")
     app_client.call(
         signer,
-        app.mint.method_spec(),
+        contract["mint"],
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 10000, asset_a),
@@ -90,7 +93,7 @@ def demo():
     print("Minting")
     app_client.call(
         signer,
-        app.mint.method_spec(),
+        contract["mint"],
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100000, asset_a),
@@ -113,7 +116,7 @@ def demo():
     print("Swapping A for B")
     app_client.call(
         signer,
-        app.swap.method_spec(),
+        contract["swap"],
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
@@ -131,7 +134,7 @@ def demo():
     print("Swapping B for A")
     app_client.call(
         signer,
-        app.swap.method_spec(),
+        contract["swap"],
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
@@ -149,7 +152,7 @@ def demo():
     print("Burning")
     app_client.call(
         signer,
-        app.burn.method_spec(),
+        contract["burn"],
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),

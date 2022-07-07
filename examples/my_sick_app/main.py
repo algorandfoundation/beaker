@@ -23,13 +23,14 @@ def demo():
     app_id, app_addr, txid = app_client.create(signer)
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    result = app_client.call(signer, app.add.method_spec(), [2, 3])
+    methods = {m.name: m for m in app.contract.methods}
+    result = app_client.call(signer, methods["add"], [2, 3])
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, app.increment.method_spec())
+    result = app_client.call(signer, methods["increment"])
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, app.decrement.method_spec())
+    result = app_client.call(signer, methods["decrement"])
     print(result.abi_results[0].return_value)
 
 

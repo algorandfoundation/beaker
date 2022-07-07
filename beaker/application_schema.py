@@ -17,7 +17,6 @@ from pyteal import (
 )
 
 
-
 class DynamicGlobalStateValue:
     def __init__(
         self, stack_type: TealType, max_keys: int, key_gen: SubroutineFnWrapper = None
@@ -126,16 +125,12 @@ class GlobalStateValue(Expr):
 
 
 class ApplicationState:
-    def __init__(self, fields:dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}):
+    def __init__(
+        self, fields: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
+    ):
 
         self.declared_vals: dict[str, GlobalStateValue] = {
-            k: GlobalStateValue(
-                stack_type=v.stack_type,
-                key=v.key if v.key is not None else Bytes(k),
-                default=v.default,
-            )
-            for k, v in fields.items()
-            if isinstance(v, GlobalStateValue)
+            k: v for k, v in fields.items() if isinstance(v, GlobalStateValue)
         }
 
         self.__dict__.update(self.declared_vals)
@@ -158,7 +153,9 @@ class ApplicationState:
         )
 
     def initialize(self):
-        return Seq(*[g.set_default() for g in self.declared_vals.values()])
+        return Seq(
+            *[g.set_default() for g in self.declared_vals.values() if not g.static]
+        )
 
     def schema(self):
         return StateSchema(
@@ -239,17 +236,11 @@ class LocalStateValue:
     def is_default(self, acct: Expr) -> Expr:
         return self.get(acct) == self.default
 
+
 class AccountState:
     def __init__(self, fields: dict[str, LocalStateValue | DynamicLocalStateValue]):
-        print(fields)
         self.declared_vals: dict[str, LocalStateValue] = {
-            k: LocalStateValue(
-                stack_type=v.stack_type,
-                key=v.key if v.key is not None else Bytes(k),
-                default=v.default,
-            )
-            for k, v in fields.items()
-            if isinstance(v, LocalStateValue)
+            k: v for k, v in fields.items() if isinstance(v, LocalStateValue)
         }
         self.__dict__.update(self.declared_vals)
 

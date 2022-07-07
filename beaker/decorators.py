@@ -1,3 +1,4 @@
+import functools
 from inspect import signature
 from typing import Any, Callable, Final
 
@@ -25,7 +26,10 @@ from pyteal import (
 )
 
 HandlerFunc = Callable[..., Expr]
+
 _handler_config_attr: Final[str] = "__handler_config__"
+_abi_method: Final[str] = "_abi_method"
+_bare_method: Final[str] = "_bare_method"
 
 
 def get_handler_config(
@@ -44,25 +48,6 @@ def add_handler_config(
     handler_config = get_handler_config(fn)
     handler_config[key] = val
     setattr(fn, _handler_config_attr, handler_config)
-
-
-class PrependExpr:
-    """Prepends an expression to be evaluated prior to the body of the method"""
-
-    def __init__(self, fn, expr):
-        self.fn = fn
-        self.expr = expr
-
-    def __get__(self):
-        def _impl(*args, **kwargs):
-            return Seq(self.expr, self.fn(*args, **kwargs))
-
-        _impl.__name__ = self.fn.__name__
-        _impl.__annotations__ = self.fn.__annotations__
-        _impl.__signature__ = signature(self.fn)
-        _impl.__doc__ = self.fn.__doc__
-
-        return _impl
 
 
 class Authorize:
@@ -103,25 +88,23 @@ class Authorize:
 
 
 def _authorize(allowed: SubroutineFnWrapper):
-    def _decorate(fn: HandlerFunc):
-        if allowed.type_of() != TealType.uint64:
-            raise TealInputError(
-                f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
-            )
+    if allowed.type_of() != TealType.uint64:
+        raise TealInputError(
+            f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
+        )
 
-        return PrependExpr(fn, Assert(allowed(Txn.sender()))).__get__()
+    def _decorate(fn: HandlerFunc):
+        def _impl(*args, **kwargs):
+            return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
+
+        _impl.__name__ = fn.__name__
+        _impl.__annotations__ = fn.__annotations__
+        _impl.__signature__ = signature(fn)
+        _impl.__doc__ = fn.__doc__
+
+        return _impl
 
     return _decorate
-
-
-def _assert_zero(txn_fields: list[TxnField]):
-    def _impl(fn: HandlerFunc):
-        concats = Concat(*[Txn.makeTxnExpr(f) for f in txn_fields])
-        if len(txn_fields) == 1:
-            concats = Txn.makeTxnExpr(txn_fields[0])
-        return PrependExpr(fn, Assert(BitLen(concats) == Int(0))).__get__()
-
-    return _impl
 
 
 def _readonly(fn: HandlerFunc):
@@ -137,6 +120,16 @@ def _on_complete(mc: MethodConfig):
     return _impl
 
 
+def _remove_self(fn: HandlerFunc) -> HandlerFunc:
+    sig = signature(fn)
+    params = sig.parameters.copy()
+    if "self" in params:
+        del params["self"]
+    newsig = sig.replace(parameters=params.values())
+    fn.__signature__ = newsig
+    return fn
+
+
 def bare_handler(
     no_op: CallConfig = None,
     opt_in: CallConfig = None,
@@ -145,9 +138,13 @@ def bare_handler(
     update_application: CallConfig = None,
     close_out: CallConfig = None,
 ):
-    def _impl(fn: HandlerFunc) -> OnCompleteAction:
-        fn = Subroutine(TealType.none)(fn)
-        return BareCallActions(
+    def _impl(fun: HandlerFunc) -> OnCompleteAction:
+
+        fun = _remove_self(fun)
+
+        fn = Subroutine(TealType.none)(fun)
+
+        bca = BareCallActions(
             no_op=OnCompleteAction(action=fn, call_config=no_op)
             if no_op is not None
             else None,
@@ -171,6 +168,10 @@ def bare_handler(
             if clear_state is not None
             else None,
         )
+
+        add_handler_config(fun, _bare_method, bca)
+
+        return fun
 
     return _impl
 
@@ -204,6 +205,8 @@ def handler(
     """
 
     def _impl(fn: HandlerFunc):
+        fn = _remove_self(fn)
+
         if authorize is not None:
             fn = _authorize(authorize)(fn)
         if method_config is not None:
@@ -211,9 +214,9 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        wrapped = ABIReturnSubroutine(fn)
-        setattr(wrapped, _handler_config_attr, get_handler_config(fn))
-        return wrapped
+        add_handler_config(fn, _abi_method, ABIReturnSubroutine(fn))
+
+        return fn
 
     if fn is None:
         return _impl

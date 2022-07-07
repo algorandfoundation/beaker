@@ -7,6 +7,7 @@ from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
     AtomicTransactionComposer,
     AtomicTransactionResponse,
+    TransactionWithSigner,
     abi,
 )
 from algosdk.future import transaction
@@ -43,19 +44,21 @@ class ApplicationClient:
         addr = address_from_private_key(signer.private_key)
         atc = AtomicTransactionComposer()
 
-        atc.add_method_call(
-            0,
-            self.app.create.method_spec(),
-            addr,
-            sp,
-            signer,
-            args,
-            approval_program=approval_compiled,
-            clear_program=clear_compiled,
-            extra_pages=extra_pages,
-            global_schema=self.app.app_state.schema(),
-            local_schema=self.app.acct_state.schema(),
-            **kwargs
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationCreateTxn(
+                    addr,
+                    sp,
+                    transaction.OnComplete.NoOpOC,
+                    approval_compiled,
+                    clear_compiled,
+                    self.app.app_state.schema(),
+                    self.app.acct_state.schema(),
+                    extra_pages=extra_pages,
+                    **kwargs
+                ),
+                signer=signer,
+            )
         )
         create_result = atc.execute(self.client, 4)
         result = self.client.pending_transaction_info(create_result.tx_ids[0])

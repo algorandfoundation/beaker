@@ -22,40 +22,46 @@ class MySickApp(Application):
     nickname: Final[LocalStateValue] = LocalStateValue(
         TealType.bytes, default=Bytes("j. doe")
     )
-    tags: Final[LocalStateValue] = DynamicLocalStateValue(
+    tags: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
         TealType.uint64, max_keys=10, key_gen=make_tag_key
     )
 
     # Overrides the default
     @bare_handler(no_op=CallConfig.CREATE)
-    def create():
-        return MySickApp.initialize_app_state()
+    def create(self):
+        """create application"""
+        return self.initialize_app_state()
 
     @bare_handler(opt_in=CallConfig.CALL)
-    def opt_in():
-        return MySickApp.initialize_account_state(Txn.sender())
+    def opt_in(self):
+        """opt into application"""
+        return self.initialize_account_state(Txn.sender())
 
     @handler
-    def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+    def add(self, a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+        """add two uint64s, produce uint64"""
         return output.set(a.get() + b.get())
 
     @handler(authorize=Authorize.only(Global.creator_address()))
-    def increment(*, output: abi.Uint64):
+    def increment(self, *, output: abi.Uint64):
+        """increment the counter"""
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1)),
-            output.set(MySickApp.app_state.counter),
+            self.counter.set(self.counter + Int(1)),
+            output.set(self.counter),
         )
 
     @handler(authorize=Authorize.only(Global.creator_address()))
-    def decrement(*, output: abi.Uint64):
+    def decrement(self, *, output: abi.Uint64):
+        """decrement the counter"""
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter - Int(1)),
-            output.set(MySickApp.app_state.counter),
+            self.counter.set(self.counter - Int(1)),
+            output.set(self.counter),
         )
 
     @handler
-    def add_tag(tag: abi.String):
-        return MySickApp.acct_state.tags(tag).set(Txn.sender(), Int(1))
+    def add_tag(self, tag: abi.String):
+        """add a tag to a user"""
+        return self.tags(tag).set(Txn.sender(), Int(1))
 
 
 if __name__ == "__main__":
