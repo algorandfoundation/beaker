@@ -145,7 +145,6 @@ class GlobalStateValue(Expr):
         return Seq(
             (sv := ScratchVar()).store(self.get()),
             self.set(sv.load() + cnt),
-            sv.load(),
         )
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
@@ -155,7 +154,6 @@ class GlobalStateValue(Expr):
         return Seq(
             (sv := ScratchVar()).store(self.get()),
             self.set(sv.load() - cnt),
-            sv.load(),
         )
 
     def get(self) -> Expr:
