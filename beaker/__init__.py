@@ -1,4 +1,4 @@
-from .application import Application, Authorize, handler, internal
+from .application import Application
 from .application_client import ApplicationClient
 from .application_schema import (
     AccountState,
@@ -8,3 +8,4 @@ from .application_schema import (
     GlobalStateValue,
     LocalStateValue,
 )
+from .decorators import Authorize, handler, internal, bare_handler

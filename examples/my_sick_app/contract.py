@@ -2,6 +2,7 @@ from typing import Final
 
 from pyteal import *
 from beaker import *
+from beaker.decorators import bare_handler
 
 
 class MySickAppState(ApplicationState):
@@ -24,6 +25,14 @@ class MySickAcctState(AccountState):
 class MySickApp(Application):
     app_state: Final[MySickAppState] = MySickAppState()
     acct_state: Final[MySickAcctState] = MySickAcctState()
+
+    @bare_handler(no_op=CallConfig.CREATE)
+    def create():
+        return MySickApp.app_state.initialize()
+
+    @bare_handler(opt_in=CallConfig.CALL)
+    def opt_in():
+        return MySickApp.acct_state.initialize(Txn.sender())
 
     @handler
     def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
