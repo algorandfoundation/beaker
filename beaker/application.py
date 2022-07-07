@@ -1,6 +1,4 @@
-from inspect import getattr_static
 from typing import Final, cast
-import functools
 
 from pyteal import (
     MAX_TEAL_VERSION,
@@ -14,7 +12,6 @@ from pyteal import (
     OptimizeOptions,
     Reject,
     Router,
-    SubroutineDefinition,
     TealInputError,
     Bytes,
 )
@@ -28,15 +25,6 @@ from .application_schema import (
     GlobalStateValue,
     DynamicGlobalStateValue,
 )
-
-
-class EmptyAppState(ApplicationState):
-    """Default app state for Application class, no class variables defined"""
-
-
-class EmptyAccountState(AccountState):
-    """Default account state for Application class, no class variables defined"""
-
 
 class Application:
     """Application should be subclassed to add functionality"""
@@ -64,20 +52,19 @@ class Application:
                     if v.key is None:
                         v.key = Bytes(k)
                     self.acct_vals[k] = v
-                case DynamicLocalStateValue():
-                    self.acct_vals[k] = v
                 case GlobalStateValue():
                     if v.key is None:
                         v.key = Bytes(k)
                     self.app_vals[k] = v
+                case DynamicLocalStateValue():
+                    self.acct_vals[k] = v
                 case DynamicGlobalStateValue():
                     self.app_vals[k] = v
 
         self.acct_state = AccountState(self.acct_vals)
         self.app_state = ApplicationState(self.app_vals)
 
-        bare_handlers = {}
-
+        self.bare_handlers = {}
         self.methods = {}
         for name, bound_attr in attrs.items():
             handler_config = get_handler_config(bound_attr)
@@ -95,16 +82,15 @@ class Application:
 
                     action = cast(OnCompleteAction, action)
 
-                    if oc in bare_handlers:
+                    if oc in self.bare_handlers:
                         raise TealInputError(f"Tried to overwrite a bare handler: {oc}")
 
                     # Swap the implementation with the bound version
                     action.action.subroutine.implementation = bound_attr
-                    bare_handlers[oc] = action
+                    self.bare_handlers[oc] = action
 
-        self.router = Router(type(self).__name__, BareCallActions(**bare_handlers))
+        self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
 
-        # self.methods = [c for c in attrs.values() if isinstance(c, ABIReturnSubroutine)]
         for method in self.methods.values():
             self.router.add_method_handler(method)
 
