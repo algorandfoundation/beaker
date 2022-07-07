@@ -1,10 +1,9 @@
-from algosdk.v2client.algod import AlgodClient
-from algosdk.atomic_transaction_composer import *
+from algosdk.atomic_transaction_composer import AccountTransactionSigner
 
-from contract import MySickApp
 from beaker import ApplicationClient
 from beaker.sandbox import get_client, get_accounts
 
+from contract import MySickApp
 
 
 client = get_client()

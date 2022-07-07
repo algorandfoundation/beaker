@@ -1,18 +1,23 @@
 import base64
 
 from algosdk.future import transaction
-from algosdk.v2client.algod import AlgodClient
-from algosdk.atomic_transaction_composer import *
+from algosdk.atomic_transaction_composer import (
+    AtomicTransactionComposer,
+    AccountTransactionSigner,
+    TransactionWithSigner,
+)
 
-from amm import ConstantProductAMM
 from beaker import ApplicationClient
 from beaker.sandbox import get_accounts, get_client
+
+from amm import ConstantProductAMM
 
 
 client = get_client()
 
 addr, sk = get_accounts().pop()
 signer = AccountTransactionSigner(sk)
+
 
 def demo():
 
