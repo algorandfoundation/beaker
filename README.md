@@ -181,7 +181,7 @@ from beaker import AccountState, LocalStateValue
 
 @Subroutine(TealType.bytes)
 def make_tag_key(tag: abi.String):
-    return Concat(Bytes("tag:"), tag)
+    return Concat(Bytes("tag:"), tag.get())
 
 class MySickAcctState(AccountState):
     nickname=LocalStateValue(stack_type=TealType.bytes, descr="What this user prefers to be called")
