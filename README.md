@@ -11,7 +11,7 @@ With Beaker, you build a class that represents your entire application including
 
 ## Install
 
-First install Beaker:
+Currently only installing from github is supported
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
@@ -66,17 +66,19 @@ Lets now deploy our contract using an `ApplicationClient`.
 
 ```py
 
-from algosdk.v2.algod import AlgodClient
 from algosdk.atomic_transaction_composer import  AccountTransactionSigner 
 
 from beaker import ApplicationClient 
 
-# definition of get_account omitted but you get the idea 
-addr, private_key = get_account()
-signer = AccountTransactionSigner(private_key)
+from beaker.sandbox import get_accounts, get_client
 
 # Connect to local sandbox
-client = AlgodClient("a"*64, "http://localhost:4001")
+client = get_client()
+
+# Get the accounts from the sandbox KMD 
+addr, private_key = get_accounts().pop()
+signer = AccountTransactionSigner(private_key)
+
 
 # Instantiate our app
 msa = MySickApp()
