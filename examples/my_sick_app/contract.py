@@ -12,8 +12,8 @@ class MySickAppState(ApplicationState):
 
 
 @Subroutine(TealType.bytes)
-def make_tag_key(tag):
-    return Concat(Bytes("tag:"), tag)
+def make_tag_key(tag: abi.String):
+    return Concat(Bytes("tag:"), tag.get())
 
 
 class MySickAcctState(AccountState):
@@ -45,7 +45,7 @@ class MySickApp(Application):
 
     @handler
     def add_tag(tag: abi.String):
-        return MySickApp.acct_state.tags(tag.get()).set(Txn.sender(), Int(1))
+        return MySickApp.acct_state.tags(tag).set(Txn.sender(), Int(1))
 
 
 if __name__ == "__main__":

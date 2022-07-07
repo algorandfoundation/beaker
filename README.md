@@ -180,7 +180,7 @@ We can also specify Account state and even allow for dynamic state keys.
 from beaker import AccountState, LocalStateValue
 
 @Subroutine(TealType.bytes)
-def make_tag_key(tag):
+def make_tag_key(tag: abi.String):
     return Concat(Bytes("tag:"), tag)
 
 class MySickAcctState(AccountState):
@@ -198,7 +198,7 @@ class MySickApp(Application):
     @handler
     def add_tag(tag: abi.String):
         # Set `tag:$tag` to 1
-        return MySickApp.acct_state.tags(tag.get()).set(Txn.sender(), Int(1))
+        return MySickApp.acct_state.tags(tag).set(Txn.sender(), Int(1))
 
 ```
 
