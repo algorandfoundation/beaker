@@ -100,7 +100,9 @@ We can call the method we defined in our `Application`
 
 ```py
 
-result = app_client.call(signer, msa.contract.get_method_by_name('add'), [2,3])
+from beaker import method_spec
+
+result = app_client.call(signer, method_spec(msa.add), [2,3])
 print(result.abi_results[0].return_value) # 5
 
 ```
