@@ -1,6 +1,7 @@
+from dataclasses import dataclass, field, fields, astuple, replace
 from functools import wraps
 from inspect import signature
-from typing import Any, Callable, Final
+from typing import Any, Callable, Final, cast
 
 from pyteal import (
     ABIReturnSubroutine,
@@ -24,54 +25,38 @@ from pyteal import (
 
 HandlerFunc = Callable[..., Expr]
 
-# TODO: conver this to a dataclass that holds these attributes
 _handler_config_attr: Final[str] = "__handler_config__"
-_abi_method: Final[str] = "_abi_method"
-_bare_method: Final[str] = "_bare_method"
-_self_arg: Final[str] = "_self_arg"
+@dataclass
+class HandlerConfig:
+    abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
+    method_config: MethodConfig = field(kw_only=True, default=None)
+    bare_method: BareCallActions = field(kw_only=True, default=None)
+    referenced_self: bool = field(kw_only=True, default=False)
 
 
 def get_handler_config(
     fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
-) -> dict[str, Any]:
-    handler_config = {}
+) -> HandlerConfig:
     if hasattr(fn, _handler_config_attr):
-        handler_config = getattr(fn, _handler_config_attr)
-
-    return handler_config
-
+        return getattr(fn, _handler_config_attr)
+    return HandlerConfig()
 
 def add_handler_config(
     fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, key: str, val: Any
 ):
     handler_config = get_handler_config(fn)
-    handler_config[key] = val
-    setattr(fn, _handler_config_attr, handler_config)
+    setattr(fn, _handler_config_attr, replace(handler_config, **{key:val}))
 
 
-def get_abi_method(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
-) -> ABIReturnSubroutine:
-    hc = get_handler_config(fn)
-    if _abi_method in hc:
-        return hc[_abi_method]
-    return None
+def get_abi_method(fn) -> ABIReturnSubroutine:
+    return get_handler_config(fn).abi_method
 
 
-def get_bare_method(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
-) -> BareCallActions:
-    hc = get_handler_config(fn)
-    if _bare_method in hc:
-        return hc[_bare_method]
-    return None
+def get_bare_method(fn) -> BareCallActions:
+    return get_handler_config(fn).bare_method
 
-
-def get_self_arg(fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction) -> bool:
-    hc = get_handler_config(fn)
-    if _self_arg in hc:
-        return hc[_self_arg]
-    return False
+def get_self_arg(fn) -> bool:
+    return get_handler_config(fn).referenced_self
 
 
 class Authorize:
@@ -141,7 +126,7 @@ def _readonly(fn: HandlerFunc):
 
 def _on_complete(mc: MethodConfig):
     def _impl(fn: HandlerFunc):
-        add_handler_config(fn, "method_config", mc)
+        add_handler_config(fn, 'method_config', mc)
         return fn
 
     return _impl
@@ -154,7 +139,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     if "self" in params:
         del params["self"]
         # Flag that this method did have a `self` argument
-        add_handler_config(fn, _self_arg, True)
+        add_handler_config(fn, 'referenced_self', True)
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
 
@@ -200,7 +185,7 @@ def bare_handler(
             else None,
         )
 
-        add_handler_config(fun, _bare_method, bca)
+        add_handler_config(fun, 'bare_method', bca)
 
         return fun
 
@@ -246,7 +231,7 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        add_handler_config(fn, _abi_method, ABIReturnSubroutine(fn))
+        add_handler_config(fn, 'abi_method', ABIReturnSubroutine(fn))
 
         return fn
 

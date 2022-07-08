@@ -73,12 +73,11 @@ class Application:
         for name, bound_attr in self.attrs.items():
             referenced_self = get_self_arg(bound_attr)
 
-            # print(bound_attr.__name__, get_handler_config(bound_attr))
-            # print(f"{name} referenced self? {referenced_self}")
-
             if (abi_meth := get_abi_method(bound_attr)) is not None:
+                # Swap the implementation with the bound version
                 if referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
+
                 self.methods[name] = abi_meth
 
             if (ba := get_bare_method(bound_attr)) is not None:
@@ -86,11 +85,10 @@ class Application:
                     if action is None:
                         continue
 
-                    action = cast(OnCompleteAction, action)
-
                     if oc in self.bare_handlers:
                         raise TealInputError(f"Tried to overwrite a bare handler: {oc}")
 
+                    action = cast(OnCompleteAction, action)
                     # Swap the implementation with the bound version
                     if referenced_self:
                         action.action.subroutine.implementation = bound_attr
