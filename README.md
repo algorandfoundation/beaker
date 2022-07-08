@@ -114,7 +114,7 @@ Lets go back and add some application state (Global State in Algorand parlance).
 
 ```py
 
-from beaker import ApplicationState, GlobalStateValue
+from beaker import GlobalStateValue
 
 class MySickApp(Application):
     counter: Final[GlobalStateValue] = GlobalStateValue(
@@ -174,7 +174,7 @@ The `handler` decorator accepts several other parameters:
 We can also specify Account state and even allow for dynamic state keys.
 
 ```py
-from beaker import AccountState, LocalStateValue
+from beaker import LocalStateValue
 
 @Subroutine(TealType.bytes)
 def make_tag_key(tag: abi.String):
