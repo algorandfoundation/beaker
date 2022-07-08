@@ -7,6 +7,7 @@ from pyteal import (
     Expr,
     If,
     Int,
+    MaybeValue,
     Not,
     ScratchVar,
     Seq,
@@ -114,11 +115,23 @@ class GlobalStateValue(Expr):
     def get(self) -> Expr:
         return App.globalGet(self.key)
 
-    def get_maybe(self) -> Expr:
+    def get_maybe(self) -> MaybeValue:
         return App.globalGetEx(Int(0), self.key)
+
+    def get_must(self)->Expr:
+        return Seq(
+            val := self.get_maybe(),
+            Assert(val.hasValue()),
+            val.value()
+        )
 
     def get_else(self, val: Expr) -> Expr:
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
+
+    def delete(self) -> Expr:
+        if self.static:
+            raise Exception("Cannot delete static global param")
+        return App.globalDel(self.key)
 
     def is_default(self) -> Expr:
         return self.get() == self.default
@@ -221,8 +234,15 @@ class LocalStateValue:
     def get(self, acct: Expr) -> Expr:
         return App.localGet(acct, self.key)
 
-    def get_maybe(self, acct: Expr) -> Expr:
-        return App.localGetEx(Int(0), acct, self.key)
+    def get_maybe(self, acct: Expr) -> MaybeValue:
+        return App.localGetEx(acct, Int(0), self.key)
+
+    def get_must(self, acct: Expr)->Expr:
+        return Seq(
+            val := self.get_maybe(acct),
+            Assert(val.hasValue()),
+            val.value()
+        )
 
     def get_else(self, acct: Expr, val: Expr) -> Expr:
         if val.type_of() != self.stack_type:
@@ -232,6 +252,9 @@ class LocalStateValue:
             (v := App.localGetEx(acct, Int(0), self.key)),
             If(v.hasValue(), v.value(), val),
         )
+
+    def delete(self, acct: Expr) ->Expr:
+        return App.localDel(acct, self.key)
 
     def is_default(self, acct: Expr) -> Expr:
         return self.get(acct) == self.default
