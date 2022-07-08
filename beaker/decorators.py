@@ -1,5 +1,7 @@
+from dataclasses import dataclass, field, fields, astuple, replace
+from functools import wraps
 from inspect import signature
-from typing import Any, Callable, Final
+from typing import Any, Callable, Final, cast
 
 from pyteal import (
     ABIReturnSubroutine,
@@ -8,9 +10,7 @@ from pyteal import (
     Assert,
     AssetHolding,
     BareCallActions,
-    BitLen,
     CallConfig,
-    Concat,
     Expr,
     Int,
     MethodConfig,
@@ -21,48 +21,35 @@ from pyteal import (
     TealInputError,
     TealType,
     Txn,
-    TxnField,
 )
 
 HandlerFunc = Callable[..., Expr]
+
 _handler_config_attr: Final[str] = "__handler_config__"
+
+
+@dataclass
+class HandlerConfig:
+    abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
+    method_config: MethodConfig = field(kw_only=True, default=None)
+    bare_method: BareCallActions = field(kw_only=True, default=None)
+    referenced_self: bool = field(kw_only=True, default=False)
+    read_only: bool = field(kw_only=True, default=False)
 
 
 def get_handler_config(
     fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
-) -> dict[str, Any]:
-    handler_config = {}
+) -> HandlerConfig:
     if hasattr(fn, _handler_config_attr):
-        handler_config = getattr(fn, _handler_config_attr)
+        return cast(HandlerConfig, getattr(fn, _handler_config_attr))
+    return HandlerConfig()
 
-    return handler_config
 
-
-def add_handler_config(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, key: str, val: Any
+def set_handler_config(
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, **kwargs
 ):
     handler_config = get_handler_config(fn)
-    handler_config[key] = val
-    setattr(fn, _handler_config_attr, handler_config)
-
-
-class PrependExpr:
-    """Prepends an expression to be evaluated prior to the body of the method"""
-
-    def __init__(self, fn, expr):
-        self.fn = fn
-        self.expr = expr
-
-    def __get__(self):
-        def _impl(*args, **kwargs):
-            return Seq(self.expr, self.fn(*args, **kwargs))
-
-        _impl.__name__ = self.fn.__name__
-        _impl.__annotations__ = self.fn.__annotations__
-        _impl.__signature__ = signature(self.fn)
-        _impl.__doc__ = self.fn.__doc__
-
-        return _impl
+    setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
 
 
 class Authorize:
@@ -103,38 +90,53 @@ class Authorize:
 
 
 def _authorize(allowed: SubroutineFnWrapper):
-    def _decorate(fn: HandlerFunc):
-        if allowed.type_of() != TealType.uint64:
-            raise TealInputError(
-                f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
-            )
+    args = allowed.subroutine.expected_arg_types
 
-        return PrependExpr(fn, Assert(allowed(Txn.sender()))).__get__()
+    if len(args) != 1 or args[0] is not Expr:
+        raise TealInputError(
+            "Expected a single expression argument to authorize function"
+        )
+
+    if allowed.type_of() != TealType.uint64:
+        raise TealInputError(
+            f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
+        )
+
+    def _decorate(fn: HandlerFunc):
+        @wraps(fn)
+        def _impl(*args, **kwargs):
+            return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
+
+        return _impl
 
     return _decorate
 
 
-def _assert_zero(txn_fields: list[TxnField]):
-    def _impl(fn: HandlerFunc):
-        concats = Concat(*[Txn.makeTxnExpr(f) for f in txn_fields])
-        if len(txn_fields) == 1:
-            concats = Txn.makeTxnExpr(txn_fields[0])
-        return PrependExpr(fn, Assert(BitLen(concats) == Int(0))).__get__()
-
-    return _impl
-
-
 def _readonly(fn: HandlerFunc):
-    # add_handler_config(fn, "read_only", True)
+    set_handler_config(fn, read_only=True)
     return fn
 
 
 def _on_complete(mc: MethodConfig):
     def _impl(fn: HandlerFunc):
-        add_handler_config(fn, "method_config", mc)
+        set_handler_config(fn, method_config=mc)
         return fn
 
     return _impl
+
+
+def _remove_self(fn: HandlerFunc) -> HandlerFunc:
+    sig = signature(fn)
+    params = sig.parameters.copy()
+
+    if "self" in params:
+        del params["self"]
+        # Flag that this method did have a `self` argument
+        set_handler_config(fn, referenced_self=True)
+    newsig = sig.replace(parameters=params.values())
+    fn.__signature__ = newsig
+
+    return fn
 
 
 def bare_handler(
@@ -145,9 +147,13 @@ def bare_handler(
     update_application: CallConfig = None,
     close_out: CallConfig = None,
 ):
-    def _impl(fn: HandlerFunc) -> OnCompleteAction:
-        fn = Subroutine(TealType.none)(fn)
-        return BareCallActions(
+    def _impl(fun: HandlerFunc) -> OnCompleteAction:
+
+        fun = _remove_self(fun)
+
+        fn = Subroutine(TealType.none)(fun)
+
+        bca = BareCallActions(
             no_op=OnCompleteAction(action=fn, call_config=no_op)
             if no_op is not None
             else None,
@@ -172,6 +178,10 @@ def bare_handler(
             else None,
         )
 
+        set_handler_config(fun, bare_method=bca)
+
+        return fun
+
     return _impl
 
 
@@ -179,6 +189,7 @@ def internal(return_type: TealType):
     """internal can be used to wrap a subroutine that is defined inside an application class"""
 
     def _impl(fn: HandlerFunc):
+        fn = _remove_self(fn)
         return Subroutine(return_type)(fn)
 
     return _impl
@@ -204,6 +215,8 @@ def handler(
     """
 
     def _impl(fn: HandlerFunc):
+        fn = _remove_self(fn)
+
         if authorize is not None:
             fn = _authorize(authorize)(fn)
         if method_config is not None:
@@ -211,9 +224,9 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        wrapped = ABIReturnSubroutine(fn)
-        setattr(wrapped, _handler_config_attr, get_handler_config(fn))
-        return wrapped
+        set_handler_config(fn, abi_method=ABIReturnSubroutine(fn))
+
+        return fn
 
     if fn is None:
         return _impl

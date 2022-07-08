@@ -54,7 +54,7 @@ from beaker import Application, handle
 class MySickApp(Application):
 
     @handler
-    def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+    def add(self, a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
         return output.set(a.get() + b.get())
 
 ```
@@ -100,7 +100,9 @@ We can call the method we defined in our `Application`
 
 ```py
 
-result = app_client.call(signer, msa.add.method_spec(), [2,3])
+from beaker import method_spec
+
+result = app_client.call(signer, method_spec(msa.add), [2,3])
 print(result.abi_results[0].return_value) # 5
 
 ```
@@ -113,9 +115,8 @@ Lets go back and add some application state (Global State in Algorand parlance).
 
 from beaker import ApplicationState, GlobalStateValue
 
-# Subclass of ApplicationState
-class MySickAppState(ApplicationState):
-    counter = GlobalStateValue(
+class MySickApp(Application):
+    counter: Final[GlobalStateValue] = GlobalStateValue(
         stack_type=TealType.uint64,
         descr="A counter meant to show use of application state",
         # key=Bytes("counter"), specify a key to override the field name  
@@ -123,27 +124,22 @@ class MySickAppState(ApplicationState):
         # static=True, flag as a value that should not change
     )
 
-class MySickApp(Application):
-    app_state: Final[MySickAppState] = MySickAppState()
-
     @handler
-    def increment(*, output: abi.Uint64):
+    def increment(self, *, output: abi.Uint64):
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1)),
-            output.set(MySickApp.app_state.counter)
+            self.counter.set(self.counter + Int(1)),
+            output.set(self.counter)
         )
 
     @handler
-    def decrement(*, output: abi.Uint64):
+    def decrement(self, *, output: abi.Uint64):
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter - Int(1)),
-            output.set(MySickApp.app_state.counter)
+            self.counter.set(self.counter - Int(1)),
+            output.set(self.counter)
         )
 ```
 
 These methods may be called in the same way as the `add` method above.  Using `set` we can overwrite the value that is currently stored.
-
-> Note that you refer to the state using the class name. 
 
 
 But what if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
@@ -154,10 +150,10 @@ But what if we only want certain callers to be allowed? Lets add a parameter to 
     #...
 
     @handler(authorize=Authorize.only(Global.creator_address()))
-    def increment(*, output: abi.Uint64):
+    def increment(self, *, output: abi.Uint64):
         return Seq(
-            MySickApp.app_state.counter.set(MySickApp.app_state.counter + Int(1)),
-            output.set(MySickApp.app_state.counter)
+            self.counter.set(self.counter + Int(1)),
+            output.set(self.counter)
         )
 ```
 
@@ -183,22 +179,19 @@ from beaker import AccountState, LocalStateValue
 def make_tag_key(tag: abi.String):
     return Concat(Bytes("tag:"), tag.get())
 
-class MySickAcctState(AccountState):
-    nickname=LocalStateValue(stack_type=TealType.bytes, descr="What this user prefers to be called")
-    tags=DynamicLocalStateValue(
+class MySickApp(Application):
+
+    nickname: Final[LocalStateValue] = LocalStateValue(stack_type=TealType.bytes, descr="What this user prefers to be called")
+    tags: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
         stack_type=TealType.bytes,
         max_keys=10,
         key_gen=make_tag_key
     )
 
-class MySickApp(Application):
-
-    acct_state: Final[MySickAcctState] = MySickAcctState()
-
     @handler
-    def add_tag(tag: abi.String):
+    def add_tag(self, tag: abi.String):
         # Set `tag:$tag` to 1
-        return MySickApp.acct_state.tags(tag).set(Txn.sender(), Int(1))
+        return self.tags(tag).set(Txn.sender(), Int(1))
 
 ```
 

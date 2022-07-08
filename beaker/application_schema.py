@@ -17,51 +17,6 @@ from pyteal import (
 )
 
 
-class ApplicationState:
-    def __init__(self):
-        attrs = {
-            attr: getattr(self, attr)
-            for attr in set(dir(self.__class__)) - set(dir(super()))
-            if not attr.startswith("__")
-        }
-
-        self.declared_vals: dict[str, GlobalStateValue] = {
-            k: GlobalStateValue(
-                stack_type=v.stack_type,
-                key=v.key if v.key is not None else Bytes(k),
-                default=v.default,
-            )
-            for k, v in attrs.items()
-            if isinstance(v, GlobalStateValue)
-        }
-        self.__dict__.update(self.declared_vals)
-
-        self.dynamic_vals: dict[str, DynamicGlobalStateValue] = {
-            k: v for k, v in attrs.items() if isinstance(v, DynamicGlobalStateValue)
-        }
-        self.__dict__.update(self.dynamic_vals)
-
-        self.num_uints = len(
-            [l for l in self.declared_vals.values() if l.stack_type == TealType.uint64]
-        ) + len(
-            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.uint64]
-        )
-
-        self.num_byte_slices = len(
-            [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
-        ) + len(
-            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.bytes]
-        )
-
-    def initialize(self):
-        return Seq(*[g.set_default() for g in self.declared_vals.values()])
-
-    def schema(self):
-        return StateSchema(
-            num_uints=self.num_uints, num_byte_slices=self.num_byte_slices
-        )
-
-
 class DynamicGlobalStateValue:
     def __init__(
         self, stack_type: TealType, max_keys: int, key_gen: SubroutineFnWrapper = None
@@ -169,27 +124,19 @@ class GlobalStateValue(Expr):
         return self.get() == self.default
 
 
-class AccountState:
-    def __init__(self):
-        attrs = {
-            attr: getattr(self, attr)
-            for attr in set(dir(self.__class__)) - set(dir(super()))
-            if not attr.startswith("__")
+class ApplicationState:
+    def __init__(
+        self, fields: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
+    ):
+
+        self.declared_vals: dict[str, GlobalStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, GlobalStateValue)
         }
 
-        self.declared_vals: dict[str, LocalStateValue] = {
-            k: LocalStateValue(
-                stack_type=v.stack_type,
-                key=v.key if v.key is not None else Bytes(k),
-                default=v.default,
-            )
-            for k, v in attrs.items()
-            if isinstance(v, LocalStateValue)
-        }
         self.__dict__.update(self.declared_vals)
 
-        self.dynamic_vals: dict[str, DynamicLocalStateValue] = {
-            k: v for k, v in attrs.items() if isinstance(v, DynamicLocalStateValue)
+        self.dynamic_vals: dict[str, DynamicGlobalStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, DynamicGlobalStateValue)
         }
         self.__dict__.update(self.dynamic_vals)
 
@@ -205,8 +152,10 @@ class AccountState:
             [l for l in self.dynamic_vals.values() if l.stack_type == TealType.bytes]
         )
 
-    def initialize(self, acct: Expr):
-        return Seq(*[l.set_default(acct) for l in self.declared_vals.values()])
+    def initialize(self):
+        return Seq(
+            *[g.set_default() for g in self.declared_vals.values() if not g.static]
+        )
 
     def schema(self):
         return StateSchema(
@@ -286,3 +235,36 @@ class LocalStateValue:
 
     def is_default(self, acct: Expr) -> Expr:
         return self.get(acct) == self.default
+
+
+class AccountState:
+    def __init__(self, fields: dict[str, LocalStateValue | DynamicLocalStateValue]):
+        self.declared_vals: dict[str, LocalStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, LocalStateValue)
+        }
+        self.__dict__.update(self.declared_vals)
+
+        self.dynamic_vals: dict[str, DynamicLocalStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, DynamicLocalStateValue)
+        }
+        self.__dict__.update(self.dynamic_vals)
+
+        self.num_uints = len(
+            [l for l in self.declared_vals.values() if l.stack_type == TealType.uint64]
+        ) + len(
+            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.uint64]
+        )
+
+        self.num_byte_slices = len(
+            [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
+        ) + len(
+            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.bytes]
+        )
+
+    def initialize(self, acct: Expr):
+        return Seq(*[l.set_default(acct) for l in self.declared_vals.values()])
+
+    def schema(self):
+        return StateSchema(
+            num_uints=self.num_uints, num_byte_slices=self.num_byte_slices
+        )

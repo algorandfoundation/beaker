@@ -1,4 +1,4 @@
-from .application import Application
+from .application import Application, method_spec
 from .application_client import ApplicationClient
 from .application_schema import (
     AccountState,
