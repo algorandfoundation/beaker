@@ -9,7 +9,7 @@
 
 ### features
 
-- Class mix-in type functionality (i.e. `class MyApp(Application, ARC18):` adds token create to bootstrap && adds global schema val for the token id)
+- Class mix-in type functionality (i.e. `class MyApp(Application, ARC18):` adds methods and global/local state requirements for ARC18)
 
 - Provide `companion` application to be the receiver of op-up requests and trampoline-ing for funding during create
 
