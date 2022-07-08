@@ -38,17 +38,13 @@ class HandlerConfig:
     subroutine: SubroutineFnWrapper = field(kw_only=True, default=None)
 
 
-def get_handler_config(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
-) -> HandlerConfig:
+def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
     if hasattr(fn, _handler_config_attr):
         return cast(HandlerConfig, getattr(fn, _handler_config_attr))
     return HandlerConfig()
 
 
-def set_handler_config(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, **kwargs
-):
+def set_handler_config(fn: HandlerFunc, **kwargs):
     handler_config = get_handler_config(fn)
     setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
 

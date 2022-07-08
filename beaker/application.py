@@ -78,9 +78,6 @@ class Application:
         for name, bound_attr in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
 
-            print(name, bound_attr, handler_config)
-            print()
-
             if handler_config.abi_method is not None:
                 abi_meth = handler_config.abi_method
 
@@ -105,7 +102,6 @@ class Application:
                         action.action.subroutine.implementation = bound_attr
 
                     self.bare_handlers[oc] = action
-
 
         self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
 

@@ -149,21 +149,21 @@ class ARC18(Application):
             # Make sure transactions look right
             valid_transfer_group,
             # Make royalty payment
-            self.do_pay_algos(
+            ARC18.do_pay_algos(
                 payment_txn.get().amount(),
                 owner.address(),
                 royalty_receiver.address(),
                 self.royalty_basis,
             ),
             # Perform asset move
-            self.do_move_asset(
+            ARC18.do_move_asset(
                 royalty_asset.asset_id(),
                 owner.address(),
                 buyer.address(),
                 royalty_asset_amount.get(),
             ),
             # Clear listing from local state of owner
-            self.do_update_offered(
+            ARC18.do_update_offered(
                 owner.address(),
                 royalty_asset.asset_id(),
                 offer_auth_addr.load(),
@@ -201,8 +201,8 @@ class ARC18(Application):
             (offer := ScratchVar()).store(
                 self.offers(royalty_asset.asset_id()).get_must(owner.address())
             ),
-            offer_auth_addr.store(self.offered_auth(offer.load())),
-            offer_amt.store(self.offered_amount(offer.load())),
+            offer_auth_addr.store(ARC18.offered_auth(offer.load())),
+            offer_amt.store(ARC18.offered_amount(offer.load())),
             # App call sent by authorizing address
             Assert(Txn.sender() == offer_auth_addr.load()),
             # payment txn should be from auth
@@ -219,20 +219,20 @@ class ARC18(Application):
         return Seq(
             # Make sure transactions look right
             valid_transfer_group,
-            self.do_pay_assets(
+            ARC18.do_pay_assets(
                 payment_txn.get().xfer_asset(),
                 payment_txn.get().asset_amount(),
                 owner.address(),
             ),
             # Perform asset move
-            self.do_move_asset(
+            ARC18.do_move_asset(
                 royalty_asset.asset_id(),
                 owner.address(),
                 buyer.address(),
                 royalty_asset_amount.get(),
             ),
             # Clear listing from local state of owner
-            self.do_update_offered(
+            ARC18.do_update_offered(
                 owner.address(),
                 royalty_asset.asset_id(),
                 offer_auth_addr.load(),
@@ -262,7 +262,7 @@ class ARC18(Application):
                 And(cb.hasValue(), cb.value() == Global.current_application_address())
             ),
             # Set the auth addr for this asset
-            self.do_update_offered(
+            ARC18.do_update_offered(
                 Txn.sender(),
                 royalty_asset.asset_id(),
                 auth_address.get(),
@@ -297,7 +297,7 @@ class ARC18(Application):
             Assert(curr_offer_amt.load() >= royalty_asset_amount.get()),
             Assert(curr_offer_auth.load() == Txn.sender()),
             # Delete the offer
-            self.do_update_offered(
+            ARC18.do_update_offered(
                 owner.address(),
                 royalty_asset.asset_id(),
                 Bytes(""),
@@ -306,7 +306,7 @@ class ARC18(Application):
                 curr_offer_amt.load(),
             ),
             # Move it
-            self.do_move_asset(
+            ARC18.do_move_asset(
                 royalty_asset.asset_id(),
                 owner.address(),
                 receiver.address(),
