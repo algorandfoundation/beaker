@@ -198,5 +198,7 @@ class MySickApp(Application):
 
 That's it for now. 
 
+See [TODO](TODO.md) for what is planned.
+
 *Please file issues with ideas or descriptions of how this might not work for your use case.*
 
