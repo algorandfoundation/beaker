@@ -14,6 +14,10 @@ class MyRoyaltyContract(ARC18):
                 {
                     TxnField.type_enum: TxnType.AssetConfig,
                     TxnField.config_asset_manager: MyRoyaltyContract.address,
+                    TxnField.config_asset_clawback: MyRoyaltyContract.address,
+                    TxnField.config_asset_freeze: MyRoyaltyContract.address,
+                    TxnField.config_asset_reserve: MyRoyaltyContract.address,
+                    TxnField.config_asset_default_frozen: Int(1),
                     TxnField.config_asset_name: name.get(),
                     TxnField.config_asset_total: Int(1),
                 }
