@@ -2,7 +2,6 @@ from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
     MAX_TEAL_VERSION,
-    ABIReturnSubroutine,
     Approve,
     BareCallActions,
     CallConfig,
@@ -17,7 +16,6 @@ from pyteal import (
 )
 
 from .decorators import (
-    HandlerConfig,
     bare_handler,
     get_handler_config,
 )

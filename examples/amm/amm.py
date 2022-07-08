@@ -3,7 +3,6 @@ from pyteal import *
 
 from beaker import (
     GlobalStateValue,
-    ApplicationState,
     Application,
     Authorize,
     handler,

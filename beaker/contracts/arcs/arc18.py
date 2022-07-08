@@ -1,5 +1,5 @@
-from pyteal import *
 from typing import Final
+from pyteal import *
 
 from beaker import *
 
