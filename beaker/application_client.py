@@ -14,7 +14,7 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
-from .application import Application
+from .application import Application, method_spec
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048
@@ -84,7 +84,7 @@ class ApplicationClient:
         atc = AtomicTransactionComposer()
         atc.add_method_call(
             self.app_id,
-            self.app.update.method_spec(),
+            method_spec(self.app.update),
             addr,
             sp,
             signer,
@@ -106,7 +106,7 @@ class ApplicationClient:
         atc = AtomicTransactionComposer()
         atc.add_method_call(
             self.app_id,
-            self.app.delete.method_spec(),
+            method_spec(self.app.delete),
             addr,
             sp,
             signer,

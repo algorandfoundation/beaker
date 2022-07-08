@@ -1,3 +1,4 @@
+from inspect import getattr_static
 from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
@@ -16,6 +17,7 @@ from pyteal import (
 )
 
 from .decorators import (
+    _remove_self,
     bare_handler,
     get_handler_config,
 )
@@ -84,6 +86,12 @@ class Application:
                     abi_meth.subroutine.implementation = bound_attr
 
                 self.methods[name] = abi_meth
+
+            if handler_config.subroutine is not None:
+                if handler_config.referenced_self:
+                    setattr(self, name, handler_config.subroutine(bound_attr))
+                else:
+                    setattr(self, name, handler_config.subroutine(getattr_static(self, name)))
 
             if handler_config.bare_method is not None:
                 ba = handler_config.bare_method
