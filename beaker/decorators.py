@@ -35,6 +35,7 @@ class HandlerConfig:
     bare_method: BareCallActions = field(kw_only=True, default=None)
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
+    subroutine: SubroutineFnWrapper = field(kw_only=True, default=None)
 
 
 def get_handler_config(
@@ -190,7 +191,8 @@ def internal(return_type: TealType):
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
-        return Subroutine(return_type)(fn)
+        set_handler_config(fn, subroutine=Subroutine(return_type)(fn))
+        return fn
 
     return _impl
 
