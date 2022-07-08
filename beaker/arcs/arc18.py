@@ -1,19 +1,26 @@
 from pyteal import *
 from typing import Final
 
-from beaker import * 
-
-
-
+from beaker import *
 
 
 class ARC18(Application):
 
-    administrator: Final[GlobalStateValue] = GlobalStateValue(stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address())
-    royalty_basis: Final[GlobalStateValue] = GlobalStateValue(stack_type=TealType.uint64, key=Bytes("royalty_basis"), static=True)
-    royalty_receiver: Final[GlobalStateValue] = GlobalStateValue(stack_type=TealType.bytes, key=Bytes("royalty_receiver"), static=True)
+    administrator: Final[GlobalStateValue] = GlobalStateValue(
+        stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address()
+    )
+    royalty_basis: Final[GlobalStateValue] = GlobalStateValue(
+        stack_type=TealType.uint64, key=Bytes("royalty_basis"), static=True
+    )
+    royalty_receiver: Final[GlobalStateValue] = GlobalStateValue(
+        stack_type=TealType.bytes, key=Bytes("royalty_receiver"), static=True
+    )
 
-    offers: Final[DynamicLocalStateValue] = DynamicLocalStateValue(stack_type=TealType.bytes, max_keys=16, key_gen=Subroutine(TealType.bytes)(lambda asset_id: Itob(asset_id)))
+    offers: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+        stack_type=TealType.bytes,
+        max_keys=16,
+        key_gen=Subroutine(TealType.bytes)(lambda asset_id: Itob(asset_id)),
+    )
 
     # A basis point is 1/100 of 1%
     basis_point_multiplier: Final[Int] = Int(100 * 100)
@@ -47,16 +54,14 @@ class ARC18(Application):
         """Sets the administrator for this royalty enforcer"""
         return self.administrator.set(new_admin.get())
 
-
     @handler(authorize=Authorize.only(administrator))
     def set_policy(self, royalty_basis: abi.Uint64, royalty_receiver: abi.Address):
         """Sets the royalty basis and royalty receiver for this royalty enforcer"""
         return Seq(
             Assert(royalty_basis.get() <= self.basis_point_multiplier),
             self.royalty_basis.set(royalty_basis.get()),
-            self.royalty_receiver.set(royalty_receiver.get()) 
+            self.royalty_receiver.set(royalty_receiver.get()),
         )
-
 
     @handler(authorize=Authorize.only(administrator))
     def set_payment_asset(payment_asset: abi.Asset, is_allowed: abi.Bool):
@@ -101,7 +106,6 @@ class ARC18(Application):
             ),
         )
 
-
     @handler
     def transfer(
         self,
@@ -113,8 +117,8 @@ class ARC18(Application):
         payment_txn: abi.PaymentTransaction,
         offered_amt: abi.Uint64,
     ):
-        """Transfers an Asset from one account to another and enforces royalty payments. 
-            This instance of the `transfer` method requires a PaymentTransaction for payment in algos
+        """Transfers an Asset from one account to another and enforces royalty payments.
+        This instance of the `transfer` method requires a PaymentTransaction for payment in algos
         """
 
         # Get the auth_addr from local state of the owner
@@ -125,11 +129,11 @@ class ARC18(Application):
 
         valid_transfer_group = Seq(
             Assert(Global.group_size() == Int(2)),
-
-            (offer := ScratchVar()).store(self.offers(royalty_asset.asset_id()).get(owner.address())),
+            (offer := ScratchVar()).store(
+                self.offers(royalty_asset.asset_id()).get(owner.address())
+            ),
             offer_auth_addr.store(self.offered_auth(offer.load())),
             offer_amt.store(self.offered_amount(offer.load())),
-
             # App call sent by authorizing address
             Assert(Txn.sender() == offer_auth_addr.load()),
             # payment txn should also be from auth address
@@ -169,7 +173,6 @@ class ARC18(Application):
             ),
         )
 
-
     @handler
     def transfer(
         self,
@@ -183,8 +186,8 @@ class ARC18(Application):
         offered_amt: abi.Uint64,
     ):
         """Transfers an Asset from one account to another and enforces royalty payments.
-            This instance of the `transfer` method requires an AssetTransfer transaction and an Asset to be passed 
-            corresponding to the Asset id of the transfer transaction."""
+        This instance of the `transfer` method requires an AssetTransfer transaction and an Asset to be passed
+        corresponding to the Asset id of the transfer transaction."""
 
         # Get the auth_addr from local state of the owner
         # If its not present, a 0 is returned and the call fails when we try
@@ -194,23 +197,20 @@ class ARC18(Application):
 
         valid_transfer_group = Seq(
             Assert(Global.group_size() == Int(2)),
-
             # Get the offer from local state
-            (offer := ScratchVar()).store(self.offers(royalty_asset.asset_id()).get_must(owner.address())),
+            (offer := ScratchVar()).store(
+                self.offers(royalty_asset.asset_id()).get_must(owner.address())
+            ),
             offer_auth_addr.store(self.offered_auth(offer.load())),
             offer_amt.store(self.offered_amount(offer.load())),
-
             # App call sent by authorizing address
             Assert(Txn.sender() == offer_auth_addr.load()),
             # payment txn should be from auth
             Assert(payment_txn.get().sender() == offer_auth_addr.load()),
-
             # transfer amount <= offered amount
             Assert(royalty_asset_amount.get() <= offer_amt.load()),
-
             # Passed the correct account according to the policy
             Assert(payment_txn.get().xfer_asset() == payment_asset.asset_id()),
-
             # Make sure payments go to the right participants
             Assert(payment_txn.get().asset_receiver() == Application.address),
             Assert(royalty_receiver.address() == self.royalty_receiver),
@@ -236,12 +236,11 @@ class ARC18(Application):
                 owner.address(),
                 royalty_asset.asset_id(),
                 offer_auth_addr.load(),
-                offer_amt.load()- royalty_asset_amount.get(),
+                offer_amt.load() - royalty_asset_amount.get(),
                 Txn.sender(),
                 offered_amt.get(),
             ),
         )
-
 
     @handler
     def offer(
@@ -259,7 +258,9 @@ class ARC18(Application):
             # Check that caller _has_ this asset
             Assert(bal.value() >= royalty_asset_amount.get()),
             # Check that this app is the clawback for it
-            Assert(And(cb.hasValue(), cb.value() == Global.current_application_address())),
+            Assert(
+                And(cb.hasValue(), cb.value() == Global.current_application_address())
+            ),
             # Set the auth addr for this asset
             self.do_update_offered(
                 Txn.sender(),
@@ -270,7 +271,6 @@ class ARC18(Application):
                 prev_offer_amt.get(),
             ),
         )
-
 
     @handler
     def royalty_free_move(
@@ -286,7 +286,9 @@ class ARC18(Application):
         offer = App.localGet(owner.address(), Itob(royalty_asset.asset_id()))
 
         return Seq(
-            (offer := ScratchVar()).store(self.offers(royalty_asset.asset_id()).get(owner.address())),
+            (offer := ScratchVar()).store(
+                self.offers(royalty_asset.asset_id()).get(owner.address())
+            ),
             (curr_offer_amt := ScratchVar()).store(ARC18.offered_amount(offer.load())),
             (curr_offer_auth := ScratchVar()).store(ARC18.offered_auth(offer.load())),
             # Must match what is currently offered and amt to move is less than
@@ -317,12 +319,15 @@ class ARC18(Application):
     ###
 
     Offer = abi.Tuple2[abi.Address, abi.Uint64]
+
     @handler(read_only=True)
     def get_offer(royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer):
-        return output.decode(ARC18.offers(royalty_asset.get()).get_must(owner.address()))
-
+        return output.decode(
+            ARC18.offers(royalty_asset.get()).get_must(owner.address())
+        )
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
+
     @handler(read_only=True)
     def get_policy(*, output: Policy):
         return Seq(
@@ -351,7 +356,6 @@ class ARC18(Application):
     def compute_royalty_amount(payment_amt, royalty_basis):
         return WideRatio([payment_amt, royalty_basis], [ARC18.basis_point_multiplier])
 
-
     ###
     # Inner txn methods
     ###
@@ -360,7 +364,9 @@ class ARC18(Application):
     def do_pay_assets(purchase_asset_id, purchase_amt, owner):
         royalty_amt = ScratchVar()
         return Seq(
-            royalty_amt.store(ARC18.compute_royalty_amount(purchase_amt, ARC18.royalty_basis)),
+            royalty_amt.store(
+                ARC18.compute_royalty_amount(purchase_amt, ARC18.royalty_basis)
+            ),
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
                 {
@@ -387,12 +393,13 @@ class ARC18(Application):
             InnerTxnBuilder.Submit(),
         )
 
-
     @internal(TealType.none)
     def do_pay_algos(purchase_amt, owner, royalty_receiver, royalty_basis):
         royalty_amt = ScratchVar()
         return Seq(
-            royalty_amt.store(ARC18.compute_royalty_amount(purchase_amt, royalty_basis)),
+            royalty_amt.store(
+                ARC18.compute_royalty_amount(purchase_amt, royalty_basis)
+            ),
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
                 {
@@ -417,7 +424,6 @@ class ARC18(Application):
             InnerTxnBuilder.Submit(),
         )
 
-
     @internal(TealType.none)
     def do_move_asset(asset_id, from_addr, to_addr, asset_amt):
         return Seq(
@@ -434,12 +440,11 @@ class ARC18(Application):
             InnerTxnBuilder.Submit(),
         )
 
-
     @internal(TealType.none)
     def do_update_offered(acct, asset, auth, amt, prev_auth, prev_amt):
         offer_state = ARC18.offers(asset)
         return Seq(
-            previous  := offer_state.get_maybe(acct),
+            previous := offer_state.get_maybe(acct),
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
             If(
                 previous.hasValue(),
@@ -453,10 +458,9 @@ class ARC18(Application):
             If(
                 amt > Int(0),
                 offer_state.set(acct, Concat(auth, Itob(amt))),
-                offer_state.delete(acct)
+                offer_state.delete(acct),
             ),
         )
-
 
 
 if __name__ == "__main__":

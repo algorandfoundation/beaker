@@ -118,12 +118,8 @@ class GlobalStateValue(Expr):
     def get_maybe(self) -> MaybeValue:
         return App.globalGetEx(Int(0), self.key)
 
-    def get_must(self)->Expr:
-        return Seq(
-            val := self.get_maybe(),
-            Assert(val.hasValue()),
-            val.value()
-        )
+    def get_must(self) -> Expr:
+        return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
@@ -237,12 +233,8 @@ class LocalStateValue:
     def get_maybe(self, acct: Expr) -> MaybeValue:
         return App.localGetEx(acct, Int(0), self.key)
 
-    def get_must(self, acct: Expr)->Expr:
-        return Seq(
-            val := self.get_maybe(acct),
-            Assert(val.hasValue()),
-            val.value()
-        )
+    def get_must(self, acct: Expr) -> Expr:
+        return Seq(val := self.get_maybe(acct), Assert(val.hasValue()), val.value())
 
     def get_else(self, acct: Expr, val: Expr) -> Expr:
         if val.type_of() != self.stack_type:
@@ -253,7 +245,7 @@ class LocalStateValue:
             If(v.hasValue(), v.value(), val),
         )
 
-    def delete(self, acct: Expr) ->Expr:
+    def delete(self, acct: Expr) -> Expr:
         return App.localDel(acct, self.key)
 
     def is_default(self, acct: Expr) -> Expr:
