@@ -61,7 +61,7 @@ class MySickApp(Application):
 
 This adds an ABI method with signature `add(uint64,uint64)uint64` to our application. The python method should return an `Expr` of some kind to be invoked when the handler is called. 
 
-> Note: `self` may be omitted if the method does not need to access any instance vars
+> Note: `self` may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like `MySickApp.do_thing(data)`
 
 Lets now deploy our contract using an `ApplicationClient`.
 
