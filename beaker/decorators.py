@@ -211,6 +211,7 @@ def internal(return_type: TealType):
     """internal can be used to wrap a subroutine that is defined inside an application class"""
 
     def _impl(fn: HandlerFunc):
+        fn = _remove_self(fn)
         return Subroutine(return_type)(fn)
 
     return _impl
