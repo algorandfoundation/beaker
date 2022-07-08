@@ -16,7 +16,13 @@ from pyteal import (
     Bytes,
 )
 
-from .decorators import bare_handler, get_handler_config, _bare_method, _abi_method
+from .decorators import (
+    bare_handler,
+    get_abi_method,
+    get_bare_method,
+    get_self_arg,
+    get_handler_config,
+)
 from .application_schema import (
     AccountState,
     ApplicationState,
@@ -25,6 +31,7 @@ from .application_schema import (
     GlobalStateValue,
     DynamicGlobalStateValue,
 )
+
 
 class Application:
     """Application should be subclassed to add functionality"""
@@ -42,40 +49,39 @@ class Application:
             if not m.startswith("__")
         ]
 
-        attrs = {a: getattr(self, a) for a in custom_attrs}
+        self.attrs = {a: getattr(self, a) for a in custom_attrs}
 
-        self.acct_vals = {}
-        self.app_vals = {}
-        for k, v in attrs.items():
+        acct_vals: dict[str, LocalStateValue | DynamicLocalStateValue] = {}
+        app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
+
+        for k, v in self.attrs.items():
+            if isinstance(v, LocalStateValue) or isinstance(v, GlobalStateValue):
+                if v.key is None:
+                    v.key = Bytes(k)
+
             match v:
-                case LocalStateValue():
-                    if v.key is None:
-                        v.key = Bytes(k)
-                    self.acct_vals[k] = v
-                case GlobalStateValue():
-                    if v.key is None:
-                        v.key = Bytes(k)
-                    self.app_vals[k] = v
-                case DynamicLocalStateValue():
-                    self.acct_vals[k] = v
-                case DynamicGlobalStateValue():
-                    self.app_vals[k] = v
+                case LocalStateValue() | DynamicLocalStateValue():
+                    acct_vals[k] = v
+                case GlobalStateValue() | DynamicGlobalStateValue():
+                    app_vals[k] = v
 
-        self.acct_state = AccountState(self.acct_vals)
-        self.app_state = ApplicationState(self.app_vals)
+        self.acct_state = AccountState(acct_vals)
+        self.app_state = ApplicationState(app_vals)
 
         self.bare_handlers = {}
         self.methods = {}
-        for name, bound_attr in attrs.items():
-            handler_config = get_handler_config(bound_attr)
+        for name, bound_attr in self.attrs.items():
+            referenced_self = get_self_arg(bound_attr)
 
-            if _abi_method in handler_config:
-                abi_meth = cast(ABIReturnSubroutine, handler_config[_abi_method])
-                abi_meth.subroutine.implementation = bound_attr
+            # print(bound_attr.__name__, get_handler_config(bound_attr))
+            # print(f"{name} referenced self? {referenced_self}")
+
+            if (abi_meth := get_abi_method(bound_attr)) is not None:
+                if referenced_self:
+                    abi_meth.subroutine.implementation = bound_attr
                 self.methods[name] = abi_meth
 
-            if _bare_method in handler_config:
-                ba = cast(BareCallActions, handler_config[_bare_method])
+            if (ba := get_bare_method(bound_attr)) is not None:
                 for oc, action in ba.__dict__.items():
                     if action is None:
                         continue
@@ -86,7 +92,9 @@ class Application:
                         raise TealInputError(f"Tried to overwrite a bare handler: {oc}")
 
                     # Swap the implementation with the bound version
-                    action.action.subroutine.implementation = bound_attr
+                    if referenced_self:
+                        action.action.subroutine.implementation = bound_attr
+
                     self.bare_handlers[oc] = action
 
         self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))

@@ -1,4 +1,4 @@
-import functools
+from functools import wraps
 from inspect import signature
 from typing import Any, Callable, Final
 
@@ -9,9 +9,7 @@ from pyteal import (
     Assert,
     AssetHolding,
     BareCallActions,
-    BitLen,
     CallConfig,
-    Concat,
     Expr,
     Int,
     MethodConfig,
@@ -22,14 +20,15 @@ from pyteal import (
     TealInputError,
     TealType,
     Txn,
-    TxnField,
 )
 
 HandlerFunc = Callable[..., Expr]
 
+# TODO: conver this to a dataclass that holds these attributes
 _handler_config_attr: Final[str] = "__handler_config__"
 _abi_method: Final[str] = "_abi_method"
 _bare_method: Final[str] = "_bare_method"
+_self_arg: Final[str] = "_self_arg"
 
 
 def get_handler_config(
@@ -48,6 +47,31 @@ def add_handler_config(
     handler_config = get_handler_config(fn)
     handler_config[key] = val
     setattr(fn, _handler_config_attr, handler_config)
+
+
+def get_abi_method(
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
+) -> ABIReturnSubroutine:
+    hc = get_handler_config(fn)
+    if _abi_method in hc:
+        return hc[_abi_method]
+    return None
+
+
+def get_bare_method(
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
+) -> BareCallActions:
+    hc = get_handler_config(fn)
+    if _bare_method in hc:
+        return hc[_bare_method]
+    return None
+
+
+def get_self_arg(fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction) -> bool:
+    hc = get_handler_config(fn)
+    if _self_arg in hc:
+        return hc[_self_arg]
+    return False
 
 
 class Authorize:
@@ -88,19 +112,22 @@ class Authorize:
 
 
 def _authorize(allowed: SubroutineFnWrapper):
+    args = allowed.subroutine.expected_arg_types
+
+    if len(args) != 1 or args[0] is not Expr:
+        raise TealInputError(
+            "Expected a single expression argument to authorize function"
+        )
+
     if allowed.type_of() != TealType.uint64:
         raise TealInputError(
             f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
         )
 
     def _decorate(fn: HandlerFunc):
+        @wraps(fn)
         def _impl(*args, **kwargs):
             return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
-
-        _impl.__name__ = fn.__name__
-        _impl.__annotations__ = fn.__annotations__
-        _impl.__signature__ = signature(fn)
-        _impl.__doc__ = fn.__doc__
 
         return _impl
 
@@ -123,10 +150,14 @@ def _on_complete(mc: MethodConfig):
 def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
+
     if "self" in params:
         del params["self"]
+        # Flag that this method did have a `self` argument
+        add_handler_config(fn, _self_arg, True)
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
+
     return fn
 
 
