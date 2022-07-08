@@ -66,17 +66,17 @@ class ConstantProductAMM(Application):
     # Call this only on create
     @bare_handler(no_op=CallConfig.CREATE)
     def create(self):
-        return self.app_state.initialize()
+        return self.initialize_app_state()
 
     # Only the account set in app_state.governor may call this method
     @handler(authorize=Authorize.only(governor))
-    def set_governor(self, new_governor: abi.Account):
+    def set_governor(new_governor: abi.Account):
         """sets the governor of the contract, may only be called by the current governor"""
-        return self.governor.set(new_governor.address())
+        return ConstantProductAMM.governor.set(new_governor.address())
 
     # Only the account set in app_state.governor may call this method
     @handler(authorize=Authorize.only(governor))
-    def bootstrap(self, a_asset: abi.Asset, b_asset: abi.Asset, *, output: abi.Uint64):
+    def bootstrap(a_asset: abi.Asset, b_asset: abi.Asset, *, output: abi.Uint64):
         """bootstraps the contract by opting into the assets and creating the pool token"""
         well_formed_bootstrap = And(
             Global.group_size() == Int(1),
@@ -104,7 +104,6 @@ class ConstantProductAMM(Application):
 
     @handler
     def mint(
-        self,
         a_xfer: abi.AssetTransferTransaction,
         b_xfer: abi.AssetTransferTransaction,
         pool_asset: abi.Asset,
@@ -172,7 +171,6 @@ class ConstantProductAMM(Application):
 
     @handler
     def burn(
-        self,
         pool_xfer: abi.AssetTransferTransaction,
         pool_asset: abi.Asset,
         a_asset: abi.Asset,
@@ -231,7 +229,6 @@ class ConstantProductAMM(Application):
 
     @handler
     def swap(
-        self,
         swap_xfer: abi.AssetTransferTransaction,
         a_asset: abi.Asset,
         b_asset: abi.Asset,
