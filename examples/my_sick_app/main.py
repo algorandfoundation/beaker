@@ -1,6 +1,6 @@
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 
-from beaker import ApplicationClient
+from beaker import ApplicationClient, method_spec
 from beaker.sandbox import get_client, get_accounts
 
 from contract import MySickApp
@@ -23,14 +23,13 @@ def demo():
     app_id, app_addr, txid = app_client.create(signer)
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    methods = {m.name: m for m in app.contract.methods}
-    result = app_client.call(signer, methods["add"], [2, 3])
+    result = app_client.call(signer, method_spec(app.add), [2, 3])
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, methods["increment"])
+    result = app_client.call(signer, method_spec(app.increment))
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, methods["decrement"])
+    result = app_client.call(signer, method_spec(app.decrement))
     print(result.abi_results[0].return_value)
 
 

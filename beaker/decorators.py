@@ -26,6 +26,8 @@ from pyteal import (
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
+
+
 @dataclass
 class HandlerConfig:
     abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
@@ -34,6 +36,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
 
+
 def get_handler_config(
     fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
 ) -> HandlerConfig:
@@ -41,11 +44,13 @@ def get_handler_config(
         return cast(HandlerConfig, getattr(fn, _handler_config_attr))
     return HandlerConfig()
 
+
 def set_handler_config(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, **kwargs 
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, **kwargs
 ):
     handler_config = get_handler_config(fn)
     setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
+
 
 class Authorize:
     """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""

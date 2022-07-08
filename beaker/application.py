@@ -1,5 +1,5 @@
 from typing import Final, cast
-
+from algosdk.abi import Method
 from pyteal import (
     MAX_TEAL_VERSION,
     ABIReturnSubroutine,
@@ -17,6 +17,7 @@ from pyteal import (
 )
 
 from .decorators import (
+    HandlerConfig,
     bare_handler,
     get_handler_config,
 )
@@ -28,6 +29,13 @@ from .application_schema import (
     GlobalStateValue,
     DynamicGlobalStateValue,
 )
+
+
+def method_spec(fn) -> Method:
+    hc = get_handler_config(fn)
+    if hc.abi_method is None:
+        raise Exception("Expected argument to be an ABI method")
+    return hc.abi_method.method_spec()
 
 
 class Application:
