@@ -32,32 +32,20 @@ class HandlerConfig:
     method_config: MethodConfig = field(kw_only=True, default=None)
     bare_method: BareCallActions = field(kw_only=True, default=None)
     referenced_self: bool = field(kw_only=True, default=False)
-
+    read_only: bool = field(kw_only=True, default=False)
 
 def get_handler_config(
     fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction,
 ) -> HandlerConfig:
     if hasattr(fn, _handler_config_attr):
-        return getattr(fn, _handler_config_attr)
+        return cast(HandlerConfig, getattr(fn, _handler_config_attr))
     return HandlerConfig()
 
-def add_handler_config(
-    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, key: str, val: Any
+def set_handler_config(
+    fn: HandlerFunc | ABIReturnSubroutine | OnCompleteAction, **kwargs 
 ):
     handler_config = get_handler_config(fn)
-    setattr(fn, _handler_config_attr, replace(handler_config, **{key:val}))
-
-
-def get_abi_method(fn) -> ABIReturnSubroutine:
-    return get_handler_config(fn).abi_method
-
-
-def get_bare_method(fn) -> BareCallActions:
-    return get_handler_config(fn).bare_method
-
-def get_self_arg(fn) -> bool:
-    return get_handler_config(fn).referenced_self
-
+    setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
 
 class Authorize:
     """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""
@@ -120,13 +108,13 @@ def _authorize(allowed: SubroutineFnWrapper):
 
 
 def _readonly(fn: HandlerFunc):
-    # add_handler_config(fn, "read_only", True)
+    set_handler_config(fn, read_only=True)
     return fn
 
 
 def _on_complete(mc: MethodConfig):
     def _impl(fn: HandlerFunc):
-        add_handler_config(fn, 'method_config', mc)
+        set_handler_config(fn, method_config=mc)
         return fn
 
     return _impl
@@ -139,7 +127,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     if "self" in params:
         del params["self"]
         # Flag that this method did have a `self` argument
-        add_handler_config(fn, 'referenced_self', True)
+        set_handler_config(fn, referenced_self=True)
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
 
@@ -185,7 +173,7 @@ def bare_handler(
             else None,
         )
 
-        add_handler_config(fun, 'bare_method', bca)
+        set_handler_config(fun, bare_method=bca)
 
         return fun
 
@@ -231,7 +219,7 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        add_handler_config(fn, 'abi_method', ABIReturnSubroutine(fn))
+        set_handler_config(fn, abi_method=ABIReturnSubroutine(fn))
 
         return fn
 

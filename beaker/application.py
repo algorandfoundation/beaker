@@ -18,9 +18,6 @@ from pyteal import (
 
 from .decorators import (
     bare_handler,
-    get_abi_method,
-    get_bare_method,
-    get_self_arg,
     get_handler_config,
 )
 from .application_schema import (
@@ -71,16 +68,19 @@ class Application:
         self.bare_handlers = {}
         self.methods = {}
         for name, bound_attr in self.attrs.items():
-            referenced_self = get_self_arg(bound_attr)
+            handler_config = get_handler_config(bound_attr)
 
-            if (abi_meth := get_abi_method(bound_attr)) is not None:
+            if handler_config.abi_method is not None:
+                abi_meth = handler_config.abi_method
+
                 # Swap the implementation with the bound version
-                if referenced_self:
+                if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 
                 self.methods[name] = abi_meth
 
-            if (ba := get_bare_method(bound_attr)) is not None:
+            if handler_config.bare_method is not None:
+                ba = handler_config.bare_method
                 for oc, action in ba.__dict__.items():
                     if action is None:
                         continue
@@ -90,7 +90,7 @@ class Application:
 
                     action = cast(OnCompleteAction, action)
                     # Swap the implementation with the bound version
-                    if referenced_self:
+                    if handler_config.referenced_self:
                         action.action.subroutine.implementation = bound_attr
 
                     self.bare_handlers[oc] = action
