@@ -344,15 +344,15 @@ class ARC18(Application):
     # Utils
     ###
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def offered_amount(offer):
         return ExtractUint64(offer, Int(32))
 
-    @internal(TealType.bytes)
+    @Subroutine(TealType.bytes)
     def offered_auth(offer):
         return Extract(offer, Int(0), Int(32))
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def compute_royalty_amount(payment_amt, royalty_basis):
         return WideRatio([payment_amt, royalty_basis], [ARC18.basis_point_multiplier])
 
@@ -360,7 +360,7 @@ class ARC18(Application):
     # Inner txn methods
     ###
 
-    @internal(TealType.none)
+    @Subroutine(TealType.none)
     def do_pay_assets(purchase_asset_id, purchase_amt, owner):
         royalty_amt = ScratchVar()
         return Seq(
@@ -393,7 +393,7 @@ class ARC18(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @internal(TealType.none)
+    @Subroutine(TealType.none)
     def do_pay_algos(purchase_amt, owner, royalty_receiver, royalty_basis):
         royalty_amt = ScratchVar()
         return Seq(
@@ -424,7 +424,7 @@ class ARC18(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @internal(TealType.none)
+    @Subroutine(TealType.none)
     def do_move_asset(asset_id, from_addr, to_addr, asset_amt):
         return Seq(
             InnerTxnBuilder.Begin(),
@@ -440,7 +440,7 @@ class ARC18(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @internal(TealType.none)
+    @Subroutine(TealType.none)
     def do_update_offered(acct, asset, auth, amt, prev_auth, prev_amt):
         offer_state = ARC18.offers(asset)
         return Seq(
