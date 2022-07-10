@@ -1,4 +1,5 @@
 from pyteal import *
+from beaker.model import Model
 from beaker.contracts import OpUp
 from beaker.decorators import required_args, handler
 
@@ -11,6 +12,15 @@ class ExpensiveApp(OpUp):
             ExpensiveApp.create_opup(),
             output.set(ExpensiveApp.opup_app_id),
         )
+
+    class UserRecord(Model):
+        account: abi.Address
+        balance: abi.Uint64
+        nickname: abi.String
+
+    @handler
+    def model(self, input: UserRecord, *, output: UserRecord):
+        return output.decode(input.encode())
 
     @handler
     @required_args(
@@ -38,6 +48,10 @@ class ExpensiveApp(OpUp):
 
 if __name__ == "__main__":
 
+    import json
+
     ea = ExpensiveApp()
-    print(ea.contract_hints())
+    for n, hints in ea.contract_hints().items():
+        for k, v in hints["models"].items():
+            print(f"method {n} defined model for arg {k} as {list(v)}")
     # print(ea.approval_program)
