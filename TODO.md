@@ -2,14 +2,17 @@
 
 ### house keeping
 
-- Make it easier to install and specify deps
+- Make it easier to install
+
 - Documentation
+
 - Testing
+
 - Better detection of type errors
 
 ### features
 
-- Class mix-in type functionality (i.e. `class MyApp(Application, ARC18):` adds methods and global/local state requirements for ARC18)
+- Class mix-in type functionality (i.e. `class MyApp(ARC18):` adds methods and global/local state requirements for ARC18)
 
 - Provide `companion` application to be the receiver of op-up requests and trampoline-ing for funding during create
 
