@@ -135,6 +135,16 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
+    def contract_hints(self):
+        hints = {}
+        for name, attr in self.attrs.items():
+            hc = get_handler_config(attr)
+            h = hc.hints()
+            if len(h.keys()) > 0:
+                hints[name] = h
+
+        return hints
+
     def initialize_app_state(self):
         return self.app_state.initialize()
 

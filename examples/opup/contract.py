@@ -1,7 +1,6 @@
 from pyteal import *
-from typing import Literal
 from beaker.contracts import OpUp
-from beaker.decorators import bare_handler, handler
+from beaker.decorators import required_args, handler
 
 
 class ExpensiveApp(OpUp):
@@ -14,6 +13,7 @@ class ExpensiveApp(OpUp):
         )
 
     @handler
+    @required_args(opup_app=OpUp.get_opup_app_id)
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,
@@ -37,4 +37,5 @@ class ExpensiveApp(OpUp):
 if __name__ == "__main__":
 
     ea = ExpensiveApp()
-    print(ea.approval_program)
+    print(ea.contract_hints())
+    # print(ea.approval_program)

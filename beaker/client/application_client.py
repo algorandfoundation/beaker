@@ -15,7 +15,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, method_spec
-from beaker.decorators import HandlerFunc
+from beaker.decorators import HandlerFunc, get_handler_config
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048
@@ -25,6 +25,9 @@ class ApplicationClient:
     def __init__(self, client: AlgodClient, app: Application, app_id: int = 0):
         self.client = client
         self.app = app
+        self.hints = self.app.contract_hints()
+
+        # Also set in create
         self.app_id = app_id
 
     def compile(self) -> tuple[bytes, bytes]:
@@ -155,6 +158,9 @@ class ApplicationClient:
 
         if not isinstance(method, abi.Method):
             method = method_spec(method)
+
+        if method.name in self.hints:
+            print(f"Did you do the thing?: {self.hints[method.name]}")
 
         if sp is None:
             sp = self.client.suggested_params()

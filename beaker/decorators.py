@@ -1,3 +1,4 @@
+from typing import Any
 from dataclasses import dataclass, field, replace
 from functools import wraps
 from inspect import signature
@@ -23,6 +24,8 @@ from pyteal import (
     Txn,
 )
 
+from beaker.application_schema import GlobalStateValue, LocalStateValue
+
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
@@ -36,6 +39,19 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
     subroutine: Subroutine = field(kw_only=True, default=None)
+    required_args: dict[str, ABIReturnSubroutine] = field(kw_only=True, default=None)
+
+    def hints(self) -> dict[str, Any]:
+        hints = {
+            "required-args": {},
+            "read-only": self.read_only,
+        }
+
+        if self.required_args is not None:
+            for name, ra in self.required_args.items():
+                hints["required-args"][name] = ra.method_spec().dictify()
+
+        return hints
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -134,6 +150,23 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     fn.__signature__ = newsig
 
     return fn
+
+
+def required_args(**required_args: ABIReturnSubroutine | HandlerFunc):
+
+    for name, arg in required_args.items():
+        if not isinstance(arg, ABIReturnSubroutine):
+            hc = get_handler_config(arg)
+            if hc.abi_method is None:
+                raise Exception(f"Expected ABISubroutine, got {required_args}")
+
+            required_args[name] = hc.abi_method
+
+    def _impl(fn: HandlerFunc):
+        set_handler_config(fn, required_args=required_args)
+        return fn
+
+    return _impl
 
 
 def bare_handler(
