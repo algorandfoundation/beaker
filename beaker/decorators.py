@@ -49,7 +49,7 @@ class HandlerConfig:
 
         if self.required_args is not None:
             for name, ra in self.required_args.items():
-                hints["required-args"][name] = ra.method_spec().dictify()
+                hints["required-args"][name] = ra.method_spec()
 
         return hints
 

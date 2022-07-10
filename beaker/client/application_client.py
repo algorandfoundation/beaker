@@ -1,6 +1,6 @@
 from base64 import b64decode
 from math import ceil
-from typing import Any
+from typing import Any, cast
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -13,6 +13,7 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
+from pyteal import ABIReturnSubroutine
 
 from beaker.application import Application, method_spec
 from beaker.decorators import HandlerFunc, get_handler_config
@@ -147,6 +148,12 @@ class ApplicationClient:
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
 
+    def method_hints(self, method_name: str):
+        hints = {}
+        if method_name not in self.hints:
+            return hints
+        return self.hints[method_name]
+
     def call(
         self,
         signer: AccountTransactionSigner,
@@ -159,8 +166,22 @@ class ApplicationClient:
         if not isinstance(method, abi.Method):
             method = method_spec(method)
 
-        if method.name in self.hints:
-            print(f"Did you do the thing?: {self.hints[method.name]}")
+        ad = {}
+        for idx in range(len(method.args)):
+            ad[method.args[idx].name] = idx
+
+        hints = self.method_hints(method.name)
+        if "required-args" in hints:
+            ra = hints["required-args"]
+            for name, arg in ra.items():
+                if args[ad[name]] is None:
+                    result = self.call(signer, arg)
+                    data = result.abi_results[0].return_value
+                    args[ad[name]] = data
+
+        if "read-only" in hints:
+            read_only = hints["read-only"]
+            # do dryrun
 
         if sp is None:
             sp = self.client.suggested_params()

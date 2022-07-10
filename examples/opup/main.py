@@ -33,20 +33,24 @@ def demo():
     txn = TransactionWithSigner(
         txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )
-    result = app_client.call(signer, method_spec(app.bootstrap), args=[txn])
+    result = app_client.call(signer, app.bootstrap, args=[txn])
     oua = result.abi_results[0].return_value
     print(f"Created op up app: {oua}")
 
     input = "stuff"
     iters = 10
-    result = app_client.call(signer, method_spec(app.hash_it), [input, iters, oua])
-    hashed = result.abi_results[0].raw_value[2:]
-    print(f"Remote result of hash: {hashed.hex()}")
 
-    hash = input.encode()
+    result = app_client.call(signer, app.hash_it, args=[input, iters, None])
+    # Get the first result and trim off str encoding bytes, I should have used byte[32]
+    result_hash = result.abi_results[0].raw_value[2:]
+
+    local_hash = input.encode()
     for _ in range(iters):
-        hash = sha256(hash).digest()
-    print(f"Local result of hash: {hash.hex()}")
+        local_hash = sha256(local_hash).digest()
+
+    assert result_hash == local_hash, f"Expected {local_hash} got {result_hash}"
+
+    print(f"Successfully hashed {input},  {iters} times to produce {result_hash.hex()}")
 
 
 if __name__ == "__main__":
