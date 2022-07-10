@@ -19,7 +19,6 @@ from .decorators import (
     get_handler_config,
     bare_create,
     bare_delete,
-    bare_opt_in,
     bare_update,
 )
 from .application_schema import (
@@ -49,13 +48,11 @@ class Application:
     bare_methods: BareCallActions
 
     def __init__(self):
-        custom_attrs = [
-            m
+        self.attrs = {
+            m: getattr(self, m)
             for m in list(set(dir(self.__class__)) - set(dir(super())))
             if not m.startswith("__")
-        ]
-
-        self.attrs = {a: getattr(self, a) for a in custom_attrs}
+        }
 
         acct_vals: dict[str, LocalStateValue | DynamicLocalStateValue] = {}
         app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
@@ -79,6 +76,7 @@ class Application:
         for name, bound_attr in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
 
+            # Add ABI handlers
             if handler_config.abi_method is not None:
                 abi_meth = handler_config.abi_method
 
@@ -88,6 +86,7 @@ class Application:
 
                 self.methods[name] = abi_meth
 
+            # Add internal subroutines
             if handler_config.subroutine is not None:
                 if handler_config.referenced_self:
                     setattr(self, name, handler_config.subroutine(bound_attr))
@@ -98,6 +97,7 @@ class Application:
                         handler_config.subroutine(getattr_static(self, name)),
                     )
 
+            # Add bare handlers
             if handler_config.bare_method is not None:
                 ba = handler_config.bare_method
                 for oc, action in ba.__dict__.items():
@@ -106,7 +106,8 @@ class Application:
 
                     if oc in self.bare_handlers:
                         raise TealInputError(
-                            f"Tried to overwrite a bare handler: {oc}. If you're trying to override a default method in Application, be sure to use the same name as the method defined."
+                            f"""Tried to overwrite a bare handler: {oc}. 
+                            If you're trying to override a default method in Application, be sure to use the same name as the method defined."""
                         )
 
                     action = cast(OnCompleteAction, action)
@@ -116,9 +117,12 @@ class Application:
 
                     self.bare_handlers[oc] = action
 
+        # Create router with name of class and bare handlers
         self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
 
+        # Add method handlers
         for method in self.methods.values():
+            # TODO: add method config back in
             self.router.add_method_handler(method)
 
         (

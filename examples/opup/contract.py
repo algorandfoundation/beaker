@@ -14,11 +14,16 @@ class ExpensiveApp(OpUp):
         )
 
     @handler
-    def hash_it(input: abi.String, iters: abi.Uint64, opup_app: abi.Application, *, output: abi.String):
+    def hash_it(
+        input: abi.String,
+        iters: abi.Uint64,
+        opup_app: abi.Application,
+        *,
+        output: abi.String,
+    ):
         return Seq(
             Assert(opup_app.application_id() == ExpensiveApp.opup_app_id),
             ExpensiveApp.call_opup_n(Int(255)),
-
             (current := ScratchVar()).store(input.get()),
             For(
                 (i := ScratchVar()).store(Int(0)),

@@ -2,12 +2,6 @@ from typing import Final
 
 from pyteal import *
 from beaker import *
-from beaker.decorators import bare_handler
-
-
-@Subroutine(TealType.bytes)
-def make_tag_key(tag: abi.String):
-    return Concat(Bytes("tag:"), tag.get())
 
 
 class MySickApp(Application):
@@ -22,6 +16,11 @@ class MySickApp(Application):
     nickname: Final[LocalStateValue] = LocalStateValue(
         TealType.bytes, default=Bytes("j. doe")
     )
+
+    @Subroutine(TealType.bytes)
+    def make_tag_key(tag: abi.String):
+        return Concat(Bytes("tag:"), tag.get())
+
     tags: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
         TealType.uint64, max_keys=10, key_gen=make_tag_key
     )

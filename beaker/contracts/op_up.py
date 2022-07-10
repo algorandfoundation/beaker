@@ -45,7 +45,7 @@ class OpUp(Application):
                     TxnField.application_id: OpUp.opup_app_id,
                 }
             ),
-            InnerTxnBuilder.Submit()
+            InnerTxnBuilder.Submit(),
         )
 
     @internal(TealType.none)

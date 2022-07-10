@@ -15,6 +15,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, method_spec
+from beaker.decorators import HandlerFunc
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048
@@ -26,93 +27,119 @@ class ApplicationClient:
         self.app = app
         self.app_id = app_id
 
-    def create(
-        self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
-    ) -> tuple[int, str, str]:
+    def compile(self) -> tuple[bytes, bytes]:
         approval_result = self.client.compile(self.app.approval_program)
-        approval_compiled = b64decode(approval_result["result"])
+        approval_binary = b64decode(approval_result["result"])
 
         clear_result = self.client.compile(self.app.clear_program)
-        clear_compiled = b64decode(clear_result["result"])
+        clear_binary = b64decode(clear_result["result"])
+
+        return approval_binary, clear_binary
+
+    def create(
+        self,
+        signer: AccountTransactionSigner,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> tuple[int, str, str]:
+
+        approval, clear = self.compile()
 
         extra_pages = ceil(
-            ((len(approval_compiled) + len(clear_compiled)) - APP_MAX_PAGE_SIZE)
-            / APP_MAX_PAGE_SIZE
+            ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
         )
 
-        sp = self.client.suggested_params()
+        if sp is None:
+            sp = self.client.suggested_params()
+
         addr = address_from_private_key(signer.private_key)
         atc = AtomicTransactionComposer()
-
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationCreateTxn(
-                    addr,
-                    sp,
-                    transaction.OnComplete.NoOpOC,
-                    approval_compiled,
-                    clear_compiled,
-                    self.app.app_state.schema(),
-                    self.app.acct_state.schema(),
+                    sender=addr,
+                    sp=sp,
+                    on_complete=transaction.OnComplete.NoOpOC,
+                    approval_program=approval,
+                    clear_program=clear,
+                    global_schema=self.app.app_state.schema(),
+                    local_schema=self.app.acct_state.schema(),
                     extra_pages=extra_pages,
-                    **kwargs
+                    app_args=args,
+                    **kwargs,
                 ),
                 signer=signer,
             )
         )
         create_result = atc.execute(self.client, 4)
-        result = self.client.pending_transaction_info(create_result.tx_ids[0])
+        create_txid = create_result.tx_ids[0]
+
+        result = self.client.pending_transaction_info(create_txid)
         app_id = result["application-index"]
         app_addr = get_application_address(app_id)
 
         self.app_id = app_id
 
-        return app_id, app_addr, create_result.tx_ids[0]
+        return app_id, app_addr, create_txid
 
     def update(
-        self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
+        self,
+        signer: AccountTransactionSigner,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> str:
-        approval_result = self.client.compile(self.app.approval_program)
-        approval_compiled = b64decode(approval_result["result"])
+        approval, clear = self.compile()
 
-        clear_result = self.client.compile(self.app.clear_program)
-        clear_compiled = b64decode(clear_result["result"])
+        if sp is None:
+            sp = self.client.suggested_params()
 
-        sp = self.client.suggested_params()
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
-        atc.add_method_call(
-            self.app_id,
-            method_spec(self.app.update),
-            addr,
-            sp,
-            signer,
-            args,
-            on_complete=transaction.OnComplete.UpdateApplicationOC,
-            approval_program=approval_compiled,
-            clear_program=clear_compiled,
-            **kwargs
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationUpdateTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    approval_program=approval,
+                    clear_program=clear,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
         )
         update_result = atc.execute(self.client, 4)
         return update_result.tx_ids[0]
 
     def delete(
-        self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
+        self,
+        signer: AccountTransactionSigner,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> str:
-        sp = self.client.suggested_params()
+
+        if sp is None:
+            sp = self.client.suggested_params()
+
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
-        atc.add_method_call(
-            self.app_id,
-            method_spec(self.app.delete),
-            addr,
-            sp,
-            signer,
-            args,
-            on_complete=transaction.OnComplete.DeleteApplicationOC,
-            **kwargs
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationDeleteTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
         )
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
@@ -120,12 +147,18 @@ class ApplicationClient:
     def call(
         self,
         signer: AccountTransactionSigner,
-        method: abi.Method,
+        method: abi.Method | HandlerFunc,
         args: list[Any] = [],
-        **kwargs
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> AtomicTransactionResponse:
 
-        sp = self.client.suggested_params()
+        if not isinstance(method, abi.Method):
+            method = method_spec(method)
+
+        if sp is None:
+            sp = self.client.suggested_params()
+
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
