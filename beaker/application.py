@@ -5,7 +5,6 @@ from pyteal import (
     MAX_TEAL_VERSION,
     Approve,
     BareCallActions,
-    CallConfig,
     Expr,
     Global,
     OnCompleteAction,
@@ -17,9 +16,11 @@ from pyteal import (
 )
 
 from .decorators import (
-    _remove_self,
-    bare_handler,
     get_handler_config,
+    bare_create,
+    bare_delete,
+    bare_opt_in,
+    bare_update,
 )
 from .application_schema import (
     AccountState,
@@ -91,7 +92,11 @@ class Application:
                 if handler_config.referenced_self:
                     setattr(self, name, handler_config.subroutine(bound_attr))
                 else:
-                    setattr(self, name, handler_config.subroutine(getattr_static(self, name)))
+                    setattr(
+                        self,
+                        name,
+                        handler_config.subroutine(getattr_static(self, name)),
+                    )
 
             if handler_config.bare_method is not None:
                 ba = handler_config.bare_method
@@ -100,7 +105,9 @@ class Application:
                         continue
 
                     if oc in self.bare_handlers:
-                        raise TealInputError(f"Tried to overwrite a bare handler: {oc}")
+                        raise TealInputError(
+                            f"Tried to overwrite a bare handler: {oc}. If you're trying to override a default method in Application, be sure to use the same name as the method defined."
+                        )
 
                     action = cast(OnCompleteAction, action)
                     # Swap the implementation with the bound version
@@ -130,14 +137,14 @@ class Application:
     def initialize_account_state(self, sender):
         return self.acct_state.initialize(sender)
 
-    @bare_handler(no_op=CallConfig.CREATE)
+    @bare_create
     def create(self):
         return Approve()
 
-    @bare_handler(update_application=CallConfig.ALL)
+    @bare_update
     def update(self):
         return Reject()
 
-    @bare_handler(delete_application=CallConfig.ALL)
+    @bare_delete
     def delete(self):
         return Reject()

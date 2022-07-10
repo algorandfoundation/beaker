@@ -14,7 +14,7 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
-from .application import Application, method_spec
+from beaker.application import Application, method_spec
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048

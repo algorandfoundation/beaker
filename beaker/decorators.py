@@ -179,6 +179,22 @@ def bare_handler(
     return _impl
 
 
+def bare_create(fn: HandlerFunc):
+    return bare_handler(no_op=CallConfig.CREATE)(fn)
+
+
+def bare_delete(fn: HandlerFunc):
+    return bare_handler(delete_application=CallConfig.CALL)(fn)
+
+
+def bare_update(fn: HandlerFunc):
+    return bare_handler(update_application=CallConfig.CALL)(fn)
+
+
+def bare_opt_in(fn: HandlerFunc):
+    return bare_handler(opt_in=CallConfig.CALL)(fn)
+
+
 def internal(return_type: TealType):
     """internal can be used to wrap a subroutine that is defined inside an application class"""
 
