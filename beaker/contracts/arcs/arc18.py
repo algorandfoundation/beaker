@@ -1,7 +1,15 @@
 from typing import Final
 from pyteal import *
 
-from beaker import *
+from beaker import Application, GlobalStateValue, DynamicLocalStateValue
+from beaker.decorators import (
+    Authorize,
+    handler,
+    bare_delete,
+    bare_create,
+    bare_update,
+    bare_handler,
+)
 
 
 class ARC18(Application):
@@ -29,15 +37,15 @@ class ARC18(Application):
     # App Lifecycle
     ###
 
-    @bare_handler(no_op=CallConfig.CREATE)
+    @bare_create
     def create(self):
         return self.initialize_app_state()
 
-    @bare_handler(update_application=CallConfig.CALL)
+    @bare_update
     def update():
         return Assert(Txn.sender() == ARC18.administrator)
 
-    @bare_handler(delete_application=CallConfig.CALL)
+    @bare_delete
     def delete():
         return Assert(Txn.sender() == ARC18.administrator)
 

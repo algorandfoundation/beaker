@@ -19,7 +19,6 @@ from .decorators import (
     get_handler_config,
     bare_create,
     bare_delete,
-    bare_opt_in,
     bare_update,
 )
 from .application_schema import (

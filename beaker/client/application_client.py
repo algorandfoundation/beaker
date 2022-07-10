@@ -15,7 +15,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, method_spec
-from beaker.decorators import HandlerFunc, get_handler_config
+from beaker.decorators import HandlerFunc
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048
@@ -73,13 +73,15 @@ class ApplicationClient:
             )
         )
         create_result = atc.execute(self.client, 4)
-        result = self.client.pending_transaction_info(create_result.tx_ids[0])
+        create_txid = create_result.tx_ids[0]
+
+        result = self.client.pending_transaction_info(create_txid)
         app_id = result["application-index"]
         app_addr = get_application_address(app_id)
 
         self.app_id = app_id
 
-        return app_id, app_addr, create_result.tx_ids[0]
+        return app_id, app_addr, create_txid
 
     def update(
         self,
@@ -152,13 +154,7 @@ class ApplicationClient:
     ) -> AtomicTransactionResponse:
 
         if not isinstance(method, abi.Method):
-            hc = get_handler_config(method)
-            if hc.abi_method is None:
-                raise Exception(
-                    f"Expected either an abi.Method or a handler that defines an ABI method: got {method}"
-                )
-
-            method = hc.abi_method.method_spec()
+            method = method_spec(method)
 
         if sp is None:
             sp = self.client.suggested_params()
