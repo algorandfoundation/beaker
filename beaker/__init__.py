@@ -17,3 +17,4 @@ from .decorators import (
     bare_opt_in,
     bare_update,
 )
+from .consts import Algo, MilliAlgo
