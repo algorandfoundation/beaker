@@ -71,7 +71,7 @@ from algosdk.atomic_transaction_composer import  AccountTransactionSigner
 
 # utils to connect to sandbox kmd and pull all accounts and init an algod client
 from beaker.sandbox import get_accounts, get_client
-from beaker import ApplicationClient 
+from beaker.client import ApplicationClient 
 
 # Get the accounts from the sandbox KMD 
 addr, private_key = get_accounts().pop()
