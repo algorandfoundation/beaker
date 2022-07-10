@@ -27,7 +27,6 @@ class ApplicationClient:
         self.app = app
         self.app_id = app_id
 
-
     def compile(self) -> tuple[bytes, bytes]:
         approval_result = self.client.compile(self.app.approval_program)
         approval_binary = b64decode(approval_result["result"])
@@ -37,34 +36,39 @@ class ApplicationClient:
 
         return approval_binary, clear_binary
 
-
     def create(
-        self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
+        self,
+        signer: AccountTransactionSigner,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> tuple[int, str, str]:
 
         approval, clear = self.compile()
 
         extra_pages = ceil(
-            ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE)
-            / APP_MAX_PAGE_SIZE
+            ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
         )
 
-        sp = self.client.suggested_params()
+        if sp is None:
+            sp = self.client.suggested_params()
+
         addr = address_from_private_key(signer.private_key)
         atc = AtomicTransactionComposer()
 
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationCreateTxn(
-                    addr,
-                    sp,
-                    transaction.OnComplete.NoOpOC,
-                    approval,
-                    clear,
-                    self.app.app_state.schema(),
-                    self.app.acct_state.schema(),
+                    sender=addr,
+                    sp=sp,
+                    on_complete=transaction.OnComplete.NoOpOC,
+                    approval_program=approval,
+                    clear_program=clear,
+                    global_schema=self.app.app_state.schema(),
+                    local_schema=self.app.acct_state.schema(),
                     extra_pages=extra_pages,
-                    **kwargs
+                    app_args=args,
+                    **kwargs,
                 ),
                 signer=signer,
             )
@@ -79,33 +83,46 @@ class ApplicationClient:
         return app_id, app_addr, create_result.tx_ids[0]
 
     def update(
-        self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
+        self,
+        signer: AccountTransactionSigner,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> str:
         approval, clear = self.compile()
 
-        sp = self.client.suggested_params()
+        if sp is None:
+            sp = self.client.suggested_params()
+
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
         atc.add_method_call(
-            self.app_id,
-            method_spec(self.app.update),
-            addr,
-            sp,
-            signer,
-            args,
+            app_id=self.app_id,
+            method=method_spec(self.app.update),
+            sender=addr,
+            sp=sp,
+            signer=signer,
+            method_args=args,
             on_complete=transaction.OnComplete.UpdateApplicationOC,
             approval_program=approval,
             clear_program=clear,
-            **kwargs
+            **kwargs,
         )
         update_result = atc.execute(self.client, 4)
         return update_result.tx_ids[0]
 
     def delete(
-        self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
+        self,
+        signer: AccountTransactionSigner,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> str:
-        sp = self.client.suggested_params()
+
+        if sp is None:
+            sp = self.client.suggested_params()
+
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
@@ -117,7 +134,7 @@ class ApplicationClient:
             signer,
             args,
             on_complete=transaction.OnComplete.DeleteApplicationOC,
-            **kwargs
+            **kwargs,
         )
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
@@ -127,19 +144,22 @@ class ApplicationClient:
         signer: AccountTransactionSigner,
         method: abi.Method | HandlerFunc,
         args: list[Any] = [],
-        **kwargs
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
     ) -> AtomicTransactionResponse:
-
 
         if not isinstance(method, abi.Method):
             hc = get_handler_config(method)
             if hc.abi_method is None:
-                raise Exception(f"Expected either an abi.Method or a handler that defines an ABI method: got {method}")
+                raise Exception(
+                    f"Expected either an abi.Method or a handler that defines an ABI method: got {method}"
+                )
 
             method = hc.abi_method.method_spec()
 
+        if sp is None:
+            sp = self.client.suggested_params()
 
-        sp = self.client.suggested_params()
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
