@@ -35,7 +35,7 @@ class HandlerConfig:
     bare_method: BareCallActions = field(kw_only=True, default=None)
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
-    subroutine: SubroutineFnWrapper = field(kw_only=True, default=None)
+    subroutine: Subroutine = field(kw_only=True, default=None)
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -145,11 +145,8 @@ def bare_handler(
     close_out: CallConfig = None,
 ):
     def _impl(fun: HandlerFunc) -> OnCompleteAction:
-
         fun = _remove_self(fun)
-
         fn = Subroutine(TealType.none)(fun)
-
         bca = BareCallActions(
             no_op=OnCompleteAction(action=fn, call_config=no_op)
             if no_op is not None
@@ -182,12 +179,33 @@ def bare_handler(
     return _impl
 
 
+def bare_create(fn: HandlerFunc):
+    return bare_handler(no_op=CallConfig.CREATE)(fn)
+
+
+def bare_delete(fn: HandlerFunc):
+    return bare_handler(delete_application=CallConfig.CALL)(fn)
+
+
+def bare_update(fn: HandlerFunc):
+    return bare_handler(update_application=CallConfig.CALL)(fn)
+
+
+def bare_opt_in(fn: HandlerFunc):
+    return bare_handler(opt_in=CallConfig.CALL)(fn)
+
+
 def internal(return_type: TealType):
     """internal can be used to wrap a subroutine that is defined inside an application class"""
 
     def _impl(fn: HandlerFunc):
-        fn = _remove_self(fn)
-        set_handler_config(fn, subroutine=Subroutine(return_type)(fn))
+        hc = get_handler_config(fn)
+
+        hc.subroutine = Subroutine(return_type)
+        if "self" in signature(fn).parameters:
+            hc.referenced_self = True
+
+        set_handler_config(fn, **hc.__dict__)
         return fn
 
     return _impl

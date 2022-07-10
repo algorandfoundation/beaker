@@ -7,8 +7,9 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
 
-from beaker import ApplicationClient, method_spec
+from beaker import method_spec
 from beaker.sandbox import get_accounts, get_client
+from beaker.client import ApplicationClient
 
 from amm import ConstantProductAMM
 

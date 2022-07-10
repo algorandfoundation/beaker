@@ -274,7 +274,7 @@ class ConstantProductAMM(Application):
     # Mathy methods
     ##############
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def tokens_to_mint(issued, a_supply, b_supply, a_amount, b_amount):
         return Seq(
             (a_rat := ScratchVar()).store(
@@ -289,15 +289,15 @@ class ConstantProductAMM(Application):
             ),
         )
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def tokens_to_mint_initial(a_amount, b_amount):
         return Sqrt(a_amount * b_amount) - ConstantProductAMM.scale
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def tokens_to_burn(issued, supply, amount):
         return WideRatio([supply, amount], [issued])
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def tokens_to_swap(in_amount, in_supply, out_supply):
         factor = ConstantProductAMM.scale - ConstantProductAMM.fee
         return WideRatio(
@@ -309,7 +309,7 @@ class ConstantProductAMM(Application):
     # Utility methods for inner transactions
     ##############
 
-    @internal(TealType.none)
+    @Subroutine(TealType.none)
     def do_axfer(rx, aid, amt):
         return Seq(
             InnerTxnBuilder.Begin(),
@@ -324,11 +324,11 @@ class ConstantProductAMM(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @internal(TealType.none)
+    @Subroutine(TealType.none)
     def do_opt_in(aid):
         return ConstantProductAMM.do_axfer(ConstantProductAMM.address, aid, Int(0))
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def do_create_pool_token(a, b):
         return Seq(
             una := AssetParam.unitName(a),
@@ -351,7 +351,7 @@ class ConstantProductAMM(Application):
             InnerTxn.created_asset_id(),
         )
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def get_ratio():
         return Seq(
             bal_a := AssetHolding.balance(

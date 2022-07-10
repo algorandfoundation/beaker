@@ -69,9 +69,9 @@ Lets now deploy our contract using an `ApplicationClient`.
 
 from algosdk.atomic_transaction_composer import  AccountTransactionSigner 
 
-from beaker import ApplicationClient 
-
+# utils to connect to sandbox kmd and pull all accounts and init an algod client
 from beaker.sandbox import get_accounts, get_client
+from beaker.client import ApplicationClient 
 
 # Get the accounts from the sandbox KMD 
 addr, private_key = get_accounts().pop()
