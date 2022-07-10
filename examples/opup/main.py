@@ -40,7 +40,13 @@ def demo():
     input = "stuff"
     iters = 10
 
+    # Passing None for the app id forces the ApplicationClient to try and resolve it
+    # TODO: make args => kwargs so we can be more explicit about the args passed and
+    # what their value should be.
+
+    # consider app_id=ResolveHint()
     result = app_client.call(signer, app.hash_it, args=[input, iters, None])
+
     # Get the first result and trim off str encoding bytes, I should have used byte[32]
     result_hash = result.abi_results[0].raw_value[2:]
 

@@ -13,7 +13,9 @@ class ExpensiveApp(OpUp):
         )
 
     @handler
-    @required_args(opup_app=OpUp.get_opup_app_id)
+    @required_args(
+        opup_app=OpUp.get_opup_app_id
+    )  # TODO: this should come from the call to `call_opup_n`?
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,
