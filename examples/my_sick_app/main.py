@@ -1,6 +1,5 @@
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 
-from beaker import method_spec
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_client, get_accounts
 
@@ -24,13 +23,13 @@ def demo():
     app_id, app_addr, txid = app_client.create(signer)
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    result = app_client.call(signer, method_spec(app.add), [2, 3])
+    result = app_client.call(signer, app.add, [2, 3])
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, method_spec(app.increment))
+    result = app_client.call(signer, app.increment)
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, method_spec(app.decrement))
+    result = app_client.call(signer, app.decrement)
     print(result.abi_results[0].return_value)
 
 

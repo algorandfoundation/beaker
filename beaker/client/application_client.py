@@ -15,6 +15,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, method_spec
+from beaker.decorators import HandlerFunc, get_handler_config
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048
@@ -26,17 +27,25 @@ class ApplicationClient:
         self.app = app
         self.app_id = app_id
 
+
+    def compile(self) -> tuple[bytes, bytes]:
+        approval_result = self.client.compile(self.app.approval_program)
+        approval_binary = b64decode(approval_result["result"])
+
+        clear_result = self.client.compile(self.app.clear_program)
+        clear_binary = b64decode(clear_result["result"])
+
+        return approval_binary, clear_binary
+
+
     def create(
         self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
     ) -> tuple[int, str, str]:
-        approval_result = self.client.compile(self.app.approval_program)
-        approval_compiled = b64decode(approval_result["result"])
 
-        clear_result = self.client.compile(self.app.clear_program)
-        clear_compiled = b64decode(clear_result["result"])
+        approval, clear = self.compile()
 
         extra_pages = ceil(
-            ((len(approval_compiled) + len(clear_compiled)) - APP_MAX_PAGE_SIZE)
+            ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE)
             / APP_MAX_PAGE_SIZE
         )
 
@@ -50,8 +59,8 @@ class ApplicationClient:
                     addr,
                     sp,
                     transaction.OnComplete.NoOpOC,
-                    approval_compiled,
-                    clear_compiled,
+                    approval,
+                    clear,
                     self.app.app_state.schema(),
                     self.app.acct_state.schema(),
                     extra_pages=extra_pages,
@@ -72,11 +81,7 @@ class ApplicationClient:
     def update(
         self, signer: AccountTransactionSigner, args: list[Any] = [], **kwargs
     ) -> str:
-        approval_result = self.client.compile(self.app.approval_program)
-        approval_compiled = b64decode(approval_result["result"])
-
-        clear_result = self.client.compile(self.app.clear_program)
-        clear_compiled = b64decode(clear_result["result"])
+        approval, clear = self.compile()
 
         sp = self.client.suggested_params()
         addr = address_from_private_key(signer.private_key)
@@ -90,8 +95,8 @@ class ApplicationClient:
             signer,
             args,
             on_complete=transaction.OnComplete.UpdateApplicationOC,
-            approval_program=approval_compiled,
-            clear_program=clear_compiled,
+            approval_program=approval,
+            clear_program=clear,
             **kwargs
         )
         update_result = atc.execute(self.client, 4)
@@ -120,10 +125,19 @@ class ApplicationClient:
     def call(
         self,
         signer: AccountTransactionSigner,
-        method: abi.Method,
+        method: abi.Method | HandlerFunc,
         args: list[Any] = [],
         **kwargs
     ) -> AtomicTransactionResponse:
+
+
+        if not isinstance(method, abi.Method):
+            hc = get_handler_config(method)
+            if hc.abi_method is None:
+                raise Exception(f"Expected either an abi.Method or a handler that defines an ABI method: got {method}")
+
+            method = hc.abi_method.method_spec()
+
 
         sp = self.client.suggested_params()
         addr = address_from_private_key(signer.private_key)

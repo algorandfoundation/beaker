@@ -7,7 +7,6 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
 
-from beaker import method_spec
 from beaker.sandbox import get_accounts, get_client
 from beaker.client import ApplicationClient
 
@@ -46,7 +45,7 @@ def demo():
 
     # Call app to create pool token
     print("Calling bootstrap")
-    result = app_client.call(signer, method_spec(app.bootstrap), [asset_a, asset_b])
+    result = app_client.call(signer, app.bootstrap, [asset_a, asset_b])
     pool_token = result.abi_results[0].return_value
     print(f"Created pool token with id: {pool_token}")
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
@@ -69,7 +68,7 @@ def demo():
     print("Funding")
     app_client.call(
         signer,
-        method_spec(app.mint),
+        app.mint,
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 10000, asset_a),
@@ -92,7 +91,7 @@ def demo():
     print("Minting")
     app_client.call(
         signer,
-        method_spec(app.mint),
+        app.mint,
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100000, asset_a),
@@ -115,7 +114,7 @@ def demo():
     print("Swapping A for B")
     app_client.call(
         signer,
-        method_spec(app.swap),
+        app.swap,
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
@@ -133,7 +132,7 @@ def demo():
     print("Swapping B for A")
     app_client.call(
         signer,
-        method_spec(app.swap),
+        app.swap,
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
@@ -151,7 +150,7 @@ def demo():
     print("Burning")
     app_client.call(
         signer,
-        method_spec(app.burn),
+        app.burn,
         [
             TransactionWithSigner(
                 txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),

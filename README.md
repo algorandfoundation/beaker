@@ -101,9 +101,7 @@ We can call the method we defined in our `Application`
 
 ```py
 
-from beaker import method_spec
-
-result = app_client.call(signer, method_spec(msa.add), [2,3])
+result = app_client.call(signer, msa.add, [2,3])
 print(result.abi_results[0].return_value) # 5
 
 ```
@@ -196,9 +194,25 @@ class MySickApp(Application):
 
 ```
 
+Lets say you want to augment an existing application written with Beaker.
+
+```py
+from beaker.contracts.arcs import ARC18
+
+class MyRoyaltyApp(ARC18):
+    # TODO: add extra methods
+    pass
+
+```
+
+You can do so by specifying the parent class then adding or overriding handler methods.
+
+
+
+
 That's it for now. 
+
 
 See [TODO](TODO.md) for what is planned.
 
-*Please file issues with ideas or descriptions of how this might not work for your use case.*
-
+*Please file issues (Or PRs?) with ideas or descriptions of how this might not work for your use case.*

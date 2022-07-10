@@ -1,7 +1,6 @@
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.future import transaction
 
-from beaker import method_spec
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_client, get_accounts
 
@@ -31,7 +30,7 @@ def demo():
     )
     transaction.wait_for_confirmation(client, txid, 4)
 
-    result = app_client.call(signer, method_spec(app.create_nft), ["cool-nft"])
+    result = app_client.call(signer, app.create_nft, ["cool-nft"])
     print(f"Created nft with id: {result.abi_results[0].return_value}")
 
 
