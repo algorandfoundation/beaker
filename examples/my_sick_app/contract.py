@@ -2,7 +2,6 @@ from typing import Final
 
 from pyteal import *
 from beaker import *
-from beaker.decorators import bare_handler
 
 
 @Subroutine(TealType.bytes)

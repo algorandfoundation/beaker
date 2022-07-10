@@ -55,7 +55,6 @@ class ApplicationClient:
 
         addr = address_from_private_key(signer.private_key)
         atc = AtomicTransactionComposer()
-
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationCreateTxn(
@@ -97,17 +96,19 @@ class ApplicationClient:
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
-        atc.add_method_call(
-            app_id=self.app_id,
-            method=method_spec(self.app.update),
-            sender=addr,
-            sp=sp,
-            signer=signer,
-            method_args=args,
-            on_complete=transaction.OnComplete.UpdateApplicationOC,
-            approval_program=approval,
-            clear_program=clear,
-            **kwargs,
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationUpdateTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    approval_program=approval,
+                    clear_program=clear,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
         )
         update_result = atc.execute(self.client, 4)
         return update_result.tx_ids[0]
@@ -126,15 +127,17 @@ class ApplicationClient:
         addr = address_from_private_key(signer.private_key)
 
         atc = AtomicTransactionComposer()
-        atc.add_method_call(
-            self.app_id,
-            method_spec(self.app.delete),
-            addr,
-            sp,
-            signer,
-            args,
-            on_complete=transaction.OnComplete.DeleteApplicationOC,
-            **kwargs,
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationDeleteTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
         )
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
