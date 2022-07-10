@@ -15,5 +15,9 @@
 
 - Add box state interface (take into account that callers need to know what box names they'll need access to)
 
+- Migration, what if the app needs to change schema at some point? Create new app with updated schema but how do users migrate to new application?
+
+- Automated Test Harness generation? no idea how to do this, graviton + dryruns?
+
 
 What else? File Issues!
