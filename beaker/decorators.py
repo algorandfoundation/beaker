@@ -319,7 +319,7 @@ def bare_handler(
 
 
 class Bare:
-    """Bare contains static methods for handling bare application calls, that is app calls with no argumentsi"""
+    """Bare contains static methods for handling bare application calls, that is app calls with no arguments"""
 
     @staticmethod
     def create(fn: HandlerFunc):
