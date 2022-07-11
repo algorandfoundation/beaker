@@ -1,14 +1,15 @@
 from pyteal import *
 from beaker.model import Model
 from beaker.contracts import OpUp
-from beaker.decorators import resolvable, handler
+from beaker.decorators import ResolvableArguments, handler
 
 
 class ExpensiveApp(OpUp):
-    @handler
-    @resolvable(
-        opup_app=OpUp.get_opup_app_id
-    )  # TODO: this should come from the call to `call_opup_n`?
+    @handler(
+        resolvable=ResolvableArguments(
+            opup_app=OpUp.get_opup_app_id  # TODO: this should come from the call to `call_opup_n`?
+        )
+    )
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,

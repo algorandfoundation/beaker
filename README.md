@@ -214,12 +214,14 @@ What about extending your Application with some other functionality?
 
 ```py
 from beaker.contracts import OpUp
+from beaker.decorators import handler
 
 class MyHasherApp(OpUp):
-    @handler
-    @resolvable(
-        opup_app=OpUp.get_opup_app_id
-    ) 
+    @handler(
+        resolvable = ResolvableArguments(
+            opup_app=OpUp.get_opup_app_id
+        ) 
+    )
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,

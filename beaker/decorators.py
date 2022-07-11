@@ -24,7 +24,6 @@ from pyteal import (
     TealType,
     Txn,
 )
-from beaker.application_schema import GlobalStateValue, LocalStateValue
 
 from beaker.model import Model
 
@@ -36,11 +35,19 @@ _handler_config_attr: Final[str] = "__handler_config__"
 class ResolvableArguments:
     def __init__(
         self,
-        **kwargs: dict[
-            str, ABIReturnSubroutine | HandlerFunc | GlobalStateValue | LocalStateValue
-        ],
+        **kwargs: dict[str, ABIReturnSubroutine | HandlerFunc],
     ):
-        self.__dict__.update(**kwargs)
+
+        resolvable_args = {}
+        for arg_name, arg_resolver in kwargs.items():
+            if not isinstance(arg_resolver, ABIReturnSubroutine):
+                hc = get_handler_config(arg_resolver)
+                if hc.abi_method is None:
+                    raise Exception(f"Expected ABISubroutine, got {arg_resolver}")
+
+            resolvable_args[arg_name] = hc.abi_method
+
+        self.__dict__.update(**resolvable_args)
 
 
 @dataclass
@@ -64,30 +71,21 @@ class HandlerConfig:
     models: dict[str, Model] = field(kw_only=True, default=None)
 
     def hints(self) -> MethodHints:
-        hints = {
-            "resolvable": {},
-            "read_only": self.read_only,
-            "models": {},
-        }
+        mh = MethodHints(read_only=self.read_only)
 
         if self.resolvable is not None:
             resolvable = {}
             for arg_name, ra in self.resolvable.__dict__.items():
-                match ra:
-                    case ABIReturnSubroutine():
-                        resolvable[arg_name] = ra.method_spec()
-                    case GlobalStateValue() | LocalStateValue():
-                        resolvable[arg_name] = ra.key 
-                    
-            hints["resolvable"] = resolvable
+                resolvable[arg_name] = ra.method_spec()
+            mh.resolvable = resolvable
 
         if self.models is not None:
             models = {}
             for arg_name, model_spec in self.models.items():
                 models[arg_name] = model_spec.__annotations__.keys()
-            hints["models"] = models
+            mh.models = models
 
-        return MethodHints(**hints)
+        return mh
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -215,21 +213,63 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def resolvable(**resolvable_args: ABIReturnSubroutine | HandlerFunc):
-
-    for name, arg in resolvable_args.items():
-        if not isinstance(arg, ABIReturnSubroutine):
-            hc = get_handler_config(arg)
-            if hc.abi_method is None:
-                raise Exception(f"Expected ABISubroutine, got {resolvable_args}")
-
-            resolvable_args[name] = hc.abi_method
+def internal(return_type: TealType):
+    """internal can be used to wrap a subroutine that is defined inside an application class"""
 
     def _impl(fn: HandlerFunc):
-        set_handler_config(fn, resolvable=resolvable_args)
+        hc = get_handler_config(fn)
+
+        hc.subroutine = Subroutine(return_type)
+        if "self" in signature(fn).parameters:
+            hc.referenced_self = True
+
+        set_handler_config(fn, **hc.__dict__)
         return fn
 
     return _impl
+
+
+def handler(
+    fn: HandlerFunc = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper = None,
+    method_config: MethodConfig = None,
+    read_only: bool = False,
+    resolvable: ResolvableArguments = None,
+):
+    """
+    handler is the primary way to expose an ABI method for an application
+    it may take a number of arguments:
+
+    Args:
+
+        authorize: A subroutine that should evaluate to 1/0 depending on the app call transaction sender
+        method_config: accepts a MethodConfig object to define how the app call should be routed given OnComplete and whether or not the call is a create
+        read_only: adds read_only flag to abi (eventually, currently it does nothing)
+    """
+
+    def _impl(fn: HandlerFunc):
+        fn = _remove_self(fn)
+        fn = _replace_models(fn)
+
+        if resolvable is not None:
+            set_handler_config(fn, resolvable=resolvable)
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        if method_config is not None:
+            fn = _on_complete(method_config)(fn)
+        if read_only:
+            fn = _readonly(fn)
+
+        set_handler_config(fn, abi_method=ABIReturnSubroutine(fn))
+
+        return fn
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
 def bare_handler(
@@ -289,59 +329,3 @@ def bare_update(fn: HandlerFunc):
 
 def bare_opt_in(fn: HandlerFunc):
     return bare_handler(opt_in=CallConfig.CALL)(fn)
-
-
-def internal(return_type: TealType):
-    """internal can be used to wrap a subroutine that is defined inside an application class"""
-
-    def _impl(fn: HandlerFunc):
-        hc = get_handler_config(fn)
-
-        hc.subroutine = Subroutine(return_type)
-        if "self" in signature(fn).parameters:
-            hc.referenced_self = True
-
-        set_handler_config(fn, **hc.__dict__)
-        return fn
-
-    return _impl
-
-
-def handler(
-    fn: HandlerFunc = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper = None,
-    method_config: MethodConfig = None,
-    read_only: bool = False,
-):
-    """
-    handler is the primary way to expose an ABI method for an application
-    it may take a number of arguments:
-
-    Args:
-
-        authorize: A subroutine that should evaluate to 1/0 depending on the app call transaction sender
-        method_config: accepts a MethodConfig object to define how the app call should be routed given OnComplete and whether or not the call is a create
-        read_only: adds read_only flag to abi (eventually, currently it does nothing)
-    """
-
-    def _impl(fn: HandlerFunc):
-        fn = _remove_self(fn)
-        fn = _replace_models(fn)
-
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        if method_config is not None:
-            fn = _on_complete(method_config)(fn)
-        if read_only:
-            fn = _readonly(fn)
-
-        set_handler_config(fn, abi_method=ABIReturnSubroutine(fn))
-
-        return fn
-
-    if fn is None:
-        return _impl
-
-    return _impl(fn)
