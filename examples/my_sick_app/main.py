@@ -17,19 +17,21 @@ def demo():
     app = MySickApp()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app)
+    app_client = ApplicationClient(client, app, signer=signer)
 
     # Create the applicatiion on chain, set the app id for the app client
-    app_id, app_addr, txid = app_client.create(signer)
+    app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    result = app_client.call(signer, app.add, [2, 3])
+    app_client = app_client.prepare(signer=signer, sp=client.suggested_params())
+
+    result = app_client.call(app.add, a=2, b=3)
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, app.increment)
+    result = app_client.call(app.increment)
     print(result.abi_results[0].return_value)
 
-    result = app_client.call(signer, app.decrement)
+    result = app_client.call(app.decrement)
     print(result.abi_results[0].return_value)
 
 
