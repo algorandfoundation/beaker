@@ -53,25 +53,21 @@ class HandlerConfig:
     models: dict[str, Model] = field(kw_only=True, default=None)
 
     def hints(self) -> MethodHints:
-        hints = {
-            "resolvable": {},
-            "read_only": self.read_only,
-            "models": {},
-        }
+        mh = MethodHints(read_only=self.read_only)
 
         if self.resolvable is not None:
             resolvable = {}
             for arg_name, ra in self.resolvable.items():
                 resolvable[arg_name] = ra.method_spec()
-            hints["resolvable"] = resolvable
+            mh.resolvable = resolvable
 
         if self.models is not None:
             models = {}
             for arg_name, model_spec in self.models.items():
                 models[arg_name] = model_spec.__annotations__.keys()
-            hints["models"] = models
+            mh.models = models
 
-        return MethodHints(**hints)
+        return mh 
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
