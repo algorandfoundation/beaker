@@ -23,17 +23,17 @@ def demo():
     app = ExpensiveApp()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app)
+    sp = client.suggested_params()
+    app_client = ApplicationClient(client, app, signer=signer, suggested_params=sp)
 
     # Create the applicatiion on chain, set the app id for the app client
-    app_id, app_addr, txid = app_client.create(signer)
+    app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    sp = client.suggested_params()
     txn = TransactionWithSigner(
         txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )
-    result = app_client.call(signer, app.bootstrap, args=[txn])
+    result = app_client.call(app.bootstrap, ptxn=txn)
     oua = result.abi_results[0].return_value
     print(f"Created op up app: {oua}")
 
@@ -45,7 +45,7 @@ def demo():
     # what their value should be.
 
     # consider app_id=ResolveHint()
-    result = app_client.call(signer, app.hash_it, args=[input, iters, None])
+    result = app_client.call(app.hash_it, input=input, iters=iters)
 
     # Get the first result and trim off str encoding bytes, I should have used byte[32]
     result_hash = result.abi_results[0].raw_value[2:]

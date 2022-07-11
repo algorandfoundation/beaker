@@ -23,10 +23,23 @@ APP_MAX_PAGE_SIZE = 2048
 
 
 class ApplicationClient:
-    def __init__(self, client: AlgodClient, app: Application, app_id: int = 0):
+    def __init__(
+        self,
+        client: AlgodClient,
+        app: Application,
+        app_id: int = 0,
+        signer: AccountTransactionSigner = None,
+        suggested_params: transaction.SuggestedParams = None,
+    ):
         self.client = client
         self.app = app
         self.hints = self.app.contract_hints()
+
+        self.signer = signer
+        if self.signer is not None:
+            self.addr = address_from_private_key(signer.private_key)
+
+        self.suggested_params = suggested_params
 
         # Also set in create
         self.app_id = app_id
@@ -42,7 +55,7 @@ class ApplicationClient:
 
     def create(
         self,
-        signer: AccountTransactionSigner,
+        signer: AccountTransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
@@ -54,10 +67,9 @@ class ApplicationClient:
             ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
         )
 
-        if sp is None:
-            sp = self.client.suggested_params()
+        sp = self.get_suggested_params(sp)
+        signer, addr = self.get_signer(signer)
 
-        addr = address_from_private_key(signer.private_key)
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
@@ -89,17 +101,15 @@ class ApplicationClient:
 
     def update(
         self,
-        signer: AccountTransactionSigner,
+        signer: AccountTransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
         approval, clear = self.compile()
 
-        if sp is None:
-            sp = self.client.suggested_params()
-
-        addr = address_from_private_key(signer.private_key)
+        sp = self.get_suggested_params(sp)
+        signer, addr = self.get_signer(signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
@@ -121,16 +131,14 @@ class ApplicationClient:
 
     def delete(
         self,
-        signer: AccountTransactionSigner,
+        signer: AccountTransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
 
-        if sp is None:
-            sp = self.client.suggested_params()
-
-        addr = address_from_private_key(signer.private_key)
+        sp = self.get_suggested_params(sp)
+        signer, addr = self.get_signer(signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
@@ -145,8 +153,63 @@ class ApplicationClient:
                 signer=signer,
             )
         )
+
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
+
+    def prepare(
+        self,
+        signer: AccountTransactionSigner,
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> "ApplicationClient":
+        self.signer = signer
+        self.sp = sp
+        self.txn_kwargs = kwargs
+        return self
+
+    def call(
+        self, method: abi.Method | HandlerFunc, **kwargs
+    ) -> AtomicTransactionResponse:
+
+        sp = self.get_suggested_params()
+        signer, addr = self.get_signer()
+
+        if not isinstance(method, abi.Method):
+            method = method_spec(method)
+
+        hints = self.method_hints(method.name)
+
+        args = []
+        for method_arg in method.args:
+            if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
+                resolvable_args = hints.get("required-args", {})
+                if method_arg.name in resolvable_args:
+                    result = self.call(resolvable_args[method_arg.name])
+                    args.append(result.abi_results[0].return_value)
+            else:
+                args.append(kwargs[method_arg.name])
+
+        if "read-only" in hints:
+            read_only = hints["read-only"]
+            # do dryrun
+
+        txnkwargs = {}
+        if hasattr(self, "txn_kwargs"):
+            txnkwargs = self.txn_kwargs
+
+        atc = AtomicTransactionComposer()
+        atc.add_method_call(
+            self.app_id,
+            method,
+            addr,
+            sp,
+            signer,
+            method_args=args,
+            **txnkwargs,
+        )
+
+        return atc.execute(self.client, 4)
 
     def method_hints(self, method_name: str):
         hints = {}
@@ -154,43 +217,30 @@ class ApplicationClient:
             return hints
         return self.hints[method_name]
 
-    def call(
-        self,
-        signer: AccountTransactionSigner,
-        method: abi.Method | HandlerFunc,
-        args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
-        **kwargs,
-    ) -> AtomicTransactionResponse:
+    def get_suggested_params(
+        self, sp: transaction.SuggestedParams = None
+    ) -> transaction.SuggestedParams:
+        if sp is not None:
+            return sp
 
-        if not isinstance(method, abi.Method):
-            method = method_spec(method)
+        if self.suggested_params is not None:
+            return self.suggested_params
 
-        ad = {}
-        for idx in range(len(method.args)):
-            ad[method.args[idx].name] = idx
+        return self.client.suggested_params()
 
-        hints = self.method_hints(method.name)
-        if "required-args" in hints:
-            ra = hints["required-args"]
-            for name, arg in ra.items():
-                if args[ad[name]] is None:
-                    result = self.call(signer, arg)
-                    data = result.abi_results[0].return_value
-                    args[ad[name]] = data
+    def get_signer(
+        self, signer: AccountTransactionSigner = None
+    ) -> tuple[AccountTransactionSigner, str]:
+        if signer is not None:
+            return (
+                signer,
+                address_from_private_key(signer.private_key),
+            )
 
-        if "read-only" in hints:
-            read_only = hints["read-only"]
-            # do dryrun
+        if self.signer is not None:
+            return (
+                self.signer,
+                address_from_private_key(self.signer.private_key),
+            )
 
-        if sp is None:
-            sp = self.client.suggested_params()
-
-        addr = address_from_private_key(signer.private_key)
-
-        atc = AtomicTransactionComposer()
-        atc.add_method_call(
-            self.app_id, method, addr, sp, signer, method_args=args, **kwargs
-        )
-
-        return atc.execute(self.client, 4)
+        raise Exception("No signer provided")
