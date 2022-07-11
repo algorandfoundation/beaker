@@ -271,7 +271,9 @@ The line omits the `opup_app` argument:
 ```py
   input = "hashme"
   iters = 10
-  result = app_client.call(app.hash_it, input=input, iters=iters)
+  # In this case we'd like to pass a different signer to call this transaction
+  signer_client = app_client.prepare(signer=signer)
+  result = signer_client.call(app.hash_it, input=input, iters=iters)
 ```
 When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
