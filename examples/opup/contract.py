@@ -6,23 +6,6 @@ from beaker.decorators import resolvable, handler
 
 class ExpensiveApp(OpUp):
     @handler
-    def bootstrap(self, ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
-        return Seq(
-            Assert(ptxn.get().amount() >= OpUp.min_balance),
-            ExpensiveApp.create_opup(),
-            output.set(ExpensiveApp.opup_app_id),
-        )
-
-    class UserRecord(Model):
-        account: abi.Address
-        balance: abi.Uint64
-        nickname: abi.String
-
-    @handler
-    def model(self, input: UserRecord, *, output: UserRecord):
-        return output.decode(input.encode())
-
-    @handler
     @resolvable(
         opup_app=OpUp.get_opup_app_id
     )  # TODO: this should come from the call to `call_opup_n`?
@@ -34,8 +17,8 @@ class ExpensiveApp(OpUp):
         output: abi.String,
     ):
         return Seq(
-            Assert(opup_app.application_id() == ExpensiveApp.opup_app_id),
-            ExpensiveApp.call_opup_n(Int(255)),
+            Assert(opup_app.application_id() == OpUp.opup_app_id),
+            OpUp.call_opup_n(Int(255)),
             (current := ScratchVar()).store(input.get()),
             For(
                 (i := ScratchVar()).store(Int(0)),

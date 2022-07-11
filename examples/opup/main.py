@@ -32,7 +32,7 @@ def demo():
     txn = TransactionWithSigner(
         txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )
-    result = app_client.call(app.bootstrap, ptxn=txn)
+    result = app_client.call(app.opup_bootstrap, ptxn=txn)
     oua = result.abi_results[0].return_value
     print(f"Created op up app: {oua}")
 

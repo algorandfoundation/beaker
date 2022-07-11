@@ -210,8 +210,53 @@ class MyRoyaltyApp(ARC18):
 You can do so by specifying the parent class then adding or overriding handler methods.
 
 
-That's it for now. 
+What about extending your Application with some other functionality?
 
+```py
+from beaker.contracts import OpUp
+
+class MyHasherApp(OpUp):
+    @handler
+    @resolvable(
+        opup_app=OpUp.get_opup_app_id
+    ) 
+    def hash_it(
+        input: abi.String,
+        iters: abi.Uint64,
+        opup_app: abi.Application,
+        *,
+        output: abi.String,
+    ):
+        return Seq(
+            Assert(opup_app.application_id() == OpUp.opup_app_id),
+            OpUp.call_opup_n(Int(255)),
+            (current := ScratchVar()).store(input.get()),
+            For(
+                (i := ScratchVar()).store(Int(0)),
+                i.load() < iters.get(),
+                i.store(i.load() + Int(1)),
+            ).Do(current.store(Sha256(current.load()))),
+            output.set(current.load()),
+        )
+
+
+```
+
+Here we subclassed the `OpUp` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
+
+Note also the experimental decorator `resolvable` which adds a `MethodHint` to the method, allowing the caller to figure out what the appropriate application id _should_ be.
+
+When using the `ApplicationClient`, omitting the argument for that parameter is equivalent to asking the value to be resolved. 
+
+The line:
+```py
+  result = app_client.call(app.hash_it, input=input, iters=iters)
+```
+
+Checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
+
+
+That's it for now. 
 
 See [TODO](TODO.md) for what is planned.
 

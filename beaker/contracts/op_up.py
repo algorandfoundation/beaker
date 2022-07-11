@@ -24,6 +24,14 @@ class OpUp(Application):
     def get_opup_app_id(*, output: abi.Uint64):
         return output.set(OpUp.opup_app_id)
 
+    @handler
+    def opup_bootstrap(self, ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
+        return Seq(
+            Assert(ptxn.get().amount() >= OpUp.min_balance),
+            OpUp.create_opup(),
+            output.set(OpUp.opup_app_id),
+        )
+
     @internal(TealType.none)
     def create_opup():
         return Seq(
