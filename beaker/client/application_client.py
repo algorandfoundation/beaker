@@ -194,11 +194,9 @@ class ApplicationClient:
 
         if "read-only" in hints:
             read_only = hints["read-only"]
-            # do dryrun
+            # TODO: do dryrun
 
-        txnkwargs = {}
-        if hasattr(self, "txn_kwargs"):
-            txnkwargs = self.txn_kwargs
+        txnkwargs = self.__dict__.get("txn_kwargs", {})
 
         atc = AtomicTransactionComposer()
         atc.add_method_call(
