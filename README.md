@@ -252,6 +252,8 @@ When using the `ApplicationClient`, omitting the argument for that parameter is 
 
 The line:
 ```py
+  input = "hashme"
+  iters = 10
   result = app_client.call(app.hash_it, input=input, iters=iters)
 ```
 
