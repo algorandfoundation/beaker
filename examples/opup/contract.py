@@ -27,10 +27,7 @@ class ExpensiveApp(OpUp):
                 i.load() < iters.get(),
                 i.store(i.load() + Int(1)),
             ).Do(current.store(Sha256(current.load()))),
-            # This is weird, but we're borrowing the string `set`
-            # so we can write the full byte slice in one go
-            (s := abi.String()).set(current.load()),
-            output.decode(s.get()),
+            output.decode(current.load()),
         )
 
 
