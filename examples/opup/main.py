@@ -51,8 +51,7 @@ def demo():
 
     result = app_client.call(app.hash_it, input=input, iters=iters)
 
-    # Get the first result and trim off str encoding bytes, I should have used byte[32]
-    result_hash = result.abi_results[0].raw_value[2:]
+    result_hash = bytes(result.abi_results[0].return_value)
 
     local_hash = input.encode()
     for _ in range(iters):

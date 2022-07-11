@@ -1,3 +1,4 @@
+from typing import Literal
 from pyteal import *
 from beaker.model import Model
 from beaker.contracts import OpUp
@@ -15,7 +16,7 @@ class ExpensiveApp(OpUp):
         iters: abi.Uint64,
         opup_app: abi.Application,
         *,
-        output: abi.String,
+        output: abi.StaticArray[abi.Byte, Literal[32]],
     ):
         return Seq(
             Assert(opup_app.application_id() == OpUp.opup_app_id),
@@ -26,7 +27,10 @@ class ExpensiveApp(OpUp):
                 i.load() < iters.get(),
                 i.store(i.load() + Int(1)),
             ).Do(current.store(Sha256(current.load()))),
-            output.set(current.load()),
+            # This is weird, but we're borrowing the string `set`
+            # so we can write the full byte slice in one go
+            (s := abi.String()).set(current.load()),
+            output.decode(s.get()),
         )
 
 
