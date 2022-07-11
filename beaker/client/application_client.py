@@ -168,7 +168,7 @@ class ApplicationClient:
         **kwargs,
     ) -> "ApplicationClient":
 
-        ac = copy.deepcopy(self)
+        ac = copy.copy(self)
         ac.signer = signer
         ac.suggested_params = sp
         ac.txn_kwargs = kwargs
