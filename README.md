@@ -178,6 +178,7 @@ The `handler` decorator accepts several other parameters:
 
 - `method_config` - See the PyTeal definition for more, but tl;dr it allows you to specify which OnCompletes may handle different modes (call/create/none/all)
 - `read_only` - Really just a place holder until arc22 is merged
+- `resolvable` - To provide hints to the caller for how to resolve a given input if there is a specific value that should be passed
 
 
 ## Account State
