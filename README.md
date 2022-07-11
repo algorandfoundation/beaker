@@ -110,7 +110,7 @@ print(result.abi_results[0].return_value) # 5
 
 ```
 
-Here we use the `call` method, passing the [Method](https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/method.html#algosdk.abi.method.Method) object, and args necessary by name. The args passed may be of any type but must match the definition of the `Method`. 
+Here we use the `call` method, passing the method defined in our class, and args necessary by name. The args passed must match the type of the method (i.e. don't pass a string when it wants an int). 
 
 ## Application State
 
@@ -121,12 +121,13 @@ Lets go back and add some application state (Global State in Algorand parlance).
 from beaker import *
 
 class MySickApp(Application):
+    # Mark it final to signal that we shouldnt change the python class variable
     counter: Final[GlobalStateValue] = GlobalStateValue(
         stack_type=TealType.uint64,
         descr="A counter meant to show use of application state",
         # key=Bytes("counter"), specify a key to override the field name  
         # default=Int(5), specify a default value to initialize the state value to
-        # static=True, flag as a value that should not change
+        # static=True, flag as a value that should not change once set
     )
 
     @Bare.create
@@ -150,7 +151,9 @@ class MySickApp(Application):
 
 The `create` method overrides the one defined in the base `Application` class, tagging it with `Bare.create` which specifies we want a bare call (no app args) and only on create (app id == 0)
 
-The other methods may be called in the same way as the `add` method above.  Using `set` we can overwrite the value that is currently stored.
+The other methods may be called similar to `add` method above.  Using `set` method of GlobalStateValue we can overwrite the value that is currently stored.
+
+## Authorization
 
 But what if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
 
@@ -177,7 +180,7 @@ Other pre-defined Authorized checks are:
 The `handler` decorator accepts several other parameters:
 
 - `method_config` - See the PyTeal definition for more, but tl;dr it allows you to specify which OnCompletes may handle different modes (call/create/none/all)
-- `read_only` - Really just a place holder until arc22 is merged
+- `read_only` - Mark a method as callable with no fee (using dryrun or view, place holder until arc22 is merged)
 - `resolvable` - To provide hints to the caller for how to resolve a given input if there is a specific value that should be passed
 
 
@@ -234,11 +237,7 @@ from beaker.contracts import OpUp
 from beaker.decorators import handler
 
 class MyHasherApp(OpUp):
-    @handler(
-        resolvable = ResolvableArguments(
-            opup_app=OpUp.get_opup_app_id
-        ) 
-    )
+    @handler
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,
@@ -265,9 +264,21 @@ Here we subclassed the `OpUp` contract which provides functionality to create a 
 
 ## Method Hints
 
-Note also in the above, the experimental decorator argument,  `resolvable`, adds a `MethodHint` to the method. This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary.  When using the `ApplicationClient`, omitting the argument for that parameter is equivalent to asking the value to be resolved. 
+In the above, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently if at all but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
 
-The line omits the `opup_app` argument:
+We can change the handler to provide the hint.
+
+```
+    @handler(
+        resolvable=ResolvableArguments(
+            opup_app=OpUp.get_opup_app_id 
+        )
+    )
+```
+
+With this we communicate to a caller that the value the application expects be passed can be resolved by calling the `get_opup_app_id` method.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
+
+Here we call the method, omitting the `opup_app` argument:
 ```py
   input = "hashme"
   iters = 10
@@ -275,6 +286,7 @@ The line omits the `opup_app` argument:
   signer_client = app_client.prepare(signer=signer)
   result = signer_client.call(app.hash_it, input=input, iters=iters)
 ```
+
 When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
 
