@@ -83,11 +83,13 @@ client = get_client()
 # Instantiate our app
 msa = MySickApp()
 
-# Create an app client with he client and an instance of the app
-app_client = ApplicationClient(client, msa)
+# Create an app client with he client and an instance of the app, 
+# also specifying signer here but it can be passed directly later on
+# if a different signer is required
+app_client = ApplicationClient(client, msa, signer=signer)
 
-# Call the `create` method, passing the signer. 
-app_id, app_addr, tx_id = app_client.create(signer)
+# Call the `create` method. 
+app_id, app_addr, tx_id = app_client.create()
 print(f"Created app with id: {app_id} and address: {app_addr}")
 
 ```
@@ -101,12 +103,12 @@ We can call the method we defined in our `Application`
 
 ```py
 
-result = app_client.call(signer, msa.add, [2,3])
+result = app_client.call(msa.add, a=2,b=3)
 print(result.abi_results[0].return_value) # 5
 
 ```
 
-Here we use the `call` method, passing the signer, the [Method](https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/method.html#algosdk.abi.method.Method) object, and any args necessary. The args passed may be of any type but must match the definition of the `Method`. 
+Here we use the `call` method, passing the [Method](https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/method.html#algosdk.abi.method.Method) object, and args necessary by name. The args passed may be of any type but must match the definition of the `Method`. 
 
 Lets go back and add some application state (Global State in Algorand parlance). 
 
@@ -206,8 +208,6 @@ class MyRoyaltyApp(ARC18):
 ```
 
 You can do so by specifying the parent class then adding or overriding handler methods.
-
-
 
 
 That's it for now. 
