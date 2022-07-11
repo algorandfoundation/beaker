@@ -256,15 +256,15 @@ Here we subclassed the `OpUp` contract which provides functionality to create a 
 
 ## Method Hints
 
-Note also in the above, the experimental decorator argument,  `resolvable`, adds a `MethodHint` to the method. This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be.  When using the `ApplicationClient`, omitting the argument for that parameter is equivalent to asking the value to be resolved. 
+Note also in the above, the experimental decorator argument,  `resolvable`, adds a `MethodHint` to the method. This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary.  When using the `ApplicationClient`, omitting the argument for that parameter is equivalent to asking the value to be resolved. 
 
-The line:
+The line omits the `opup_app` argument:
 ```py
   input = "hashme"
   iters = 10
   result = app_client.call(app.hash_it, input=input, iters=iters)
 ```
-Checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
+When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
 
 ## More?
