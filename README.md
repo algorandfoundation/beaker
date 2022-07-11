@@ -63,6 +63,8 @@ This adds an ABI method with signature `add(uint64,uint64)uint64` to our applica
 
 > Note: `self` may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like `MySickApp.do_thing(data)`
 
+## ApplicationClient
+
 Lets now deploy our contract using an `ApplicationClient`.
 
 ```py
@@ -109,6 +111,8 @@ print(result.abi_results[0].return_value) # 5
 ```
 
 Here we use the `call` method, passing the [Method](https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/method.html#algosdk.abi.method.Method) object, and args necessary by name. The args passed may be of any type but must match the definition of the `Method`. 
+
+## Application State
 
 Lets go back and add some application state (Global State in Algorand parlance). 
 
@@ -171,6 +175,8 @@ The `handler` decorator accepts several other parameters:
 - `read_only` - Really just a place holder until arc22 is merged
 
 
+## Account State
+
 We can also specify Account state and even allow for dynamic state keys.
 
 ```py
@@ -196,6 +202,8 @@ class MySickApp(Application):
 
 ```
 
+## Subclassing
+
 Lets say you want to augment an existing application written with Beaker.
 
 ```py
@@ -210,7 +218,7 @@ class MyRoyaltyApp(ARC18):
 You can do so by specifying the parent class then adding or overriding handler methods.
 
 
-What about extending your Application with some other functionality?
+What about just extending your Application with some other functionality?
 
 ```py
 from beaker.contracts import OpUp
@@ -246,9 +254,9 @@ class MyHasherApp(OpUp):
 
 Here we subclassed the `OpUp` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 
-Note also the experimental decorator `resolvable` which adds a `MethodHint` to the method, allowing the caller to figure out what the appropriate application id _should_ be.
+## Method Hints
 
-When using the `ApplicationClient`, omitting the argument for that parameter is equivalent to asking the value to be resolved. 
+Note also in the above, the experimental decorator argument,  `resolvable`, adds a `MethodHint` to the method. This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be.  When using the `ApplicationClient`, omitting the argument for that parameter is equivalent to asking the value to be resolved. 
 
 The line:
 ```py
@@ -256,9 +264,10 @@ The line:
   iters = 10
   result = app_client.call(app.hash_it, input=input, iters=iters)
 ```
-
 Checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
+
+## More?
 
 That's it for now. 
 
