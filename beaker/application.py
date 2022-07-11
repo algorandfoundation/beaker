@@ -16,6 +16,7 @@ from pyteal import (
 )
 
 from .decorators import (
+    MethodHints,
     get_handler_config,
     bare_create,
     bare_delete,
@@ -134,6 +135,16 @@ class Application:
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
+
+    def contract_hints(self) -> dict[str, MethodHints]:
+        hints = {}
+        for name, attr in self.attrs.items():
+            hc = get_handler_config(attr)
+            h = hc.hints()
+            if len(h.__dict__.keys()) > 0:
+                hints[name] = h
+
+        return hints
 
     def initialize_app_state(self):
         return self.app_state.initialize()

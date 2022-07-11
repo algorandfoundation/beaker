@@ -1,8 +1,9 @@
+from typing import Any
 from dataclasses import dataclass, field, replace
 from functools import wraps
-from inspect import signature
+from inspect import get_annotations, signature
 from typing import Callable, Final, cast
-
+from algosdk.abi import Method
 from pyteal import (
     ABIReturnSubroutine,
     And,
@@ -23,9 +24,21 @@ from pyteal import (
     Txn,
 )
 
+from beaker.application_schema import GlobalStateValue, LocalStateValue
+from beaker.model import Model
+
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
+
+
+@dataclass
+class MethodHints:
+    """MethodHints provides some hints to the caller"""
+
+    resolvable: dict[str, dict[str, Method]] = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
+    models: dict[str, dict[str, Model]] = field(kw_only=True, default=None)
 
 
 @dataclass
@@ -36,6 +49,29 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
     subroutine: Subroutine = field(kw_only=True, default=None)
+    resolvable: dict[str, ABIReturnSubroutine] = field(kw_only=True, default=None)
+    models: dict[str, Model] = field(kw_only=True, default=None)
+
+    def hints(self) -> MethodHints:
+        hints = {
+            "resolvable": {},
+            "read_only": self.read_only,
+            "models": {},
+        }
+
+        if self.resolvable is not None:
+            resolvable = {}
+            for arg_name, ra in self.resolvable.items():
+                resolvable[arg_name] = ra.method_spec()
+            hints["resolvable"] = resolvable
+
+        if self.models is not None:
+            models = {}
+            for arg_name, model_spec in self.models.items():
+                models[arg_name] = model_spec.__annotations__.keys()
+            hints["models"] = models
+
+        return MethodHints(**hints)
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -122,6 +158,33 @@ def _on_complete(mc: MethodConfig):
     return _impl
 
 
+def _replace_models(fn: HandlerFunc) -> HandlerFunc:
+    sig = signature(fn)
+    params = sig.parameters.copy()
+
+    replaced = {}
+    annotations = get_annotations(fn)
+    for k, v in params.items():
+        cls = v.annotation
+        if hasattr(v.annotation, "__origin__"):
+            # Generic type, not a Model
+            continue
+
+        if issubclass(cls, Model):
+            params[k] = v.replace(annotation=cls().get_type())
+            annotations[k] = cls().get_type()
+            replaced[k] = cls
+
+    if len(replaced.keys()) > 0:
+        set_handler_config(fn, models=replaced)
+
+    newsig = sig.replace(parameters=params.values())
+    fn.__signature__ = newsig
+    fn.__annotations__ = annotations
+
+    return fn
+
+
 def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
@@ -134,6 +197,23 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     fn.__signature__ = newsig
 
     return fn
+
+
+def resolvable(**resolvable_args: ABIReturnSubroutine | HandlerFunc):
+
+    for name, arg in resolvable_args.items():
+        if not isinstance(arg, ABIReturnSubroutine):
+            hc = get_handler_config(arg)
+            if hc.abi_method is None:
+                raise Exception(f"Expected ABISubroutine, got {resolvable_args}")
+
+            resolvable_args[name] = hc.abi_method
+
+    def _impl(fn: HandlerFunc):
+        set_handler_config(fn, resolvable=resolvable_args)
+        return fn
+
+    return _impl
 
 
 def bare_handler(
@@ -232,6 +312,7 @@ def handler(
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
+        fn = _replace_models(fn)
 
         if authorize is not None:
             fn = _authorize(authorize)(fn)

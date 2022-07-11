@@ -1,7 +1,7 @@
 from pyteal import *
-from typing import Literal
+from beaker.model import Model
 from beaker.contracts import OpUp
-from beaker.decorators import bare_handler, handler
+from beaker.decorators import resolvable, handler
 
 
 class ExpensiveApp(OpUp):
@@ -13,7 +13,19 @@ class ExpensiveApp(OpUp):
             output.set(ExpensiveApp.opup_app_id),
         )
 
+    class UserRecord(Model):
+        account: abi.Address
+        balance: abi.Uint64
+        nickname: abi.String
+
     @handler
+    def model(self, input: UserRecord, *, output: UserRecord):
+        return output.decode(input.encode())
+
+    @handler
+    @resolvable(
+        opup_app=OpUp.get_opup_app_id
+    )  # TODO: this should come from the call to `call_opup_n`?
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,
@@ -36,5 +48,10 @@ class ExpensiveApp(OpUp):
 
 if __name__ == "__main__":
 
+    import json
+
     ea = ExpensiveApp()
-    print(ea.approval_program)
+    for n, hints in ea.contract_hints().items():
+        for k, v in hints["models"].items():
+            print(f"method {n} defined model for arg {k} as {list(v)}")
+    # print(ea.approval_program)

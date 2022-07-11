@@ -25,10 +25,10 @@ def demo():
     app = ConstantProductAMM()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app)
+    app_client = ApplicationClient(client, app, signer=signer)
 
     # Create the applicatiion on chain, set the app id for the app client
-    app_id, app_addr, txid = app_client.create(signer)
+    app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
     # Fund App address so it can create the pool token and hold balances
@@ -45,7 +45,7 @@ def demo():
 
     # Call app to create pool token
     print("Calling bootstrap")
-    result = app_client.call(signer, app.bootstrap, [asset_a, asset_b])
+    result = app_client.call(app.bootstrap, a_asset=asset_a, b_asset=asset_b)
     pool_token = result.abi_results[0].return_value
     print(f"Created pool token with id: {pool_token}")
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
@@ -67,21 +67,18 @@ def demo():
     ###
     print("Funding")
     app_client.call(
-        signer,
         app.mint,
-        [
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 10000, asset_a),
-                signer=signer,
-            ),
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 3000, asset_b),
-                signer=signer,
-            ),
-            pool_token,
-            asset_a,
-            asset_b,
-        ],
+        a_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 10000, asset_a),
+            signer=signer,
+        ),
+        b_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 3000, asset_b),
+            signer=signer,
+        ),
+        pool_asset=pool_token,
+        a_asset=asset_a,
+        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -90,21 +87,18 @@ def demo():
     ###
     print("Minting")
     app_client.call(
-        signer,
         app.mint,
-        [
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100000, asset_a),
-                signer=signer,
-            ),
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 1000, asset_b),
-                signer=signer,
-            ),
-            pool_token,
-            asset_a,
-            asset_b,
-        ],
+        a_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100000, asset_a),
+            signer=signer,
+        ),
+        b_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 1000, asset_b),
+            signer=signer,
+        ),
+        pool_asset=pool_token,
+        a_asset=asset_a,
+        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -113,16 +107,13 @@ def demo():
     ###
     print("Swapping A for B")
     app_client.call(
-        signer,
         app.swap,
-        [
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
-                signer=signer,
-            ),
-            asset_a,
-            asset_b,
-        ],
+        swap_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
+            signer=signer,
+        ),
+        a_asset=asset_a,
+        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -131,16 +122,13 @@ def demo():
     ###
     print("Swapping B for A")
     app_client.call(
-        signer,
         app.swap,
-        [
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
-                signer=signer,
-            ),
-            asset_a,
-            asset_b,
-        ],
+        swap_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
+            signer=signer,
+        ),
+        a_asset=asset_a,
+        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -149,17 +137,14 @@ def demo():
     ###
     print("Burning")
     app_client.call(
-        signer,
         app.burn,
-        [
-            TransactionWithSigner(
-                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),
-                signer=signer,
-            ),
-            pool_token,
-            asset_a,
-            asset_b,
-        ],
+        pool_xfer=TransactionWithSigner(
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),
+            signer=signer,
+        ),
+        pool_asset=pool_token,
+        a_asset=asset_a,
+        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 

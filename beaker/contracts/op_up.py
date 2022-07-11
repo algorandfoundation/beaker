@@ -20,6 +20,10 @@ class OpUp(Application):
         stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
     )
 
+    @handler(read_only=True)
+    def get_opup_app_id(*, output: abi.Uint64):
+        return output.set(OpUp.opup_app_id)
+
     @internal(TealType.none)
     def create_opup():
         return Seq(
