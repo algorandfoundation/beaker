@@ -9,12 +9,9 @@ from .application_schema import (
 )
 from .decorators import (
     Authorize,
+    Bare,
     handler,
     internal,
     bare_handler,
-    bare_create,
-    bare_delete,
-    bare_opt_in,
-    bare_update,
 )
 from .consts import Algo, MilliAlgo

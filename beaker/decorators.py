@@ -41,6 +41,7 @@ class ResolvableArguments:
         resolvable_args = {}
         for arg_name, arg_resolver in kwargs.items():
             if not isinstance(arg_resolver, ABIReturnSubroutine):
+                # Assume its a handler func and try to get the config
                 hc = get_handler_config(arg_resolver)
                 if hc.abi_method is None:
                     raise Exception(f"Expected ABISubroutine, got {arg_resolver}")
@@ -61,6 +62,8 @@ class MethodHints:
 
 @dataclass
 class HandlerConfig:
+    """HandlerConfig contains all the extra bits of info about a given ABI method"""
+
     abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
     method_config: MethodConfig = field(kw_only=True, default=None)
     bare_method: BareCallActions = field(kw_only=True, default=None)
@@ -315,17 +318,33 @@ def bare_handler(
     return _impl
 
 
-def bare_create(fn: HandlerFunc):
-    return bare_handler(no_op=CallConfig.CREATE)(fn)
+class Bare:
+    """Bare contains static methods for handling bare application calls, that is app calls with no argumentsi"""
 
+    @staticmethod
+    def create(fn: HandlerFunc):
+        return bare_handler(no_op=CallConfig.CREATE)(fn)
 
-def bare_delete(fn: HandlerFunc):
-    return bare_handler(delete_application=CallConfig.CALL)(fn)
+    @staticmethod
+    def delete(fn: HandlerFunc):
+        return bare_handler(delete_application=CallConfig.CALL)(fn)
 
+    @staticmethod
+    def update(fn: HandlerFunc):
+        return bare_handler(update_application=CallConfig.CALL)(fn)
 
-def bare_update(fn: HandlerFunc):
-    return bare_handler(update_application=CallConfig.CALL)(fn)
+    @staticmethod
+    def opt_in(fn: HandlerFunc):
+        return bare_handler(opt_in=CallConfig.CALL)(fn)
 
+    @staticmethod
+    def clear_state(fn: HandlerFunc):
+        return bare_handler(clear_state=CallConfig.CALL)(fn)
 
-def bare_opt_in(fn: HandlerFunc):
-    return bare_handler(opt_in=CallConfig.CALL)(fn)
+    @staticmethod
+    def close_out(fn: HandlerFunc):
+        return bare_handler(close_out=CallConfig.CALL)(fn)
+
+    @staticmethod
+    def no_op(fn: HandlerFunc):
+        return bare_handler(no_op=CallConfig.CALL)(fn)

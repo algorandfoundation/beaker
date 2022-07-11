@@ -1,4 +1,4 @@
 .vscode/
 .venv/
 __pycache__/
-Beaker.egg-info/
+beaker.egg-info/

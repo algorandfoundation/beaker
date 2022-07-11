@@ -16,11 +16,9 @@ from pyteal import (
 )
 
 from .decorators import (
+    Bare,
     MethodHints,
     get_handler_config,
-    bare_create,
-    bare_delete,
-    bare_update,
 )
 from .application_schema import (
     AccountState,
@@ -152,14 +150,14 @@ class Application:
     def initialize_account_state(self, sender):
         return self.acct_state.initialize(sender)
 
-    @bare_create
+    @Bare.create
     def create(self):
         return Approve()
 
-    @bare_update
+    @Bare.update
     def update(self):
         return Reject()
 
-    @bare_delete
+    @Bare.delete
     def delete(self):
         return Reject()
