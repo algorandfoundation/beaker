@@ -268,23 +268,23 @@ In the above, there is a required argument `opup_app`, the id of the application
 
 We can change the handler to provide the hint.
 
-```
-    @handler(
-        resolvable=ResolvableArguments(
-            opup_app=OpUp.get_opup_app_id 
-        )
+```py
+@handler(
+    resolvable=ResolvableArguments(
+        opup_app=OpUp.get_opup_app_id 
     )
+)
 ```
 
 With this we communicate to a caller that the value the application expects be passed can be resolved by calling the `get_opup_app_id` method.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
 
 Here we call the method, omitting the `opup_app` argument:
 ```py
-  input = "hashme"
-  iters = 10
-  # In this case we'd like to pass a different signer to call this transaction
-  signer_client = app_client.prepare(signer=signer)
-  result = signer_client.call(app.hash_it, input=input, iters=iters)
+input = "hashme"
+iters = 10
+# In this case we'd like to pass a different signer to call this transaction
+signer_client = app_client.prepare(signer=signer)
+result = signer_client.call(app.hash_it, input=input, iters=iters)
 ```
 
 When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
