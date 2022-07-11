@@ -15,9 +15,9 @@ Currently only installing from github is supported
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
-## Use 
-
 See [examples](/examples/) for runnable source
+
+## Hello Beaker 
 
 First, create a class to represent your application as a subclass of the beaker `Application`. 
 
