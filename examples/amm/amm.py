@@ -6,7 +6,6 @@ from beaker import (
     Application,
     Authorize,
     handler,
-    internal,
 )
 from beaker.decorators import bare_handler
 

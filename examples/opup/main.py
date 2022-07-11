@@ -5,7 +5,6 @@ from algosdk.atomic_transaction_composer import (
 )
 from algosdk.future import transaction
 
-from beaker import method_spec
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_client, get_accounts
 
