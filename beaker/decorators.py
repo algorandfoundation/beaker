@@ -1,4 +1,4 @@
-from typing import Any
+from ast import arg
 from dataclasses import dataclass, field, replace
 from functools import wraps
 from inspect import get_annotations, signature
@@ -13,6 +13,7 @@ from pyteal import (
     BareCallActions,
     CallConfig,
     Expr,
+    Global,
     Int,
     MethodConfig,
     OnCompleteAction,
@@ -23,13 +24,23 @@ from pyteal import (
     TealType,
     Txn,
 )
-
 from beaker.application_schema import GlobalStateValue, LocalStateValue
+
 from beaker.model import Model
 
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
+
+
+class ResolvableArguments:
+    def __init__(
+        self,
+        **kwargs: dict[
+            str, ABIReturnSubroutine | HandlerFunc | GlobalStateValue | LocalStateValue
+        ],
+    ):
+        self.__dict__.update(**kwargs)
 
 
 @dataclass
@@ -49,7 +60,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
     subroutine: Subroutine = field(kw_only=True, default=None)
-    resolvable: dict[str, ABIReturnSubroutine] = field(kw_only=True, default=None)
+    resolvable: ResolvableArguments = field(kw_only=True, default=None)
     models: dict[str, Model] = field(kw_only=True, default=None)
 
     def hints(self) -> MethodHints:
@@ -61,8 +72,13 @@ class HandlerConfig:
 
         if self.resolvable is not None:
             resolvable = {}
-            for arg_name, ra in self.resolvable.items():
-                resolvable[arg_name] = ra.method_spec()
+            for arg_name, ra in self.resolvable.__dict__.items():
+                match ra:
+                    case ABIReturnSubroutine():
+                        resolvable[arg_name] = ra.method_spec()
+                    case GlobalStateValue() | LocalStateValue():
+                        resolvable[arg_name] = ra.key 
+                    
             hints["resolvable"] = resolvable
 
         if self.models is not None:
