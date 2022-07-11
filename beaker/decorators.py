@@ -1,7 +1,7 @@
 from typing import Any
 from dataclasses import dataclass, field, replace
 from functools import wraps
-from inspect import signature
+from inspect import get_annotations, signature
 from typing import Callable, Final, cast
 
 from pyteal import (
@@ -25,6 +25,7 @@ from pyteal import (
 )
 
 from beaker.application_schema import GlobalStateValue, LocalStateValue
+from beaker.model import Model
 
 HandlerFunc = Callable[..., Expr]
 
@@ -40,16 +41,23 @@ class HandlerConfig:
     read_only: bool = field(kw_only=True, default=False)
     subroutine: Subroutine = field(kw_only=True, default=None)
     required_args: dict[str, ABIReturnSubroutine] = field(kw_only=True, default=None)
+    models: dict[str, Model] = field(kw_only=True, default=None)
 
     def hints(self) -> dict[str, Any]:
         hints = {
             "required-args": {},
             "read-only": self.read_only,
+            "models": {},
         }
 
         if self.required_args is not None:
-            for name, ra in self.required_args.items():
-                hints["required-args"][name] = ra.method_spec()
+            for arg_name, ra in self.required_args.items():
+                hints["required-args"][arg_name] = ra.method_spec()
+
+        if self.models is not None:
+            for arg_name, model_spec in self.models.items():
+                print(model_spec.__annotations__)
+                hints["models"][arg_name] = model_spec.__annotations__.keys()
 
         return hints
 
@@ -136,6 +144,33 @@ def _on_complete(mc: MethodConfig):
         return fn
 
     return _impl
+
+
+def _replace_models(fn: HandlerFunc) -> HandlerFunc:
+    sig = signature(fn)
+    params = sig.parameters.copy()
+
+    replaced = {}
+    annotations = get_annotations(fn)
+    for k, v in params.items():
+        cls = v.annotation
+        if hasattr(v.annotation, "__origin__"):
+            # Generic type, not a Model
+            continue
+
+        if issubclass(cls, Model):
+            params[k] = v.replace(annotation=cls().get_type())
+            annotations[k] = cls().get_type()
+            replaced[k] = cls
+
+    if len(replaced.keys()) > 0:
+        set_handler_config(fn, models=replaced)
+
+    newsig = sig.replace(parameters=params.values())
+    fn.__signature__ = newsig
+    fn.__annotations__ = annotations
+
+    return fn
 
 
 def _remove_self(fn: HandlerFunc) -> HandlerFunc:
@@ -265,6 +300,7 @@ def handler(
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
+        fn = _replace_models(fn)
 
         if authorize is not None:
             fn = _authorize(authorize)(fn)
