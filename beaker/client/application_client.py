@@ -165,14 +165,14 @@ class ApplicationClient:
         self,
         signer: TransactionSigner,
         sp: transaction.SuggestedParams = None,
-        **kwargs
+        **kwargs,
     ) -> "ApplicationClient":
 
         ac = copy.deepcopy(self)
         ac.signer = signer
         ac.suggested_params = sp
         ac.txn_kwargs = kwargs
-        return ac 
+        return ac
 
     def call(
         self, method: abi.Method | HandlerFunc, **kwargs

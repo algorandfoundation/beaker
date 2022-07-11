@@ -31,12 +31,14 @@ HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
 
+
 @dataclass
 class MethodHints:
+    """MethodHints provides some hints to the caller"""
+
     resolvable: dict[str, dict[str, Method]] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
     models: dict[str, dict[str, Model]] = field(kw_only=True, default=None)
-
 
 
 @dataclass
@@ -61,7 +63,7 @@ class HandlerConfig:
             resolvable = {}
             for arg_name, ra in self.resolvable.items():
                 resolvable[arg_name] = ra.method_spec()
-            hints['resolvable'] = resolvable
+            hints["resolvable"] = resolvable
 
         if self.models is not None:
             models = {}
@@ -69,7 +71,7 @@ class HandlerConfig:
                 models[arg_name] = model_spec.__annotations__.keys()
             hints["models"] = models
 
-        return MethodHints(**hints) 
+        return MethodHints(**hints)
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
