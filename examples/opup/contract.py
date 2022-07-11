@@ -1,7 +1,7 @@
 from pyteal import *
 from beaker.model import Model
 from beaker.contracts import OpUp
-from beaker.decorators import required_args, handler
+from beaker.decorators import resolvable, handler
 
 
 class ExpensiveApp(OpUp):
@@ -23,7 +23,7 @@ class ExpensiveApp(OpUp):
         return output.decode(input.encode())
 
     @handler
-    @required_args(
+    @resolvable(
         opup_app=OpUp.get_opup_app_id
     )  # TODO: this should come from the call to `call_opup_n`?
     def hash_it(

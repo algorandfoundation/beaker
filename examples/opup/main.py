@@ -42,8 +42,13 @@ def demo():
     # Passing None for the app id forces the ApplicationClient to try and resolve it
     # TODO: make args => kwargs so we can be more explicit about the args passed and
     # what their value should be.
-
     # consider app_id=ResolveHint()
+
+    # Can compose
+    # atc = AtomicTransactionComposer()
+    # app_client.compose(atc, app.hash_it, input=input, iters=iters)
+    # result = atc.execute(client, 4)
+
     result = app_client.call(app.hash_it, input=input, iters=iters)
 
     # Get the first result and trim off str encoding bytes, I should have used byte[32]

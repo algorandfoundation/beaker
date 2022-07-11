@@ -1,10 +1,14 @@
 from base64 import b64decode
+import copy
 from math import ceil
 from typing import Any, cast
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
+    TransactionSigner,
     AccountTransactionSigner,
+    MultisigTransactionSigner,
+    LogicSigTransactionSigner,
     AtomicTransactionComposer,
     AtomicTransactionResponse,
     TransactionWithSigner,
@@ -16,7 +20,7 @@ from algosdk.v2client.algod import AlgodClient
 from pyteal import ABIReturnSubroutine
 
 from beaker.application import Application, method_spec
-from beaker.decorators import HandlerFunc, get_handler_config
+from beaker.decorators import HandlerFunc, MethodHints
 
 # TODO make const
 APP_MAX_PAGE_SIZE = 2048
@@ -28,7 +32,7 @@ class ApplicationClient:
         client: AlgodClient,
         app: Application,
         app_id: int = 0,
-        signer: AccountTransactionSigner = None,
+        signer: TransactionSigner = None,
         suggested_params: transaction.SuggestedParams = None,
     ):
         self.client = client
@@ -55,7 +59,7 @@ class ApplicationClient:
 
     def create(
         self,
-        signer: AccountTransactionSigner = None,
+        signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
@@ -101,7 +105,7 @@ class ApplicationClient:
 
     def update(
         self,
-        signer: AccountTransactionSigner = None,
+        signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
@@ -131,7 +135,7 @@ class ApplicationClient:
 
     def delete(
         self,
-        signer: AccountTransactionSigner = None,
+        signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
@@ -159,14 +163,16 @@ class ApplicationClient:
 
     def prepare(
         self,
-        signer: AccountTransactionSigner,
+        signer: TransactionSigner,
         sp: transaction.SuggestedParams = None,
-        **kwargs,
+        **kwargs
     ) -> "ApplicationClient":
-        self.signer = signer
-        self.sp = sp
-        self.txn_kwargs = kwargs
-        return self
+
+        ac = copy.deepcopy(self)
+        ac.signer = signer
+        ac.suggested_params = sp
+        ac.txn_kwargs = kwargs
+        return ac 
 
     def call(
         self, method: abi.Method | HandlerFunc, **kwargs
@@ -183,18 +189,17 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
-                resolvable_args = hints.get("required-args", {})
-                if method_arg.name in resolvable_args:
-                    result = self.call(resolvable_args[method_arg.name])
+                if hints.resolvable is not None and method_arg.name in hints.resolvable:
+                    result = self.call(hints.resolvable[method_arg.name])
                     args.append(result.abi_results[0].return_value)
                 else:
                     raise Exception(f"Unspecified argument: {method_arg.name}")
             else:
                 args.append(kwargs[method_arg.name])
 
-        if "read-only" in hints:
-            read_only = hints["read-only"]
+        if hints.read_only:
             # TODO: do dryrun
+            pass
 
         txnkwargs = self.__dict__.get("txn_kwargs", {})
 
@@ -211,10 +216,47 @@ class ApplicationClient:
 
         return atc.execute(self.client, 4)
 
+    def compose(
+        self, atc: AtomicTransactionComposer, method: abi.Method | HandlerFunc, **kwargs
+    ):
+        sp = self.get_suggested_params()
+        signer, addr = self.get_signer()
+
+        if not isinstance(method, abi.Method):
+            method = method_spec(method)
+
+        hints = self.method_hints(method.name)
+
+        args = []
+        for method_arg in method.args:
+            if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
+
+                resolvable_args = hints.get("required-args", {})
+                if method_arg.name in resolvable_args:
+                    result = self.call(resolvable_args[method_arg.name])
+                    args.append(result.abi_results[0].return_value)
+                else:
+                    raise Exception(f"Unspecified argument: {method_arg.name}")
+            else:
+                args.append(kwargs[method_arg.name])
+
+        txnkwargs = self.__dict__.get("txn_kwargs", {})
+
+        atc.add_method_call(
+            self.app_id,
+            method,
+            addr,
+            sp,
+            signer,
+            method_args=args,
+            **txnkwargs,
+        )
+
+        return atc
+
     def method_hints(self, method_name: str):
-        hints = {}
         if method_name not in self.hints:
-            return hints
+            return MethodHints()
         return self.hints[method_name]
 
     def get_suggested_params(
@@ -229,18 +271,21 @@ class ApplicationClient:
         return self.client.suggested_params()
 
     def get_signer(
-        self, signer: AccountTransactionSigner = None
-    ) -> tuple[AccountTransactionSigner, str]:
-        if signer is not None:
-            return (
-                signer,
-                address_from_private_key(signer.private_key),
-            )
+        self, signer: TransactionSigner = None
+    ) -> tuple[TransactionSigner, str]:
 
-        if self.signer is not None:
-            return (
-                self.signer,
-                address_from_private_key(self.signer.private_key),
-            )
+        if signer is None:
+            if self.signer is None:
+                raise Exception("No signer provided")
 
-        raise Exception("No signer provided")
+            signer = self.signer
+
+        match signer:
+            case AccountTransactionSigner():
+                addr = address_from_private_key(signer.private_key)
+            case MultisigTransactionSigner():
+                addr = signer.msig.address()
+            case LogicSigTransactionSigner():
+                addr = signer.lsig.address()
+
+        return signer, addr
