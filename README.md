@@ -188,7 +188,10 @@ def make_tag_key(tag: abi.String):
 
 class MySickApp(Application):
 
-    nickname: Final[LocalStateValue] = LocalStateValue(stack_type=TealType.bytes, descr="What this user prefers to be called")
+    nickname: Final[LocalStateValue] = LocalStateValue(
+        stack_type=TealType.bytes, 
+        descr="What this user prefers to be called"
+    )
     tags: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
         stack_type=TealType.bytes,
         max_keys=10,
