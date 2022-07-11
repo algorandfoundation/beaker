@@ -7,7 +7,7 @@ from beaker import (
     Authorize,
     handler,
 )
-from beaker.decorators import bare_create, bare_handler
+from beaker.decorators import bare_create
 
 # WARNING: THIS IS NOT PROODUCTION LEVEL CODE
 # Seriously, there are _definitely_ bugs in the math
