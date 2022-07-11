@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, replace
 from functools import wraps
 from inspect import get_annotations, signature
 from typing import Callable, Final, cast
-
+from algosdk.abi import Method
 from pyteal import (
     ABIReturnSubroutine,
     And,
@@ -33,6 +33,15 @@ _handler_config_attr: Final[str] = "__handler_config__"
 
 
 @dataclass
+class MethodHints:
+    """MethodHints provides some hints to the caller"""
+
+    resolvable: dict[str, dict[str, Method]] = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
+    models: dict[str, dict[str, Model]] = field(kw_only=True, default=None)
+
+
+@dataclass
 class HandlerConfig:
     abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
     method_config: MethodConfig = field(kw_only=True, default=None)
@@ -40,26 +49,29 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     read_only: bool = field(kw_only=True, default=False)
     subroutine: Subroutine = field(kw_only=True, default=None)
-    required_args: dict[str, ABIReturnSubroutine] = field(kw_only=True, default=None)
+    resolvable: dict[str, ABIReturnSubroutine] = field(kw_only=True, default=None)
     models: dict[str, Model] = field(kw_only=True, default=None)
 
-    def hints(self) -> dict[str, Any]:
+    def hints(self) -> MethodHints:
         hints = {
-            "required-args": {},
-            "read-only": self.read_only,
+            "resolvable": {},
+            "read_only": self.read_only,
             "models": {},
         }
 
-        if self.required_args is not None:
-            for arg_name, ra in self.required_args.items():
-                hints["required-args"][arg_name] = ra.method_spec()
+        if self.resolvable is not None:
+            resolvable = {}
+            for arg_name, ra in self.resolvable.items():
+                resolvable[arg_name] = ra.method_spec()
+            hints["resolvable"] = resolvable
 
         if self.models is not None:
+            models = {}
             for arg_name, model_spec in self.models.items():
-                print(model_spec.__annotations__)
-                hints["models"][arg_name] = model_spec.__annotations__.keys()
+                models[arg_name] = model_spec.__annotations__.keys()
+            hints["models"] = models
 
-        return hints
+        return MethodHints(**hints)
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -187,18 +199,18 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def required_args(**required_args: ABIReturnSubroutine | HandlerFunc):
+def resolvable(**resolvable_args: ABIReturnSubroutine | HandlerFunc):
 
-    for name, arg in required_args.items():
+    for name, arg in resolvable_args.items():
         if not isinstance(arg, ABIReturnSubroutine):
             hc = get_handler_config(arg)
             if hc.abi_method is None:
-                raise Exception(f"Expected ABISubroutine, got {required_args}")
+                raise Exception(f"Expected ABISubroutine, got {resolvable_args}")
 
-            required_args[name] = hc.abi_method
+            resolvable_args[name] = hc.abi_method
 
     def _impl(fn: HandlerFunc):
-        set_handler_config(fn, required_args=required_args)
+        set_handler_config(fn, resolvable=resolvable_args)
         return fn
 
     return _impl

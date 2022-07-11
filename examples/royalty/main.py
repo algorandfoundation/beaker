@@ -18,10 +18,10 @@ def demo():
     app = MyRoyaltyContract()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app)
+    app_client = ApplicationClient(client, app, signer=signer)
 
     # Create the applicatiion on chain, set the app id for the app client
-    app_id, app_addr, txid = app_client.create(signer)
+    app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
     sp = client.suggested_params()
@@ -30,7 +30,7 @@ def demo():
     )
     transaction.wait_for_confirmation(client, txid, 4)
 
-    result = app_client.call(signer, app.create_nft, ["cool-nft"])
+    result = app_client.call(app.create_nft, name="cool-nft")
     print(f"Created nft with id: {result.abi_results[0].return_value}")
 
 

@@ -4,7 +4,7 @@ from pyteal import *
 from beaker.application import Application
 from beaker.application_schema import GlobalStateValue
 from beaker.consts import Algo
-from beaker.decorators import internal, required_args, handler
+from beaker.decorators import internal, handler
 
 
 OpUpTarget = Return(Txn.sender() == Global.creator_address())
