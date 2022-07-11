@@ -118,7 +118,7 @@ Lets go back and add some application state (Global State in Algorand parlance).
 
 ```py
 
-from beaker import GlobalStateValue
+from beaker import *
 
 class MySickApp(Application):
     counter: Final[GlobalStateValue] = GlobalStateValue(
@@ -128,6 +128,10 @@ class MySickApp(Application):
         # default=Int(5), specify a default value to initialize the state value to
         # static=True, flag as a value that should not change
     )
+
+    @Bare.create
+    def create(self):
+        return self.initialize_app_state()
 
     @handler
     def increment(self, *, output: abi.Uint64):
@@ -144,8 +148,9 @@ class MySickApp(Application):
         )
 ```
 
-These methods may be called in the same way as the `add` method above.  Using `set` we can overwrite the value that is currently stored.
+The `create` method overrides the one defined in the base `Application` class, tagging it with `Bare.create` which specifies we want a bare call (no app args) and only on create (app id == 0)
 
+The other methods may be called in the same way as the `add` method above.  Using `set` we can overwrite the value that is currently stored.
 
 But what if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
 
