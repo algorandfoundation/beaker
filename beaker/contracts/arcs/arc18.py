@@ -5,9 +5,7 @@ from beaker import Application, GlobalStateValue, DynamicLocalStateValue
 from beaker.decorators import (
     Authorize,
     handler,
-    bare_delete,
-    bare_create,
-    bare_update,
+    Bare,
     bare_handler,
 )
 
@@ -37,15 +35,15 @@ class ARC18(Application):
     # App Lifecycle
     ###
 
-    @bare_create
+    @Bare.create
     def create(self):
         return self.initialize_app_state()
 
-    @bare_update
+    @Bare.update
     def update():
         return Assert(Txn.sender() == ARC18.administrator)
 
-    @bare_delete
+    @Bare.delete
     def delete():
         return Assert(Txn.sender() == ARC18.administrator)
 
