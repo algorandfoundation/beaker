@@ -187,6 +187,8 @@ class ApplicationClient:
                 if method_arg.name in resolvable_args:
                     result = self.call(resolvable_args[method_arg.name])
                     args.append(result.abi_results[0].return_value)
+                else:
+                    raise Exception(f"Unspecified argument: {method_arg.name}")
             else:
                 args.append(kwargs[method_arg.name])
 
