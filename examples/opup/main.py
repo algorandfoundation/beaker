@@ -32,26 +32,20 @@ def demo():
     txn = TransactionWithSigner(
         txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )
-    result = app_client.call(app.opup_bootstrap, ptxn=txn)
-    oua = result.abi_results[0].return_value
+    oua = app_client.call(app.opup_bootstrap, ptxn=txn)
     print(f"Created op up app: {oua}")
 
     input = "stuff"
     iters = 10
 
-    # Passing None for the app id forces the ApplicationClient to try and resolve it
-    # TODO: make args => kwargs so we can be more explicit about the args passed and
-    # what their value should be.
-    # consider app_id=ResolveHint()
-
-    # Can compose
+    # You can compose calls if you pre-defined your ATC
     # atc = AtomicTransactionComposer()
     # app_client.compose(atc, app.hash_it, input=input, iters=iters)
     # result = atc.execute(client, 4)
 
     result = app_client.call(app.hash_it, input=input, iters=iters)
 
-    result_hash = bytes(result.abi_results[0].return_value)
+    result_hash = bytes(result)
 
     local_hash = input.encode()
     for _ in range(iters):

@@ -191,7 +191,7 @@ class ApplicationClient:
             if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
                 if hints.resolvable is not None and method_arg.name in hints.resolvable:
                     result = self.call(hints.resolvable[method_arg.name])
-                    args.append(result.abi_results[0].return_value)
+                    args.append(result)
                 else:
                     raise Exception(f"Unspecified argument: {method_arg.name}")
             else:
@@ -214,7 +214,10 @@ class ApplicationClient:
             **txnkwargs,
         )
 
-        return atc.execute(self.client, 4)
+        result = atc.execute(self.client, 4)
+        if result.abi_results[0].decode_error is not None:
+            raise Exception(f"decode error: {result.abi_results[0].decode_error}")
+        return result.abi_results[0].return_value
 
     def compose(
         self, atc: AtomicTransactionComposer, method: abi.Method | HandlerFunc, **kwargs
