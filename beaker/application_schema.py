@@ -151,14 +151,22 @@ class ApplicationState:
 
         self.num_uints = len(
             [l for l in self.declared_vals.values() if l.stack_type == TealType.uint64]
-        ) + len(
-            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.uint64]
+        ) + sum(
+            [
+                l.max_keys
+                for l in self.dynamic_vals.values()
+                if l.stack_type == TealType.uint64
+            ]
         )
 
         self.num_byte_slices = len(
             [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
-        ) + len(
-            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.bytes]
+        ) + sum(
+            [
+                l.max_keys
+                for l in self.dynamic_vals.values()
+                if l.stack_type == TealType.bytes
+            ]
         )
 
     def initialize(self):
@@ -266,14 +274,22 @@ class AccountState:
 
         self.num_uints = len(
             [l for l in self.declared_vals.values() if l.stack_type == TealType.uint64]
-        ) + len(
-            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.uint64]
+        ) + sum(
+            [
+                l.max_keys
+                for l in self.dynamic_vals.values()
+                if l.stack_type == TealType.uint64
+            ]
         )
 
         self.num_byte_slices = len(
             [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
-        ) + len(
-            [l for l in self.dynamic_vals.values() if l.stack_type == TealType.bytes]
+        ) + sum(
+            [
+                l.max_keys
+                for l in self.dynamic_vals.values()
+                if l.stack_type == TealType.bytes
+            ]
         )
 
     def initialize(self, acct: Expr):

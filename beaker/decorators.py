@@ -22,6 +22,7 @@ from pyteal import (
     SubroutineFnWrapper,
     TealInputError,
     TealType,
+    TealTypeError,
     Txn,
 )
 
@@ -148,9 +149,7 @@ def _authorize(allowed: SubroutineFnWrapper):
         )
 
     if allowed.type_of() != TealType.uint64:
-        raise TealInputError(
-            f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
-        )
+        raise TealTypeError(allowed.type_of(), TealType.uint64)
 
     def _decorate(fn: HandlerFunc):
         @wraps(fn)
