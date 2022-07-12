@@ -32,8 +32,8 @@ def demo():
     txn = TransactionWithSigner(
         txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )
-    oua = app_client.call(app.opup_bootstrap, ptxn=txn)
-    print(f"Created op up app: {oua}")
+    result = app_client.call(app.opup_bootstrap, ptxn=txn)
+    print(f"Created op up app: {result.return_value}")
 
     input = "stuff"
     iters = 10
@@ -44,8 +44,7 @@ def demo():
     # result = atc.execute(client, 4)
 
     result = app_client.call(app.hash_it, input=input, iters=iters)
-
-    result_hash = bytes(result)
+    result_hash = bytes(result.return_value)
 
     local_hash = input.encode()
     for _ in range(iters):

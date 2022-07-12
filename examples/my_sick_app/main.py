@@ -26,13 +26,13 @@ def demo():
     app_client = app_client.prepare(signer=signer, sp=client.suggested_params())
 
     result = app_client.call(app.add, a=2, b=3)
-    print(result)
+    print(result.return_value)
 
     result = app_client.call(app.increment)
-    print(result)
+    print(result.return_value)
 
     result = app_client.call(app.decrement)
-    print(result)
+    print(result.return_value)
 
 
 if __name__ == "__main__":

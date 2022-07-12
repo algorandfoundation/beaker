@@ -31,7 +31,7 @@ def demo():
     transaction.wait_for_confirmation(client, txid, 4)
 
     result = app_client.call(app.create_nft, name="cool-nft")
-    print(f"Created nft with id: {result}")
+    print(f"Created nft with id: {result.return_value}")
 
 
 if __name__ == "__main__":

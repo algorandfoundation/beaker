@@ -45,7 +45,8 @@ def demo():
 
     # Call app to create pool token
     print("Calling bootstrap")
-    pool_token = app_client.call(app.bootstrap, a_asset=asset_a, b_asset=asset_b)
+    result = app_client.call(app.bootstrap, a_asset=asset_a, b_asset=asset_b)
+    pool_token = result.return_value
     print(f"Created pool token with id: {pool_token}")
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
