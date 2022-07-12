@@ -11,7 +11,6 @@ from pyteal import (
     OptimizeOptions,
     Reject,
     Router,
-    TealInputError,
     Bytes,
 )
 
@@ -28,6 +27,7 @@ from .application_schema import (
     GlobalStateValue,
     DynamicGlobalStateValue,
 )
+from .errors import BareOverwriteError
 
 
 def method_spec(fn) -> Method:
@@ -46,7 +46,9 @@ class Application:
 
     bare_methods: BareCallActions
 
-    def __init__(self):
+    def __init__(self, version: int = MAX_TEAL_VERSION):
+        self.teal_version = version
+
         self.attrs = {
             m: getattr(self, m)
             for m in list(set(dir(self.__class__)) - set(dir(super())))
@@ -104,10 +106,7 @@ class Application:
                         continue
 
                     if oc in self.bare_handlers:
-                        raise TealInputError(
-                            f"""Tried to overwrite a bare handler: {oc}. 
-                            If you're trying to override a default method in Application, be sure to use the same name as the method defined."""
-                        )
+                        raise BareOverwriteError(oc)
 
                     action = cast(OnCompleteAction, action)
                     # Swap the implementation with the bound version
@@ -129,7 +128,7 @@ class Application:
             self.clear_program,
             self.contract,
         ) = self.router.compile_program(
-            version=MAX_TEAL_VERSION,
+            version=self.teal_version,
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
@@ -141,14 +140,13 @@ class Application:
             h = hc.hints()
             if len(h.__dict__.keys()) > 0:
                 hints[name] = h
-
         return hints
 
     def initialize_app_state(self):
         return self.app_state.initialize()
 
-    def initialize_account_state(self, sender):
-        return self.acct_state.initialize(sender)
+    def initialize_account_state(self, addr):
+        return self.acct_state.initialize(addr)
 
     @Bare.create
     def create(self):

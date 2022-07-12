@@ -1,4 +1,3 @@
-from ast import arg
 from dataclasses import dataclass, field, replace
 from functools import wraps
 from inspect import get_annotations, signature
@@ -13,7 +12,6 @@ from pyteal import (
     BareCallActions,
     CallConfig,
     Expr,
-    Global,
     Int,
     MethodConfig,
     OnCompleteAction,
@@ -22,6 +20,7 @@ from pyteal import (
     SubroutineFnWrapper,
     TealInputError,
     TealType,
+    TealTypeError,
     Txn,
 )
 
@@ -79,6 +78,7 @@ class HandlerConfig:
         if self.resolvable is not None:
             resolvable = {}
             for arg_name, ra in self.resolvable.__dict__.items():
+                ra = cast(ABIReturnSubroutine, ra)
                 resolvable[arg_name] = ra.method_spec()
             mh.resolvable = resolvable
 
@@ -109,6 +109,9 @@ class Authorize:
     def only(addr: Expr):
         """only requires that the sender of the app call being evaluated match exactly the address passed"""
 
+        if addr.type_of() != TealType.bytes:
+            raise TealTypeError(addr.type_of(), TealType.bytes)
+
         @Subroutine(TealType.uint64, name="auth_only")
         def _impl(sender: Expr):
             return sender == addr
@@ -118,6 +121,9 @@ class Authorize:
     @staticmethod
     def holds_token(asset_id: Expr):
         """holds_token ensures that the sender of the app call being evaluated holds >0 of the asset id passed"""
+
+        if asset_id.type_of() != TealType.uint64:
+            raise TealTypeError(asset_id.type_of(), TealType.uint64)
 
         @Subroutine(TealType.uint64, name="auth_holds_token")
         def _impl(sender: Expr):
@@ -131,6 +137,9 @@ class Authorize:
     @staticmethod
     def opted_in(app_id: Expr):
         """opted_in ensures that the sender of the app call being evaluated has already opted-in to a given app id"""
+
+        if app_id.type_of() != TealType.uint64:
+            raise TealTypeError(app_id.type_of(), TealType.uint64)
 
         @Subroutine(TealType.uint64, name="auth_opted_in")
         def _impl(sender: Expr):
@@ -148,9 +157,7 @@ def _authorize(allowed: SubroutineFnWrapper):
         )
 
     if allowed.type_of() != TealType.uint64:
-        raise TealInputError(
-            f"Expected authorize method to return TealType.uint64, got {allowed.type_of()}"
-        )
+        raise TealTypeError(allowed.type_of(), TealType.uint64)
 
     def _decorate(fn: HandlerFunc):
         @wraps(fn)
