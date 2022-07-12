@@ -14,5 +14,5 @@ from .decorators import (
     internal,
     bare_handler,
 )
-from beaker.sandbox import get_client, get_accounts
+from .sandbox import get_client, get_accounts
 from .consts import Algo, MilliAlgo
