@@ -1,7 +1,7 @@
 import pytest
 import pyteal as pt
 
-from .decorators import handler, get_handler_config, Authorize
+from .decorators import handler, get_handler_config, Authorize, Bare
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -109,12 +109,11 @@ def test_authorize_holds():
     auth_holds_token = Authorize.holds_token(asset_id)
 
     balance = pt.AssetHolding.balance(pt.Txn.sender(), asset_id)
-    expr = pt.Seq(
-        balance,
-        pt.And(balance.hasValue(), balance.value() > pt.Int(0))
-    )
+    expr = pt.Seq(balance, pt.And(balance.hasValue(), balance.value() > pt.Int(0)))
     expected = expr.__teal__(options)
-    actual = auth_holds_token.subroutine.implementation(pt.Txn.sender()).__teal__(options)
+    actual = auth_holds_token.subroutine.implementation(pt.Txn.sender()).__teal__(
+        options
+    )
 
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -133,6 +132,7 @@ def test_authorize_holds():
 
     with pytest.raises(pt.TealTypeError):
         Authorize.holds_token(pt.Bytes("abc"))
+
 
 def test_authorize_opted_in():
     app_id = pt.Int(123)
@@ -160,3 +160,54 @@ def test_authorize_opted_in():
 
     with pytest.raises(pt.TealTypeError):
         Authorize.opted_in(pt.Bytes("abc"))
+
+
+def test_bare():
+    @Bare.create
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.no_op.action.subroutine.implementation == impl
+
+    @Bare.no_op
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.no_op.action.subroutine.implementation == impl
+
+    @Bare.delete
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.delete_application.action.subroutine.implementation == impl
+
+    @Bare.update
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.update_application.action.subroutine.implementation == impl
+
+    @Bare.opt_in
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.opt_in.action.subroutine.implementation == impl
+
+    @Bare.close_out
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.close_out.action.subroutine.implementation == impl
+
+    @Bare.clear_state
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.clear_state.action.subroutine.implementation == impl
