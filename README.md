@@ -106,7 +106,7 @@ We can call the method we defined in our `Application`
 ```py
 
 result = app_client.call(msa.add, a=2,b=3)
-print(result.abi_results[0].return_value) # 5
+print(result.return_value) # 5
 
 ```
 
