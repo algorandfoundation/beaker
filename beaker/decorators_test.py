@@ -79,7 +79,7 @@ def test_handler_config():
         assert v is None or v is False, f"Expected {k} to be unset"
 
 
-def test_authorize():
+def test_authorize_only():
     auth_only = Authorize.only(pt.Global.creator_address())
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
@@ -103,4 +103,60 @@ def test_authorize():
     with pytest.raises(pt.TealTypeError):
         Authorize.only(pt.Int(1))
 
-    
+
+def test_authorize_holds():
+    asset_id = pt.Int(123)
+    auth_holds_token = Authorize.holds_token(asset_id)
+
+    balance = pt.AssetHolding.balance(pt.Txn.sender(), asset_id)
+    expr = pt.Seq(
+        balance,
+        pt.And(balance.hasValue(), balance.value() > pt.Int(0))
+    )
+    expected = expr.__teal__(options)
+    actual = auth_holds_token.subroutine.implementation(pt.Txn.sender()).__teal__(options)
+
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    @handler(authorize=auth_holds_token)
+    def holds_token_only():
+        return pt.Approve()
+
+    expr = pt.Seq(pt.Assert(auth_holds_token(pt.Txn.sender())), pt.Approve())
+
+    expected = expr.__teal__(options)
+    actual = holds_token_only().__teal__(options)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealTypeError):
+        Authorize.holds_token(pt.Bytes("abc"))
+
+def test_authorize_opted_in():
+    app_id = pt.Int(123)
+    auth_opted_in = Authorize.opted_in(app_id)
+
+    expr = pt.App.optedIn(pt.Txn.sender(), app_id)
+
+    expected = expr.__teal__(options)
+    actual = auth_opted_in.subroutine.implementation(pt.Txn.sender()).__teal__(options)
+
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    @handler(authorize=auth_opted_in)
+    def opted_in_only():
+        return pt.Approve()
+
+    expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender())), pt.Approve())
+
+    expected = expr.__teal__(options)
+    actual = opted_in_only().__teal__(options)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealTypeError):
+        Authorize.opted_in(pt.Bytes("abc"))
