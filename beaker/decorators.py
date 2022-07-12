@@ -313,7 +313,7 @@ def bare_handler(
             close_out=OnCompleteAction(action=fn, call_config=close_out)
             if close_out is not None
             else None,
-            clear_state=OnCompleteAction(action=fn, call_config=delete_application)
+            clear_state=OnCompleteAction(action=fn, call_config=clear_state)
             if clear_state is not None
             else None,
         )
