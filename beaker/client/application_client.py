@@ -10,7 +10,7 @@ from algosdk.atomic_transaction_composer import (
     MultisigTransactionSigner,
     LogicSigTransactionSigner,
     AtomicTransactionComposer,
-    AtomicTransactionResponse,
+    ABIResult,
     TransactionWithSigner,
     abi,
 )
@@ -174,9 +174,7 @@ class ApplicationClient:
         ac.txn_kwargs = kwargs
         return ac
 
-    def call(
-        self, method: abi.Method | HandlerFunc, **kwargs
-    ) -> AtomicTransactionResponse:
+    def call(self, method: abi.Method | HandlerFunc, **kwargs) -> ABIResult:
 
         sp = self.get_suggested_params()
         signer, addr = self.get_signer()
@@ -191,7 +189,7 @@ class ApplicationClient:
             if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
                 if hints.resolvable is not None and method_arg.name in hints.resolvable:
                     result = self.call(hints.resolvable[method_arg.name])
-                    args.append(result.abi_results[0].return_value)
+                    args.append(result.return_value)
                 else:
                     raise Exception(f"Unspecified argument: {method_arg.name}")
             else:
@@ -214,7 +212,8 @@ class ApplicationClient:
             **txnkwargs,
         )
 
-        return atc.execute(self.client, 4)
+        result = atc.execute(self.client, 4)
+        return result.abi_results.pop()
 
     def compose(
         self, atc: AtomicTransactionComposer, method: abi.Method | HandlerFunc, **kwargs

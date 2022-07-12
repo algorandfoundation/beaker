@@ -26,12 +26,12 @@ class MySickApp(Application):
     )
 
     # Overrides the default
-    @bare_create
+    @Bare.create
     def create(self):
         """create application"""
         return self.initialize_app_state()
 
-    @bare_opt_in
+    @Bare.opt_in
     def opt_in(self):
         """opt into application"""
         return self.initialize_account_state(Txn.sender())
