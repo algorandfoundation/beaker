@@ -48,7 +48,7 @@ class OpUp(Application):
         )
 
     @internal(TealType.none)
-    def call_opup_n():
+    def call_opup():
         return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(

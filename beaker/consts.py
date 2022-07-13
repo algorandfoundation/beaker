@@ -1,4 +1,7 @@
 from pyteal import Int
 
-Algo = Int(int(1e6))
-MilliAlgo = Int(int(1e3))
+algo = int(1e6)
+milli_algo = int(1e3)
+
+Algo = Int(algo)
+MilliAlgo = Int(milli_algo)

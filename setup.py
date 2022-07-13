@@ -8,5 +8,7 @@ setup(
     packages=find_packages(),
     license="MIT",
     long_description=open("README.md").read(),
-    install_requires=['pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal'],
+    install_requires=[
+        "pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal"
+    ],
 )
