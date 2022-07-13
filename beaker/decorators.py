@@ -229,7 +229,7 @@ def internal(return_type: TealType):
     def _impl(fn: HandlerFunc):
         hc = get_handler_config(fn)
 
-        hc.subroutine = Subroutine(return_type)
+        hc.subroutine = Subroutine(return_type, name=fn.__name__)
         if "self" in signature(fn).parameters:
             hc.referenced_self = True
 

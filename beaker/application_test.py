@@ -1,6 +1,5 @@
-from inspect import stack
 import pytest
-from typing import Final
+from typing import Final, cast
 import pyteal as pt
 
 from beaker.application_schema import (
@@ -13,6 +12,8 @@ from beaker.application_schema import (
 from .errors import BareOverwriteError
 from .application import Application
 from .decorators import get_handler_config, handler, Bare
+
+options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
 def test_empty_application():
@@ -176,3 +177,75 @@ def test_acct_state():
     app = DynamicAcctState()
     assert app.acct_state.num_uints == 11, "Expected 11 ints"
     assert app.acct_state.num_byte_slices == 11, "Expected 11 byte slices"
+
+
+def test_internal():
+    from beaker.decorators import internal
+
+    class Internal(Application):
+        @Bare.create
+        def create(self):
+            return pt.Seq(
+                pt.Pop(self.internal_meth()),
+                pt.Pop(self.internal_meth_no_self()),
+                pt.Pop(self.subr_no_self()),
+            )
+
+        @handler(method_config=pt.MethodConfig(no_op=pt.CallConfig.CALL))
+        def otherthing():
+            return pt.Seq(
+                pt.Pop(Internal.internal_meth_no_self()),
+                pt.Pop(Internal.subr_no_self()),
+            )
+
+        @internal(pt.TealType.uint64)
+        def internal_meth(self):
+            return pt.Int(1)
+
+        @internal(pt.TealType.uint64)
+        def internal_meth_no_self():
+            return pt.Int(1)
+
+        # Cannot be called with `self` specified
+        @pt.Subroutine(pt.TealType.uint64)
+        def subr(self):
+            return pt.Int(1)
+
+        @pt.Subroutine(pt.TealType.uint64)
+        def subr_no_self():
+            return pt.Int(1)
+
+    i = Internal()
+    assert len(i.methods) == 1, "Expected 1 ABI method"
+
+    # Test with self
+    meth = cast(pt.SubroutineFnWrapper, i.internal_meth)
+    expected = pt.SubroutineCall(meth.subroutine, []).__teal__(options)
+
+    actual = i.internal_meth().__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    # Cannot call it without instantiated object
+    with pytest.raises(Exception):
+        Internal.internal_meth()
+
+    # Test with no self
+    meth = cast(pt.SubroutineFnWrapper, i.internal_meth_no_self)
+    expected = pt.SubroutineCall(meth.subroutine, []).__teal__(options)
+
+    actual = i.internal_meth_no_self().__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    # Cannot call a subroutine that references self
+    with pytest.raises(pt.TealInputError):
+        i.subr()
+
+    # Test subr with no self
+    meth = cast(pt.SubroutineFnWrapper, i.subr_no_self)
+    expected = pt.SubroutineCall(meth.subroutine, []).__teal__(options)
+    actual = i.subr_no_self().__teal__(options)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
