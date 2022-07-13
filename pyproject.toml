@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beaker-pyteal"
+version = "0.0.1"
+authors = [
+  { name="Ben Guidarelli", email="ben@algorand.com" },
+]
+description = "A Framework for building PyTeal Applications"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3.10",
+  "License :: OSI Approved :: MIT License"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/algorand-devrel/beaker"
+"Bug Tracker" = "https://github.com/algorand-devrel/beaker/issues"
