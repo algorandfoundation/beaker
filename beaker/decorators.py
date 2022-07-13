@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field, replace
 from functools import wraps
 from inspect import get_annotations, signature, Signature
-from typing import Callable, Final, cast
+from typing import Callable, Final, cast, Any
 from algosdk.abi import Method
 from pyteal import (
     ABIReturnSubroutine,
@@ -32,6 +32,8 @@ _handler_config_attr: Final[str] = "__handler_config__"
 
 
 class ResolvableArguments:
+    """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
+
     def __init__(
         self,
         **kwargs: dict[str, ABIReturnSubroutine | HandlerFunc],
@@ -52,15 +54,26 @@ class ResolvableArguments:
     def check_arguments(self, sig: Signature):
         for k in self.__dict__.keys():
             if k not in sig.parameters:
-                raise Exception(f"The ResolvableArgument field {k} not present in function signature")
+                raise Exception(
+                    f"The ResolvableArgument field {k} not present in function signature"
+                )
+
 
 @dataclass
 class MethodHints:
     """MethodHints provides some hints to the caller"""
 
-    resolvable: dict[str, dict[str, Method]] = field(kw_only=True, default=None)
+    resolvable: dict[str, Method] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
-    models: dict[str, dict[str, Model]] = field(kw_only=True, default=None)
+    models: dict[str, list[str]] = field(kw_only=True, default=None)
+
+    def dictify(self) -> dict[str, Any]:
+        d = {"resolvable": {}, "read_only": self.read_only, "models": self.models}
+
+        if self.resolvable is not None:
+            d["resolvable"] = {k: v.dictify() for k, v in self.resolvable.items()}
+
+        return d
 
 
 @dataclass
