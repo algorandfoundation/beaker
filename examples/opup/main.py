@@ -40,7 +40,7 @@ def demo():
 
     # You can compose calls if you pre-defined your ATC
     # atc = AtomicTransactionComposer()
-    # app_client.compose(atc, app.hash_it, input=input, iters=iters)
+    # app_client.add_method_call(atc, app.hash_it, input=input, iters=iters)
     # result = atc.execute(client, 4)
 
     result = app_client.call(app.hash_it, input=input, iters=iters)

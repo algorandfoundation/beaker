@@ -37,7 +37,6 @@ class ApplicationClient:
     ):
         self.client = client
         self.app = app
-        self.hints = self.app.contract_hints()
 
         self.signer = signer
         if self.signer is not None:
@@ -215,7 +214,7 @@ class ApplicationClient:
         result = atc.execute(self.client, 4)
         return result.abi_results.pop()
 
-    def compose(
+    def add_method_call(
         self, atc: AtomicTransactionComposer, method: abi.Method | HandlerFunc, **kwargs
     ):
         sp = self.get_suggested_params()
@@ -229,11 +228,9 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
-
-                resolvable_args = hints.get("required-args", {})
-                if method_arg.name in resolvable_args:
-                    result = self.call(resolvable_args[method_arg.name])
-                    args.append(result.abi_results[0].return_value)
+                if hints.resolvable is not None and method_arg.name in hints.resolvable:
+                    result = self.call(hints.resolvable[method_arg.name])
+                    args.append(result.return_value)
                 else:
                     raise Exception(f"Unspecified argument: {method_arg.name}")
             else:
@@ -253,10 +250,10 @@ class ApplicationClient:
 
         return atc
 
-    def method_hints(self, method_name: str):
-        if method_name not in self.hints:
+    def method_hints(self, method_name: str) -> MethodHints:
+        if method_name not in self.app.hints:
             return MethodHints()
-        return self.hints[method_name]
+        return self.app.hints[method_name]
 
     def get_suggested_params(
         self, sp: transaction.SuggestedParams = None

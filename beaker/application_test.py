@@ -263,11 +263,10 @@ def test_resolvable_hint():
             return pt.Assert(pt.Int(1))
 
     h = Hinty()
-    hints = h.contract_hints()
 
-    assert h.hintymeth.__name__ in hints, "Expected a hint available for the method"
+    assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
-    hint = hints[h.hintymeth.__name__]
+    hint = h.hints[h.hintymeth.__name__]
     assert hint.resolvable["aid"] == method_spec(
         h.get_asset_id
     ), "Expected the hint to match the method spec"
@@ -292,5 +291,4 @@ def test_model_args():
     ret = Returns("void")
     assert Method("modely", [arg], ret) == method_spec(m.modely)
 
-    hints = m.contract_hints()
-    assert hints["modely"].models == {"user_record": ["addr", "balance", "nickname"]}
+    assert m.hints["modely"].models == {"user_record": ["addr", "balance", "nickname"]}

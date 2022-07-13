@@ -75,10 +75,15 @@ class Application:
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
+        self.hints: dict[str, MethodHints] = {}
         self.bare_handlers: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
         for name, bound_attr in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
+
+            h = handler_config.hints()
+            if len(h.__dict__.keys()) > 0:
+                self.hints[name] = h
 
             # Add ABI handlers
             if handler_config.abi_method is not None:
@@ -138,15 +143,6 @@ class Application:
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
-
-    def contract_hints(self) -> dict[str, MethodHints]:
-        hints = {}
-        for name, attr in self.attrs.items():
-            hc = get_handler_config(attr)
-            h = hc.hints()
-            if len(h.__dict__.keys()) > 0:
-                hints[name] = h
-        return hints
 
     def initialize_app_state(self):
         return self.app_state.initialize()
