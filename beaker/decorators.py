@@ -92,7 +92,7 @@ class HandlerConfig:
         if self.models is not None:
             models = {}
             for arg_name, model_spec in self.models.items():
-                models[arg_name] = model_spec.__annotations__.keys()
+                models[arg_name] = list(model_spec.__annotations__.keys())
             mh.models = models
 
         return mh

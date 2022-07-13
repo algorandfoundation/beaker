@@ -293,4 +293,7 @@ def test_model_args():
 
     arg = Argument('(address,uint64,string)', name='user_record')
     ret = Returns('void')
-    assert Method("modely", [arg], ret)  == method_spec(m.modely)
+    assert Method("modely", [arg], ret) == method_spec(m.modely)
+
+    hints = m.contract_hints()
+    assert hints['modely'].models  == {'user_record':['addr', 'balance', 'nickname']}
