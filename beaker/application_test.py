@@ -252,7 +252,7 @@ def test_internal():
         assert actual == expected
 
 
-def test_contract_hints():
+def test_resolvable_hint():
     class Hinty(Application):
 
         @handler
