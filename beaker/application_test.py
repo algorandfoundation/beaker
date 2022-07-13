@@ -10,8 +10,8 @@ from beaker.application_schema import (
 )
 
 from .errors import BareOverwriteError
-from .application import Application
-from .decorators import get_handler_config, handler, Bare
+from .application import Application,method_spec
+from .decorators import ResolvableArguments, get_handler_config, handler, Bare
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -249,3 +249,29 @@ def test_internal():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_contract_hints():
+    class Hinty(Application):
+
+        @handler
+        def get_asset_id(*, output: pt.abi.Uint64):
+            return output.set(pt.Int(123))
+
+        @handler(
+            resolvable=ResolvableArguments(
+                aid=get_asset_id
+            )
+        )
+        def hintymeth(aid: pt.abi.Asset):
+            return pt.Assert(pt.Int(1))
+        
+
+    h = Hinty()
+    hints = h.contract_hints()
+
+    assert h.hintymeth.__name__ in hints, "Expected a hint available for the method"
+
+    hint = hints[h.hintymeth.__name__]
+    assert hint.resolvable['aid'] == method_spec(h.get_asset_id), "Expected the hint to match the method spec"
+
