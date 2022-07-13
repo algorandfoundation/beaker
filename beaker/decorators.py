@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, replace
 from functools import wraps
-from inspect import get_annotations, signature
+from inspect import get_annotations, signature, Signature
 from typing import Callable, Final, cast
 from algosdk.abi import Method
 from pyteal import (
@@ -43,12 +43,16 @@ class ResolvableArguments:
                 # Assume its a handler func and try to get the config
                 hc = get_handler_config(arg_resolver)
                 if hc.abi_method is None:
-                    raise Exception(f"Expected ABISubroutine, got {arg_resolver}")
+                    raise TealTypeError(arg_resolver, ABIReturnSubroutine)
 
             resolvable_args[arg_name] = hc.abi_method
 
         self.__dict__.update(**resolvable_args)
 
+    def check_arguments(self, sig: Signature):
+        for k in self.__dict__.keys():
+            if k not in sig.parameters:
+                raise Exception(f"The ResolvableArgument field {k} not present in function signature")
 
 @dataclass
 class MethodHints:
@@ -78,14 +82,17 @@ class HandlerConfig:
         if self.resolvable is not None:
             resolvable = {}
             for arg_name, ra in self.resolvable.__dict__.items():
-                ra = cast(ABIReturnSubroutine, ra)
+                if not isinstance(ra, ABIReturnSubroutine):
+                    raise TealTypeError(ra, ABIReturnSubroutine)
+
                 resolvable[arg_name] = ra.method_spec()
+
             mh.resolvable = resolvable
 
         if self.models is not None:
             models = {}
             for arg_name, model_spec in self.models.items():
-                models[arg_name] = model_spec.__annotations__.keys()
+                models[arg_name] = list(model_spec.__annotations__.keys())
             mh.models = models
 
         return mh
@@ -257,6 +264,7 @@ def handler(
         authorize: A subroutine that should evaluate to 1/0 depending on the app call transaction sender
         method_config: accepts a MethodConfig object to define how the app call should be routed given OnComplete and whether or not the call is a create
         read_only: adds read_only flag to abi (eventually, currently it does nothing)
+        resolvable: provides hints to a caller at how to resolve some arguments
     """
 
     def _impl(fn: HandlerFunc):
@@ -264,6 +272,7 @@ def handler(
         fn = _replace_models(fn)
 
         if resolvable is not None:
+            resolvable.check_arguments(signature(fn))
             set_handler_config(fn, resolvable=resolvable)
         if authorize is not None:
             fn = _authorize(authorize)(fn)

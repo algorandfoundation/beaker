@@ -10,8 +10,9 @@ from beaker.application_schema import (
 )
 
 from .errors import BareOverwriteError
-from .application import Application
-from .decorators import get_handler_config, handler, Bare
+from .application import Application,method_spec
+from .decorators import ResolvableArguments, get_handler_config, handler, Bare
+from .model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -249,3 +250,50 @@ def test_internal():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_contract_hints():
+    class Hinty(Application):
+
+        @handler
+        def get_asset_id(*, output: pt.abi.Uint64):
+            return output.set(pt.Int(123))
+
+        @handler(
+            resolvable=ResolvableArguments(
+                aid=get_asset_id
+            )
+        )
+        def hintymeth(aid: pt.abi.Asset):
+            return pt.Assert(pt.Int(1))
+        
+
+    h = Hinty()
+    hints = h.contract_hints()
+
+    assert h.hintymeth.__name__ in hints, "Expected a hint available for the method"
+
+    hint = hints[h.hintymeth.__name__]
+    assert hint.resolvable['aid'] == method_spec(h.get_asset_id), "Expected the hint to match the method spec"
+
+
+def test_model_args():
+    from algosdk.abi import Method, Argument, Returns
+    class Modeled(Application):
+        class UserRecord(Model):
+            addr: pt.abi.Address
+            balance: pt.abi.Uint64
+            nickname: pt.abi.String
+
+        @handler
+        def modely(user_record: UserRecord):
+            return pt.Assert(pt.Int(1))
+
+    m = Modeled()
+
+    arg = Argument('(address,uint64,string)', name='user_record')
+    ret = Returns('void')
+    assert Method("modely", [arg], ret) == method_spec(m.modely)
+
+    hints = m.contract_hints()
+    assert hints['modely'].models  == {'user_record':['addr', 'balance', 'nickname']}
