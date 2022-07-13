@@ -1,7 +1,5 @@
 from typing import Callable, cast
-from pyteal import *
-
-## Experimental Model, meant to be subclassed
+from pyteal import abi, TealInputError, Expr, TealTypeError, Seq
 
 
 class Model(abi.Tuple):
@@ -60,14 +58,3 @@ class Model(abi.Tuple):
 
     def __str__(self) -> str:
         return super().type_spec().__str__()
-
-
-# Example subclass of Model
-class UserRecord(Model):
-    address: abi.Address
-    balance: abi.Uint64
-    points: abi.Uint64
-    is_admin: abi.Bool
-
-
-# UserRecord.address() will get the `address` attribute as
