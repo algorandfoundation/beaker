@@ -1,9 +1,7 @@
 import pytest
 import pyteal as pt
 
-from .application import Application
-
-from .decorators import internal, handler, get_handler_config, Authorize, Bare
+from .decorators import handler, get_handler_config, Authorize, Bare
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 

@@ -20,7 +20,6 @@ from .decorators import (
     Bare,
     MethodHints,
     get_handler_config,
-    set_handler_config,
 )
 from .application_schema import (
     AccountState,
@@ -81,9 +80,7 @@ class Application:
         for name, bound_attr in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
 
-            h = handler_config.hints()
-            if len(h.__dict__.keys()) > 0:
-                self.hints[name] = h
+            self.hints[name] = handler_config.hints()
 
             # Add ABI handlers
             if handler_config.abi_method is not None:
