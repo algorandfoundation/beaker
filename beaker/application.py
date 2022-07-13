@@ -3,10 +3,12 @@ from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
     MAX_TEAL_VERSION,
+    ABIReturnSubroutine,
     Approve,
     BareCallActions,
     Expr,
     Global,
+    MethodConfig,
     OnCompleteAction,
     OptimizeOptions,
     Reject,
@@ -18,6 +20,7 @@ from .decorators import (
     Bare,
     MethodHints,
     get_handler_config,
+    set_handler_config,
 )
 from .application_schema import (
     AccountState,
@@ -72,8 +75,8 @@ class Application:
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        self.bare_handlers = {}
-        self.methods = {}
+        self.bare_handlers: dict[str, OnCompleteAction] = {}
+        self.methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
         for name, bound_attr in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
 
@@ -85,15 +88,17 @@ class Application:
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 
-                self.methods[name] = abi_meth
+                self.methods[name] = (abi_meth, handler_config.method_config)
 
             # Add internal subroutines
             if handler_config.subroutine is not None:
                 if handler_config.referenced_self:
+                    # Add the `self` bound method, wrapped in a subroutine
                     setattr(self, name, handler_config.subroutine(bound_attr))
                 else:
+                    # Add the static method, wrapped in a subroutine on the class since we didn't reference `self`
                     setattr(
-                        self,
+                        self.__class__,
                         name,
                         handler_config.subroutine(getattr_static(self, name)),
                     )
@@ -119,9 +124,10 @@ class Application:
         self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
 
         # Add method handlers
-        for method in self.methods.values():
-            # TODO: add method config back in
-            self.router.add_method_handler(method)
+        for method, method_config in self.methods.values():
+            self.router.add_method_handler(
+                method_call=method, method_config=method_config
+            )
 
         (
             self.approval_program,

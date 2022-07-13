@@ -213,21 +213,3 @@ def test_bare():
 
     hc = get_handler_config(impl)
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
-
-
-#def test_internal():
-#
-#    class Internal(Application):
-#
-#        @internal(pt.TealType.uint64)
-#        def internal_meth(self):
-#            return pt.Int(1)
-#
-#    print()
-#    i = Internal()
-#    print(Internal.internal_meth)
-#    print(i.internal_meth)
-#    hc1 = get_handler_config(Internal.internal_meth)
-#    hc2 = get_handler_config(i.internal_meth)
-#    print(hc1)
-#    print(hc2)
