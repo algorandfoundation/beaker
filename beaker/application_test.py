@@ -11,7 +11,7 @@ from beaker.application_schema import (
 
 from .errors import BareOverwriteError
 from .application import Application, method_spec
-from .decorators import ResolvableArguments, get_handler_config, handler, Bare
+from .decorators import ResolvableArguments, handler, Bare
 from .model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -61,10 +61,8 @@ def test_single_handler():
     sh = SingleHandler()
 
     assert len(sh.methods) == 1, "Expected a single handler"
-
-    hc = get_handler_config(sh.handle)
-    assert (
-        sh.contract.get_method_by_name("handle") == hc.abi_method.method_spec()
+    assert sh.contract.get_method_by_name("handle") == method_spec(
+        sh.handle
     ), "Expected contract method to match method spec"
 
     with pytest.raises(Exception):
@@ -110,9 +108,8 @@ def test_subclass_application():
 
     sc = SubClass()
     assert len(sc.methods) == 1, "Expected single method"
-    hc = get_handler_config(sc.handle)
-    assert (
-        sc.contract.get_method_by_name("handle") == hc.abi_method.method_spec()
+    assert sc.contract.get_method_by_name("handle") == method_spec(
+        sc.handle
     ), "Expected contract method to match method spec"
 
     class OverrideSubClass(SuperClass):
@@ -122,9 +119,8 @@ def test_subclass_application():
 
     osc = OverrideSubClass()
     assert len(osc.methods) == 1, "Expected single method"
-    hc = get_handler_config(osc.handle)
-    assert (
-        osc.contract.get_method_by_name("handle") == hc.abi_method.method_spec()
+    assert osc.contract.get_method_by_name("handle") == method_spec(
+        osc.handle
     ), "Expected contract method to match method spec"
 
 

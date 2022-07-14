@@ -1,6 +1,7 @@
 import pytest
 import pyteal as pt
 
+from .application import method_spec
 from .decorators import handler, get_handler_config, Authorize, Bare
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -13,8 +14,8 @@ def test_handler_config():
 
     hc = get_handler_config(handleable)
 
-    assert hc.abi_method is not None, "Expected abi method to be created"
-    meth = hc.abi_method.method_spec()
+    assert hc.abi_method, "Expected abi method to be created"
+    meth = method_spec(handleable)
     assert len(meth.args) == 0, "Expected no args"
     assert meth.name == "handleable", "Expected name to match"
 
