@@ -11,7 +11,7 @@ from beaker.application_schema import (
 
 from .errors import BareOverwriteError
 from .application import Application, method_spec
-from .decorators import ResolvableArguments, handler, Bare
+from .decorators import ResolvableArguments, handler, Bare, internal
 from .model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -288,3 +288,36 @@ def test_model_args():
     assert Method("modely", [arg], ret) == method_spec(m.modely)
 
     assert m.hints["modely"].models == {"user_record": ["addr", "balance", "nickname"]}
+
+
+def test_instance_vars():
+
+    class Inst(Application):
+        def __init__(self, v: str):
+            self.v = pt.Bytes(v)
+            super().__init__()
+
+        @handler
+        def use_it(self):
+            return pt.Log(self.v)
+
+        @handler
+        def call_it(self):
+            return self.use_it_internal()
+
+        @internal(pt.TealType.none)
+        def use_it_internal(self):
+            return pt.Log(self.v)
+
+    i1 = Inst("first")
+    i2 = Inst("second")
+
+    assert i1.approval_program.index("first") > 0, "Expected to see the string `first`"
+    assert i2.approval_program.index("second") > 0, "Expected to see the string `second`"
+
+    with pytest.raises(ValueError):
+        i1.approval_program.index("second")
+
+    with pytest.raises(ValueError):
+        i2.approval_program.index("first")
+
