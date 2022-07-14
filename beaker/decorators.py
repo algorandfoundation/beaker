@@ -96,7 +96,8 @@ class HandlerConfig:
         if self.resolvable is not None:
             resolvable = {}
             for arg_name, ra in self.resolvable.__dict__.items():
-                resolvable[arg_name] = ABIReturnSubroutine(ra).method_spec()
+                hc = get_handler_config(ra)
+                resolvable[arg_name] = hc.method_spec
             mh.resolvable = resolvable
 
         if self.models is not None:
@@ -291,7 +292,9 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(fn, abi_method=True)
+        set_handler_config(
+            fn, abi_method=True, method_spec=ABIReturnSubroutine(fn).method_spec()
+        )
 
         return fn
 

@@ -34,14 +34,9 @@ from .errors import BareOverwriteError
 
 def method_spec(fn) -> Method:
     hc = get_handler_config(fn)
-    if not hc.abi_method:
+    if hc.method_spec is None:
         raise Exception("Expected argument to be an ABI method")
-
-    if hasattr(fn, "__self__"):
-        app = cast(Application, fn.__self__)
-        return app.methods[fn.__name__][0].method_spec()
-
-    return ABIReturnSubroutine(fn).method_spec()
+    return hc.method_spec
 
 
 class Application:
@@ -83,11 +78,14 @@ class Application:
         for name, bound_attr in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
 
+            static_attr = getattr_static(self, name)
+
             self.hints[name] = handler_config.hints()
 
             # Add ABI handlers
             if handler_config.abi_method:
-                abi_meth = ABIReturnSubroutine(getattr_static(self, name))
+                abi_meth = ABIReturnSubroutine(static_attr)
+
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 
@@ -103,7 +101,7 @@ class Application:
                     setattr(
                         self.__class__,
                         name,
-                        handler_config.subroutine(getattr_static(self, name)),
+                        handler_config.subroutine(static_attr),
                     )
 
             # Add bare handlers
