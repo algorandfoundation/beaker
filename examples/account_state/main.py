@@ -1,4 +1,5 @@
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
+from algosdk.future import transaction
 from contract import Dope
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_client, get_accounts
@@ -21,7 +22,7 @@ print(f"Opting in")
 result = app_client.opt_in()
 
 print("Setting value")
-result = app_client.call(app.doit, k=0, v="First item")
+result = app_client.call(app.doit, note="yo", k=0, v="First item")
 
 print("Getting value")
 result = app_client.call(app.getit, k=0)

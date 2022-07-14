@@ -237,20 +237,30 @@ class ApplicationClient:
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
 
-    def prepare(
-        self,
-        signer: TransactionSigner,
-        sp: transaction.SuggestedParams = None,
-        **kwargs,
-    ) -> "ApplicationClient":
+    def prepare(self, signer: TransactionSigner, **kwargs) -> "ApplicationClient":
 
         ac = copy.copy(self)
         ac.signer = signer
-        ac.suggested_params = sp
-        ac.txn_kwargs = kwargs
+        ac.__dict__.update(**kwargs)
         return ac
 
-    def call(self, method: abi.Method | HandlerFunc, **kwargs) -> ABIResult:
+    def call(
+        self,
+        method: abi.Method | HandlerFunc,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        local_schema: transaction.StateSchema = None,
+        global_schema: transaction.StateSchema = None,
+        approval_program: bytes = None,
+        clear_program: bytes = None,
+        extra_pages: int = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+        note: bytes = None,
+        lease: bytes = None,
+        rekey_to: str = None,
+        **kwargs,
+    ) -> ABIResult:
 
         sp = self.get_suggested_params()
         signer, addr = self.get_signer()
@@ -275,9 +285,6 @@ class ApplicationClient:
             # TODO: do dryrun
             pass
 
-        # TODO: find a way better way to do this
-        txnkwargs = self.__dict__.get("txn_kwargs", {})
-
         atc = AtomicTransactionComposer()
         atc.add_method_call(
             self.app_id,
@@ -286,14 +293,40 @@ class ApplicationClient:
             sp,
             signer,
             method_args=args,
-            **txnkwargs,
+            on_complete=on_complete,
+            local_schema=local_schema,
+            global_schema=global_schema,
+            approval_program=approval_program,
+            clear_program=clear_program,
+            extra_pages=extra_pages,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+            note=note,
+            lease=lease,
+            rekey_to=rekey_to,
         )
 
         result = atc.execute(self.client, 4)
         return result.abi_results.pop()
 
     def add_method_call(
-        self, atc: AtomicTransactionComposer, method: abi.Method | HandlerFunc, **kwargs
+        self,
+        atc: AtomicTransactionComposer,
+        method: abi.Method | HandlerFunc,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        local_schema: transaction.StateSchema = None,
+        global_schema: transaction.StateSchema = None,
+        approval_program: bytes = None,
+        clear_program: bytes = None,
+        extra_pages: int = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+        note: bytes = None,
+        lease: bytes = None,
+        rekey_to: str = None,
+        **kwargs,
     ):
         sp = self.get_suggested_params()
         signer, addr = self.get_signer()
@@ -314,8 +347,6 @@ class ApplicationClient:
             else:
                 args.append(kwargs[method_arg.name])
 
-        txnkwargs = self.__dict__.get("txn_kwargs", {})
-
         atc.add_method_call(
             self.app_id,
             method,
@@ -323,8 +354,18 @@ class ApplicationClient:
             sp,
             signer,
             method_args=args,
-            on_complete=transaction.OnComplete.OptInOC,
-            **txnkwargs,
+            on_complete=on_complete,
+            local_schema=local_schema,
+            global_schema=global_schema,
+            approval_program=approval_program,
+            clear_program=clear_program,
+            extra_pages=extra_pages,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+            note=note,
+            lease=lease,
+            rekey_to=rekey_to,
         )
 
         return atc
