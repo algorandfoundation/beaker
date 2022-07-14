@@ -291,7 +291,6 @@ def test_model_args():
 
 
 def test_instance_vars():
-
     class Inst(Application):
         def __init__(self, v: str):
             self.v = pt.Bytes(v)
@@ -313,11 +312,12 @@ def test_instance_vars():
     i2 = Inst("second")
 
     assert i1.approval_program.index("first") > 0, "Expected to see the string `first`"
-    assert i2.approval_program.index("second") > 0, "Expected to see the string `second`"
+    assert (
+        i2.approval_program.index("second") > 0
+    ), "Expected to see the string `second`"
 
     with pytest.raises(ValueError):
         i1.approval_program.index("second")
 
     with pytest.raises(ValueError):
         i2.approval_program.index("first")
-
