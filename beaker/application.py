@@ -1,4 +1,4 @@
-from inspect import getattr_static
+from inspect import getattr_static, signature
 from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
@@ -46,8 +46,6 @@ class Application:
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
 
-    bare_methods: BareCallActions
-
     def __init__(self, version: int = MAX_TEAL_VERSION):
         self.teal_version = version
 
@@ -83,10 +81,8 @@ class Application:
             self.hints[name] = handler_config.hints()
 
             # Add ABI handlers
-            if handler_config.abi_method is not None:
-                abi_meth = handler_config.abi_method
-
-                # Swap the implementation with the bound version
+            if handler_config.abi_method:
+                abi_meth = ABIReturnSubroutine(getattr_static(self, name))
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 

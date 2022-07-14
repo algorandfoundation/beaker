@@ -80,7 +80,7 @@ class MethodHints:
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
-    abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
+    abi_method: bool = field(kw_only=True, default=False)
     method_config: MethodConfig = field(kw_only=True, default=None)
     bare_method: BareCallActions = field(kw_only=True, default=None)
     referenced_self: bool = field(kw_only=True, default=False)
@@ -294,7 +294,7 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(fn, abi_method=ABIReturnSubroutine(fn))
+        set_handler_config(fn, abi_method=True)
 
         return fn
 
