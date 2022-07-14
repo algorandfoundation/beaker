@@ -34,9 +34,14 @@ from .errors import BareOverwriteError
 
 def method_spec(fn) -> Method:
     hc = get_handler_config(fn)
-    if hc.abi_method is None:
+    if not hc.abi_method:
         raise Exception("Expected argument to be an ABI method")
-    return hc.abi_method.method_spec()
+
+    if hasattr(fn, "__self__"):
+        app = cast(Application, fn.__self__)
+        return app.methods[fn.__name__][0].method_spec()
+
+    return ABIReturnSubroutine(fn).method_spec()
 
 
 class Application:

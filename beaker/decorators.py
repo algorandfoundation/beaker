@@ -44,10 +44,10 @@ class ResolvableArguments:
             if not isinstance(arg_resolver, ABIReturnSubroutine):
                 # Assume its a handler func and try to get the config
                 hc = get_handler_config(arg_resolver)
-                if hc.abi_method is None:
+                if not hc.abi_method:
                     raise TealTypeError(arg_resolver, ABIReturnSubroutine)
 
-            resolvable_args[arg_name] = hc.abi_method
+            resolvable_args[arg_name] = arg_resolver
 
         self.__dict__.update(**resolvable_args)
 
@@ -81,6 +81,7 @@ class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
     abi_method: bool = field(kw_only=True, default=False)
+    method_spec: Method = field(kw_only=True, default=None)
     method_config: MethodConfig = field(kw_only=True, default=None)
     bare_method: BareCallActions = field(kw_only=True, default=None)
     referenced_self: bool = field(kw_only=True, default=False)
@@ -95,11 +96,7 @@ class HandlerConfig:
         if self.resolvable is not None:
             resolvable = {}
             for arg_name, ra in self.resolvable.__dict__.items():
-                if not isinstance(ra, ABIReturnSubroutine):
-                    raise TealTypeError(ra, ABIReturnSubroutine)
-
-                resolvable[arg_name] = ra.method_spec()
-
+                resolvable[arg_name] = ABIReturnSubroutine(ra).method_spec()
             mh.resolvable = resolvable
 
         if self.models is not None:
