@@ -194,7 +194,6 @@ class DynamicLocalStateValue:
         self.descr = descr
 
         if key_gen is not None:
-            print(key_gen)
             if key_gen.type_of() != TealType.bytes:
                 raise Exception("key generator must evaluate to bytes")
 
