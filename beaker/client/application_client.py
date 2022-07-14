@@ -75,7 +75,7 @@ class ApplicationClient:
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
-                txn=transaction.ApplicationCreateTxn(
+                txn=transaction.Applica(
                     sender=addr,
                     sp=sp,
                     on_complete=transaction.OnComplete.NoOpOC,
@@ -130,6 +130,84 @@ class ApplicationClient:
         )
         update_result = atc.execute(self.client, 4)
         return update_result.tx_ids[0]
+
+    def opt_in(
+        self,
+        signer: TransactionSigner = None,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> str:
+        sp = self.get_suggested_params(sp)
+        signer, addr = self.get_signer(signer)
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationOptInTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
+        )
+        opt_in_result = atc.execute(self.client, 4)
+        return opt_in_result.tx_ids[0]
+
+    def close_out(
+        self,
+        signer: TransactionSigner = None,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> str:
+        sp = self.get_suggested_params(sp)
+        signer, addr = self.get_signer(signer)
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationCloseOutTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
+        )
+        close_out_result = atc.execute(self.client, 4)
+        return close_out_result.tx_ids[0]
+
+    def clear_state(
+        self,
+        signer: TransactionSigner = None,
+        args: list[Any] = [],
+        sp: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> str:
+        sp = self.get_suggested_params(sp)
+        signer, addr = self.get_signer(signer)
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationClearStateTxn(
+                    sender=addr,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
+        )
+        clear_state_result = atc.execute(self.client, 4)
+        return clear_state_result.tx_ids[0]
 
     def delete(
         self,
@@ -245,6 +323,7 @@ class ApplicationClient:
             sp,
             signer,
             method_args=args,
+            on_complete=transaction.OnComplete.OptInOC,
             **txnkwargs,
         )
 
