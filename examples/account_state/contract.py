@@ -8,7 +8,6 @@ class Dope(Application):
     stuff: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
-        key_gen=Subroutine(TealType.bytes)(lambda i: Suffix(Itob(i), Int(7))),
     )
 
     @Bare.opt_in
@@ -16,12 +15,12 @@ class Dope(Application):
         return self.initialize_account_state(Txn.sender())
 
     @handler
-    def doit(self, k: abi.Uint64, v: abi.String):
-        return self.stuff(k.get()).set(Txn.sender(), v.get())
+    def doit(self, k: abi.Uint8, v: abi.String):
+        return self.stuff(k.encode()).set(Txn.sender(), v.get())
 
     @handler(read_only=True)
-    def getit(self, k: abi.Uint64, *, output: abi.String):
-        return output.set(self.stuff(k.get()).get(Txn.sender()))
+    def getit(self, k: abi.Uint8, *, output: abi.String):
+        return output.set(self.stuff(k.encode()).get(Txn.sender()))
 
 
 if __name__ == "__main__":

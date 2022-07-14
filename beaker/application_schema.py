@@ -28,7 +28,8 @@ class DynamicGlobalStateValue:
         if key_gen is not None:
             if key_gen.type_of() != TealType.bytes:
                 raise Exception("key generator must evaluate to bytes")
-            self.key_generator = key_gen
+
+        self.key_generator = key_gen
 
     def __call__(self, key_seed: Expr) -> "GlobalStateValue":
         key = key_seed
@@ -193,9 +194,11 @@ class DynamicLocalStateValue:
         self.descr = descr
 
         if key_gen is not None:
+            print(key_gen)
             if key_gen.type_of() != TealType.bytes:
                 raise Exception("key generator must evaluate to bytes")
-            self.key_generator = key_gen
+
+        self.key_generator = key_gen
 
     def __call__(self, key_seed: Expr) -> "LocalStateValue":
         key = key_seed
