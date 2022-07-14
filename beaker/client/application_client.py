@@ -75,7 +75,7 @@ class ApplicationClient:
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
-                txn=transaction.Applica(
+                txn=transaction.ApplicationCreateTxn(
                     sender=addr,
                     sp=sp,
                     on_complete=transaction.OnComplete.NoOpOC,
