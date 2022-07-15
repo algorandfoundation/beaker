@@ -32,9 +32,9 @@ def test_empty_application():
         == 0
     ), "Expected no schema"
 
-    assert (
-        len(ea.bare_handlers.keys()) == 3
-    ), "Expected 3 bare handlers: create, update, and delete"
+    assert len(ea.bare_handlers.keys()) == len(
+        EXPECTED_BARE_HANDLERS
+    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
         len(ea.approval_program) > 0
     ), "Expected approval program to be compiled to teal"
@@ -84,9 +84,9 @@ def test_bare_handler():
             return pt.Approve()
 
     bh = BareHandler()
-    assert (
-        len(bh.bare_handlers) == 3
-    ), "Expected 3 bare handlers: create, update, delete"
+    assert len(bh.bare_handlers) == len(
+        EXPECTED_BARE_HANDLERS
+    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
 
     class FailBareHandler(Application):
         @Bare.create
@@ -165,15 +165,15 @@ def test_acct_state():
 
     class DynamicAcctState(BasicAcctState):
         uint_dynamic: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
-            stack_type=pt.TealType.uint64, max_keys=10
+            stack_type=pt.TealType.uint64, max_keys=5
         )
         byte_dynamic: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
-            stack_type=pt.TealType.bytes, max_keys=10
+            stack_type=pt.TealType.bytes, max_keys=5
         )
 
     app = DynamicAcctState()
-    assert app.acct_state.num_uints == 11, "Expected 11 ints"
-    assert app.acct_state.num_byte_slices == 11, "Expected 11 byte slices"
+    assert app.acct_state.num_uints == 6, "Expected 6 ints"
+    assert app.acct_state.num_byte_slices == 6, "Expected 6 byte slices"
 
 
 def test_internal():
@@ -266,6 +266,16 @@ def test_resolvable_hint():
     assert hint.resolvable["aid"] == method_spec(
         h.get_asset_id
     ), "Expected the hint to match the method spec"
+
+
+EXPECTED_BARE_HANDLERS = [
+    "create",
+    "update",
+    "delete",
+    "opt_in",
+    "clear_state",
+    "close_out",
+]
 
 
 def test_model_args():

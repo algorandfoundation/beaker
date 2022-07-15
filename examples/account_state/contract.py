@@ -11,7 +11,7 @@ class Dope(Application):
     )
 
     @Bare.opt_in
-    def optin(self):
+    def opt_in(self):
         return self.initialize_account_state(Txn.sender())
 
     @handler

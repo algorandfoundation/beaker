@@ -14,13 +14,12 @@ def test_handler_config():
 
     hc = get_handler_config(handleable)
 
-    assert hc.abi_method, "Expected abi method to be created"
-    meth = method_spec(handleable)
+    assert hc.method_spec is not None, "Expected abi method to be created"
+    meth = hc.method_spec
     assert len(meth.args) == 0, "Expected no args"
     assert meth.name == "handleable", "Expected name to match"
 
     config_dict = hc.__dict__
-    del config_dict["abi_method"]
     del config_dict["method_spec"]
 
     for k, v in config_dict.items():
@@ -36,8 +35,7 @@ def test_handler_config():
 
     config_dict = hc.__dict__
 
-    assert hc.abi_method, "Expected abi method to be created"
-    del config_dict["abi_method"]
+    assert hc.method_spec is not None, "Expected abi method to be created"
     del config_dict["method_spec"]
 
     assert hc.read_only == True, "Expected read_only to be true"
@@ -56,8 +54,7 @@ def test_handler_config():
 
     config_dict = hc.__dict__
 
-    assert hc.abi_method, "Expected abi method to be created"
-    del config_dict["abi_method"]
+    assert hc.method_spec is not None, "Expected abi method to be created"
     del config_dict["method_spec"]
     for k, v in config_dict.items():
         assert v is None or v is False, f"Expected {k} to be unset"
@@ -72,9 +69,9 @@ def test_handler_config():
 
     config_dict = hc.__dict__
 
-    assert hc.abi_method is not None, "Expected abi method to be created"
-    del config_dict["abi_method"]
+    assert hc.method_spec is not None, "Expected abi method to be created"
     del config_dict["method_spec"]
+
     assert hc.method_config is not None, "Expected method config to be set"
     assert (
         hc.method_config.opt_in == pt.CallConfig.CALL

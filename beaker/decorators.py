@@ -44,7 +44,7 @@ class ResolvableArguments:
             if not isinstance(arg_resolver, ABIReturnSubroutine):
                 # Assume its a handler func and try to get the config
                 hc = get_handler_config(arg_resolver)
-                if not hc.abi_method:
+                if hc.method_spec is None:
                     raise TealTypeError(arg_resolver, ABIReturnSubroutine)
 
             resolvable_args[arg_name] = arg_resolver
@@ -80,15 +80,16 @@ class MethodHints:
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
-    abi_method: bool = field(kw_only=True, default=False)
     method_spec: Method = field(kw_only=True, default=None)
-    method_config: MethodConfig = field(kw_only=True, default=None)
-    bare_method: BareCallActions = field(kw_only=True, default=None)
-    referenced_self: bool = field(kw_only=True, default=False)
-    read_only: bool = field(kw_only=True, default=False)
     subroutine: Subroutine = field(kw_only=True, default=None)
-    resolvable: ResolvableArguments = field(kw_only=True, default=None)
+    bare_method: BareCallActions = field(kw_only=True, default=None)
+
+    referenced_self: bool = field(kw_only=True, default=False)
     models: dict[str, Model] = field(kw_only=True, default=None)
+
+    resolvable: ResolvableArguments = field(kw_only=True, default=None)
+    method_config: MethodConfig = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> MethodHints:
         mh = MethodHints(read_only=self.read_only)
@@ -292,9 +293,7 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(
-            fn, abi_method=True, method_spec=ABIReturnSubroutine(fn).method_spec()
-        )
+        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
 
         return fn
 

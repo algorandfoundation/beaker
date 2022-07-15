@@ -175,7 +175,7 @@ class ApplicationState:
 
         if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
             raise Exception(
-                "Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
+                f"Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
             )
 
     def initialize(self):
@@ -304,7 +304,7 @@ class AccountState:
 
         if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
             raise Exception(
-                "Too much account state, expected {total} <= {MAX_LOCAL_STATE}"
+                f"Too much account state, expected {total} <= {MAX_LOCAL_STATE}"
             )
 
     def initialize(self, acct: Expr):

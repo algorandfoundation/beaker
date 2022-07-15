@@ -1,8 +1,9 @@
 from inspect import getattr_static, signature
-from typing import Final, cast
+from typing import Final, cast, Callable
 from algosdk.abi import Method
 from pyteal import (
     MAX_TEAL_VERSION,
+    Expr,
     ABIReturnSubroutine,
     Approve,
     BareCallActions,
@@ -14,10 +15,12 @@ from pyteal import (
     Reject,
     Router,
     Bytes,
+    Subroutine,
 )
 
 from .decorators import (
     Bare,
+    HandlerConfig,
     MethodHints,
     get_handler_config,
 )
@@ -55,71 +58,65 @@ class Application:
             if not m.startswith("__")
         }
 
-        acct_vals: dict[str, LocalStateValue | DynamicLocalStateValue] = {}
-        app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
-
-        for k, v in self.attrs.items():
-            if isinstance(v, LocalStateValue) or isinstance(v, GlobalStateValue):
-                if v.key is None:
-                    v.key = Bytes(k)
-
-            match v:
-                case LocalStateValue() | DynamicLocalStateValue():
-                    acct_vals[k] = v
-                case GlobalStateValue() | DynamicGlobalStateValue():
-                    app_vals[k] = v
-
-        self.acct_state = AccountState(acct_vals)
-        self.app_state = ApplicationState(app_vals)
-
         self.hints: dict[str, MethodHints] = {}
         self.bare_handlers: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
+
+        acct_vals: dict[str, LocalStateValue | DynamicLocalStateValue] = {}
+        app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
+
         for name, bound_attr in self.attrs.items():
-            handler_config = get_handler_config(bound_attr)
-
             static_attr = getattr_static(self, name)
-
+            handler_config = get_handler_config(bound_attr)
             self.hints[name] = handler_config.hints()
 
-            # Add ABI handlers
-            if handler_config.abi_method:
-                abi_meth = ABIReturnSubroutine(static_attr)
-
-                if handler_config.referenced_self:
-                    abi_meth.subroutine.implementation = bound_attr
-
-                self.methods[name] = (abi_meth, handler_config.method_config)
-
-            # Add internal subroutines
-            if handler_config.subroutine is not None:
-                if handler_config.referenced_self:
-                    # Add the `self` bound method, wrapped in a subroutine
-                    setattr(self, name, handler_config.subroutine(bound_attr))
-                else:
-                    # Add the static method, wrapped in a subroutine on the class since we didn't reference `self`
-                    setattr(
-                        self.__class__,
-                        name,
-                        handler_config.subroutine(static_attr),
-                    )
-
-            # Add bare handlers
-            if handler_config.bare_method is not None:
-                ba = handler_config.bare_method
-                for oc, action in ba.__dict__.items():
-                    if action is None:
-                        continue
-
-                    if oc in self.bare_handlers:
-                        raise BareOverwriteError(oc)
-
-                    action = cast(OnCompleteAction, action)
-                    # Swap the implementation with the bound version
+            match (bound_attr, handler_config):
+                case (DynamicLocalStateValue(), _):
+                    acct_vals[name] = bound_attr
+                case (LocalStateValue(), _):
+                    if bound_attr.key is None:
+                        bound_attr.key = Bytes(name)
+                    acct_vals[name] = bound_attr
+                case (DynamicGlobalStateValue(), _):
+                    app_vals[name] = bound_attr
+                case (GlobalStateValue(), _):
+                    if bound_attr.key is None:
+                        bound_attr.key = Bytes(name)
+                    app_vals[name] = bound_attr
+                case (_, HandlerConfig(method_spec=Method())):
+                    abi_meth = ABIReturnSubroutine(static_attr)
                     if handler_config.referenced_self:
-                        action.action.subroutine.implementation = bound_attr
+                        abi_meth.subroutine.implementation = bound_attr
+                    self.methods[name] = (abi_meth, handler_config.method_config)
+                case (_, HandlerConfig(subroutine=Subroutine())):
+                    if handler_config.referenced_self:
+                        # Add the `self` bound method, wrapped in a subroutine
+                        setattr(self, name, handler_config.subroutine(bound_attr))
+                    else:
+                        # Add the static method, wrapped in a subroutine on the class since we didn't reference `self`
+                        setattr(
+                            self.__class__,
+                            name,
+                            handler_config.subroutine(static_attr),
+                        )
+                case (_, HandlerConfig(bare_method=BareCallActions())):
+                    ba = handler_config.bare_method
+                    for oc, action in ba.__dict__.items():
+                        if action is None:
+                            continue
 
-                    self.bare_handlers[oc] = action
+                        if oc in self.bare_handlers:
+                            raise BareOverwriteError(oc)
+
+                        action = cast(OnCompleteAction, action)
+                        # Swap the implementation with the bound version
+                        if handler_config.referenced_self:
+                            action.action.subroutine.implementation = bound_attr
+
+                        self.bare_handlers[oc] = action
+
+        self.acct_state = AccountState(acct_vals)
+        self.app_state = ApplicationState(app_vals)
 
         # Create router with name of class and bare handlers
         self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
@@ -156,4 +153,16 @@ class Application:
 
     @Bare.delete
     def delete(self):
+        return Reject()
+
+    @Bare.opt_in
+    def opt_in(self):
+        return Reject()
+
+    @Bare.close_out
+    def close_out(self):
+        return Reject()
+
+    @Bare.clear_state
+    def clear_state(self):
         return Reject()
