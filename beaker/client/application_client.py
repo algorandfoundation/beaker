@@ -21,7 +21,7 @@ from algosdk.v2client.algod import AlgodClient
 from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints
 
-# TODO make const
+# TODO: replace with pysdk when its released
 APP_MAX_PAGE_SIZE = 2048
 
 
@@ -44,14 +44,13 @@ class ApplicationClient:
 
         self.suggested_params = suggested_params
 
-    def compile(self) -> tuple[bytes, bytes]:
+    def compile_approval(self) -> tuple[bytes, bytes]:
         approval_result = self.client.compile(self.app.approval_program)
-        approval_binary = b64decode(approval_result["result"])
+        return b64decode(approval_result["result"])
 
+    def compile_clear(self) -> bytes:
         clear_result = self.client.compile(self.app.clear_program)
-        clear_binary = b64decode(clear_result["result"])
-
-        return approval_binary, clear_binary
+        return b64decode(clear_result["result"])
 
     def create(
         self,
@@ -62,7 +61,8 @@ class ApplicationClient:
         **kwargs,
     ) -> tuple[int, str, str]:
 
-        approval, clear = self.compile()
+        approval = self.compile_approval()
+        clear = self.compile_clear()
 
         extra_pages = ceil(
             ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
@@ -109,7 +109,8 @@ class ApplicationClient:
         sp: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        approval, clear = self.compile()
+        approval = self.compile_approval()
+        clear = self.compile_clear()
 
         sp = self.get_suggested_params(sp)
         signer = self.get_signer(signer)
@@ -248,7 +249,6 @@ class ApplicationClient:
         return delete_result.tx_ids[0]
 
     def prepare(self, signer: TransactionSigner, **kwargs) -> "ApplicationClient":
-
         ac = copy.copy(self)
         ac.signer = signer
         ac.__dict__.update(**kwargs)

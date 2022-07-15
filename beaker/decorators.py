@@ -31,51 +31,6 @@ HandlerFunc = Callable[..., Expr]
 _handler_config_attr: Final[str] = "__handler_config__"
 
 
-class ResolvableArguments:
-    """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
-
-    def __init__(
-        self,
-        **kwargs: dict[str, ABIReturnSubroutine | HandlerFunc],
-    ):
-
-        resolvable_args = {}
-        for arg_name, arg_resolver in kwargs.items():
-            if not isinstance(arg_resolver, ABIReturnSubroutine):
-                # Assume its a handler func and try to get the config
-                hc = get_handler_config(arg_resolver)
-                if hc.method_spec is None:
-                    raise TealTypeError(arg_resolver, ABIReturnSubroutine)
-
-            resolvable_args[arg_name] = arg_resolver
-
-        self.__dict__.update(**resolvable_args)
-
-    def check_arguments(self, sig: Signature):
-        for k in self.__dict__.keys():
-            if k not in sig.parameters:
-                raise Exception(
-                    f"The ResolvableArgument field {k} not present in function signature"
-                )
-
-
-@dataclass
-class MethodHints:
-    """MethodHints provides some hints to the caller"""
-
-    resolvable: dict[str, Method] = field(kw_only=True, default=None)
-    read_only: bool = field(kw_only=True, default=False)
-    models: dict[str, list[str]] = field(kw_only=True, default=None)
-
-    def dictify(self) -> dict[str, Any]:
-        d = {"resolvable": {}, "read_only": self.read_only, "models": self.models}
-
-        if self.resolvable is not None:
-            d["resolvable"] = {k: v.dictify() for k, v in self.resolvable.items()}
-
-        return d
-
-
 @dataclass
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
@@ -87,11 +42,11 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     models: dict[str, Model] = field(kw_only=True, default=None)
 
-    resolvable: ResolvableArguments = field(kw_only=True, default=None)
+    resolvable: "ResolvableArguments" = field(kw_only=True, default=None)
     method_config: MethodConfig = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 
-    def hints(self) -> MethodHints:
+    def hints(self) -> "MethodHints":
         mh = MethodHints(read_only=self.read_only)
 
         if self.resolvable is not None:
@@ -119,6 +74,51 @@ def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
 def set_handler_config(fn: HandlerFunc, **kwargs):
     handler_config = get_handler_config(fn)
     setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
+
+
+@dataclass
+class MethodHints:
+    """MethodHints provides some hints to the caller"""
+
+    resolvable: dict[str, Method] = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
+    models: dict[str, list[str]] = field(kw_only=True, default=None)
+
+    def dictify(self) -> dict[str, Any]:
+        d = {"resolvable": {}, "read_only": self.read_only, "models": self.models}
+
+        if self.resolvable is not None:
+            d["resolvable"] = {k: v.dictify() for k, v in self.resolvable.items()}
+
+        return d
+
+
+class ResolvableArguments:
+    """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
+
+    def __init__(
+        self,
+        **kwargs: dict[str, ABIReturnSubroutine | HandlerFunc],
+    ):
+
+        resolvable_args = {}
+        for arg_name, arg_resolver in kwargs.items():
+            if not isinstance(arg_resolver, ABIReturnSubroutine):
+                # Assume its a handler func and try to get the config
+                hc = get_handler_config(arg_resolver)
+                if hc.method_spec is None:
+                    raise TealTypeError(arg_resolver, ABIReturnSubroutine)
+
+            resolvable_args[arg_name] = arg_resolver
+
+        self.__dict__.update(**resolvable_args)
+
+    def check_arguments(self, sig: Signature):
+        for k in self.__dict__.keys():
+            if k not in sig.parameters:
+                raise Exception(
+                    f"The ResolvableArgument field {k} not present in function signature"
+                )
 
 
 class Authorize:

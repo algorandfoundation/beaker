@@ -66,27 +66,30 @@ class Application:
         app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
+
+            # Check for state vals
+            match bound_attr:
+                case LocalStateValue():
+                    if bound_attr.key is None:
+                        bound_attr.key = Bytes(name)
+                    acct_vals[name] = bound_attr
+                case DynamicLocalStateValue():
+                    acct_vals[name] = bound_attr
+                case GlobalStateValue():
+                    if bound_attr.key is None:
+                        bound_attr.key = Bytes(name)
+                    app_vals[name] = bound_attr
+                case DynamicGlobalStateValue():
+                    app_vals[name] = bound_attr
+
+            if name in app_vals or name in acct_vals:
+                continue
+
+            # Check for handlers and internal methods
             handler_config = get_handler_config(bound_attr)
-
-            match (bound_attr, handler_config):
-                # Local State
-                case DynamicLocalStateValue(), _:
-                    acct_vals[name] = bound_attr
-                case LocalStateValue(), _:
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
-                    acct_vals[name] = bound_attr
-
-                # Global State
-                case DynamicGlobalStateValue(), _:
-                    app_vals[name] = bound_attr
-                case GlobalStateValue(), _:
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
-                    app_vals[name] = bound_attr
-
+            match handler_config:
                 # Bare Handlers
-                case _, HandlerConfig(bare_method=BareCallActions()):
+                case HandlerConfig(bare_method=BareCallActions()):
                     actions = {
                         oc: cast(OnCompleteAction, action)
                         for oc, action in handler_config.bare_method.__dict__.items()
@@ -104,7 +107,7 @@ class Application:
                         self.bare_handlers[oc] = action
 
                 # ABI Methods
-                case _, HandlerConfig(method_spec=Method()):
+                case HandlerConfig(method_spec=Method()):
                     # Create the ABIReturnSubroutine from the static attr
                     # but override the implementation with the bound version
                     abi_meth = ABIReturnSubroutine(static_attr)
@@ -114,7 +117,7 @@ class Application:
                     self.hints[name] = handler_config.hints()
 
                 # Internal subroutines
-                case _, HandlerConfig(subroutine=Subroutine()):
+                case HandlerConfig(subroutine=Subroutine()):
                     if handler_config.referenced_self:
                         setattr(self, name, handler_config.subroutine(bound_attr))
                     else:
