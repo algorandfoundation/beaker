@@ -23,7 +23,7 @@ def demo():
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    app_client = app_client.prepare(signer=signer, sp=client.suggested_params())
+    app_client = app_client.prepare(signer=signer)
 
     result = app_client.call(app.add, a=2, b=3)
     print(result.return_value)

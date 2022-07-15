@@ -34,7 +34,7 @@ class MySickApp(Application):
     @Bare.opt_in
     def opt_in(self):
         """opt into application"""
-        return self.initialize_account_state(Txn.sender())
+        return self.initialize_account_state()
 
     @handler
     def add(self, a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
@@ -69,4 +69,5 @@ if __name__ == "__main__":
     msa = MySickApp()
     print(msa.approval_program)
     print(msa.clear_program)
+    print(msa.app_state.schema())
     print(json.dumps(msa.contract.dictify()))

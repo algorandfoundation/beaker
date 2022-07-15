@@ -36,7 +36,5 @@ if __name__ == "__main__":
     import json
 
     ea = ExpensiveApp()
-    for n, hints in ea.contract_hints().items():
-        for k, v in hints["models"].items():
-            print(f"method {n} defined model for arg {k} as {list(v)}")
-    # print(ea.approval_program)
+    print(ea.approval_program)
+    print(ea.contract.dictify())

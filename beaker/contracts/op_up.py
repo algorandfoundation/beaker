@@ -13,7 +13,6 @@ OpUpTargetBinary = "BjEAMgkSQw=="
 OpUpClear = Return(Int(1))
 OpUpClearBinary = "BoEBQw=="
 
-
 class OpUp(Application):
     min_balance: Final[Int] = Algo
     opup_app_id: Final[GlobalStateValue] = GlobalStateValue(

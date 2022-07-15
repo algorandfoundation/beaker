@@ -42,7 +42,7 @@ class ApplicationClient:
 
         self.suggested_params = suggested_params
 
-    def compile_approval(self) -> tuple[bytes, bytes]:
+    def compile_approval(self) ->  bytes:
         approval_result = self.client.compile(self.app.approval_program)
         return b64decode(approval_result["result"])
 
@@ -292,11 +292,11 @@ class ApplicationClient:
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
+        atc = AtomicTransactionComposer()
         if hints.read_only:
             # TODO: do dryrun
             pass
 
-        atc = AtomicTransactionComposer()
         atc.add_method_call(
             self.app_id,
             method,

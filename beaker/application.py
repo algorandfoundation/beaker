@@ -1,5 +1,5 @@
-from inspect import getattr_static, signature
-from typing import Final, cast, Callable
+from inspect import getattr_static
+from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
     MAX_TEAL_VERSION,
