@@ -20,9 +20,7 @@ from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints
-
-# TODO: replace with pysdk when its released
-APP_MAX_PAGE_SIZE = 2048
+from beaker.consts import APP_MAX_PAGE_SIZE
 
 
 class ApplicationClient:

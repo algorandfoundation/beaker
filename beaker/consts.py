@@ -12,3 +12,10 @@ MilliAlgo: Final[Int] = Int(milli_algo)
 # aliases for 1/0
 TRUE: Final[Int] = Int(1)
 FALSE: Final[Int] = Int(0)
+
+# TODO: find consts
+MAX_LOCAL_STATE = 16
+MAX_GLOBAL_STATE = 64
+
+# TODO: replace with pysdk when its released
+APP_MAX_PAGE_SIZE = 2048

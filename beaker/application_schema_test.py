@@ -146,15 +146,15 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
 
+def test_account_state():
+    pass
+
+
 def test_global_value():
     pass
 
 
 def test_dynamic_global_value():
-    pass
-
-
-def test_account_state():
     pass
 
 
