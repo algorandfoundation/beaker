@@ -19,10 +19,10 @@ print(
 )
 
 print(f"Opting in")
-result = app_client.opt_in()
+app_client.opt_in()
 
 print("Setting value")
-result = app_client.call(app.doit, note="yo", k=0, v="First item")
+app_client.call(app.doit, note="yo", k=0, v="First item")
 
 print("Getting value")
 result = app_client.call(app.getit, k=0)

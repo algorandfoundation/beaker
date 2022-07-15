@@ -272,14 +272,14 @@ class ApplicationClient:
 
         args = []
         for method_arg in method.args:
-            if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
-                if hints.resolvable is not None and method_arg.name in hints.resolvable:
-                    result = self.call(hints.resolvable[method_arg.name])
-                    args.append(result.return_value)
-                else:
-                    raise Exception(f"Unspecified argument: {method_arg.name}")
+            name = method_arg.name
+            if name in kwargs:
+                args.append(kwargs[name])
+            elif name in hints.resolvable:
+                result = self.call(hints.resolvable[name])
+                args.append(result.return_value)
             else:
-                args.append(kwargs[method_arg.name])
+                raise Exception(f"Unspecified argument: {name}")
 
         if hints.read_only:
             # TODO: do dryrun
@@ -338,14 +338,14 @@ class ApplicationClient:
 
         args = []
         for method_arg in method.args:
-            if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
-                if hints.resolvable is not None and method_arg.name in hints.resolvable:
-                    result = self.call(hints.resolvable[method_arg.name])
-                    args.append(result.return_value)
-                else:
-                    raise Exception(f"Unspecified argument: {method_arg.name}")
+            name = method_arg.name
+            if name in kwargs:
+                args.append(kwargs[name])
+            elif name in hints.resolvable:
+                result = self.call(hints.resolvable[name])
+                args.append(result.return_value)
             else:
-                args.append(kwargs[method_arg.name])
+                raise Exception(f"Unspecified argument: {name}")
 
         atc.add_method_call(
             self.app_id,
