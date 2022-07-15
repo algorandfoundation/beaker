@@ -17,6 +17,9 @@ from pyteal import (
     TealTypeError,
 )
 
+MAX_LOCAL_STATE = 16
+MAX_GLOBAL_STATE = 64
+
 
 class DynamicGlobalStateValue:
     def __init__(
@@ -170,6 +173,11 @@ class ApplicationState:
             ]
         )
 
+        if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
+            raise Exception(
+                "Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
+            )
+
     def initialize(self):
         return Seq(
             *[g.set_default() for g in self.declared_vals.values() if not g.static]
@@ -293,6 +301,11 @@ class AccountState:
                 if l.stack_type == TealType.bytes
             ]
         )
+
+        if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
+            raise Exception(
+                "Too much account state, expected {total} <= {MAX_LOCAL_STATE}"
+            )
 
     def initialize(self, acct: Expr):
         return Seq(*[l.set_default(acct) for l in self.declared_vals.values()])
