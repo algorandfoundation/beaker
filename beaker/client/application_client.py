@@ -55,18 +55,21 @@ class ApplicationClient:
         sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        extra_pages: int = None,
         **kwargs,
     ) -> tuple[int, str, str]:
 
         approval = self.compile_approval()
         clear = self.compile_clear()
 
-        extra_pages = ceil(
-            ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
-        )
+        if extra_pages is None:
+            extra_pages = ceil(
+                ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
+            )
 
-        sp = self.get_suggested_params(sp)
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -76,7 +79,7 @@ class ApplicationClient:
                 txn=transaction.ApplicationCreateTxn(
                     sender=sender,
                     sp=sp,
-                    on_complete=transaction.OnComplete.NoOpOC,
+                    on_complete=on_complete,
                     approval_program=approval,
                     clear_program=clear,
                     global_schema=self.app.app_state.schema(),
@@ -104,13 +107,13 @@ class ApplicationClient:
         sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
         approval = self.compile_approval()
         clear = self.compile_clear()
 
-        sp = self.get_suggested_params(sp)
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -137,10 +140,10 @@ class ApplicationClient:
         sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        sp = self.get_suggested_params(sp)
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -165,10 +168,10 @@ class ApplicationClient:
         sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        sp = self.get_suggested_params(sp)
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -193,10 +196,10 @@ class ApplicationClient:
         sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        sp = self.get_suggested_params(sp)
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -221,11 +224,11 @@ class ApplicationClient:
         sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
 
-        sp = self.get_suggested_params(sp)
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -400,9 +403,7 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def get_signer(
-        self, signer: TransactionSigner = None
-    ) -> tuple[TransactionSigner, str]:
+    def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
 
         if signer is not None:
             return signer
@@ -412,7 +413,7 @@ class ApplicationClient:
 
         raise Exception("No signer provided")
 
-    def get_sender(self, sender: str = None, signer: TransactionSigner = None):
+    def get_sender(self, sender: str = None, signer: TransactionSigner = None) -> str:
         if sender is not None:
             return sender
 
@@ -429,3 +430,5 @@ class ApplicationClient:
                 return signer.msig.address()
             case LogicSigTransactionSigner():
                 return signer.lsig.address()
+
+        raise Exception("No sender provided")

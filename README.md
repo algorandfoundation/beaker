@@ -49,7 +49,7 @@ We can add a method to be handled by the application. This is done by tagging a 
 
 ```py
 from pyteal import *
-from beaker import Application, handle
+from beaker import Application, handler
 
 class MySickApp(Application):
 
@@ -117,7 +117,7 @@ Here we use the `call` method, passing the method defined in our class, and args
 Lets go back and add some application state (Global State in Algorand parlance). 
 
 ```py
-
+from pyteal import *
 from beaker import *
 
 class MySickApp(Application):
@@ -125,12 +125,13 @@ class MySickApp(Application):
     counter: Final[GlobalStateValue] = GlobalStateValue(
         stack_type=TealType.uint64,
         descr="A counter meant to show use of application state",
-        # key=Bytes("counter"), specify a key to override the field name  
-        # default=Int(5), specify a default value to initialize the state value to
-        # static=True, flag as a value that should not change once set
+        key=Bytes("counter"), # Override the default key (class var name) 
+        default=Int(5), # Initialize to 5 
+        static=True, # Once set, prevent overwrite (enforced _only_ while using methods defined on statevar, not protocol level) 
     )
 
-    @Bare.create
+    # Note the method name needs to be `crete` exactly to override the implementation in the Application class
+    @create
     def create(self):
         return self.initialize_app_state()
 
@@ -149,7 +150,7 @@ class MySickApp(Application):
         )
 ```
 
-The `create` method overrides the one defined in the base `Application` class, tagging it with `Bare.create` which specifies we want a bare call (no app args) and only on create (app id == 0)
+The `create` method overrides the one defined in the base `Application` class, tagging it with `@create` which specifies we want a bare call (no app args) and only on create (app id == 0)
 
 The other methods may be called similar to `add` method above.  Using `set` method of GlobalStateValue we can overwrite the value that is currently stored.
 
@@ -181,7 +182,7 @@ The `handler` decorator accepts several other parameters:
 
 - `method_config` - See the PyTeal definition for more, but tl;dr it allows you to specify which OnCompletes may handle different modes (call/create/none/all)
 - `read_only` - Mark a method as callable with no fee (using dryrun or view, place holder until arc22 is merged)
-- `resolvable` - To provide hints to the caller for how to resolve a given input if there is a specific value that should be passed
+- `resolvable` - To provide [hints](#method-hints) to the caller for how to resolve a given input if there is a specific value that should be passed
 
 
 ## Account State
