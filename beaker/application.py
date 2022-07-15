@@ -53,7 +53,7 @@ class Application:
         self.teal_version = version
 
         self.attrs = {
-            m: getattr(self, m)
+            m: (getattr(self, m), getattr_static(self, m))
             for m in list(set(dir(self.__class__)) - set(dir(super())))
             if not m.startswith("__")
         }
@@ -65,55 +65,64 @@ class Application:
         acct_vals: dict[str, LocalStateValue | DynamicLocalStateValue] = {}
         app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
 
-        for name, bound_attr in self.attrs.items():
-            static_attr = getattr_static(self, name)
+        for name, (bound_attr, static_attr) in self.attrs.items():
             handler_config = get_handler_config(bound_attr)
-            self.hints[name] = handler_config.hints()
 
             match (bound_attr, handler_config):
-                case (DynamicLocalStateValue(), _):
+                # Local State
+                case DynamicLocalStateValue(), _:
                     acct_vals[name] = bound_attr
-                case (LocalStateValue(), _):
+                case LocalStateValue(), _:
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
-                case (DynamicGlobalStateValue(), _):
-                    app_vals[name] = bound_attr
-                case (GlobalStateValue(), _):
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
-                    app_vals[name] = bound_attr
-                case (_, HandlerConfig(method_spec=Method())):
-                    abi_meth = ABIReturnSubroutine(static_attr)
-                    if handler_config.referenced_self:
-                        abi_meth.subroutine.implementation = bound_attr
-                    self.methods[name] = (abi_meth, handler_config.method_config)
-                case (_, HandlerConfig(subroutine=Subroutine())):
-                    if handler_config.referenced_self:
-                        # Add the `self` bound method, wrapped in a subroutine
-                        setattr(self, name, handler_config.subroutine(bound_attr))
-                    else:
-                        # Add the static method, wrapped in a subroutine on the class since we didn't reference `self`
-                        setattr(
-                            self.__class__,
-                            name,
-                            handler_config.subroutine(static_attr),
-                        )
-                case (_, HandlerConfig(bare_method=BareCallActions())):
-                    ba = handler_config.bare_method
-                    for oc, action in ba.__dict__.items():
-                        if action is None:
-                            continue
 
+                # Global State
+                case DynamicGlobalStateValue(), _:
+                    app_vals[name] = bound_attr
+                case GlobalStateValue(), _:
+                    if bound_attr.key is None:
+                        bound_attr.key = Bytes(name)
+                    app_vals[name] = bound_attr
+
+                # Bare Handlers
+                case _, HandlerConfig(bare_method=BareCallActions()):
+                    actions = {
+                        oc: cast(OnCompleteAction, action)
+                        for oc, action in handler_config.bare_method.__dict__.items()
+                        if action is not None
+                    }
+
+                    for oc, action in actions.items():
                         if oc in self.bare_handlers:
                             raise BareOverwriteError(oc)
 
-                        action = cast(OnCompleteAction, action)
                         # Swap the implementation with the bound version
                         if handler_config.referenced_self:
                             action.action.subroutine.implementation = bound_attr
 
                         self.bare_handlers[oc] = action
+
+                # ABI Methods
+                case _, HandlerConfig(method_spec=Method()):
+                    # Create the subr from the static attr
+                    # but override the implementation with the bound version
+                    abi_meth = ABIReturnSubroutine(static_attr)
+                    if handler_config.referenced_self:
+                        abi_meth.subroutine.implementation = bound_attr
+                    self.methods[name] = abi_meth
+                    self.hints[name] = handler_config.hints()
+
+                # Internal subroutines
+                case _, HandlerConfig(subroutine=Subroutine()):
+                    if handler_config.referenced_self:
+                        setattr(self, name, handler_config.subroutine(bound_attr))
+                    else:
+                        setattr(
+                            self.__class__,
+                            name,
+                            handler_config.subroutine(static_attr),
+                        )
 
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
@@ -122,9 +131,9 @@ class Application:
         self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
 
         # Add method handlers
-        for method, method_config in self.methods.values():
+        for method in self.methods.values():
             self.router.add_method_handler(
-                method_call=method, method_config=method_config
+                method_call=method, method_config=handler_config.method_config
             )
 
         (
