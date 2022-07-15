@@ -32,19 +32,17 @@ class ApplicationClient:
         app: Application,
         app_id: int = 0,
         signer: TransactionSigner = None,
+        sender: str = None,
         suggested_params: transaction.SuggestedParams = None,
     ):
         self.client = client
         self.app = app
+        self.app_id = app_id
 
         self.signer = signer
-        if self.signer is not None:
-            self.addr = address_from_private_key(signer.private_key)
+        self.sender = sender
 
         self.suggested_params = suggested_params
-
-        # Also set in create
-        self.app_id = app_id
 
     def compile(self) -> tuple[bytes, bytes]:
         approval_result = self.client.compile(self.app.approval_program)
@@ -57,6 +55,7 @@ class ApplicationClient:
 
     def create(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
@@ -70,13 +69,14 @@ class ApplicationClient:
         )
 
         sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationCreateTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     on_complete=transaction.OnComplete.NoOpOC,
                     approval_program=approval,
@@ -103,6 +103,7 @@ class ApplicationClient:
 
     def update(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
@@ -111,13 +112,14 @@ class ApplicationClient:
         approval, clear = self.compile()
 
         sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationUpdateTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     approval_program=approval,
@@ -133,19 +135,21 @@ class ApplicationClient:
 
     def opt_in(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
         sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationOptInTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     app_args=args,
@@ -159,19 +163,21 @@ class ApplicationClient:
 
     def close_out(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
         sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationCloseOutTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     app_args=args,
@@ -185,19 +191,21 @@ class ApplicationClient:
 
     def clear_state(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
         sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationClearStateTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     app_args=args,
@@ -211,6 +219,7 @@ class ApplicationClient:
 
     def delete(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
         sp: transaction.SuggestedParams = None,
@@ -218,13 +227,14 @@ class ApplicationClient:
     ) -> str:
 
         sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationDeleteTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     app_args=args,
@@ -247,6 +257,8 @@ class ApplicationClient:
     def call(
         self,
         method: abi.Method | HandlerFunc,
+        sender: str = None,
+        signer: TransactionSigner = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema = None,
         global_schema: transaction.StateSchema = None,
@@ -263,7 +275,8 @@ class ApplicationClient:
     ) -> ABIResult:
 
         sp = self.get_suggested_params()
-        signer, addr = self.get_signer()
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         if not isinstance(method, abi.Method):
             method = get_method_spec(method)
@@ -289,7 +302,7 @@ class ApplicationClient:
         atc.add_method_call(
             self.app_id,
             method,
-            addr,
+            sender,
             sp,
             signer,
             method_args=args,
@@ -314,6 +327,8 @@ class ApplicationClient:
         self,
         atc: AtomicTransactionComposer,
         method: abi.Method | HandlerFunc,
+        sender: str = None,
+        signer: TransactionSigner = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema = None,
         global_schema: transaction.StateSchema = None,
@@ -329,7 +344,8 @@ class ApplicationClient:
         **kwargs,
     ):
         sp = self.get_suggested_params()
-        signer, addr = self.get_signer()
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         if not isinstance(method, abi.Method):
             method = get_method_spec(method)
@@ -350,7 +366,7 @@ class ApplicationClient:
         atc.add_method_call(
             self.app_id,
             method,
-            addr,
+            sender,
             sp,
             signer,
             method_args=args,
@@ -390,18 +406,28 @@ class ApplicationClient:
         self, signer: TransactionSigner = None
     ) -> tuple[TransactionSigner, str]:
 
-        if signer is None:
-            if self.signer is None:
-                raise Exception("No signer provided")
+        if signer is not None:
+            return signer
 
+        if self.signer is not None:
+            return self.signer
+
+        raise Exception("No signer provided")
+
+    def get_sender(self, sender: str = None, signer: TransactionSigner = None):
+        if sender is not None:
+            return sender
+
+        if self.sender is not None:
+            return self.sender
+
+        if self.signer is not None and signer is None:
             signer = self.signer
 
         match signer:
             case AccountTransactionSigner():
-                addr = address_from_private_key(signer.private_key)
+                return address_from_private_key(signer.private_key)
             case MultisigTransactionSigner():
-                addr = signer.msig.address()
+                return signer.msig.address()
             case LogicSigTransactionSigner():
-                addr = signer.lsig.address()
-
-        return signer, addr
+                return signer.lsig.address()

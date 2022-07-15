@@ -1,5 +1,11 @@
 # TODOs
 
+## random
+
+- Use dryrun for `read-only` methods
+
+
+
 ## house keeping
 
 - Deploy to pip
@@ -8,10 +14,13 @@
 
 - Unit/Integration Testing 
 
+- Automated testing of examples
+
 - Better detection of app definition errors (cannot redeclare state keys, cannot declare over max schema)  
 
-
 ## features
+
+- Add `Debug` mode using Dryrun 
 
 - Add Box state interface (take into account that callers need to know what box names they'll need access to)
 
@@ -35,10 +44,8 @@
 
 ### Contracts
 
-- Trampoline - Adds method to deploy itself (w/ payment?)
+- Trampoline - Adds method to deploy itself (w/ hook for other subroutine to call)
 
 - Membership Token creation/validation
 
 - Other ARCs?
-
-- ??

@@ -17,6 +17,7 @@ from pyteal import (
     TealTypeError,
 )
 
+# TODO: find consts
 MAX_LOCAL_STATE = 16
 MAX_GLOBAL_STATE = 64
 
