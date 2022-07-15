@@ -10,7 +10,7 @@ from beaker.application_schema import (
 )
 
 from .errors import BareOverwriteError
-from .application import Application, method_spec
+from .application import Application, get_method_spec
 from .decorators import ResolvableArguments, handler, Bare, internal
 from .model import Model
 
@@ -61,7 +61,7 @@ def test_single_handler():
     sh = SingleHandler()
 
     assert len(sh.methods) == 1, "Expected a single handler"
-    assert sh.contract.get_method_by_name("handle") == method_spec(
+    assert sh.contract.get_method_by_name("handle") == get_method_spec(
         sh.handle
     ), "Expected contract method to match method spec"
 
@@ -108,7 +108,7 @@ def test_subclass_application():
 
     sc = SubClass()
     assert len(sc.methods) == 1, "Expected single method"
-    assert sc.contract.get_method_by_name("handle") == method_spec(
+    assert sc.contract.get_method_by_name("handle") == get_method_spec(
         sc.handle
     ), "Expected contract method to match method spec"
 
@@ -119,7 +119,7 @@ def test_subclass_application():
 
     osc = OverrideSubClass()
     assert len(osc.methods) == 1, "Expected single method"
-    assert osc.contract.get_method_by_name("handle") == method_spec(
+    assert osc.contract.get_method_by_name("handle") == get_method_spec(
         osc.handle
     ), "Expected contract method to match method spec"
 
@@ -263,7 +263,7 @@ def test_resolvable_hint():
     assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
     hint = h.hints[h.hintymeth.__name__]
-    assert hint.resolvable["aid"] == method_spec(
+    assert hint.resolvable["aid"] == get_method_spec(
         h.get_asset_id
     ), "Expected the hint to match the method spec"
 
@@ -295,7 +295,7 @@ def test_model_args():
 
     arg = Argument("(address,uint64,string)", name="user_record")
     ret = Returns("void")
-    assert Method("modely", [arg], ret) == method_spec(m.modely)
+    assert Method("modely", [arg], ret) == get_method_spec(m.modely)
 
     assert m.hints["modely"].models == {"user_record": ["addr", "balance", "nickname"]}
 

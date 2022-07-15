@@ -1,7 +1,7 @@
 import pytest
 import pyteal as pt
 
-from .application import method_spec
+from .application import get_method_spec
 from .decorators import handler, get_handler_config, Authorize, Bare
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)

@@ -18,7 +18,7 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
-from beaker.application import Application, method_spec
+from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints
 
 # TODO make const
@@ -266,7 +266,7 @@ class ApplicationClient:
         signer, addr = self.get_signer()
 
         if not isinstance(method, abi.Method):
-            method = method_spec(method)
+            method = get_method_spec(method)
 
         hints = self.method_hints(method.name)
 
@@ -332,7 +332,7 @@ class ApplicationClient:
         signer, addr = self.get_signer()
 
         if not isinstance(method, abi.Method):
-            method = method_spec(method)
+            method = get_method_spec(method)
 
         hints = self.method_hints(method.name)
 

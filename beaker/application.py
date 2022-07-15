@@ -35,7 +35,7 @@ from .application_schema import (
 from .errors import BareOverwriteError
 
 
-def method_spec(fn) -> Method:
+def get_method_spec(fn) -> Method:
     hc = get_handler_config(fn)
     if hc.method_spec is None:
         raise Exception("Expected argument to be an ABI method")
@@ -105,7 +105,7 @@ class Application:
 
                 # ABI Methods
                 case _, HandlerConfig(method_spec=Method()):
-                    # Create the subr from the static attr
+                    # Create the ABIReturnSubroutine from the static attr
                     # but override the implementation with the bound version
                     abi_meth = ABIReturnSubroutine(static_attr)
                     if handler_config.referenced_self:
@@ -128,7 +128,10 @@ class Application:
         self.app_state = ApplicationState(app_vals)
 
         # Create router with name of class and bare handlers
-        self.router = Router(type(self).__name__, BareCallActions(**self.bare_handlers))
+        self.router = Router(
+            name=self.__class__.__name__,
+            bare_calls=BareCallActions(**self.bare_handlers),
+        )
 
         # Add method handlers
         for method in self.methods.values():
