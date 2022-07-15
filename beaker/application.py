@@ -42,6 +42,14 @@ def get_method_spec(fn) -> Method:
     return hc.method_spec
 
 
+def get_method_signature(fn) -> str:
+    return get_method_spec(fn).get_signature()
+
+
+def get_method_selector(fn) -> str:
+    return get_method_spec(fn).get_selector()
+
+
 class Application:
     """Application should be subclassed to add functionality"""
 
