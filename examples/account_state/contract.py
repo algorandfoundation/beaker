@@ -10,7 +10,7 @@ class Dope(Application):
         max_keys=16,
     )
 
-    @Bare.opt_in
+    @opt_in
     def opt_in(self):
         return self.initialize_account_state(Txn.sender())
 

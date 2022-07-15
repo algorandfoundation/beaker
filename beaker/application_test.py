@@ -11,7 +11,18 @@ from beaker.application_schema import (
 
 from .errors import BareOverwriteError
 from .application import Application, get_method_spec
-from .decorators import ResolvableArguments, handler, Bare, internal
+from .decorators import (
+    ResolvableArguments,
+    handler,
+    internal,
+    create,
+    update,
+    delete,
+    opt_in,
+    clear_state,
+    close_out,
+    no_op,
+)
 from .model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -71,15 +82,15 @@ def test_single_handler():
 
 def test_bare_handler():
     class BareHandler(Application):
-        @Bare.create
+        @create
         def create():
             return pt.Approve()
 
-        @Bare.update
+        @update
         def update():
             return pt.Approve()
 
-        @Bare.delete
+        @delete
         def delete():
             return pt.Approve()
 
@@ -89,7 +100,7 @@ def test_bare_handler():
     ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
 
     class FailBareHandler(Application):
-        @Bare.create
+        @create
         def wrong_name():
             return pt.Approve()
 
@@ -180,7 +191,7 @@ def test_internal():
     from beaker.decorators import internal
 
     class Internal(Application):
-        @Bare.create
+        @create
         def create(self):
             return pt.Seq(
                 pt.Pop(self.internal_meth()),

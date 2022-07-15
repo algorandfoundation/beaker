@@ -6,8 +6,8 @@ from beaker import (
     Application,
     Authorize,
     handler,
+    create,
 )
-from beaker.decorators import Bare
 
 # WARNING: THIS IS NOT PROODUCTION LEVEL CODE
 # Seriously, there are _definitely_ bugs in the math
@@ -62,7 +62,7 @@ class ConstantProductAMM(Application):
     ##############
 
     # Call this only on create
-    @Bare.create
+    @create
     def create(self):
         return self.initialize_app_state()
 

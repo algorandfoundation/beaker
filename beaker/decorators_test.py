@@ -2,7 +2,18 @@ import pytest
 import pyteal as pt
 
 from .application import get_method_spec
-from .decorators import handler, get_handler_config, Authorize, Bare
+from .decorators import (
+    handler,
+    get_handler_config,
+    Authorize,
+    create,
+    clear_state,
+    close_out,
+    delete,
+    update,
+    no_op,
+    opt_in,
+)
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -166,49 +177,49 @@ def test_authorize_opted_in():
 
 
 def test_bare():
-    @Bare.create
+    @create
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
-    @Bare.no_op
+    @no_op
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
-    @Bare.delete
+    @delete
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.delete_application.action.subroutine.implementation == impl
 
-    @Bare.update
+    @update
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.update_application.action.subroutine.implementation == impl
 
-    @Bare.opt_in
+    @opt_in
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.opt_in.action.subroutine.implementation == impl
 
-    @Bare.close_out
+    @close_out
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.close_out.action.subroutine.implementation == impl
 
-    @Bare.clear_state
+    @clear_state
     def impl():
         return pt.Assert(pt.Int(1))
 

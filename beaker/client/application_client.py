@@ -42,7 +42,7 @@ class ApplicationClient:
 
         self.suggested_params = suggested_params
 
-    def compile_approval(self) ->  bytes:
+    def compile_approval(self) -> bytes:
         approval_result = self.client.compile(self.app.approval_program)
         return b64decode(approval_result["result"])
 
