@@ -273,9 +273,9 @@ def handler(
 
     Args:
 
-        authorize: A subroutine that should evaluate to 1/0 depending on the app call transaction sender
+        authorize: A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender
         method_config: accepts a MethodConfig object to define how the app call should be routed given OnComplete and whether or not the call is a create
-        read_only: adds read_only flag to abi (eventually, currently it does nothing)
+        read_only: adds `read-only` flag to abi (eventually, currently it does nothing)
         resolvable: provides hints to a caller at how to resolve some arguments
     """
 

@@ -1,11 +1,5 @@
 # TODOs
 
-## random
-
-- Use dryrun for `read-only` methods
-
-
-
 ## house keeping
 
 - Deploy to pip
@@ -17,6 +11,12 @@
 - Automated testing of examples
 
 - Better detection of app definition errors (cannot redeclare state keys, cannot declare over max schema)  
+
+## random
+
+- Use Dryrun for `read-only` methods
+
+- Make `ResolvableArguments` accept state values for no method call resolution
 
 ## features
 

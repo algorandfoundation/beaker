@@ -198,13 +198,17 @@ class DynamicLocalStateValue:
         key_gen: SubroutineFnWrapper = None,
         descr: str = None,
     ):
+
+        if max_keys <= 0 or max_keys > 16:
+            raise Exception("max keys expected to be between 0 and 16")
+
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
 
         if key_gen is not None:
             if key_gen.type_of() != TealType.bytes:
-                raise Exception("key generator must evaluate to bytes")
+                raise TealTypeError(key_gen.type_of(), TealType.bytes)
 
         self.key_generator = key_gen
 
@@ -223,18 +227,23 @@ class LocalStateValue:
         default: Expr = None,
         descr: str = None,
     ):
-        if key is not None:
-            if key.type_of() != TealType.bytes:
-                raise Exception("key must evaluate to bytes")
-            self.key = key
-        else:
-            self.key = None
-
-        self.default = default
         self.stack_type = stack_type
         self.descr = descr
 
+        if key is not None and key.type_of() != TealType.bytes:
+            raise TealTypeError(key.type_of(), TealType.bytes)
+
+        self.key = key
+
+        if default is not None and default.type_of() != self.stack_type:
+            raise TealTypeError(default.type_of(), self.stack_type)
+
+        self.default = default
+
     def set(self, acct: Expr, val: Expr) -> Expr:
+        if val.type_of() != self.stack_type:
+            raise TealTypeError(val.type_of(), self.stack_type)
+
         return App.localPut(acct, self.key, val)
 
     def set_default(self, acct: Expr) -> Expr:
