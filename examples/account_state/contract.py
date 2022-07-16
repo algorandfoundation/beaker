@@ -12,15 +12,15 @@ class Dope(Application):
 
     @opt_in
     def opt_in(self):
-        return self.initialize_account_state(Txn.sender())
+        return self.initialize_account_state()
 
     @handler
     def doit(self, k: abi.Uint8, v: abi.String):
-        return self.stuff(k.encode()).set(Txn.sender(), v.get())
+        return self.stuff[k].set(v.get())
 
     @handler(read_only=True)
     def getit(self, k: abi.Uint8, *, output: abi.String):
-        return output.set(self.stuff(k.encode()).get(Txn.sender()))
+        return output.set(self.stuff[k])
 
 
 if __name__ == "__main__":
