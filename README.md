@@ -10,19 +10,6 @@ With Beaker, you build a class that represents your entire application including
 *Experimental - Mostly Untested - subject to change* 
 
 
-- [Beaker](#beaker)
-- [Install](#install)
-- [Hello Beaker](#hello-beaker)
-- [Application Client](#application-client)
-- [Application State](#application-state)
-- [Authorization](#authorization)
-- [Account State](#account-state)
-- [Subclassing](#subclassing)
-- [Method Hints](#method-hints)
-- [Models](#models)
-- [More?](#more)
-
-
 ## Install
 
 Currently only installing from github is supported
