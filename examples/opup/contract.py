@@ -8,7 +8,7 @@ from beaker.decorators import ResolvableArguments, handler
 class ExpensiveApp(OpUp):
     @handler(
         resolvable=ResolvableArguments(
-            opup_app=OpUp.opup_app_id  # TODO: this should come from the call to `call_opup_n`?
+            opup_app=OpUp.opup_app_id  # TODO: can we communicate this with use of `call_opup`?
         )
     )
     def hash_it(
