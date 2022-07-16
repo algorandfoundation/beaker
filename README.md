@@ -7,7 +7,7 @@ Beaker is a smart contract development framework for [PyTeal](https://github.com
 
 With Beaker, you build a class that represents your entire application including state and routing.
 
-*Experimental - Untested - subject to change* 
+*Experimental - Mostly Untested - subject to change* 
 
 
 ## Install
@@ -179,17 +179,33 @@ But what if we only want certain callers to be allowed? Lets add a parameter to 
 
 This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
 
-Other pre-defined Authorized checks are: 
+The pre-defined Authorized checks are: 
 
+- `Authorize.only(address)` for allowing a single address access
 - `Authorize.has_token(asset_id)` for whether or not the sender holds >0 of a given asset
 - `Authorize.opted_in(app_id)`  for whether or not they're opted in to a given app 
 
-The `handler` decorator accepts several other parameters:
+But you can define your own
 
+```py
+from beaker.consts import algo
+
+@internal(TealType.uint64)
+def is_whale(acct: Expr):
+    # Only allow accounts with 1mm algos
+    return Balance(acct)>Int(1_000_000*algos)
+
+@handler(authorize=is_whale)
+def greet(*, output: abi.String):
+    return output.set("hello whale")
+```
+
+The `handler` decorator accepts several parameters:
+
+- `authorize` - Accepts a subroutine with input of `Txn.sender()` and output uint64 interpreted as true/false for >0/0
 - `method_config` - See the PyTeal definition for more, but tl;dr it allows you to specify which OnCompletes may handle different modes (call/create/none/all)
 - `read_only` - Mark a method as callable with no fee (using dryrun or view, place holder until arc22 is merged)
 - `resolvable` - To provide [hints](#method-hints) to the caller for how to resolve a given input if there is a specific value that should be passed
-
 
 ## Account State
 
@@ -303,6 +319,54 @@ result = signer_client.call(app.hash_it, input=input, iters=iters)
 
 When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
+
+## Models
+
+With Beaker you can define a custom structure and use it in your ABI methods.
+
+```py
+from beaker.model import Model
+
+class Modeler(Application):
+
+    orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+        stack_type=TealType.bytes,
+        max_keys=16,
+    )
+
+
+    class Order(Model):
+        item: abi.String
+        quantity: abi.Uint32
+
+    
+    @handler
+    def place_order(self, order_number: abi.Byte, order: Order):
+        return self.orders(order_number.encode()).set(order.encode())
+
+    @handler
+    def read_order(self, order_number: abi.Byte, *, output: Order):
+        return output.decode(self.orders(order_number.encode()))
+
+```
+
+The application exposes these methods using the tuple encoded version of the fields specified in the model.
+
+A method hint is available to the caller for encoding/decoding by field name. 
+
+
+```py
+    # Passing in a dict as an argument that should take a tuple according to the type spec
+    order_number = 12
+    order = {"quantity": 8, "item": "cubes"}
+    app_client.call(app.place_order, order_number=order_number, order=order)
+
+    # Call the method to return 
+    result = app_client.call(app.read_order, order_number=order_number)
+    abi_decoded = Modeler.Order().client_decode(result.raw_value)
+
+    assert order == abi_decoded
+```
 
 ## More?
 

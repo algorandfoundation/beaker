@@ -19,7 +19,7 @@ class Modeler(Application):
     def place_order(self, order_number: abi.Byte, order: Order):
         return self.orders(order_number.encode()).set(order.encode())
 
-    @handler
+    @handler(read_only=True)
     def read_item(self, order_number: abi.Byte, *, output: Order):
         return output.decode(self.orders(order_number.encode()))
 
