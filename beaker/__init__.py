@@ -2,10 +2,10 @@ from .application import Application, get_method_spec
 from .application_schema import (
     AccountState,
     ApplicationState,
-    DynamicGlobalStateValue,
-    DynamicLocalStateValue,
-    GlobalStateValue,
-    LocalStateValue,
+    DynamicApplicationStateValue,
+    DynamicAccountStateValue,
+    ApplicationStateValue,
+    AccountStateValue,
 )
 from .decorators import (
     Authorize,

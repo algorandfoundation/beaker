@@ -20,7 +20,7 @@ from pyteal import (
 from .consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 
 
-class DynamicGlobalStateValue:
+class DynamicApplicationStateValue:
     def __init__(
         self, stack_type: TealType, max_keys: int, key_gen: SubroutineFnWrapper = None
     ):
@@ -33,14 +33,14 @@ class DynamicGlobalStateValue:
 
         self.key_generator = key_gen
 
-    def __call__(self, key_seed: Expr) -> "GlobalStateValue":
+    def __call__(self, key_seed: Expr) -> "ApplicationStateValue":
         key = key_seed
         if self.key_generator is not None:
             key = self.key_generator(key)
-        return GlobalStateValue(stack_type=self.stack_type, key=key)
+        return ApplicationStateValue(stack_type=self.stack_type, key=key)
 
 
-class GlobalStateValue(Expr):
+class ApplicationStateValue(Expr):
     def __init__(
         self,
         stack_type: TealType,
@@ -73,7 +73,7 @@ class GlobalStateValue(Expr):
         return self.get().__teal__(options)
 
     def __str__(self) -> str:
-        return f"GlobalState {self.key}"
+        return f"ApplicationState {self.key}"
 
     def __call__(self, val: Expr) -> Expr:
         return self.set(val)
@@ -138,17 +138,20 @@ class GlobalStateValue(Expr):
 
 class ApplicationState:
     def __init__(
-        self, fields: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
+        self,
+        fields: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {},
     ):
 
-        self.declared_vals: dict[str, GlobalStateValue] = {
-            k: v for k, v in fields.items() if isinstance(v, GlobalStateValue)
+        self.declared_vals: dict[str, ApplicationStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, ApplicationStateValue)
         }
 
         self.__dict__.update(self.declared_vals)
 
-        self.dynamic_vals: dict[str, DynamicGlobalStateValue] = {
-            k: v for k, v in fields.items() if isinstance(v, DynamicGlobalStateValue)
+        self.dynamic_vals: dict[str, DynamicApplicationStateValue] = {
+            k: v
+            for k, v in fields.items()
+            if isinstance(v, DynamicApplicationStateValue)
         }
         self.__dict__.update(self.dynamic_vals)
 
@@ -188,7 +191,7 @@ class ApplicationState:
         )
 
 
-class DynamicLocalStateValue:
+class DynamicAccountStateValue:
     def __init__(
         self,
         stack_type: TealType,
@@ -210,14 +213,14 @@ class DynamicLocalStateValue:
 
         self.key_generator = key_gen
 
-    def __call__(self, key_seed: Expr) -> "LocalStateValue":
+    def __call__(self, key_seed: Expr) -> "AccountStateValue":
         key = key_seed
         if self.key_generator is not None:
             key = self.key_generator(key)
-        return LocalStateValue(stack_type=self.stack_type, key=key)
+        return AccountStateValue(stack_type=self.stack_type, key=key)
 
 
-class LocalStateValue:
+class AccountStateValue:
     def __init__(
         self,
         stack_type: TealType,
@@ -279,14 +282,14 @@ class LocalStateValue:
 
 
 class AccountState:
-    def __init__(self, fields: dict[str, LocalStateValue | DynamicLocalStateValue]):
-        self.declared_vals: dict[str, LocalStateValue] = {
-            k: v for k, v in fields.items() if isinstance(v, LocalStateValue)
+    def __init__(self, fields: dict[str, AccountStateValue | DynamicAccountStateValue]):
+        self.declared_vals: dict[str, AccountStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, AccountStateValue)
         }
         self.__dict__.update(self.declared_vals)
 
-        self.dynamic_vals: dict[str, DynamicLocalStateValue] = {
-            k: v for k, v in fields.items() if isinstance(v, DynamicLocalStateValue)
+        self.dynamic_vals: dict[str, DynamicAccountStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, DynamicAccountStateValue)
         }
         self.__dict__.update(self.dynamic_vals)
 

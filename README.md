@@ -122,7 +122,7 @@ from beaker import *
 
 class MySickApp(Application):
     # Mark it final to signal that we shouldnt change the python class variable
-    counter: Final[GlobalStateValue] = GlobalStateValue(
+    counter: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         descr="A counter meant to show use of application state",
         key=Bytes("counter"), # Override the default key (class var name) 
@@ -152,7 +152,7 @@ class MySickApp(Application):
 
 The `create` method overrides the one defined in the base `Application` class, tagging it with `@create` which specifies we want a bare call (no app args) and only on create (app id == 0)
 
-The other methods may be called similar to `add` method above.  Using `set` method of GlobalStateValue we can overwrite the value that is currently stored.
+The other methods may be called similar to `add` method above.  Using `set` method of ApplicationStateValue we can overwrite the value that is currently stored.
 
 ## Authorization
 
@@ -190,7 +190,7 @@ The `handler` decorator accepts several other parameters:
 We can also specify Account state and even allow for dynamic state keys.
 
 ```py
-from beaker import LocalStateValue
+from beaker import AccountStateValue
 
 @Subroutine(TealType.bytes)
 def make_tag_key(tag: abi.String):
@@ -198,11 +198,11 @@ def make_tag_key(tag: abi.String):
 
 class MySickApp(Application):
 
-    nickname: Final[LocalStateValue] = LocalStateValue(
+    nickname: Final[AccountStateValue] = AccountStateValue(
         stack_type=TealType.bytes, 
         descr="What this user prefers to be called"
     )
-    tags: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+    tags: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=10,
         key_gen=make_tag_key

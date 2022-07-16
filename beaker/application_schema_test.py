@@ -64,7 +64,7 @@ def test_local_value(key, stack_type, default, val, error):
 
 
 def do_lv_test(key, stack_type, default, val):
-    lv = LocalStateValue(stack_type=stack_type, key=key, default=default)
+    lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
 
     actual = lv.set(pt.Txn.sender(), val).__teal__(options)
     expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
@@ -107,7 +107,7 @@ def test_dynamic_local_value(stack_type, max_keys, key_gen, key_seed, val, error
 
 
 def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
-    dlv = DynamicLocalStateValue(
+    dlv = DynamicAccountStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 

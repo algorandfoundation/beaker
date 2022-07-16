@@ -2,7 +2,7 @@ from typing import Final
 from pyteal import *
 
 from beaker.application import Application
-from beaker.application_schema import GlobalStateValue
+from beaker.application_schema import ApplicationStateValue
 from beaker.consts import Algo
 from beaker.decorators import internal, handler
 
@@ -16,7 +16,7 @@ OpUpClearBinary = "BoEBQw=="
 
 class OpUp(Application):
     min_balance: Final[Int] = Algo
-    opup_app_id: Final[GlobalStateValue] = GlobalStateValue(
+    opup_app_id: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
     )
 

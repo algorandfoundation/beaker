@@ -1,7 +1,7 @@
 from typing import Final
 from pyteal import *
 
-from beaker import Application, GlobalStateValue, DynamicLocalStateValue
+from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
 from beaker.decorators import (
     Authorize,
     handler,
@@ -12,17 +12,17 @@ from beaker.decorators import (
 
 class ARC18(Application):
 
-    administrator: Final[GlobalStateValue] = GlobalStateValue(
+    administrator: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address()
     )
-    royalty_basis: Final[GlobalStateValue] = GlobalStateValue(
+    royalty_basis: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64, key=Bytes("royalty_basis"), static=True
     )
-    royalty_receiver: Final[GlobalStateValue] = GlobalStateValue(
+    royalty_receiver: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("royalty_receiver"), static=True
     )
 
-    offers: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+    offers: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
         key_gen=Subroutine(TealType.bytes)(lambda asset_id: Itob(asset_id)),

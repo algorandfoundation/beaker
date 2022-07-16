@@ -5,7 +5,7 @@ from pyteal import *
 
 class Dope(Application):
 
-    stuff: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+    stuff: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
     )

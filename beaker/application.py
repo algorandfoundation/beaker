@@ -32,10 +32,10 @@ from .decorators import (
 from .application_schema import (
     AccountState,
     ApplicationState,
-    DynamicLocalStateValue,
-    LocalStateValue,
-    GlobalStateValue,
-    DynamicGlobalStateValue,
+    DynamicAccountStateValue,
+    AccountStateValue,
+    ApplicationStateValue,
+    DynamicApplicationStateValue,
 )
 from .errors import BareOverwriteError
 
@@ -75,24 +75,24 @@ class Application:
         self.bare_handlers: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
 
-        acct_vals: dict[str, LocalStateValue | DynamicLocalStateValue] = {}
-        app_vals: dict[str, GlobalStateValue | DynamicGlobalStateValue] = {}
+        acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
+        app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
 
             # Check for state vals
             match bound_attr:
-                case LocalStateValue():
+                case AccountStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
-                case DynamicLocalStateValue():
+                case DynamicAccountStateValue():
                     acct_vals[name] = bound_attr
-                case GlobalStateValue():
+                case ApplicationStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
-                case DynamicGlobalStateValue():
+                case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
 
             if name in app_vals or name in acct_vals:

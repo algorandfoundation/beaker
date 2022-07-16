@@ -7,13 +7,13 @@ from beaker import *
 class MySickApp(Application):
 
     # App state
-    counter: Final[GlobalStateValue] = GlobalStateValue(
+    counter: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         descr="A counter for showing how to use application state",
     )
 
     # Account state
-    nickname: Final[LocalStateValue] = LocalStateValue(
+    nickname: Final[AccountStateValue] = AccountStateValue(
         TealType.bytes, default=Bytes("j. doe")
     )
 
@@ -21,7 +21,7 @@ class MySickApp(Application):
     def make_tag_key(tag: abi.String):
         return Concat(Bytes("tag:"), tag.get())
 
-    tags: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+    tags: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         TealType.uint64, max_keys=10, key_gen=make_tag_key
     )
 

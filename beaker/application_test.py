@@ -3,10 +3,10 @@ from typing import Final, cast
 import pyteal as pt
 
 from beaker.application_schema import (
-    DynamicGlobalStateValue,
-    GlobalStateValue,
-    LocalStateValue,
-    DynamicLocalStateValue,
+    DynamicApplicationStateValue,
+    ApplicationStateValue,
+    AccountStateValue,
+    DynamicAccountStateValue,
 )
 
 from .errors import BareOverwriteError
@@ -137,10 +137,10 @@ def test_subclass_application():
 
 def test_app_state():
     class BasicAppState(Application):
-        uint_val: Final[GlobalStateValue] = GlobalStateValue(
+        uint_val: Final[ApplicationStateValue] = ApplicationStateValue(
             stack_type=pt.TealType.uint64
         )
-        byte_val: Final[GlobalStateValue] = GlobalStateValue(
+        byte_val: Final[ApplicationStateValue] = ApplicationStateValue(
             stack_type=pt.TealType.bytes
         )
 
@@ -150,12 +150,12 @@ def test_app_state():
     assert app.app_state.num_byte_slices == 1, "Expected 1 byte slice"
 
     class DynamicAppState(BasicAppState):
-        uint_dynamic: Final[DynamicGlobalStateValue] = DynamicGlobalStateValue(
-            stack_type=pt.TealType.uint64, max_keys=10
-        )
-        byte_dynamic: Final[DynamicGlobalStateValue] = DynamicGlobalStateValue(
-            stack_type=pt.TealType.bytes, max_keys=10
-        )
+        uint_dynamic: Final[
+            DynamicApplicationStateValue
+        ] = DynamicApplicationStateValue(stack_type=pt.TealType.uint64, max_keys=10)
+        byte_dynamic: Final[
+            DynamicApplicationStateValue
+        ] = DynamicApplicationStateValue(stack_type=pt.TealType.bytes, max_keys=10)
 
     app = DynamicAppState()
     assert app.app_state.num_uints == 11, "Expected 11 ints"
@@ -164,10 +164,12 @@ def test_app_state():
 
 def test_acct_state():
     class BasicAcctState(Application):
-        uint_val: Final[LocalStateValue] = LocalStateValue(
+        uint_val: Final[AccountStateValue] = AccountStateValue(
             stack_type=pt.TealType.uint64
         )
-        byte_val: Final[LocalStateValue] = LocalStateValue(stack_type=pt.TealType.bytes)
+        byte_val: Final[AccountStateValue] = AccountStateValue(
+            stack_type=pt.TealType.bytes
+        )
 
     app = BasicAcctState()
 
@@ -175,10 +177,10 @@ def test_acct_state():
     assert app.acct_state.num_byte_slices == 1, "Expected 1 byte slice"
 
     class DynamicAcctState(BasicAcctState):
-        uint_dynamic: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+        uint_dynamic: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
             stack_type=pt.TealType.uint64, max_keys=5
         )
-        byte_dynamic: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+        byte_dynamic: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
             stack_type=pt.TealType.bytes, max_keys=5
         )
 

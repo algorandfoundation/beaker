@@ -2,7 +2,7 @@ from typing import Final
 from pyteal import *
 
 from beaker import (
-    GlobalStateValue,
+    ApplicationStateValue,
     Application,
     Authorize,
     handler,
@@ -15,31 +15,33 @@ from beaker import (
 
 class ConstantProductAMM(Application):
 
-    governor = GlobalStateValue(
+    # Declare Application state, marking `Final` here so the python class var doesn't get changed
+    # Marking a var `Final` does _not_ change anything at the AVM level
+    governor: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes,
         key=Bytes("g"),
         default=Global.creator_address(),
         descr="The current governor of this contract, allowed to do admin type actions",
     )
-    asset_a = GlobalStateValue(
+    asset_a: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         key=Bytes("a"),
         static=True,
         descr="The asset id of asset A",
     )
-    asset_b = GlobalStateValue(
+    asset_b: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         key=Bytes("b"),
         static=True,
         descr="The asset id of asset B",
     )
-    pool_token = GlobalStateValue(
+    pool_token: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         key=Bytes("p"),
         static=True,
         descr="The asset id of the Pool Token, used to track share of pool the holder may recover",
     )
-    ratio = GlobalStateValue(
+    ratio: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         key=Bytes("r"),
         descr="The ratio between assets (A/B)*Scale",
