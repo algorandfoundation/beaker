@@ -9,8 +9,6 @@ With Beaker, you build a class that represents your entire application including
 
 *Experimental - Untested - subject to change* 
 
-<hr />
-
 
 ## Install
 
