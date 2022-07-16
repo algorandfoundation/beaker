@@ -270,7 +270,7 @@ class MyHasherApp(OpUp):
     ):
         return Seq(
             Assert(opup_app.application_id() == OpUp.opup_app_id),
-            OpUp.call_opup_n(Int(255)),
+            OpUp.call_opup(Int(255)),
             (current := ScratchVar()).store(input.get()),
             For(
                 (i := ScratchVar()).store(Int(0)),
@@ -287,7 +287,7 @@ Here we subclassed the `OpUp` contract which provides functionality to create a 
 
 ## Method Hints
 
-In the above, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently if at all but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
+In the above, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
 
 We can change the handler to provide the hint.
 
