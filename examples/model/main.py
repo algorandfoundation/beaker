@@ -18,17 +18,15 @@ client = get_client()
 addr, sk = get_accounts()[0]
 signer = AccountTransactionSigner(sk)
 
+# Initialize Application from amm.py
+app = Modeler()
 
-# From hint, accept dict
+# Create an Application client containing both an algod client and my app
+sp = client.suggested_params()
+app_client = ApplicationClient(client, app, signer=signer, suggested_params=sp)
 
 
 def demo():
-    # Initialize Application from amm.py
-    app = Modeler()
-
-    # Create an Application client containing both an algod client and my app
-    sp = client.suggested_params()
-    app_client = ApplicationClient(client, app, signer=signer, suggested_params=sp)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()

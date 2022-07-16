@@ -29,12 +29,12 @@ class Modeler(Application):
             # Read the order from state
             (new_order := Modeler.Order()).decode(self.orders(order_number.encode())),
             # Select out in the quantity attribute
-            (quant := abi.Uint16()).set(new_order.quantity()),
+            (quant := abi.Uint16()).set(new_order.quantity),
             # Add 1 to quantity
             quant.set(quant.get() + Int(1)),
             # We've gotta set all of the fields at the same time, but we can
             # borrow the item we already know about
-            new_order.set(new_order.item(), quant),
+            new_order.set(new_order.item, quant),
             # Write the new order to state
             self.orders(order_number.encode()).set(new_order.encode()),
             # Write new order to caller

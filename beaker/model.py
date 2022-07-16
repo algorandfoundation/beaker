@@ -10,11 +10,11 @@ class Model(abi.Tuple):
         }
         self.field_names = list(self.type_specs.keys())
 
+        super().__init__(abi.TupleTypeSpec(*self.type_specs.values()))
+
         for idx in range(len(self.field_names)):
             name = self.field_names[idx]
-            setattr(self, name, self.getter(idx))
-
-        super().__init__(abi.TupleTypeSpec(*self.type_specs.values()))
+            setattr(self, name, self.__getitem__(idx))
 
     def set(
         self, *exprs: Expr | abi.BaseType | abi.TupleElement | abi.ComputedValue
@@ -47,15 +47,12 @@ class Model(abi.Tuple):
                     abi_types.append(val)
                 case _:
                     raise TealTypeError(tspec, e)
-        self.abi_types = abi_types
+            abi_types = abi_types
 
         return Seq(*setters, super().set(*abi_types))
 
     def annotation_type(self):
         return self.type_spec().annotation_type()
-
-    def getter(self, idx) -> Callable[..., abi.TupleElement]:
-        return lambda: self.__getitem__(idx)
 
     def client_decode(self, to_decode: bytes) -> dict[str, str | int]:
         decoder = abi.algosdk_from_type_spec(self.type_spec())
