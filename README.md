@@ -347,7 +347,7 @@ class Modeler(Application):
     def place_order(self, order_number: abi.Uint8, order: Order):
         return self.orders[order_number].set(order.encode())
 
-    @handler
+    @handler(read_only=True)
     def read_order(self, order_number: abi.Uint8, *, output: Order):
         return output.decode(self.orders[order_number])
 
@@ -358,7 +358,8 @@ The application exposes the ABI methods using the tuple encoded version of the f
 A method hint is available to the caller for encoding/decoding by field name. 
 
 ```py
-    # Passing in a dict as an argument that should take a tuple according to the type spec
+    # Passing in a dict as an argument that, according to the ABI, should take a tuple 
+    # The keys should match the field names
     order_number = 12
     order = {"quantity": 8, "item": "cubes"}
     app_client.call(app.place_order, order_number=order_number, order=order)
