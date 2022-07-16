@@ -17,17 +17,17 @@ class Modeler(Application):
 
     @handler
     def place_order(self, order_number: abi.Byte, order: Order):
-        return self.orders(order_number.encode()).set(order.encode())
+        return self.orders[order_number].set(order.encode())
 
     @handler(read_only=True)
     def read_item(self, order_number: abi.Byte, *, output: Order):
-        return output.decode(self.orders(order_number.encode()))
+        return output.decode(self.orders[order_number])
 
     @handler
     def increase_quantity(self, order_number: abi.Byte, *, output: Order):
         return Seq(
             # Read the order from state
-            (new_order := Modeler.Order()).decode(self.orders(order_number.encode())),
+            (new_order := Modeler.Order()).decode(self.orders[order_number]),
             # Select out in the quantity attribute, its a TupleElement type
             # so needs to be stored somewhere
             (quant := abi.Uint16()).set(new_order.quantity),
@@ -37,7 +37,7 @@ class Modeler(Application):
             # borrow the item we already know about
             new_order.set(new_order.item, quant),
             # Write the new order to state
-            self.orders(order_number.encode()).set(new_order.encode()),
+            self.orders[order_number].set(new_order.encode()),
             # Write new order to caller
             output.decode(new_order.encode()),
         )

@@ -22,6 +22,16 @@ class DynamicApplicationStateValue:
             key = self.key_generator(key)
         return ApplicationStateValue(stack_type=self.stack_type, key=key)
 
+    def __getitem__(self, key_seed: Expr | abi.BaseType) -> "ApplicationStateValue":
+        key = key_seed
+
+        if isinstance(key_seed, abi.BaseType):
+            key = key_seed.encode()
+
+        if self.key_generator is not None:
+            key = self.key_generator(key)
+        return ApplicationStateValue(stack_type=self.stack_type, key=key)
+
 
 class ApplicationStateValue(Expr):
     def __init__(
@@ -181,13 +191,11 @@ class DynamicAccountStateValue:
         max_keys: int,
         key_gen: SubroutineFnWrapper = None,
         descr: str = None,
-        incrementing: bool = False,
     ):
 
         if max_keys <= 0 or max_keys > 16:
             raise Exception("max keys expected to be between 0 and 16")
 
-        self.incrementing = incrementing
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
@@ -198,27 +206,18 @@ class DynamicAccountStateValue:
 
         self.key_generator = key_gen
 
-    # def next(self)->Expr:
-    #    if not self.incrementing:
-    #        raise Exception(f"Only {self.__class__.__name__} set with incrementing=True may call next")
-
-    #    #next_key = Seq(
-    #    #    For((i:=ScratchVar()).store(Int(0)), i.load() < Int(MAX_LOCAL_STATE), i.store(i.load() + Int(1)) ).Do(
-    #    #        Seq(
-    #    #            (key := ScratchVar()).store(Suffix(Itob(i), 7)),
-    #    #            mb := self.__call__(key.load()).get_maybe(),
-    #    #            If(Not(mb.hasValue()),
-    #    #                Return(key.load())
-    #    #            )
-    #    #        )
-    #    #    )
-    #    #)
-    #
-    #    #return self.__call__(next_key)
-    #
-
     def __call__(self, key_seed: Expr) -> "AccountStateValue":
         key = key_seed
+        if self.key_generator is not None:
+            key = self.key_generator(key)
+        return AccountStateValue(stack_type=self.stack_type, key=key)
+
+    def __getitem__(self, key_seed: Expr | abi.BaseType) -> "AccountStateValue":
+        key = key_seed
+
+        if isinstance(key_seed, abi.BaseType):
+            key = key_seed.encode()
+
         if self.key_generator is not None:
             key = self.key_generator(key)
         return AccountStateValue(stack_type=self.stack_type, key=key)
