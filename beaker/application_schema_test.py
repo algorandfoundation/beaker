@@ -66,7 +66,7 @@ def test_local_value(key, stack_type, default, val, error):
 def do_lv_test(key, stack_type, default, val):
     lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
 
-    actual = lv.set(pt.Txn.sender(), val).__teal__(options)
+    actual = lv.set(val, pt.Txn.sender()).__teal__(options)
     expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -117,7 +117,7 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     if key_gen is not None:
         key = key_gen(key_seed)
 
-    actual = lv.set(pt.Txn.sender(), val).__teal__(options)
+    actual = lv.set(val, pt.Txn.sender()).__teal__(options)
     expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected

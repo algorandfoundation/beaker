@@ -49,12 +49,21 @@ def demo():
         f"We can get the order we stored from local state of the sender: {state_decoded}"
     )
 
-    assert state_decoded == order
-
     # Or we could
     result = app_client.call(app.read_item, order_number=order_number)
     abi_decoded = Modeler.Order().client_decode(result.raw_value)
     print(f"We can provide a method to read it: {abi_decoded}")
+
+    result = app_client.call(app.increase_quantity, order_number=order_number)
+    increased_decoded = Modeler.Order().client_decode(result.raw_value)
+    print(
+        f"Let's add 1 to model, update state, and return the updated version: {increased_decoded}"
+    )
+
+    state_key = order_number.to_bytes(1, "big")
+    stored_order = app_client.get_account_state()[state_key]
+    state_decoded = Modeler.Order().client_decode(stored_order)
+    print(f"And it's been updated: {state_decoded}")
 
 
 if __name__ == "__main__":
