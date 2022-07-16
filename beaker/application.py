@@ -2,6 +2,7 @@ from inspect import getattr_static
 from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
+    Txn,
     MAX_TEAL_VERSION,
     Expr,
     ABIReturnSubroutine,
@@ -169,7 +170,7 @@ class Application:
     def initialize_app_state(self):
         return self.app_state.initialize()
 
-    def initialize_account_state(self, addr):
+    def initialize_account_state(self, addr=Txn.sender()):
         return self.acct_state.initialize(addr)
 
     @create
@@ -186,7 +187,7 @@ class Application:
 
     @opt_in
     def opt_in(self):
-        return Reject()
+        return self.initialize_account_state()
 
     @close_out
     def close_out(self):

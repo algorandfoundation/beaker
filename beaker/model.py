@@ -1,5 +1,5 @@
 from typing import Callable, cast
-from pyteal import abi, TealInputError, Expr, TealTypeError, Seq
+from pyteal import *
 
 
 class Model(abi.Tuple):
@@ -47,14 +47,23 @@ class Model(abi.Tuple):
                     abi_types.append(val)
                 case _:
                     raise TealTypeError(tspec, e)
+        self.abi_types = abi_types
 
         return Seq(*setters, super().set(*abi_types))
 
-    def get_type(self):
+    def annotation_type(self):
         return self.type_spec().annotation_type()
 
     def getter(self, idx) -> Callable[..., abi.TupleElement]:
         return lambda: self.__getitem__(idx)
+
+    def client_decode(self, to_decode: bytes) -> dict[str, str | int]:
+        decoder = abi.algosdk_from_type_spec(self.type_spec())
+        values = decoder.decode(bytestring=to_decode)
+        return dict(zip(self.field_names, values))
+
+    def client_encode(self):
+        pass
 
     def __str__(self) -> str:
         return super().type_spec().__str__()

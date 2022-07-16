@@ -48,7 +48,7 @@ class HandlerConfig:
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
-        mh = MethodHints(read_only=self.read_only)
+        mh = MethodHints(read_only=self.read_only, resolvable={}, models={})
 
         if self.resolvable is not None:
             mh.resolvable = self.resolvable.__dict__
@@ -236,8 +236,8 @@ def _replace_models(fn: HandlerFunc) -> HandlerFunc:
             continue
 
         if issubclass(cls, Model):
-            params[k] = v.replace(annotation=cls().get_type())
-            annotations[k] = cls().get_type()
+            params[k] = v.replace(annotation=cls().annotation_type())
+            annotations[k] = cls().annotation_type()
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:

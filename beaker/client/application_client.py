@@ -31,13 +31,20 @@ def str_or_hex(v: bytes):
     return v
 
 
-def decode_state(state: list[dict[str, Any]]) -> dict[str, str | int]:
+def decode_state(
+    state: list[dict[str, Any]], force_str=False
+) -> dict[bytes | str, bytes | str | int]:
     decoded_state: dict[str, str | int] = {}
     for sv in state:
-        key = str_or_hex(b64decode(sv["key"]))
+        key = b64decode(sv["key"])
+        if force_str:
+            key = str_or_hex(key)
+
         match sv["value"]["type"]:
             case 1:
-                val = str_or_hex(b64decode(sv["value"]["bytes"]))
+                val = b64decode(sv["value"]["bytes"])
+                if force_str:
+                    val = str_or_hex(val)
             case 2:
                 val = sv["value"]["uint"]
             case _:
@@ -311,7 +318,17 @@ class ApplicationClient:
         for method_arg in method.args:
             name = method_arg.name
             if name in kwargs:
-                args.append(kwargs[name])
+                thing = kwargs[name]
+                if type(thing) is dict:
+                    if name in hints.models:
+                        thing = [
+                            thing[field_name]
+                            for field_name in hints.models[name]["elements"]
+                        ]
+                    else:
+                        # todo error if wrong keys
+                        thing = list(thing.values())
+                args.append(thing)
             elif name in hints.resolvable:
                 args.append(self.resolve(hints.resolvable[name]))
             else:
@@ -412,7 +429,10 @@ class ApplicationClient:
         app_state = self.client.application_info(self.app_id)
         return decode_state(app_state["params"]["global-state"])
 
-    def get_account_state(self, account) -> dict[str, str | int]:
+    def get_account_state(self, account: str = None) -> dict[str, str | int]:
+        if account is None:
+            account = self.get_sender()
+
         acct_state = self.client.account_application_info(account, self.app_id)
         return decode_state(acct_state["app-local-state"]["key-value"])
 
