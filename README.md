@@ -233,8 +233,9 @@ class MySickApp(Application):
 
     @handler
     def add_tag(self, tag: abi.String):
-        # Set `tag:$tag` to 1
-        return self.tags[tag].set(Txn.sender(), Int(1))
+        # Set `tag:$tag` to 1 for Txn.sender()
+        # you can override who's state to lookup with kwarg `acct=XXX`
+        return self.tags[tag].set(Int(1))
 
 ```
 
