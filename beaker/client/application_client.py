@@ -19,7 +19,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import HandlerFunc, MethodHints
+from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 
 
@@ -313,8 +313,7 @@ class ApplicationClient:
             if name in kwargs:
                 args.append(kwargs[name])
             elif name in hints.resolvable:
-                result = self.call(hints.resolvable[name])
-                args.append(result.return_value)
+                args.append(self.resolve(hints.resolvable[name]))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -382,8 +381,7 @@ class ApplicationClient:
             if name in kwargs:
                 args.append(kwargs[name])
             elif name in hints.resolvable:
-                result = self.call(hints.resolvable[name])
-                args.append(result.return_value)
+                args.append(self.resolve(hints.resolvable[name]))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -417,6 +415,24 @@ class ApplicationClient:
     def get_account_state(self, account) -> dict[str, str | int]:
         acct_state = self.client.account_application_info(account, self.app_id)
         return decode_state(acct_state["app-local-state"]["key-value"])
+
+    def resolve(self, to_resolve):
+        if ResolvableTypes.Constant in to_resolve:
+            return to_resolve[ResolvableTypes.Constant]
+        elif ResolvableTypes.GlobalState in to_resolve:
+            key = to_resolve[ResolvableTypes.GlobalState]
+            app_state = self.get_application_state()
+            return app_state[key]
+        elif ResolvableTypes.LocalState in to_resolve:
+            key = to_resolve[ResolvableTypes.LocalState]
+            acct_state = self.get_account_state(self.get_sender(None, None))
+            return acct_state[key]
+        elif ResolvableTypes.ABIMethod in to_resolve:
+            method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])
+            result = self.call(method)
+            return result.return_value
+        else:
+            raise Exception(f"Unrecognized resolver: {to_resolve}")
 
     def method_hints(self, method_name: str) -> MethodHints:
         if method_name not in self.app.hints:

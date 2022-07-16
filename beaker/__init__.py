@@ -9,6 +9,7 @@ from .application_schema import (
 )
 from .decorators import (
     Authorize,
+    ResolvableArguments,
     handler,
     internal,
     bare_handler,

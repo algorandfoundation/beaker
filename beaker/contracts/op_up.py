@@ -20,10 +20,6 @@ class OpUp(Application):
         stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
     )
 
-    @handler(read_only=True)
-    def get_opup_app_id(*, output: abi.Uint64):
-        return output.set(OpUp.opup_app_id)
-
     @handler
     def opup_bootstrap(self, ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
         return Seq(

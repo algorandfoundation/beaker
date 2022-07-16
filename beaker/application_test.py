@@ -13,6 +13,7 @@ from .errors import BareOverwriteError
 from .application import Application, get_method_spec
 from .decorators import (
     ResolvableArguments,
+    ResolvableTypes,
     handler,
     internal,
     create,
@@ -263,7 +264,7 @@ def test_internal():
 
 def test_resolvable_hint():
     class Hinty(Application):
-        @handler
+        @handler(read_only=True)
         def get_asset_id(*, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
@@ -276,8 +277,9 @@ def test_resolvable_hint():
     assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
     hint = h.hints[h.hintymeth.__name__]
-    assert hint.resolvable["aid"] == get_method_spec(
-        h.get_asset_id
+    assert (
+        hint.resolvable["aid"][ResolvableTypes.ABIMethod]
+        == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
 
 
@@ -310,7 +312,12 @@ def test_model_args():
     ret = Returns("void")
     assert Method("modely", [arg], ret) == get_method_spec(m.modely)
 
-    assert m.hints["modely"].models == {"user_record": ["addr", "balance", "nickname"]}
+    assert m.hints["modely"].models == {
+        "user_record": {
+            "name": "UserRecord",
+            "elements": ["addr", "balance", "nickname"],
+        }
+    }
 
 
 def test_instance_vars():

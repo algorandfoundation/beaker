@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field, replace
+from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Signature
 from typing import Callable, Final, cast, Any
@@ -23,7 +24,7 @@ from pyteal import (
     TealTypeError,
     Txn,
 )
-
+from beaker.application_schema import *
 from beaker.model import Model
 
 HandlerFunc = Callable[..., Expr]
@@ -50,17 +51,16 @@ class HandlerConfig:
         mh = MethodHints(read_only=self.read_only)
 
         if self.resolvable is not None:
-            resolvable = {}
-            for arg_name, ra in self.resolvable.__dict__.items():
-                hc = get_handler_config(ra)
-                resolvable[arg_name] = hc.method_spec
-            mh.resolvable = resolvable
+            mh.resolvable = self.resolvable.__dict__
 
         if self.models is not None:
-            models = {}
-            for arg_name, model_spec in self.models.items():
-                models[arg_name] = list(model_spec.__annotations__.keys())
-            mh.models = models
+            mh.models = {
+                arg_name: {
+                    "name": model_spec.__name__,
+                    "elements": list(model_spec.__annotations__.keys()),
+                }
+                for arg_name, model_spec in self.models.items()
+            }
 
         return mh
 
@@ -80,7 +80,7 @@ def set_handler_config(fn: HandlerFunc, **kwargs):
 class MethodHints:
     """MethodHints provides some hints to the caller"""
 
-    resolvable: dict[str, Method] = field(kw_only=True, default=None)
+    resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
     models: dict[str, list[str]] = field(kw_only=True, default=None)
 
@@ -88,9 +88,16 @@ class MethodHints:
         d = {"resolvable": {}, "read_only": self.read_only, "models": self.models}
 
         if self.resolvable is not None:
-            d["resolvable"] = {k: v.dictify() for k, v in self.resolvable.items()}
+            d["resolvable"] = self.resolvable
 
         return d
+
+
+class ResolvableTypes(Enum):
+    ABIMethod = "abi-method"
+    LocalState = "local-state"
+    GlobalState = "global-state"
+    Constant = "constant"
 
 
 class ResolvableArguments:
@@ -98,18 +105,33 @@ class ResolvableArguments:
 
     def __init__(
         self,
-        **kwargs: dict[str, ABIReturnSubroutine | HandlerFunc],
+        **kwargs: dict[
+            str, AccountStateValue | ApplicationStateValue | HandlerFunc | str | int
+        ],
     ):
 
         resolvable_args = {}
         for arg_name, arg_resolver in kwargs.items():
-            if not isinstance(arg_resolver, ABIReturnSubroutine):
-                # Assume its a handler func and try to get the config
-                hc = get_handler_config(arg_resolver)
-                if hc.method_spec is None:
-                    raise TealTypeError(arg_resolver, ABIReturnSubroutine)
-
-            resolvable_args[arg_name] = arg_resolver
+            match arg_resolver:
+                case AccountStateValue():
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.LocalState: arg_resolver.str_key()
+                    }
+                case ApplicationStateValue():
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.GlobalState: arg_resolver.str_key()
+                    }
+                case str(), int():
+                    resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
+                case _:
+                    hc = get_handler_config(arg_resolver)
+                    if hc.method_spec is None or not hc.read_only:
+                        raise Exception(
+                            "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
+                        )
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.ABIMethod: hc.method_spec.dictify()
+                    }
 
         self.__dict__.update(**resolvable_args)
 
