@@ -364,7 +364,7 @@ A method hint is available to the caller for encoding/decoding by field name.
     order = {"quantity": 8, "item": "cubes"}
     app_client.call(app.place_order, order_number=order_number, order=order)
 
-    # Call the method to return 
+    # Call the method to read the order at the original order number and decode it
     result = app_client.call(app.read_order, order_number=order_number)
     abi_decoded = Modeler.Order().client_decode(result.raw_value)
 
