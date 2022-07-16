@@ -104,7 +104,7 @@ class ResolvableArguments:
 
         resolvable_args = {}
         for arg_name, arg_resolver in kwargs.items():
-
+            # TODO: make the names enums
             match arg_resolver:
                 case AccountStateValue():
                     resolvable_args[arg_name] = {"local-state": arg_resolver.str_key()}

@@ -381,8 +381,7 @@ class ApplicationClient:
             if name in kwargs:
                 args.append(kwargs[name])
             elif name in hints.resolvable:
-                result = self.call(hints.resolvable[name])
-                args.append(result.return_value)
+                args.append(self.resolve(hints.resolvable[name]))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
