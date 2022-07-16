@@ -53,12 +53,15 @@ class ConstantProductAMM(Application):
     ##############
 
     # Total supply of the pool tokens
-    total_supply: Final[Expr] = Int(int(1e10))
+    _total_supply: Final[int] = int(1e10)
+    total_supply: Final[Expr] = Int(_total_supply)
     # scale helps with precision when doing computation for
     # the number of tokens to transfer
-    scale: Final[Expr] = Int(1000)
+    _scale: Final[int] = 1000
+    scale: Final[Expr] = Int(_scale)
     # Fee for swaps, 5 represents 0.5% ((fee / scale)*100)
-    fee: Final[Expr] = Int(5)
+    _fee: Final[int] = 5
+    fee: Final[Expr] = Int(_fee)
 
     ##############
     # Administrative Actions

@@ -13,19 +13,21 @@ from beaker.client import ApplicationClient
 from amm import ConstantProductAMM
 
 
-client = get_client()
-
+# Take first account from sandbox
 addr, sk = get_accounts().pop()
 signer = AccountTransactionSigner(sk)
 
+# get sandbox client
+client = get_client()
+
+# Initialize Application from amm.py
+app = ConstantProductAMM()
+
+# Create an Application client containing both an algod client and my app
+app_client = ApplicationClient(client, app, signer=signer)
+
 
 def demo():
-
-    # Initialize Application from amm.py
-    app = ConstantProductAMM()
-
-    # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app, signer=signer)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
@@ -185,23 +187,10 @@ def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
         if asset["asset-id"] == b:
             print("\tAssetB Balance {}".format(asset["amount"]))
 
-    app_state = client.application_info(app_id)
-    state = {}
-    for sv in app_state["params"]["global-state"]:
-        key = base64.b64decode(sv["key"]).decode("utf-8")
-        match sv["value"]["type"]:
-            case 1:
-                val = f"0x{base64.b64decode(sv['value']['bytes']).hex()}"
-            case 2:
-                val = sv["value"]["uint"]
-            case 3:
-                pass
-        state[key] = val
-
-    if "r" in state:
-        print(
-            f"\tCurrent ratio a/b == {state['r'] / 1000}"
-        )  # TODO: dont hardcode the scale
+    state = app_client.get_application_state()
+    state_key = ConstantProductAMM.ratio.str_key()
+    if state_key in state:
+        print(f"\tCurrent ratio a/b == {state[state_key] / ConstantProductAMM._scale}")
     else:
         print("\tNo ratio a/b")
 

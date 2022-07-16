@@ -12,15 +12,17 @@ class ExpensiveApp(OpUp):
         )
     )
     def hash_it(
+        self,
         input: abi.String,
         iters: abi.Uint64,
         opup_app: abi.Application,
         *,
         output: abi.StaticArray[abi.Byte, Literal[32]],
     ):
+
         return Seq(
-            Assert(opup_app.application_id() == OpUp.opup_app_id),
-            OpUp.call_opup_n(Int(255)),
+            Assert(opup_app.application_id() == self.opup_app_id),
+            self.call_opup(Int(255)),
             (current := ScratchVar()).store(input.get()),
             For(
                 (i := ScratchVar()).store(Int(0)),
@@ -36,5 +38,5 @@ if __name__ == "__main__":
     import json
 
     ea = ExpensiveApp()
-    print(ea.approval_program)
-    print(ea.contract.dictify())
+    # print(ea.approval_program)
+    # print(ea.contract.dictify())

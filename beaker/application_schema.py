@@ -75,8 +75,8 @@ class ApplicationStateValue(Expr):
     def __str__(self) -> str:
         return f"ApplicationState {self.key}"
 
-    def __call__(self, val: Expr) -> Expr:
-        return self.set(val)
+    def str_key(self) -> str:
+        return self.key.byte_str.replace('"', "")
 
     def set_default(self) -> Expr:
         if self.default:
@@ -240,6 +240,12 @@ class AccountStateValue:
             raise TealTypeError(default.type_of(), self.stack_type)
 
         self.default = default
+
+    def __str__(self) -> str:
+        return f"AccountStateValue {self.key}"
+
+    def str_key(self) -> str:
+        return self.key.byte_str.replace('"', "")
 
     def set(self, acct: Expr, val: Expr) -> Expr:
         if val.type_of() != self.stack_type:

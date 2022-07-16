@@ -48,20 +48,19 @@ class OpUp(Application):
         )
 
     @internal(TealType.none)
-    def call_opup():
-        return Seq(
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.SetFields(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.application_id: OpUp.opup_app_id,
-                }
-            ),
-            InnerTxnBuilder.Submit(),
-        )
-
-    @internal(TealType.none)
-    def call_opup_n(n):
+    def call_opup(n):
         return For(
             (i := ScratchVar()).store(Int(0)), i.load() < n, i.store(i.load() + Int(1))
-        ).Do(OpUp.call_opup())
+        ).Do(
+            Seq(
+                # TODO:  group together into 16 at a time? does this help anything?
+                InnerTxnBuilder.Begin(),
+                InnerTxnBuilder.SetFields(
+                    {
+                        TxnField.type_enum: TxnType.ApplicationCall,
+                        TxnField.application_id: OpUp.opup_app_id,
+                    }
+                ),
+                InnerTxnBuilder.Submit(),
+            )
+        )

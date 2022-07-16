@@ -23,6 +23,29 @@ from beaker.decorators import HandlerFunc, MethodHints
 from beaker.consts import APP_MAX_PAGE_SIZE
 
 
+def str_or_hex(v: bytes):
+    try:
+        v = v.decode("utf-8")
+    except Exception:
+        v = f"0x{v.hex()}"
+    return v
+
+
+def decode_state(state: list[dict[str, Any]]) -> dict[str, str | int]:
+    decoded_state: dict[str, str | int] = {}
+    for sv in state:
+        key = str_or_hex(b64decode(sv["key"]))
+        match sv["value"]["type"]:
+            case 1:
+                val = str_or_hex(b64decode(sv["value"]["bytes"]))
+            case 2:
+                val = sv["value"]["uint"]
+            case _:
+                val = None
+        decoded_state[key] = val
+    return decoded_state
+
+
 class ApplicationClient:
     def __init__(
         self,
@@ -386,6 +409,14 @@ class ApplicationClient:
         )
 
         return atc
+
+    def get_application_state(self) -> dict[str, str | int]:
+        app_state = self.client.application_info(self.app_id)
+        return decode_state(app_state["params"]["global-state"])
+
+    def get_account_state(self, account) -> dict[str, str | int]:
+        acct_state = self.client.account_application_info(account, self.app_id)
+        return decode_state(acct_state["app-local-state"]["key-value"])
 
     def method_hints(self, method_name: str) -> MethodHints:
         if method_name not in self.app.hints:

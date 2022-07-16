@@ -27,3 +27,5 @@ app_client.call(app.doit, note="yo", k=0, v="First item")
 print("Getting value")
 result = app_client.call(app.getit, k=0)
 print(f"Result: {result.return_value}")
+
+print(f"Current account state: {app_client.get_account_state(acct)}")
