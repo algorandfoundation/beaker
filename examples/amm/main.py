@@ -187,7 +187,7 @@ def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
         if asset["asset-id"] == b:
             print("\tAssetB Balance {}".format(asset["amount"]))
 
-    state = app_client.get_application_state()
+    state = app_client.get_application_state(force_str=True)
     state_key = ConstantProductAMM.ratio.str_key()
     if state_key in state:
         print(f"\tCurrent ratio a/b == {state[state_key] / ConstantProductAMM._scale}")

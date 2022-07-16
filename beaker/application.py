@@ -17,6 +17,7 @@ from pyteal import (
     Router,
     Bytes,
     Subroutine,
+    Seq,
 )
 
 from .decorators import (
@@ -175,7 +176,10 @@ class Application:
 
     @create
     def create(self):
-        return Approve()
+        return Seq(
+            self.initialize_app_state(),
+            Approve()
+        )
 
     @update
     def update(self):

@@ -425,16 +425,16 @@ class ApplicationClient:
 
         return atc
 
-    def get_application_state(self) -> dict[str, str | int]:
+    def get_application_state(self, force_str = False) -> dict[str, str | int]:
         app_state = self.client.application_info(self.app_id)
-        return decode_state(app_state["params"]["global-state"])
+        return decode_state(app_state["params"]["global-state"], force_str=force_str)
 
-    def get_account_state(self, account: str = None) -> dict[str, str | int]:
+    def get_account_state(self, account: str = None, force_str: bool = False) -> dict[str, str | int]:
         if account is None:
             account = self.get_sender()
 
         acct_state = self.client.account_application_info(account, self.app_id)
-        return decode_state(acct_state["app-local-state"]["key-value"])
+        return decode_state(acct_state["app-local-state"]["key-value"], force_str=force_str)
 
     def resolve(self, to_resolve):
         if ResolvableTypes.Constant in to_resolve:
