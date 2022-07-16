@@ -117,17 +117,22 @@ Here we use the `call` method, passing the method defined in our class, and args
 Lets go back and add some application state (Global State in Algorand parlance). 
 
 ```py
+from typing import Final
 from pyteal import *
 from beaker import *
 
 class MySickApp(Application):
-    # Mark it final to signal that we shouldnt change the python class variable
+    # Mark it `Final` to signal that we shouldn't change the python class variable
+    # This has _no_ effect on the generated TEAL, its purely a python level
+    # demarcation for the reader/writer of the contract
     counter: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         descr="A counter meant to show use of application state",
         key=Bytes("counter"), # Override the default key (class var name) 
         default=Int(5), # Initialize to 5 
-        static=True, # Once set, prevent overwrite (enforced _only_ while using methods defined on statevar, not protocol level) 
+        static=True, # Once set, prevent overwrite 
+        # Note: `static` is enforced _only_ while using methods defined on the StateVarr
+        # it _could_ still be changed if you use the `App.globalSet`, but don't do that
     )
 
     # Note the method name needs to be `crete` exactly to override the implementation in the Application class
