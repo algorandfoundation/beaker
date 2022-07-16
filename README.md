@@ -365,10 +365,9 @@ class Modeler(Application):
 
 ```
 
-The application exposes these methods using the tuple encoded version of the fields specified in the model.
+The application exposes the ABI methods using the tuple encoded version of the fields specified in the model. Here it would be `(string,uint32)`.
 
 A method hint is available to the caller for encoding/decoding by field name. 
-
 
 ```py
     # Passing in a dict as an argument that should take a tuple according to the type spec
