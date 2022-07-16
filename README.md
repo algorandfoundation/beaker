@@ -136,7 +136,8 @@ class MySickApp(Application):
         # it _could_ still be changed if you use the `App.globalSet`, but don't do that
     )
 
-    # Note the method name needs to be `crete` exactly to override the implementation in the Application class
+    # Note the method name needs to be `create` exactly to 
+    # override the implementation in the Application class
     @create
     def create(self):
         return self.initialize_app_state()
