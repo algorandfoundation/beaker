@@ -262,6 +262,7 @@ from beaker.decorators import handler
 class MyHasherApp(OpUp):
     @handler
     def hash_it(
+        self,
         input: abi.String,
         iters: abi.Uint64,
         opup_app: abi.Application,
@@ -269,8 +270,8 @@ class MyHasherApp(OpUp):
         output: abi.StaticArray[abi.Byte, Literal[32]],
     ):
         return Seq(
-            Assert(opup_app.application_id() == OpUp.opup_app_id),
-            OpUp.call_opup(Int(255)),
+            Assert(opup_app.application_id() == self.opup_app_id),
+            self.call_opup(Int(255)),
             (current := ScratchVar()).store(input.get()),
             For(
                 (i := ScratchVar()).store(Int(0)),
