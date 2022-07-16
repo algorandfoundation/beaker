@@ -356,12 +356,12 @@ class Modeler(Application):
 
     
     @handler
-    def place_order(self, order_number: abi.Byte, order: Order):
-        return self.orders(order_number.encode()).set(order.encode())
+    def place_order(self, order_number: abi.Uint8, order: Order):
+        return self.orders[order_number].set(order.encode())
 
     @handler
-    def read_order(self, order_number: abi.Byte, *, output: Order):
-        return output.decode(self.orders(order_number.encode()))
+    def read_order(self, order_number: abi.Uint8, *, output: Order):
+        return output.decode(self.orders[order_number])
 
 ```
 

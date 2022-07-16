@@ -16,15 +16,15 @@ class Modeler(Application):
         quantity: abi.Uint16
 
     @handler
-    def place_order(self, order_number: abi.Byte, order: Order):
+    def place_order(self, order_number: abi.Uint8, order: Order):
         return self.orders[order_number].set(order.encode())
 
     @handler(read_only=True)
-    def read_item(self, order_number: abi.Byte, *, output: Order):
+    def read_item(self, order_number: abi.Uint8, *, output: Order):
         return output.decode(self.orders[order_number])
 
     @handler
-    def increase_quantity(self, order_number: abi.Byte, *, output: Order):
+    def increase_quantity(self, order_number: abi.Uint8, *, output: Order):
         return Seq(
             # Read the order from state
             (new_order := Modeler.Order()).decode(self.orders[order_number]),
