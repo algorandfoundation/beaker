@@ -7,6 +7,7 @@ from beaker import (
     Authorize,
     handler,
     create,
+    internal,
 )
 
 # WARNING: THIS IS NOT PROODUCTION LEVEL CODE
@@ -70,13 +71,13 @@ class ConstantProductAMM(Application):
 
     # Only the account set in app_state.governor may call this method
     @handler(authorize=Authorize.only(governor))
-    def set_governor(new_governor: abi.Account):
+    def set_governor(self, new_governor: abi.Account):
         """sets the governor of the contract, may only be called by the current governor"""
-        return ConstantProductAMM.governor.set(new_governor.address())
+        return self.governor.set(new_governor.address())
 
     # Only the account set in app_state.governor may call this method
     @handler(authorize=Authorize.only(governor))
-    def bootstrap(a_asset: abi.Asset, b_asset: abi.Asset, *, output: abi.Uint64):
+    def bootstrap(self, a_asset: abi.Asset, b_asset: abi.Asset, *, output: abi.Uint64):
         """bootstraps the contract by opting into the assets and creating the pool token"""
         well_formed_bootstrap = And(
             Global.group_size() == Int(1),
@@ -85,17 +86,17 @@ class ConstantProductAMM(Application):
 
         return Seq(
             Assert(well_formed_bootstrap),
-            ConstantProductAMM.asset_a.set(a_asset.asset_id()),
-            ConstantProductAMM.asset_b.set(b_asset.asset_id()),
-            ConstantProductAMM.pool_token.set(
-                ConstantProductAMM.do_create_pool_token(
-                    ConstantProductAMM.asset_a,
-                    ConstantProductAMM.asset_b,
+            self.asset_a.set(a_asset.asset_id()),
+            self.asset_b.set(b_asset.asset_id()),
+            self.pool_token.set(
+                self.do_create_pool_token(
+                    self.asset_a,
+                    self.asset_b,
                 ),
             ),
-            ConstantProductAMM.do_opt_in(ConstantProductAMM.asset_a),
-            ConstantProductAMM.do_opt_in(ConstantProductAMM.asset_b),
-            output.set(ConstantProductAMM.pool_token),
+            self.do_opt_in(self.asset_a),
+            self.do_opt_in(self.asset_b),
+            output.set(self.pool_token),
         )
 
     ##############
@@ -104,6 +105,7 @@ class ConstantProductAMM(Application):
 
     @handler
     def mint(
+        self,
         a_xfer: abi.AssetTransferTransaction,
         b_xfer: abi.AssetTransferTransaction,
         pool_asset: abi.Asset,
@@ -113,21 +115,21 @@ class ConstantProductAMM(Application):
         """mint pool tokens given some amount of asset A and asset B"""
 
         well_formed_mint = And(
-            a_asset.asset_id() == ConstantProductAMM.asset_a,
-            b_asset.asset_id() == ConstantProductAMM.asset_b,
-            pool_asset.asset_id() == ConstantProductAMM.pool_token,
+            a_asset.asset_id() == self.asset_a,
+            b_asset.asset_id() == self.asset_b,
+            pool_asset.asset_id() == self.pool_token,
         )
 
         valid_asset_a_xfer = And(
-            a_xfer.get().asset_receiver() == ConstantProductAMM.address,
-            a_xfer.get().xfer_asset() == ConstantProductAMM.asset_a,
+            a_xfer.get().asset_receiver() == self.address,
+            a_xfer.get().xfer_asset() == self.asset_a,
             a_xfer.get().asset_amount() > Int(0),
             a_xfer.get().sender() == Txn.sender(),
         )
 
         valid_asset_b_xfer = And(
-            b_xfer.get().asset_receiver() == ConstantProductAMM.address,
-            b_xfer.get().xfer_asset() == ConstantProductAMM.asset_b,
+            b_xfer.get().asset_receiver() == self.address,
+            b_xfer.get().xfer_asset() == self.asset_b,
             b_xfer.get().asset_amount() > Int(0),
             b_xfer.get().sender() == Txn.sender(),
         )
@@ -138,14 +140,14 @@ class ConstantProductAMM(Application):
             Assert(valid_asset_a_xfer),
             Assert(valid_asset_b_xfer),
             # Check that we have these things
-            pool_bal := pool_asset.holding(ConstantProductAMM.address).balance(),
-            a_bal := a_asset.holding(ConstantProductAMM.address).balance(),
-            b_bal := b_asset.holding(ConstantProductAMM.address).balance(),
+            pool_bal := pool_asset.holding(self.address).balance(),
+            a_bal := a_asset.holding(self.address).balance(),
+            b_bal := b_asset.holding(self.address).balance(),
             Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
             # mint tokens
-            ConstantProductAMM.do_axfer(
+            self.do_axfer(
                 Txn.sender(),
-                ConstantProductAMM.pool_token,
+                self.pool_token,
                 If(
                     And(
                         a_bal.value() == a_xfer.get().asset_amount(),
@@ -153,12 +155,12 @@ class ConstantProductAMM(Application):
                     ),
                     # This is the first time we've been called
                     # we use a different formula to mint tokens
-                    ConstantProductAMM.tokens_to_mint_initial(
+                    self.tokens_to_mint_initial(
                         a_xfer.get().asset_amount(), b_xfer.get().asset_amount()
                     ),
                     # Normal mint
-                    ConstantProductAMM.tokens_to_mint(
-                        ConstantProductAMM.total_supply - pool_bal.value(),
+                    self.tokens_to_mint(
+                        self.total_supply - pool_bal.value(),
                         a_bal.value(),
                         b_bal.value(),
                         a_xfer.get().asset_amount(),
@@ -166,11 +168,12 @@ class ConstantProductAMM(Application):
                     ),
                 ),
             ),
-            ConstantProductAMM.ratio.set(ConstantProductAMM.get_ratio()),
+            self.ratio.set(self.get_ratio()),
         )
 
     @handler
     def burn(
+        self,
         pool_xfer: abi.AssetTransferTransaction,
         pool_asset: abi.Asset,
         a_asset: abi.Asset,
@@ -179,139 +182,139 @@ class ConstantProductAMM(Application):
         """burn pool tokens to get back some amount of asset A and asset B"""
 
         well_formed_burn = And(
-            pool_asset.asset_id() == ConstantProductAMM.pool_token,
-            a_asset.asset_id() == ConstantProductAMM.asset_a,
-            b_asset.asset_id() == ConstantProductAMM.asset_b,
+            pool_asset.asset_id() == self.pool_token,
+            a_asset.asset_id() == self.asset_a,
+            b_asset.asset_id() == self.asset_b,
         )
 
         valid_pool_xfer = And(
-            pool_xfer.get().asset_receiver() == ConstantProductAMM.address,
+            pool_xfer.get().asset_receiver() == self.address,
             pool_xfer.get().asset_amount() > Int(0),
-            pool_xfer.get().xfer_asset() == ConstantProductAMM.pool_token,
+            pool_xfer.get().xfer_asset() == self.pool_token,
             pool_xfer.get().sender() == Txn.sender(),
         )
 
         return Seq(
             Assert(well_formed_burn),
             Assert(valid_pool_xfer),
-            pool_bal := pool_asset.holding(ConstantProductAMM.address).balance(),
-            a_bal := a_asset.holding(ConstantProductAMM.address).balance(),
-            b_bal := b_asset.holding(ConstantProductAMM.address).balance(),
+            pool_bal := pool_asset.holding(self.address).balance(),
+            a_bal := a_asset.holding(self.address).balance(),
+            b_bal := b_asset.holding(self.address).balance(),
             Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
             # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
             (issued := ScratchVar()).store(
-                ConstantProductAMM.total_supply
-                - (pool_bal.value() - pool_xfer.get().asset_amount())
+                self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
             ),
             # Send back commensurate amt of a
-            ConstantProductAMM.do_axfer(
+            self.do_axfer(
                 Txn.sender(),
-                ConstantProductAMM.asset_a,
-                ConstantProductAMM.tokens_to_burn(
+                self.asset_a,
+                self.tokens_to_burn(
                     issued.load(),
                     a_bal.value(),
                     pool_xfer.get().asset_amount(),
                 ),
             ),
             # Send back commensurate amt of b
-            ConstantProductAMM.do_axfer(
+            self.do_axfer(
                 Txn.sender(),
-                ConstantProductAMM.asset_b,
-                ConstantProductAMM.tokens_to_burn(
+                self.asset_b,
+                self.tokens_to_burn(
                     issued.load(),
                     b_bal.value(),
                     pool_xfer.get().asset_amount(),
                 ),
             ),
             # The ratio should be the same before and after
-            Assert(ConstantProductAMM.ratio == ConstantProductAMM.get_ratio()),
+            Assert(self.ratio == self.get_ratio()),
         )
 
     @handler
     def swap(
+        self,
         swap_xfer: abi.AssetTransferTransaction,
         a_asset: abi.Asset,
         b_asset: abi.Asset,
     ):
         """Swap some amount of either asset A or asset B for the other"""
         well_formed_swap = And(
-            a_asset.asset_id() == ConstantProductAMM.asset_a,
-            b_asset.asset_id() == ConstantProductAMM.asset_b,
+            a_asset.asset_id() == self.asset_a,
+            b_asset.asset_id() == self.asset_b,
         )
 
         valid_swap_xfer = And(
             Or(
-                swap_xfer.get().xfer_asset() == ConstantProductAMM.asset_a,
-                swap_xfer.get().xfer_asset() == ConstantProductAMM.asset_b,
+                swap_xfer.get().xfer_asset() == self.asset_a,
+                swap_xfer.get().xfer_asset() == self.asset_b,
             ),
             swap_xfer.get().asset_amount() > Int(0),
             swap_xfer.get().sender() == Txn.sender(),
         )
 
         out_id = If(
-            swap_xfer.get().xfer_asset() == ConstantProductAMM.asset_a,
-            ConstantProductAMM.asset_b,
-            ConstantProductAMM.asset_a,
+            swap_xfer.get().xfer_asset() == self.asset_a,
+            self.asset_b,
+            self.asset_a,
         )
         in_id = swap_xfer.get().xfer_asset()
 
         return Seq(
             Assert(well_formed_swap),
             Assert(valid_swap_xfer),
-            in_sup := AssetHolding.balance(ConstantProductAMM.address, in_id),
-            out_sup := AssetHolding.balance(ConstantProductAMM.address, out_id),
+            in_sup := AssetHolding.balance(self.address, in_id),
+            out_sup := AssetHolding.balance(self.address, out_id),
             Assert(And(in_sup.hasValue(), out_sup.hasValue())),
-            ConstantProductAMM.do_axfer(
+            self.do_axfer(
                 Txn.sender(),
                 out_id,
-                ConstantProductAMM.tokens_to_swap(
+                self.tokens_to_swap(
                     swap_xfer.get().asset_amount(), in_sup.value(), out_sup.value()
                 ),
             ),
-            ConstantProductAMM.ratio.set(ConstantProductAMM.get_ratio()),
+            self.ratio.set(self.get_ratio()),
         )
 
     ##############
     # Mathy methods
     ##############
 
-    @Subroutine(TealType.uint64)
-    def tokens_to_mint(issued, a_supply, b_supply, a_amount, b_amount):
+    @internal(TealType.uint64)
+    def tokens_to_mint(self, issued, a_supply, b_supply, a_amount, b_amount):
         return Seq(
             (a_rat := ScratchVar()).store(
-                WideRatio([a_amount, ConstantProductAMM.scale], [a_supply])
+                WideRatio([a_amount, self.scale], [a_supply])
             ),
             (b_rat := ScratchVar()).store(
-                WideRatio([b_amount, ConstantProductAMM.scale], [b_supply])
+                WideRatio([b_amount, self.scale], [b_supply])
             ),
             WideRatio(
                 [If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued],
-                [ConstantProductAMM.scale],
+                [self.scale],
             ),
         )
 
-    @Subroutine(TealType.uint64)
-    def tokens_to_mint_initial(a_amount, b_amount):
-        return Sqrt(a_amount * b_amount) - ConstantProductAMM.scale
+    @internal(TealType.uint64)
+    def tokens_to_mint_initial(self, a_amount, b_amount):
+        return Sqrt(a_amount * b_amount) - self.scale
 
-    @Subroutine(TealType.uint64)
-    def tokens_to_burn(issued, supply, amount):
+    @internal(TealType.uint64)
+    def tokens_to_burn(self, issued, supply, amount):
         return WideRatio([supply, amount], [issued])
 
-    @Subroutine(TealType.uint64)
-    def tokens_to_swap(in_amount, in_supply, out_supply):
-        factor = ConstantProductAMM.scale - ConstantProductAMM.fee
+    @internal(TealType.uint64)
+    def tokens_to_swap(self, in_amount, in_supply, out_supply):
+        factor = self.scale - self.fee
         return WideRatio(
             [in_amount, factor, out_supply],
-            [(in_supply * ConstantProductAMM.scale) + (in_amount * factor)],
+            [(in_supply * self.scale) + (in_amount * factor)],
         )
 
     ##############
     # Utility methods for inner transactions
     ##############
 
-    @Subroutine(TealType.none)
-    def do_axfer(rx, aid, amt):
+    @internal(TealType.none)
+    def do_axfer(self, rx, aid, amt):
         return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
@@ -325,15 +328,16 @@ class ConstantProductAMM(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @Subroutine(TealType.none)
-    def do_opt_in(aid):
-        return ConstantProductAMM.do_axfer(ConstantProductAMM.address, aid, Int(0))
+    @internal(TealType.none)
+    def do_opt_in(self, aid):
+        return self.do_axfer(self.address, aid, Int(0))
 
-    @Subroutine(TealType.uint64)
-    def do_create_pool_token(a, b):
+    @internal(TealType.uint64)
+    def do_create_pool_token(self, a, b):
         return Seq(
             una := AssetParam.unitName(a),
             unb := AssetParam.unitName(b),
+            Assert(And(una.hasValue(), unb.hasValue())),
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
                 {
@@ -342,29 +346,29 @@ class ConstantProductAMM(Application):
                         Bytes("DPT-"), una.value(), Bytes("-"), unb.value()
                     ),
                     TxnField.config_asset_unit_name: Bytes("dpt"),
-                    TxnField.config_asset_total: ConstantProductAMM.total_supply,
+                    TxnField.config_asset_total: self.total_supply,
                     TxnField.config_asset_decimals: Int(3),
-                    TxnField.config_asset_manager: ConstantProductAMM.address,
-                    TxnField.config_asset_reserve: ConstantProductAMM.address,
+                    TxnField.config_asset_manager: self.address,
+                    TxnField.config_asset_reserve: self.address,
                 }
             ),
             InnerTxnBuilder.Submit(),
             InnerTxn.created_asset_id(),
         )
 
-    @Subroutine(TealType.uint64)
-    def get_ratio():
+    @internal(TealType.uint64)
+    def get_ratio(self):
         return Seq(
             bal_a := AssetHolding.balance(
-                ConstantProductAMM.address,
-                ConstantProductAMM.asset_a,
+                self.address,
+                self.asset_a,
             ),
             bal_b := AssetHolding.balance(
-                ConstantProductAMM.address,
-                ConstantProductAMM.asset_b,
+                self.address,
+                self.asset_b,
             ),
             Assert(And(bal_a.hasValue(), bal_b.hasValue())),
-            WideRatio([bal_a.value(), ConstantProductAMM.scale], [bal_b.value()]),
+            WideRatio([bal_a.value(), self.scale], [bal_b.value()]),
         )
 
 
