@@ -313,8 +313,7 @@ class ApplicationClient:
             if name in kwargs:
                 args.append(kwargs[name])
             elif name in hints.resolvable:
-                result = self.call(hints.resolvable[name])
-                args.append(result.return_value)
+                args.append(self.resolve(hints.resolvable[name]))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -417,6 +416,24 @@ class ApplicationClient:
     def get_account_state(self, account) -> dict[str, str | int]:
         acct_state = self.client.account_application_info(account, self.app_id)
         return decode_state(acct_state["app-local-state"]["key-value"])
+
+    def resolve(self, to_resolve):
+        if "constant" in to_resolve:
+            return to_resolve["constant"]
+        elif "global-state" in to_resolve:
+            key = to_resolve["global-state"]
+            app_state = self.get_application_state()
+            return app_state[key]
+        elif "local-state" in to_resolve:
+            key = to_resolve["local-state"]
+            acct_state = self.get_account_state(self.get_sender(None, None))
+            return acct_state[key]
+        elif "abi-method" in to_resolve:
+            method = abi.Method.undictify(to_resolve["abi-method"])
+            result = self.call(method)
+            return result.return_value
+        else:
+            raise Exception(f"Unrecognized resolver: {to_resolve}")
 
     def method_hints(self, method_name: str) -> MethodHints:
         if method_name not in self.app.hints:

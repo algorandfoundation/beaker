@@ -127,6 +127,7 @@ class Application:
                     if handler_config.referenced_self:
                         abi_meth.subroutine.implementation = bound_attr
                     self.methods[name] = abi_meth
+
                     self.hints[name] = handler_config.hints()
 
                 # Internal subroutines
