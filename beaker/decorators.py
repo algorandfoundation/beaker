@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field, replace
+from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Signature
 from typing import Callable, Final, cast, Any
@@ -92,6 +93,13 @@ class MethodHints:
         return d
 
 
+class ResolvableTypes(Enum):
+    ABIMethod = "abi-method"
+    LocalState = "local-state"
+    GlobalState = "global-state"
+    Constant = "constant"
+
+
 class ResolvableArguments:
     """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
 
@@ -107,18 +115,24 @@ class ResolvableArguments:
             # TODO: make the names enums
             match arg_resolver:
                 case AccountStateValue():
-                    resolvable_args[arg_name] = {"local-state": arg_resolver.str_key()}
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.LocalState: arg_resolver.str_key()
+                    }
                 case ApplicationStateValue():
-                    resolvable_args[arg_name] = {"global-state": arg_resolver.str_key()}
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.GlobalState: arg_resolver.str_key()
+                    }
                 case str(), int():
-                    resolvable_args[arg_name] = {"static": arg_resolver}
+                    resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
                 case _:
                     hc = get_handler_config(arg_resolver)
                     if hc.method_spec is None or not hc.read_only:
                         raise Exception(
                             "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
                         )
-                    resolvable_args[arg_name] = {"abi-method": hc.method_spec.dictify()}
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.ABIMethod: hc.method_spec.dictify()
+                    }
 
         self.__dict__.update(**resolvable_args)
 

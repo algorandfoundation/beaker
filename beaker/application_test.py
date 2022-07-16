@@ -13,6 +13,7 @@ from .errors import BareOverwriteError
 from .application import Application, get_method_spec
 from .decorators import (
     ResolvableArguments,
+    ResolvableTypes,
     handler,
     internal,
     create,
@@ -277,7 +278,7 @@ def test_resolvable_hint():
 
     hint = h.hints[h.hintymeth.__name__]
     assert (
-        hint.resolvable["aid"]["abi-method"]
+        hint.resolvable["aid"][ResolvableTypes.ABIMethod]
         == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
 

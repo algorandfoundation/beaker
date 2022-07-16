@@ -19,7 +19,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import HandlerFunc, MethodHints
+from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 
 
@@ -417,18 +417,18 @@ class ApplicationClient:
         return decode_state(acct_state["app-local-state"]["key-value"])
 
     def resolve(self, to_resolve):
-        if "constant" in to_resolve:
-            return to_resolve["constant"]
-        elif "global-state" in to_resolve:
-            key = to_resolve["global-state"]
+        if ResolvableTypes.Constant in to_resolve:
+            return to_resolve[ResolvableTypes.Constant]
+        elif ResolvableTypes.GlobalState in to_resolve:
+            key = to_resolve[ResolvableTypes.GlobalState]
             app_state = self.get_application_state()
             return app_state[key]
-        elif "local-state" in to_resolve:
-            key = to_resolve["local-state"]
+        elif ResolvableTypes.LocalState in to_resolve:
+            key = to_resolve[ResolvableTypes.LocalState]
             acct_state = self.get_account_state(self.get_sender(None, None))
             return acct_state[key]
-        elif "abi-method" in to_resolve:
-            method = abi.Method.undictify(to_resolve["abi-method"])
+        elif ResolvableTypes.ABIMethod in to_resolve:
+            method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])
             result = self.call(method)
             return result.return_value
         else:
