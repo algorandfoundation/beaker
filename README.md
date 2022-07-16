@@ -10,6 +10,19 @@ With Beaker, you build a class that represents your entire application including
 *Experimental - Mostly Untested - subject to change* 
 
 
+- [Beaker](#beaker)
+- [Install](#install)
+- [Hello Beaker](#hello-beaker)
+- [Application Client](#application-client)
+- [Application State](#application-state)
+- [Authorization](#authorization)
+- [Account State](#account-state)
+- [Subclassing](#subclassing)
+- [Method Hints](#method-hints)
+- [Models](#models)
+- [More?](#more)
+
+
 ## Install
 
 Currently only installing from github is supported
@@ -64,7 +77,7 @@ This adds an ABI method with signature `add(uint64,uint64)uint64` to our applica
 
 > Note: `self` may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like `MySickApp.do_thing(data)`
 
-## ApplicationClient
+## Application Client
 
 Lets now deploy our contract using an `ApplicationClient`.
 
