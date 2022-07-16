@@ -277,12 +277,19 @@ We can change the handler to provide the hint.
 ```py
 @handler(
     resolvable=ResolvableArguments(
-        opup_app=OpUp.get_opup_app_id 
+        opup_app=OpUp.opup_app_id 
     )
 )
 ```
 
-With this we communicate to a caller that the value the application expects be passed can be resolved by calling the `get_opup_app_id` method.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
+With this handler config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
+
+Options for resolving arguments are:
+
+- A constant, `str | int`
+- State Values, `ApplicationStateValue | AccountStateValue (only for sender)`
+- A read-only ABI method  (If you need access to a Dynamic state value, use an ABI method to produce the expected value)
+
 
 Here we call the method, omitting the `opup_app` argument:
 ```py
