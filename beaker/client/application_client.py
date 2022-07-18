@@ -38,7 +38,7 @@ class ApplicationClient:
         self.client = client
         self.app = app
         self.app_id = app_id
-        self.app_addr = None
+        self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
         self.signer = signer
         self.sender = sender
@@ -413,11 +413,10 @@ class ApplicationClient:
         return decode_state(
             acct_state["app-local-state"]["key-value"], force_str=force_str
         )
-    
+
     def get_account_info(self) -> dict[str, Any]:
         app_state = self.client.get_account_info(self.app_addr)
         return app_state
-    
 
     def resolve(self, to_resolve):
         if ResolvableTypes.Constant in to_resolve:
