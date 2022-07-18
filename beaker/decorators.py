@@ -84,19 +84,19 @@ class MethodHints:
     read_only: bool = field(kw_only=True, default=False)
     models: dict[str, list[str]] = field(kw_only=True, default=None)
 
-    def dictify(self) -> dict[str, Any]:
-        d = {}
+    # def dictify(self) -> dict[str, Any]:
+    #    d = {}
 
-        if self.read_only:
-            d["read_only"] = True
+    #    if self.read_only:
+    #        d["read_only"] = True
 
-        if self.models is not None:
-            d["models"] = self.models
+    #    if self.models is not None:
+    #        d["models"] = self.models
 
-        if self.resolvable is not None:
-            d["resolvable"] = self.resolvable
+    #    if self.resolvable is not None:
+    #        d["resolvable"] = self.resolvable
 
-        return d
+    #    return d
 
 
 class ResolvableTypes(str, Enum):
@@ -127,7 +127,7 @@ class ResolvableArguments:
                     resolvable_args[arg_name] = {
                         ResolvableTypes.GlobalState: arg_resolver.str_key()
                     }
-                case str(), int():
+                case str() | int():
                     resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
                 case _:
                     hc = get_handler_config(arg_resolver)

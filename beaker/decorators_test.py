@@ -3,6 +3,8 @@ import pyteal as pt
 
 from .application import get_method_spec
 from .decorators import (
+    ResolvableArguments,
+    MethodHints,
     handler,
     get_handler_config,
     Authorize,
@@ -93,7 +95,8 @@ def test_handler_config():
         assert v is None or v is False, f"Expected {k} to be unset"
 
 
-def test_authorize_only():
+def test_authorize():
+
     auth_only = Authorize.only(pt.Global.creator_address())
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
@@ -117,8 +120,6 @@ def test_authorize_only():
     with pytest.raises(pt.TealTypeError):
         Authorize.only(pt.Int(1))
 
-
-def test_authorize_holds():
     asset_id = pt.Int(123)
     auth_holds_token = Authorize.holds_token(asset_id)
 
@@ -147,8 +148,6 @@ def test_authorize_holds():
     with pytest.raises(pt.TealTypeError):
         Authorize.holds_token(pt.Bytes("abc"))
 
-
-def test_authorize_opted_in():
     app_id = pt.Int(123)
     auth_opted_in = Authorize.opted_in(app_id)
 
@@ -174,6 +173,26 @@ def test_authorize_opted_in():
 
     with pytest.raises(pt.TealTypeError):
         Authorize.opted_in(pt.Bytes("abc"))
+
+    with pytest.raises(pt.TealInputError):
+
+        @pt.Subroutine(pt.TealType.uint64)
+        def thing(a, b):
+            return pt.Int(1)
+
+        @handler(authorize=thing)
+        def other_thing():
+            pass
+
+    with pytest.raises(pt.TealTypeError):
+
+        @pt.Subroutine(pt.TealType.bytes)
+        def thing(x):
+            return pt.Bytes("fail")
+
+        @handler(authorize=thing)
+        def other_thing():
+            pass
 
 
 def test_bare():
@@ -225,3 +244,60 @@ def test_bare():
 
     hc = get_handler_config(impl)
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
+
+
+def test_resolvable():
+    from .application_schema import (
+        AccountStateValue,
+        ApplicationStateValue,
+        DynamicAccountStateValue,
+        DynamicApplicationStateValue,
+    )
+
+    x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
+    r = ResolvableArguments(x=x)
+    assert r.x == {"local-state": "x"}
+
+    x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
+    r = ResolvableArguments(x=x[pt.Bytes("x")])
+    assert r.x == {"local-state": "x"}
+
+    x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
+    r = ResolvableArguments(x=x)
+    assert r.x == {"global-state": "x"}
+
+    x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
+    r = ResolvableArguments(x=x[pt.Bytes("x")])
+    assert r.x == {"global-state": "x"}
+
+    x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
+    r = ResolvableArguments(x=x[pt.Bytes("x")])
+    assert r.x == {"global-state": "x"}
+
+    @handler(read_only=True)
+    def x():
+        return pt.Assert(pt.Int(1))
+
+    r = ResolvableArguments(x=x)
+    assert r.x == {"abi-method": get_method_spec(x).dictify()}
+
+    r = ResolvableArguments(x="1")
+    assert r.x == {"constant": "1"}
+
+    r = ResolvableArguments(x=1)
+    assert r.x == {"constant": 1}
+
+    with pytest.raises(Exception):
+
+        @handler(resolvable=ResolvableArguments(x=1))
+        def doit(a: pt.abi.Uint64):
+            pass
+
+    with pytest.raises(Exception):
+
+        @handler
+        def x():
+            return pt.Assert(pt.Int(1))
+
+        r = ResolvableArguments(x=x)
+        assert r.x == {"abi-method": get_method_spec(x).dictify()}
