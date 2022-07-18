@@ -93,7 +93,7 @@ class MethodHints:
         return d
 
 
-class ResolvableTypes(Enum):
+class ResolvableTypes(str, Enum):
     ABIMethod = "abi-method"
     LocalState = "local-state"
     GlobalState = "global-state"

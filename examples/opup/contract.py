@@ -38,5 +38,6 @@ if __name__ == "__main__":
     import json
 
     ea = ExpensiveApp()
+    print(json.dumps(ea.application_spec()))
     # print(ea.approval_program)
     # print(ea.contract.dictify())

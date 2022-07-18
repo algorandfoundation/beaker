@@ -1,5 +1,5 @@
 from inspect import getattr_static
-from typing import Final, cast
+from typing import Final, Any, cast
 from algosdk.abi import Method
 from pyteal import (
     Txn,
@@ -167,6 +167,12 @@ class Application:
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
+
+    def application_spec(self) -> dict[str, Any]:
+        return {
+            "hints": {k: v.dictify() for k, v in self.hints.items()},
+            "contract": self.contract.dictify(),
+        }
 
     def initialize_app_state(self):
         return self.app_state.initialize()

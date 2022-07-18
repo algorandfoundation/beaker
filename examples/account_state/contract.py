@@ -25,4 +25,4 @@ class Dope(Application):
 
 if __name__ == "__main__":
     d = Dope()
-    print(d.approval_program)
+    print(d.application_spec())
