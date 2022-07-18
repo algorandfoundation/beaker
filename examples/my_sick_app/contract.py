@@ -18,8 +18,8 @@ class MySickApp(Application):
     )
 
     @Subroutine(TealType.bytes)
-    def make_tag_key(tag: abi.String):
-        return Concat(Bytes("tag:"), tag.get())
+    def make_tag_key(tag):
+        return Concat(Bytes("tag:"), tag)
 
     tags: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         TealType.uint64, max_keys=10, key_gen=make_tag_key
@@ -60,7 +60,7 @@ class MySickApp(Application):
     @handler
     def add_tag(self, tag: abi.String):
         """add a tag to a user"""
-        return self.tags(tag).set(Int(1))
+        return self.tags[tag].set(Int(1))
 
 
 if __name__ == "__main__":

@@ -127,7 +127,7 @@ class ARC18(Application):
         valid_transfer_group = Seq(
             Assert(Global.group_size() == Int(2)),
             (offer := ScratchVar()).store(
-                self.offers(royalty_asset.asset_id()).get(owner.address())
+                self.offers[royalty_asset.asset_id()].get(owner.address())
             ),
             offer_auth_addr.store(self.offered_auth(offer.load())),
             offer_amt.store(self.offered_amount(offer.load())),
@@ -196,7 +196,7 @@ class ARC18(Application):
             Assert(Global.group_size() == Int(2)),
             # Get the offer from local state
             (offer := ScratchVar()).store(
-                self.offers(royalty_asset.asset_id()).get_must(owner.address())
+                self.offers[royalty_asset.asset_id()].get_must(owner.address())
             ),
             offer_auth_addr.store(ARC18.offered_auth(offer.load())),
             offer_amt.store(ARC18.offered_amount(offer.load())),
@@ -284,7 +284,7 @@ class ARC18(Application):
 
         return Seq(
             (offer := ScratchVar()).store(
-                self.offers(royalty_asset.asset_id()).get(owner.address())
+                self.offers[royalty_asset.asset_id()].get(owner.address())
             ),
             (curr_offer_amt := ScratchVar()).store(ARC18.offered_amount(offer.load())),
             (curr_offer_auth := ScratchVar()).store(ARC18.offered_auth(offer.load())),
@@ -319,9 +319,7 @@ class ARC18(Application):
 
     @handler(read_only=True)
     def get_offer(royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer):
-        return output.decode(
-            ARC18.offers(royalty_asset.get()).get_must(owner.address())
-        )
+        return output.decode(ARC18.offers[royalty_asset].get_must(owner.address()))
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
@@ -439,7 +437,7 @@ class ARC18(Application):
 
     @Subroutine(TealType.none)
     def do_update_offered(acct, asset, auth, amt, prev_auth, prev_amt):
-        offer_state = ARC18.offers(asset)
+        offer_state = ARC18.offers[asset]
         return Seq(
             previous := offer_state.get_maybe(acct),
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
