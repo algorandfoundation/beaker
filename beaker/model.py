@@ -1,4 +1,5 @@
-from typing import Callable, cast
+import inspect
+from typing import cast
 from pyteal import *
 
 
@@ -7,7 +8,8 @@ class Model(abi.Tuple):
         if not hasattr(self, "__annotations__"):
             raise Exception("Expected fields to be declared but found none")
 
-        import inspect
+        if self.__class__.__base__ != Model:
+            raise Exception("Expected direct subclass of Model")
 
         self.type_specs = {
             k: cast(abi.BaseType, abi.make(v)).type_spec()

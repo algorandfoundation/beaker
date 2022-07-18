@@ -85,3 +85,4 @@ def test_model_create(model: Model, annotation_type, field_names, type_specs, st
     assert model.field_names == field_names
     assert model.type_specs == type_specs
     assert model.__str__() == strified
+    assert model.type_spec() == pt.abi.type_spec_from_annotation(annotation_type)
