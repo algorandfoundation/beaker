@@ -150,6 +150,7 @@ class Application:
         self.router = Router(
             name=self.__class__.__name__,
             bare_calls=BareCallActions(**self.bare_handlers),
+            # description=self.__doc__ TODO: once the pr https://github.com/algorand/pyteal/pull/448 is merged, we can pass this
         )
 
         # Add method handlers

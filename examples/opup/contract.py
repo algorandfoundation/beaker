@@ -6,6 +6,8 @@ from beaker.decorators import ResolvableArguments, handler
 
 
 class ExpensiveApp(OpUp):
+    """Do expensive work to demonstrate opup"""
+
     @handler(
         resolvable=ResolvableArguments(
             opup_app=OpUp.opup_app_id  # TODO: can we communicate this with use of `call_opup`?

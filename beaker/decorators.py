@@ -48,7 +48,7 @@ class HandlerConfig:
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
-        mh = MethodHints(read_only=self.read_only, resolvable={}, models={})
+        mh = MethodHints(read_only=self.read_only)
 
         if self.resolvable is not None:
             mh.resolvable = self.resolvable.__dict__
@@ -85,7 +85,13 @@ class MethodHints:
     models: dict[str, list[str]] = field(kw_only=True, default=None)
 
     def dictify(self) -> dict[str, Any]:
-        d = {"resolvable": {}, "read_only": self.read_only, "models": self.models}
+        d = {}
+
+        if self.read_only:
+            d["read_only"] = True
+
+        if self.models is not None:
+            d["models"] = self.models
 
         if self.resolvable is not None:
             d["resolvable"] = self.resolvable
