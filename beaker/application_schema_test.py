@@ -4,7 +4,7 @@ from .application_schema import *
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
 
-LOCAL_VAL_TESTS = [
+ACCOUNT_VAL_TESTS = [
     # key, stacktype, default, val to set, expected error
     (Bytes("k"), pt.TealType.uint64, Int(1), Int(1), None),
     (Bytes("k"), pt.TealType.uint64, None, Int(1), None),
@@ -17,7 +17,7 @@ LOCAL_VAL_TESTS = [
     (Int(123), pt.TealType.bytes, None, Bytes("abc"), pt.TealTypeError),
 ]
 
-DYNAMIC_VALUE_TESTS = [
+DYNAMIC_ACCOUNT_VALUE_TESTS = [
     # stack type, max keys, key gen, key_seed, val, expected error
     (pt.TealType.uint64, 1, None, Bytes("abc"), Int(1), None),
     (pt.TealType.bytes, 1, None, Bytes("abc"), Bytes("abc"), None),
@@ -54,7 +54,7 @@ def get_default_for_type(stack_type, default):
     return expected_default
 
 
-@pytest.mark.parametrize("key, stack_type, default, val, error", LOCAL_VAL_TESTS)
+@pytest.mark.parametrize("key, stack_type, default, val, error", ACCOUNT_VAL_TESTS)
 def test_local_value(key, stack_type, default, val, error):
     if error is not None:
         with pytest.raises(error):
@@ -82,53 +82,7 @@ def do_lv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.get_maybe(pt.Txn.sender()).__teal__(options)
-    expected = pt.App.localGetEx(pt.Txn.sender(), Int(0), key).__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
-        assert actual == expected
-
-    # TODO: other get_*
-
-    actual = lv.delete(pt.Txn.sender()).__teal__(options)
-    expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-
-@pytest.mark.parametrize(
-    "stack_type, max_keys, key_gen, key_seed, val, error", DYNAMIC_VALUE_TESTS
-)
-def test_dynamic_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
-    if error is not None:
-        with pytest.raises(error):
-            do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val)
-    else:
-        do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val)
-
-
-def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
-    dlv = DynamicAccountStateValue(
-        stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
-    )
-
-    lv = dlv(key_seed)
-
-    key = key_seed
-    if key_gen is not None:
-        key = key_gen(key_seed)
-
-    actual = lv.set(val, pt.Txn.sender()).__teal__(options)
-    expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-    actual = lv.set_default(pt.Txn.sender()).__teal__(options)
-    expected_default = get_default_for_type(stack_type, None)
-    expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-    actual = lv.get(pt.Txn.sender()).__teal__(options)
+    actual = lv.__teal__(options)
     expected = pt.App.localGet(pt.Txn.sender(), key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -146,8 +100,75 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
 
+@pytest.mark.parametrize(
+    "stack_type, max_keys, key_gen, key_seed, val, error", DYNAMIC_ACCOUNT_VALUE_TESTS
+)
+def test_dynamic_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
+    if error is not None:
+        with pytest.raises(error):
+            do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val)
+    else:
+        do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val)
+
+
+def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
+    dlv = DynamicAccountStateValue(
+        stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
+    )
+
+    for get_item_notation in [True, False]:
+        if get_item_notation:
+            lv = dlv(key_seed)
+        else:
+            lv = dlv[key_seed]
+
+        key = key_seed
+        if key_gen is not None:
+            key = key_gen(key_seed)
+
+        actual = lv.set(val, pt.Txn.sender()).__teal__(options)
+        expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        actual = lv.set_default(pt.Txn.sender()).__teal__(options)
+        expected_default = get_default_for_type(stack_type, None)
+        expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(
+            options
+        )
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        actual = lv.get(pt.Txn.sender()).__teal__(options)
+        expected = pt.App.localGet(pt.Txn.sender(), key).__teal__(options)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        actual = lv.__teal__(options)
+        expected = pt.App.localGet(pt.Txn.sender(), key).__teal__(options)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        actual = lv.get_maybe(pt.Txn.sender()).__teal__(options)
+        expected = pt.App.localGetEx(pt.Txn.sender(), Int(0), key).__teal__(options)
+        with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+            assert actual == expected
+
+        # TODO: other get_*
+
+        actual = lv.delete(pt.Txn.sender()).__teal__(options)
+        expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
 def test_account_state():
     pass
+
+
+APPLICATION_VALUE_TESTS = []
+
+DYNAMIC_APPLICATION_VALUE_TESTS = []
 
 
 def test_global_value():

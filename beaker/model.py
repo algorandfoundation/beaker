@@ -4,8 +4,15 @@ from pyteal import *
 
 class Model(abi.Tuple):
     def __init__(self):
+        if not hasattr(self, "__annotations__"):
+            raise Exception("Expected fields to be declared but found none")
+
+        import inspect
+
         self.type_specs = {
-            k: cast(abi.BaseType, v()).type_spec()
+            k: cast(abi.BaseType, abi.make(v)).type_spec()
+            if not (inspect.isclass(v) and issubclass(v, Model))
+            else v().type_spec()
             for k, v in self.__annotations__.items()
         }
         self.field_names = list(self.type_specs.keys())
