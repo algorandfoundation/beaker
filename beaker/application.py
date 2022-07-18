@@ -176,10 +176,7 @@ class Application:
 
     @create
     def create(self):
-        return Seq(
-            self.initialize_app_state(),
-            Approve()
-        )
+        return Seq(self.initialize_app_state(), Approve())
 
     @update
     def update(self):

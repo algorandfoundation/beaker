@@ -2,12 +2,7 @@ from typing import Final
 from pyteal import *
 
 from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
-from beaker.decorators import (
-    Authorize,
-    handler,
-    Bare,
-    bare_handler,
-)
+from beaker.decorators import Authorize, handler, bare_handler, create, update, delete
 
 
 class ARC18(Application):
@@ -35,15 +30,15 @@ class ARC18(Application):
     # App Lifecycle
     ###
 
-    @Bare.create
+    @create
     def create(self):
         return self.initialize_app_state()
 
-    @Bare.update
+    @update
     def update():
         return Assert(Txn.sender() == ARC18.administrator)
 
-    @Bare.delete
+    @delete
     def delete():
         return Assert(Txn.sender() == ARC18.administrator)
 
