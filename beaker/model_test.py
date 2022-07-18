@@ -96,3 +96,23 @@ def test_model_create(model: Model, annotation_type, field_names, type_specs, st
     assert model.type_specs == type_specs
     assert model.__str__() == strified
     assert model.type_spec() == pt.abi.type_spec_from_annotation(annotation_type)
+
+
+MODEL_SET_TESTS = [
+    (UserId(), [pt.abi.Address(), pt.abi.Uint64()], None),
+    (UserId(), [pt.abi.Address()], pt.TealInputError),
+    (UserId(), [pt.abi.Address(), pt.abi.Uint8()], pt.TealTypeError),
+    (UserId(), [pt.abi.Address(), pt.Int(1)], None),
+    (UserId(), [pt.abi.Address(), pt.Bytes("00")], pt.TealTypeError),
+    (UserId(), [pt.abi.Address(), 1], pt.TealTypeError),
+    (Order(), [pt.abi.make(pt.abi.DynamicArray[pt.abi.String]), pt.abi.Uint32(), pt.abi.make(pt.abi.StaticArray[pt.abi.Bool, Literal[32]])], None),
+    (SubOrder(), [pt.abi.make(pt.abi.Tuple3[pt.abi.DynamicArray[pt.abi.String], pt.abi.Uint32, pt.abi.StaticArray[pt.abi.Bool, Literal[32]]]), pt.abi.Uint8()], None),
+]
+
+@pytest.mark.parametrize("model, vals, exception", MODEL_SET_TESTS)
+def test_model_set(model: Model, vals, exception):
+    if exception is not None:
+        with pytest.raises(exception):
+            model.set(*vals)
+    else:
+        model.set(*vals)
