@@ -399,6 +399,12 @@ class ApplicationClient:
 
     def get_application_state(self, force_str=False) -> dict[str, str | int]:
         app_state = self.client.application_info(self.app_id)
+        if "params" not in app_state:
+            return {}
+
+        if "global-state" not in app_state["params"]:
+            return {}
+
         return decode_state(app_state["params"]["global-state"], force_str=force_str)
 
     def get_account_state(
@@ -408,6 +414,11 @@ class ApplicationClient:
             account = self.get_sender()
 
         acct_state = self.client.account_application_info(account, self.app_id)
+        if "app-local-state" not in acct_state:
+            return {}
+        if "key-value" not in acct_state["app-local-state"]:
+            return {}
+
         return decode_state(
             acct_state["app-local-state"]["key-value"], force_str=force_str
         )
