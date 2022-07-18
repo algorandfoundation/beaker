@@ -313,8 +313,25 @@ def do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
 
+def test_impl_expr():
+    asv = AccountStateValue(pt.TealType.uint64)
+    assert asv.has_return() == False
+    assert asv.type_of() == pt.TealType.uint64
+
+    asv = ApplicationStateValue(pt.TealType.uint64)
+    assert asv.has_return() == False
+    assert asv.type_of() == pt.TealType.uint64
+
+
 def test_application_state():
-    pass
+    statevals = {
+        "a": ApplicationStateValue(pt.TealType.uint64),
+        "b": ApplicationStateValue(pt.TealType.bytes),
+    }
+    astate = ApplicationState(statevals)
+
+    assert astate.num_byte_slices == 1
+    assert astate.num_uints == 1
 
 
 def test_account_state():

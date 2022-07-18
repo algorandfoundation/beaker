@@ -105,9 +105,31 @@ MODEL_SET_TESTS = [
     (UserId(), [pt.abi.Address(), pt.Int(1)], None),
     (UserId(), [pt.abi.Address(), pt.Bytes("00")], pt.TealTypeError),
     (UserId(), [pt.abi.Address(), 1], pt.TealTypeError),
-    (Order(), [pt.abi.make(pt.abi.DynamicArray[pt.abi.String]), pt.abi.Uint32(), pt.abi.make(pt.abi.StaticArray[pt.abi.Bool, Literal[32]])], None),
-    (SubOrder(), [pt.abi.make(pt.abi.Tuple3[pt.abi.DynamicArray[pt.abi.String], pt.abi.Uint32, pt.abi.StaticArray[pt.abi.Bool, Literal[32]]]), pt.abi.Uint8()], None),
+    (
+        Order(),
+        [
+            pt.abi.make(pt.abi.DynamicArray[pt.abi.String]),
+            pt.abi.Uint32(),
+            pt.abi.make(pt.abi.StaticArray[pt.abi.Bool, Literal[32]]),
+        ],
+        None,
+    ),
+    (
+        SubOrder(),
+        [
+            pt.abi.make(
+                pt.abi.Tuple3[
+                    pt.abi.DynamicArray[pt.abi.String],
+                    pt.abi.Uint32,
+                    pt.abi.StaticArray[pt.abi.Bool, Literal[32]],
+                ]
+            ),
+            pt.abi.Uint8(),
+        ],
+        None,
+    ),
 ]
+
 
 @pytest.mark.parametrize("model, vals, exception", MODEL_SET_TESTS)
 def test_model_set(model: Model, vals, exception):

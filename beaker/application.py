@@ -169,11 +169,11 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
-    def application_spec(self) -> dict[str, Any]:
-        return {
-            "hints": {k: v.dictify() for k, v in self.hints.items()},
-            "contract": self.contract.dictify(),
-        }
+    # def application_spec(self) -> dict[str, Any]:
+    #    return {
+    #        "hints": {k: v.dictify() for k, v in self.hints.items()},
+    #        "contract": self.contract.dictify(),
+    #    }
 
     def initialize_app_state(self):
         return self.app_state.initialize()

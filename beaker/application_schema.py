@@ -54,7 +54,7 @@ class ApplicationStateValue(Expr):
         self.descr = descr
 
     def has_return(self) -> bool:
-        return super().has_return()
+        return False
 
     def type_of(self) -> TealType:
         return self.stack_type
