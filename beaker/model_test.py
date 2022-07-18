@@ -4,9 +4,19 @@ import pyteal as pt
 from beaker.model import Model
 
 
-def test_empty_model():
+def test_valid_create():
     with pytest.raises(Exception):
         Model()
+
+    with pytest.raises(Exception):
+
+        class A(Model):
+            a: pt.abi.Uint64
+
+        class B(A):
+            b: pt.abi.Uint64
+
+        B()
 
 
 class UserId(Model):

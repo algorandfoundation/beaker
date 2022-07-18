@@ -10,17 +10,14 @@ class DynamicApplicationStateValue:
         self.stack_type = stack_type
         self.max_keys = max_keys
 
+        if max_keys <= 0 or max_keys > MAX_GLOBAL_STATE:
+            raise Exception(f"max keys expected to be between 0 and {MAX_GLOBAL_STATE}")
+
         if key_gen is not None:
             if key_gen.type_of() != TealType.bytes:
-                raise Exception("key generator must evaluate to bytes")
+                raise TealTypeError(key_gen.type_of(), TealType.bytes)
 
         self.key_generator = key_gen
-
-    def __call__(self, key_seed: Expr) -> "ApplicationStateValue":
-        key = key_seed
-        if self.key_generator is not None:
-            key = self.key_generator(key)
-        return ApplicationStateValue(stack_type=self.stack_type, key=key)
 
     def __getitem__(self, key_seed: Expr | abi.BaseType) -> "ApplicationStateValue":
         key = key_seed
@@ -46,7 +43,7 @@ class ApplicationStateValue(Expr):
 
         if key is not None:
             if key.type_of() != TealType.bytes:
-                raise Exception("key must evaluate to bytes")
+                raise TealTypeError(key.type_of(), TealType.bytes)
             self.key = key
         else:
             self.key = None
@@ -81,6 +78,9 @@ class ApplicationStateValue(Expr):
             return App.globalPut(self.key, Bytes(""))
 
     def set(self, val: Expr) -> Expr:
+        if val.type_of() != self.stack_type:
+            raise TealTypeError(val.type_of(), self.stack_type)
+
         if self.static:
             return Seq(
                 v := App.globalGetEx(Int(0), self.key),
@@ -193,8 +193,8 @@ class DynamicAccountStateValue:
         descr: str = None,
     ):
 
-        if max_keys <= 0 or max_keys > 16:
-            raise Exception("max keys expected to be between 0 and 16")
+        if max_keys <= 0 or max_keys > MAX_LOCAL_STATE:
+            raise Exception(f"max keys expected to be between 0 and {MAX_LOCAL_STATE}")
 
         self.stack_type = stack_type
         self.max_keys = max_keys
@@ -205,12 +205,6 @@ class DynamicAccountStateValue:
                 raise TealTypeError(key_gen.type_of(), TealType.bytes)
 
         self.key_generator = key_gen
-
-    def __call__(self, key_seed: Expr) -> "AccountStateValue":
-        key = key_seed
-        if self.key_generator is not None:
-            key = self.key_generator(key)
-        return AccountStateValue(stack_type=self.stack_type, key=key)
 
     def __getitem__(self, key_seed: Expr | abi.BaseType) -> "AccountStateValue":
         key = key_seed

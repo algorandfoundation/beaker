@@ -1,5 +1,6 @@
 import pytest
 from typing import Final, cast
+from Cryptodome.Hash import SHA512
 import pyteal as pt
 
 from beaker.application_schema import (
@@ -10,7 +11,12 @@ from beaker.application_schema import (
 )
 
 from .errors import BareOverwriteError
-from .application import Application, get_method_spec
+from .application import (
+    Application,
+    get_method_selector,
+    get_method_signature,
+    get_method_spec,
+)
 from .decorators import (
     ResolvableArguments,
     ResolvableTypes,
@@ -351,3 +357,33 @@ def test_instance_vars():
 
     with pytest.raises(ValueError):
         i2.approval_program.index("first")
+
+
+def hashy(sig: str):
+    chksum = SHA512.new(truncate="256")
+    chksum.update(sig.encode())
+    return chksum.digest()[:4]
+
+
+def test_abi_method_details():
+    @handler
+    def meth():
+        return pt.Assert(pt.Int(1))
+
+    expected_sig = "meth()void"
+    expected_selector = hashy(expected_sig)
+
+    assert get_method_signature(meth) == expected_sig
+    assert get_method_selector(meth) == expected_selector
+
+    def meth2():
+        pass
+
+    with pytest.raises(Exception):
+        get_method_spec(meth2)
+
+    with pytest.raises(Exception):
+        get_method_signature(meth2)
+
+    with pytest.raises(Exception):
+        get_method_selector(meth2)
