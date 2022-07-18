@@ -9,7 +9,7 @@ class Model(abi.Tuple):
         if not hasattr(self, "__annotations__"):
             raise Exception("Expected fields to be declared but found none")
 
-        if self.__class__.__base__ != Model:
+        if self.__class__.__base__ is not Model:
             raise Exception("Expected direct subclass of Model")
 
         self.type_specs = {
