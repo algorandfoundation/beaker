@@ -1,4 +1,5 @@
 import inspect
+from typing import Any
 from typing import cast
 from pyteal import *
 
@@ -24,6 +25,8 @@ class Model(abi.Tuple):
         for idx in range(len(self.field_names)):
             name = self.field_names[idx]
             setattr(self, name, self.__getitem__(idx))
+
+        self.sdk_codec = abi.algosdk_from_type_spec(self.type_spec())
 
     def set(
         self, *exprs: Expr | abi.BaseType | abi.TupleElement | abi.ComputedValue
@@ -64,12 +67,12 @@ class Model(abi.Tuple):
         return self.type_spec().annotation_type()
 
     def client_decode(self, to_decode: bytes) -> dict[str, str | int]:
-        decoder = abi.algosdk_from_type_spec(self.type_spec())
-        values = decoder.decode(bytestring=to_decode)
+        values = self.sdk_codec.decode(bytestring=to_decode)
         return dict(zip(self.field_names, values))
 
-    def client_encode(self):
-        pass
+    def client_encode(self, val: dict[str, Any]) -> bytes:
+        values = [val[name] for name in self.field_names]
+        return self.sdk_codec.encode(values)
 
     def __str__(self) -> str:
         return super().type_spec().__str__()

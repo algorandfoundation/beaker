@@ -22,35 +22,7 @@ from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 
-
-def str_or_hex(v: bytes):
-    try:
-        v = v.decode("utf-8")
-    except Exception:
-        v = f"0x{v.hex()}"
-    return v
-
-
-def decode_state(
-    state: list[dict[str, Any]], force_str=False
-) -> dict[bytes | str, bytes | str | int]:
-    decoded_state: dict[str, str | int] = {}
-    for sv in state:
-        key = b64decode(sv["key"])
-        if force_str:
-            key = str_or_hex(key)
-
-        match sv["value"]["type"]:
-            case 1:
-                val = b64decode(sv["value"]["bytes"])
-                if force_str:
-                    val = str_or_hex(val)
-            case 2:
-                val = sv["value"]["uint"]
-            case _:
-                val = None
-        decoded_state[key] = val
-    return decoded_state
+from .state_decode import decode_state
 
 
 class ApplicationClient:
@@ -445,7 +417,7 @@ class ApplicationClient:
             return to_resolve[ResolvableTypes.Constant]
         elif ResolvableTypes.GlobalState in to_resolve:
             key = to_resolve[ResolvableTypes.GlobalState]
-            app_state = self.get_application_state()
+            app_state = self.get_application_state(force_str=True)
             return app_state[key]
         elif ResolvableTypes.LocalState in to_resolve:
             key = to_resolve[ResolvableTypes.LocalState]

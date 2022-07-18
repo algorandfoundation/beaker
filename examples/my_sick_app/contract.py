@@ -60,7 +60,7 @@ class MySickApp(Application):
     @handler
     def add_tag(self, tag: abi.String):
         """add a tag to a user"""
-        return self.tags(tag).set(Txn.sender(), Int(1))
+        return self.tags(tag).set(Int(1))
 
 
 if __name__ == "__main__":

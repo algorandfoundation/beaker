@@ -42,10 +42,6 @@ class ARC18(Application):
     def delete():
         return Assert(Txn.sender() == ARC18.administrator)
 
-    @bare_handler(opt_in=CallConfig.CALL, close_out=CallConfig.CALL)
-    def handle_accts():
-        return Approve()
-
     ###
     # Admin
     ###
@@ -458,7 +454,7 @@ class ARC18(Application):
             # Now consider the new offer, if its 0 this is a delete, otherwise update
             If(
                 amt > Int(0),
-                offer_state.set(acct, Concat(auth, Itob(amt))),
+                offer_state.set(Concat(auth, Itob(amt)), acct),
                 offer_state.delete(acct),
             ),
         )
