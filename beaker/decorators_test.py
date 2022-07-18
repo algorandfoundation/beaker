@@ -228,52 +228,53 @@ def test_bare():
     hc = get_handler_config(impl)
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
 
+
 def test_resolvable():
     from .application_schema import (
-        AccountStateValue, 
-        ApplicationStateValue, 
-        DynamicAccountStateValue, 
+        AccountStateValue,
+        ApplicationStateValue,
+        DynamicAccountStateValue,
         DynamicApplicationStateValue,
     )
 
-    x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes('x'))
+    x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = ResolvableArguments(x=x)
-    assert r.x == {'local-state':'x'} 
+    assert r.x == {"local-state": "x"}
 
     x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes('x')])
-    assert r.x == {'local-state':'x'} 
+    r = ResolvableArguments(x=x[pt.Bytes("x")])
+    assert r.x == {"local-state": "x"}
 
-    x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes('x'))
+    x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = ResolvableArguments(x=x)
-    assert r.x == {'global-state':'x'} 
+    assert r.x == {"global-state": "x"}
 
     x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes('x')])
-    assert r.x == {'global-state':'x'} 
+    r = ResolvableArguments(x=x[pt.Bytes("x")])
+    assert r.x == {"global-state": "x"}
 
     x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes('x')])
-    assert r.x == {'global-state':'x'} 
-
+    r = ResolvableArguments(x=x[pt.Bytes("x")])
+    assert r.x == {"global-state": "x"}
 
     @handler(read_only=True)
     def x():
-        return pt.Assert(pt.Int(1)) 
+        return pt.Assert(pt.Int(1))
 
     r = ResolvableArguments(x=x)
-    assert r.x == {'abi-method': get_method_spec(x).dictify()}
-
+    assert r.x == {"abi-method": get_method_spec(x).dictify()}
 
     r = ResolvableArguments(x="1")
-    assert r.x == {'constant':"1"} 
+    assert r.x == {"constant": "1"}
 
     r = ResolvableArguments(x=1)
-    assert r.x == {'constant':1} 
+    assert r.x == {"constant": 1}
 
     with pytest.raises(Exception):
+
         @handler
         def x():
-            return pt.Assert(pt.Int(1)) 
+            return pt.Assert(pt.Int(1))
+
         r = ResolvableArguments(x=x)
-        assert r.x == {'abi-method': get_method_spec(x).dictify()}
+        assert r.x == {"abi-method": get_method_spec(x).dictify()}

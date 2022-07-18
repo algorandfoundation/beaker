@@ -84,7 +84,7 @@ class MethodHints:
     read_only: bool = field(kw_only=True, default=False)
     models: dict[str, list[str]] = field(kw_only=True, default=None)
 
-    #def dictify(self) -> dict[str, Any]:
+    # def dictify(self) -> dict[str, Any]:
     #    d = {}
 
     #    if self.read_only:

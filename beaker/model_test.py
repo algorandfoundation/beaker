@@ -139,6 +139,7 @@ def test_model_set(model: Model, vals, exception):
     else:
         model.set(*vals)
 
+
 def test_model_codec():
     class CodecTest(Model):
         a: pt.abi.Uint64
@@ -146,7 +147,7 @@ def test_model_codec():
         c: pt.abi.Tuple2[pt.abi.Bool, pt.abi.Bool]
 
     c = CodecTest()
-    to_encode = {'a':1, 'b': [1,2,3], 'c':[True, False]}
+    to_encode = {"a": 1, "b": [1, 2, 3], "c": [True, False]}
     encoded = c.client_encode(to_encode)
     decoded = c.client_decode(encoded)
     assert to_encode == decoded, "The result of decode(encode(data)) should == data"
