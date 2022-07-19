@@ -1,5 +1,5 @@
 from typing import Final
-from pyteal import *
+from pyteal import abi, Itob, TealType, Subroutine, Concat, Bytes
 from beaker.application import Application
 from beaker.application_schema import DynamicApplicationStateValue
 from beaker.decorators import handler
@@ -34,4 +34,4 @@ class ARC21(Application):
         *,
         output: abi.DynamicArray[abi.Byte]
     ):
-        return output.decode(self.data_for_round(round.get()).get_must())
+        return output.decode(self.data_for_round[round.get()].get_must())

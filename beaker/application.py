@@ -1,10 +1,9 @@
 from inspect import getattr_static
-from typing import Final, Any, cast
+from typing import Final, cast
 from algosdk.abi import Method
 from pyteal import (
     Txn,
     MAX_TEAL_VERSION,
-    Expr,
     ABIReturnSubroutine,
     Approve,
     BareCallActions,

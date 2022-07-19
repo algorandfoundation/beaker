@@ -24,7 +24,10 @@ from pyteal import (
     TealTypeError,
     Txn,
 )
-from beaker.application_schema import *
+from beaker.application_schema import (
+    ApplicationStateValue,
+    AccountStateValue,
+)
 from beaker.model import Model
 
 HandlerFunc = Callable[..., Expr]

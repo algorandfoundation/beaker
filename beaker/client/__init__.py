@@ -1,1 +1,1 @@
-from .application_client import ApplicationClient
+from .application_client import ApplicationClient  # noqa

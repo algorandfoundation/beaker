@@ -4,7 +4,6 @@ import pyteal as pt
 from .application import get_method_spec
 from .decorators import (
     ResolvableArguments,
-    MethodHints,
     handler,
     get_handler_config,
     Authorize,
@@ -51,7 +50,7 @@ def test_handler_config():
     assert hc.method_spec is not None, "Expected abi method to be created"
     del config_dict["method_spec"]
 
-    assert hc.read_only == True, "Expected read_only to be true"
+    assert hc.read_only is True, "Expected read_only to be true"
     del config_dict["read_only"]
 
     for k, v in config_dict.items():
@@ -191,7 +190,7 @@ def test_authorize():
             return pt.Bytes("fail")
 
         @handler(authorize=thing)
-        def other_thing():
+        def other_other_thing():
             pass
 
 

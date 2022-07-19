@@ -2,7 +2,6 @@ import pytest
 import pyteal as pt
 from beaker.application_schema import (
     ApplicationState,
-    AccountState,
     DynamicAccountStateValue,
     DynamicApplicationStateValue,
     ApplicationStateValue,
@@ -263,7 +262,7 @@ DYNAMIC_APPLICATION_VALUE_TESTS = [
     "stack_type, max_keys, key_gen, key_seed, val, error",
     DYNAMIC_APPLICATION_VALUE_TESTS,
 )
-def test_dynamic_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_dynamic_global_value(stack_type, max_keys, key_gen, key_seed, val, error):
     if error is not None:
         with pytest.raises(error):
             do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val)
@@ -315,11 +314,11 @@ def do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val):
 
 def test_impl_expr():
     asv = AccountStateValue(pt.TealType.uint64)
-    assert asv.has_return() == False
+    assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
     asv = ApplicationStateValue(pt.TealType.uint64)
-    assert asv.has_return() == False
+    assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 

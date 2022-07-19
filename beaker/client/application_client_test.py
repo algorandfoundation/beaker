@@ -74,11 +74,11 @@ def test_app_client_create():
     app = App()
     client = get_client()
     ac = ApplicationClient(client, app)
-    assert ac.signer == None, "Should not have a signer"
-    assert ac.sender == None, "Should not have a sender"
+    assert ac.signer is None, "Should not have a signer"
+    assert ac.sender is None, "Should not have a sender"
     assert ac.app_id == 0, "Should not have app id"
-    assert ac.app_addr == None, "Should not have app address"
-    assert ac.suggested_params == None, "Should not have suggested params"
+    assert ac.app_addr is None, "Should not have app address"
+    assert ac.suggested_params is None, "Should not have suggested params"
 
     with pytest.raises(Exception):
         ac.get_signer(None)
@@ -97,7 +97,7 @@ def test_app_prepare():
     ac_with_signer = ApplicationClient(client, app, signer=signer)
 
     assert ac_with_signer.signer == signer, "Should have the same signer"
-    assert ac_with_signer.sender == None, "Should not have a sender"
+    assert ac_with_signer.sender is None, "Should not have a sender"
 
     assert ac_with_signer.get_signer(None) == signer, "Should produce the same signer"
     assert (
@@ -426,7 +426,7 @@ def test_call():
 
     result = ac.call(app.add, a=1, b=1)
     assert result.return_value == 2
-    assert result.decode_error == None
+    assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
     ms = get_method_selector(app.add)
@@ -473,7 +473,7 @@ def test_add_method_call():
     result = atc_result.abi_results[0]
 
     assert result.return_value == 2
-    assert result.decode_error == None
+    assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
     ms = get_method_selector(app.add)
