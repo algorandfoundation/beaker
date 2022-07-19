@@ -1,5 +1,5 @@
 from inspect import getattr_static
-from typing import Final, cast
+from typing import Final, Any, cast
 from algosdk.abi import Method
 from pyteal import (
     Txn,
@@ -149,7 +149,7 @@ class Application:
         self.router = Router(
             name=self.__class__.__name__,
             bare_calls=BareCallActions(**self.bare_handlers),
-            # description=self.__doc__ TODO: once the pr https://github.com/algorand/pyteal/pull/448 is merged, we can pass this
+            descr=self.__doc__,
         )
 
         # Add method handlers
@@ -168,11 +168,15 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
-    # def application_spec(self) -> dict[str, Any]:
-    #    return {
-    #        "hints": {k: v.dictify() for k, v in self.hints.items()},
-    #        "contract": self.contract.dictify(),
-    #    }
+    def application_spec(self) -> dict[str, Any]:
+        return {
+            "hints": {k: v.dictify() for k, v in self.hints.items()},
+            "schema": {
+                "local": self.acct_state.schema().dictify(),
+                "global": self.app_state.schema().dictify(),
+            },
+            "contract": self.contract.dictify(),
+        }
 
     def initialize_app_state(self):
         return self.app_state.initialize()

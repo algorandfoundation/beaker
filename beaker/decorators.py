@@ -87,19 +87,15 @@ class MethodHints:
     read_only: bool = field(kw_only=True, default=False)
     models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
 
-    # def dictify(self) -> dict[str, Any]:
-    #    d = {}
-
-    #    if self.read_only:
-    #        d["read_only"] = True
-
-    #    if self.models is not None:
-    #        d["models"] = self.models
-
-    #    if self.resolvable is not None:
-    #        d["resolvable"] = self.resolvable
-
-    #    return d
+    def dictify(self) -> dict[str, Any]:
+        d = {}
+        if self.read_only:
+            d["read_only"] = True
+        if self.models is not None:
+            d["models"] = self.models
+        if self.resolvable is not None:
+            d["resolvable"] = self.resolvable
+        return d
 
 
 class ResolvableTypes(str, Enum):
