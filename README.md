@@ -283,12 +283,12 @@ The pre-defined Authorized checks are:
 But we can define our own
 
 ```py
-from beaker.consts import algo
+from beaker.consts import Algos
 
 @internal(TealType.uint64)
 def is_whale(acct: Expr):
     # Only allow accounts with 1mm algos
-    return Balance(acct)>Int(1_000_000*algo)
+    return Balance(acct)>Algos(1_000_000)
 
 @handler(authorize=is_whale)
 def greet(*, output: abi.String):

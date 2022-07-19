@@ -188,6 +188,10 @@ class Application:
     def create(self):
         return Seq(self.initialize_app_state(), Approve())
 
+    @opt_in
+    def opt_in(self):
+        return self.initialize_account_state()
+
     @update
     def update(self):
         return Reject()
@@ -195,10 +199,6 @@ class Application:
     @delete
     def delete(self):
         return Reject()
-
-    @opt_in
-    def opt_in(self):
-        return self.initialize_account_state()
 
     @close_out
     def close_out(self):
