@@ -425,7 +425,7 @@ class ApplicationClient:
         )
 
     def get_account_info(self) -> dict[str, Any]:
-        app_state = self.client.get_account_info(self.app_addr)
+        app_state = self.client.account_info(self.app_addr)
         return app_state
 
     def resolve(self, to_resolve) -> Any:
