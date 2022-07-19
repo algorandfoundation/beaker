@@ -53,7 +53,7 @@ def get_method_signature(fn) -> str:
     return get_method_spec(fn).get_signature()
 
 
-def get_method_selector(fn) -> str:
+def get_method_selector(fn) -> bytes:
     return get_method_spec(fn).get_selector()
 
 

@@ -193,7 +193,7 @@ class MySickApp(Application):
         descr="What this user prefers to be called"
     )
     tags: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
-        stack_type=TealType.bytes,
+        stack_type=TealType.uint64,
         max_keys=10,
         key_gen=make_tag_key # optional
     )

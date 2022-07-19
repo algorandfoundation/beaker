@@ -1,7 +1,7 @@
 import pytest
 from typing import Any
 import pyteal as pt
-from base64 import b64decode
+from base64 import b64decode, b64encode
 
 from algosdk.account import generate_account
 from algosdk.logic import get_application_address
@@ -12,9 +12,9 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
 )
 
-from ..decorators import update, clear_state, close_out, delete
+from ..decorators import handler, update, clear_state, close_out, delete
 from ..sandbox import get_accounts, get_client
-from ..application import Application
+from ..application import Application, get_method_selector
 from ..application_schema import ApplicationStateValue, AccountStateValue
 from .application_client import ApplicationClient
 
@@ -40,6 +40,10 @@ class App(Application):
     @delete
     def delete():
         return pt.Approve()
+
+    @handler
+    def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(a.get() + b.get())
 
 
 def test_app_client_create():
@@ -386,7 +390,39 @@ def test_clear_state():
 
 
 def test_call():
-    pass
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, _, _ = ac.create()
+
+    result = ac.call(app.add, a=1, b=1)
+    assert result.return_value == 2
+    assert result.decode_error == None
+    assert result.raw_value == (2).to_bytes(8, "big")
+
+    ms = get_method_selector(app.add)
+    raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
+
+    result_tx = client.pending_transaction_info(result.tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apaa": [b64encode(arg).decode("utf-8") for arg in raw_args],
+                    "apid": app_id,
+                    "snd": addr,
+                }
+            },
+        },
+    )
+    print(result_tx)
 
 
 def test_add_method_call():
