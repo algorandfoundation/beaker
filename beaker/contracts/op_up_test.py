@@ -1,9 +1,12 @@
-import pytest
-from algosdk.atomic_transaction_composer import AccountTransactionSigner, TransactionWithSigner
+from algosdk.atomic_transaction_composer import (
+    AccountTransactionSigner,
+    TransactionWithSigner,
+)
 from algosdk.future.transaction import PaymentTxn
 from beaker.client import ApplicationClient
 from beaker.contracts.op_up import OpUp
 from beaker.sandbox import get_client, get_accounts
+
 
 def test_op_up():
     app = OpUp()
@@ -15,23 +18,19 @@ def test_op_up():
 
     ac = ApplicationClient(client, app, signer=signer)
 
-    _, app_addr, _ =ac.create()
+    _, app_addr, _ = ac.create()
 
     sp = client.suggested_params()
     ptxn = TransactionWithSigner(
-        txn=PaymentTxn(addr, sp, app_addr, int(1e6)),
-        signer=signer
+        txn=PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )
 
     result = ac.call(app.opup_bootstrap, ptxn=ptxn)
     created_app_id = result.return_value
-    assert created_app_id >0
-
+    assert created_app_id > 0
 
     app_acct_info = ac.get_account_info()
-    assert len(app_acct_info['created-apps']) == 1
+    assert len(app_acct_info["created-apps"]) == 1
 
     state = ac.get_application_state(force_str=True)
-    assert state['ouaid'] == created_app_id
-
-
+    assert state["ouaid"] == created_app_id
