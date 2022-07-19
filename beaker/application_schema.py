@@ -10,7 +10,6 @@ from pyteal import (
     App,
     Bytes,
     Int,
-    ScratchVar,
     TealInputError,
     Assert,
     Not,
