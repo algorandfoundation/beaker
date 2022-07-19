@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Any
 from algosdk.future.transaction import StateSchema
 from pyteal import (
     abi,
@@ -19,6 +19,15 @@ from pyteal import (
     If,
 )
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
+
+
+def stack_type_to_string(st: TealType):
+    if st == TealType.uint64:
+        return "uint64"
+    if st == TealType.bytes:
+        return "bytes"
+    else:
+        return "???"
 
 
 class DynamicApplicationStateValue:
@@ -191,6 +200,18 @@ class ApplicationState:
                 f"Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
             )
 
+    def dictify(self) -> dict[str, dict[str, Any]]:
+        return {
+            "declared": {
+                k: {"type": stack_type_to_string(v.stack_type), "key": v.str_key()}
+                for k, v in self.declared_vals.items()
+            },
+            "dynamic": {
+                k: {"type": stack_type_to_string(v.stack_type), "max-keys": v.max_keys}
+                for k, v in self.dynamic_vals.items()
+            },
+        }
+
     def initialize(self):
         return Seq(
             *[g.set_default() for g in self.declared_vals.values() if not g.static]
@@ -348,6 +369,18 @@ class AccountState:
             raise Exception(
                 f"Too much account state, expected {total} <= {MAX_LOCAL_STATE}"
             )
+
+    def dictify(self) -> dict[str, dict[str, Any]]:
+        return {
+            "declared": {
+                k: {"type": stack_type_to_string(v.stack_type), "key": v.str_key()}
+                for k, v in self.declared_vals.items()
+            },
+            "dynamic": {
+                k: {"type": stack_type_to_string(v.stack_type), "max-keys": v.max_keys}
+                for k, v in self.dynamic_vals.items()
+            },
+        }
 
     def initialize(self, acct: Expr = Txn.sender()):
         return Seq(*[l.set_default(acct) for l in self.declared_vals.values()])

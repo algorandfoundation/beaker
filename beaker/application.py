@@ -172,8 +172,8 @@ class Application:
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items()},
             "schema": {
-                "local": self.acct_state.schema().dictify(),
-                "global": self.app_state.schema().dictify(),
+                "local": self.acct_state.dictify(),
+                "global": self.app_state.dictify(),
             },
             "contract": self.contract.dictify(),
         }
