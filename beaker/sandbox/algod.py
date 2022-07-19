@@ -7,8 +7,14 @@ DEFAULT_ALGOD_TOKEN = "a" * 64
 DEFAULT_INDEXER_ADDRESS = "http://localhost:8090"
 DEFAULT_INDEXER_TOKEN = "a" * 64
 
-def get_client(address: str = DEFAULT_ALGOD_ADDRESS, token: str = DEFAULT_ALGOD_TOKEN)->AlgodClient:
+
+def get_client(
+    address: str = DEFAULT_ALGOD_ADDRESS, token: str = DEFAULT_ALGOD_TOKEN
+) -> AlgodClient:
     return AlgodClient(token, address)
 
-def get_indexer(address: str = DEFAULT_INDEXER_ADDRESS, token: str = DEFAULT_INDEXER_TOKEN)->IndexerClient:
+
+def get_indexer(
+    address: str = DEFAULT_INDEXER_ADDRESS, token: str = DEFAULT_INDEXER_TOKEN
+) -> IndexerClient:
     return IndexerClient(token, address)

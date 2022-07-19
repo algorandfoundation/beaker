@@ -41,7 +41,7 @@ class ApplicationClient:
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
         self.signer = signer
-        self.sender = sender 
+        self.sender = sender
 
         self.suggested_params = suggested_params
 
@@ -253,10 +253,8 @@ class ApplicationClient:
         delete_result = atc.execute(self.client, 4)
         return delete_result.tx_ids[0]
 
-    def prepare(self, 
-        signer: TransactionSigner = None, 
-        sender: str = None,
-        **kwargs
+    def prepare(
+        self, signer: TransactionSigner = None, sender: str = None, **kwargs
     ) -> "ApplicationClient":
         ac = copy.copy(self)
         ac.signer = ac.get_signer(signer)
