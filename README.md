@@ -165,7 +165,7 @@ class MySickApp(Application):
         )
 ```
 
-The `create` method overrides the one defined in the base `Application` class, tagging it with `@create` which specifies we want a bare call (no app args) and only on create (app id == 0). [See Bare Handlers for more](#bare-handlers).
+The `create` method overrides the one defined in the base `Application` class, tagging it with `@create` which specifies we want a bare call (no app args) and only on create (app id == 0). 
 
 These new methods may be called by the application client just like the `add` method above.  
 
