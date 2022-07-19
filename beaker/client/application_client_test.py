@@ -1,16 +1,18 @@
 import pytest
+from typing import Any
 import pyteal as pt
 from base64 import b64decode
 
 from algosdk.account import generate_account
 from algosdk.logic import get_application_address
-from algosdk.future.transaction import Multisig, LogicSigAccount
+from algosdk.future.transaction import Multisig, LogicSigAccount, OnComplete
 from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
     MultisigTransactionSigner,
     LogicSigTransactionSigner,
 )
 
+from ..decorators import update, clear_state, close_out, delete
 from ..sandbox import get_accounts, get_client
 from ..application import Application
 from ..application_schema import ApplicationStateValue, AccountStateValue
@@ -22,6 +24,22 @@ class App(Application):
     app_state_val_byte = ApplicationStateValue(pt.TealType.bytes)
     acct_state_val_int = AccountStateValue(pt.TealType.uint64)
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes)
+
+    @update
+    def update():
+        return pt.Approve()
+
+    @clear_state
+    def clear_state():
+        return pt.Approve()
+
+    @close_out
+    def close_out():
+        return pt.Approve()
+
+    @delete
+    def delete():
+        return pt.Approve()
 
 
 def test_app_client_create():
@@ -139,6 +157,14 @@ def test_compile():
     assert clear_program[0] == version, "First byte should be the version we set"
 
 
+def expect_dict(actual: dict[str, Any], expected: dict[str, Any]):
+    for k, v in expected.items():
+        if type(v) is dict:
+            expect_dict(actual[k], v)
+        else:
+            assert actual[k] == v, f"for field {k}, expected {v} got {actual[k]}"
+
+
 def test_create():
     app = App()
     accts = get_accounts()
@@ -155,13 +181,21 @@ def test_create():
     assert ac.app_addr == app_addr
 
     result_tx = client.pending_transaction_info(tx_id)
-    assert result_tx["application-index"] == app_id
     assert result_tx["confirmed-round"] > 0
-    assert result_tx["pool-error"] == ""
-    txn = result_tx["txn"]["txn"]
-    assert txn["snd"] == addr
-    assert txn['apgs'] == {'nbs': 1, 'nui': 1}
-    assert txn['apls'] == {'nbs': 1, 'nui': 1}
+    expect_dict(
+        result_tx,
+        {
+            "application-index": app_id,
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "snd": addr,
+                    "apgs": {"nbs": 1, "nui": 1},
+                    "apls": {"nbs": 1, "nui": 1},
+                }
+            },
+        },
+    )
 
     new_addr, new_pk = accts.pop()
     new_signer = AccountTransactionSigner(new_pk)
@@ -179,36 +213,176 @@ def test_create():
     assert new_ac.app_addr == app_addr
 
     result_tx = client.pending_transaction_info(tx_id)
-    assert result_tx["application-index"] == app_id
-    assert result_tx["confirmed-round"] > 0
-    assert result_tx["pool-error"] == ""
-    txn = result_tx["txn"]["txn"]
-    assert txn["snd"] == new_addr
-    assert txn["apep"] == extra_pages
-    assert txn["fee"] == sp.fee
-    assert txn['apgs'] == {'nbs': 1, 'nui': 1}
-    assert txn['apls'] == {'nbs': 1, 'nui': 1}
+    expect_dict(
+        result_tx,
+        {
+            "application-index": app_id,
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "snd": new_addr,
+                    "apep": extra_pages,
+                    "fee": sp.fee,
+                    "apgs": {"nbs": 1, "nui": 1},
+                    "apls": {"nbs": 1, "nui": 1},
+                }
+            },
+        },
+    )
 
 
 def test_update():
+    app = App()
+    accts = get_accounts()
 
-    pass
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, app_addr, _ = ac.create()
+
+    tx_id = ac.update()
+    result_tx = client.pending_transaction_info(tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apan": OnComplete.UpdateApplicationOC,
+                    "apid": app_id,
+                    "snd": addr,
+                }
+            },
+        },
+    )
 
 
 def test_delete():
-    pass
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, _, _ = ac.create()
+
+    tx_id = ac.delete()
+    result_tx = client.pending_transaction_info(tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apan": OnComplete.DeleteApplicationOC,
+                    "apid": app_id,
+                    "snd": addr,
+                }
+            },
+        },
+    )
 
 
 def test_opt_in():
-    pass
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, _, _ = ac.create()
+
+    new_addr, new_pk = accts.pop()
+    new_signer = AccountTransactionSigner(new_pk)
+    new_ac = ac.prepare(signer=new_signer)
+    tx_id = new_ac.opt_in()
+    result_tx = client.pending_transaction_info(tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apan": OnComplete.OptInOC,
+                    "apid": app_id,
+                    "snd": new_addr,
+                }
+            },
+        },
+    )
 
 
 def test_close_out():
-    pass
+
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, _, _ = ac.create()
+
+    new_addr, new_pk = accts.pop()
+    new_signer = AccountTransactionSigner(new_pk)
+    new_ac = ac.prepare(signer=new_signer)
+    new_ac.opt_in()
+
+    tx_id = new_ac.close_out()
+    result_tx = client.pending_transaction_info(tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apan": OnComplete.CloseOutOC,
+                    "apid": app_id,
+                    "snd": new_addr,
+                }
+            },
+        },
+    )
 
 
 def test_clear_state():
-    pass
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, _, _ = ac.create()
+
+    new_addr, new_pk = accts.pop()
+    new_signer = AccountTransactionSigner(new_pk)
+    new_ac = ac.prepare(signer=new_signer)
+    new_ac.opt_in()
+
+    tx_id = new_ac.clear_state()
+    result_tx = client.pending_transaction_info(tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apan": OnComplete.ClearStateOC,
+                    "apid": app_id,
+                    "snd": new_addr,
+                }
+            },
+        },
+    )
 
 
 def test_call():
