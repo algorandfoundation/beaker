@@ -60,11 +60,11 @@ class ARC18(Application):
         return self.initialize_app_state()
 
     @update
-    def update():
+    def update(self):
         return Assert(Txn.sender() == ARC18.administrator)
 
     @delete
-    def delete():
+    def delete(self):
         return Assert(Txn.sender() == ARC18.administrator)
 
     ###

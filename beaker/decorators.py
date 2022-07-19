@@ -85,7 +85,7 @@ class MethodHints:
 
     resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
-    models: dict[str, list[str]] = field(kw_only=True, default=None)
+    models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
 
     # def dictify(self) -> dict[str, Any]:
     #    d = {}

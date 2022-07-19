@@ -1,3 +1,4 @@
+from typing import cast
 from algosdk.future.transaction import StateSchema
 from pyteal import (
     abi,
@@ -84,7 +85,7 @@ class ApplicationStateValue(Expr):
         return f"ApplicationState {self.key}"
 
     def str_key(self) -> str:
-        return self.key.byte_str.replace('"', "")
+        return cast(Bytes, self.key).byte_str.replace('"', "")
 
     def set_default(self) -> Expr:
         if self.default:
@@ -269,7 +270,9 @@ class AccountStateValue(Expr):
         return f"AccountStateValue {self.key}"
 
     def str_key(self) -> str:
-        return self.key.byte_str.replace('"', "")
+        if self.key is None:
+            return ""
+        return cast(Bytes, self.key).byte_str.replace('"', "")
 
     def set(self, val: Expr, acct: Expr = Txn.sender()) -> Expr:
         if val.type_of() != self.stack_type:

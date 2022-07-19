@@ -46,19 +46,19 @@ class App(Application):
         return pt.Seq(self.initialize_account_state(), pt.Approve())
 
     @update
-    def update():
+    def update(self):
         return pt.Approve()
 
     @clear_state
-    def clear_state():
+    def clear_state(self):
         return pt.Approve()
 
     @close_out
-    def close_out():
+    def close_out(self):
         return pt.Approve()
 
     @delete
-    def delete():
+    def delete(self):
         return pt.Approve()
 
     @handler
