@@ -20,7 +20,7 @@ from pyteal import (
     Seq,
 )
 
-from .decorators import (
+from beaker.decorators import (
     HandlerConfig,
     MethodHints,
     get_handler_config,
@@ -31,7 +31,7 @@ from .decorators import (
     close_out,
     clear_state,
 )
-from .application_schema import (
+from beaker.application_schema import (
     AccountState,
     ApplicationState,
     DynamicAccountStateValue,
@@ -39,7 +39,7 @@ from .application_schema import (
     ApplicationStateValue,
     DynamicApplicationStateValue,
 )
-from .errors import BareOverwriteError
+from beaker.errors import BareOverwriteError
 
 
 def get_method_spec(fn) -> Method:

@@ -1,5 +1,21 @@
 from typing import Final
-from pyteal import *
+from pyteal import (
+    Txn,
+    Return,
+    Global,
+    TealType,
+    abi,
+    InnerTxnBuilder,
+    Seq,
+    Bytes,
+    TxnType,
+    InnerTxn,
+    TxnField,
+    Assert,
+    Int,
+    ScratchVar,
+    For,
+)
 
 from beaker.application import Application
 from beaker.application_schema import ApplicationStateValue

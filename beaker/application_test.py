@@ -10,14 +10,14 @@ from beaker.application_schema import (
     DynamicAccountStateValue,
 )
 
-from .errors import BareOverwriteError
-from .application import (
+from beaker.errors import BareOverwriteError
+from beaker.application import (
     Application,
     get_method_selector,
     get_method_signature,
     get_method_spec,
 )
-from .decorators import (
+from beaker.decorators import (
     ResolvableArguments,
     ResolvableTypes,
     handler,
@@ -30,7 +30,7 @@ from .decorators import (
     close_out,
     no_op,
 )
-from .model import Model
+from beaker.model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 

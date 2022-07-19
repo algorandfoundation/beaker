@@ -1,6 +1,6 @@
 import pytest
 import pyteal as pt
-from .application_schema import (
+from beaker.application_schema import (
     ApplicationState,
     AccountState,
     DynamicAccountStateValue,

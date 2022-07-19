@@ -1,6 +1,6 @@
 from algosdk.future.transaction import StateSchema
 from pyteal import *
-from .consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
+from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 
 
 class DynamicApplicationStateValue:

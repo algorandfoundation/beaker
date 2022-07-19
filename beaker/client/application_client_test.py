@@ -1,6 +1,6 @@
 import pytest
-from typing import Any
 import pyteal as pt
+from typing import Any
 from base64 import b64decode, b64encode
 
 from algosdk.account import generate_account
@@ -15,16 +15,18 @@ from algosdk.atomic_transaction_composer import (
 
 from ..decorators import (
     ResolvableTypes,
+    create,
     handler,
     update,
     clear_state,
     close_out,
     delete,
+    opt_in,
 )
-from ..sandbox import get_accounts, get_client
-from ..application import Application, get_method_selector, get_method_spec
-from ..application_schema import ApplicationStateValue, AccountStateValue
-from .application_client import ApplicationClient
+from beaker.sandbox import get_accounts, get_client
+from beaker.application import Application, get_method_selector, get_method_spec
+from beaker.application_schema import ApplicationStateValue, AccountStateValue
+from beaker.client.application_client import ApplicationClient
 
 
 class App(Application):
@@ -34,6 +36,14 @@ class App(Application):
     )
     acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
+
+    @create
+    def create(self):
+        return pt.Seq(self.initialize_app_state(), pt.Approve())
+
+    @opt_in
+    def opt_in(self):
+        return pt.Seq(self.initialize_account_state(), pt.Approve())
 
     @update
     def update():

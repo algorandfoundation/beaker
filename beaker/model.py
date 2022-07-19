@@ -1,7 +1,7 @@
 import inspect
 from typing import Any
 from typing import cast
-from pyteal import *
+from pyteal import Expr, abi, TealInputError, TealTypeError, Seq
 
 
 class Model(abi.Tuple):
