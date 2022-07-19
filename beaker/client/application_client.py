@@ -429,7 +429,7 @@ class ApplicationClient:
         app_state = self.client.get_account_info(self.app_addr)
         return app_state
 
-    def resolve(self, to_resolve):
+    def resolve(self, to_resolve) -> Any:
         if ResolvableTypes.Constant in to_resolve:
             return to_resolve[ResolvableTypes.Constant]
         elif ResolvableTypes.GlobalState in to_resolve:
@@ -438,7 +438,9 @@ class ApplicationClient:
             return app_state[key]
         elif ResolvableTypes.LocalState in to_resolve:
             key = to_resolve[ResolvableTypes.LocalState]
-            acct_state = self.get_account_state(self.get_sender(None, None))
+            acct_state = self.get_account_state(
+                self.get_sender(None, None), force_str=True
+            )
             return acct_state[key]
         elif ResolvableTypes.ABIMethod in to_resolve:
             method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])

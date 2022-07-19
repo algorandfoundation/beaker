@@ -7,23 +7,33 @@ from algosdk.account import generate_account
 from algosdk.logic import get_application_address
 from algosdk.future.transaction import Multisig, LogicSigAccount, OnComplete
 from algosdk.atomic_transaction_composer import (
+    AtomicTransactionComposer,
     AccountTransactionSigner,
     MultisigTransactionSigner,
     LogicSigTransactionSigner,
 )
 
-from ..decorators import handler, update, clear_state, close_out, delete
+from ..decorators import (
+    ResolvableTypes,
+    handler,
+    update,
+    clear_state,
+    close_out,
+    delete,
+)
 from ..sandbox import get_accounts, get_client
-from ..application import Application, get_method_selector
+from ..application import Application, get_method_selector, get_method_spec
 from ..application_schema import ApplicationStateValue, AccountStateValue
 from .application_client import ApplicationClient
 
 
 class App(Application):
-    app_state_val_int = ApplicationStateValue(pt.TealType.uint64)
-    app_state_val_byte = ApplicationStateValue(pt.TealType.bytes)
-    acct_state_val_int = AccountStateValue(pt.TealType.uint64)
-    acct_state_val_byte = AccountStateValue(pt.TealType.bytes)
+    app_state_val_int = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(1))
+    app_state_val_byte = ApplicationStateValue(
+        pt.TealType.bytes, default=pt.Bytes("test")
+    )
+    acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
+    acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
     @update
     def update():
@@ -44,6 +54,10 @@ class App(Application):
     @handler
     def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a.get() + b.get())
+
+    @handler(read_only=True)
+    def dummy(self, *, output: pt.abi.String):
+        return output.set("deadbeef")
 
 
 def test_app_client_create():
@@ -408,6 +422,11 @@ def test_call():
     ms = get_method_selector(app.add)
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
+    return_prefix = 0x151F7C75
+    log_msg = b64encode(
+        return_prefix.to_bytes(4, "big") + (2).to_bytes(8, "big")
+    ).decode("utf-8")
+
     result_tx = client.pending_transaction_info(result.tx_id)
     expect_dict(
         result_tx,
@@ -420,14 +439,89 @@ def test_call():
                     "snd": addr,
                 }
             },
+            "logs": [log_msg],
         },
     )
-    print(result_tx)
+
+    # TODO: need way more tests with diff signers/txn vals
 
 
 def test_add_method_call():
-    pass
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    app_id, _, _ = ac.create()
+
+    atc = AtomicTransactionComposer()
+    ac.add_method_call(atc, app.add, a=1, b=1)
+    atc_result = atc.execute(client, 4)
+    result = atc_result.abi_results[0]
+
+    assert result.return_value == 2
+    assert result.decode_error == None
+    assert result.raw_value == (2).to_bytes(8, "big")
+
+    ms = get_method_selector(app.add)
+    raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
+
+    return_prefix = 0x151F7C75
+    log_msg = b64encode(
+        return_prefix.to_bytes(4, "big") + (2).to_bytes(8, "big")
+    ).decode("utf-8")
+
+    result_tx = client.pending_transaction_info(result.tx_id)
+    expect_dict(
+        result_tx,
+        {
+            "pool-error": "",
+            "txn": {
+                "txn": {
+                    "apaa": [b64encode(arg).decode("utf-8") for arg in raw_args],
+                    "apid": app_id,
+                    "snd": addr,
+                }
+            },
+            "logs": [log_msg],
+        },
+    )
 
 
 def test_resolve():
-    pass
+
+    app = App()
+    accts = get_accounts()
+
+    addr, pk = accts.pop()
+    signer = AccountTransactionSigner(pk)
+
+    client = get_client()
+    ac = ApplicationClient(client, app, signer=signer)
+
+    ac.create()
+    ac.opt_in()
+
+    to_resolve = {ResolvableTypes.Constant: 1}
+    assert ac.resolve(to_resolve) == 1
+
+    to_resolve = {ResolvableTypes.Constant: "stringy"}
+    assert ac.resolve(to_resolve) == "stringy"
+
+    to_resolve = {ResolvableTypes.GlobalState: "app_state_val_int"}
+    assert ac.resolve(to_resolve) == 1
+
+    to_resolve = {ResolvableTypes.GlobalState: "app_state_val_byte"}
+    assert ac.resolve(to_resolve) == "test"
+
+    to_resolve = {ResolvableTypes.LocalState: "acct_state_val_int"}
+    assert ac.resolve(to_resolve) == 1
+
+    to_resolve = {ResolvableTypes.LocalState: "acct_state_val_byte"}
+    assert ac.resolve(to_resolve) == "test"
+
+    to_resolve = {ResolvableTypes.ABIMethod: get_method_spec(app.dummy).dictify()}
+    assert ac.resolve(to_resolve) == "deadbeef"
