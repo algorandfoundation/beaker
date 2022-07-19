@@ -76,6 +76,8 @@ def test_local_value(key, stack_type, default, val, error):
 def do_lv_test(key, stack_type, default, val):
     lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
 
+    assert lv.__str__() == f"AccountStateValue {key}"
+
     actual = lv.set(val, pt.Txn.sender()).__teal__(options)
     expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
@@ -102,7 +104,24 @@ def do_lv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    # TODO: other get_*
+    default = get_default_for_type(stack_type=stack_type, default=None)
+    actual = lv.get_else(default).__teal__(options)
+    expected = pt.If(
+        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)).hasValue(),
+        v.value(),
+        default,
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    actual = lv.get_must().__teal__(options)
+    expected = pt.Seq(
+        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)),
+        pt.Assert(v.hasValue()),
+        v.value(),
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
 
     actual = lv.delete(pt.Txn.sender()).__teal__(options)
     expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
@@ -160,7 +179,24 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    # TODO: other get_*
+    default = get_default_for_type(stack_type=stack_type, default=None)
+    actual = lv.get_else(default).__teal__(options)
+    expected = pt.If(
+        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)).hasValue(),
+        v.value(),
+        default,
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    actual = lv.get_must().__teal__(options)
+    expected = pt.Seq(
+        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)),
+        pt.Assert(v.hasValue()),
+        v.value(),
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
 
     actual = lv.delete(pt.Txn.sender()).__teal__(options)
     expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
@@ -169,34 +205,49 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
 
 
 APPLICATION_VAL_TESTS = [
-    # key, stacktype, default, val to set, expected error
-    (pt.Bytes("k"), pt.TealType.uint64, pt.Int(1), pt.Int(1), None),
-    (pt.Bytes("k"), pt.TealType.uint64, None, pt.Int(1), None),
-    (pt.Bytes("k"), pt.TealType.uint64, None, pt.Bytes("abc"), pt.TealTypeError),
-    (pt.Int(123), pt.TealType.uint64, None, pt.Int(1), pt.TealTypeError),
-    (pt.Bytes("k"), pt.TealType.bytes, None, pt.Bytes("abc"), None),
-    (pt.Bytes("k"), pt.TealType.bytes, pt.Bytes("abc"), pt.Bytes("def"), None),
-    (pt.Bytes("k"), pt.TealType.bytes, pt.Bytes("abc"), pt.Bytes("def"), None),
-    (pt.Bytes("k"), pt.TealType.bytes, None, pt.Int(1), pt.TealTypeError),
-    (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealTypeError),
+    # key, stacktype, default, val to set, static, expected error
+    (pt.Bytes("k"), pt.TealType.uint64, pt.Int(1), pt.Int(1), False, None),
+    (pt.Bytes("k"), pt.TealType.uint64, None, pt.Int(1), False, None),
+    (pt.Bytes("k"), pt.TealType.uint64, None, pt.Bytes("abc"), False, pt.TealTypeError),
+    (pt.Int(123), pt.TealType.uint64, None, pt.Int(1), False, pt.TealTypeError),
+    (pt.Bytes("k"), pt.TealType.bytes, None, pt.Bytes("abc"), False, None),
+    (pt.Bytes("k"), pt.TealType.bytes, pt.Bytes("abc"), pt.Bytes("def"), False, None),
+    (pt.Bytes("k"), pt.TealType.bytes, pt.Bytes("abc"), pt.Bytes("def"), False, None),
+    (pt.Bytes("k"), pt.TealType.bytes, None, pt.Int(1), False, pt.TealTypeError),
+    (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealTypeError),
+    (pt.Bytes("k"), pt.TealType.bytes, None, pt.Bytes("abc"), True, pt.TealInputError),
 ]
 
 
-@pytest.mark.parametrize("key, stack_type, default, val, error", APPLICATION_VAL_TESTS)
-def test_global_value(key, stack_type, default, val, error):
+@pytest.mark.parametrize(
+    "key, stack_type, default, val, static, error", APPLICATION_VAL_TESTS
+)
+def test_global_value(key, stack_type, default, val, static, error):
     if error is not None:
         with pytest.raises(error):
-            do_gv_test(key, stack_type, default, val)
+            do_gv_test(key, stack_type, default, val, static)
     else:
-        do_gv_test(key, stack_type, default, val)
+        do_gv_test(key, stack_type, default, val, static)
 
 
-def do_gv_test(key, stack_type, default, val):
-    lv = ApplicationStateValue(stack_type=stack_type, key=key, default=default)
+def do_gv_test(key, stack_type, default, val, static):
+    lv = ApplicationStateValue(
+        stack_type=stack_type, key=key, default=default, static=static
+    )
+
+    assert lv.__str__() == f"ApplicationStateValue {key}"
 
     actual = lv.set(val).__teal__(options)
-    expected = pt.App.globalPut(key, val).__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality():
+
+    if static:
+        expected = pt.Seq(
+            v := pt.App.globalGetEx(pt.Int(0), key),
+            pt.Assert(pt.Not(v.hasValue())),
+            pt.App.globalPut(key, val),
+        ).__teal__(options)
+    else:
+        expected = pt.App.globalPut(key, val).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
@@ -220,7 +271,42 @@ def do_gv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    # TODO: other get_*
+    if stack_type == pt.TealType.uint64 and not static:
+        actual = lv.increment().__teal__(options)
+        expected = pt.App.globalPut(key, pt.App.globalGet(key) + pt.Int(1)).__teal__(
+            options
+        )
+        with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+            assert actual == expected
+
+        actual = lv.decrement().__teal__(options)
+        expected = pt.App.globalPut(key, pt.App.globalGet(key) - pt.Int(1)).__teal__(
+            options
+        )
+        with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+            assert actual == expected
+
+    else:
+        with pytest.raises(pt.TealInputError):
+            lv.increment()
+
+        with pytest.raises(pt.TealInputError):
+            lv.decrement()
+
+    default = get_default_for_type(stack_type=stack_type, default=None)
+    actual = lv.get_else(default).__teal__(options)
+    expected = pt.If(
+        (v := pt.App.globalGetEx(pt.Int(0), key)).hasValue(), v.value(), default
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    actual = lv.get_must().__teal__(options)
+    expected = pt.Seq(
+        (v := pt.App.globalGetEx(pt.Int(0), key)), pt.Assert(v.hasValue()), v.value()
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
 
     actual = lv.delete().__teal__(options)
     expected = pt.App.globalDel(key).__teal__(options)
@@ -304,7 +390,42 @@ def do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    # TODO: other get_*
+    if stack_type == pt.TealType.uint64:
+        actual = lv.increment().__teal__(options)
+        expected = pt.App.globalPut(key, pt.App.globalGet(key) + pt.Int(1)).__teal__(
+            options
+        )
+        with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+            assert actual == expected
+
+        actual = lv.decrement().__teal__(options)
+        expected = pt.App.globalPut(key, pt.App.globalGet(key) - pt.Int(1)).__teal__(
+            options
+        )
+        with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+            assert actual == expected
+
+    else:
+        with pytest.raises(pt.TealInputError):
+            lv.increment()
+
+        with pytest.raises(pt.TealInputError):
+            lv.decrement()
+
+    default = get_default_for_type(stack_type=stack_type, default=None)
+    actual = lv.get_else(default).__teal__(options)
+    expected = pt.If(
+        (v := pt.App.globalGetEx(pt.Int(0), key)).hasValue(), v.value(), default
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    actual = lv.get_must().__teal__(options)
+    expected = pt.Seq(
+        (v := pt.App.globalGetEx(pt.Int(0), key)), pt.Assert(v.hasValue()), v.value()
+    ).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
 
     actual = lv.delete().__teal__(options)
     expected = pt.App.globalDel(key).__teal__(options)

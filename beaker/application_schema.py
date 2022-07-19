@@ -82,7 +82,7 @@ class ApplicationStateValue(Expr):
         return self.get().__teal__(options)
 
     def __str__(self) -> str:
-        return f"ApplicationState {self.key}"
+        return f"ApplicationStateValue {self.key}"
 
     def str_key(self) -> str:
         return cast(Bytes, self.key).byte_str.replace('"', "")
@@ -113,19 +113,19 @@ class ApplicationStateValue(Expr):
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be incremented")
 
-        return Seq(
-            (sv := ScratchVar()).store(self.get()),
-            self.set(sv.load() + cnt),
-        )
+        if self.static:
+            raise TealInputError("Cannot increment a static value")
+
+        return self.set(self.get() + cnt)
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be decremented")
 
-        return Seq(
-            (sv := ScratchVar()).store(self.get()),
-            self.set(sv.load() - cnt),
-        )
+        if self.static:
+            raise TealInputError("Cannot decrement a static value")
+
+        return self.set(self.get() - cnt)
 
     def get(self) -> Expr:
         return App.globalGet(self.key)
@@ -141,7 +141,7 @@ class ApplicationStateValue(Expr):
 
     def delete(self) -> Expr:
         if self.static:
-            raise Exception("Cannot delete static global param")
+            raise TealInputError("Cannot delete static global param")
         return App.globalDel(self.key)
 
     def is_default(self) -> Expr:
@@ -302,9 +302,8 @@ class AccountStateValue(Expr):
         if val.type_of() != self.stack_type:
             return TealTypeError(val.type_of(), self.stack_type)
 
-        return Seq(
-            (v := App.localGetEx(acct, Int(0), self.key)),
-            If(v.hasValue(), v.value(), val),
+        return If(
+            (v := App.localGetEx(acct, Int(0), self.key)).hasValue(), v.value(), val
         )
 
     def delete(self, acct: Expr = Txn.sender()) -> Expr:
