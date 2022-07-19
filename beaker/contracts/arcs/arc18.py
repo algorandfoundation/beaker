@@ -129,7 +129,7 @@ class ARC18(Application):
         )
 
     @handler
-    def transfer(
+    def transfer_algo_payment(
         self,
         royalty_asset: abi.Asset,
         royalty_asset_amount: abi.Uint64,
@@ -196,7 +196,7 @@ class ARC18(Application):
         )
 
     @handler
-    def transfer(
+    def transfer_asset_payment(
         self,
         royalty_asset: abi.Asset,
         royalty_asset_amount: abi.Uint64,
