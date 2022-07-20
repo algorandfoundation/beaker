@@ -246,7 +246,7 @@ def test_bare():
 
 
 def test_resolvable():
-    from .application_schema import (
+    from .state import (
         AccountStateValue,
         ApplicationStateValue,
         DynamicAccountStateValue,

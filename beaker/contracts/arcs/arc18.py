@@ -57,7 +57,7 @@ class ARC18(Application):
 
     @create
     def create(self):
-        return self.initialize_app_state()
+        return self.initialize_application_state()
 
     @update
     def update(self):

@@ -212,12 +212,12 @@ class ApplicationState:
             },
         }
 
-    def initialize(self):
+    def initialize(self) -> Expr:
         return Seq(
             *[g.set_default() for g in self.declared_vals.values() if not g.static]
         )
 
-    def schema(self):
+    def schema(self) -> StateSchema:
         return StateSchema(
             num_uints=self.num_uints, num_byte_slices=self.num_byte_slices
         )
@@ -382,10 +382,10 @@ class AccountState:
             },
         }
 
-    def initialize(self, acct: Expr = Txn.sender()):
+    def initialize(self, acct: Expr = Txn.sender()) -> Expr:
         return Seq(*[l.set_default(acct) for l in self.declared_vals.values()])
 
-    def schema(self):
+    def schema(self) -> StateSchema:
         return StateSchema(
             num_uints=self.num_uints, num_byte_slices=self.num_byte_slices
         )

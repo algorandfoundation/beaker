@@ -24,7 +24,7 @@ from pyteal import (
     TealTypeError,
     Txn,
 )
-from beaker.application_schema import (
+from beaker.state import (
     ApplicationStateValue,
     AccountStateValue,
 )

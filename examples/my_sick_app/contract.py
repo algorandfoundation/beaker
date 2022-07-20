@@ -29,7 +29,7 @@ class MySickApp(Application):
     @create
     def create(self):
         """create application"""
-        return self.initialize_app_state()
+        return self.initialize_application_state()
 
     @opt_in
     def opt_in(self):
