@@ -1,10 +1,7 @@
-from dataclasses import dataclass
 from beaker.application import Application
-from beaker.decorators import handler, internal
-from beaker.model import Model
+from beaker.decorators import handler
 from pyteal import (
     Assert,
-    ABIReturnSubroutine,
     abi,
     Expr,
     Seq,
@@ -108,8 +105,9 @@ class ContractTransferVAA:
 
 class WormholeTransfer(Application):
 
-    # Should be overridden with whatever app specific stuff 
-    def handle_transfer(self, ctvaa: ContractTransferVAA)->Expr:
+    # Should be overridden with whatever app specific stuff
+    # needs to be done on transfer
+    def handle_transfer(self, ctvaa: ContractTransferVAA) -> Expr:
         return Assert(Len(ctvaa.payload.load()) > Int(0))
 
     @handler
