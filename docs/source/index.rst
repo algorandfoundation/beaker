@@ -15,6 +15,8 @@ Check out the :doc:`usage` section for further information, including how to :re
 
    usage
    application
+   state
+   client
 
 
 Indices and tables

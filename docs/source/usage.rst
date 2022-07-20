@@ -13,6 +13,9 @@ Currently only installing from github is supported:
     (.venv)$ pip install git+https://github.com/algorand-devrel/beaker
 
 
+.. note::
+    This package currently requires the feature/abi branch of pyteal
+
 
 .. _hello_beaker:
 
@@ -43,7 +46,7 @@ This is a full application, though it doesn't do much.  Instantiate it and take 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
-Lets add a method to be handled by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>_` method with with the `handler` decorator. 
+Lets add a method to be handled by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the `handler` decorator. 
 
 .. code-block:: python
 
@@ -57,13 +60,14 @@ Lets add a method to be handled by tagging a `PyTeal ABI <https://pyteal.readthe
             return output.set(a.get() + b.get())
 
 
-The `@handler` decorator adds an ABI method with signature `add(uint64,uint64)uint64` to our application and includes it in the routing logic for handling an ABI call. 
+The ``@handler`` decorator adds an ABI method with signature ``add(uint64,uint64)uint64`` to our application and includes it in the routing logic for handling an ABI call. 
 
-The python method must return an `Expr` of some kind, invoked when the handler is called. 
+The python method must return an ``Expr`` of some kind, invoked when the handler is called. 
 
-> Note: `self` may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like `MySickApp.do_thing(data)`
+.. note::
+    ``self`` may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like ``MySickApp.do_thing(data)``
 
-Lets now deploy and call our contract using an :ref:`ApplicationClient application_client`.
+Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. code-block:: python
 
@@ -98,18 +102,18 @@ Lets now deploy and call our contract using an :ref:`ApplicationClient applicati
     print(result.return_value) # 5
 
 
-Thats it! During `create`, the `ApplicationClient` constructs an appropriate ApplicationCallTransaction, signs it with the `signer` passed, and submits it to the network.  
+Thats it! Invoking ``create``, the ``ApplicationClient`` constructs an appropriate ApplicationCallTransaction, signs it with the ``signer`` passed, and submits it to the network.
 
 .. note:: 
-    Once created, subsequent calls to the app_client are directed to the `app_id`. 
+    Once created, subsequent calls to the app_client are directed to the ``app_id``. 
     The constructor may also be passed an app_id directly if one is already deployed.
 
-After creation, we use `app_client.call`, passing the method defined in our class and args the method specified (by name). 
+After creation, we use ``app_client.call``, passing the method defined in our class and args the method specified (by name). 
 
 .. note::
     The args passed must match the type of the method (i.e. don't pass a string when it wants an int). 
 
-The result contains the parsed `return_value` which should match the type the ABI method returns.
+The result contains the parsed ``return_value`` which should match the type the ABI method returns.
 
 
 .. _manage_state:
@@ -120,7 +124,7 @@ Managing State
 Beaker provides a way to define state values as class variables and use them throughout our program. This is a convenient way to encapsulate functionality associated with some state values.
 
 .. note:: 
-    Througout the examples we tend to mark State Values as `Final[...]`, this is solely for good practice and has no effect on the output of the program.
+    Througout the examples we tend to mark State Values as ``Final[...]``, this is solely for good practice and has no effect on the output of the program.
 
 
 Lets add some Application State (or `Global State <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract>`_ in Algorand parlance) to our Application. 
@@ -154,12 +158,12 @@ Lets add some Application State (or `Global State <https://developer.algorand.or
                 output.set(self.counter)
             )
 
-We've added an :ref:`ApplicationStateValue _application_state` attribute to our class with several configuration options.
+We've added an :ref:`ApplicationStateValue <application_state>` attribute to our class with several configuration options.
 
-We can now reference it by name in the new methods we've added!  These new methods may be called by the application client just like the `add` method above.  
+We can now reference it by name in the new methods we've added!  These new methods may be called by the application client just like the ``add`` method above.  
 
 .. note:: 
-    The base `Application` class has several handlers pre-defined, including `create` which performs `ApplicationState` initialization for us, setting the keys to default values.
+    The base ``Application`` class has several handlers pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
 
 AccountState (Local storage) and even allow for dynamic state keys.
@@ -188,13 +192,14 @@ AccountState (Local storage) and even allow for dynamic state keys.
         def add_tag(self, tag: abi.String):
             return self.tags[tag.get()].set(Int(1))
 
-This application just allows a user to set their nickname and add tags. The `tags` class variable is a `DynamicAccountStateValue` and allows for accessing custom keys using the `[]` notation.
+This application just allows a user to set their nickname and add tags. The ``tags`` class variable is a ``DynamicAccountStateValue``, allowing for accessing custom keys using the ``[...]`` notation.
 
 
 
 What about extending our Application with some other functionality?
 
 .. code-block:: python
+
     from beaker.contracts import OpUp
     from beaker.decorators import handler
 
@@ -221,22 +226,29 @@ What about extending our Application with some other functionality?
             )
 
 
-Here we subclassed the `OpUp` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
+Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 
-## Handler Arguments
+.. _handler_arguments:
 
-The `handler` decorator accepts several parameters:
 
-- [authorize](#authorization) - Accepts a subroutine with input of `Txn.sender()` and output uint64 interpreted as allowed if the output>0.
-- `method_config` - See the PyTeal definition for more, (something like `method_config=MethodConfig(no_op=CallConfig.ALL)`).
+Handler Arguments
+-----------------
+
+
+The ``handler`` decorator accepts several parameters:
+
+- [authorize](#authorization) - Accepts a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+- ``method_config`` - See the PyTeal definition for more, (something like ``method_config=MethodConfig(no_op=CallConfig.ALL)``).
 - [read_only](#method-hints) - Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).
 - [resolvable](#resolvable) - Provides a means to resolve some required input to the caller. 
 
-### Authorization
+Authorization
+^^^^^^^^^^^^^
 
 What if we only want certain callers to be allowed? Lets add a parameter to the handler to allow only the app creator to call this method.
 
 .. code-block:: python
+
     from beaker import Authorize
 
     #...
@@ -250,6 +262,8 @@ What if we only want certain callers to be allowed? Lets add a parameter to the 
 
 This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
 
+For more, see 
+
 The pre-defined Authorized checks are: 
 
 - `Authorize.only(address)` for allowing a single address access
@@ -259,6 +273,7 @@ The pre-defined Authorized checks are:
 But we can define our own
 
 .. code-block:: python
+
     from beaker.consts import Algos
 
     @internal(TealType.uint64)
@@ -271,7 +286,10 @@ But we can define our own
         return output.set("hello whale")
 
 
-## Method Hints
+.. _method_hints:
+
+Method Hints
+^^^^^^^^^^^^
 
 A Method may provide hints to the caller to help provide context for the call. Currently Method hints are one of:
 
@@ -279,19 +297,19 @@ A Method may provide hints to the caller to help provide context for the call. C
 - [Models](#models) - A list of model field names associated to some abi Tuple. 
 - Read Only - A boolean flag indicating how this method should be called. Methods that are meant to only produce information, having no side effects, should be flagged as read only. [ARC22](https://github.com/algorandfoundation/ARCs/pull/79)
 
-### Resolvable (*Experimental*)
+ Resolvable (*Experimental*)
 
 In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
 
 We can change the handler to provide the hint.
 
-```py
-@handler(
-    resolvable=ResolvableArguments(
-        opup_app=OpUp.opup_app_id 
+.. code-block:: python
+
+    @handler(
+        resolvable=ResolvableArguments(
+            opup_app=OpUp.opup_app_id 
+        )
     )
-)
-```
 
 With this handler config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
 
@@ -303,52 +321,53 @@ Options for resolving arguments are:
 
 
 Here we call the method, omitting the `opup_app` argument:
-```py
-input = "hashme"
-iters = 10
-# In this case we'd like to pass a different signer to call this transaction
-signer_client = app_client.prepare(signer=signer)
-result = signer_client.call(app.hash_it, input=input, iters=iters)
-```
+
+.. code-block:: python
+
+    result = app_client.call(app.hash_it, input="hashme", iters=10)
 
 When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
 
-### Models
+.. _models:
+
+Models
+------
 
 With Beaker we can define a custom structure and use it in our ABI methods.
 
-```py
-from beaker.model import Model
+.. code-block:: python
 
-class Modeler(Application):
+    from beaker.model import Model
 
-    orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
-        stack_type=TealType.bytes,
-        max_keys=16,
-    )
+    class Modeler(Application):
+
+        orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+            stack_type=TealType.bytes,
+            max_keys=16,
+        )
 
 
-    class Order(Model):
-        item: abi.String
-        quantity: abi.Uint32
+        class Order(Model):
+            item: abi.String
+            quantity: abi.Uint32
 
-    
-    @handler
-    def place_order(self, order_number: abi.Uint8, order: Order):
-        return self.orders[order_number].set(order.encode())
+        
+        @handler
+        def place_order(self, order_number: abi.Uint8, order: Order):
+            return self.orders[order_number].set(order.encode())
 
-    @handler(read_only=True)
-    def read_order(self, order_number: abi.Uint8, *, output: Order):
-        return output.decode(self.orders[order_number])
+        @handler(read_only=True)
+        def read_order(self, order_number: abi.Uint8, *, output: Order):
+            return output.decode(self.orders[order_number])
 
-```
 
 The application exposes the ABI methods using the tuple encoded version of the fields specified in the model. Here it would be `(string,uint32)`.
 
 A method hint is available to the caller for encoding/decoding by field name. 
 
-```py
+.. code-block:: python
+
     # Passing in a dict as an argument that, according to the ABI, should take a tuple 
     # The keys should match the field names
     order_number = 12
@@ -360,5 +379,4 @@ A method hint is available to the caller for encoding/decoding by field name.
     abi_decoded = Modeler.Order().client_decode(result.raw_value)
 
     assert order == abi_decoded
-```
 
