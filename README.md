@@ -46,7 +46,7 @@ print(f"Contract Spec: {json.dumps(msa.contract.dictify())}")
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
-We can add a method to be handled by the application. This is done by tagging a valid PyTeal ABI method with with the `handler` decorator. More on this later.
+We can add a method to be handled by the application. This is done by tagging a valid PyTeal ABI method with with the `handler` decorator. More on this [later](#handler-arguments).
 
 ```py
 from pyteal import *
@@ -66,34 +66,33 @@ Tagging the method with the `@handler` decorator adds an ABI method with signatu
 
 ## Application Client
 
-Lets now deploy our contract using an `ApplicationClient`.
+Lets now deploy and call our contract using an `ApplicationClient`.
 
 ```py
 
 from algosdk.atomic_transaction_composer import  AccountTransactionSigner 
 
 # utils to connect to sandbox kmd and pull all accounts and init an algod client
-from beaker.sandbox import get_accounts, get_client
+from beaker import sandbox
 from beaker.client import ApplicationClient 
 
 # Get the accounts from the sandbox KMD 
-addr, private_key = get_accounts().pop()
+addr, private_key = sandbox.get_accounts().pop()
 signer = AccountTransactionSigner(private_key)
-
-# Get algod client for local sandbox
-client = get_client()
 
 # Instantiate our app
 msa = MySickApp()
 
-# Create an app client with he client and an instance of the app, 
-# also specifying signer here but it can be passed directly later on
-# if a different signer is required
-app_client = ApplicationClient(client, msa, signer=signer)
+# Create ApplicationClient
+app_client = ApplicationClient(sandbox.get_client(), msa, signer=signer)
 
-# Call the `create` method. 
+# Call `create`  
 app_id, app_addr, tx_id = app_client.create()
 print(f"Created app with id: {app_id} and address: {app_addr}")
+
+# Call the `add` method 
+result = app_client.call(msa.add, a=2, b=3)
+print(result.return_value) # 5
 
 ```
 
@@ -101,19 +100,9 @@ Thats it! The `ApplicationClient` handles constructing the ApplicationCallTransa
 
 Once created, subsequent calls to the app_client are directed to the `app_id`. The constructor may also be passed an app_id directly if one is already deployed.  Methods for `.delete()`/`.update()`/`.opt_in()`/`.close_out()`/`.clear_state()`  are also available. 
 
-
-Now, we can call the method we defined in our `Application`
-
-```py
-result = app_client.call(msa.add, a=2,b=3)
-print(result.return_value) # 5
-```
-
 We use the `app_client.call` method, passing the method defined in our class as well as args the method specified by name. The args passed must match the type of the method (i.e. don't pass a string when it wants an int). 
 
 The result contains the parsed `return_value`, a `decode_error` if necessary and the `raw_value`, useful if there  is a `decode_error`.
-
-The Application Client also provides for composing multiple app calls with the `app_client.add_method_call`, passing a pre-existing AtomicTransactionComposer.
 
 ## Managing State
 
@@ -303,7 +292,7 @@ A Method may provide hints to the caller to help provide context for the call. C
 - [Models](#models) - A list of model field names associated to some abi Tuple. 
 - Read Only - A boolean flag indicating how this method should be called. Methods that are meant to only produce information, having no side effects, should be flagged as read only. [ARC22](https://github.com/algorandfoundation/ARCs/pull/79)
 
-### Resolvable 
+### Resolvable (*Experimental*)
 
 In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
 
