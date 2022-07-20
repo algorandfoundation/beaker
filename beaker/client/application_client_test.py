@@ -39,7 +39,7 @@ class App(Application):
 
     @create
     def create(self):
-        return pt.Seq(self.initialize_app_state(), pt.Approve())
+        return pt.Seq(self.initialize_application_state(), pt.Approve())
 
     @opt_in
     def opt_in(self):
