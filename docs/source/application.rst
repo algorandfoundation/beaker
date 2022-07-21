@@ -1,7 +1,10 @@
 Application
 ============
 
-.. module:: beaker
+.. module:: beaker.application
+
+This is the base class that all Beaker Applications should inherit from.
+
 
 .. autoclass:: Application
 
@@ -19,3 +22,6 @@ Application
     .. automethod:: opt_in
     .. automethod:: clear_state 
     .. automethod:: close_out 
+
+
+

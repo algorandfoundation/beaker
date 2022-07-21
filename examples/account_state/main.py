@@ -1,6 +1,5 @@
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
-from algosdk.future import transaction
-from contract import Dope
+from contract import AccountStateExample
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_client, get_accounts
 
@@ -11,7 +10,7 @@ signer = AccountTransactionSigner(sk)
 
 client = get_client()
 
-app = Dope()
+app = AccountStateExample()
 app_client = ApplicationClient(client, app, signer=signer)
 app_id, app_address, transaction_id = app_client.create()
 print(

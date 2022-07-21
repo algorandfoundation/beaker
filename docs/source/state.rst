@@ -40,9 +40,7 @@ Dynamic Application State Value
 Account State
 -------------
 
-Accounts store state too, say more 
-
-
+If your application requires storage of state at the Account level, AccountState may be used.
 
 .. autoclass:: AccountState
 
@@ -60,3 +58,5 @@ DynamicAccountStateValue
 .. _dynamic_account_state_value:
 
 .. autoclass:: DynamicAccountStateValue
+
+.. literalinclude:: ../../examples/account_state/contract.py

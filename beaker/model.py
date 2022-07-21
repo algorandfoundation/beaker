@@ -5,6 +5,8 @@ from pyteal import Expr, abi, TealInputError, TealTypeError, Seq
 
 
 class Model(abi.Tuple):
+    """Model provides a base class to inherit from when defining custom data structures"""
+
     def __init__(self):
         if not hasattr(self, "__annotations__"):
             raise Exception("Expected fields to be declared but found none")

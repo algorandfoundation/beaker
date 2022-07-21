@@ -5,6 +5,15 @@ Models
 
 With Beaker we can define a custom structure and use it in our ABI methods.
 
+.. autoclass:: Model
+
+    .. automethod:: set
+    .. automethod:: annotation_type
+
+    .. automethod:: client_encode
+    .. automethod:: client_decode
+
+
 .. code-block:: python
 
     from beaker.model import Model
@@ -47,12 +56,3 @@ A method hint is available to the caller for encoding/decoding by field name.
     abi_decoded = Order().client_decode(result.raw_value)
 
     assert order == abi_decoded
-
-
-.. autoclass:: Model
-
-    .. automethod:: set
-    .. automethod:: annotation_type
-
-    .. automethod:: client_encode
-    .. automethod:: client_decode

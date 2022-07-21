@@ -1,14 +1,12 @@
 Decorators
 ===========
 
-.. module:: beaker
+.. module:: beaker.decorators
 
-handler
-----------
+ABI Method Handler
+------------------
 
- TODO - Examples of calling the handler with all the options set
-
-.. autofunction:: handler
+.. autodecorator:: handler
 
 
 
@@ -37,13 +35,14 @@ Lets add a parameter to the handler to allow only the app creator to call this m
             output.set(self.counter)
         )
 
-This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
+The ``authorize`` parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
 
 The pre-defined Authorized checks are: 
 
-- `Authorize.only(address)` for allowing a single address access
-- `Authorize.has_token(asset_id)` for whether or not the sender holds >0 of a given asset
-- `Authorize.opted_in(app_id)`  for whether or not they're opted in to a given app 
+.. automethod:: Authorize.only
+.. automethod:: Authorize.holds_token
+.. automethod:: Authorize.opted_in
+
 
 But we can define our own
 
@@ -142,12 +141,12 @@ Single Bare Handlers
 
 If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.
 
-.. autofunction:: create
-.. autofunction:: delete 
-.. autofunction:: update 
-.. autofunction:: opt_in 
-.. autofunction:: close_out 
-.. autofunction:: clear_state 
+.. autodecorator:: create
+.. autodecorator:: delete 
+.. autodecorator:: update 
+.. autodecorator:: opt_in 
+.. autodecorator:: close_out 
+.. autodecorator:: clear_state 
     
 
 
@@ -156,8 +155,7 @@ Multiple Bare Handlers
 
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_handler``
 
-.. autofunction:: bare_handler
-
+.. autodecorator:: bare_handler
 
 
 .. _internal_methods:
@@ -171,7 +169,7 @@ An Application will often need a number of internal ``utility`` type methods to 
     If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@internal`` decorator and the expression will be inlined 
 
 
-.. autofunction:: internal
+.. autodecorator:: internal
 
 .. code-block:: python
 

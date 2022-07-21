@@ -1,6 +1,8 @@
 Beaker
 =========
 
+.. module:: beaker
+
 .. image:: ../../beaker.png
 
 **Beaker** is a Python framework for building Smart Contracts on Algorand using `PyTeal <https://pyteal.readthedocs.io/en/stable/>`_.

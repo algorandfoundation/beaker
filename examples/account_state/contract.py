@@ -3,7 +3,7 @@ from beaker import *
 from pyteal import *
 
 
-class Dope(Application):
+class AccountStateExample(Application):
 
     stuff: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
@@ -24,5 +24,5 @@ class Dope(Application):
 
 
 if __name__ == "__main__":
-    d = Dope()
-    print(d.application_spec())
+    ase = AccountStateExample()
+    print(ase.application_spec())
