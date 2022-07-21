@@ -64,13 +64,16 @@ class Model(abi.Tuple):
         return Seq(*setters, super().set(*abi_types))
 
     def annotation_type(self):
+        """ returns the annotation type for the model, useful for type aliases in method signature annotation"""
         return self.type_spec().annotation_type()
 
-    def client_decode(self, to_decode: bytes) -> dict[str, str | int]:
+    def client_decode(self, to_decode: bytes) -> dict[str, Any]:
+        """ decode a bytestring into a dictionary of keys/values based on the fields this model declared """
         values = self.sdk_codec.decode(bytestring=to_decode)
         return dict(zip(self.field_names, values))
 
     def client_encode(self, val: dict[str, Any]) -> bytes:
+        """" encode a dictionary of keys/values to a bytestring matching the ABI tuple type it is represented by"""
         values = [val[name] for name in self.field_names]
         return self.sdk_codec.encode(values)
 

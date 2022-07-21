@@ -162,7 +162,7 @@ We can now reference it by name in the new methods we've added!  These new metho
     The base ``Application`` class has several handlers pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
 
-AccountState (Local storage) and even allow for dynamic state keys.
+:ref:`AccountState <_account_state>` (or Local storage) and even allow for dynamic state keys.
 
 .. code-block:: python
 

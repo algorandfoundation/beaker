@@ -1,5 +1,7 @@
 Models
-======
+=======
+
+.. module:: beaker.model
 
 With Beaker we can define a custom structure and use it in our ABI methods.
 
@@ -7,17 +9,16 @@ With Beaker we can define a custom structure and use it in our ABI methods.
 
     from beaker.model import Model
 
+    class Order(Model):
+        item: abi.String
+        quantity: abi.Uint32
+
     class Modeler(Application):
 
         orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
             stack_type=TealType.bytes,
             max_keys=16,
         )
-
-
-        class Order(Model):
-            item: abi.String
-            quantity: abi.Uint32
 
         
         @handler
@@ -29,7 +30,7 @@ With Beaker we can define a custom structure and use it in our ABI methods.
             return output.decode(self.orders[order_number])
 
 
-The application exposes the ABI methods using the tuple encoded version of the fields specified in the model. Here it would be `(string,uint32)`.
+The application exposes the ABI methods using the tuple encoded version of the fields specified in the model. Here it would be ``(string,uint32)``.
 
 A method hint is available to the caller for encoding/decoding by field name. 
 
@@ -43,7 +44,15 @@ A method hint is available to the caller for encoding/decoding by field name.
 
     # Call the method to read the order at the original order number and decode it
     result = app_client.call(app.read_order, order_number=order_number)
-    abi_decoded = Modeler.Order().client_decode(result.raw_value)
+    abi_decoded = Order().client_decode(result.raw_value)
 
     assert order == abi_decoded
 
+
+.. autoclass:: Model
+
+    .. automethod:: set
+    .. automethod:: annotation_type
+
+    .. automethod:: client_encode
+    .. automethod:: client_decode

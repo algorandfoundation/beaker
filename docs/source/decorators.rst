@@ -157,3 +157,26 @@ Multiple Bare Handlers
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_handler``
 
 .. autofunction:: bare_handler
+
+
+
+.. _internal_methods:
+
+Internal Methods
+----------------
+
+An Application will often need a number of internal ``utility`` type methods to handle common logic.  We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
+
+.. note:: 
+    If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@internal`` decorator and the expression will be inlined 
+
+
+.. autofunction:: internal
+
+.. code-block:: python
+
+    @internal(TealType.uint64)
+    def do_logic(self):
+        return If(self.counter>10, self.send_asset())
+
+
