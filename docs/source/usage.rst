@@ -13,10 +13,6 @@ Currently only installing from github is supported:
     (.venv)$ pip install git+https://github.com/algorand-devrel/beaker
 
 
-.. note::
-    This package currently requires the feature/abi branch of pyteal
-
-
 .. _hello_beaker:
 
 Hello, Beaker 
@@ -194,7 +190,10 @@ AccountState (Local storage) and even allow for dynamic state keys.
 
 This application just allows a user to set their nickname and add tags. The ``tags`` class variable is a ``DynamicAccountStateValue``, allowing for accessing custom keys using the ``[...]`` notation.
 
+.. _inheritance:
 
+Inheritance 
+-----------
 
 What about extending our Application with some other functionality?
 
@@ -225,117 +224,4 @@ What about extending our Application with some other functionality?
                 output.decode(current.load()),
             )
 
-
 Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
-
-.. _handler_arguments:
-
-
-Handler Arguments
------------------
-
-
-The ``handler`` decorator accepts several parameters:
-
-- [authorize](#authorization) - Accepts a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
-- ``method_config`` - See the PyTeal definition for more, (something like ``method_config=MethodConfig(no_op=CallConfig.ALL)``).
-- [read_only](#method-hints) - Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).
-- [resolvable](#resolvable) - Provides a means to resolve some required input to the caller. 
-
-Authorization
-^^^^^^^^^^^^^
-
-.. _method_hints:
-
-Method Hints
-^^^^^^^^^^^^
-
-A Method may provide hints to the caller to help provide context for the call. Currently Method hints are one of:
-
-- [Resolvable](#resolvable) - A hint to _"resolve"_ some required argument
-- [Models](#models) - A list of model field names associated to some abi Tuple. 
-- Read Only - A boolean flag indicating how this method should be called. Methods that are meant to only produce information, having no side effects, should be flagged as read only. [ARC22](https://github.com/algorandfoundation/ARCs/pull/79)
-
- Resolvable (*Experimental*)
-
-In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
-
-We can change the handler to provide the hint.
-
-.. code-block:: python
-
-    @handler(
-        resolvable=ResolvableArguments(
-            opup_app=OpUp.opup_app_id 
-        )
-    )
-
-With this handler config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
-
-Options for resolving arguments are:
-
-- A constant, `str | int`
-- State Values, `ApplicationStateValue | AccountStateValue (only for sender)`
-- A read-only ABI method  (If we need access to a Dynamic state value, use an ABI method to produce the expected value)
-
-
-Here we call the method, omitting the `opup_app` argument:
-
-.. code-block:: python
-
-    result = app_client.call(app.hash_it, input="hashme", iters=10)
-
-When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
-
-
-.. _models:
-
-Models
-------
-
-With Beaker we can define a custom structure and use it in our ABI methods.
-
-.. code-block:: python
-
-    from beaker.model import Model
-
-    class Modeler(Application):
-
-        orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
-            stack_type=TealType.bytes,
-            max_keys=16,
-        )
-
-
-        class Order(Model):
-            item: abi.String
-            quantity: abi.Uint32
-
-        
-        @handler
-        def place_order(self, order_number: abi.Uint8, order: Order):
-            return self.orders[order_number].set(order.encode())
-
-        @handler(read_only=True)
-        def read_order(self, order_number: abi.Uint8, *, output: Order):
-            return output.decode(self.orders[order_number])
-
-
-The application exposes the ABI methods using the tuple encoded version of the fields specified in the model. Here it would be `(string,uint32)`.
-
-A method hint is available to the caller for encoding/decoding by field name. 
-
-.. code-block:: python
-
-    # Passing in a dict as an argument that, according to the ABI, should take a tuple 
-    # The keys should match the field names
-    order_number = 12
-    order = {"quantity": 8, "item": "cubes"}
-    app_client.call(app.place_order, order_number=order_number, order=order)
-
-    # Call the method to read the order at the original order number and decode it
-    result = app_client.call(app.read_order, order_number=order_number)
-    abi_decoded = Modeler.Order().client_decode(result.raw_value)
-
-    assert order == abi_decoded
-

@@ -293,17 +293,14 @@ def handler(
     method_config: MethodConfig = None,
     read_only: bool = False,
     resolvable: ResolvableArguments = None,
-):
-    """
-    handler is the primary way to expose an ABI method for an application
-    it may take a number of arguments:
+) -> HandlerFunc:
+    """handler is the primary way to expose an ABI method for an application
 
-    Args:
-
-        authorize: A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender
-        method_config: accepts a MethodConfig object to define how the app call should be routed given OnComplete and whether or not the call is a create
-        read_only: adds `read-only` flag to abi (eventually, currently it does nothing)
-        resolvable: provides hints to a caller at how to resolve some arguments
+    :param fn: The function being wrapped
+    :param authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+    :param method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender (TODO: link to py sdk docs)
+    :param read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).A
+    :param resolvable: **Experimental** Provides a means to resolve some required input to the caller. 
     """
 
     def _impl(fn: HandlerFunc):

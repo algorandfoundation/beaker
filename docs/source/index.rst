@@ -16,6 +16,8 @@ Check out the :doc:`usage` section for further information, including how to :re
    usage
    application
    state
+   decorators
+   models
    client
 
 
