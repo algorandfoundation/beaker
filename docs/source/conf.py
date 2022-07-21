@@ -10,7 +10,8 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
+
+sys.path.insert(0, os.path.abspath("../../"))
 
 
 # -- Project information -----------------------------------------------------
@@ -62,7 +63,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = "en" 
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -187,4 +188,3 @@ intersphinx_mapping = {"https://docs.python.org/": None}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-

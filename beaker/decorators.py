@@ -300,7 +300,7 @@ def handler(
     :param authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     :param method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender (TODO: link to py sdk docs)
     :param read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).A
-    :param resolvable: **Experimental** Provides a means to resolve some required input to the caller. 
+    :param resolvable: **Experimental** Provides a means to resolve some required input to the caller.
     """
 
     def _impl(fn: HandlerFunc):

@@ -25,5 +25,3 @@ Application Client
     .. automethod:: get_application_state 
     .. automethod:: get_account_state 
     .. automethod:: get_account_info
-
-
