@@ -8,7 +8,7 @@ class StateExample(Application):
     declared_app_value: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes,
         default=Bytes(
-            "I'm a declared state value that is protected with the `static flag`"
+            "A declared state value that is protected with the `static` flag"
         ),
         descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
         static=True,
@@ -25,13 +25,13 @@ class StateExample(Application):
     declared_account_value: Final[AccountStateValue] = AccountStateValue(
         stack_type=TealType.uint64,
         default=Int(1),
-        descr="Just an int stored for each account that opts in",
+        descr="An int stored for each account that opts in",
     )
 
     dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
-        descr="This dynamic state value allows 8 keys to be reserved, in this case byte type",
+        descr="A dynamic state value, allowing 8 keys to be reserved, in this case byte type",
     )
 
     @create
