@@ -59,4 +59,10 @@ DynamicAccountStateValue
 
 .. autoclass:: DynamicAccountStateValue
 
-.. literalinclude:: ../../examples/account_state/contract.py
+
+.. _state_example:
+
+Example
+-------
+
+.. literalinclude:: ../../examples/state_example/contract.py
