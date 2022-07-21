@@ -19,7 +19,7 @@ from pyteal import (
 
 from beaker.application import Application
 from beaker.state import ApplicationStateValue
-from beaker.consts import Algo
+from beaker.consts import Algos
 from beaker.decorators import internal, handler
 
 
@@ -31,21 +31,28 @@ OpUpClearBinary = "BoEBQw=="
 
 
 class OpUp(Application):
-    min_balance: Final[Int] = Algo
+    """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget."""
+
+    #: The minimum balance required for this class
+    min_balance: Final[Int] = Algos(0.1)
+
+    #: The id of the app created during `bootstrap`
     opup_app_id: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
     )
 
     @handler
     def opup_bootstrap(self, ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
+        """initialize opup with bootstrap to create a target app"""
         return Seq(
-            Assert(ptxn.get().amount() >= OpUp.min_balance),
-            OpUp.create_opup(),
+            Assert(ptxn.get().amount() >= self.min_balance),
+            self.create_opup(),
             output.set(OpUp.opup_app_id),
         )
 
     @internal(TealType.none)
-    def create_opup():
+    def create_opup(self):
+        """internal method to create the target application"""
         return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
@@ -53,14 +60,18 @@ class OpUp(Application):
                     TxnField.type_enum: TxnType.ApplicationCall,
                     TxnField.approval_program: Bytes("base64", OpUpTargetBinary),
                     TxnField.clear_state_program: Bytes("base64", OpUpClearBinary),
+                    TxnField.fee: Int(0),
                 }
             ),
             InnerTxnBuilder.Submit(),
-            OpUp.opup_app_id.set(InnerTxn.created_application_id()),
+            self.opup_app_id.set(InnerTxn.created_application_id()),
         )
 
     @internal(TealType.none)
-    def call_opup(n):
+    def call_opup(self, n):
+        """internal method to issue transactions against the target app"""
+
+        # TODO: conditional cheaper? offer 2 methods?
         return For(
             (i := ScratchVar()).store(Int(0)), i.load() < n, i.store(i.load() + Int(1))
         ).Do(
@@ -71,6 +82,7 @@ class OpUp(Application):
                     {
                         TxnField.type_enum: TxnType.ApplicationCall,
                         TxnField.application_id: OpUp.opup_app_id,
+                        TxnField.fee: Int(0),
                     }
                 ),
                 InnerTxnBuilder.Submit(),

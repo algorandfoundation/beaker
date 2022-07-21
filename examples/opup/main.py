@@ -6,6 +6,7 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.future import transaction
 
 from beaker.client import ApplicationClient
+from beaker.consts import algo, milli_algo
 from beaker.sandbox import get_client, get_accounts
 
 from contract import ExpensiveApp
@@ -23,6 +24,9 @@ def demo():
 
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()
+    # we need to cover 255 inner transactions + ours
+    sp.flat_fee = True
+    sp.fee = 256 * milli_algo
     app_client = ApplicationClient(client, app, signer=signer, suggested_params=sp)
 
     # Create the applicatiion on chain, set the app id for the app client

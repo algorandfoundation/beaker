@@ -21,6 +21,7 @@ Check out the :doc:`usage` section for further information, including how to :re
    decorators
    models
    client
+   contracts
 
 
 Indices and tables

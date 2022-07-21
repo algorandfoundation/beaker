@@ -97,8 +97,8 @@ With this handler config argument, we communicate to a caller the application ex
 Options for resolving arguments are:
 
 - A constant, `str | int`
-- State Values, `ApplicationStateValue | AccountStateValue (only for sender)`
-- A read-only ABI method  (If we need access to a Dynamic state value, use an ABI method to produce the expected value)
+- State Values, `ApplicationStateValue | AccountStateValue`
+- A read-only ABI method  
 
 
 Here we call the method, omitting the `opup_app` argument:
@@ -107,7 +107,7 @@ Here we call the method, omitting the `opup_app` argument:
 
     result = app_client.call(app.hash_it, input="hashme", iters=10)
 
-When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
+When invoked, the `ApplicationClient` consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.
 
 
 .. _read_only:

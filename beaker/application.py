@@ -69,6 +69,7 @@ class Application:
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
 
+        # Is there a better way to get all the attrs declared in subclasses?
         self.attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in list(set(dir(self.__class__)) - set(dir(super())))

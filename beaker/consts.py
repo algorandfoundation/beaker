@@ -10,8 +10,8 @@ Algo: Final[Int] = Int(algo)
 MilliAlgo: Final[Int] = Int(milli_algo)
 
 # Use this as shorthand for Int(10*algo) like Algos(10)
-Algos: Callable[..., Expr] = lambda v: Int(v * algo)
-MilliAlgos: Callable[..., Expr] = lambda v: Int(v * milli_algo)
+Algos: Callable[..., Expr] = lambda v: Int(int(v * algo))
+MilliAlgos: Callable[..., Expr] = lambda v: Int(int(v * milli_algo))
 
 # aliases for 1/0
 TRUE: Final[Int] = Int(1)
