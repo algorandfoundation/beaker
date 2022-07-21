@@ -221,6 +221,7 @@ class ApplicationState:
             )
 
     def dictify(self) -> dict[str, dict[str, Any]]:
+        """ Convert the Application state to a dict for encoding """
         return {
             "declared": {
                 k: {"type": stack_type_to_string(v.stack_type), "key": v.str_key()}
@@ -233,6 +234,7 @@ class ApplicationState:
         }
 
     def initialize(self) -> Expr:
+        """ Generate expression from state values to initialize a default value """
         return Seq(
             *[
                 g.set_default()
@@ -358,6 +360,7 @@ class DynamicAccountStateValue:
         self.key_generator = key_gen
 
     def __getitem__(self, key_seed: Expr | abi.BaseType) -> AccountStateValue:
+        """ Access AccountState value given key_seed """
         key = key_seed
 
         if isinstance(key_seed, abi.BaseType):
@@ -406,6 +409,7 @@ class AccountState:
             )
 
     def dictify(self) -> dict[str, dict[str, Any]]:
+        """ return AccountState as a dictionary for encoding """
         return {
             "declared": {
                 k: {"type": stack_type_to_string(v.stack_type), "key": v.str_key()}
@@ -418,6 +422,7 @@ class AccountState:
         }
 
     def initialize(self, acct: Expr = Txn.sender()) -> Expr:
+        """ Generate expression to initialize account state fields to default values """
         return Seq(*[l.set_default(acct) for l in self.declared_vals.values()])
 
     def schema(self) -> StateSchema:
