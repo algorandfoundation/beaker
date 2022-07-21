@@ -29,7 +29,7 @@ app_client.call(app.set_dynamic_account_state_val, k=0, v="stuff")
 result = app_client.call(app.get_dynamic_account_state_val, k=0)
 print(f"Set/get dynamic acct state result: {result.return_value}")
 
-try: 
+try:
     app_client.call(app.set_app_state_val, v="Expect fail")
 except Exception:
     print("Task failed successfully")

@@ -3,6 +3,8 @@ Decorators
 
 .. module:: beaker.decorators
 
+.. _handler:
+
 ABI Method Handler
 ------------------
 

@@ -2,31 +2,36 @@ from typing import Final
 from beaker import *
 from pyteal import *
 
+
 class StateExample(Application):
 
     declared_app_value: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes,
-        default=Bytes("I'm a declared state value that is protected with the `static flag`"),
+        default=Bytes(
+            "I'm a declared state value that is protected with the `static flag`"
+        ),
         descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
-        static=True
+        static=True,
     )
 
-    dynamic_app_value: Final[DynamicApplicationStateValue] = DynamicApplicationStateValue(
+    dynamic_app_value: Final[
+        DynamicApplicationStateValue
+    ] = DynamicApplicationStateValue(
         stack_type=TealType.uint64,
         max_keys=63,
-        descr="A dynamic app state variable, with 63 possible keys"
+        descr="A dynamic app state variable, with 63 possible keys",
     )
 
     declared_account_value: Final[AccountStateValue] = AccountStateValue(
         stack_type=TealType.uint64,
         default=Int(1),
-        descr="Just an int stored for each account that opts in"
+        descr="Just an int stored for each account that opts in",
     )
 
     dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
-        descr="This dynamic state value allows 8 keys to be reserved, in this case byte type"
+        descr="This dynamic state value allows 8 keys to be reserved, in this case byte type",
     )
 
     @create
@@ -57,7 +62,6 @@ class StateExample(Application):
     def get_dynamic_app_state_val(self, k: abi.Uint8, *, output: abi.Uint64):
         return output.set(self.dynamic_app_value[k])
 
-
     @handler
     def set_account_state_val(self, v: abi.Uint64):
         return self.declared_account_value.set(v.get())
@@ -73,6 +77,7 @@ class StateExample(Application):
     @handler(read_only=True)
     def get_dynamic_account_state_val(self, k: abi.Uint8, *, output: abi.String):
         return output.set(self.dynamic_account_value[k])
+
 
 if __name__ == "__main__":
     se = StateExample()

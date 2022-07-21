@@ -32,7 +32,11 @@ def stack_type_to_string(st: TealType):
 
 class DynamicApplicationStateValue:
     def __init__(
-        self, stack_type: TealType, max_keys: int, key_gen: SubroutineFnWrapper = None, descr: str = None
+        self,
+        stack_type: TealType,
+        max_keys: int,
+        key_gen: SubroutineFnWrapper = None,
+        descr: str = None,
     ):
         self.stack_type = stack_type
         self.max_keys = max_keys
@@ -55,7 +59,9 @@ class DynamicApplicationStateValue:
 
         if self.key_generator is not None:
             key = self.key_generator(key)
-        return ApplicationStateValue(stack_type=self.stack_type, key=key, descr=self.descr)
+        return ApplicationStateValue(
+            stack_type=self.stack_type, key=key, descr=self.descr
+        )
 
 
 class ApplicationStateValue(Expr):
@@ -214,9 +220,7 @@ class ApplicationState:
         }
 
     def initialize(self) -> Expr:
-        return Seq(
-            *[g.set_default() for g in self.declared_vals.values()]
-        )
+        return Seq(*[g.set_default() for g in self.declared_vals.values()])
 
     def schema(self) -> StateSchema:
         return StateSchema(
