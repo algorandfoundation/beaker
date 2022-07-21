@@ -30,7 +30,6 @@ def stack_type_to_string(st: TealType):
         return "???"
 
 
-
 class ApplicationStateValue(Expr):
     def __init__(
         self,
@@ -67,13 +66,12 @@ class ApplicationStateValue(Expr):
     def __str__(self) -> str:
         return f"ApplicationStateValue {self.key}"
 
-
     def str_key(self) -> str:
         """returns the string held by the key Bytes object"""
         return cast(Bytes, self.key).byte_str.replace('"', "")
 
     def set_default(self) -> Expr:
-        """ sets the default value if one is provided, if none provided sets the zero value for its type """
+        """sets the default value if one is provided, if none provided sets the zero value for its type"""
         if self.default:
             return App.globalPut(self.key, self.default)
 
@@ -83,7 +81,7 @@ class ApplicationStateValue(Expr):
             return App.globalPut(self.key, Bytes(""))
 
     def set(self, val: Expr) -> Expr:
-        """ sets the value to the argument passed """
+        """sets the value to the argument passed"""
         if val.type_of() != self.stack_type:
             raise TealTypeError(val.type_of(), self.stack_type)
 
@@ -97,7 +95,7 @@ class ApplicationStateValue(Expr):
         return App.globalPut(self.key, val)
 
     def increment(self, cnt: Expr = Int(1)) -> Expr:
-        """ helper to increment a counter """
+        """helper to increment a counter"""
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be incremented")
 
@@ -107,7 +105,7 @@ class ApplicationStateValue(Expr):
         return self.set(self.get() + cnt)
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
-        """ helper to decrement a counter """
+        """helper to decrement a counter"""
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be decremented")
 
@@ -117,30 +115,31 @@ class ApplicationStateValue(Expr):
         return self.set(self.get() - cnt)
 
     def get(self) -> Expr:
-        """ gets the value stored for this state value """
+        """gets the value stored for this state value"""
         return App.globalGet(self.key)
 
     def get_maybe(self) -> MaybeValue:
-        """ gets a MaybeValue that can be used for existence check """
+        """gets a MaybeValue that can be used for existence check"""
         return App.globalGetEx(Int(0), self.key)
 
     def get_must(self) -> Expr:
-        """ gets the value stored at the key. if none is stored, Assert out of the program """
+        """gets the value stored at the key. if none is stored, Assert out of the program"""
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
-        """ gets the value stored at the key. if none is stored, return the value passed """
+        """gets the value stored at the key. if none is stored, return the value passed"""
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
     def delete(self) -> Expr:
-        """ deletes the key from state, if the value is static it will be a compile time error """
+        """deletes the key from state, if the value is static it will be a compile time error"""
         if self.static:
             raise TealInputError("Cannot delete static global param")
         return App.globalDel(self.key)
 
     def is_default(self) -> Expr:
-        """ checks to see if the value set equals the default value """
+        """checks to see if the value set equals the default value"""
         return self.get() == self.default
+
 
 class DynamicApplicationStateValue:
     def __init__(
@@ -164,7 +163,7 @@ class DynamicApplicationStateValue:
         self.key_generator = key_gen
 
     def __getitem__(self, key_seed: Expr | abi.BaseType) -> ApplicationStateValue:
-        """ Method to access the state value with the key seed provided """
+        """Method to access the state value with the key seed provided"""
         key = key_seed
 
         if isinstance(key_seed, abi.BaseType):
@@ -175,6 +174,7 @@ class DynamicApplicationStateValue:
         return ApplicationStateValue(
             stack_type=self.stack_type, key=key, descr=self.descr
         )
+
 
 class ApplicationState:
     def __init__(
@@ -283,7 +283,7 @@ class AccountStateValue(Expr):
         return cast(Bytes, self.key).byte_str.replace('"', "")
 
     def set_default(self, acct: Expr = Txn.sender()) -> Expr:
-        """ sets the default value if one is provided, if none provided sets the zero value for its type """
+        """sets the default value if one is provided, if none provided sets the zero value for its type"""
         if self.default is not None:
             return App.localPut(acct, self.key, self.default)
 
@@ -292,28 +292,27 @@ class AccountStateValue(Expr):
         else:
             return App.localPut(acct, self.key, Bytes(""))
 
-
     def set(self, val: Expr, acct: Expr = Txn.sender()) -> Expr:
-        """ sets the value to the argument passed """
+        """sets the value to the argument passed"""
         if val.type_of() != self.stack_type:
             raise TealTypeError(val.type_of(), self.stack_type)
 
         return App.localPut(acct, self.key, val)
 
     def get(self, acct: Expr = Txn.sender()) -> Expr:
-        """ gets the value stored for this state value """
+        """gets the value stored for this state value"""
         return App.localGet(acct, self.key)
 
     def get_maybe(self, acct: Expr = Txn.sender()) -> MaybeValue:
-        """ gets a MaybeValue that can be used for existence check """
+        """gets a MaybeValue that can be used for existence check"""
         return App.localGetEx(acct, Int(0), self.key)
 
     def get_must(self, acct: Expr = Txn.sender()) -> Expr:
-        """ gets the value stored at the key. if none is stored, Assert out of the program """
+        """gets the value stored at the key. if none is stored, Assert out of the program"""
         return Seq(val := self.get_maybe(acct), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr, acct: Expr = Txn.sender()) -> Expr:
-        """ gets the value stored at the key. if none is stored, return the value passed """
+        """gets the value stored at the key. if none is stored, return the value passed"""
         if val.type_of() != self.stack_type:
             return TealTypeError(val.type_of(), self.stack_type)
 
@@ -322,12 +321,13 @@ class AccountStateValue(Expr):
         )
 
     def delete(self, acct: Expr = Txn.sender()) -> Expr:
-        """ deletes the key from state, if the value is static it will be a compile time error """
+        """deletes the key from state, if the value is static it will be a compile time error"""
         return App.localDel(acct, self.key)
 
     def is_default(self, acct: Expr = Txn.sender()) -> Expr:
-        """ checks to see if the value set equals the default value """
+        """checks to see if the value set equals the default value"""
         return self.get(acct) == self.default
+
 
 class DynamicAccountStateValue:
     def __init__(
@@ -360,7 +360,6 @@ class DynamicAccountStateValue:
         if self.key_generator is not None:
             key = self.key_generator(key)
         return AccountStateValue(stack_type=self.stack_type, key=key)
-
 
 
 class AccountState:
