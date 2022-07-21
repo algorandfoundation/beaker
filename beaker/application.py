@@ -5,7 +5,6 @@ from pyteal import (
     Txn,
     MAX_TEAL_VERSION,
     ABIReturnSubroutine,
-    Approve,
     BareCallActions,
     Expr,
     Global,
@@ -16,7 +15,6 @@ from pyteal import (
     Router,
     Bytes,
     Subroutine,
-    Seq,
 )
 
 from beaker.decorators import (
