@@ -2,11 +2,11 @@
 
 ## house keeping
 
-- Deploy to pip
+- Install via pip
 
-- Documentation 
+- (More) Documentation 
 
-- Unit/Integration Testing 
+- (More) Unit/Integration Testing 
 
 - Automated testing of examples
 

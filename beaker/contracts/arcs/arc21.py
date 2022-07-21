@@ -1,7 +1,7 @@
 from typing import Final
 from pyteal import abi, Itob, TealType, Subroutine, Concat, Bytes
 from beaker.application import Application
-from beaker.application_schema import DynamicApplicationStateValue
+from beaker.state import DynamicApplicationStateValue
 from beaker.decorators import handler
 
 

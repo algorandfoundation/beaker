@@ -62,6 +62,7 @@ class ApplicationClient:
         extra_pages: int = None,
         **kwargs,
     ) -> tuple[int, str, str]:
+        """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
         approval = self.compile_approval()
         clear = self.compile_clear()
@@ -113,6 +114,9 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
+
+        """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
+
         approval = self.compile_approval()
         clear = self.compile_clear()
 
@@ -146,6 +150,8 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
+        """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
+
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
@@ -174,6 +180,8 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
+        """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
+
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
@@ -202,6 +210,9 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
+
+        """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
+
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
@@ -230,6 +241,7 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
+        """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
@@ -255,6 +267,9 @@ class ApplicationClient:
     def prepare(
         self, signer: TransactionSigner = None, sender: str = None, **kwargs
     ) -> "ApplicationClient":
+
+        """makes a copy of the current ApplicationClient and the fields passed"""
+
         ac = copy.copy(self)
         ac.signer = ac.get_signer(signer)
         ac.sender = ac.get_sender(sender, ac.signer)
@@ -280,6 +295,8 @@ class ApplicationClient:
         rekey_to: str = None,
         **kwargs,
     ) -> ABIResult:
+
+        """Handles calling the application"""
 
         sp = self.get_suggested_params()
         signer = self.get_signer(signer)
@@ -359,6 +376,9 @@ class ApplicationClient:
         rekey_to: str = None,
         **kwargs,
     ):
+
+        """Adds a transaction to the AtomicTransactionComposer passed"""
+
         sp = self.get_suggested_params()
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
@@ -402,6 +422,7 @@ class ApplicationClient:
         return atc
 
     def get_application_state(self, force_str=False) -> dict[str, str | int]:
+        """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)
         if "params" not in app_state or "global-state" not in app_state["params"]:
             return {}
@@ -410,6 +431,9 @@ class ApplicationClient:
     def get_account_state(
         self, account: str = None, force_str: bool = False
     ) -> dict[str, str | int]:
+
+        """gets the local state info for the app id set and the account specified"""
+
         if account is None:
             account = self.get_sender()
 
@@ -424,7 +448,8 @@ class ApplicationClient:
             acct_state["app-local-state"]["key-value"], force_str=force_str
         )
 
-    def get_account_info(self) -> dict[str, Any]:
+    def get_application_account_info(self) -> dict[str, Any]:
+        """gets the account info for the application account"""
         app_state = self.client.account_info(self.app_addr)
         return app_state
 

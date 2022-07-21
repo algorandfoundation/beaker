@@ -1,5 +1,5 @@
 from .application import Application, get_method_spec
-from .application_schema import (
+from .state import (
     AccountState,
     ApplicationState,
     DynamicApplicationStateValue,

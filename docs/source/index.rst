@@ -1,15 +1,26 @@
-.. Beaker documentation master file, created by
-   sphinx-quickstart on Mon Jul 18 13:34:12 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Beaker
+=========
 
-Welcome to Beaker's documentation!
-==================================
+.. module:: beaker
+
+.. image:: ../../beaker.png
+
+**Beaker** is a Python framework for building Smart Contracts on Algorand using `PyTeal <https://pyteal.readthedocs.io/en/stable/>`_.
+
+Check out the :doc:`usage` section for further information, including how to :ref:`install <installation>` the project.
+
+.. note:: 
+   
+   This project is under active development
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
+   usage
+   application
+   state
+   decorators
+   models
+   client
 
 
 Indices and tables

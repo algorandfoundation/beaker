@@ -30,7 +30,7 @@ from beaker.decorators import (
     close_out,
     clear_state,
 )
-from beaker.application_schema import (
+from beaker.state import (
     AccountState,
     ApplicationState,
     DynamicAccountStateValue,
@@ -57,13 +57,18 @@ def get_method_selector(fn) -> bytes:
 
 
 class Application:
-    """Application should be subclassed to add functionality"""
+    """Application contains logic to detect State Variables, Bare methods
+    ABI Methods and internal subroutines.
+
+    It should be subclassed to provide basic behavior to a custom application.
+    """
 
     # Convenience constant fields
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
 
     def __init__(self, version: int = MAX_TEAL_VERSION):
+        """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
 
         self.attrs = {
@@ -169,6 +174,7 @@ class Application:
         )
 
     def application_spec(self) -> dict[str, Any]:
+        """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items()},
             "schema": {
@@ -178,32 +184,47 @@ class Application:
             "contract": self.contract.dictify(),
         }
 
-    def initialize_app_state(self):
+    def initialize_application_state(self) -> Expr:
+        """Initialize any application state variables declared"""
         return self.app_state.initialize()
 
-    def initialize_account_state(self, addr=Txn.sender()):
+    def initialize_account_state(self, addr=Txn.sender()) -> Expr:
+        """
+        Initialize any account state variables declared
+
+        :param addr: Optional, address of account to initialize state for.
+        :return: The Expr to initialize the account state.
+        :rtype: pyteal.Expr
+        """
+
         return self.acct_state.initialize(addr)
 
     @create
-    def create(self):
-        return Seq(self.initialize_app_state(), Approve())
+    def create(self) -> Expr:
+        """default create behavior, initializes application state"""
+        return self.initialize_application_state()
 
     @opt_in
-    def opt_in(self):
+    def opt_in(self) -> Expr:
+        """default opt in behavior, initializes account state"""
         return self.initialize_account_state()
 
     @update
-    def update(self):
+    def update(self) -> Expr:
+        """default update behavior, rejects"""
         return Reject()
 
     @delete
-    def delete(self):
+    def delete(self) -> Expr:
+        """default delete behavior, rejects"""
         return Reject()
 
     @close_out
-    def close_out(self):
+    def close_out(self) -> Expr:
+        """default close out behavior, rejects"""
         return Reject()
 
     @clear_state
-    def clear_state(self):
+    def clear_state(self) -> Expr:
+        """default clear state behavior, rejects"""
         return Reject()

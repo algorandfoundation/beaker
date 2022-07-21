@@ -1,18 +1,13 @@
 from typing import Literal
 from pyteal import *
-from beaker.model import Model
 from beaker.contracts import OpUp
 from beaker.decorators import ResolvableArguments, handler
 
 
 class ExpensiveApp(OpUp):
-    """Do expensive work to demonstrate opup"""
+    """Do expensive work to demonstrate inheriting from OpUp"""
 
-    @handler(
-        resolvable=ResolvableArguments(
-            opup_app=OpUp.opup_app_id  # TODO: can we communicate this with use of `call_opup`?
-        )
-    )
+    @handler(resolvable=ResolvableArguments(opup_app=OpUp.opup_app_id))
     def hash_it(
         self,
         input: abi.String,
@@ -33,13 +28,3 @@ class ExpensiveApp(OpUp):
             ).Do(current.store(Sha256(current.load()))),
             output.decode(current.load()),
         )
-
-
-if __name__ == "__main__":
-
-    import json
-
-    ea = ExpensiveApp()
-    print(json.dumps(ea.application_spec()))
-    # print(ea.approval_program)
-    # print(ea.contract.dictify())

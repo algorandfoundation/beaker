@@ -70,7 +70,7 @@ class ConstantProductAMM(Application):
     # Call this only on create
     @create
     def create(self):
-        return self.initialize_app_state()
+        return self.initialize_application_state()
 
     # Only the account set in app_state.governor may call this method
     @handler(authorize=Authorize.only(governor))

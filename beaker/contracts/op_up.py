@@ -18,7 +18,7 @@ from pyteal import (
 )
 
 from beaker.application import Application
-from beaker.application_schema import ApplicationStateValue
+from beaker.state import ApplicationStateValue
 from beaker.consts import Algo
 from beaker.decorators import internal, handler
 

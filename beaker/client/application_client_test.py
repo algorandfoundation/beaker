@@ -25,7 +25,7 @@ from ..decorators import (
 )
 from beaker.sandbox import get_accounts, get_client
 from beaker.application import Application, get_method_selector, get_method_spec
-from beaker.application_schema import ApplicationStateValue, AccountStateValue
+from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 
 
@@ -39,7 +39,7 @@ class App(Application):
 
     @create
     def create(self):
-        return pt.Seq(self.initialize_app_state(), pt.Approve())
+        return pt.Seq(self.initialize_application_state(), pt.Approve())
 
     @opt_in
     def opt_in(self):

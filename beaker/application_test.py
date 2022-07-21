@@ -3,7 +3,7 @@ from typing import Final, cast
 from Cryptodome.Hash import SHA512
 import pyteal as pt
 
-from beaker.application_schema import (
+from beaker.state import (
     DynamicApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
