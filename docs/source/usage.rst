@@ -108,6 +108,7 @@ We've added an :ref:`ApplicationStateValue <application_state_value>` attribute 
 
 You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for dynamic state keys.
 
+For more example usage see the example :ref:`here <state_example>`.
 
 .. _inheritance:
 
