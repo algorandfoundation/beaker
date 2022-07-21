@@ -27,7 +27,7 @@ def stack_type_to_string(st: TealType):
     if st == TealType.bytes:
         return "bytes"
     else:
-        return "???"
+        raise Exception("Only uint64 and bytes supported")
 
 
 class ApplicationStateValue(Expr):
@@ -233,7 +233,13 @@ class ApplicationState:
         }
 
     def initialize(self) -> Expr:
-        return Seq(*[g.set_default() for g in self.declared_vals.values()])
+        return Seq(
+            *[
+                g.set_default()
+                for g in self.declared_vals.values()
+                if not g.static or (g.static and g.default is not None)
+            ]
+        )
 
     def schema(self) -> StateSchema:
         return StateSchema(
