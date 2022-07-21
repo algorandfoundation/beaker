@@ -1,12 +1,13 @@
 Decorators
-========
+===========
+
+.. module:: beaker
 
 handler
 ----------
 
  TODO - Examples of calling the handler with all the options set
 
-.. module:: beaker
 .. autofunction:: handler
 
 
@@ -16,7 +17,9 @@ handler
 Authorization
 ^^^^^^^^^^^^^
 
-Often, Methods should only be called by certain accounts. 
+Often, we would like to restrict the accounts that may call certain methods. 
+
+.. autoclass:: Authorize
 
 
 Lets add a parameter to the handler to allow only the app creator to call this method.
@@ -35,8 +38,6 @@ Lets add a parameter to the handler to allow only the app creator to call this m
         )
 
 This parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
-
-For more, see 
 
 The pre-defined Authorized checks are: 
 
@@ -68,11 +69,15 @@ Method Hints
 
 A Method may provide hints to the caller to help provide context for the call. Currently Method hints are one of:
 
-- [Resolvable](#resolvable) - A hint to _"resolve"_ some required argument
-- [Models](#models) - A list of model field names associated to some abi Tuple. 
-- Read Only - A boolean flag indicating how this method should be called. Methods that are meant to only produce information, having no side effects, should be flagged as read only. [ARC22](https://github.com/algorandfoundation/ARCs/pull/79)
+- :ref:`Resolvable <resolvable>` - A hint for the caller to "resolve" some required argument.
+- :doc:`models` - A list of model field names associated to some abi Tuple. 
+- :ref:`Read Only <read_only>` - A boolean flag indicating how this method should be called. 
 
- Resolvable (*Experimental*)
+
+.. _resolvable:
+
+Resolvable (*Experimental*)
+
 
 In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
 
@@ -104,14 +109,51 @@ Here we call the method, omitting the `opup_app` argument:
 When invoked, the `ApplicationClient` checks to see that all the expected arguments are passed, if not it will check for hints to see if one is specified for the missing argument and try to resolve it by calling the method and setting the value of the argument to the return value of the hint.
 
 
+.. _read_only:
+
+Read Only
+^^^^^^^^^
+
+Methods that are meant to only produce information, having no side effects, should be flagged as read only. 
+
+See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more details.
+
+.. code-block:: python
+
+    count = ApplicationStateValue(stack_type=TealType.uint64) 
+
+    @handler(read_only=True)
+    def get_count(self, id_of_thing: abi.Uint8, *, output: abi.Uint64):
+        return output.set(self.count)
+
+
+
+.. _bare_handlers:
+
 Bare Handlers
---------
+--------------
 
 The ARC4 spec allows applications to define handlers for ``bare`` methods, that is methods with no application arguments. 
 
 Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
 
-.. module:: beaker
-.. autofunction:: bare_handler
+Single Bare Handlers
+^^^^^^^^^^^^^^^^^^^^
 
+If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.
+
+.. autofunction:: create
+.. autofunction:: delete 
+.. autofunction:: update 
+.. autofunction:: opt_in 
+.. autofunction:: close_out 
+.. autofunction:: clear_state 
     
+
+
+Multiple Bare Handlers
+^^^^^^^^^^^^^^^^^^^^^^
+
+If a method requires handling multiple ``OnComplete`` actions, use ``bare_handler``
+
+.. autofunction:: bare_handler
