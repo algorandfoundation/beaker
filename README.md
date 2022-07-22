@@ -19,7 +19,14 @@ Currently only installing from github is supported
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
+## Use
+
+[Examples](/examples/)
+
+[Docs](https://beaker.algo.xyz)
+
 ## Hello, Beaker
+
 
 ```py
 from pyteal import *
@@ -45,9 +52,3 @@ if __name__ == "__main__":
     result = app_client.call(msa.hello, name="Beaker")
     print(result.return_value) # Hello, Beaker
 ```
-
-## Use
-
-[Examples](/examples/)
-
-[Docs](https://beaker.algo.xyz)
