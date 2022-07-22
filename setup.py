@@ -4,13 +4,11 @@ from setuptools import find_packages
 
 setup(
     name="beaker",
-    version="0.0.1dev",
+    version="0.0.1-3-dev",
     python_requires=">=3.10",
     packages=find_packages(),
     license="MIT",
     long_description=open("README.md").read(),
     package_data={"beaker": ["py.typed"]},
-    install_requires=[
-        "pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal"
-    ],
+    install_requires=["pyteal", "py-algorand-sdk"]
 )
