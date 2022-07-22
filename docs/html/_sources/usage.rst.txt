@@ -71,6 +71,7 @@ Thats it!
 To summarize, we:
 
  * Wrote an application using Beaker and PyTeal
+    By subclassing ``Application`` and adding a ``handler`` method
  * Compiled it to TEAL (automatically by Application)
     Using the PyTeal ``Router.compile`` 
  * Assembled the TEAL to binary (automatically by the ApplicationClient)
