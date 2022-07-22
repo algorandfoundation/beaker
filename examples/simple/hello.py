@@ -2,7 +2,7 @@ from pyteal import *
 from beaker import *
 
 # Create a class, subclassing Application from beaker
-class MySickApp(Application):
+class HelloBeaker(Application):
 
     # Add a method handler, ABI method signature will be `hello(string)string`
     @handler
@@ -16,19 +16,19 @@ if __name__ == "__main__":
     from beaker import sandbox, client
 
     # Instantiate our app
-    msa = MySickApp()
+    app = HelloBeaker()
 
     # Get an acct from the sandbox
     addr, secret = sandbox.get_accounts().pop()
 
     # Create an Application client
     app_client = client.ApplicationClient(
-        client=sandbox.get_client(), app=msa, signer=AccountTransactionSigner(secret)
+        client=sandbox.get_client(), app=app, signer=AccountTransactionSigner(secret)
     )
 
     # Deploy the app
     app_id, app_addr, txid = app_client.create()
 
     # Call the method we defined
-    result = app_client.call(msa.hello, name="Beaker")
+    result = app_client.call(app.hello, name="Beaker")
     print(result.return_value)  # Hello, Beaker
