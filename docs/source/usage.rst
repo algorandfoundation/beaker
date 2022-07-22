@@ -46,9 +46,7 @@ This is a full application, though it doesn't do much.  Instantiate it and take 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
-Lets rename our app to ``Calculator`` and add some methods to be handled by an ``ApplicationCallTransaction``. 
-
-We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`handler <handler>` decorator. 
+Lets add some methods to be handled by an incoming ``ApplicationCallTransaction``.  We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`handler <handler>` decorator. 
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
@@ -74,29 +72,29 @@ To summarize, we:
 
  * Wrote an application using Beaker and PyTeal
  * Compiled it to TEAL (automatically by Application)
+    Using the PyTeal ``Router.compile`` 
  * Assembled the TEAL to binary (automatically by the ApplicationClient)
+    By calling sending the TEAL to the Algod ``compile`` endpoint
  * Created the application on chain (automatically by the ApplicationClient)
+    Invoking the ``app_client.create`` will compile our application to binary, create an ApplicationCallTransaction with appropriate fields set, sign it with the signer provided and submit it to the network.
+
+    .. note:: 
+        Once created, subsequent calls to the app_client are directed to the ``app_id``. 
+        The constructor may also be passed an app_id directly if one is already deployed.
+
  * Called the method we defined
+    Using ``app_client.call``, passing the method defined in our class and args the method specified (by name). 
 
+    .. note::
+        The args passed must match the type of the method (i.e. don't pass a string when it wants an int). 
 
-Invoking the ``app_client.create`` will compile our application to binary, create an ApplicationCallTransaction with appropriate fields set, sign it with the signer provided and submit it to the network.
-
-.. note:: 
-    Once created, subsequent calls to the app_client are directed to the ``app_id``. 
-    The constructor may also be passed an app_id directly if one is already deployed.
-
-After creation, we use ``app_client.call``, passing the method defined in our class and args the method specified (by name). 
-
-.. note::
-    The args passed must match the type of the method (i.e. don't pass a string when it wants an int). 
-
-The result contains the parsed ``return_value`` which should match the type the ABI method returns.
+    The result contains the parsed ``return_value`` which should match the type the ABI method returns.
 
 
 .. _manage_state:
 
-Managing State
---------------
+State Management
+----------------
 
 Beaker provides a way to define state values as class variables and use them throughout our program. This is a convenient way to encapsulate functionality associated with some state values.
 
