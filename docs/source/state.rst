@@ -106,4 +106,4 @@ The ``AccountState`` class is produced automatically by the ``Application``, the
 Full Example
 ------------
 
-.. literalinclude:: ../../examples/state_example/contract.py
+.. literalinclude:: ../../examples/state/contract.py
