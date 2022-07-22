@@ -87,7 +87,7 @@ class MethodHints:
     resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
     #: hint to indicate this method can be called through Dryrun 
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indicies, see :doc:`models` for more
+    #: hint to provide names for tuple argument indices, see :doc:`models` for more
     models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
 
     def dictify(self) -> dict[str, Any]:
