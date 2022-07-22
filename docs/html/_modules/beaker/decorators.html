@@ -155,11 +155,11 @@
 
 <div class="viewcode-block" id="MethodHints"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.MethodHints">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">MethodHints</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; MethodHints provides hints to the caller about how to call the method &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;MethodHints provides hints to the caller about how to call the method&quot;&quot;&quot;</span>
 
     <span class="c1">#: hints to resolve a given argument, see :ref:`resolvable &lt;resolvable&gt;` for more</span>
     <span class="n">resolvable</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="c1">#: hint to indicate this method can be called through Dryrun </span>
+    <span class="c1">#: hint to indicate this method can be called through Dryrun</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="c1">#: hint to provide names for tuple argument indices, see :doc:`models` for more</span>
     <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -347,12 +347,12 @@
 
 
 <div class="viewcode-block" id="internal"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.internal">[docs]</a><span class="k">def</span> <span class="nf">internal</span><span class="p">(</span><span class="n">return_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; creates a subroutine to be called by logic internally</span>
+    <span class="sd">&quot;&quot;&quot;creates a subroutine to be called by logic internally</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            return_type: The type this method&#39;s returned Expression should evaluate to</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The wrapped subroutine </span>
+<span class="sd">    Args:</span>
+<span class="sd">        return_type: The type this method&#39;s returned Expression should evaluate to</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The wrapped subroutine</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
@@ -423,7 +423,7 @@
     <span class="n">delete_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">update_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">close_out</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span><span class="o">-&gt;</span><span class="n">HandlerFunc</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Add method to be handled by specific bare :code:`OnComplete` actions.</span>
 
 <span class="sd">    Args:</span>
@@ -475,80 +475,80 @@
 
 
 <div class="viewcode-block" id="create"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.create">[docs]</a><span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0</span>
 
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="delete"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.delete">[docs]</a><span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`DeleteApplication` call </span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`DeleteApplication` call</span>
 
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="update"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.update">[docs]</a><span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`UpdateApplication` call </span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`UpdateApplication` call</span>
 
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="opt_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.opt_in">[docs]</a><span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`OptIn` call </span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`OptIn` call</span>
 
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.clear_state">[docs]</a><span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`ClearState` call </span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`ClearState` call</span>
 
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="close_out"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.close_out">[docs]</a><span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`CloseOut` call </span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`CloseOut` call</span>
 
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; set method to be handled by a bare :code:`NoOp` call </span>
-<span class="sd">    </span>
-<span class="sd">        Args: </span>
-<span class="sd">            fn: The method to be wrapped.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`NoOp` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">bare_handler</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 </pre></div>
