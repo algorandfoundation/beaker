@@ -4,7 +4,7 @@ from beaker import *
 # Create a class, subclassing Application from beaker
 class MySickApp(Application):
 
-    # Add a method handler, ABI method string will be `hello(string)string`
+    # Add a method handler, ABI method signature will be `hello(string)string`
     @handler
     def hello(name: abi.String, *, output: abi.String):
         # Return the result of `Hello, `+name
