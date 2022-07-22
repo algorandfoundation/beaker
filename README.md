@@ -9,7 +9,7 @@ With Beaker, we build a class that represents our entire application including s
 
 *Mostly Untested - Expect Breaking Changes* 
 
-*Please file issues (Or PRs?) with ideas or descriptions of how this might not work for your use case.*
+*Please feel free to file issues/prs*
 
 ## Hello, Beaker
 
