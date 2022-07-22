@@ -26,7 +26,7 @@ Walkthrough
 -----------
 
 
-Lets write a bad calculator app. The full source is in the ``examples/simple/calculator.py`` `here <https://github.com/algorand-devrel/beaker>`_ 
+Lets write a bad calculator app. The full source is available `here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
 
 First, create a class to represent our application as a subclass of the beaker `Application`. 
 
