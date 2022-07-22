@@ -16,6 +16,7 @@ class Testy(Application):
                 TxnField.type_enum: TxnType.ApplicationCall,
                 TxnField.application_id: app.application_id(),
                 # Pass _all_ the accounts we got in the transaction
+                # NOTE: requires the itxn-txna branch of pyteal
                 TxnField.accounts: Txn.accounts,
                 TxnField.application_args: [
                     Bytes(get_method_selector(self.handle_inner))
