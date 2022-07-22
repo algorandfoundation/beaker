@@ -68,17 +68,13 @@ But we can define our own
 Method Hints
 ^^^^^^^^^^^^
 
-A Method may provide hints to the caller to help provide context for the call. Currently Method hints are one of:
-
-- :ref:`Resolvable <resolvable>` - A hint for the caller to "resolve" some required argument.
-- :doc:`models` - A list of model field names associated to some abi Tuple. 
-- :ref:`Read Only <read_only>` - A boolean flag indicating how this method should be called. 
+.. autoclass:: MethodHints
+    :members:
 
 
 .. _resolvable:
 
-Resolvable (*Experimental*)
-
+.. autoclass:: ResolvableArguments
 
 In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
 
@@ -112,8 +108,7 @@ When invoked, the `ApplicationClient` consults the method definition to check th
 
 .. _read_only:
 
-Read Only
-^^^^^^^^^
+**Read Only**
 
 Methods that are meant to only produce information, having no side effects, should be flagged as read only. 
 
