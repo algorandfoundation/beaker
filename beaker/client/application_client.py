@@ -281,6 +281,7 @@ class ApplicationClient:
         method: abi.Method | HandlerFunc,
         sender: str = None,
         signer: TransactionSigner = None,
+        suggested_params: transaction.SuggestedParams = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema = None,
         global_schema: transaction.StateSchema = None,
@@ -298,7 +299,7 @@ class ApplicationClient:
 
         """Handles calling the application"""
 
-        sp = self.get_suggested_params()
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -362,6 +363,7 @@ class ApplicationClient:
         method: abi.Method | HandlerFunc,
         sender: str = None,
         signer: TransactionSigner = None,
+        suggested_params: transaction.SuggestedParams = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema = None,
         global_schema: transaction.StateSchema = None,
@@ -379,7 +381,7 @@ class ApplicationClient:
 
         """Adds a transaction to the AtomicTransactionComposer passed"""
 
-        sp = self.get_suggested_params()
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
