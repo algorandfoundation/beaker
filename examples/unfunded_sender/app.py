@@ -26,7 +26,7 @@ class Testy(Application):
     @handler
     def handle_inner(self):
         return Assert(
-            # I'm being called
+            # I'm being called by another app
             Global.caller_app_id() > Int(0),
             # I got accounts passed
             Txn.accounts.length() > Int(0),
