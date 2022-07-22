@@ -22,7 +22,6 @@ Hello, Beaker
 
 
 
-
 Walkthrough
 -----------
 
