@@ -96,7 +96,7 @@
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># Create a class, subclassing Application from beaker</span>
-<span class="k">class</span> <span class="nc">MySickApp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">HelloBeaker</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
 
     <span class="c1"># Add a method handler, ABI method signature will be `hello(string)string`</span>
     <span class="nd">@handler</span>
@@ -110,21 +110,21 @@
     <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">client</span>
 
     <span class="c1"># Instantiate our app</span>
-    <span class="n">msa</span> <span class="o">=</span> <span class="n">MySickApp</span><span class="p">()</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">HelloBeaker</span><span class="p">()</span>
 
     <span class="c1"># Get an acct from the sandbox</span>
     <span class="n">addr</span><span class="p">,</span> <span class="n">secret</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Create an Application client</span>
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">msa</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">secret</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">secret</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Deploy the app</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="c1"># Call the method we defined</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">msa</span><span class="o">.</span><span class="n">hello</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Beaker&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">hello</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Beaker&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="p">)</span>  <span class="c1"># Hello, Beaker</span>
 </pre></div>
 </div>
