@@ -81,11 +81,11 @@ def set_handler_config(fn: HandlerFunc, **kwargs):
 
 @dataclass
 class MethodHints:
-    """ MethodHints provides hints to the caller about how to call the method """
+    """MethodHints provides hints to the caller about how to call the method"""
 
     #: hints to resolve a given argument, see :ref:`resolvable <resolvable>` for more
     resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
-    #: hint to indicate this method can be called through Dryrun 
+    #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
     #: hint to provide names for tuple argument indicies, see :doc:`models` for more
     models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
@@ -273,12 +273,12 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
 
 
 def internal(return_type: TealType):
-    """ creates a subroutine to be called by logic internally
+    """creates a subroutine to be called by logic internally
 
-        Args:
-            return_type: The type this method's returned Expression should evaluate to
-        Returns:
-            The wrapped subroutine 
+    Args:
+        return_type: The type this method's returned Expression should evaluate to
+    Returns:
+        The wrapped subroutine
     """
 
     def _impl(fn: HandlerFunc):
@@ -349,7 +349,7 @@ def bare_handler(
     delete_application: CallConfig = None,
     update_application: CallConfig = None,
     close_out: CallConfig = None,
-)->HandlerFunc:
+) -> HandlerFunc:
     """Add method to be handled by specific bare :code:`OnComplete` actions.
 
     Args:
@@ -401,79 +401,79 @@ def bare_handler(
 
 
 def create(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0
+    """set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0
 
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_handler(no_op=CallConfig.CREATE)(fn)
 
 
 def delete(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`DeleteApplication` call 
+    """set method to be handled by a bare :code:`DeleteApplication` call
 
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_handler(delete_application=CallConfig.CALL)(fn)
 
 
 def update(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`UpdateApplication` call 
+    """set method to be handled by a bare :code:`UpdateApplication` call
 
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_handler(update_application=CallConfig.CALL)(fn)
 
 
 def opt_in(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`OptIn` call 
+    """set method to be handled by a bare :code:`OptIn` call
 
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_handler(opt_in=CallConfig.CALL)(fn)
 
 
 def clear_state(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`ClearState` call 
+    """set method to be handled by a bare :code:`ClearState` call
 
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
     return bare_handler(clear_state=CallConfig.CALL)(fn)
 
 
 def close_out(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`CloseOut` call 
+    """set method to be handled by a bare :code:`CloseOut` call
 
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
     return bare_handler(close_out=CallConfig.CALL)(fn)
 
 
 def no_op(fn: HandlerFunc):
-    """ set method to be handled by a bare :code:`NoOp` call 
-    
-        Args: 
-            fn: The method to be wrapped.
-        Returns:
-            The original method with changes made to its signature and attributes set in its `__handler_config__`
+    """set method to be handled by a bare :code:`NoOp` call
+
+    Args:
+        fn: The method to be wrapped.
+    Returns:
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_handler(no_op=CallConfig.CALL)(fn)
