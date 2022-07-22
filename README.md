@@ -29,9 +29,11 @@ if __name__ == "__main__":
     msa = MySickApp()
 
     addr, secret = sandbox.get_accounts().pop()
-    signer = AccountTransactionSigner(secret)
 
-    app_client = client.ApplicationClient(sandbox.get_client(), msa, signer=signer)
+    app_client = client.ApplicationClient(
+        sandbox.get_client(), msa, signer=AccountTransactionSigner(secret)
+    )
+
     app_id, app_addr, txid = app_client.create()
 
     result = app_client.call(msa.hello, name="Beaker")
