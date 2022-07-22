@@ -18,6 +18,14 @@ Currently only installing from github is supported:
 Hello, Beaker 
 -------------
 
+.. literalinclude:: ../../examples/simple/hello.py
+
+
+
+Walkthrough
+-----------
+
+
 Lets write a bad calculator app. The full source is in the ``examples/simple/calculator.py`` `here <https://github.com/algorand-devrel/beaker>`_ 
 
 First, create a class to represent our application as a subclass of the beaker `Application`. 

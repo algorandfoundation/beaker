@@ -44,6 +44,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hello-beaker">Hello, Beaker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#walkthrough">Walkthrough</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#managing-state">Managing State</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#inheritance">Inheritance</a></li>
 </ul>
@@ -91,6 +92,35 @@
 </section>
 <section id="hello-beaker">
 <span id="id2"></span><h2>Hello, Beaker<a class="headerlink" href="#hello-beaker" title="Permalink to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">class</span> <span class="nc">MySickApp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+
+    <span class="nd">@handler</span>
+    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;Hello, &quot;</span><span class="p">),</span> <span class="n">name</span><span class="o">.</span><span class="n">get</span><span class="p">()))</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
+    <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">client</span>
+
+
+    <span class="n">msa</span> <span class="o">=</span> <span class="n">MySickApp</span><span class="p">()</span>
+
+    <span class="n">addr</span><span class="p">,</span> <span class="n">secret</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">signer</span> <span class="o">=</span> <span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">secret</span><span class="p">)</span>
+
+    <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">(),</span> <span class="n">msa</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">)</span>
+    <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">msa</span><span class="o">.</span><span class="n">hello</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Beaker&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="p">)</span> <span class="c1"># Hello, Beaker</span>
+</pre></div>
+</div>
+</section>
+<section id="walkthrough">
+<h2>Walkthrough<a class="headerlink" href="#walkthrough" title="Permalink to this heading"></a></h2>
 <p>Lets write a bad calculator app. The full source is in the <code class="docutils literal notranslate"><span class="pre">examples/simple/calculator.py</span></code> <a class="reference external" href="https://github.com/algorand-devrel/beaker">here</a></p>
 <p>First, create a class to represent our application as a subclass of the beaker <cite>Application</cite>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Application</span>
