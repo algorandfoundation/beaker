@@ -9,21 +9,7 @@ With Beaker, we build a class that represents our entire application including s
 
 *Mostly Untested - Expect Breaking Changes* 
 
-[TODO](TODO.md)
-
 *Please file issues (Or PRs?) with ideas or descriptions of how this might not work for your use case.*
-
-## Install
-
-Currently only installing from github is supported
-
-`pip install git+https://github.com/algorand-devrel/beaker`
-
-## Use
-
-[Examples](/examples/)
-
-[Docs](https://beaker.algo.xyz)
 
 ## Hello, Beaker
 
@@ -52,3 +38,17 @@ if __name__ == "__main__":
     result = app_client.call(msa.hello, name="Beaker")
     print(result.return_value) # Hello, Beaker
 ```
+
+## Install
+
+Currently only installing from github is supported
+
+`pip install git+https://github.com/algorand-devrel/beaker`
+
+## Use
+
+[Examples](/examples/)
+
+[Docs](https://beaker.algo.xyz)
+
+[TODO](TODO.md)
