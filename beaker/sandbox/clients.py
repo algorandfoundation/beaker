@@ -14,7 +14,7 @@ def get_client(
     return AlgodClient(token, address)
 
 
-def get_indexer(
+def get_indexer_client(
     address: str = DEFAULT_INDEXER_ADDRESS, token: str = DEFAULT_INDEXER_TOKEN
 ) -> IndexerClient:
     return IndexerClient(token, address)
