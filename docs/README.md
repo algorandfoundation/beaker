@@ -1,3 +1,0 @@
-Run with 
-
-`make html`
