@@ -9,7 +9,6 @@ With Beaker, we build a class that represents our entire application including s
 
 *Mostly Untested - Expect Breaking Changes* 
 
-*Please feel free to file issues/prs*
 
 ## Hello, Beaker
 
@@ -52,3 +51,5 @@ Currently only installing from github is supported
 [Docs](https://beaker.algo.xyz)
 
 [TODO](TODO.md)
+
+*Please feel free to file issues/prs*
