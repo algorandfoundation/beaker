@@ -1,7 +1,7 @@
 from typing import Final
-from pyteal import *
+from pyteal import abi, Itob, TealType, Subroutine, Concat, Bytes
 from beaker.application import Application
-from beaker.application_schema import DynamicGlobalStateValue
+from beaker.state import DynamicApplicationStateValue
 from beaker.decorators import handler
 
 
@@ -12,7 +12,7 @@ class ARC21(Application):
     def round_key(round):
         return Concat(Bytes("data:"), Itob(round))
 
-    data_for_round: Final[DynamicGlobalStateValue] = DynamicGlobalStateValue(
+    data_for_round: Final[DynamicApplicationStateValue] = DynamicApplicationStateValue(
         stack_type=TealType.bytes, max_keys=64, key_gen=round_key
     )
 
@@ -34,4 +34,4 @@ class ARC21(Application):
         *,
         output: abi.DynamicArray[abi.Byte]
     ):
-        return output.decode(self.data_for_round(round.get()).get_must())
+        return output.decode(self.data_for_round[round.get()].get_must())

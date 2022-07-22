@@ -5,8 +5,12 @@ from setuptools import find_packages
 setup(
     name="beaker",
     version="0.0.1dev",
+    python_requires=">=3.10",
     packages=find_packages(),
     license="MIT",
     long_description=open("README.md").read(),
-    install_requires=['pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal'],
+    package_data={"beaker": ["py.typed"]},
+    install_requires=[
+        "pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal"
+    ],
 )

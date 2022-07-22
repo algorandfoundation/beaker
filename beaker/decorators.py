@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field, replace
+from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Signature
 from typing import Callable, Final, cast, Any
@@ -23,7 +24,10 @@ from pyteal import (
     TealTypeError,
     Txn,
 )
-
+from beaker.state import (
+    ApplicationStateValue,
+    AccountStateValue,
+)
 from beaker.model import Model
 
 HandlerFunc = Callable[..., Expr]
@@ -31,82 +35,35 @@ HandlerFunc = Callable[..., Expr]
 _handler_config_attr: Final[str] = "__handler_config__"
 
 
-class ResolvableArguments:
-    """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
-
-    def __init__(
-        self,
-        **kwargs: dict[str, ABIReturnSubroutine | HandlerFunc],
-    ):
-
-        resolvable_args = {}
-        for arg_name, arg_resolver in kwargs.items():
-            if not isinstance(arg_resolver, ABIReturnSubroutine):
-                # Assume its a handler func and try to get the config
-                hc = get_handler_config(arg_resolver)
-                if hc.abi_method is None:
-                    raise TealTypeError(arg_resolver, ABIReturnSubroutine)
-
-            resolvable_args[arg_name] = hc.abi_method
-
-        self.__dict__.update(**resolvable_args)
-
-    def check_arguments(self, sig: Signature):
-        for k in self.__dict__.keys():
-            if k not in sig.parameters:
-                raise Exception(
-                    f"The ResolvableArgument field {k} not present in function signature"
-                )
-
-
-@dataclass
-class MethodHints:
-    """MethodHints provides some hints to the caller"""
-
-    resolvable: dict[str, Method] = field(kw_only=True, default=None)
-    read_only: bool = field(kw_only=True, default=False)
-    models: dict[str, list[str]] = field(kw_only=True, default=None)
-
-    def dictify(self) -> dict[str, Any]:
-        d = {"resolvable": {}, "read_only": self.read_only, "models": self.models}
-
-        if self.resolvable is not None:
-            d["resolvable"] = {k: v.dictify() for k, v in self.resolvable.items()}
-
-        return d
-
-
 @dataclass
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
-    abi_method: ABIReturnSubroutine = field(kw_only=True, default=None)
-    method_config: MethodConfig = field(kw_only=True, default=None)
-    bare_method: BareCallActions = field(kw_only=True, default=None)
-    referenced_self: bool = field(kw_only=True, default=False)
-    read_only: bool = field(kw_only=True, default=False)
+    method_spec: Method = field(kw_only=True, default=None)
     subroutine: Subroutine = field(kw_only=True, default=None)
-    resolvable: ResolvableArguments = field(kw_only=True, default=None)
+    bare_method: BareCallActions = field(kw_only=True, default=None)
+
+    referenced_self: bool = field(kw_only=True, default=False)
     models: dict[str, Model] = field(kw_only=True, default=None)
 
-    def hints(self) -> MethodHints:
+    resolvable: "ResolvableArguments" = field(kw_only=True, default=None)
+    method_config: MethodConfig = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
+
+    def hints(self) -> "MethodHints":
         mh = MethodHints(read_only=self.read_only)
 
         if self.resolvable is not None:
-            resolvable = {}
-            for arg_name, ra in self.resolvable.__dict__.items():
-                if not isinstance(ra, ABIReturnSubroutine):
-                    raise TealTypeError(ra, ABIReturnSubroutine)
-
-                resolvable[arg_name] = ra.method_spec()
-
-            mh.resolvable = resolvable
+            mh.resolvable = self.resolvable.__dict__
 
         if self.models is not None:
-            models = {}
-            for arg_name, model_spec in self.models.items():
-                models[arg_name] = list(model_spec.__annotations__.keys())
-            mh.models = models
+            mh.models = {
+                arg_name: {
+                    "name": model_spec.__name__,
+                    "elements": list(model_spec.__annotations__.keys()),
+                }
+                for arg_name, model_spec in self.models.items()
+            }
 
         return mh
 
@@ -120,6 +77,75 @@ def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
 def set_handler_config(fn: HandlerFunc, **kwargs):
     handler_config = get_handler_config(fn)
     setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
+
+
+@dataclass
+class MethodHints:
+    """MethodHints provides some hints to the caller"""
+
+    resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
+    models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
+
+    def dictify(self) -> dict[str, Any]:
+        d = {}
+        if self.read_only:
+            d["read_only"] = True
+        if self.models is not None:
+            d["models"] = self.models
+        if self.resolvable is not None:
+            d["resolvable"] = self.resolvable
+        return d
+
+
+class ResolvableTypes(str, Enum):
+    ABIMethod = "abi-method"
+    LocalState = "local-state"
+    GlobalState = "global-state"
+    Constant = "constant"
+
+
+class ResolvableArguments:
+    """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
+
+    def __init__(
+        self,
+        **kwargs: dict[
+            str, AccountStateValue | ApplicationStateValue | HandlerFunc | str | int
+        ],
+    ):
+
+        resolvable_args = {}
+        for arg_name, arg_resolver in kwargs.items():
+            match arg_resolver:
+                case AccountStateValue():
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.LocalState: arg_resolver.str_key()
+                    }
+                case ApplicationStateValue():
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.GlobalState: arg_resolver.str_key()
+                    }
+                case str() | int():
+                    resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
+                case _:
+                    hc = get_handler_config(arg_resolver)
+                    if hc.method_spec is None or not hc.read_only:
+                        raise Exception(
+                            "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
+                        )
+                    resolvable_args[arg_name] = {
+                        ResolvableTypes.ABIMethod: hc.method_spec.dictify()
+                    }
+
+        self.__dict__.update(**resolvable_args)
+
+    def check_arguments(self, sig: Signature):
+        for k in self.__dict__.keys():
+            if k not in sig.parameters:
+                raise Exception(
+                    f"The ResolvableArgument field {k} not present in function signature"
+                )
 
 
 class Authorize:
@@ -215,8 +241,8 @@ def _replace_models(fn: HandlerFunc) -> HandlerFunc:
             continue
 
         if issubclass(cls, Model):
-            params[k] = v.replace(annotation=cls().get_type())
-            annotations[k] = cls().get_type()
+            params[k] = v.replace(annotation=cls().annotation_type())
+            annotations[k] = cls().annotation_type()
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
@@ -267,17 +293,14 @@ def handler(
     method_config: MethodConfig = None,
     read_only: bool = False,
     resolvable: ResolvableArguments = None,
-):
-    """
-    handler is the primary way to expose an ABI method for an application
-    it may take a number of arguments:
+) -> HandlerFunc:
+    """handler is the primary way to expose an ABI method for an application
 
-    Args:
-
-        authorize: A subroutine that should evaluate to 1/0 depending on the app call transaction sender
-        method_config: accepts a MethodConfig object to define how the app call should be routed given OnComplete and whether or not the call is a create
-        read_only: adds read_only flag to abi (eventually, currently it does nothing)
-        resolvable: provides hints to a caller at how to resolve some arguments
+    :param fn: The function being wrapped
+    :param authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+    :param method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender (TODO: link to py sdk docs)
+    :param read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).A
+    :param resolvable: **Experimental** Provides a means to resolve some required input to the caller.
     """
 
     def _impl(fn: HandlerFunc):
@@ -294,7 +317,7 @@ def handler(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(fn, abi_method=ABIReturnSubroutine(fn))
+        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
 
         return fn
 
@@ -347,33 +370,29 @@ def bare_handler(
     return _impl
 
 
-class Bare:
-    """Bare contains static methods for handling bare application calls, that is app calls with no arguments"""
+def create(fn: HandlerFunc):
+    return bare_handler(no_op=CallConfig.CREATE)(fn)
 
-    @staticmethod
-    def create(fn: HandlerFunc):
-        return bare_handler(no_op=CallConfig.CREATE)(fn)
 
-    @staticmethod
-    def delete(fn: HandlerFunc):
-        return bare_handler(delete_application=CallConfig.CALL)(fn)
+def delete(fn: HandlerFunc):
+    return bare_handler(delete_application=CallConfig.CALL)(fn)
 
-    @staticmethod
-    def update(fn: HandlerFunc):
-        return bare_handler(update_application=CallConfig.CALL)(fn)
 
-    @staticmethod
-    def opt_in(fn: HandlerFunc):
-        return bare_handler(opt_in=CallConfig.CALL)(fn)
+def update(fn: HandlerFunc):
+    return bare_handler(update_application=CallConfig.CALL)(fn)
 
-    @staticmethod
-    def clear_state(fn: HandlerFunc):
-        return bare_handler(clear_state=CallConfig.CALL)(fn)
 
-    @staticmethod
-    def close_out(fn: HandlerFunc):
-        return bare_handler(close_out=CallConfig.CALL)(fn)
+def opt_in(fn: HandlerFunc):
+    return bare_handler(opt_in=CallConfig.CALL)(fn)
 
-    @staticmethod
-    def no_op(fn: HandlerFunc):
-        return bare_handler(no_op=CallConfig.CALL)(fn)
+
+def clear_state(fn: HandlerFunc):
+    return bare_handler(clear_state=CallConfig.CALL)(fn)
+
+
+def close_out(fn: HandlerFunc):
+    return bare_handler(close_out=CallConfig.CALL)(fn)
+
+
+def no_op(fn: HandlerFunc):
+    return bare_handler(no_op=CallConfig.CALL)(fn)

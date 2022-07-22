@@ -18,11 +18,10 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
-from beaker.application import Application, method_spec
-from beaker.decorators import HandlerFunc, MethodHints
-
-# TODO make const
-APP_MAX_PAGE_SIZE = 2048
+from beaker.application import Application, get_method_spec
+from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
+from beaker.consts import APP_MAX_PAGE_SIZE
+from beaker.client.state_decode import decode_state
 
 
 class ApplicationClient:
@@ -32,53 +31,58 @@ class ApplicationClient:
         app: Application,
         app_id: int = 0,
         signer: TransactionSigner = None,
+        sender: str = None,
         suggested_params: transaction.SuggestedParams = None,
     ):
         self.client = client
         self.app = app
+        self.app_id = app_id
+        self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
         self.signer = signer
-        if self.signer is not None:
-            self.addr = address_from_private_key(signer.private_key)
+        self.sender = sender
 
         self.suggested_params = suggested_params
 
-        # Also set in create
-        self.app_id = app_id
-
-    def compile(self) -> tuple[bytes, bytes]:
+    def compile_approval(self) -> bytes:
         approval_result = self.client.compile(self.app.approval_program)
-        approval_binary = b64decode(approval_result["result"])
+        return b64decode(approval_result["result"])
 
+    def compile_clear(self) -> bytes:
         clear_result = self.client.compile(self.app.clear_program)
-        clear_binary = b64decode(clear_result["result"])
-
-        return approval_binary, clear_binary
+        return b64decode(clear_result["result"])
 
     def create(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        extra_pages: int = None,
         **kwargs,
     ) -> tuple[int, str, str]:
+        """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
-        approval, clear = self.compile()
+        approval = self.compile_approval()
+        clear = self.compile_clear()
 
-        extra_pages = ceil(
-            ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
-        )
+        if extra_pages is None:
+            extra_pages = ceil(
+                ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
+            )
 
-        sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        sp = self.get_suggested_params(suggested_params)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationCreateTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
-                    on_complete=transaction.OnComplete.NoOpOC,
+                    on_complete=on_complete,
                     approval_program=approval,
                     clear_program=clear,
                     global_schema=self.app.app_state.schema(),
@@ -98,26 +102,33 @@ class ApplicationClient:
         app_addr = get_application_address(app_id)
 
         self.app_id = app_id
+        self.app_addr = app_addr
 
         return app_id, app_addr, create_txid
 
     def update(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        approval, clear = self.compile()
 
-        sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
+
+        approval = self.compile_approval()
+        clear = self.compile_clear()
+
+        sp = self.get_suggested_params(suggested_params)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationUpdateTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     approval_program=approval,
@@ -131,22 +142,116 @@ class ApplicationClient:
         update_result = atc.execute(self.client, 4)
         return update_result.tx_ids[0]
 
-    def delete(
+    def opt_in(
         self,
+        sender: str = None,
         signer: TransactionSigner = None,
         args: list[Any] = [],
-        sp: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> str:
+        """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
+
+        sp = self.get_suggested_params(suggested_params)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationOptInTxn(
+                    sender=sender,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
+        )
+        opt_in_result = atc.execute(self.client, 4)
+        return opt_in_result.tx_ids[0]
+
+    def close_out(
+        self,
+        sender: str = None,
+        signer: TransactionSigner = None,
+        args: list[Any] = [],
+        suggested_params: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> str:
+        """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
+
+        sp = self.get_suggested_params(suggested_params)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationCloseOutTxn(
+                    sender=sender,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
+        )
+        close_out_result = atc.execute(self.client, 4)
+        return close_out_result.tx_ids[0]
+
+    def clear_state(
+        self,
+        sender: str = None,
+        signer: TransactionSigner = None,
+        args: list[Any] = [],
+        suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
 
-        sp = self.get_suggested_params(sp)
-        signer, addr = self.get_signer(signer)
+        """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
+
+        sp = self.get_suggested_params(suggested_params)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationClearStateTxn(
+                    sender=sender,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
+                signer=signer,
+            )
+        )
+        clear_state_result = atc.execute(self.client, 4)
+        return clear_state_result.tx_ids[0]
+
+    def delete(
+        self,
+        sender: str = None,
+        signer: TransactionSigner = None,
+        args: list[Any] = [],
+        suggested_params: transaction.SuggestedParams = None,
+        **kwargs,
+    ) -> str:
+        """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
+
+        sp = self.get_suggested_params(suggested_params)
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
                 txn=transaction.ApplicationDeleteTxn(
-                    sender=addr,
+                    sender=sender,
                     sp=sp,
                     index=self.app_id,
                     app_args=args,
@@ -160,95 +265,213 @@ class ApplicationClient:
         return delete_result.tx_ids[0]
 
     def prepare(
-        self,
-        signer: TransactionSigner,
-        sp: transaction.SuggestedParams = None,
-        **kwargs,
+        self, signer: TransactionSigner = None, sender: str = None, **kwargs
     ) -> "ApplicationClient":
 
+        """makes a copy of the current ApplicationClient and the fields passed"""
+
         ac = copy.copy(self)
-        ac.signer = signer
-        ac.suggested_params = sp
-        ac.txn_kwargs = kwargs
+        ac.signer = ac.get_signer(signer)
+        ac.sender = ac.get_sender(sender, ac.signer)
+        ac.__dict__.update(**kwargs)
         return ac
 
-    def call(self, method: abi.Method | HandlerFunc, **kwargs) -> ABIResult:
+    def call(
+        self,
+        method: abi.Method | HandlerFunc,
+        sender: str = None,
+        signer: TransactionSigner = None,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        local_schema: transaction.StateSchema = None,
+        global_schema: transaction.StateSchema = None,
+        approval_program: bytes = None,
+        clear_program: bytes = None,
+        extra_pages: int = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+        note: bytes = None,
+        lease: bytes = None,
+        rekey_to: str = None,
+        **kwargs,
+    ) -> ABIResult:
+
+        """Handles calling the application"""
 
         sp = self.get_suggested_params()
-        signer, addr = self.get_signer()
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         if not isinstance(method, abi.Method):
-            method = method_spec(method)
+            method = get_method_spec(method)
 
         hints = self.method_hints(method.name)
 
         args = []
         for method_arg in method.args:
-            if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
-                if hints.resolvable is not None and method_arg.name in hints.resolvable:
-                    result = self.call(hints.resolvable[method_arg.name])
-                    args.append(result.return_value)
-                else:
-                    raise Exception(f"Unspecified argument: {method_arg.name}")
+            name = method_arg.name
+            if name in kwargs:
+                thing = kwargs[name]
+                if type(thing) is dict:
+                    if name in hints.models:
+                        thing = [
+                            thing[field_name]
+                            for field_name in hints.models[name]["elements"]
+                        ]
+                    else:
+                        # todo error if wrong keys
+                        thing = list(thing.values())
+                args.append(thing)
+            elif name in hints.resolvable:
+                args.append(self.resolve(hints.resolvable[name]))
             else:
-                args.append(kwargs[method_arg.name])
+                raise Exception(f"Unspecified argument: {name}")
 
+        atc = AtomicTransactionComposer()
         if hints.read_only:
             # TODO: do dryrun
             pass
 
-        # TODO: find a way better way to do this
-        txnkwargs = self.__dict__.get("txn_kwargs", {})
-
-        atc = AtomicTransactionComposer()
         atc.add_method_call(
             self.app_id,
             method,
-            addr,
+            sender,
             sp,
             signer,
             method_args=args,
-            **txnkwargs,
+            on_complete=on_complete,
+            local_schema=local_schema,
+            global_schema=global_schema,
+            approval_program=approval_program,
+            clear_program=clear_program,
+            extra_pages=extra_pages,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+            note=note,
+            lease=lease,
+            rekey_to=rekey_to,
         )
 
         result = atc.execute(self.client, 4)
         return result.abi_results.pop()
 
     def add_method_call(
-        self, atc: AtomicTransactionComposer, method: abi.Method | HandlerFunc, **kwargs
+        self,
+        atc: AtomicTransactionComposer,
+        method: abi.Method | HandlerFunc,
+        sender: str = None,
+        signer: TransactionSigner = None,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        local_schema: transaction.StateSchema = None,
+        global_schema: transaction.StateSchema = None,
+        approval_program: bytes = None,
+        clear_program: bytes = None,
+        extra_pages: int = None,
+        accounts: list[str] = None,
+        foreign_apps: list[int] = None,
+        foreign_assets: list[int] = None,
+        note: bytes = None,
+        lease: bytes = None,
+        rekey_to: str = None,
+        **kwargs,
     ):
+
+        """Adds a transaction to the AtomicTransactionComposer passed"""
+
         sp = self.get_suggested_params()
-        signer, addr = self.get_signer()
+        signer = self.get_signer(signer)
+        sender = self.get_sender(sender, signer)
 
         if not isinstance(method, abi.Method):
-            method = method_spec(method)
+            method = get_method_spec(method)
 
         hints = self.method_hints(method.name)
 
         args = []
         for method_arg in method.args:
-            if method_arg.name not in kwargs or kwargs[method_arg.name] is None:
-                if hints.resolvable is not None and method_arg.name in hints.resolvable:
-                    result = self.call(hints.resolvable[method_arg.name])
-                    args.append(result.return_value)
-                else:
-                    raise Exception(f"Unspecified argument: {method_arg.name}")
+            name = method_arg.name
+            if name in kwargs:
+                args.append(kwargs[name])
+            elif name in hints.resolvable:
+                args.append(self.resolve(hints.resolvable[name]))
             else:
-                args.append(kwargs[method_arg.name])
-
-        txnkwargs = self.__dict__.get("txn_kwargs", {})
+                raise Exception(f"Unspecified argument: {name}")
 
         atc.add_method_call(
             self.app_id,
             method,
-            addr,
+            sender,
             sp,
             signer,
             method_args=args,
-            **txnkwargs,
+            on_complete=on_complete,
+            local_schema=local_schema,
+            global_schema=global_schema,
+            approval_program=approval_program,
+            clear_program=clear_program,
+            extra_pages=extra_pages,
+            accounts=accounts,
+            foreign_apps=foreign_apps,
+            foreign_assets=foreign_assets,
+            note=note,
+            lease=lease,
+            rekey_to=rekey_to,
         )
 
         return atc
+
+    def get_application_state(self, force_str=False) -> dict[str, str | int]:
+        """gets the global state info for the app id set"""
+        app_state = self.client.application_info(self.app_id)
+        if "params" not in app_state or "global-state" not in app_state["params"]:
+            return {}
+        return decode_state(app_state["params"]["global-state"], force_str=force_str)
+
+    def get_account_state(
+        self, account: str = None, force_str: bool = False
+    ) -> dict[str, str | int]:
+
+        """gets the local state info for the app id set and the account specified"""
+
+        if account is None:
+            account = self.get_sender()
+
+        acct_state = self.client.account_application_info(account, self.app_id)
+        if (
+            "app-local-state" not in acct_state
+            or "key-value" not in acct_state["app-local-state"]
+        ):
+            return {}
+
+        return decode_state(
+            acct_state["app-local-state"]["key-value"], force_str=force_str
+        )
+
+    def get_application_account_info(self) -> dict[str, Any]:
+        """gets the account info for the application account"""
+        app_state = self.client.account_info(self.app_addr)
+        return app_state
+
+    def resolve(self, to_resolve) -> Any:
+        if ResolvableTypes.Constant in to_resolve:
+            return to_resolve[ResolvableTypes.Constant]
+        elif ResolvableTypes.GlobalState in to_resolve:
+            key = to_resolve[ResolvableTypes.GlobalState]
+            app_state = self.get_application_state(force_str=True)
+            return app_state[key]
+        elif ResolvableTypes.LocalState in to_resolve:
+            key = to_resolve[ResolvableTypes.LocalState]
+            acct_state = self.get_account_state(
+                self.get_sender(None, None), force_str=True
+            )
+            return acct_state[key]
+        elif ResolvableTypes.ABIMethod in to_resolve:
+            method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])
+            result = self.call(method)
+            return result.return_value
+        else:
+            raise Exception(f"Unrecognized resolver: {to_resolve}")
 
     def method_hints(self, method_name: str) -> MethodHints:
         if method_name not in self.app.hints:
@@ -266,22 +489,32 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def get_signer(
-        self, signer: TransactionSigner = None
-    ) -> tuple[TransactionSigner, str]:
+    def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
 
-        if signer is None:
-            if self.signer is None:
-                raise Exception("No signer provided")
+        if signer is not None:
+            return signer
 
+        if self.signer is not None:
+            return self.signer
+
+        raise Exception("No signer provided")
+
+    def get_sender(self, sender: str = None, signer: TransactionSigner = None) -> str:
+        if sender is not None:
+            return sender
+
+        if self.sender is not None:
+            return self.sender
+
+        if self.signer is not None and signer is None:
             signer = self.signer
 
         match signer:
             case AccountTransactionSigner():
-                addr = address_from_private_key(signer.private_key)
+                return address_from_private_key(signer.private_key)
             case MultisigTransactionSigner():
-                addr = signer.msig.address()
+                return signer.msig.address()
             case LogicSigTransactionSigner():
-                addr = signer.lsig.address()
+                return signer.lsig.address()
 
-        return signer, addr
+        raise Exception("No sender provided")

@@ -1,18 +1,32 @@
 import pytest
 from typing import Final, cast
+from Cryptodome.Hash import SHA512
 import pyteal as pt
 
-from beaker.application_schema import (
-    DynamicGlobalStateValue,
-    GlobalStateValue,
-    LocalStateValue,
-    DynamicLocalStateValue,
+from beaker.state import (
+    DynamicApplicationStateValue,
+    ApplicationStateValue,
+    AccountStateValue,
+    DynamicAccountStateValue,
 )
 
-from .errors import BareOverwriteError
-from .application import Application, method_spec
-from .decorators import ResolvableArguments, get_handler_config, handler, Bare
-from .model import Model
+from beaker.errors import BareOverwriteError
+from beaker.application import (
+    Application,
+    get_method_selector,
+    get_method_signature,
+    get_method_spec,
+)
+from beaker.decorators import (
+    ResolvableArguments,
+    ResolvableTypes,
+    handler,
+    internal,
+    create,
+    update,
+    delete,
+)
+from beaker.model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -32,9 +46,9 @@ def test_empty_application():
         == 0
     ), "Expected no schema"
 
-    assert (
-        len(ea.bare_handlers.keys()) == 3
-    ), "Expected 3 bare handlers: create, update, and delete"
+    assert len(ea.bare_handlers.keys()) == len(
+        EXPECTED_BARE_HANDLERS
+    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
         len(ea.approval_program) > 0
     ), "Expected approval program to be compiled to teal"
@@ -61,10 +75,8 @@ def test_single_handler():
     sh = SingleHandler()
 
     assert len(sh.methods) == 1, "Expected a single handler"
-
-    hc = get_handler_config(sh.handle)
-    assert (
-        sh.contract.get_method_by_name("handle") == hc.abi_method.method_spec()
+    assert sh.contract.get_method_by_name("handle") == get_method_spec(
+        sh.handle
     ), "Expected contract method to match method spec"
 
     with pytest.raises(Exception):
@@ -73,25 +85,25 @@ def test_single_handler():
 
 def test_bare_handler():
     class BareHandler(Application):
-        @Bare.create
+        @create
         def create():
             return pt.Approve()
 
-        @Bare.update
+        @update
         def update():
             return pt.Approve()
 
-        @Bare.delete
+        @delete
         def delete():
             return pt.Approve()
 
     bh = BareHandler()
-    assert (
-        len(bh.bare_handlers) == 3
-    ), "Expected 3 bare handlers: create, update, delete"
+    assert len(bh.bare_handlers) == len(
+        EXPECTED_BARE_HANDLERS
+    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
 
     class FailBareHandler(Application):
-        @Bare.create
+        @create
         def wrong_name():
             return pt.Approve()
 
@@ -110,9 +122,8 @@ def test_subclass_application():
 
     sc = SubClass()
     assert len(sc.methods) == 1, "Expected single method"
-    hc = get_handler_config(sc.handle)
-    assert (
-        sc.contract.get_method_by_name("handle") == hc.abi_method.method_spec()
+    assert sc.contract.get_method_by_name("handle") == get_method_spec(
+        sc.handle
     ), "Expected contract method to match method spec"
 
     class OverrideSubClass(SuperClass):
@@ -122,18 +133,17 @@ def test_subclass_application():
 
     osc = OverrideSubClass()
     assert len(osc.methods) == 1, "Expected single method"
-    hc = get_handler_config(osc.handle)
-    assert (
-        osc.contract.get_method_by_name("handle") == hc.abi_method.method_spec()
+    assert osc.contract.get_method_by_name("handle") == get_method_spec(
+        osc.handle
     ), "Expected contract method to match method spec"
 
 
 def test_app_state():
     class BasicAppState(Application):
-        uint_val: Final[GlobalStateValue] = GlobalStateValue(
+        uint_val: Final[ApplicationStateValue] = ApplicationStateValue(
             stack_type=pt.TealType.uint64
         )
-        byte_val: Final[GlobalStateValue] = GlobalStateValue(
+        byte_val: Final[ApplicationStateValue] = ApplicationStateValue(
             stack_type=pt.TealType.bytes
         )
 
@@ -143,12 +153,12 @@ def test_app_state():
     assert app.app_state.num_byte_slices == 1, "Expected 1 byte slice"
 
     class DynamicAppState(BasicAppState):
-        uint_dynamic: Final[DynamicGlobalStateValue] = DynamicGlobalStateValue(
-            stack_type=pt.TealType.uint64, max_keys=10
-        )
-        byte_dynamic: Final[DynamicGlobalStateValue] = DynamicGlobalStateValue(
-            stack_type=pt.TealType.bytes, max_keys=10
-        )
+        uint_dynamic: Final[
+            DynamicApplicationStateValue
+        ] = DynamicApplicationStateValue(stack_type=pt.TealType.uint64, max_keys=10)
+        byte_dynamic: Final[
+            DynamicApplicationStateValue
+        ] = DynamicApplicationStateValue(stack_type=pt.TealType.bytes, max_keys=10)
 
     app = DynamicAppState()
     assert app.app_state.num_uints == 11, "Expected 11 ints"
@@ -157,10 +167,12 @@ def test_app_state():
 
 def test_acct_state():
     class BasicAcctState(Application):
-        uint_val: Final[LocalStateValue] = LocalStateValue(
+        uint_val: Final[AccountStateValue] = AccountStateValue(
             stack_type=pt.TealType.uint64
         )
-        byte_val: Final[LocalStateValue] = LocalStateValue(stack_type=pt.TealType.bytes)
+        byte_val: Final[AccountStateValue] = AccountStateValue(
+            stack_type=pt.TealType.bytes
+        )
 
     app = BasicAcctState()
 
@@ -168,23 +180,23 @@ def test_acct_state():
     assert app.acct_state.num_byte_slices == 1, "Expected 1 byte slice"
 
     class DynamicAcctState(BasicAcctState):
-        uint_dynamic: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
-            stack_type=pt.TealType.uint64, max_keys=10
+        uint_dynamic: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+            stack_type=pt.TealType.uint64, max_keys=5
         )
-        byte_dynamic: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
-            stack_type=pt.TealType.bytes, max_keys=10
+        byte_dynamic: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+            stack_type=pt.TealType.bytes, max_keys=5
         )
 
     app = DynamicAcctState()
-    assert app.acct_state.num_uints == 11, "Expected 11 ints"
-    assert app.acct_state.num_byte_slices == 11, "Expected 11 byte slices"
+    assert app.acct_state.num_uints == 6, "Expected 6 ints"
+    assert app.acct_state.num_byte_slices == 6, "Expected 6 byte slices"
 
 
 def test_internal():
     from beaker.decorators import internal
 
     class Internal(Application):
-        @Bare.create
+        @create
         def create(self):
             return pt.Seq(
                 pt.Pop(self.internal_meth()),
@@ -254,7 +266,7 @@ def test_internal():
 
 def test_resolvable_hint():
     class Hinty(Application):
-        @handler
+        @handler(read_only=True)
         def get_asset_id(*, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
@@ -267,9 +279,20 @@ def test_resolvable_hint():
     assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
     hint = h.hints[h.hintymeth.__name__]
-    assert hint.resolvable["aid"] == method_spec(
-        h.get_asset_id
+    assert (
+        hint.resolvable["aid"][ResolvableTypes.ABIMethod]
+        == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
+
+
+EXPECTED_BARE_HANDLERS = [
+    "create",
+    "update",
+    "delete",
+    "opt_in",
+    "clear_state",
+    "close_out",
+]
 
 
 def test_model_args():
@@ -289,6 +312,74 @@ def test_model_args():
 
     arg = Argument("(address,uint64,string)", name="user_record")
     ret = Returns("void")
-    assert Method("modely", [arg], ret) == method_spec(m.modely)
+    assert Method("modely", [arg], ret) == get_method_spec(m.modely)
 
-    assert m.hints["modely"].models == {"user_record": ["addr", "balance", "nickname"]}
+    assert m.hints["modely"].models == {
+        "user_record": {
+            "name": "UserRecord",
+            "elements": ["addr", "balance", "nickname"],
+        }
+    }
+
+
+def test_instance_vars():
+    class Inst(Application):
+        def __init__(self, v: str):
+            self.v = pt.Bytes(v)
+            super().__init__()
+
+        @handler
+        def use_it(self):
+            return pt.Log(self.v)
+
+        @handler
+        def call_it(self):
+            return self.use_it_internal()
+
+        @internal(pt.TealType.none)
+        def use_it_internal(self):
+            return pt.Log(self.v)
+
+    i1 = Inst("first")
+    i2 = Inst("second")
+
+    assert i1.approval_program.index("first") > 0, "Expected to see the string `first`"
+    assert (
+        i2.approval_program.index("second") > 0
+    ), "Expected to see the string `second`"
+
+    with pytest.raises(ValueError):
+        i1.approval_program.index("second")
+
+    with pytest.raises(ValueError):
+        i2.approval_program.index("first")
+
+
+def hashy(sig: str):
+    chksum = SHA512.new(truncate="256")
+    chksum.update(sig.encode())
+    return chksum.digest()[:4]
+
+
+def test_abi_method_details():
+    @handler
+    def meth():
+        return pt.Assert(pt.Int(1))
+
+    expected_sig = "meth()void"
+    expected_selector = hashy(expected_sig)
+
+    assert get_method_signature(meth) == expected_sig
+    assert get_method_selector(meth) == expected_selector
+
+    def meth2():
+        pass
+
+    with pytest.raises(Exception):
+        get_method_spec(meth2)
+
+    with pytest.raises(Exception):
+        get_method_signature(meth2)
+
+    with pytest.raises(Exception):
+        get_method_selector(meth2)

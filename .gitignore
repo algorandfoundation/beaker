@@ -2,3 +2,5 @@
 .venv/
 __pycache__/
 beaker.egg-info/
+.coverage
+docs/build/

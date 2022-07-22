@@ -1,28 +1,48 @@
 from typing import Final
-from pyteal import *
-
-from beaker import Application, GlobalStateValue, DynamicLocalStateValue
-from beaker.decorators import (
-    Authorize,
-    handler,
-    Bare,
-    bare_handler,
+from pyteal import (
+    abi,
+    TealType,
+    Subroutine,
+    Itob,
+    Assert,
+    Global,
+    Bytes,
+    Int,
+    Seq,
+    AssetHolding,
+    AssetParam,
+    Txn,
+    If,
+    And,
+    InnerTxnBuilder,
+    ScratchVar,
+    TxnField,
+    TxnType,
+    Not,
+    ExtractUint64,
+    Extract,
+    WideRatio,
+    Concat,
+    App,
 )
+
+from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
+from beaker.decorators import Authorize, handler, create, update, delete
 
 
 class ARC18(Application):
 
-    administrator: Final[GlobalStateValue] = GlobalStateValue(
+    administrator: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address()
     )
-    royalty_basis: Final[GlobalStateValue] = GlobalStateValue(
+    royalty_basis: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64, key=Bytes("royalty_basis"), static=True
     )
-    royalty_receiver: Final[GlobalStateValue] = GlobalStateValue(
+    royalty_receiver: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("royalty_receiver"), static=True
     )
 
-    offers: Final[DynamicLocalStateValue] = DynamicLocalStateValue(
+    offers: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
         key_gen=Subroutine(TealType.bytes)(lambda asset_id: Itob(asset_id)),
@@ -35,21 +55,17 @@ class ARC18(Application):
     # App Lifecycle
     ###
 
-    @Bare.create
+    @create
     def create(self):
-        return self.initialize_app_state()
+        return self.initialize_application_state()
 
-    @Bare.update
-    def update():
+    @update
+    def update(self):
         return Assert(Txn.sender() == ARC18.administrator)
 
-    @Bare.delete
-    def delete():
+    @delete
+    def delete(self):
         return Assert(Txn.sender() == ARC18.administrator)
-
-    @bare_handler(opt_in=CallConfig.CALL, close_out=CallConfig.CALL)
-    def handle_accts():
-        return Approve()
 
     ###
     # Admin
@@ -113,7 +129,7 @@ class ARC18(Application):
         )
 
     @handler
-    def transfer(
+    def transfer_algo_payment(
         self,
         royalty_asset: abi.Asset,
         royalty_asset_amount: abi.Uint64,
@@ -136,7 +152,7 @@ class ARC18(Application):
         valid_transfer_group = Seq(
             Assert(Global.group_size() == Int(2)),
             (offer := ScratchVar()).store(
-                self.offers(royalty_asset.asset_id()).get(owner.address())
+                self.offers[royalty_asset.asset_id()].get(owner.address())
             ),
             offer_auth_addr.store(self.offered_auth(offer.load())),
             offer_amt.store(self.offered_amount(offer.load())),
@@ -180,7 +196,7 @@ class ARC18(Application):
         )
 
     @handler
-    def transfer(
+    def transfer_asset_payment(
         self,
         royalty_asset: abi.Asset,
         royalty_asset_amount: abi.Uint64,
@@ -205,7 +221,7 @@ class ARC18(Application):
             Assert(Global.group_size() == Int(2)),
             # Get the offer from local state
             (offer := ScratchVar()).store(
-                self.offers(royalty_asset.asset_id()).get_must(owner.address())
+                self.offers[royalty_asset.asset_id()].get_must(owner.address())
             ),
             offer_auth_addr.store(ARC18.offered_auth(offer.load())),
             offer_amt.store(ARC18.offered_amount(offer.load())),
@@ -293,7 +309,7 @@ class ARC18(Application):
 
         return Seq(
             (offer := ScratchVar()).store(
-                self.offers(royalty_asset.asset_id()).get(owner.address())
+                self.offers[royalty_asset.asset_id()].get(owner.address())
             ),
             (curr_offer_amt := ScratchVar()).store(ARC18.offered_amount(offer.load())),
             (curr_offer_auth := ScratchVar()).store(ARC18.offered_auth(offer.load())),
@@ -328,9 +344,7 @@ class ARC18(Application):
 
     @handler(read_only=True)
     def get_offer(royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer):
-        return output.decode(
-            ARC18.offers(royalty_asset.get()).get_must(owner.address())
-        )
+        return output.decode(ARC18.offers[royalty_asset].get_must(owner.address()))
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
@@ -448,7 +462,7 @@ class ARC18(Application):
 
     @Subroutine(TealType.none)
     def do_update_offered(acct, asset, auth, amt, prev_auth, prev_amt):
-        offer_state = ARC18.offers(asset)
+        offer_state = ARC18.offers[asset]
         return Seq(
             previous := offer_state.get_maybe(acct),
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
@@ -463,7 +477,7 @@ class ARC18(Application):
             # Now consider the new offer, if its 0 this is a delete, otherwise update
             If(
                 amt > Int(0),
-                offer_state.set(acct, Concat(auth, Itob(amt))),
+                offer_state.set(Concat(auth, Itob(amt)), acct),
                 offer_state.delete(acct),
             ),
         )

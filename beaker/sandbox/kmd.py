@@ -2,7 +2,7 @@ from typing import Tuple
 from algosdk.kmd import KMDClient
 
 DEFAULT_KMD_ADDRESS = "http://localhost:4002"
-DEFAULT_KMD_TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+DEFAULT_KMD_TOKEN = "a" * 64
 DEFAULT_KMD_WALLET_NAME = "unencrypted-default-wallet"
 DEFAULT_KMD_WALLET_PASSWORD = ""
 
