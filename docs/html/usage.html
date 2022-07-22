@@ -98,7 +98,7 @@
 <span class="c1"># Create a class, subclassing Application from beaker</span>
 <span class="k">class</span> <span class="nc">MySickApp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
 
-    <span class="c1"># Add a method handler, ABI method string will be `hello(string)string`</span>
+    <span class="c1"># Add a method handler, ABI method signature will be `hello(string)string`</span>
     <span class="nd">@handler</span>
     <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
         <span class="c1"># Return the result of `Hello, `+name</span>
