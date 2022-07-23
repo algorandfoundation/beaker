@@ -1,7 +1,7 @@
-from typing import Literal
+from typing import Literal, Annotated, get_type_hints
 from pyteal import *
 from beaker.contracts import OpUp
-from beaker.decorators import ResolvableArguments, handler
+from beaker.decorators import ResolvableArguments, handler, Param
 
 
 class ExpensiveApp(OpUp):
@@ -12,7 +12,7 @@ class ExpensiveApp(OpUp):
         self,
         input: abi.String,
         iters: abi.Uint64,
-        opup_app: abi.Application,
+        opup_app: Annotated[abi.Application, OpUp.opup_app_id],
         *,
         output: abi.StaticArray[abi.Byte, Literal[32]],
     ):
@@ -28,3 +28,7 @@ class ExpensiveApp(OpUp):
             ).Do(current.store(Sha256(current.load()))),
             output.decode(current.load()),
         )
+
+e = ExpensiveApp()
+print(e.approval_program)
+print(e.hints)

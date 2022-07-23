@@ -1,10 +1,13 @@
+from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
-from inspect import get_annotations, signature, Signature
-from typing import Callable, Final, cast, Any
+from inspect import get_annotations, isclass, signature, Signature
+from typing import Annotated, Callable, Final, cast, Any, get_type_hints, Generic, TypeVar
+from typing_extensions import _AnnotatedAlias
 from algosdk.abi import Method
 from pyteal import (
+    abi,
     ABIReturnSubroutine,
     And,
     App,
@@ -30,6 +33,22 @@ from beaker.state import (
 )
 from beaker.model import Model
 
+T = TypeVar('T')
+V = TypeVar('V')
+
+class Param(abi.BaseType, Generic[T,V]):
+
+    def __init__(self):
+        print(self.__dict__)
+
+    def encode(self):
+        pass
+
+    def decode(self, v: Any):
+        pass
+
+
+
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
@@ -46,12 +65,17 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     models: dict[str, Model] = field(kw_only=True, default=None)
 
+    annotations: list[Any]  = field(kw_only=True, default=None)
+
     resolvable: "ResolvableArguments" = field(kw_only=True, default=None)
     method_config: MethodConfig = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
         mh = MethodHints(read_only=self.read_only)
+
+        if self.annotations is not None:
+            mh.annotations = self.annotations
 
         if self.resolvable is not None:
             mh.resolvable = self.resolvable.__dict__
@@ -89,11 +113,16 @@ class MethodHints:
     read_only: bool = field(kw_only=True, default=False)
     #: hint to provide names for tuple argument indices, see :doc:`models` for more
     models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
+    #: annotations
+    annotations: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
+
 
     def dictify(self) -> dict[str, Any]:
         d = {}
         if self.read_only:
             d["read_only"] = True
+        if self.annotations is not None:
+            d["annotations"] = self.annotations
         if self.models is not None:
             d["models"] = self.models
         if self.resolvable is not None:
@@ -239,13 +268,14 @@ def _replace_models(fn: HandlerFunc) -> HandlerFunc:
     annotations = get_annotations(fn)
     for k, v in params.items():
         cls = v.annotation
-        if hasattr(v.annotation, "__origin__"):
+        if hasattr(cls, "__origin__"):
             # Generic type, not a Model
             continue
 
         if issubclass(cls, Model):
-            params[k] = v.replace(annotation=cls().annotation_type())
-            annotations[k] = cls().annotation_type()
+            orig = cls().annotation_type()
+            params[k] = v.replace(annotation=orig)
+            annotations[k] = orig 
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
@@ -257,6 +287,30 @@ def _replace_models(fn: HandlerFunc) -> HandlerFunc:
 
     return fn
 
+def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
+    sig = signature(fn)
+    fn_annotations = get_annotations(fn)
+
+    arg_annotations = {}
+
+    params = sig.parameters.copy()
+    for k, v in params.items():
+        tv = v.annotation
+        if hasattr(tv, '__origin__'):
+            orig = tv.__origin__
+            if hasattr(tv, '__metadata__'):
+                arg_annotations[k] = tv.__metadata__
+
+                params[k] = v.replace(annotation=orig)
+                fn_annotations[k] = orig
+
+    # TODO:
+    set_handler_config(fn, annotations=arg_annotations)
+    newsig = sig.replace(parameters=params.values())
+    fn.__signature__ = newsig
+    fn.__annotations__ = fn_annotations 
+
+    return fn
 
 def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
@@ -270,6 +324,8 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     fn.__signature__ = newsig
 
     return fn
+
+
 
 
 def internal(return_type: TealType):
@@ -320,6 +376,7 @@ def handler(
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
+        fn = _capture_annotations(fn)
         fn = _replace_models(fn)
 
         if resolvable is not None:
