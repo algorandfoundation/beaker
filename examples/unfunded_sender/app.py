@@ -57,7 +57,7 @@ if __name__ == "__main__":
     inner_client = client.ApplicationClient(algod_client, a2, signer=signer)
     inner_client.create()
 
-    # try to call second from first, note we did _not_ fund 
+    # try to call second from first, note we did _not_ fund
     # the first app but we're covering the transaction with suggested params
     sp = algod_client.suggested_params()
     sp.flat_fee = True

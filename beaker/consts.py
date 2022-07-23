@@ -13,6 +13,15 @@ MilliAlgo: Final[Int] = Int(milli_algo)
 Algos: Callable[..., Expr] = lambda v: Int(int(v * algo))
 MilliAlgos: Callable[..., Expr] = lambda v: Int(int(v * milli_algo))
 
+
+MAX_INNERS = 255
+APP_CALL_BUDGET = 700
+MAX_OPS = MAX_INNERS * APP_CALL_BUDGET
+
+AppCallBudget = Int(APP_CALL_BUDGET)
+MaxOps = Int(MAX_OPS)
+
+
 # aliases for 1/0
 TRUE: Final[Int] = Int(1)
 FALSE: Final[Int] = Int(0)
