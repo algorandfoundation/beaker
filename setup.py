@@ -11,6 +11,6 @@ setup(
     long_description=open("README.md").read(),
     package_data={"beaker": ["py.typed"]},
     install_requires=[
-        "pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal"
+        "pyteal @ git+https://github.com/algorand/pyteal@master#egg=pyteal"
     ],
 )
