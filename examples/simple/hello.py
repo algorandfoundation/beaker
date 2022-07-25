@@ -4,7 +4,7 @@ from beaker import *
 # Create a class, subclassing Application from beaker
 class HelloBeaker(Application):
 
-    # Add a method external, ABI method signature will be `hello(string)string`
+    # Add an external method, ABI method signature will be `hello(string)string`
     @external
     def hello(name: abi.String, *, output: abi.String):
         # Return the result of `Hello, `+name
