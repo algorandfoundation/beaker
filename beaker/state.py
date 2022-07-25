@@ -139,7 +139,7 @@ class ApplicationStateValue(StateValue):
             return App.globalPut(self.key, Bytes(""))
 
     def set(self, val: Expr) -> Expr:
-        if val.type_of() != self.stack_type:
+        if val.type_of() != self.stack_type and val.type_of() != TealType.anytype:
             raise TealTypeError(val.type_of(), self.stack_type)
 
         if self.static:
@@ -231,7 +231,7 @@ class AccountStateValue(StateValue):
             return App.localPut(acct, self.key, Bytes(""))
 
     def set(self, val: Expr, acct: Expr = Txn.sender()) -> Expr:
-        if val.type_of() != self.stack_type:
+        if val.type_of() != self.stack_type and val.type_of() != TealType.anytype:
             raise TealTypeError(val.type_of(), self.stack_type)
 
         if self.static:
