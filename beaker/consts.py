@@ -1,21 +1,25 @@
 from typing import Final, Callable
 from pyteal import Int, Expr
 
-# Use these for compile time consts like `payment_amt = Int(10 * algo)`
+#: Used these for compile time consts like `payment_amt = Int(10 * algo)`
+#: number of microalgos in 1 Algo
 algo: Final[int] = int(1e6)
+#: number of microalgos in 1 MilliAlgo
 milli_algo: Final[int] = int(1e3)
 
-# Use these for runtime algo calculations `Txn.fee()==MilliAlgo`
+#: Used for runtime algo calculations `Txn.fee()==MilliAlgo`
 Algo: Final[Int] = Int(algo)
 MilliAlgo: Final[Int] = Int(milli_algo)
 
-# Use this as shorthand for Int(10*algo) like Algos(10)
+#: Used for shorthand for Int(10*algo) like Algos(10)
 Algos: Callable[..., Expr] = lambda v: Int(int(v * algo))
 MilliAlgos: Callable[..., Expr] = lambda v: Int(int(v * milli_algo))
 
-
+#: Max number of inner transactions that may be called
 MAX_INNERS = 255
+#: Single app call opcode budget
 APP_CALL_BUDGET = 700
+#: Max possible opcode budget
 MAX_OPS = MAX_INNERS * APP_CALL_BUDGET
 
 AppCallBudget = Int(APP_CALL_BUDGET)
