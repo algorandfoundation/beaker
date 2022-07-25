@@ -78,52 +78,42 @@ class StateValue(Expr):
     @abstractmethod
     def set_default(self) -> Expr:
         """sets the default value if one is provided, if none provided sets the zero value for its type"""
-        pass
 
     @abstractmethod
     def set(self, val: Expr) -> Expr:
         """sets the value to the argument passed"""
-        pass
 
     @abstractmethod
     def increment(self, cnt: Expr = Int(1)) -> Expr:
         """helper to increment a counter"""
-        pass
 
     @abstractmethod
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
         """helper to decrement a counter"""
-        pass
 
     @abstractmethod
     def get(self) -> Expr:
         """gets the value stored for this state value"""
-        pass
 
     @abstractmethod
     def get_maybe(self) -> MaybeValue:
         """gets a MaybeValue that can be used for existence check"""
-        pass
 
     @abstractmethod
     def get_must(self) -> Expr:
         """gets the value stored at the key. if none is stored, Assert out of the program"""
-        pass
 
     @abstractmethod
     def get_else(self, val: Expr) -> Expr:
         """gets the value stored at the key. if none is stored, return the value passed"""
-        pass
 
     @abstractmethod
     def delete(self) -> Expr:
         """deletes the key from state, if the value is static it will be a compile time error"""
-        pass
 
     @abstractmethod
     def is_default(self) -> Expr:
         """checks to see if the value set equals the default value"""
-        pass
 
 
 class DynamicStateValue(ABC):
@@ -153,7 +143,6 @@ class ApplicationStateValue(StateValue):
         return f"ApplicationStateValue {self.key}"
 
     def set_default(self) -> Expr:
-        """sets the default value if one is provided, if none provided sets the zero value for its type"""
         if self.default:
             return App.globalPut(self.key, self.default)
 
@@ -163,7 +152,6 @@ class ApplicationStateValue(StateValue):
             return App.globalPut(self.key, Bytes(""))
 
     def set(self, val: Expr) -> Expr:
-        """sets the value to the argument passed"""
         if val.type_of() != self.stack_type:
             raise TealTypeError(val.type_of(), self.stack_type)
 
@@ -195,7 +183,6 @@ class ApplicationStateValue(StateValue):
         return self.set(self.get() - cnt)
 
     def get(self) -> Expr:
-        """gets the value stored for this state value"""
         return App.globalGet(self.key)
 
     def get_maybe(self) -> MaybeValue:
@@ -338,6 +325,8 @@ class DynamicAccountStateValue(DynamicStateValue):
 
 
 class State:
+    """holds all the declared and dynamic state values for this storage type"""
+
     def __init__(self, fields: dict[str, StateValue | DynamicStateValue]):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
@@ -394,6 +383,7 @@ class State:
         )
 
     def schema(self) -> StateSchema:
+        """gets the schema as num uints/bytes for app create transactions"""
         return StateSchema(
             num_uints=self.num_uints, num_byte_slices=self.num_byte_slices
         )
@@ -414,7 +404,6 @@ class ApplicationState(State):
 class AccountState(State):
     def __init__(self, fields: dict[str, AccountStateValue | DynamicAccountStateValue]):
         super().__init__(fields)
-
         if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
             raise Exception(
                 f"Too much account state, expected {total} <= {MAX_LOCAL_STATE}"
