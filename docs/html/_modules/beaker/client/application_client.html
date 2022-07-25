@@ -93,7 +93,7 @@
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">get_method_spec</span>
-<span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">,</span> <span class="n">ResolvableTypes</span>
+<span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">externalFunc</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">,</span> <span class="n">ResolvableTypes</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">APP_MAX_PAGE_SIZE</span>
 <span class="kn">from</span> <span class="nn">beaker.client.state_decode</span> <span class="kn">import</span> <span class="n">decode_state</span>
 
@@ -352,7 +352,7 @@
 
 <div class="viewcode-block" id="ApplicationClient.call"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.call">[docs]</a>    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span> <span class="o">|</span> <span class="n">HandlerFunc</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span> <span class="o">|</span> <span class="n">externalFunc</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -434,7 +434,7 @@
 <div class="viewcode-block" id="ApplicationClient.add_method_call"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.add_method_call">[docs]</a>    <span class="k">def</span> <span class="nf">add_method_call</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">atc</span><span class="p">:</span> <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
-        <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span> <span class="o">|</span> <span class="n">HandlerFunc</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span> <span class="o">|</span> <span class="n">externalFunc</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

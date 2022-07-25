@@ -6,7 +6,7 @@ from beaker.application import get_method_selector
 class Testy(Application):
     """Testy has 2 ABI methods, one meant to be called from an outer and one from an inner transaction"""
 
-    @handler
+    @external
     def handle_outer(
         self, acct1: abi.Account, acct2: abi.Account, app: abi.Application
     ):
@@ -24,7 +24,7 @@ class Testy(Application):
             }
         )
 
-    @handler
+    @external
     def handle_inner(self):
         return Assert(
             # I'm being called by another app

@@ -20,7 +20,7 @@ from beaker.application import (
 from beaker.decorators import (
     ResolvableArguments,
     ResolvableTypes,
-    handler,
+    external,
     internal,
     create,
     update,
@@ -46,9 +46,9 @@ def test_empty_application():
         == 0
     ), "Expected no schema"
 
-    assert len(ea.bare_handlers.keys()) == len(
-        EXPECTED_BARE_HANDLERS
-    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
+    assert len(ea.bare_externals.keys()) == len(
+        EXPECTED_BARE_externalS
+    ), f"Expected {len(EXPECTED_BARE_externalS)} bare externals: {EXPECTED_BARE_externalS}"
     assert (
         len(ea.approval_program) > 0
     ), "Expected approval program to be compiled to teal"
@@ -66,15 +66,15 @@ def test_teal_version():
     assert ea.approval_program.split("\n")[0] == "#pragma version 4"
 
 
-def test_single_handler():
-    class SingleHandler(Application):
-        @handler
+def test_single_external():
+    class Singleexternal(Application):
+        @external
         def handle():
             return pt.Assert(pt.Int(1))
 
-    sh = SingleHandler()
+    sh = Singleexternal()
 
-    assert len(sh.methods) == 1, "Expected a single handler"
+    assert len(sh.methods) == 1, "Expected a single external"
     assert sh.contract.get_method_by_name("handle") == get_method_spec(
         sh.handle
     ), "Expected contract method to match method spec"
@@ -83,8 +83,8 @@ def test_single_handler():
         sh.contract.get_method_by_name("made up")
 
 
-def test_bare_handler():
-    class BareHandler(Application):
+def test_bare_external():
+    class Bareexternal(Application):
         @create
         def create():
             return pt.Approve()
@@ -97,23 +97,23 @@ def test_bare_handler():
         def delete():
             return pt.Approve()
 
-    bh = BareHandler()
-    assert len(bh.bare_handlers) == len(
-        EXPECTED_BARE_HANDLERS
-    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
+    bh = Bareexternal()
+    assert len(bh.bare_externals) == len(
+        EXPECTED_BARE_externalS
+    ), f"Expected {len(EXPECTED_BARE_externalS)} bare externals: {EXPECTED_BARE_externalS}"
 
-    class FailBareHandler(Application):
+    class FailBareexternal(Application):
         @create
         def wrong_name():
             return pt.Approve()
 
     with pytest.raises(BareOverwriteError):
-        bh = FailBareHandler()
+        bh = FailBareexternal()
 
 
 def test_subclass_application():
     class SuperClass(Application):
-        @handler
+        @external
         def handle():
             return pt.Assert(pt.Int(1))
 
@@ -127,7 +127,7 @@ def test_subclass_application():
     ), "Expected contract method to match method spec"
 
     class OverrideSubClass(SuperClass):
-        @handler
+        @external
         def handle():
             return pt.Assert(pt.Int(2))
 
@@ -204,7 +204,7 @@ def test_internal():
                 pt.Pop(self.subr_no_self()),
             )
 
-        @handler(method_config=pt.MethodConfig(no_op=pt.CallConfig.CALL))
+        @external(method_config=pt.MethodConfig(no_op=pt.CallConfig.CALL))
         def otherthing():
             return pt.Seq(
                 pt.Pop(Internal.internal_meth_no_self()),
@@ -266,11 +266,11 @@ def test_internal():
 
 def test_resolvable_hint():
     class Hinty(Application):
-        @handler(read_only=True)
+        @external(read_only=True)
         def get_asset_id(*, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
-        @handler(resolvable=ResolvableArguments(aid=get_asset_id))
+        @external(resolvable=ResolvableArguments(aid=get_asset_id))
         def hintymeth(aid: pt.abi.Asset):
             return pt.Assert(pt.Int(1))
 
@@ -285,7 +285,7 @@ def test_resolvable_hint():
     ), "Expected the hint to match the method spec"
 
 
-EXPECTED_BARE_HANDLERS = [
+EXPECTED_BARE_externalS = [
     "create",
     "update",
     "delete",
@@ -304,7 +304,7 @@ def test_model_args():
             balance: pt.abi.Uint64
             nickname: pt.abi.String
 
-        @handler
+        @external
         def structy(user_record: UserRecord):
             return pt.Assert(pt.Int(1))
 
@@ -328,11 +328,11 @@ def test_instance_vars():
             self.v = pt.Bytes(v)
             super().__init__()
 
-        @handler
+        @external
         def use_it(self):
             return pt.Log(self.v)
 
-        @handler
+        @external
         def call_it(self):
             return self.use_it_internal()
 
@@ -362,7 +362,7 @@ def hashy(sig: str):
 
 
 def test_abi_method_details():
-    @handler
+    @external
     def meth():
         return pt.Assert(pt.Int(1))
 

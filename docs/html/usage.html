@@ -101,18 +101,18 @@
 </pre></div>
 </div>
 <p>Nice!  This is already enough to provide the TEAL programs and ABI specification.</p>
-<p>Lets add some methods to be handled by an incoming <code class="docutils literal notranslate"><span class="pre">ApplicationCallTransaction</span></code>.  We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#handler"><span class="std std-ref">handler</span></a> decorator.</p>
+<p>Lets add some methods to be handled by an incoming <code class="docutils literal notranslate"><span class="pre">ApplicationCallTransaction</span></code>.  We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#external"><span class="std std-ref">external</span></a> decorator.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
 <span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a and b, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">&#64;handler</span></code> decorator adds an ABI method with signature <code class="docutils literal notranslate"><span class="pre">add(uint64,uint64)uint64</span></code> to our application and includes it in the routing logic for handling an ABI call.</p>
-<p>The python method must return an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> of some kind, invoked when the handler is called.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> decorator adds an ABI method with signature <code class="docutils literal notranslate"><span class="pre">add(uint64,uint64)uint64</span></code> to our application and includes it in the routing logic for handling an ABI call.</p>
+<p>The python method must return an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> of some kind, invoked when the external is called.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><code class="docutils literal notranslate"><span class="pre">self</span></code> may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like <code class="docutils literal notranslate"><span class="pre">MySickApp.do_thing(data)</span></code></p>
@@ -141,7 +141,7 @@
 <blockquote>
 <div><ul>
 <li><dl class="simple">
-<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By subclassing <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding a <code class="docutils literal notranslate"><span class="pre">handler</span></code> method</p>
+<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By subclassing <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding a <code class="docutils literal notranslate"><span class="pre">external</span></code> method</p>
 </dd>
 </dl>
 </li>
@@ -198,7 +198,7 @@ The constructor may also be passed an app_id directly if one is already deployed
         <span class="sd">&quot;&quot;&quot;create application&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">()</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;increment the counter&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
@@ -206,7 +206,7 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">decrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;decrement the counter&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
@@ -218,7 +218,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 <p>We’ve added an <a class="reference internal" href="state.html#application-state-value"><span class="std std-ref">ApplicationStateValue</span></a> attribute to our class with several configuration options and we can reference it by name throughout our application.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The base <code class="docutils literal notranslate"><span class="pre">Application</span></code> class has several handlers pre-defined, including <code class="docutils literal notranslate"><span class="pre">create</span></code> which performs <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> initialization for us, setting the keys to default values.</p>
+<p>The base <code class="docutils literal notranslate"><span class="pre">Application</span></code> class has several externals pre-defined, including <code class="docutils literal notranslate"><span class="pre">create</span></code> which performs <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> initialization for us, setting the keys to default values.</p>
 </div>
 <p>You may also define state values for applications, called <a class="reference internal" href="state.html#account-state"><span class="std std-ref">AccountState</span></a> (or Local storage) and even allow for dynamic state keys.</p>
 <p>For more example usage see the example <a class="reference internal" href="state.html#state-example"><span class="std std-ref">here</span></a>.</p>
@@ -229,7 +229,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ExpensiveApp</span><span class="p">(</span><span class="n">OpUp</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Do expensive work to demonstrate inheriting from OpUp&quot;&quot;&quot;</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">resolvable</span><span class="o">=</span><span class="n">ResolvableArguments</span><span class="p">(</span><span class="n">opup_app</span><span class="o">=</span><span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">))</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">resolvable</span><span class="o">=</span><span class="n">ResolvableArguments</span><span class="p">(</span><span class="n">opup_app</span><span class="o">=</span><span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">))</span>
     <span class="k">def</span> <span class="nf">hash_it</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span>

@@ -5,7 +5,7 @@ from beaker import (
     ApplicationStateValue,
     Application,
     Authorize,
-    handler,
+    external,
     create,
     internal,
 )
@@ -73,13 +73,13 @@ class ConstantProductAMM(Application):
         return self.initialize_application_state()
 
     # Only the account set in app_state.governor may call this method
-    @handler(authorize=Authorize.only(governor))
+    @external(authorize=Authorize.only(governor))
     def set_governor(self, new_governor: abi.Account):
         """sets the governor of the contract, may only be called by the current governor"""
         return self.governor.set(new_governor.address())
 
     # Only the account set in app_state.governor may call this method
-    @handler(authorize=Authorize.only(governor))
+    @external(authorize=Authorize.only(governor))
     def bootstrap(self, a_asset: abi.Asset, b_asset: abi.Asset, *, output: abi.Uint64):
         """bootstraps the contract by opting into the assets and creating the pool token"""
         well_formed_bootstrap = And(
@@ -106,7 +106,7 @@ class ConstantProductAMM(Application):
     # AMM specific methods for mint/burn/swap
     ##############
 
-    @handler
+    @external
     def mint(
         self,
         a_xfer: abi.AssetTransferTransaction,
@@ -174,7 +174,7 @@ class ConstantProductAMM(Application):
             self.ratio.set(self.get_ratio()),
         )
 
-    @handler
+    @external
     def burn(
         self,
         pool_xfer: abi.AssetTransferTransaction,
@@ -232,7 +232,7 @@ class ConstantProductAMM(Application):
             Assert(self.ratio == self.get_ratio()),
         )
 
-    @handler
+    @external
     def swap(
         self,
         swap_xfer: abi.AssetTransferTransaction,

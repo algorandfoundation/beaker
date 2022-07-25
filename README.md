@@ -18,7 +18,7 @@ from pyteal import *
 from beaker import *
 
 class HelloBeaker(Application):
-    @handler
+    @external
     def hello(name: abi.String, *, output: abi.String):
         return output.set(Concat(Bytes("Hello, "), name.get()))
 
