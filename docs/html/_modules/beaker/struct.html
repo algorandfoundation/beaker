@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>beaker.model &mdash; Beaker  documentation</title>
+  <title>beaker.struct &mdash; Beaker  documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -26,6 +27,7 @@
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
             <a href="../../index.html" class="icon icon-home"> Beaker
+            <img src="../../_static/beaker.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -60,7 +62,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="../index.html">Module code</a> &raquo;</li>
-      <li>beaker.model</li>
+      <li>beaker.struct</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -69,26 +71,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for beaker.model</h1><div class="highlight"><pre>
+  <h1>Source code for beaker.struct</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">abi</span><span class="p">,</span> <span class="n">TealInputError</span><span class="p">,</span> <span class="n">TealTypeError</span><span class="p">,</span> <span class="n">Seq</span>
 
 
-<div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../structs.html#beaker.model.Model">[docs]</a><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">Tuple</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Model provides a base class to inherit from when defining custom data structures&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Struct"><a class="viewcode-back" href="../../structs.html#beaker.struct.Struct">[docs]</a><span class="k">class</span> <span class="nc">Struct</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">Tuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Struct provides a base class to inherit from when defining custom data structures&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Expected fields to be declared but found none&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">__base__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Model</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Expected direct subclass of Model&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">__base__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Struct</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Expected direct subclass of Struct&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">type_specs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">v</span><span class="p">))</span><span class="o">.</span><span class="n">type_spec</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Model</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Struct</span><span class="p">))</span>
             <span class="k">else</span> <span class="n">v</span><span class="p">()</span><span class="o">.</span><span class="n">type_spec</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
@@ -102,7 +104,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">sdk_codec</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">algosdk_from_type_spec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_spec</span><span class="p">())</span>
 
-<div class="viewcode-block" id="Model.set"><a class="viewcode-back" href="../../structs.html#beaker.model.Model.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span>
+<div class="viewcode-block" id="Struct.set"><a class="viewcode-back" href="../../structs.html#beaker.struct.Struct.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exprs</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">TupleElement</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">ComputedValue</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="n">abi_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -137,16 +139,16 @@
 
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="o">*</span><span class="n">setters</span><span class="p">,</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">*</span><span class="n">abi_types</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Model.annotation_type"><a class="viewcode-back" href="../../structs.html#beaker.model.Model.annotation_type">[docs]</a>    <span class="k">def</span> <span class="nf">annotation_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Struct.annotation_type"><a class="viewcode-back" href="../../structs.html#beaker.struct.Struct.annotation_type">[docs]</a>    <span class="k">def</span> <span class="nf">annotation_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;returns the annotation type for the model, useful for type aliases in method signature annotation&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_spec</span><span class="p">()</span><span class="o">.</span><span class="n">annotation_type</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Model.client_decode"><a class="viewcode-back" href="../../structs.html#beaker.model.Model.client_decode">[docs]</a>    <span class="k">def</span> <span class="nf">client_decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_decode</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<div class="viewcode-block" id="Struct.client_decode"><a class="viewcode-back" href="../../structs.html#beaker.struct.Struct.client_decode">[docs]</a>    <span class="k">def</span> <span class="nf">client_decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_decode</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;decode a bytestring into a dictionary of keys/values based on the fields this model declared&quot;&quot;&quot;</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sdk_codec</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">bytestring</span><span class="o">=</span><span class="n">to_decode</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_names</span><span class="p">,</span> <span class="n">values</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Model.client_encode"><a class="viewcode-back" href="../../structs.html#beaker.model.Model.client_encode">[docs]</a>    <span class="k">def</span> <span class="nf">client_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<div class="viewcode-block" id="Struct.client_encode"><a class="viewcode-back" href="../../structs.html#beaker.struct.Struct.client_encode">[docs]</a>    <span class="k">def</span> <span class="nf">client_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot; &quot; encode a dictionary of keys/values to a bytestring matching the ABI tuple type it is represented by&quot;&quot;&quot;</span>
         <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">val</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sdk_codec</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>

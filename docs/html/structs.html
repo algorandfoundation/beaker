@@ -77,16 +77,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-beaker.model">
-<span id="structs"></span><h1>structs<a class="headerlink" href="#module-beaker.model" title="Permalink to this heading"></a></h1>
+  <section id="module-beaker.struct">
+<span id="structs"></span><h1>structs<a class="headerlink" href="#module-beaker.struct" title="Permalink to this heading"></a></h1>
 <p>With Beaker we can define a custom structure and use it in our ABI methods.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="beaker.model.Model">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><a class="reference internal" href="_modules/beaker/model.html#Model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.model.Model" title="Permalink to this definition"></a></dt>
-<dd><p>Model provides a base class to inherit from when defining custom data structures</p>
+<dt class="sig sig-object py" id="beaker.struct.Struct">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.struct.</span></span><span class="sig-name descname"><span class="pre">Struct</span></span><a class="reference internal" href="_modules/beaker/struct.html#Struct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct" title="Permalink to this definition"></a></dt>
+<dd><p>Struct provides a base class to inherit from when defining custom data structures</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.model.Model.set">
-<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/model.html#Model.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.model.Model.set" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.struct.Struct.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/struct.html#Struct.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct.set" title="Permalink to this definition"></a></dt>
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ComputedValue</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span></dt>
 <dd><p>Set the elements of this Tuple to the input values.</p>
@@ -108,20 +108,20 @@
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.model.Model.annotation_type">
-<span class="sig-name descname"><span class="pre">annotation_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/model.html#Model.annotation_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.model.Model.annotation_type" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.struct.Struct.annotation_type">
+<span class="sig-name descname"><span class="pre">annotation_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/struct.html#Struct.annotation_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct.annotation_type" title="Permalink to this definition"></a></dt>
 <dd><p>returns the annotation type for the model, useful for type aliases in method signature annotation</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.model.Model.client_encode">
-<span class="sig-name descname"><span class="pre">client_encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.10)"><span class="pre">bytes</span></a></span></span><a class="reference internal" href="_modules/beaker/model.html#Model.client_encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.model.Model.client_encode" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.struct.Struct.client_encode">
+<span class="sig-name descname"><span class="pre">client_encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.10)"><span class="pre">bytes</span></a></span></span><a class="reference internal" href="_modules/beaker/struct.html#Struct.client_encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct.client_encode" title="Permalink to this definition"></a></dt>
 <dd><p>” encode a dictionary of keys/values to a bytestring matching the ABI tuple type it is represented by</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.model.Model.client_decode">
-<span class="sig-name descname"><span class="pre">client_decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_decode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.10)"><span class="pre">bytes</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/model.html#Model.client_decode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.model.Model.client_decode" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.struct.Struct.client_decode">
+<span class="sig-name descname"><span class="pre">client_decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_decode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.10)"><span class="pre">bytes</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/struct.html#Struct.client_decode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct.client_decode" title="Permalink to this definition"></a></dt>
 <dd><p>decode a bytestring into a dictionary of keys/values based on the fields this model declared</p>
 </dd></dl>
 
@@ -129,9 +129,9 @@
 
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Modeler</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Structer</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
     <span class="c1"># Our custom model</span>
-    <span class="k">class</span> <span class="nc">Order</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Order</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">):</span>
         <span class="n">item</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span>
         <span class="n">quantity</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint16</span>
 
@@ -168,9 +168,9 @@
         <span class="p">)</span>
 </pre></div>
 </div>
-<p>The application exposes the ABI methods using the tuple encoded version of the fields specified in the model. Here it would be <code class="docutils literal notranslate"><span class="pre">(string,uint32)</span></code>.</p>
+<p>The application exposes the ABI methods using the tuple encoded version of the fields specified in the struct. Here it would be <code class="docutils literal notranslate"><span class="pre">(string,uint32)</span></code>.</p>
 <p>A method hint is available to the caller for encoding/decoding by field name.</p>
-<p>To pass a model we can pass a python dict <code class="docutils literal notranslate"><span class="pre">dict</span></code></p>
+<p>To pass a struct we can pass a python dict <code class="docutils literal notranslate"><span class="pre">dict</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Passing in a dict as an argument that should take a tuple according to the type spec</span>
     <span class="n">order_number</span> <span class="o">=</span> <span class="mi">12</span>
     <span class="n">order</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;item&quot;</span><span class="p">:</span> <span class="s2">&quot;cubes&quot;</span><span class="p">}</span>

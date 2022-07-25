@@ -28,7 +28,7 @@ from beaker.state import (
     ApplicationStateValue,
     AccountStateValue,
 )
-from beaker.model import Model
+from beaker.struct import Struct
 
 HandlerFunc = Callable[..., Expr]
 
@@ -44,7 +44,7 @@ class HandlerConfig:
     bare_method: BareCallActions = field(kw_only=True, default=None)
 
     referenced_self: bool = field(kw_only=True, default=False)
-    models: dict[str, Model] = field(kw_only=True, default=None)
+    structs: dict[str, Struct] = field(kw_only=True, default=None)
 
     resolvable: "ResolvableArguments" = field(kw_only=True, default=None)
     method_config: MethodConfig = field(kw_only=True, default=None)
@@ -56,13 +56,13 @@ class HandlerConfig:
         if self.resolvable is not None:
             mh.resolvable = self.resolvable.__dict__
 
-        if self.models is not None:
-            mh.models = {
+        if self.structs is not None:
+            mh.structs = {
                 arg_name: {
                     "name": model_spec.__name__,
                     "elements": list(model_spec.__annotations__.keys()),
                 }
-                for arg_name, model_spec in self.models.items()
+                for arg_name, model_spec in self.structs.items()
             }
 
         return mh
@@ -87,15 +87,15 @@ class MethodHints:
     resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices, see :doc:`models` for more
-    models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
+    #: hint to provide names for tuple argument indices, see :doc:`structs` for more
+    structs: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
 
     def dictify(self) -> dict[str, Any]:
         d = {}
         if self.read_only:
             d["read_only"] = True
-        if self.models is not None:
-            d["models"] = self.models
+        if self.structs is not None:
+            d["structs"] = self.structs
         if self.resolvable is not None:
             d["resolvable"] = self.resolvable
         return d
@@ -231,7 +231,7 @@ def _on_complete(mc: MethodConfig):
     return _impl
 
 
-def _replace_models(fn: HandlerFunc) -> HandlerFunc:
+def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
 
@@ -240,16 +240,16 @@ def _replace_models(fn: HandlerFunc) -> HandlerFunc:
     for k, v in params.items():
         cls = v.annotation
         if hasattr(v.annotation, "__origin__"):
-            # Generic type, not a Model
+            # Generic type, not a Struct
             continue
 
-        if issubclass(cls, Model):
+        if issubclass(cls, Struct):
             params[k] = v.replace(annotation=cls().annotation_type())
             annotations[k] = cls().annotation_type()
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
-        set_handler_config(fn, models=replaced)
+        set_handler_config(fn, structs=replaced)
 
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
@@ -320,7 +320,7 @@ def handler(
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
-        fn = _replace_models(fn)
+        fn = _replace_structs(fn)
 
         if resolvable is not None:
             resolvable.check_arguments(signature(fn))

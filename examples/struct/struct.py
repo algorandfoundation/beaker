@@ -10,14 +10,14 @@ from beaker import (
     DynamicAccountStateValue,
     handler,
     sandbox,
-    model,
     client,
+    struct,
 )
 
 
-class Modeler(Application):
+class Structer(Application):
     # Our custom model
-    class Order(model.Model):
+    class Order(struct.Struct):
         item: abi.String
         quantity: abi.Uint16
 
@@ -59,7 +59,7 @@ def demo():
     signer = AccountTransactionSigner(sk)
 
     # Initialize Application from amm.py
-    app = Modeler()
+    app = Structer()
 
     # Create an Application client containing both an algod client and my app
     app_client = client.ApplicationClient(sandbox.get_client(), app, signer=signer)

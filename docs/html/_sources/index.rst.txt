@@ -44,7 +44,7 @@ Table Of Contents
    application
    state
    decorators
-   models
+   structs
    client
    contracts
 
