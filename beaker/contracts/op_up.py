@@ -1,5 +1,6 @@
 from typing import Final
 from pyteal import (
+    If,
     Txn,
     Return,
     Global,
@@ -70,21 +71,22 @@ class OpUp(Application):
     @internal(TealType.none)
     def call_opup(self, n):
         """internal method to issue transactions against the target app"""
+        return If(
+            n,
+            self.__call_opup(),
+            For(
+                (i := ScratchVar()).store(Int(0)),
+                i.load() < n,
+                i.store(i.load() + Int(1)),
+            ).Do(Seq(self.__call_opup())),
+        )
 
-        # TODO: conditional cheaper? offer 2 methods?
-        return For(
-            (i := ScratchVar()).store(Int(0)), i.load() < n, i.store(i.load() + Int(1))
-        ).Do(
-            Seq(
-                # TODO:  group together into 16 at a time? does this help anything?
-                InnerTxnBuilder.Begin(),
-                InnerTxnBuilder.SetFields(
-                    {
-                        TxnField.type_enum: TxnType.ApplicationCall,
-                        TxnField.application_id: OpUp.opup_app_id,
-                        TxnField.fee: Int(0),
-                    }
-                ),
-                InnerTxnBuilder.Submit(),
-            )
+    # No decorator, inline it
+    def __call_opup(self):
+        return InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.ApplicationCall,
+                TxnField.application_id: OpUp.opup_app_id,
+                TxnField.fee: Int(0),
+            }
         )
