@@ -1,16 +1,16 @@
 import pytest
 from typing import Literal
 import pyteal as pt
-from beaker.model import Model
+from beaker.struct import Struct
 
 
 def test_valid_create():
     with pytest.raises(Exception):
-        Model()
+        Struct()
 
     with pytest.raises(Exception):
 
-        class A(Model):
+        class A(Struct):
             a: pt.abi.Uint64
 
         class B(A):
@@ -19,18 +19,18 @@ def test_valid_create():
         B()
 
 
-class UserId(Model):
+class UserId(Struct):
     user: pt.abi.Address
     id: pt.abi.Uint64
 
 
-class Order(Model):
+class Order(Struct):
     items: pt.abi.DynamicArray[pt.abi.String]
     id: pt.abi.Uint32
     flags: pt.abi.StaticArray[pt.abi.Bool, Literal[32]]
 
 
-class SubOrder(Model):
+class SubOrder(Struct):
     order: Order
     idx: pt.abi.Uint8
 
@@ -89,7 +89,9 @@ MODEL_TESTS = [
 @pytest.mark.parametrize(
     "model, annotation_type, field_names, type_specs, strified", MODEL_TESTS
 )
-def test_model_create(model: Model, annotation_type, field_names, type_specs, strified):
+def test_model_create(
+    model: Struct, annotation_type, field_names, type_specs, strified
+):
 
     assert model.annotation_type() == annotation_type
     assert model.field_names == field_names
@@ -132,7 +134,7 @@ MODEL_SET_TESTS = [
 
 
 @pytest.mark.parametrize("model, vals, exception", MODEL_SET_TESTS)
-def test_model_set(model: Model, vals, exception):
+def test_model_set(model: Struct, vals, exception):
     if exception is not None:
         with pytest.raises(exception):
             model.set(*vals)
@@ -141,7 +143,7 @@ def test_model_set(model: Model, vals, exception):
 
 
 def test_model_codec():
-    class CodecTest(Model):
+    class CodecTest(Struct):
         a: pt.abi.Uint64
         b: pt.abi.DynamicArray[pt.abi.Uint8]
         c: pt.abi.Tuple2[pt.abi.Bool, pt.abi.Bool]

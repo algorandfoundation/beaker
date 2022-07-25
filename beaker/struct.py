@@ -4,19 +4,19 @@ from typing import cast
 from pyteal import Expr, abi, TealInputError, TealTypeError, Seq
 
 
-class Model(abi.Tuple):
-    """Model provides a base class to inherit from when defining custom data structures"""
+class Struct(abi.Tuple):
+    """Struct provides a base class to inherit from when defining custom data structures"""
 
     def __init__(self):
         if not hasattr(self, "__annotations__"):
             raise Exception("Expected fields to be declared but found none")
 
-        if self.__class__.__base__ is not Model:
-            raise Exception("Expected direct subclass of Model")
+        if self.__class__.__base__ is not Struct:
+            raise Exception("Expected direct subclass of Struct")
 
         self.type_specs = {
             k: cast(abi.BaseType, abi.make(v)).type_spec()
-            if not (inspect.isclass(v) and issubclass(v, Model))
+            if not (inspect.isclass(v) and issubclass(v, Struct))
             else v().type_spec()
             for k, v in self.__annotations__.items()
         }

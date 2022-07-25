@@ -26,7 +26,7 @@ from beaker.decorators import (
     update,
     delete,
 )
-from beaker.model import Model
+from beaker.struct import Struct
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -298,23 +298,23 @@ EXPECTED_BARE_HANDLERS = [
 def test_model_args():
     from algosdk.abi import Method, Argument, Returns
 
-    class Modeled(Application):
-        class UserRecord(Model):
+    class Structed(Application):
+        class UserRecord(Struct):
             addr: pt.abi.Address
             balance: pt.abi.Uint64
             nickname: pt.abi.String
 
         @handler
-        def modely(user_record: UserRecord):
+        def structy(user_record: UserRecord):
             return pt.Assert(pt.Int(1))
 
-    m = Modeled()
+    m = Structed()
 
     arg = Argument("(address,uint64,string)", name="user_record")
     ret = Returns("void")
-    assert Method("modely", [arg], ret) == get_method_spec(m.modely)
+    assert Method("structy", [arg], ret) == get_method_spec(m.structy)
 
-    assert m.hints["modely"].models == {
+    assert m.hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
             "elements": ["addr", "balance", "nickname"],

@@ -314,10 +314,10 @@ class ApplicationClient:
             if name in kwargs:
                 thing = kwargs[name]
                 if type(thing) is dict:
-                    if name in hints.models:
+                    if name in hints.structs:
                         thing = [
                             thing[field_name]
-                            for field_name in hints.models[name]["elements"]
+                            for field_name in hints.structs[name]["elements"]
                         ]
                     else:
                         # todo error if wrong keys

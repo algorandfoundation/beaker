@@ -1,4 +1,4 @@
-Models
+structs
 =======
 
 .. module:: beaker.model
