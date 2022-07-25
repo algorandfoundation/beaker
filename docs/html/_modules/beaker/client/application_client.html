@@ -90,12 +90,14 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">algosdk.future</span> <span class="kn">import</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">algosdk.logic</span> <span class="kn">import</span> <span class="n">get_application_address</span>
+<span class="kn">from</span> <span class="nn">algosdk.source_map</span> <span class="kn">import</span> <span class="n">SourceMap</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">get_method_spec</span>
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">,</span> <span class="n">ResolvableTypes</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">APP_MAX_PAGE_SIZE</span>
 <span class="kn">from</span> <span class="nn">beaker.client.state_decode</span> <span class="kn">import</span> <span class="n">decode_state</span>
+<span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span>
 
 
 <div class="viewcode-block" id="ApplicationClient"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient">[docs]</a><span class="k">class</span> <span class="nc">ApplicationClient</span><span class="p">:</span>
@@ -118,13 +120,21 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">suggested_params</span> <span class="o">=</span> <span class="n">suggested_params</span>
 
-    <span class="k">def</span> <span class="nf">compile_approval</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-        <span class="n">approval_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">approval_result</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">compile_approval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_map</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="n">SourceMap</span><span class="p">]:</span>
+        <span class="n">approval_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="n">source_map</span><span class="o">=</span><span class="n">source_map</span>
+        <span class="p">)</span>
+        <span class="n">src_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">source_map</span><span class="p">:</span>
+            <span class="n">src_map</span> <span class="o">=</span> <span class="n">SourceMap</span><span class="p">(</span><span class="n">approval_result</span><span class="p">[</span><span class="s2">&quot;sourcemap&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">b64decode</span><span class="p">(</span><span class="n">approval_result</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]),</span> <span class="n">src_map</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">compile_clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-        <span class="n">clear_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">clear_program</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">clear_result</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">compile_clear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_map</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="n">SourceMap</span><span class="p">]:</span>
+        <span class="n">clear_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">clear_program</span><span class="p">,</span> <span class="n">source_map</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">src_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">source_map</span><span class="p">:</span>
+            <span class="n">src_map</span> <span class="o">=</span> <span class="n">SourceMap</span><span class="p">(</span><span class="n">clear_result</span><span class="p">[</span><span class="s2">&quot;sourcemap&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">b64decode</span><span class="p">(</span><span class="n">clear_result</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]),</span> <span class="n">src_map</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ApplicationClient.create"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -138,8 +148,13 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed&quot;&quot;&quot;</span>
 
-        <span class="n">approval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_approval</span><span class="p">()</span>
-        <span class="n">clear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_clear</span><span class="p">()</span>
+        <span class="n">approval</span><span class="p">,</span> <span class="n">approval_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_approval</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="o">=</span> <span class="n">approval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="o">=</span> <span class="n">approval_map</span>
+
+        <span class="n">clear</span><span class="p">,</span> <span class="n">clear_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="o">=</span> <span class="n">clear</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span> <span class="o">=</span> <span class="n">clear_map</span>
 
         <span class="k">if</span> <span class="n">extra_pages</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">extra_pages</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
@@ -168,6 +183,7 @@
                 <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
+
         <span class="n">create_result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
         <span class="n">create_txid</span> <span class="o">=</span> <span class="n">create_result</span><span class="o">.</span><span class="n">tx_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -191,8 +207,13 @@
 
         <span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed&quot;&quot;&quot;</span>
 
-        <span class="n">approval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_approval</span><span class="p">()</span>
-        <span class="n">clear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_clear</span><span class="p">()</span>
+        <span class="n">approval</span><span class="p">,</span> <span class="n">approval_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_approval</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="o">=</span> <span class="n">approval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="o">=</span> <span class="n">approval_map</span>
+
+        <span class="n">clear</span><span class="p">,</span> <span class="n">clear_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="o">=</span> <span class="n">clear</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span> <span class="o">=</span> <span class="n">clear_map</span>
 
         <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_suggested_params</span><span class="p">(</span><span class="n">suggested_params</span><span class="p">)</span>
         <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signer</span><span class="p">(</span><span class="n">signer</span><span class="p">)</span>
@@ -387,7 +408,7 @@
             <span class="n">name</span> <span class="o">=</span> <span class="n">method_arg</span><span class="o">.</span><span class="n">name</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">thing</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span> <span class="ow">and</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">:</span>
                         <span class="n">thing</span> <span class="o">=</span> <span class="p">[</span>
                             <span class="n">thing</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
@@ -397,7 +418,7 @@
                         <span class="c1"># todo error if wrong keys</span>
                         <span class="n">thing</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">thing</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span><span class="p">:</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unspecified argument: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -469,7 +490,7 @@
             <span class="n">name</span> <span class="o">=</span> <span class="n">method_arg</span><span class="o">.</span><span class="n">name</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
-            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span><span class="p">:</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">hints</span><span class="o">.</span><span class="n">resolvable</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unspecified argument: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -497,7 +518,9 @@
 
         <span class="k">return</span> <span class="n">atc</span></div>
 
-<div class="viewcode-block" id="ApplicationClient.get_application_state"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.get_application_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_str</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+<div class="viewcode-block" id="ApplicationClient.get_application_state"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.get_application_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_state</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">force_str</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;gets the global state info for the app id set&quot;&quot;&quot;</span>
         <span class="n">app_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">application_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">app_state</span> <span class="ow">or</span> <span class="s2">&quot;global-state&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">app_state</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]:</span>
@@ -506,7 +529,7 @@
 
 <div class="viewcode-block" id="ApplicationClient.get_account_state"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.get_account_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_account_state</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">force_str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
 
         <span class="sd">&quot;&quot;&quot;gets the local state info for the app id set and the account specified&quot;&quot;&quot;</span>
 
@@ -565,6 +588,12 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">suggested_params</span><span class="p">()</span>
 
+    <span class="k">def</span> <span class="nf">wrap_approval_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicException</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LogicException</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">wrap_clear_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicException</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LogicException</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">clear_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">get_signer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionSigner</span><span class="p">:</span>
 
         <span class="k">if</span> <span class="n">signer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -583,12 +612,13 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sender</span>
 
         <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signer</span><span class="p">(</span><span class="n">signer</span><span class="p">)</span>
+
         <span class="k">match</span> <span class="n">signer</span><span class="p">:</span>
-            <span class="k">case</span> <span class="n">AccountTransactionSigner</span><span class="p">():</span>
+            <span class="k">case</span> <span class="n">AccountTransactionSigner</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
                 <span class="k">return</span> <span class="n">address_from_private_key</span><span class="p">(</span><span class="n">signer</span><span class="o">.</span><span class="n">private_key</span><span class="p">)</span>
-            <span class="k">case</span> <span class="n">MultisigTransactionSigner</span><span class="p">():</span>
+            <span class="k">case</span> <span class="n">MultisigTransactionSigner</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
                 <span class="k">return</span> <span class="n">signer</span><span class="o">.</span><span class="n">msig</span><span class="o">.</span><span class="n">address</span><span class="p">()</span>
-            <span class="k">case</span> <span class="n">LogicSigTransactionSigner</span><span class="p">():</span>
+            <span class="k">case</span> <span class="n">LogicSigTransactionSigner</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
                 <span class="k">return</span> <span class="n">signer</span><span class="o">.</span><span class="n">lsig</span><span class="o">.</span><span class="n">address</span><span class="p">()</span>
 
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No sender provided&quot;</span><span class="p">)</span></div>
