@@ -1,13 +1,13 @@
 from typing import Literal
 from pyteal import *
 from beaker.contracts import OpUp
-from beaker.decorators import ResolvableArguments, handler
+from beaker.decorators import ResolvableArguments, external
 
 
 class ExpensiveApp(OpUp):
     """Do expensive work to demonstrate inheriting from OpUp"""
 
-    @handler(resolvable=ResolvableArguments(opup_app=OpUp.opup_app_id))
+    @external(resolvable=ResolvableArguments(opup_app=OpUp.opup_app_id))
     def hash_it(
         self,
         input: abi.String,

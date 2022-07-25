@@ -27,16 +27,16 @@ This is a full application, though it doesn't do much.  Instantiate it and take 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
-Lets add some methods to be handled by an incoming ``ApplicationCallTransaction``.  We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`handler <handler>` decorator. 
+Lets add some methods to be handled by an incoming ``ApplicationCallTransaction``.  We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`external <external>` decorator. 
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
     :lines: 9-15
 
 
-The ``@handler`` decorator adds an ABI method with signature ``add(uint64,uint64)uint64`` to our application and includes it in the routing logic for handling an ABI call. 
+The ``@external`` decorator adds an ABI method with signature ``add(uint64,uint64)uint64`` to our application and includes it in the routing logic for handling an ABI call. 
 
-The python method must return an ``Expr`` of some kind, invoked when the handler is called. 
+The python method must return an ``Expr`` of some kind, invoked when the external is called. 
 
 .. note::
     ``self`` may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like ``MySickApp.do_thing(data)``
@@ -52,7 +52,7 @@ Thats it!
 To summarize, we:
 
  * Wrote an application using Beaker and PyTeal
-    By subclassing ``Application`` and adding a ``handler`` method
+    By subclassing ``Application`` and adding a ``external`` method
  * Compiled it to TEAL 
     Done automatically by Application, PyTeal's ``Router.compile`` 
  * Assembled the TEAL to binary
@@ -92,7 +92,7 @@ Lets write a new app with Application State (or `Global State <https://developer
 We've added an :ref:`ApplicationStateValue <application_state_value>` attribute to our class with several configuration options and we can reference it by name throughout our application.
 
 .. note:: 
-    The base ``Application`` class has several handlers pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
+    The base ``Application`` class has several externals pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
 You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for dynamic state keys.
 

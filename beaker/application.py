@@ -18,9 +18,9 @@ from pyteal import (
 )
 
 from beaker.decorators import (
-    HandlerConfig,
+    externalConfig,
     MethodHints,
-    get_handler_config,
+    get_external_config,
     create,
     update,
     delete,
@@ -40,7 +40,7 @@ from beaker.errors import BareOverwriteError
 
 
 def get_method_spec(fn) -> Method:
-    hc = get_handler_config(fn)
+    hc = get_external_config(fn)
     if hc.method_spec is None:
         raise Exception("Expected argument to be an ABI method")
     return hc.method_spec
@@ -77,7 +77,7 @@ class Application:
         }
 
         self.hints: dict[str, MethodHints] = {}
-        self.bare_handlers: dict[str, OnCompleteAction] = {}
+        self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
 
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
@@ -103,63 +103,63 @@ class Application:
             if name in app_vals or name in acct_vals:
                 continue
 
-            # Check for handlers and internal methods
-            handler_config = get_handler_config(bound_attr)
-            match handler_config:
-                # Bare Handlers
-                case HandlerConfig(bare_method=BareCallActions()):
+            # Check for externals and internal methods
+            external_config = get_external_config(bound_attr)
+            match external_config:
+                # Bare externals
+                case externalConfig(bare_method=BareCallActions()):
                     actions = {
                         oc: cast(OnCompleteAction, action)
-                        for oc, action in handler_config.bare_method.__dict__.items()
+                        for oc, action in external_config.bare_method.__dict__.items()
                         if action is not None
                     }
 
                     for oc, action in actions.items():
-                        if oc in self.bare_handlers:
+                        if oc in self.bare_externals:
                             raise BareOverwriteError(oc)
 
                         # Swap the implementation with the bound version
-                        if handler_config.referenced_self:
+                        if external_config.referenced_self:
                             action.action.subroutine.implementation = bound_attr
 
-                        self.bare_handlers[oc] = action
+                        self.bare_externals[oc] = action
 
                 # ABI Methods
-                case HandlerConfig(method_spec=Method()):
+                case externalConfig(method_spec=Method()):
                     # Create the ABIReturnSubroutine from the static attr
                     # but override the implementation with the bound version
                     abi_meth = ABIReturnSubroutine(static_attr)
-                    if handler_config.referenced_self:
+                    if external_config.referenced_self:
                         abi_meth.subroutine.implementation = bound_attr
                     self.methods[name] = abi_meth
 
-                    self.hints[name] = handler_config.hints()
+                    self.hints[name] = external_config.hints()
 
                 # Internal subroutines
-                case HandlerConfig(subroutine=Subroutine()):
-                    if handler_config.referenced_self:
-                        setattr(self, name, handler_config.subroutine(bound_attr))
+                case externalConfig(subroutine=Subroutine()):
+                    if external_config.referenced_self:
+                        setattr(self, name, external_config.subroutine(bound_attr))
                     else:
                         setattr(
                             self.__class__,
                             name,
-                            handler_config.subroutine(static_attr),
+                            external_config.subroutine(static_attr),
                         )
 
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        # Create router with name of class and bare handlers
+        # Create router with name of class and bare externals
         self.router = Router(
             name=self.__class__.__name__,
-            bare_calls=BareCallActions(**self.bare_handlers),
+            bare_calls=BareCallActions(**self.bare_externals),
             descr=self.__doc__,
         )
 
-        # Add method handlers
+        # Add method externals
         for method in self.methods.values():
             self.router.add_method_handler(
-                method_call=method, method_config=handler_config.method_config
+                method_call=method, method_config=external_config.method_config
             )
 
         (

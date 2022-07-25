@@ -16,7 +16,7 @@ from algosdk.atomic_transaction_composer import (
 from ..decorators import (
     ResolvableTypes,
     create,
-    handler,
+    external,
     update,
     clear_state,
     close_out,
@@ -61,11 +61,11 @@ class App(Application):
     def delete(self):
         return pt.Approve()
 
-    @handler
+    @external
     def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a.get() + b.get())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def dummy(self, *, output: pt.abi.String):
         return output.set("deadbeef")
 

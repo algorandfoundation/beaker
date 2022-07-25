@@ -330,39 +330,39 @@
     <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_account_state</span><span class="p">()</span>
 
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">set_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
         <span class="c1"># This will fail, since it was declared as `static` and initialized to a default value during create</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_app_value</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declared_app_value</span><span class="p">)</span>
 
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">set_dynamic_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="c1"># Accessing the key with square brackets, accepts both Expr and an ABI type</span>
         <span class="c1"># If the value is an Expr it must evaluate to `TealType.bytes`</span>
         <span class="c1"># If the value is an ABI type, the `encode` method is used to convert it to bytes</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_app_value</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_dynamic_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dynamic_app_value</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
 
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">set_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_account_value</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declared_account_value</span><span class="p">)</span>
 
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">set_dynamic_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_account_value</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_dynamic_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dynamic_account_value</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
 

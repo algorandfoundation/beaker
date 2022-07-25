@@ -8,7 +8,7 @@ from algosdk.atomic_transaction_composer import (
 from beaker import (
     Application,
     DynamicAccountStateValue,
-    handler,
+    external,
     sandbox,
     client,
     struct,
@@ -26,15 +26,15 @@ class Structer(Application):
         max_keys=16,
     )
 
-    @handler
+    @external
     def place_order(self, order_number: abi.Uint8, order: Order):
         return self.orders[order_number].set(order.encode())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def read_item(self, order_number: abi.Uint8, *, output: Order):
         return output.decode(self.orders[order_number])
 
-    @handler
+    @external
     def increase_quantity(self, order_number: abi.Uint8, *, output: Order):
         return Seq(
             # Read the order from state
