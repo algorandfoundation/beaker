@@ -1,29 +1,10 @@
 Usage
 =====
 
-.. _installation:
+.. _tutorial:
 
-Installation
-------------
-
-Currently only installing from github is supported:
-
-.. code-block:: console
-
-    (.venv)$ pip install git+https://github.com/algorand-devrel/beaker
-
-
-.. _hello_beaker:
-
-Hello, Beaker 
--------------
-
-.. literalinclude:: ../../examples/simple/hello.py
-
-
-
-Walkthrough
------------
+Tutorial
+---------
 
 
 Lets write a bad calculator app. The full source is available `here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
@@ -72,12 +53,12 @@ To summarize, we:
 
  * Wrote an application using Beaker and PyTeal
     By subclassing ``Application`` and adding a ``handler`` method
- * Compiled it to TEAL (automatically by Application)
-    Using the PyTeal ``Router.compile`` 
- * Assembled the TEAL to binary (automatically by the ApplicationClient)
-    By calling sending the TEAL to the Algod ``compile`` endpoint
- * Created the application on chain (automatically by the ApplicationClient)
-    Invoking the ``app_client.create`` will compile our application to binary, create an ApplicationCallTransaction with appropriate fields set, sign it with the signer provided and submit it to the network.
+ * Compiled it to TEAL 
+    Done automatically by Application, PyTeal's ``Router.compile`` 
+ * Assembled the TEAL to binary
+    Done automatically by the ApplicationClient by sending the TEAL to the Algod ``compile`` endpoint
+ * Created the application on chain
+    Done by invoking the ``app_client.create``, which takes our binary and submits an ApplicationCallTransaction.
 
     .. note:: 
         Once created, subsequent calls to the app_client are directed to the ``app_id``. 
