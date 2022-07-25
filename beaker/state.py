@@ -22,15 +22,6 @@ from pyteal import (
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 
 
-def stack_type_to_string(st: TealType):
-    if st == TealType.uint64:
-        return "uint64"
-    if st == TealType.bytes:
-        return "bytes"
-    else:
-        raise Exception("Only uint64 and bytes supported")
-
-
 class StateValue(Expr):
     def __init__(
         self,
@@ -44,19 +35,15 @@ class StateValue(Expr):
 
         self.stack_type = stack_type
         self.static = static
+        self.descr = descr
 
         if key is not None and key.type_of() != TealType.bytes:
             raise TealTypeError(key.type_of(), TealType.bytes)
-
         self.key = key
 
         if default is not None and default.type_of() != self.stack_type:
             raise TealTypeError(default.type_of(), self.stack_type)
-
         self.default = default
-
-        self.default = default
-        self.descr = descr
 
     # Required methods for `Expr subclass`
     def has_return(self) -> bool:
@@ -322,6 +309,15 @@ class DynamicAccountStateValue(DynamicStateValue):
         if self.key_generator is not None:
             key = self.key_generator(key)
         return AccountStateValue(stack_type=self.stack_type, key=key)
+
+
+def stack_type_to_string(st: TealType):
+    if st == TealType.uint64:
+        return "uint64"
+    if st == TealType.bytes:
+        return "bytes"
+    else:
+        raise Exception("Only uint64 and bytes supported")
 
 
 class State:
