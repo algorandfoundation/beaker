@@ -111,7 +111,9 @@ def test_app_prepare():
     assert (
         ac_with_signer_and_sender.signer == signer
     ), "Should have the same original signer"
-    assert ac_with_signer_and_sender.sender == new_addr, "Should have the new addr as sender"
+    assert (
+        ac_with_signer_and_sender.sender == new_addr
+    ), "Should have the new addr as sender"
 
     assert (
         ac_with_signer_and_sender.get_signer(None) == signer
