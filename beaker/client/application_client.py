@@ -46,18 +46,21 @@ class ApplicationClient:
 
         self.suggested_params = suggested_params
 
-    def compile_approval(self) -> tuple[bytes, SourceMap]:
+    def compile_approval(self, source_map: bool = False) -> tuple[bytes, SourceMap]:
         approval_result = self.client.compile(
-            self.app.approval_program, source_map=True
+            self.app.approval_program, source_map=source_map
         )
-        return (
-            b64decode(approval_result["result"]),
-            SourceMap(approval_result["sourcemap"]),
-        )
+        src_map = None
+        if source_map:
+            src_map = SourceMap(approval_result["sourcemap"])
+        return (b64decode(approval_result["result"]), src_map)
 
-    def compile_clear(self) -> tuple[bytes, SourceMap]:
+    def compile_clear(self, source_map: bool = False) -> tuple[bytes, SourceMap]:
         clear_result = self.client.compile(self.app.clear_program, source_map=True)
-        return (b64decode(clear_result["result"]), SourceMap(clear_result["sourcemap"]))
+        src_map = None
+        if source_map:
+            src_map = SourceMap(clear_result["sourcemap"])
+        return (b64decode(clear_result["result"]), src_map)
 
     def create(
         self,
