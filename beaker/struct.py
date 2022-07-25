@@ -75,7 +75,7 @@ class Struct(abi.Tuple):
         return dict(zip(self.field_names, values))
 
     def client_encode(self, val: dict[str, Any]) -> bytes:
-        """ " encode a dictionary of keys/values to a bytestring matching the ABI tuple type it is represented by"""
+        """encode a dictionary of keys/values to a bytestring matching the ABI tuple type it is represented by"""
         values = [val[name] for name in self.field_names]
         return self.sdk_codec.encode(values)
 
