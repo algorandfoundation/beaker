@@ -23,7 +23,7 @@ from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
-from .logic_error import LogicException, parse_logic_error
+from beaker.client.logic_error import LogicException
 
 
 class ApplicationClient:
