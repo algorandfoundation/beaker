@@ -505,12 +505,7 @@ class ApplicationClient:
         if sender is not None:
             return sender
 
-        if self.sender is not None:
-            return self.sender
-
-        if self.signer is not None and signer is None:
-            signer = self.signer
-
+        signer = self.get_signer(signer)
         match signer:
             case AccountTransactionSigner():
                 return address_from_private_key(signer.private_key)
@@ -518,5 +513,7 @@ class ApplicationClient:
                 return signer.msig.address()
             case LogicSigTransactionSigner():
                 return signer.lsig.address()
+            case _:
+                print("wat")
 
         raise Exception("No sender provided")
