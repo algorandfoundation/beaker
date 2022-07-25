@@ -21,7 +21,7 @@ from pyteal import (
 from beaker.application import Application
 from beaker.state import ApplicationStateValue
 from beaker.consts import Algos
-from beaker.decorators import internal, handler
+from beaker.decorators import internal, external
 
 
 OpUpTarget = Return(Txn.sender() == Global.creator_address())
@@ -42,7 +42,7 @@ class OpUp(Application):
         stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
     )
 
-    @handler
+    @external
     def opup_bootstrap(self, ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
         """initialize opup with bootstrap to create a target app"""
         return Seq(

@@ -45,14 +45,14 @@
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Decorators</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#abi-method-handler">ABI Method Handler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#abi-method-external">ABI Method external</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#authorization">Authorization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#method-hints">Method Hints</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#bare-handlers">Bare Handlers</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#single-bare-handlers">Single Bare Handlers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#multiple-bare-handlers">Multiple Bare Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bare-externals">Bare externals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#single-bare-externals">Single Bare externals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multiple-bare-externals">Multiple Bare externals</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#internal-methods">Internal Methods</a></li>
@@ -89,11 +89,11 @@
              
   <section id="module-beaker.decorators">
 <span id="decorators"></span><h1>Decorators<a class="headerlink" href="#module-beaker.decorators" title="Permalink to this heading"></a></h1>
-<section id="abi-method-handler">
-<span id="handler"></span><h2>ABI Method Handler<a class="headerlink" href="#abi-method-handler" title="Permalink to this heading"></a></h2>
+<section id="abi-method-external">
+<span id="external"></span><h2>ABI Method external<a class="headerlink" href="#abi-method-external" title="Permalink to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="beaker.decorators.handler">
-<span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">authorize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">MethodConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolvable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#beaker.decorators.ResolvableArguments" title="beaker.decorators.ResolvableArguments"><span class="pre">ResolvableArguments</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/decorators.html#handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.handler" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.decorators.external">
+<span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">external</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">authorize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">MethodConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolvable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#beaker.decorators.ResolvableArguments" title="beaker.decorators.ResolvableArguments"><span class="pre">ResolvableArguments</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/decorators.html#external"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.external" title="Permalink to this definition"></a></dt>
 <dd><p>Add the method decorated to be handled as an ABI method for the Application</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -106,7 +106,7 @@
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with additional elements set in its  <code class="code docutils literal notranslate"><span class="pre">__handler_config__</span></code> attribute</p>
+<dd class="field-even"><p>The original method with additional elements set in its  <code class="code docutils literal notranslate"><span class="pre">__external_config__</span></code> attribute</p>
 </dd>
 </dl>
 </dd></dl>
@@ -120,12 +120,12 @@
 <dd><p>Authorize contains methods that may be used as values to the <cite>authorize</cite> keyword of the <cite>handle</cite> decorator</p>
 </dd></dl>
 
-<p>Lets add a parameter to the handler to allow only the app creator to call this method.</p>
+<p>Lets add a parameter to the external to allow only the app creator to call this method.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Authorize</span>
 
 <span class="c1">#...</span>
 
-<span class="nd">@handler</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+<span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
 <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
@@ -161,7 +161,7 @@
     <span class="c1"># Only allow accounts with 1mm algos</span>
     <span class="k">return</span> <span class="n">Balance</span><span class="p">(</span><span class="n">acct</span><span class="p">)</span><span class="o">&gt;</span><span class="n">Algos</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">)</span>
 
-<span class="nd">@handler</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">is_whale</span><span class="p">)</span>
+<span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">is_whale</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">greet</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hello whale&quot;</span><span class="p">)</span>
 </pre></div>
@@ -199,16 +199,16 @@
 <dd><p>ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method</p>
 </dd></dl>
 
-<p>In an above example, there is a required argument <cite>opup_app</cite>, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to <cite>resolve</cite> the appropriate app id using the <cite>resolvable</cite> keyword argument of the handler.</p>
-<p>We can change the handler to provide the hint.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@handler</span><span class="p">(</span>
+<p>In an above example, there is a required argument <cite>opup_app</cite>, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to <cite>resolve</cite> the appropriate app id using the <cite>resolvable</cite> keyword argument of the external.</p>
+<p>We can change the external to provide the hint.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@external</span><span class="p">(</span>
     <span class="n">resolvable</span><span class="o">=</span><span class="n">ResolvableArguments</span><span class="p">(</span>
         <span class="n">opup_app</span><span class="o">=</span><span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span>
     <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>With this handler config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for <cite>opup_app_id</cite>.  This allows the <cite>ApplicationClient</cite> to figure out what the appropriate application id _should_ be if necessary.</p>
+<p>With this external config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for <cite>opup_app_id</cite>.  This allows the <cite>ApplicationClient</cite> to figure out what the appropriate application id _should_ be if necessary.</p>
 <p>Options for resolving arguments are:</p>
 <ul class="simple">
 <li><p>A constant, <cite>str | int</cite></p></li>
@@ -225,19 +225,19 @@
 <p>See <a class="reference external" href="https://github.com/algorandfoundation/ARCs/pull/79">ARC22</a> for more details.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">count</span> <span class="o">=</span> <span class="n">ApplicationStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
-<span class="nd">@handler</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">get_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_of_thing</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 </section>
-<section id="bare-handlers">
-<span id="id3"></span><h2>Bare Handlers<a class="headerlink" href="#bare-handlers" title="Permalink to this heading"></a></h2>
-<p>The ARC4 spec allows applications to define handlers for <code class="docutils literal notranslate"><span class="pre">bare</span></code> methods, that is methods with no application arguments.</p>
+<section id="bare-externals">
+<span id="id3"></span><h2>Bare externals<a class="headerlink" href="#bare-externals" title="Permalink to this heading"></a></h2>
+<p>The ARC4 spec allows applications to define externals for <code class="docutils literal notranslate"><span class="pre">bare</span></code> methods, that is methods with no application arguments.</p>
 <p>Routing for <code class="docutils literal notranslate"><span class="pre">bare</span></code> methods is based on the transaction’s <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> and whether or not it’s a Create transaction.</p>
-<section id="single-bare-handlers">
-<h3>Single Bare Handlers<a class="headerlink" href="#single-bare-handlers" title="Permalink to this heading"></a></h3>
+<section id="single-bare-externals">
+<h3>Single Bare externals<a class="headerlink" href="#single-bare-externals" title="Permalink to this heading"></a></h3>
 <p>If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="beaker.decorators.create">
@@ -248,7 +248,7 @@
 <dd class="field-odd"><p><strong>fn</strong> – The method to be wrapped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -262,7 +262,7 @@
 <dd class="field-odd"><p><strong>fn</strong> – The method to be wrapped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -276,7 +276,7 @@
 <dd class="field-odd"><p><strong>fn</strong> – The method to be wrapped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -290,7 +290,7 @@
 <dd class="field-odd"><p><strong>fn</strong> – The method to be wrapped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -304,7 +304,7 @@
 <dd class="field-odd"><p><strong>fn</strong> – The method to be wrapped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -318,18 +318,18 @@
 <dd class="field-odd"><p><strong>fn</strong> – The method to be wrapped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>
 
 </section>
-<section id="multiple-bare-handlers">
-<h3>Multiple Bare Handlers<a class="headerlink" href="#multiple-bare-handlers" title="Permalink to this heading"></a></h3>
-<p>If a method requires handling multiple <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> actions, use <code class="docutils literal notranslate"><span class="pre">bare_handler</span></code></p>
+<section id="multiple-bare-externals">
+<h3>Multiple Bare externals<a class="headerlink" href="#multiple-bare-externals" title="Permalink to this heading"></a></h3>
+<p>If a method requires handling multiple <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> actions, use <code class="docutils literal notranslate"><span class="pre">bare_external</span></code></p>
 <dl class="py function">
-<dt class="sig sig-object py" id="beaker.decorators.bare_handler">
-<span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">bare_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_application</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_application</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/decorators.html#bare_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.bare_handler" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.decorators.bare_external">
+<span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">bare_external</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_application</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_application</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">CallConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/decorators.html#bare_external"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.bare_external" title="Permalink to this definition"></a></dt>
 <dd><p>Add method to be handled by specific bare <code class="code docutils literal notranslate"><span class="pre">OnComplete</span></code> actions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -343,7 +343,7 @@
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__handler_config__</cite></p>
+<dd class="field-even"><p>The original method with changes made to its signature and attributes set in its <cite>__external_config__</cite></p>
 </dd>
 </dl>
 </dd></dl>

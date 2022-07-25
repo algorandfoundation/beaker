@@ -140,15 +140,15 @@
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">place_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="n">order_number</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">read_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Order</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="n">order_number</span><span class="p">])</span>
 
-    <span class="nd">@handler</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">increase_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Order</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="c1"># Read the order from state</span>

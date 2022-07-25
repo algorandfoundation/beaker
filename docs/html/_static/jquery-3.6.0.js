@@ -713,7 +713,7 @@ var i,
 	// See setDocument()
 	// Removing the function wrapper causes a "Permission Denied"
 	// error in IE
-	unloadHandler = function() {
+	unloadexternal = function() {
 		setDocument();
 	},
 
@@ -953,16 +953,16 @@ function assert( fn ) {
 }
 
 /**
- * Adds the same handler for all of the specified attrs
+ * Adds the same external for all of the specified attrs
  * @param {String} attrs Pipe-separated list of attributes
- * @param {Function} handler The method that will be applied
+ * @param {Function} external The method that will be applied
  */
-function addHandle( attrs, handler ) {
+function addHandle( attrs, external ) {
 	var arr = attrs.split( "|" ),
 		i = arr.length;
 
 	while ( i-- ) {
-		Expr.attrHandle[ arr[ i ] ] = handler;
+		Expr.attrHandle[ arr[ i ] ] = external;
 	}
 }
 
@@ -1155,11 +1155,11 @@ setDocument = Sizzle.setDocument = function( node ) {
 
 		// Support: IE 11, Edge
 		if ( subWindow.addEventListener ) {
-			subWindow.addEventListener( "unload", unloadHandler, false );
+			subWindow.addEventListener( "unload", unloadexternal, false );
 
 		// Support: IE 9 - 10 only
 		} else if ( subWindow.attachEvent ) {
-			subWindow.attachEvent( "onunload", unloadHandler );
+			subWindow.attachEvent( "onunload", unloadexternal );
 		}
 	}
 
@@ -3695,7 +3695,7 @@ jQuery.extend( {
 		var tuples = [
 
 				// action, add listener, callbacks,
-				// ... .then handlers, argument index, [final state]
+				// ... .then externals, argument index, [final state]
 				[ "notify", "progress", jQuery.Callbacks( "memory" ),
 					jQuery.Callbacks( "memory" ), 2 ],
 				[ "resolve", "done", jQuery.Callbacks( "once memory" ),
@@ -3749,7 +3749,7 @@ jQuery.extend( {
 				},
 				then: function( onFulfilled, onRejected, onProgress ) {
 					var maxDepth = 0;
-					function resolve( depth, deferred, handler, special ) {
+					function resolve( depth, deferred, external, special ) {
 						return function() {
 							var that = this,
 								args = arguments,
@@ -3763,7 +3763,7 @@ jQuery.extend( {
 										return;
 									}
 
-									returned = handler.apply( that, args );
+									returned = external.apply( that, args );
 
 									// Support: Promises/A+ section 2.3.1
 									// https://promisesaplus.com/#point-48
@@ -3813,9 +3813,9 @@ jQuery.extend( {
 									// Handle all other returned values
 									} else {
 
-										// Only substitute handlers pass on context
+										// Only substitute externals pass on context
 										// and multiple values (non-spec behavior)
-										if ( handler !== Identity ) {
+										if ( external !== Identity ) {
 											that = undefined;
 											args = [ returned ];
 										}
@@ -3844,9 +3844,9 @@ jQuery.extend( {
 											// Ignore post-resolution exceptions
 											if ( depth + 1 >= maxDepth ) {
 
-												// Only substitute handlers pass on context
+												// Only substitute externals pass on context
 												// and multiple values (non-spec behavior)
-												if ( handler !== Thrower ) {
+												if ( external !== Thrower ) {
 													that = undefined;
 													args = [ e ];
 												}
@@ -3876,7 +3876,7 @@ jQuery.extend( {
 
 					return jQuery.Deferred( function( newDefer ) {
 
-						// progress_handlers.add( ... )
+						// progress_externals.add( ... )
 						tuples[ 0 ][ 3 ].add(
 							resolve(
 								0,
@@ -3888,7 +3888,7 @@ jQuery.extend( {
 							)
 						);
 
-						// fulfilled_handlers.add( ... )
+						// fulfilled_externals.add( ... )
 						tuples[ 1 ][ 3 ].add(
 							resolve(
 								0,
@@ -3899,7 +3899,7 @@ jQuery.extend( {
 							)
 						);
 
-						// rejected_handlers.add( ... )
+						// rejected_externals.add( ... )
 						tuples[ 2 ][ 3 ].add(
 							resolve(
 								0,
@@ -3944,21 +3944,21 @@ jQuery.extend( {
 					// fulfilled_callbacks.disable
 					tuples[ 3 - i ][ 2 ].disable,
 
-					// rejected_handlers.disable
-					// fulfilled_handlers.disable
+					// rejected_externals.disable
+					// fulfilled_externals.disable
 					tuples[ 3 - i ][ 3 ].disable,
 
 					// progress_callbacks.lock
 					tuples[ 0 ][ 2 ].lock,
 
-					// progress_handlers.lock
+					// progress_externals.lock
 					tuples[ 0 ][ 3 ].lock
 				);
 			}
 
-			// progress_handlers.fire
-			// fulfilled_handlers.fire
-			// rejected_handlers.fire
+			// progress_externals.fire
+			// fulfilled_externals.fire
+			// rejected_externals.fire
 			list.add( tuple[ 3 ].fire );
 
 			// deferred.notify = function() { deferred.notifyWith(...) }
@@ -4113,7 +4113,7 @@ jQuery.extend( {
 
 jQuery.ready.then = readyList.then;
 
-// The ready event handler and self cleanup method
+// The ready event external and self cleanup method
 function completed() {
 	document.removeEventListener( "DOMContentLoaded", completed );
 	window.removeEventListener( "load", completed );
@@ -5125,7 +5125,7 @@ function safeActiveElement() {
 function on( elem, types, selector, data, fn, one ) {
 	var origFn, type;
 
-	// Types can be a map of types/handlers
+	// Types can be a map of types/externals
 	if ( typeof types === "object" ) {
 
 		// ( types-Object, selector, data )
@@ -5191,11 +5191,11 @@ jQuery.event = {
 
 	global: {},
 
-	add: function( elem, types, handler, data, selector ) {
+	add: function( elem, types, external, data, selector ) {
 
 		var handleObjIn, eventHandle, tmp,
 			events, t, handleObj,
-			special, handlers, type, namespaces, origType,
+			special, externals, type, namespaces, origType,
 			elemData = dataPriv.get( elem );
 
 		// Only attach events to objects that accept data
@@ -5203,10 +5203,10 @@ jQuery.event = {
 			return;
 		}
 
-		// Caller can pass in an object of custom data in lieu of the handler
-		if ( handler.handler ) {
-			handleObjIn = handler;
-			handler = handleObjIn.handler;
+		// Caller can pass in an object of custom data in lieu of the external
+		if ( external.external ) {
+			handleObjIn = external;
+			external = handleObjIn.external;
 			selector = handleObjIn.selector;
 		}
 
@@ -5216,12 +5216,12 @@ jQuery.event = {
 			jQuery.find.matchesSelector( documentElement, selector );
 		}
 
-		// Make sure that the handler has a unique ID, used to find/remove it later
-		if ( !handler.guid ) {
-			handler.guid = jQuery.guid++;
+		// Make sure that the external has a unique ID, used to find/remove it later
+		if ( !external.guid ) {
+			external.guid = jQuery.guid++;
 		}
 
-		// Init the element's event structure and main handler, if this is the first
+		// Init the element's event structure and main external, if this is the first
 		if ( !( events = elemData.events ) ) {
 			events = elemData.events = Object.create( null );
 		}
@@ -5243,12 +5243,12 @@ jQuery.event = {
 			type = origType = tmp[ 1 ];
 			namespaces = ( tmp[ 2 ] || "" ).split( "." ).sort();
 
-			// There *must* be a type, no attaching namespace-only handlers
+			// There *must* be a type, no attaching namespace-only externals
 			if ( !type ) {
 				continue;
 			}
 
-			// If event changes its type, use the special event handlers for the changed type
+			// If event changes its type, use the special event externals for the changed type
 			special = jQuery.event.special[ type ] || {};
 
 			// If selector defined, determine special event api type, otherwise given type
@@ -5257,24 +5257,24 @@ jQuery.event = {
 			// Update special based on newly reset type
 			special = jQuery.event.special[ type ] || {};
 
-			// handleObj is passed to all event handlers
+			// handleObj is passed to all event externals
 			handleObj = jQuery.extend( {
 				type: type,
 				origType: origType,
 				data: data,
-				handler: handler,
-				guid: handler.guid,
+				external: external,
+				guid: external.guid,
 				selector: selector,
 				needsContext: selector && jQuery.expr.match.needsContext.test( selector ),
 				namespace: namespaces.join( "." )
 			}, handleObjIn );
 
-			// Init the event handler queue if we're the first
-			if ( !( handlers = events[ type ] ) ) {
-				handlers = events[ type ] = [];
-				handlers.delegateCount = 0;
+			// Init the event external queue if we're the first
+			if ( !( externals = events[ type ] ) ) {
+				externals = events[ type ] = [];
+				externals.delegateCount = 0;
 
-				// Only use addEventListener if the special events handler returns false
+				// Only use addEventListener if the special events external returns false
 				if ( !special.setup ||
 					special.setup.call( elem, data, namespaces, eventHandle ) === false ) {
 
@@ -5287,16 +5287,16 @@ jQuery.event = {
 			if ( special.add ) {
 				special.add.call( elem, handleObj );
 
-				if ( !handleObj.handler.guid ) {
-					handleObj.handler.guid = handler.guid;
+				if ( !handleObj.external.guid ) {
+					handleObj.external.guid = external.guid;
 				}
 			}
 
-			// Add to the element's handler list, delegates in front
+			// Add to the element's external list, delegates in front
 			if ( selector ) {
-				handlers.splice( handlers.delegateCount++, 0, handleObj );
+				externals.splice( externals.delegateCount++, 0, handleObj );
 			} else {
-				handlers.push( handleObj );
+				externals.push( handleObj );
 			}
 
 			// Keep track of which events have ever been used, for event optimization
@@ -5306,11 +5306,11 @@ jQuery.event = {
 	},
 
 	// Detach an event or set of events from an element
-	remove: function( elem, types, handler, selector, mappedTypes ) {
+	remove: function( elem, types, external, selector, mappedTypes ) {
 
 		var j, origCount, tmp,
 			events, t, handleObj,
-			special, handlers, type, namespaces, origType,
+			special, externals, type, namespaces, origType,
 			elemData = dataPriv.hasData( elem ) && dataPriv.get( elem );
 
 		if ( !elemData || !( events = elemData.events ) ) {
@@ -5328,31 +5328,31 @@ jQuery.event = {
 			// Unbind all events (on this namespace, if provided) for the element
 			if ( !type ) {
 				for ( type in events ) {
-					jQuery.event.remove( elem, type + types[ t ], handler, selector, true );
+					jQuery.event.remove( elem, type + types[ t ], external, selector, true );
 				}
 				continue;
 			}
 
 			special = jQuery.event.special[ type ] || {};
 			type = ( selector ? special.delegateType : special.bindType ) || type;
-			handlers = events[ type ] || [];
+			externals = events[ type ] || [];
 			tmp = tmp[ 2 ] &&
 				new RegExp( "(^|\\.)" + namespaces.join( "\\.(?:.*\\.|)" ) + "(\\.|$)" );
 
 			// Remove matching events
-			origCount = j = handlers.length;
+			origCount = j = externals.length;
 			while ( j-- ) {
-				handleObj = handlers[ j ];
+				handleObj = externals[ j ];
 
 				if ( ( mappedTypes || origType === handleObj.origType ) &&
-					( !handler || handler.guid === handleObj.guid ) &&
+					( !external || external.guid === handleObj.guid ) &&
 					( !tmp || tmp.test( handleObj.namespace ) ) &&
 					( !selector || selector === handleObj.selector ||
 						selector === "**" && handleObj.selector ) ) {
-					handlers.splice( j, 1 );
+					externals.splice( j, 1 );
 
 					if ( handleObj.selector ) {
-						handlers.delegateCount--;
+						externals.delegateCount--;
 					}
 					if ( special.remove ) {
 						special.remove.call( elem, handleObj );
@@ -5360,9 +5360,9 @@ jQuery.event = {
 				}
 			}
 
-			// Remove generic event handler if we removed something and no more handlers exist
-			// (avoids potential for endless recursion during removal of special event handlers)
-			if ( origCount && !handlers.length ) {
+			// Remove generic event external if we removed something and no more externals exist
+			// (avoids potential for endless recursion during removal of special event externals)
+			if ( origCount && !externals.length ) {
 				if ( !special.teardown ||
 					special.teardown.call( elem, namespaces, elemData.handle ) === false ) {
 
@@ -5381,13 +5381,13 @@ jQuery.event = {
 
 	dispatch: function( nativeEvent ) {
 
-		var i, j, ret, matched, handleObj, handlerQueue,
+		var i, j, ret, matched, handleObj, externalQueue,
 			args = new Array( arguments.length ),
 
 			// Make a writable jQuery.Event from the native event object
 			event = jQuery.event.fix( nativeEvent ),
 
-			handlers = (
+			externals = (
 				dataPriv.get( this, "events" ) || Object.create( null )
 			)[ event.type ] || [],
 			special = jQuery.event.special[ event.type ] || {};
@@ -5406,19 +5406,19 @@ jQuery.event = {
 			return;
 		}
 
-		// Determine handlers
-		handlerQueue = jQuery.event.handlers.call( this, event, handlers );
+		// Determine externals
+		externalQueue = jQuery.event.externals.call( this, event, externals );
 
 		// Run delegates first; they may want to stop propagation beneath us
 		i = 0;
-		while ( ( matched = handlerQueue[ i++ ] ) && !event.isPropagationStopped() ) {
+		while ( ( matched = externalQueue[ i++ ] ) && !event.isPropagationStopped() ) {
 			event.currentTarget = matched.elem;
 
 			j = 0;
-			while ( ( handleObj = matched.handlers[ j++ ] ) &&
+			while ( ( handleObj = matched.externals[ j++ ] ) &&
 				!event.isImmediatePropagationStopped() ) {
 
-				// If the event is namespaced, then each handler is only invoked if it is
+				// If the event is namespaced, then each external is only invoked if it is
 				// specially universal or its namespaces are a superset of the event's.
 				if ( !event.rnamespace || handleObj.namespace === false ||
 					event.rnamespace.test( handleObj.namespace ) ) {
@@ -5427,7 +5427,7 @@ jQuery.event = {
 					event.data = handleObj.data;
 
 					ret = ( ( jQuery.event.special[ handleObj.origType ] || {} ).handle ||
-						handleObj.handler ).apply( matched.elem, args );
+						handleObj.external ).apply( matched.elem, args );
 
 					if ( ret !== undefined ) {
 						if ( ( event.result = ret ) === false ) {
@@ -5447,13 +5447,13 @@ jQuery.event = {
 		return event.result;
 	},
 
-	handlers: function( event, handlers ) {
-		var i, handleObj, sel, matchedHandlers, matchedSelectors,
-			handlerQueue = [],
-			delegateCount = handlers.delegateCount,
+	externals: function( event, externals ) {
+		var i, handleObj, sel, matchedexternals, matchedSelectors,
+			externalQueue = [],
+			delegateCount = externals.delegateCount,
 			cur = event.target;
 
-		// Find delegate handlers
+		// Find delegate externals
 		if ( delegateCount &&
 
 			// Support: IE <=9
@@ -5472,10 +5472,10 @@ jQuery.event = {
 				// Don't check non-elements (#13208)
 				// Don't process clicks on disabled elements (#6911, #8165, #11382, #11764)
 				if ( cur.nodeType === 1 && !( event.type === "click" && cur.disabled === true ) ) {
-					matchedHandlers = [];
+					matchedexternals = [];
 					matchedSelectors = {};
 					for ( i = 0; i < delegateCount; i++ ) {
-						handleObj = handlers[ i ];
+						handleObj = externals[ i ];
 
 						// Don't conflict with Object.prototype properties (#13203)
 						sel = handleObj.selector + " ";
@@ -5486,23 +5486,23 @@ jQuery.event = {
 								jQuery.find( sel, this, null, [ cur ] ).length;
 						}
 						if ( matchedSelectors[ sel ] ) {
-							matchedHandlers.push( handleObj );
+							matchedexternals.push( handleObj );
 						}
 					}
-					if ( matchedHandlers.length ) {
-						handlerQueue.push( { elem: cur, handlers: matchedHandlers } );
+					if ( matchedexternals.length ) {
+						externalQueue.push( { elem: cur, externals: matchedexternals } );
 					}
 				}
 			}
 		}
 
-		// Add the remaining (directly-bound) handlers
+		// Add the remaining (directly-bound) externals
 		cur = this;
-		if ( delegateCount < handlers.length ) {
-			handlerQueue.push( { elem: cur, handlers: handlers.slice( delegateCount ) } );
+		if ( delegateCount < externals.length ) {
+			externalQueue.push( { elem: cur, externals: externals.slice( delegateCount ) } );
 		}
 
-		return handlerQueue;
+		return externalQueue;
 	},
 
 	addProp: function( name, hook ) {
@@ -5554,7 +5554,7 @@ jQuery.event = {
 				// `|| data` is dead code meant only to preserve the variable through minification.
 				var el = this || data;
 
-				// Claim the first handler
+				// Claim the first external
 				if ( rcheckableType.test( el.type ) &&
 					el.click && nodeName( el, "input" ) ) {
 
@@ -5620,11 +5620,11 @@ function leverageNative( el, type, expectSync ) {
 		return;
 	}
 
-	// Register the controller as a special universal handler for all event namespaces
+	// Register the controller as a special universal external for all event namespaces
 	dataPriv.set( el, type, false );
 	jQuery.event.add( el, type, {
 		namespace: false,
-		handler: function( event ) {
+		external: function( event ) {
 			var notAsync, result,
 				saved = dataPriv.get( this, type );
 
@@ -5632,7 +5632,7 @@ function leverageNative( el, type, expectSync ) {
 
 				// Interrupt processing of the outer synthetic .trigger()ed event
 				// Saved data should be false in such cases, but might be a leftover capture object
-				// from an async native handler (gh-4350)
+				// from an async native external (gh-4350)
 				if ( !saved.length ) {
 
 					// Store arguments for use when handling the inner native event
@@ -5659,9 +5659,9 @@ function leverageNative( el, type, expectSync ) {
 						event.preventDefault();
 
 						// Support: Chrome 86+
-						// In Chrome, if an element having a focusout handler is blurred by
-						// clicking outside of it, it invokes the handler synchronously. If
-						// that handler calls `.remove()` on the element, the data is cleared,
+						// In Chrome, if an element having a focusout external is blurred by
+						// clicking outside of it, it invokes the external synchronously. If
+						// that external calls `.remove()` on the element, the data is cleared,
 						// leaving `result` undefined. We need to guard against this.
 						return result && result.value;
 					}
@@ -5720,7 +5720,7 @@ jQuery.Event = function( src, props ) {
 		this.type = src.type;
 
 		// Events bubbling up the document may have been marked as prevented
-		// by a handler lower down the tree; reflect the correct value.
+		// by a external lower down the tree; reflect the correct value.
 		this.isDefaultPrevented = src.defaultPrevented ||
 				src.defaultPrevented === undefined &&
 
@@ -5837,7 +5837,7 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 		// Utilize native event if possible so blur/focus sequence is correct
 		setup: function() {
 
-			// Claim the first handler
+			// Claim the first external
 			// dataPriv.set( this, "focus", ... )
 			// dataPriv.set( this, "blur", ... )
 			leverageNative( this, type, expectSync );
@@ -5888,11 +5888,11 @@ jQuery.each( {
 				related = event.relatedTarget,
 				handleObj = event.handleObj;
 
-			// For mouseenter/leave call the handler if related is outside the target.
+			// For mouseenter/leave call the external if related is outside the target.
 			// NB: No relatedTarget if the mouse left/entered the browser window
 			if ( !related || ( related !== target && !jQuery.contains( target, related ) ) ) {
 				event.type = handleObj.origType;
-				ret = handleObj.handler.apply( this, arguments );
+				ret = handleObj.external.apply( this, arguments );
 				event.type = fix;
 			}
 			return ret;
@@ -5919,7 +5919,7 @@ jQuery.fn.extend( {
 					handleObj.origType + "." + handleObj.namespace :
 					handleObj.origType,
 				handleObj.selector,
-				handleObj.handler
+				handleObj.external
 			);
 			return this;
 		}
@@ -5991,7 +5991,7 @@ function cloneCopyEvent( src, dest ) {
 		return;
 	}
 
-	// 1. Copy private data: events, handlers, etc.
+	// 1. Copy private data: events, externals, etc.
 	if ( dataPriv.hasData( src ) ) {
 		pdataOld = dataPriv.get( src );
 		events = pdataOld.events;
@@ -7351,7 +7351,7 @@ function defaultPrefilter( elem, props, opts ) {
 
 		anim.always( function() {
 
-			// Ensure the complete handler is called before this completes
+			// Ensure the complete external is called before this completes
 			anim.always( function() {
 				hooks.unqueued--;
 				if ( !jQuery.queue( elem, "fx" ).length ) {
@@ -8628,7 +8628,7 @@ var rfocusMorph = /^(?:focusinfocus|focusoutblur)$/,
 
 jQuery.extend( jQuery.event, {
 
-	trigger: function( event, data, elem, onlyHandlers ) {
+	trigger: function( event, data, elem, onlyexternals ) {
 
 		var i, cur, tmp, bubbleType, ontype, handle, special, lastElement,
 			eventPath = [ elem || document ],
@@ -8661,8 +8661,8 @@ jQuery.extend( jQuery.event, {
 			event :
 			new jQuery.Event( type, typeof event === "object" && event );
 
-		// Trigger bitmask: & 1 for native handlers; & 2 for jQuery (always true)
-		event.isTrigger = onlyHandlers ? 2 : 3;
+		// Trigger bitmask: & 1 for native externals; & 2 for jQuery (always true)
+		event.isTrigger = onlyexternals ? 2 : 3;
 		event.namespace = namespaces.join( "." );
 		event.rnamespace = event.namespace ?
 			new RegExp( "(^|\\.)" + namespaces.join( "\\.(?:.*\\.|)" ) + "(\\.|$)" ) :
@@ -8674,20 +8674,20 @@ jQuery.extend( jQuery.event, {
 			event.target = elem;
 		}
 
-		// Clone any incoming data and prepend the event, creating the handler arg list
+		// Clone any incoming data and prepend the event, creating the external arg list
 		data = data == null ?
 			[ event ] :
 			jQuery.makeArray( data, [ event ] );
 
 		// Allow special events to draw outside the lines
 		special = jQuery.event.special[ type ] || {};
-		if ( !onlyHandlers && special.trigger && special.trigger.apply( elem, data ) === false ) {
+		if ( !onlyexternals && special.trigger && special.trigger.apply( elem, data ) === false ) {
 			return;
 		}
 
 		// Determine event propagation path in advance, per W3C events spec (#9951)
 		// Bubble up to document, then to window; watch for a global ownerDocument var (#9724)
-		if ( !onlyHandlers && !special.noBubble && !isWindow( elem ) ) {
+		if ( !onlyexternals && !special.noBubble && !isWindow( elem ) ) {
 
 			bubbleType = special.delegateType || type;
 			if ( !rfocusMorph.test( bubbleType + type ) ) {
@@ -8704,7 +8704,7 @@ jQuery.extend( jQuery.event, {
 			}
 		}
 
-		// Fire handlers on the event path
+		// Fire externals on the event path
 		i = 0;
 		while ( ( cur = eventPath[ i++ ] ) && !event.isPropagationStopped() ) {
 			lastElement = cur;
@@ -8712,14 +8712,14 @@ jQuery.extend( jQuery.event, {
 				bubbleType :
 				special.bindType || type;
 
-			// jQuery handler
+			// jQuery external
 			handle = ( dataPriv.get( cur, "events" ) || Object.create( null ) )[ event.type ] &&
 				dataPriv.get( cur, "handle" );
 			if ( handle ) {
 				handle.apply( cur, data );
 			}
 
-			// Native handler
+			// Native external
 			handle = ontype && cur[ ontype ];
 			if ( handle && handle.apply && acceptData( cur ) ) {
 				event.result = handle.apply( cur, data );
@@ -8731,7 +8731,7 @@ jQuery.extend( jQuery.event, {
 		event.type = type;
 
 		// If nobody prevented the default action, do it now
-		if ( !onlyHandlers && !event.isDefaultPrevented() ) {
+		if ( !onlyexternals && !event.isDefaultPrevented() ) {
 
 			if ( ( !special._default ||
 				special._default.apply( eventPath.pop(), data ) === false ) &&
@@ -8797,7 +8797,7 @@ jQuery.fn.extend( {
 			jQuery.event.trigger( type, data, this );
 		} );
 	},
-	triggerHandler: function( type, data ) {
+	triggerexternal: function( type, data ) {
 		var elem = this[ 0 ];
 		if ( elem ) {
 			return jQuery.event.trigger( type, data, elem, true );
@@ -8817,8 +8817,8 @@ jQuery.fn.extend( {
 if ( !support.focusin ) {
 	jQuery.each( { focus: "focusin", blur: "focusout" }, function( orig, fix ) {
 
-		// Attach a single capturing handler on the document while someone wants focusin/focusout
-		var handler = function( event ) {
+		// Attach a single capturing external on the document while someone wants focusin/focusout
+		var external = function( event ) {
 			jQuery.event.simulate( fix, event.target, jQuery.event.fix( event ) );
 		};
 
@@ -8831,7 +8831,7 @@ if ( !support.focusin ) {
 					attaches = dataPriv.access( doc, fix );
 
 				if ( !attaches ) {
-					doc.addEventListener( orig, handler, true );
+					doc.addEventListener( orig, external, true );
 				}
 				dataPriv.access( doc, fix, ( attaches || 0 ) + 1 );
 			},
@@ -8840,7 +8840,7 @@ if ( !support.focusin ) {
 					attaches = dataPriv.access( doc, fix ) - 1;
 
 				if ( !attaches ) {
-					doc.removeEventListener( orig, handler, true );
+					doc.removeEventListener( orig, external, true );
 					dataPriv.remove( doc, fix );
 
 				} else {
@@ -9127,7 +9127,7 @@ function ajaxExtend( target, src ) {
  * - finds the right dataType (mediates between content-type and expected dataType)
  * - returns the corresponding response
  */
-function ajaxHandleResponses( s, jqXHR, responses ) {
+function ajaxexternalesponses( s, jqXHR, responses ) {
 
 	var ct, type, finalDataType, firstDataType,
 		contents = s.contents,
@@ -9732,7 +9732,7 @@ jQuery.extend( {
 
 			// Get response data
 			if ( responses ) {
-				response = ajaxHandleResponses( s, jqXHR, responses );
+				response = ajaxexternalesponses( s, jqXHR, responses );
 			}
 
 			// Use a noop converter for missing script but not if jsonp
@@ -10320,7 +10320,7 @@ jQuery.parseHTML = function( data, context, keepScripts ) {
 
 	if ( !context ) {
 
-		// Stop scripts or inline event handlers from being executed immediately
+		// Stop scripts or inline event externals from being executed immediately
 		// by using document.implementation
 		if ( support.createHTMLDocument ) {
 			context = document.implementation.createHTMLDocument( "" );
@@ -10780,7 +10780,7 @@ jQuery.proxy = function( fn, context ) {
 		return fn.apply( context || this, args.concat( slice.call( arguments ) ) );
 	};
 
-	// Set the guid of unique handler to the same of original handler, so it can be removed
+	// Set the guid of unique external to the same of original external, so it can be removed
 	proxy.guid = fn.guid = fn.guid || jQuery.guid++;
 
 	return proxy;

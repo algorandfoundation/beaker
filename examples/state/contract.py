@@ -42,39 +42,39 @@ class StateExample(Application):
     def opt_in(self):
         return self.initialize_account_state()
 
-    @handler
+    @external
     def set_app_state_val(self, v: abi.String):
         # This will fail, since it was declared as `static` and initialized to a default value during create
         return self.declared_app_value.set(v.get())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_app_state_val(self, *, output: abi.String):
         return output.set(self.declared_app_value)
 
-    @handler
+    @external
     def set_dynamic_app_state_val(self, k: abi.Uint8, v: abi.Uint64):
         # Accessing the key with square brackets, accepts both Expr and an ABI type
         # If the value is an Expr it must evaluate to `TealType.bytes`
         # If the value is an ABI type, the `encode` method is used to convert it to bytes
         return self.dynamic_app_value[k].set(v.get())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_dynamic_app_state_val(self, k: abi.Uint8, *, output: abi.Uint64):
         return output.set(self.dynamic_app_value[k])
 
-    @handler
+    @external
     def set_account_state_val(self, v: abi.Uint64):
         return self.declared_account_value.set(v.get())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_account_state_val(self, *, output: abi.Uint64):
         return output.set(self.declared_account_value)
 
-    @handler
+    @external
     def set_dynamic_account_state_val(self, k: abi.Uint8, v: abi.String):
         return self.dynamic_account_value[k].set(v.get())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_dynamic_account_state_val(self, k: abi.Uint8, *, output: abi.String):
         return output.set(self.dynamic_account_value[k])
 

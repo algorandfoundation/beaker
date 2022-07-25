@@ -4,7 +4,7 @@ class BareOverwriteError(Exception):
 
     def __str__(self) -> str:
         return (
-            f"Tried to overwrite a bare handler: {self.on_complete}.\n"
+            f"Tried to overwrite a bare external: {self.on_complete}.\n"
             + "If you're trying to override a default method in Application"
             + ", be sure to use the same name as the method defined (`create`, `update`, `delete`)."
         )
