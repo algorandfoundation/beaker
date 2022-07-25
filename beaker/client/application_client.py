@@ -16,12 +16,14 @@ from algosdk.atomic_transaction_composer import (
 )
 from algosdk.future import transaction
 from algosdk.logic import get_application_address
+from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
+from beaker.client.logic_error import LogicException
 
 
 class ApplicationClient:
@@ -44,13 +46,18 @@ class ApplicationClient:
 
         self.suggested_params = suggested_params
 
-    def compile_approval(self) -> bytes:
-        approval_result = self.client.compile(self.app.approval_program)
-        return b64decode(approval_result["result"])
+    def compile_approval(self) -> tuple[bytes, SourceMap]:
+        approval_result = self.client.compile(
+            self.app.approval_program, source_map=True
+        )
+        return (
+            b64decode(approval_result["result"]),
+            SourceMap(approval_result["sourcemap"]),
+        )
 
-    def compile_clear(self) -> bytes:
-        clear_result = self.client.compile(self.app.clear_program)
-        return b64decode(clear_result["result"])
+    def compile_clear(self) -> tuple[bytes, SourceMap]:
+        clear_result = self.client.compile(self.app.clear_program, source_map=True)
+        return (b64decode(clear_result["result"]), SourceMap(clear_result["sourcemap"]))
 
     def create(
         self,
@@ -64,8 +71,13 @@ class ApplicationClient:
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
-        approval = self.compile_approval()
-        clear = self.compile_clear()
+        approval, approval_map = self.compile_approval()
+        self.approval_binary = approval
+        self.approval_src_map = approval_map
+
+        clear, clear_map = self.compile_clear()
+        self.clear_binary = clear
+        self.clear_src_map = clear_map
 
         if extra_pages is None:
             extra_pages = ceil(
@@ -94,6 +106,7 @@ class ApplicationClient:
                 signer=signer,
             )
         )
+
         create_result = atc.execute(self.client, 4)
         create_txid = create_result.tx_ids[0]
 
@@ -117,8 +130,13 @@ class ApplicationClient:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
 
-        approval = self.compile_approval()
-        clear = self.compile_clear()
+        approval, approval_map = self.compile_approval()
+        self.approval_binary = approval
+        self.approval_src_map = approval_map
+
+        clear, clear_map = self.compile_clear()
+        self.clear_binary = clear
+        self.clear_src_map = clear_map
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
@@ -281,6 +299,7 @@ class ApplicationClient:
         method: abi.Method | HandlerFunc,
         sender: str = None,
         signer: TransactionSigner = None,
+        suggested_params: transaction.SuggestedParams = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema = None,
         global_schema: transaction.StateSchema = None,
@@ -298,7 +317,7 @@ class ApplicationClient:
 
         """Handles calling the application"""
 
-        sp = self.get_suggested_params()
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -313,10 +332,10 @@ class ApplicationClient:
             if name in kwargs:
                 thing = kwargs[name]
                 if type(thing) is dict:
-                    if name in hints.models:
+                    if name in hints.structs:
                         thing = [
                             thing[field_name]
-                            for field_name in hints.models[name]["elements"]
+                            for field_name in hints.structs[name]["elements"]
                         ]
                     else:
                         # todo error if wrong keys
@@ -362,6 +381,7 @@ class ApplicationClient:
         method: abi.Method | HandlerFunc,
         sender: str = None,
         signer: TransactionSigner = None,
+        suggested_params: transaction.SuggestedParams = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema = None,
         global_schema: transaction.StateSchema = None,
@@ -379,7 +399,7 @@ class ApplicationClient:
 
         """Adds a transaction to the AtomicTransactionComposer passed"""
 
-        sp = self.get_suggested_params()
+        sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
@@ -489,6 +509,12 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
+    def wrap_approval_exception(self, e: Exception) -> LogicException:
+        return LogicException(e, self.app.approval_program, self.approval_src_map)
+
+    def wrap_clear_exception(self, e: Exception) -> LogicException:
+        return LogicException(e, self.app.clear_program, self.clear_src_map)
+
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
 
         if signer is not None:
@@ -506,9 +532,7 @@ class ApplicationClient:
         if self.sender is not None:
             return self.sender
 
-        if self.signer is not None and signer is None:
-            signer = self.signer
-
+        signer = self.get_signer(signer)
         match signer:
             case AccountTransactionSigner():
                 return address_from_private_key(signer.private_key)

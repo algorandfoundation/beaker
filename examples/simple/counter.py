@@ -8,7 +8,7 @@ from beaker import sandbox
 from pyteal import *
 from beaker.application import Application
 from beaker.state import ApplicationStateValue
-from beaker.decorators import handler, create, Authorize
+from beaker.decorators import external, create, Authorize
 
 
 class CounterApp(Application):
@@ -23,7 +23,7 @@ class CounterApp(Application):
         """create application"""
         return self.initialize_application_state()
 
-    @handler(authorize=Authorize.only(Global.creator_address()))
+    @external(authorize=Authorize.only(Global.creator_address()))
     def increment(self, *, output: abi.Uint64):
         """increment the counter"""
         return Seq(
@@ -31,7 +31,7 @@ class CounterApp(Application):
             output.set(self.counter),
         )
 
-    @handler(authorize=Authorize.only(Global.creator_address()))
+    @external(authorize=Authorize.only(Global.creator_address()))
     def decrement(self, *, output: abi.Uint64):
         """decrement the counter"""
         return Seq(

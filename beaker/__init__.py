@@ -10,9 +10,9 @@ from .state import (
 from .decorators import (
     Authorize,
     ResolvableArguments,
-    handler,
+    external,
     internal,
-    bare_handler,
+    bare_external,
     create,
     no_op,
     update,

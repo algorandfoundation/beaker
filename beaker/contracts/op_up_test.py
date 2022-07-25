@@ -5,6 +5,7 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.future.transaction import PaymentTxn
 from beaker.client import ApplicationClient
 from beaker.contracts.op_up import OpUp
+from beaker.consts import milli_algo
 from beaker.sandbox import get_client, get_accounts
 
 
@@ -21,6 +22,8 @@ def test_op_up():
     _, app_addr, _ = ac.create()
 
     sp = client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 256 * milli_algo
     ptxn = TransactionWithSigner(
         txn=PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
     )

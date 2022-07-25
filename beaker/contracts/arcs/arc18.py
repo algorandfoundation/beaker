@@ -27,7 +27,7 @@ from pyteal import (
 )
 
 from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
-from beaker.decorators import Authorize, handler, create, update, delete
+from beaker.decorators import Authorize, external, create, update, delete
 
 
 class ARC18(Application):
@@ -71,12 +71,12 @@ class ARC18(Application):
     # Admin
     ###
 
-    @handler(authorize=Authorize.only(administrator))
+    @external(authorize=Authorize.only(administrator))
     def set_administrator(self, new_admin: abi.Address):
         """Sets the administrator for this royalty enforcer"""
         return self.administrator.set(new_admin.get())
 
-    @handler(authorize=Authorize.only(administrator))
+    @external(authorize=Authorize.only(administrator))
     def set_policy(self, royalty_basis: abi.Uint64, royalty_receiver: abi.Address):
         """Sets the royalty basis and royalty receiver for this royalty enforcer"""
         return Seq(
@@ -85,7 +85,7 @@ class ARC18(Application):
             self.royalty_receiver.set(royalty_receiver.get()),
         )
 
-    @handler(authorize=Authorize.only(administrator))
+    @external(authorize=Authorize.only(administrator))
     def set_payment_asset(payment_asset: abi.Asset, is_allowed: abi.Bool):
         """Triggers the contract account to opt in or out of an asset that may be used for payment of royalties"""
         return Seq(
@@ -128,7 +128,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def transfer_algo_payment(
         self,
         royalty_asset: abi.Asset,
@@ -195,7 +195,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def transfer_asset_payment(
         self,
         royalty_asset: abi.Asset,
@@ -264,7 +264,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def offer(
         self,
         royalty_asset: abi.Asset,
@@ -294,7 +294,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def royalty_free_move(
         self,
         royalty_asset: abi.Asset,
@@ -342,13 +342,13 @@ class ARC18(Application):
 
     Offer = abi.Tuple2[abi.Address, abi.Uint64]
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_offer(royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer):
         return output.decode(ARC18.offers[royalty_asset].get_must(owner.address()))
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_policy(*, output: Policy):
         return Seq(
             (addr := abi.Address()).decode(ARC18.royalty_receiver),
@@ -356,7 +356,7 @@ class ARC18(Application):
             output.set(addr, amt),
         )
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_administrator(*, output: abi.Address):
         return output.decode(ARC18.administrator)
 

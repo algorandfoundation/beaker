@@ -16,7 +16,7 @@ from algosdk.atomic_transaction_composer import (
 from ..decorators import (
     ResolvableTypes,
     create,
-    handler,
+    external,
     update,
     clear_state,
     close_out,
@@ -61,11 +61,11 @@ class App(Application):
     def delete(self):
         return pt.Approve()
 
-    @handler
+    @external
     def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a.get() + b.get())
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def dummy(self, *, output: pt.abi.String):
         return output.set("deadbeef")
 
@@ -111,11 +111,14 @@ def test_app_prepare():
     assert (
         ac_with_signer_and_sender.signer == signer
     ), "Should have the same original signer"
-    assert ac_with_signer_and_sender.sender == new_addr, "Should not have a sender"
+    assert (
+        ac_with_signer_and_sender.sender == new_addr
+    ), "Should have the new addr as sender"
 
     assert (
         ac_with_signer_and_sender.get_signer(None) == signer
     ), "Should produce the same signer"
+
     assert (
         ac_with_signer_and_sender.get_sender(None, None) == new_addr
     ), "Should produce the new address"
@@ -176,13 +179,17 @@ def test_compile():
     client = get_client()
     ac = ApplicationClient(client, app)
 
-    approval_program = ac.compile_approval()
+    approval_program, approval_map = ac.compile_approval()
     assert len(approval_program) > 0, "Should have a valid approval program"
     assert approval_program[0] == version, "First byte should be the version we set"
+    assert approval_map.version == 3, "Should have valid source map with version 3"
+    assert len(approval_map.pc_to_line) > 0, "Should have valid mapping"
 
-    clear_program = ac.compile_clear()
+    clear_program, clear_map = ac.compile_clear()
     assert len(clear_program) > 0, "Should have a valid clear program"
     assert clear_program[0] == version, "First byte should be the version we set"
+    assert clear_map.version == 3, "Should have valid source map with version 3"
+    assert len(clear_map.pc_to_line) > 0, "Should have valid mapping"
 
 
 def expect_dict(actual: dict[str, Any], expected: dict[str, Any]):
