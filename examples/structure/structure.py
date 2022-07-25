@@ -11,13 +11,13 @@ from beaker import (
     external,
     sandbox,
     client,
-    struct
+    struct,
 )
 
 
 class Structer(Application):
 
-    # Our custom Struct 
+    # Our custom Struct
     class Order(struct.Struct):
         item: abi.String
         quantity: abi.Uint16
