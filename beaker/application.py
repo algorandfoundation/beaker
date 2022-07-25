@@ -18,9 +18,9 @@ from pyteal import (
 )
 
 from beaker.decorators import (
-    externalConfig,
+    HandlerConfig,
+    get_handler_config,
     MethodHints,
-    get_external_config,
     create,
     update,
     delete,
@@ -40,7 +40,7 @@ from beaker.errors import BareOverwriteError
 
 
 def get_method_spec(fn) -> Method:
-    hc = get_external_config(fn)
+    hc = get_handler_config(fn)
     if hc.method_spec is None:
         raise Exception("Expected argument to be an ABI method")
     return hc.method_spec
@@ -104,10 +104,10 @@ class Application:
                 continue
 
             # Check for externals and internal methods
-            external_config = get_external_config(bound_attr)
+            external_config = get_handler_config(bound_attr)
             match external_config:
                 # Bare externals
-                case externalConfig(bare_method=BareCallActions()):
+                case HandlerConfig(bare_method=BareCallActions()):
                     actions = {
                         oc: cast(OnCompleteAction, action)
                         for oc, action in external_config.bare_method.__dict__.items()
@@ -125,7 +125,7 @@ class Application:
                         self.bare_externals[oc] = action
 
                 # ABI Methods
-                case externalConfig(method_spec=Method()):
+                case HandlerConfig(method_spec=Method()):
                     # Create the ABIReturnSubroutine from the static attr
                     # but override the implementation with the bound version
                     abi_meth = ABIReturnSubroutine(static_attr)
@@ -136,7 +136,7 @@ class Application:
                     self.hints[name] = external_config.hints()
 
                 # Internal subroutines
-                case externalConfig(subroutine=Subroutine()):
+                case HandlerConfig(subroutine=Subroutine()):
                     if external_config.referenced_self:
                         setattr(self, name, external_config.subroutine(bound_attr))
                     else:

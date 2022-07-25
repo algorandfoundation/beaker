@@ -30,14 +30,14 @@ from beaker.state import (
 )
 from beaker.struct import Struct
 
-externalFunc = Callable[..., Expr]
+HandlerFunc = Callable[..., Expr]
 
-_external_config_attr: Final[str] = "__external_config__"
+_handler_config_attr: Final[str] = "__handler_config__"
 
 
 @dataclass
-class externalConfig:
-    """externalConfig contains all the extra bits of info about a given ABI method"""
+class HandlerConfig:
+    """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
     method_spec: Method = field(kw_only=True, default=None)
     subroutine: Subroutine = field(kw_only=True, default=None)
@@ -68,15 +68,15 @@ class externalConfig:
         return mh
 
 
-def get_external_config(fn: externalFunc) -> externalConfig:
-    if hasattr(fn, _external_config_attr):
-        return cast(externalConfig, getattr(fn, _external_config_attr))
-    return externalConfig()
+def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
+    if hasattr(fn, _handler_config_attr):
+        return cast(HandlerConfig, getattr(fn, _handler_config_attr))
+    return HandlerConfig()
 
 
-def set_external_config(fn: externalFunc, **kwargs):
-    external_config = get_external_config(fn)
-    setattr(fn, _external_config_attr, replace(external_config, **kwargs))
+def set_handler_config(fn: HandlerFunc, **kwargs):
+    handler_config = get_handler_config(fn)
+    setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
 
 
 @dataclass
@@ -114,7 +114,7 @@ class ResolvableArguments:
     def __init__(
         self,
         **kwargs: dict[
-            str, AccountStateValue | ApplicationStateValue | externalFunc | str | int
+            str, AccountStateValue | ApplicationStateValue | HandlerFunc | str | int
         ],
     ):
 
@@ -132,7 +132,7 @@ class ResolvableArguments:
                 case str() | int():
                     resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
                 case _:
-                    hc = get_external_config(arg_resolver)
+                    hc = get_handler_config(arg_resolver)
                     if hc.method_spec is None or not hc.read_only:
                         raise Exception(
                             "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
@@ -208,7 +208,7 @@ def _authorize(allowed: SubroutineFnWrapper):
     if allowed.type_of() != TealType.uint64:
         raise TealTypeError(allowed.type_of(), TealType.uint64)
 
-    def _decorate(fn: externalFunc):
+    def _decorate(fn: HandlerFunc):
         @wraps(fn)
         def _impl(*args, **kwargs):
             return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
@@ -218,20 +218,20 @@ def _authorize(allowed: SubroutineFnWrapper):
     return _decorate
 
 
-def _readonly(fn: externalFunc):
-    set_external_config(fn, read_only=True)
+def _readonly(fn: HandlerFunc):
+    set_handler_config(fn, read_only=True)
     return fn
 
 
 def _on_complete(mc: MethodConfig):
-    def _impl(fn: externalFunc):
-        set_external_config(fn, method_config=mc)
+    def _impl(fn: HandlerFunc):
+        set_handler_config(fn, method_config=mc)
         return fn
 
     return _impl
 
 
-def _replace_structs(fn: externalFunc) -> externalFunc:
+def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
 
@@ -249,7 +249,7 @@ def _replace_structs(fn: externalFunc) -> externalFunc:
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
-        set_external_config(fn, structs=replaced)
+        set_handler_config(fn, structs=replaced)
 
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
@@ -258,14 +258,14 @@ def _replace_structs(fn: externalFunc) -> externalFunc:
     return fn
 
 
-def _remove_self(fn: externalFunc) -> externalFunc:
+def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
 
     if "self" in params:
         del params["self"]
         # Flag that this method did have a `self` argument
-        set_external_config(fn, referenced_self=True)
+        set_handler_config(fn, referenced_self=True)
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
 
@@ -281,28 +281,28 @@ def internal(return_type: TealType):
         The wrapped subroutine
     """
 
-    def _impl(fn: externalFunc):
-        hc = get_external_config(fn)
+    def _impl(fn: HandlerFunc):
+        hc = get_handler_config(fn)
 
         hc.subroutine = Subroutine(return_type, name=fn.__name__)
         if "self" in signature(fn).parameters:
             hc.referenced_self = True
 
-        set_external_config(fn, **hc.__dict__)
+        set_handler_config(fn, **hc.__dict__)
         return fn
 
     return _impl
 
 
 def external(
-    fn: externalFunc = None,
+    fn: HandlerFunc = None,
     /,
     *,
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
     resolvable: ResolvableArguments = None,
-) -> externalFunc:
+) -> HandlerFunc:
 
     """
     Add the method decorated to be handled as an ABI method for the Application
@@ -315,16 +315,16 @@ def external(
         resolvable: **Experimental** Provides a means to resolve some required input to the caller.
 
     Returns:
-        The original method with additional elements set in its  :code:`__external_config__` attribute
+        The original method with additional elements set in its  :code:`__handler_config__` attribute
     """
 
-    def _impl(fn: externalFunc):
+    def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
         fn = _replace_structs(fn)
 
         if resolvable is not None:
             resolvable.check_arguments(signature(fn))
-            set_external_config(fn, resolvable=resolvable)
+            set_handler_config(fn, resolvable=resolvable)
         if authorize is not None:
             fn = _authorize(authorize)(fn)
         if method_config is not None:
@@ -332,7 +332,7 @@ def external(
         if read_only:
             fn = _readonly(fn)
 
-        set_external_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
+        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
 
         return fn
 
@@ -349,7 +349,7 @@ def bare_external(
     delete_application: CallConfig = None,
     update_application: CallConfig = None,
     close_out: CallConfig = None,
-) -> externalFunc:
+) -> HandlerFunc:
     """Add method to be handled by specific bare :code:`OnComplete` actions.
 
     Args:
@@ -361,11 +361,11 @@ def bare_external(
         close_out: CallConfig to handle a `CloseOut`
 
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
 
     """
 
-    def _impl(fun: externalFunc) -> OnCompleteAction:
+    def _impl(fun: HandlerFunc) -> OnCompleteAction:
         fun = _remove_self(fun)
         fn = Subroutine(TealType.none)(fun)
         bca = BareCallActions(
@@ -393,87 +393,87 @@ def bare_external(
             else None,
         )
 
-        set_external_config(fun, bare_method=bca)
+        set_handler_config(fun, bare_method=bca)
 
         return fun
 
     return _impl
 
 
-def create(fn: externalFunc):
+def create(fn: HandlerFunc):
     """set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_external(no_op=CallConfig.CREATE)(fn)
 
 
-def delete(fn: externalFunc):
+def delete(fn: HandlerFunc):
     """set method to be handled by a bare :code:`DeleteApplication` call
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_external(delete_application=CallConfig.CALL)(fn)
 
 
-def update(fn: externalFunc):
+def update(fn: HandlerFunc):
     """set method to be handled by a bare :code:`UpdateApplication` call
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_external(update_application=CallConfig.CALL)(fn)
 
 
-def opt_in(fn: externalFunc):
+def opt_in(fn: HandlerFunc):
     """set method to be handled by a bare :code:`OptIn` call
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_external(opt_in=CallConfig.CALL)(fn)
 
 
-def clear_state(fn: externalFunc):
+def clear_state(fn: HandlerFunc):
     """set method to be handled by a bare :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
     return bare_external(clear_state=CallConfig.CALL)(fn)
 
 
-def close_out(fn: externalFunc):
+def close_out(fn: HandlerFunc):
     """set method to be handled by a bare :code:`CloseOut` call
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
     return bare_external(close_out=CallConfig.CALL)(fn)
 
 
-def no_op(fn: externalFunc):
+def no_op(fn: HandlerFunc):
     """set method to be handled by a bare :code:`NoOp` call
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__external_config__`
+        The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
     return bare_external(no_op=CallConfig.CALL)(fn)

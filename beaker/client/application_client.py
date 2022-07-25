@@ -19,7 +19,7 @@ from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import externalFunc, MethodHints, ResolvableTypes
+from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
 
@@ -278,7 +278,7 @@ class ApplicationClient:
 
     def call(
         self,
-        method: abi.Method | externalFunc,
+        method: abi.Method | HandlerFunc,
         sender: str = None,
         signer: TransactionSigner = None,
         suggested_params: transaction.SuggestedParams = None,
@@ -360,7 +360,7 @@ class ApplicationClient:
     def add_method_call(
         self,
         atc: AtomicTransactionComposer,
-        method: abi.Method | externalFunc,
+        method: abi.Method | HandlerFunc,
         sender: str = None,
         signer: TransactionSigner = None,
         suggested_params: transaction.SuggestedParams = None,
