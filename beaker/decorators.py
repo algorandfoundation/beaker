@@ -59,7 +59,7 @@ class HandlerConfig:
         if self.structs is not None:
             mh.structs = {
                 arg_name: {
-                    "name": model_spec.__name__,
+                    "name": model_spec.__class__.__name__,
                     "elements": list(model_spec.__annotations__.keys()),
                 }
                 for arg_name, model_spec in self.structs.items()
@@ -254,7 +254,7 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
         set_handler_config(fn, structs=replaced)
 
     newsig = sig.replace(parameters=list(params.values()))
-    fn.__signature__ = newsig
+    fn.__signature__ = newsig  # type: ignore[attr-defined]
     fn.__annotations__ = annotations
 
     return fn
@@ -269,7 +269,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
         # Flag that this method did have a `self` argument
         set_handler_config(fn, referenced_self=True)
     newsig = sig.replace(parameters=list(params.values()))
-    fn.__signature__ = newsig
+    fn.__signature__ = newsig  # type: ignore[attr-defined]
 
     return fn
 

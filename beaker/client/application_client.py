@@ -535,12 +535,13 @@ class ApplicationClient:
             return self.sender
 
         signer = self.get_signer(signer)
+
         match signer:
-            case AccountTransactionSigner():
+            case AccountTransactionSigner():  # type: ignore
                 return address_from_private_key(signer.private_key)
-            case MultisigTransactionSigner():
+            case MultisigTransactionSigner():  # type: ignore
                 return signer.msig.address()
-            case LogicSigTransactionSigner():
+            case LogicSigTransactionSigner():  # type: ignore
                 return signer.lsig.address()
 
         raise Exception("No sender provided")

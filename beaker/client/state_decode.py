@@ -21,7 +21,9 @@ def decode_state(
     for sv in state:
 
         raw_key = b64decode(sv["key"])
-        key = str_or_hex(raw_key) if force_str else raw_key
+
+        key: str | bytes = str_or_hex(raw_key) if force_str else raw_key
+        val: str | bytes | int
 
         match sv["value"]["type"]:
             case 1:
