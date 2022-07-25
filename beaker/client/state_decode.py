@@ -14,9 +14,9 @@ def str_or_hex(v: bytes) -> str:
 
 def decode_state(
     state: list[dict[str, Any]], force_str=False
-) -> dict[bytes | str, bytes | str | int]:
+) -> dict[str | bytes, bytes | str | int]:
 
-    decoded_state: dict[bytes | str, str | int] = {}
+    decoded_state: dict[str | bytes, bytes | str | int] = {}
 
     for sv in state:
 

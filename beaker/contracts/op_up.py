@@ -13,6 +13,7 @@ from pyteal import (
     InnerTxn,
     TxnField,
     Assert,
+    Expr,
     Int,
     ScratchVar,
     For,
@@ -35,7 +36,7 @@ class OpUp(Application):
     """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget."""
 
     #: The minimum balance required for this class
-    min_balance: Final[Int] = Algos(0.1)
+    min_balance: Final[Expr] = Algos(0.1)
 
     #: The id of the app created during `bootstrap`
     opup_app_id: Final[ApplicationStateValue] = ApplicationStateValue(

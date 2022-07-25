@@ -331,7 +331,7 @@ class ApplicationClient:
             name = method_arg.name
             if name in kwargs:
                 thing = kwargs[name]
-                if type(thing) is dict:
+                if type(thing) is dict and hints.structs is not None:
                     if name in hints.structs:
                         thing = [
                             thing[field_name]
@@ -341,7 +341,7 @@ class ApplicationClient:
                         # todo error if wrong keys
                         thing = list(thing.values())
                 args.append(thing)
-            elif name in hints.resolvable:
+            elif hints.resolvable is not None and name in hints.resolvable:
                 args.append(self.resolve(hints.resolvable[name]))
             else:
                 raise Exception(f"Unspecified argument: {name}")
@@ -413,7 +413,7 @@ class ApplicationClient:
             name = method_arg.name
             if name in kwargs:
                 args.append(kwargs[name])
-            elif name in hints.resolvable:
+            elif hints.resolvable is not None and name in hints.resolvable:
                 args.append(self.resolve(hints.resolvable[name]))
             else:
                 raise Exception(f"Unspecified argument: {name}")
@@ -441,7 +441,9 @@ class ApplicationClient:
 
         return atc
 
-    def get_application_state(self, force_str=False) -> dict[str, str | int]:
+    def get_application_state(
+        self, force_str=False
+    ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)
         if "params" not in app_state or "global-state" not in app_state["params"]:
@@ -450,7 +452,7 @@ class ApplicationClient:
 
     def get_account_state(
         self, account: str = None, force_str: bool = False
-    ) -> dict[str, str | int]:
+    ) -> dict[str | bytes, bytes | str | int]:
 
         """gets the local state info for the app id set and the account specified"""
 

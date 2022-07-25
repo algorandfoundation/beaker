@@ -24,7 +24,7 @@ class ARC21(Application):
         *,
         output: abi.DynamicArray[abi.Byte]
     ):
-        return output.decode(self.data_for_round(round.get()))
+        return output.decode(self.data_for_round[round.get()])
 
     @external
     def mustGet(
