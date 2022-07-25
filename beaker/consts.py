@@ -38,5 +38,5 @@ MAX_GLOBAL_STATE = 64
 APP_MAX_PAGE_SIZE = 2048
 
 
-#: The maximum number of args that may be included in an lsig 
+#: The maximum number of args that may be included in an lsig
 LSIG_MAX_ARGS = 255

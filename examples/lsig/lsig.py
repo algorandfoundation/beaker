@@ -87,6 +87,7 @@ class MyLsig(LogicSignature):
 
 if __name__ == "__main__":
     from beaker.sandbox import get_accounts
+
     accts = get_accounts()
     addr, sk = accts.pop()
     mls = MyLsig(addr)
