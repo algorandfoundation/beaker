@@ -73,16 +73,16 @@ class OpUp(Application):
         """internal method to issue transactions against the target app"""
         return If(
             n,
-            self.call_opup(),
+            self.__call_opup(),
             For(
                 (i := ScratchVar()).store(Int(0)),
                 i.load() < n,
                 i.store(i.load() + Int(1)),
-            ).Do(Seq(self.call_opup())),
+            ).Do(Seq(self.__call_opup())),
         )
 
     # No decorator, inline it
-    def call_opup(self):
+    def __call_opup(self):
         return InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.ApplicationCall,

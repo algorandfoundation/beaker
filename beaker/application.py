@@ -1,7 +1,8 @@
 from inspect import getattr_static
-from typing import Final, Any, cast
+from typing import Final, Any, TypeVar, cast, Generic
 from algosdk.abi import Method
 from pyteal import (
+    abi,
     Txn,
     MAX_TEAL_VERSION,
     ABIReturnSubroutine,
