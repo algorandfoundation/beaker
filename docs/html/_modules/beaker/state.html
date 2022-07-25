@@ -213,7 +213,11 @@
             <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
 
 <div class="viewcode-block" id="ApplicationStateValue.set"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<<<<<<< HEAD
         <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">anytype</span><span class="p">:</span>
+=======
+        <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">:</span>
+>>>>>>> docs
             <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
@@ -305,7 +309,11 @@
             <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localPut</span><span class="p">(</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
 
 <div class="viewcode-block" id="AccountStateValue.set"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<<<<<<< HEAD
         <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">anytype</span><span class="p">:</span>
+=======
+        <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">:</span>
+>>>>>>> docs
             <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
