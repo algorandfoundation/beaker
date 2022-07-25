@@ -17,7 +17,7 @@ With Beaker we can define a custom structure and use it in our ABI methods.
 Example 
 --------
 
-.. literalinclude:: ../../examples/struct/struct.py
+.. literalinclude:: ../../examples/structure/structure.py
     :lines: 18-54
 
 
@@ -27,10 +27,10 @@ A method hint is available to the caller for encoding/decoding by field name.
 
 To pass a struct we can pass a python dict ``dict``
 
-.. literalinclude:: ../../examples/struct/struct.py
+.. literalinclude:: ../../examples/structure/structure.py
     :lines: 73-76
 
 And we can decode it from the tuple we get back
 
-.. literalinclude:: ../../examples/struct/struct.py
+.. literalinclude:: ../../examples/structure/structure.py
     :lines: 86-88
