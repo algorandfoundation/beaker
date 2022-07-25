@@ -2,14 +2,15 @@ import re
 from algosdk.source_map import SourceMap
 from beaker import Application
 
-ASSERT_ERROR_PATTERN = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: assert failed pc=([0-9]+). Details: pc=([0-9]+), opcodes=.*"
+LOGIC_ERROR = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: (.*). Details: pc=([0-9]+), opcodes=.*"
 
 
-def parse_logic_error(error_str: str) -> tuple[str, int]:
-    matches = re.match(ASSERT_ERROR_PATTERN, error_str)
+def parse_logic_error(error_str: str) -> tuple[str, str, int]:
+    matches = re.match(LOGIC_ERROR, error_str)
     txid = matches.group(1)
-    pc = int(matches.group(2))
-    return txid, pc
+    msg = matches.group(2)
+    pc = int(matches.group(3))
+    return txid, msg, pc
 
 
 def tiny_trace(approval_program: str, line_no: int, lines: int) -> str:
@@ -34,9 +35,9 @@ class LogicException(Exception):
         self.approval_map = approval_map
         self.clear_map = clear_map
         # TODO: check if it was the clear or approval program
-        self.txid, self.pc = parse_logic_error(self.logic_error_str)
+        self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
 
     def __str__(self):
         line_no = self.approval_map.get_line_for_pc(self.pc)
         trace = tiny_trace(self.app.approval_program, line_no, 5)
-        return f"Txn({self.txid}) had logic error at pc {self.pc} and source line {line_no}: \n\n\t{trace}"
+        return f"Txn({self.txid}) had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"
