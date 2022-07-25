@@ -5,7 +5,7 @@ from .application import get_method_spec
 from .decorators import (
     ResolvableArguments,
     external,
-    get_external_config,
+    get_handler_config,
     Authorize,
     create,
     clear_state,
@@ -24,7 +24,7 @@ def test_external_config():
     def handleable():
         pass
 
-    hc = get_external_config(handleable)
+    hc = get_handler_config(handleable)
 
     assert hc.method_spec is not None, "Expected abi method to be created"
     meth = hc.method_spec
@@ -43,7 +43,7 @@ def test_external_config():
     def handleable():
         pass
 
-    hc = get_external_config(handleable)
+    hc = get_handler_config(handleable)
 
     config_dict = hc.__dict__
 
@@ -62,7 +62,7 @@ def test_external_config():
     def handleable():
         pass
 
-    hc = get_external_config(handleable)
+    hc = get_handler_config(handleable)
 
     config_dict = hc.__dict__
 
@@ -77,7 +77,7 @@ def test_external_config():
     def handleable():
         pass
 
-    hc = get_external_config(handleable)
+    hc = get_handler_config(handleable)
 
     config_dict = hc.__dict__
 
@@ -199,49 +199,49 @@ def test_bare():
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
     @no_op
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
     @delete
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.delete_application.action.subroutine.implementation == impl
 
     @update
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.update_application.action.subroutine.implementation == impl
 
     @opt_in
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.opt_in.action.subroutine.implementation == impl
 
     @close_out
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.close_out.action.subroutine.implementation == impl
 
     @clear_state
     def impl():
         return pt.Assert(pt.Int(1))
 
-    hc = get_external_config(impl)
+    hc = get_handler_config(impl)
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
 
 
