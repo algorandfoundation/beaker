@@ -27,7 +27,8 @@ This is a full application, though it doesn't do much.  Instantiate it and take 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
-Lets add some methods to be handled by an incoming ``ApplicationCallTransaction``.  We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`external <external>` decorator. 
+Lets add some methods to be handled by an incoming ``ApplicationCallTransaction``.  
+We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`external <external>` decorator. 
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
@@ -52,7 +53,7 @@ Thats it!
 To summarize, we:
 
  * Wrote an application using Beaker and PyTeal
-    By subclassing ``Application`` and adding a ``external`` method
+    By subclassing ``Application`` and adding an ``external`` method
  * Compiled it to TEAL 
     Done automatically by Application, PyTeal's ``Router.compile`` 
  * Assembled the TEAL to binary

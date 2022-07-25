@@ -101,7 +101,8 @@
 </pre></div>
 </div>
 <p>Nice!  This is already enough to provide the TEAL programs and ABI specification.</p>
-<p>Lets add some methods to be handled by an incoming <code class="docutils literal notranslate"><span class="pre">ApplicationCallTransaction</span></code>.  We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#external"><span class="std std-ref">external</span></a> decorator.</p>
+<p>Lets add some methods to be handled by an incoming <code class="docutils literal notranslate"><span class="pre">ApplicationCallTransaction</span></code>.
+We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#external"><span class="std std-ref">external</span></a> decorator.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
 <span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
     <span class="nd">@external</span>
@@ -141,7 +142,7 @@
 <blockquote>
 <div><ul>
 <li><dl class="simple">
-<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By subclassing <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding a <code class="docutils literal notranslate"><span class="pre">external</span></code> method</p>
+<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By subclassing <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding an <code class="docutils literal notranslate"><span class="pre">external</span></code> method</p>
 </dd>
 </dl>
 </li>
