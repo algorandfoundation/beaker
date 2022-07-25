@@ -11,15 +11,14 @@ from beaker import (
     sandbox,
 )
 
+
 class ClientExample(Application):
     manager: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.bytes,
-        default=Global.creator_address()
+        stack_type=TealType.bytes, default=Global.creator_address()
     )
 
     nickname: Final[AccountStateValue] = AccountStateValue(
-        stack_type=TealType.bytes,
-        descr="what this uers prefers to be called"
+        stack_type=TealType.bytes, descr="what this uers prefers to be called"
     )
 
     @external(authorize=Authorize.only(manager))
@@ -29,6 +28,7 @@ class ClientExample(Application):
     @external
     def set_nick(self, nick: abi.String):
         return self.nickname.set(nick.get())
+
 
 def demo():
 
@@ -73,14 +73,13 @@ def demo():
         app_client2.call(app.set_manager, new_manager=addr2)
         print("Shouldn't get here")
     except Exception:
-        print("Failed as expected, only addr1 should be authorized to set the manager") 
-
+        print("Failed as expected, only addr1 should be authorized to set the manager")
 
     # Have addr1 set the manager to addr2
     app_client1.call(app.set_manager, new_manager=addr2)
     print(f"Current app state: {app_client.get_application_state(force_str=True)}")
-    # and back
 
+    # and back
     app_client2.call(app.set_manager, new_manager=addr1)
     print(f"Current app state: {app_client.get_application_state(force_str=True)}")
 
