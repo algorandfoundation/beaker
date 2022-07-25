@@ -6,7 +6,7 @@ Decorators
 .. _external:
 
 ABI Method external
-------------------
+--------------------
 
 .. autodecorator:: external
 
@@ -127,14 +127,14 @@ See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more detai
 .. _bare_externals:
 
 Bare externals
---------------
+---------------
 
 The ARC4 spec allows applications to define externals for ``bare`` methods, that is methods with no application arguments. 
 
 Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
 
 Single Bare externals
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.
 
@@ -148,7 +148,7 @@ If a single OnComplete should be handled by a given method, use one of the pre-d
 
 
 Multiple Bare externals
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
 
