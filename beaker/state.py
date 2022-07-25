@@ -260,6 +260,13 @@ class AccountStateValue(StateValue):
         if val.type_of() != self.stack_type:
             raise TealTypeError(val.type_of(), self.stack_type)
 
+        if self.static:
+            return Seq(
+                v := self.get_maybe(acct),
+                Assert(Not(v.hasValue())),
+                App.localPut(acct, self.key, val),
+            )
+
         return App.localPut(acct, self.key, val)
 
     def get(self, acct: Expr = Txn.sender()) -> Expr:
