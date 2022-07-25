@@ -523,9 +523,9 @@ class ApplicationClient:
         line_no = self.approval_src_map.get_line_for_pc(pc)
         approval_lines = self.app.approval_program.split("\n")
         approval_lines[line_no] += " <-- This one right here was where we failed"
-        joined = "\n".join(approval_lines[line_no-5:line_no+5])
+        joined = "\n\t".join(approval_lines[line_no-5:line_no+5])
 
-        return f"Tx: {txid} had logic error at pc {pc} and source line {line_no}: \n{joined}"
+        return f"Tx: {txid} had logic error at pc {pc} and source line {line_no}: \n\t{joined}"
 
     def get_sender(self, sender: str = None, signer: TransactionSigner = None) -> str:
         if sender is not None:
