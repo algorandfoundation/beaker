@@ -1,6 +1,5 @@
 import re
 from algosdk.source_map import SourceMap
-from beaker import Application
 
 LOGIC_ERROR = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: (.*). Details: pc=([0-9]+), opcodes=.*"
 
@@ -13,31 +12,28 @@ def parse_logic_error(error_str: str) -> tuple[str, str, int]:
     return txid, msg, pc
 
 
-def tiny_trace(approval_program: str, line_no: int, lines: int) -> str:
-    approval_lines = approval_program.split("\n")
-    approval_lines[line_no] += "\t\t<-- Error"
-    lines_before = max(0, line_no - lines)
-    lines_after = min(len(approval_lines), line_no + lines)
-    return "\n\t".join(approval_lines[lines_before:lines_after])
+def tiny_trace(program: str, line_no: int, num_lines: int) -> str:
+    lines = program.split("\n")
+    lines[line_no] += "\t\t<-- Error"
+    lines_before = max(0, line_no - num_lines)
+    lines_after = min(len(lines), line_no + num_lines)
+    return "\n\t".join(lines[lines_before:lines_after])
 
 
 class LogicException(Exception):
     def __init__(
         self,
         logic_error: Exception,
-        app: Application,
-        approval_map: SourceMap,
-        clear_map: SourceMap,
+        program: str,
+        map: SourceMap,
     ):
         self.logic_error = logic_error
         self.logic_error_str = str(logic_error)
-        self.app = app
-        self.approval_map = approval_map
-        self.clear_map = clear_map
+        self.program = program
+        self.map = map
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
 
     def __str__(self):
-        # TODO: check if it was the clear or approval program??
-        line_no = self.approval_map.get_line_for_pc(self.pc)
-        trace = tiny_trace(self.app.approval_program, line_no, 5)
+        line_no = self.map.get_line_for_pc(self.pc)
+        trace = tiny_trace(self.program, line_no, 5)
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"
