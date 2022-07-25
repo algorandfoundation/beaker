@@ -34,10 +34,10 @@ class LogicException(Exception):
         self.app = app
         self.approval_map = approval_map
         self.clear_map = clear_map
-        # TODO: check if it was the clear or approval program
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
 
     def __str__(self):
+        # TODO: check if it was the clear or approval program??
         line_no = self.approval_map.get_line_for_pc(self.pc)
         trace = tiny_trace(self.app.approval_program, line_no, 5)
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"
