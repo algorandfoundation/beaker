@@ -7,6 +7,7 @@ from .state import (
     ApplicationStateValue,
     AccountStateValue,
 )
+from .logic_signature import LogicSignature
 from .decorators import (
     Authorize,
     ResolvableArguments,
