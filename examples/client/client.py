@@ -18,7 +18,7 @@ class ClientExample(Application):
     )
 
     nickname: Final[AccountStateValue] = AccountStateValue(
-        stack_type=TealType.bytes, descr="what this uers prefers to be called"
+        stack_type=TealType.bytes, descr="what this user prefers to be called"
     )
 
     @external(authorize=Authorize.only(manager))
@@ -72,7 +72,10 @@ def demo():
     try:
         app_client2.call(app.set_manager, new_manager=addr2)
         print("Shouldn't get here")
-    except Exception:
+    except Exception as e:
+        print()
+        print(app_client2.parse_logic_error(str(e)))
+        print()
         print("Failed as expected, only addr1 should be authorized to set the manager")
 
     # Have addr1 set the manager to addr2
