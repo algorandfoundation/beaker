@@ -18,7 +18,7 @@ class ClientExample(Application):
     )
 
     nickname: Final[AccountStateValue] = AccountStateValue(
-        stack_type=TealType.bytes, descr="what this uers prefers to be called"
+        stack_type=TealType.bytes, descr="what this user prefers to be called"
     )
 
     @external(authorize=Authorize.only(manager))
