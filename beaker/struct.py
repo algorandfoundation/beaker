@@ -30,6 +30,7 @@ class Struct(abi.Tuple):
 
         self.sdk_codec = abi.algosdk_from_type_spec(self.type_spec())
 
+
     def set(
         self, *exprs: Expr | abi.BaseType | abi.TupleElement | abi.ComputedValue
     ) -> Expr:
