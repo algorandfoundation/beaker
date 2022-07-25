@@ -5,4 +5,3 @@ __pycache__/
 .coverage
 docs/build/
 dist/*
-

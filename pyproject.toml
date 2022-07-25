@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "beaker-pyteal"
-version = "0.0.1-4-dev"
 authors = [
   { name="Ben Guidarelli", email="ben@algorand.com" },
 ]
@@ -12,6 +11,7 @@ description = "A Framework for building PyTeal Applications"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.10"
+dynamic = ["version"]
 dependencies = [
   "py-algorand-sdk >= 1.16.0",
   "pyteal >= 0.14.0"
@@ -21,6 +21,9 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "License :: OSI Approved :: MIT License"
 ]
+
+[tools.setuptools.dynamic]
+version = {attr = "beaker-pyteal.VERSION"} 
 
 [project.optional-dependencies]
 tests = [
