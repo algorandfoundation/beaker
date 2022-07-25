@@ -106,6 +106,7 @@ class ApplicationClient:
                 signer=signer,
             )
         )
+
         create_result = atc.execute(self.client, 4)
         create_txid = create_result.tx_ids[0]
 

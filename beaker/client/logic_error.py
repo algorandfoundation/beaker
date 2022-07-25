@@ -40,4 +40,4 @@ class LogicException(Exception):
     def __str__(self):
         line_no = self.approval_map.get_line_for_pc(self.pc)
         trace = tiny_trace(self.app.approval_program, line_no, 5)
-        return f"Txn({self.txid}) had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"
+        return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"

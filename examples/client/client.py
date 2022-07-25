@@ -58,6 +58,12 @@ def demo():
     app_client1.opt_in()
     app_client1.call(app.set_nick, nick="first")
 
+    # Try calling without opting in
+    try:
+        app_client2.call(app.set_nick, nick="second")
+    except Exception as e:
+        print(f"\n{app_client2.wrap_exception(e)}\n")
+
     app_client2.opt_in()
     app_client2.call(app.set_nick, nick="second")
 
@@ -73,10 +79,8 @@ def demo():
         app_client2.call(app.set_manager, new_manager=addr2)
         print("Shouldn't get here")
     except Exception as e:
-        print()
-        print(app_client2.wrap_exception(e))
-        print()
         print("Failed as expected, only addr1 should be authorized to set the manager")
+        print(f"\n{app_client2.wrap_exception(e)}\n")
 
     # Have addr1 set the manager to addr2
     app_client1.call(app.set_manager, new_manager=addr2)
