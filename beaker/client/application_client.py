@@ -23,6 +23,7 @@ from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
+from .logic_error import parse_logic_error
 
 
 class ApplicationClient:
@@ -516,6 +517,15 @@ class ApplicationClient:
             return self.signer
 
         raise Exception("No signer provided")
+
+    def parse_logic_error(self, logic_error: str):
+        txid, pc = parse_logic_error(logic_error)
+        line_no = self.approval_src_map.get_line_for_pc(pc)
+        approval_lines = self.app.approval_program.split("\n")
+        approval_lines[line_no] += " <-- This one right here was where we failed"
+        joined = "\n".join(approval_lines[line_no-5:line_no+5])
+
+        return f"Tx: {txid} had logic error at pc {pc} and source line {line_no}: \n{joined}"
 
     def get_sender(self, sender: str = None, signer: TransactionSigner = None) -> str:
         if sender is not None:

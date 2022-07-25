@@ -72,7 +72,8 @@ def demo():
     try:
         app_client2.call(app.set_manager, new_manager=addr2)
         print("Shouldn't get here")
-    except Exception:
+    except Exception as e:
+        print(app_client2.parse_logic_error(str(e)))
         print("Failed as expected, only addr1 should be authorized to set the manager")
 
     # Have addr1 set the manager to addr2
