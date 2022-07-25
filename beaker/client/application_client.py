@@ -16,6 +16,7 @@ from algosdk.atomic_transaction_composer import (
 )
 from algosdk.future import transaction
 from algosdk.logic import get_application_address
+from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
@@ -44,13 +45,18 @@ class ApplicationClient:
 
         self.suggested_params = suggested_params
 
-    def compile_approval(self) -> bytes:
-        approval_result = self.client.compile(self.app.approval_program)
-        return b64decode(approval_result["result"])
+    def compile_approval(self) -> tuple[bytes, SourceMap]:
+        approval_result = self.client.compile(
+            self.app.approval_program, source_map=True
+        )
+        return (
+            b64decode(approval_result["result"]),
+            SourceMap(approval_result["sourcemap"]),
+        )
 
-    def compile_clear(self) -> bytes:
-        clear_result = self.client.compile(self.app.clear_program)
-        return b64decode(clear_result["result"])
+    def compile_clear(self) -> tuple[bytes, SourceMap]:
+        clear_result = self.client.compile(self.app.clear_program, source_map=True)
+        return (b64decode(clear_result["result"]), SourceMap(clear_result["sourcemap"]))
 
     def create(
         self,
@@ -64,8 +70,13 @@ class ApplicationClient:
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
-        approval = self.compile_approval()
-        clear = self.compile_clear()
+        approval, approval_map = self.compile_approval()
+        self.approval_binary = approval
+        self.approval_src_map = approval_map
+
+        clear, clear_map = self.compile_clear()
+        self.clear_binary = clear
+        self.clear_src_map = clear_map
 
         if extra_pages is None:
             extra_pages = ceil(
@@ -117,8 +128,13 @@ class ApplicationClient:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
 
-        approval = self.compile_approval()
-        clear = self.compile_clear()
+        approval, approval_map = self.compile_approval()
+        self.approval_binary = approval
+        self.approval_src_map = approval_map
+
+        clear, clear_map = self.compile_clear()
+        self.clear_binary = clear
+        self.clear_src_map = clear_map
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
