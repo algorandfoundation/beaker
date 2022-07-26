@@ -378,15 +378,21 @@ class ApplicationClient:
             txns = atc.gather_signatures()
             dr_req = transaction.create_dryrun(self.client, txns)
             dr_result = self.client.dryrun(dr_req)
-            method_results = self._parse_result({0: method}, dr_result['txns'], atc.tx_ids)
+            method_results = self._parse_result(
+                {0: method}, dr_result["txns"], atc.tx_ids
+            )
             return method_results.pop()
 
         result = atc.execute(self.client, 4)
         return result.abi_results.pop()
 
-
     # TEMPORARY, use SDK one when available
-    def _parse_result(self, methods: dict[int, abi.Method], txns: list[dict[str, Any]], txids: list[str])->list[ABIResult]:
+    def _parse_result(
+        self,
+        methods: dict[int, abi.Method],
+        txns: list[dict[str, Any]],
+        txids: list[str],
+    ) -> list[ABIResult]:
         method_results = []
         for i, tx_info in enumerate(txns):
 
@@ -421,16 +427,11 @@ class ApplicationClient:
                 result = logs[-1]
                 # Check that the first four bytes is the hash of "return"
                 result_bytes = b64decode(result)
-                if (
-                    len(result_bytes) < 4
-                    or result_bytes[:4] != ABI_RETURN_HASH
-                ):
+                if len(result_bytes) < 4 or result_bytes[:4] != ABI_RETURN_HASH:
                     raise Exception("no logs")
 
                 raw_value = result_bytes[4:]
-                return_value = methods[i].returns.type.decode(
-                    raw_value
-                )
+                return_value = methods[i].returns.type.decode(raw_value)
             except Exception as e:
                 decode_error = e
 
@@ -446,8 +447,6 @@ class ApplicationClient:
             )
 
         return method_results
-
-    
 
     def add_method_call(
         self,
@@ -621,23 +620,3 @@ class ApplicationClient:
                 return signer.lsig.address()
 
         raise Exception("No sender provided")
-
-
-
-
-class DryrunABIResult(ABIResult):
-    cost: int
-
-
-class DryrunAtomicTransactionResponse:
-    def __init__(
-        self,
-        dryrun_response: dict,
-        tx_ids: list[str],
-        results: DryrunABIResult,
-        trace: DryrunResponse,
-    ) -> None:
-        self.dryrun_response = dryrun_response
-        self.tx_ids = tx_ids
-        self.abi_results = results
-        self.trace = trace

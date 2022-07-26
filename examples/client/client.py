@@ -34,7 +34,6 @@ class ClientExample(Application):
         return output.set(self.nickname)
 
 
-
 def demo():
 
     # Set up accounts we'll use
