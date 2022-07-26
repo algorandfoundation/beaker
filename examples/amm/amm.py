@@ -237,7 +237,8 @@ class ConstantProductAMM(Application):
                     pool_xfer.get().asset_amount(),
                 ),
             ),
-            # The ratio should be the same before and after
+            self.ratio.set(self.get_ratio())
+            # Should the ratio should be the same before and after?
             # Assert(self.ratio == self.get_ratio()),
         )
 

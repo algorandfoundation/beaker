@@ -307,12 +307,13 @@ def test_burn(creator_app_client: ApplicationClient):
     expected_b_tokens = _get_tokens_to_burn(b_supply, burn_amt, issued)
     assert app_deltas[B_IDX] == int(expected_b_tokens)
 
-    # Ratio should be identical
     ratio_after = _get_ratio_from_state(creator_app_client)
-    assert ratio_before == ratio_after
 
-    # expected_ratio = _expect_ratio(app_after[A_IDX], app_after[B_IDX])
-    # assert ratio_after == expected_ratio
+    # Ratio should be identical?
+    # assert ratio_before == ratio_after
+
+    expected_ratio = _expect_ratio(app_after[A_IDX], app_after[B_IDX])
+    assert ratio_after == expected_ratio
 
 
 def test_swap(creator_app_client: ApplicationClient):
