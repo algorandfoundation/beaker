@@ -42,7 +42,8 @@ class ApplicationClient:
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
         self.signer = signer
-        self.sender = sender
+        self.sender = None
+        self.sender = self.get_sender(sender, self.signer)
 
         self.suggested_params = suggested_params
 
@@ -444,17 +445,15 @@ class ApplicationClient:
 
         return atc
 
-    def get_application_state(
-        self, force_str=False
-    ) -> dict[bytes | str, bytes | str | int]:
+    def get_application_state(self, raw=False) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)
         if "params" not in app_state or "global-state" not in app_state["params"]:
             return {}
-        return decode_state(app_state["params"]["global-state"], force_str=force_str)
+        return decode_state(app_state["params"]["global-state"], raw=raw)
 
     def get_account_state(
-        self, account: str = None, force_str: bool = False
+        self, account: str = None, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
         """gets the local state info for the app id set and the account specified"""
@@ -469,9 +468,7 @@ class ApplicationClient:
         ):
             return {}
 
-        return decode_state(
-            acct_state["app-local-state"]["key-value"], force_str=force_str
-        )
+        return decode_state(acct_state["app-local-state"]["key-value"], raw=raw)
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""

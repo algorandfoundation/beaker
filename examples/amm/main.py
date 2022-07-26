@@ -34,11 +34,6 @@ def demo():
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
     # Fund App address so it can create the pool token and hold balances
-    sp = client.suggested_params()
-    txid = client.send_transaction(
-        transaction.PaymentTxn(addr, sp, app_addr, int(1e7)).sign(sk)
-    )
-    transaction.wait_for_confirmation(client, txid, 4)
 
     # Create assets
     asset_a = create_asset(addr, sk, "A")
@@ -47,7 +42,11 @@ def demo():
 
     # Call app to create pool token
     print("Calling bootstrap")
-    result = app_client.call(app.bootstrap, a_asset=asset_a, b_asset=asset_b)
+    sp = client.suggested_params()
+    ptxn = TransactionWithSigner(
+        txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e7)), signer=signer
+    )
+    result = app_client.call(app.bootstrap, seed=ptxn, a_asset=asset_a, b_asset=asset_b)
     pool_token = result.return_value
     print(f"Created pool token with id: {pool_token}")
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
