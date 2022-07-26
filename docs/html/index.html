@@ -103,7 +103,7 @@
 
     <span class="c1"># Add an external method, ABI method signature will be `hello(string)string`</span>
     <span class="nd">@external</span>
-    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
         <span class="c1"># Return the result of `Hello, `+name</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;Hello, &quot;</span><span class="p">),</span> <span class="n">name</span><span class="o">.</span><span class="n">get</span><span class="p">()))</span>
 
