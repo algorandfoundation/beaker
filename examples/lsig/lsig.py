@@ -9,27 +9,34 @@ Signature = abi.StaticArray[abi.Byte, Literal[65]]
 
 class EthEcdsaVerify(LogicSignature):
     """
-    This Lsig has a single method called `validate` that takes two application arguments:
+    This Lsig has a single method  `eth_ecdsa_validate` that takes two application arguments:
       hash, signature
-    and returns the validity of the hash given the signature
+    and returns the validity of the signature given the hash
     as written in OpenZeppelin https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-
     (65-byte signatures only)
     """
 
     def evaluate(self):
         return Seq(
-            Assert(Txn.type_enum() == TxnType.ApplicationCall),
+            Assert(
+                Txn.type_enum() == TxnType.ApplicationCall,
+                Txn.application_args.length() == Int(3),
+            ),
             self.eth_ecdsa_validate(Txn.application_args[1], Txn.application_args[2]),
         )
 
     @internal(TealType.uint64)
     def eth_ecdsa_validate(self, hash_value: Expr, signature: Expr) -> Expr:
         """
+        Return a 1/0 for valid signature given hash
+
         Equivalent of OpenZeppelin ECDSA.recover for long 65-byte Ethereum signatures
         https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-
         Short 64-byte Ethereum signatures require some changes to the code
 
-        Return a 20-byte Ethereum address
+
+        [1] https://github.com/OpenZeppelin/openzeppelin-contracts/blob/5fbf494511fd522b931f7f92e2df87d671ea8b0b/contracts/utils/cryptography/ECDSA.sol#L153
+
 
         Note: Unless compatibility with Ethereum or another system is necessary,
         we highly recommend using ed25519_verify instead of ecdsa on Algorand
@@ -49,9 +56,7 @@ class EthEcdsaVerify(LogicSignature):
             Assert(
                 Len(signature) == Int(65),
                 Len(hash_value) == Int(32),
-                # The following two asserts are to prevent malleability like in
-                # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/
-                # 5fbf494511fd522b931f7f92e2df87d671ea8b0b/contracts/utils/cryptography/ECDSA.sol#L153
+                # The following two asserts are to prevent malleability like in [1]
                 BytesLe(
                     s,
                     Bytes(
