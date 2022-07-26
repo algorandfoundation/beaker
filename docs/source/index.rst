@@ -20,7 +20,13 @@ Check out the :doc:`usage` section for further information.
 Installation
 ------------
 
-Currently only installing from github is supported:
+You may install from Pip
+
+.. code-block:: console
+
+    (.venv)$ pip install beaker-pyteal 
+
+Or from github directly
 
 .. code-block:: console
 

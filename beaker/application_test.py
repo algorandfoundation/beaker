@@ -267,11 +267,11 @@ def test_internal():
 def test_resolvable_hint():
     class Hinty(Application):
         @external(read_only=True)
-        def get_asset_id(*, output: pt.abi.Uint64):
+        def get_asset_id(self, *, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
         @external(resolvable=ResolvableArguments(aid=get_asset_id))
-        def hintymeth(aid: pt.abi.Asset):
+        def hintymeth(self, aid: pt.abi.Asset):
             return pt.Assert(pt.Int(1))
 
     h = Hinty()
@@ -305,7 +305,7 @@ def test_model_args():
             nickname: pt.abi.String
 
         @external
-        def structy(user_record: UserRecord):
+        def structy(self, user_record: UserRecord):
             return pt.Assert(pt.Int(1))
 
     m = Structed()

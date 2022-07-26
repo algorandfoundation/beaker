@@ -23,7 +23,6 @@ from pyteal import (
     Extract,
     WideRatio,
     Concat,
-    App,
 )
 
 from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
@@ -86,7 +85,7 @@ class ARC18(Application):
         )
 
     @external(authorize=Authorize.only(administrator))
-    def set_payment_asset(payment_asset: abi.Asset, is_allowed: abi.Bool):
+    def set_payment_asset(self, payment_asset: abi.Asset, is_allowed: abi.Bool):
         """Triggers the contract account to opt in or out of an asset that may be used for payment of royalties"""
         return Seq(
             bal := AssetHolding.balance(
@@ -305,8 +304,6 @@ class ARC18(Application):
     ):
         """Moves the asset passed from one account to another"""
 
-        offer = App.localGet(owner.address(), Itob(royalty_asset.asset_id()))
-
         return Seq(
             (offer := ScratchVar()).store(
                 self.offers[royalty_asset.asset_id()].get(owner.address())
@@ -343,13 +340,15 @@ class ARC18(Application):
     Offer = abi.Tuple2[abi.Address, abi.Uint64]
 
     @external(read_only=True)
-    def get_offer(royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer):
+    def get_offer(
+        self, royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer
+    ):
         return output.decode(ARC18.offers[royalty_asset].get_must(owner.address()))
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
     @external(read_only=True)
-    def get_policy(*, output: Policy):
+    def get_policy(self, *, output: Policy):
         return Seq(
             (addr := abi.Address()).decode(ARC18.royalty_receiver),
             (amt := abi.Uint64()).set(ARC18.royalty_basis),
@@ -357,7 +356,7 @@ class ARC18(Application):
         )
 
     @external(read_only=True)
-    def get_administrator(*, output: abi.Address):
+    def get_administrator(self, *, output: abi.Address):
         return output.decode(ARC18.administrator)
 
     ###

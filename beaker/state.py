@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import cast, Any
+from typing import Mapping, cast, Any
 from algosdk.future.transaction import StateSchema
 from pyteal import (
     abi,
@@ -130,6 +130,9 @@ class ApplicationStateValue(StateValue):
         return f"ApplicationStateValue {self.key}"
 
     def set_default(self) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         if self.default:
             return App.globalPut(self.key, self.default)
 
@@ -139,6 +142,9 @@ class ApplicationStateValue(StateValue):
             return App.globalPut(self.key, Bytes(""))
 
     def set(self, val: Expr) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         if val.type_of() != self.stack_type and val.type_of() != TealType.anytype:
             raise TealTypeError(val.type_of(), self.stack_type)
 
@@ -152,6 +158,9 @@ class ApplicationStateValue(StateValue):
         return App.globalPut(self.key, val)
 
     def increment(self, cnt: Expr = Int(1)) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be incremented")
 
@@ -161,6 +170,9 @@ class ApplicationStateValue(StateValue):
         return self.set(self.get() + cnt)
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be decremented")
 
@@ -170,23 +182,39 @@ class ApplicationStateValue(StateValue):
         return self.set(self.get() - cnt)
 
     def get(self) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         return App.globalGet(self.key)
 
     def get_maybe(self) -> MaybeValue:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         return App.globalGetEx(Int(0), self.key)
 
     def get_must(self) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
     def delete(self) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for application state value")
+
         if self.static:
             raise TealInputError("Cannot delete static global param")
         return App.globalDel(self.key)
 
     def is_default(self) -> Expr:
+
         return self.get() == self.default
 
 
@@ -210,8 +238,11 @@ class DynamicApplicationStateValue(DynamicStateValue):
         if isinstance(key_seed, abi.BaseType):
             key = key_seed.encode()
 
+        key = cast(Expr, key)
+
         if self.key_generator is not None:
             key = self.key_generator(key)
+
         return ApplicationStateValue(
             stack_type=self.stack_type, key=key, descr=self.descr
         )
@@ -222,6 +253,9 @@ class AccountStateValue(StateValue):
         return f"AccountStateValue {self.key}"
 
     def set_default(self, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         if self.default is not None:
             return App.localPut(acct, self.key, self.default)
 
@@ -231,6 +265,9 @@ class AccountStateValue(StateValue):
             return App.localPut(acct, self.key, Bytes(""))
 
     def set(self, val: Expr, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         if val.type_of() != self.stack_type and val.type_of() != TealType.anytype:
             raise TealTypeError(val.type_of(), self.stack_type)
 
@@ -244,26 +281,44 @@ class AccountStateValue(StateValue):
         return App.localPut(acct, self.key, val)
 
     def get(self, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         return App.localGet(acct, self.key)
 
     def get_maybe(self, acct: Expr = Txn.sender()) -> MaybeValue:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         return App.localGetEx(acct, Int(0), self.key)
 
     def get_must(self, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         return Seq(val := self.get_maybe(acct), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         if val.type_of() != self.stack_type:
-            return TealTypeError(val.type_of(), self.stack_type)
+            raise TealTypeError(val.type_of(), self.stack_type)
 
         return If(
             (v := App.localGetEx(acct, Int(0), self.key)).hasValue(), v.value(), val
         )
 
     def delete(self, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         return App.localDel(acct, self.key)
 
     def increment(self, cnt: Expr = Int(1), acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be incremented")
 
@@ -273,6 +328,9 @@ class AccountStateValue(StateValue):
         return self.set(self.get() + cnt, acct=acct)
 
     def decrement(self, cnt: Expr = Int(1), acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         if self.stack_type != TealType.uint64:
             raise TealInputError("Only uint64 types can be decremented")
 
@@ -282,6 +340,9 @@ class AccountStateValue(StateValue):
         return self.set(self.get() - cnt, acct=acct)
 
     def is_default(self, acct: Expr = Txn.sender()) -> Expr:
+        if self.key is None:
+            raise Exception("No Key defined for account state value")
+
         return self.get(acct) == self.default
 
 
@@ -308,7 +369,8 @@ class DynamicAccountStateValue(DynamicStateValue):
 
         if self.key_generator is not None:
             key = self.key_generator(key)
-        return AccountStateValue(stack_type=self.stack_type, key=key)
+
+        return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
 
 
 def stack_type_to_string(st: TealType):
@@ -323,7 +385,7 @@ def stack_type_to_string(st: TealType):
 class State:
     """holds all the declared and dynamic state values for this storage type"""
 
-    def __init__(self, fields: dict[str, StateValue | DynamicStateValue]):
+    def __init__(self, fields: Mapping[str, StateValue | DynamicStateValue]):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
         }
@@ -388,7 +450,7 @@ class State:
 class ApplicationState(State):
     def __init__(
         self,
-        fields: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {},
+        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue] = {},
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
@@ -398,7 +460,9 @@ class ApplicationState(State):
 
 
 class AccountState(State):
-    def __init__(self, fields: dict[str, AccountStateValue | DynamicAccountStateValue]):
+    def __init__(
+        self, fields: Mapping[str, AccountStateValue | DynamicAccountStateValue]
+    ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
             raise Exception(
@@ -409,7 +473,7 @@ class AccountState(State):
         """Generate expression from state values to initialize a default value"""
         return Seq(
             *[
-                v.set_default(acct)
+                cast(AccountStateValue, v).set_default(acct)
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
             ]

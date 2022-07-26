@@ -14,14 +14,16 @@ def str_or_hex(v: bytes) -> str:
 
 def decode_state(
     state: list[dict[str, Any]], force_str=False
-) -> dict[bytes | str, bytes | str | int]:
+) -> dict[str | bytes, bytes | str | int]:
 
-    decoded_state: dict[bytes | str, str | int] = {}
+    decoded_state: dict[str | bytes, bytes | str | int] = {}
 
     for sv in state:
 
         raw_key = b64decode(sv["key"])
-        key = str_or_hex(raw_key) if force_str else raw_key
+
+        key: str | bytes = str_or_hex(raw_key) if force_str else raw_key
+        val: str | bytes | int
 
         match sv["value"]["type"]:
             case 1:
