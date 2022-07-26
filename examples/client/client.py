@@ -29,6 +29,11 @@ class ClientExample(Application):
     def set_nick(self, nick: abi.String):
         return self.nickname.set(nick.get())
 
+    @external(read_only=True)
+    def get_nick(self, *, output: abi.String):
+        return output.set(self.nickname)
+
+
 
 def demo():
 
@@ -58,6 +63,10 @@ def demo():
     app_client1.opt_in()
     app_client1.call(app.set_nick, nick="first")
 
+    result = app_client1.call(app.get_nick)
+    print(result.__dict__)
+
+    return
     # Try calling without opting in
     try:
         app_client2.call(app.set_nick, nick="second")
