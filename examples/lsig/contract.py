@@ -10,8 +10,6 @@ class EthChecker(Application):
         self, hash: HashValue, signature: Signature, *, output: abi.String
     ):
         return Seq(
-            x := App.globalGetEx(Int(0), Bytes("thekey")),
-            Assert(x.hasValue()),
             Assert(
                 Txn.sender()
                 == Addr("SVRVGQFTQEX5PUNWK6BDACE63DGYWF2Z6CUCVBCJFPNJV7XI2DRHO2MW5M")
