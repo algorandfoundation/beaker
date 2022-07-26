@@ -6,7 +6,7 @@ class HelloBeaker(Application):
 
     # Add an external method, ABI method signature will be `hello(string)string`
     @external
-    def hello(name: abi.String, *, output: abi.String):
+    def hello(self, name: abi.String, *, output: abi.String):
         # Return the result of `Hello, `+name
         return output.set(Concat(Bytes("Hello, "), name.get()))
 

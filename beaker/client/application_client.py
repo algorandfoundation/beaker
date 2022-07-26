@@ -515,10 +515,12 @@ class ApplicationClient:
         return self.client.suggested_params()
 
     def wrap_approval_exception(self, e: Exception) -> LogicException:
-        return LogicException(e, self.app.approval_program, self.approval_src_map)
+        _, map = self.compile_approval(True)
+        return LogicException(e, self.app.approval_program, map)
 
     def wrap_clear_exception(self, e: Exception) -> LogicException:
-        return LogicException(e, self.app.clear_program, self.clear_src_map)
+        _, map = self.compile_clear(True)
+        return LogicException(e, self.app.clear_program, map)
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
 

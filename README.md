@@ -19,7 +19,7 @@ from beaker import *
 
 class HelloBeaker(Application):
     @external
-    def hello(name: abi.String, *, output: abi.String):
+    def hello(self, name: abi.String, *, output: abi.String):
         return output.set(Concat(Bytes("Hello, "), name.get()))
 
 if __name__ == "__main__":
@@ -42,7 +42,11 @@ if __name__ == "__main__":
 
 ## Install
 
-Currently only installing from github is supported
+You can install from pip:
+
+`pip install beaker-pyteal`
+
+Or from github directly (no promises on stability): 
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
