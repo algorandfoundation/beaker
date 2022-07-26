@@ -1,94 +1,71 @@
-from beaker.logic_signature import LogicSignature
-from beaker.consts import Algos
-from beaker.decorators import external
+from typing import Literal
 from pyteal import *
+from beaker import *
 
 
-class MyLsig(LogicSignature):
-    seeder: Addr
+HashValue = abi.StaticArray[abi.Byte, Literal[32]]
+Signature = abi.StaticArray[abi.Byte, Literal[65]]
 
-    def __init__(self, seed_addr: str):
-        super().__init__()
-        self.seeder = Addr(seed_addr)
 
-    @external
-    def seed(self):
-        seed_payment, optin_asset, rcv_asset = Gtxn[0], Gtxn[1], Gtxn[2]
-        return And(
-            Global.group_size() == Int(3),
-            # Seed with funds
-            seed_payment.type_enum() == TxnType.Payment,
-            seed_payment.sender() == self.seeder,
-            seed_payment.amount() == Algos(0.3),
-            seed_payment.close_remainder_to() == Global.zero_address(),
-            # Opt escrow into asset
-            optin_asset.type_enum() == TxnType.AssetTransfer,
-            optin_asset.asset_amount() == Int(0),
-            optin_asset.asset_receiver() == Gtxn[1].sender(),
-            optin_asset.asset_receiver() == Gtxn[0].receiver(),
-            # Xfer asset from creator to escrow
-            rcv_asset.type_enum() == TxnType.AssetTransfer,
-            rcv_asset.asset_amount() == Int(1),
-            rcv_asset.asset_receiver() == Gtxn[0].receiver(),
-            rcv_asset.sender() == Gtxn[0].sender(),
-            rcv_asset.asset_close_to() == Global.zero_address(),
-            rcv_asset.xfer_asset() == Gtxn[1].xfer_asset(),
+class EthEcdsaVerify(LogicSignature):
+    """
+    This Lsig has a single method called `validate` that takes two application arguments:
+      hash, signature
+    and returns the validity of the hash given the signature
+    as written in OpenZeppelin https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-
+    (65-byte signatures only)
+    """
+
+    def evaluate(self):
+        return Seq(
+            Assert(Txn.type_enum() == TxnType.ApplicationCall),
+            self.eth_ecdsa_validate(Txn.application_args[1], Txn.application_args[2]),
         )
 
-    @external
-    def recover(self):
-        cosign, close_asset, close_algos = Gtxn[0], Gtxn[1], Gtxn[2]
-        return And(
-            Global.group_size() == Int(3),
-            # Make sure seeder cosigned
-            cosign.type_enum() == TxnType.Payment,
-            cosign.sender() == self.seeder,
-            cosign.receiver() == self.seeder,
-            cosign.amount() == Int(0),
-            cosign.close_remainder_to() == Global.zero_address(),
-            cosign.rekey_to() == Global.zero_address(),
-            # Close out asset
-            close_asset.type_enum() == TxnType.AssetTransfer,
-            close_asset.asset_amount() == Int(0),
-            close_asset.asset_close_to() == self.seeder,
-            # Close out algos
-            close_algos.type_enum() == TxnType.Payment,
-            close_algos.amount() == Int(0),
-            close_algos.close_remainder_to() == self.seeder,
-        )
+    @internal(TealType.uint64)
+    def eth_ecdsa_validate(self, hash_value: Expr, signature: Expr) -> Expr:
+        """
+        Equivalent of OpenZeppelin ECDSA.recover for long 65-byte Ethereum signatures
+        https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-
+        Short 64-byte Ethereum signatures require some changes to the code
 
-    @external
-    def claim(self):
-        claimer_optin, snd_asset, close_to_seeder = Gtxn[0], Gtxn[1], Gtxn[2]
-        return And(
-            Global.group_size() == Int(3),
-            # Make sure the signature matches
-            If(
-                Txn.group_index() == Int(1),
-                Ed25519Verify(Txn.tx_id(), Arg(1), Tmpl.Bytes("TMPL_GEN_ADDR")),
-                Int(1),
+        Return a 20-byte Ethereum address
+
+        Note: Unless compatibility with Ethereum or another system is necessary,
+        we highly recommend using ed25519_verify instead of ecdsa on Algorand
+
+        WARNING: This code has NOT been audited
+        DO NOT USE IN PRODUCTION
+        """
+
+        r = Extract(signature, Int(0), Int(32))
+        s = Extract(signature, Int(32), Int(32))
+
+        # The recovery ID is shifted by 27 on Ethereum
+        # For non-Ethereum signatures, remove the -27 on the line below
+        v = Btoi(Extract(signature, Int(64), Int(1))) - Int(27)
+
+        return Seq(
+            Assert(
+                Len(signature) == Int(65),
+                Len(hash_value) == Int(32),
+                # The following two asserts are to prevent malleability like in
+                # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/
+                # 5fbf494511fd522b931f7f92e2df87d671ea8b0b/contracts/utils/cryptography/ECDSA.sol#L153
+                BytesLe(
+                    s,
+                    Bytes(
+                        "base16",
+                        "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0",
+                    ),
+                ),
+                v <= Int(1),
             ),
-            # Account Opt in
-            claimer_optin.type_enum() == TxnType.AssetTransfer,
-            claimer_optin.sender() == Gtxn[0].asset_receiver(),
-            claimer_optin.asset_amount() == Int(0),
-            claimer_optin.asset_close_to() == Global.zero_address(),
-            # Close Asset to Account
-            snd_asset.type_enum() == TxnType.AssetTransfer,
-            snd_asset.asset_amount() == Int(0),
-            snd_asset.xfer_asset() == Gtxn[0].xfer_asset(),
-            snd_asset.asset_close_to() == Gtxn[0].sender(),
-            # Close algos back to seeder
-            close_to_seeder.type_enum() == TxnType.Payment,
-            close_to_seeder.amount() == Int(0),
-            close_to_seeder.close_remainder_to() == self.seeder,
+            EcdsaVerify(
+                EcdsaCurve.Secp256k1,
+                hash_value,
+                r,
+                s,
+                EcdsaRecover(EcdsaCurve.Secp256k1, hash_value, v, r, s),
+            ),
         )
-
-
-if __name__ == "__main__":
-    from beaker.sandbox import get_accounts
-
-    accts = get_accounts()
-    addr, sk = accts.pop()
-    mls = MyLsig(addr)
-    print(mls)

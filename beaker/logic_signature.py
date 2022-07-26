@@ -15,14 +15,16 @@ from beaker.decorators import get_handler_config, HandlerConfig, Method
 
 class LogicSignature:
     def __init__(self, version: int = MAX_TEAL_VERSION):
+
         self.teal_version = version
+
         self.attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in list(set(dir(self.__class__)) - set(dir(super())))
             if not m.startswith("__")
         }
 
-        self.methods: dict[str, tuple[Subroutine, MethodConfig]] = {}
+        self.methods: dict[str, Subroutine] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
             # Check for externals and internal methods
@@ -33,9 +35,8 @@ class LogicSignature:
                     abi_meth = ABIReturnSubroutine(static_attr)
                     if external_config.referenced_self:
                         abi_meth.subroutine.implementation = bound_attr
-                    self.methods[name] = abi_meth
 
-                    self.hints[name] = external_config.hints()
+                    self.methods[name] = abi_meth.subroutine
 
                 # Internal subroutines
                 case HandlerConfig(subroutine=Subroutine()):
@@ -47,3 +48,10 @@ class LogicSignature:
                             name,
                             external_config.subroutine(static_attr),
                         )
+
+        self.program = compileTeal(
+            self.evaluate(), mode=Mode.Signature, version=self.teal_version
+        )
+
+    def evaluate(self):
+        return Reject()
