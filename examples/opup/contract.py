@@ -16,7 +16,6 @@ class ExpensiveApp(OpUp):
         *,
         output: abi.StaticArray[abi.Byte, Literal[32]],
     ):
-
         return Seq(
             Assert(opup_app.application_id() == self.opup_app_id),
             self.call_opup(Int(255)),
