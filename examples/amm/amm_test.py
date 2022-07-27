@@ -132,8 +132,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
     asset_list = _get_tokens_from_state(creator_app_client)
     _opt_in_to_token(addr, signer, asset_list[POOL_IDX])
 
-    creator_before = _get_balances(addr, asset_list)
-    app_before = _get_balances(app_addr, asset_list)
+    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
 
     a_amount = 10000
     b_amount = 3000
@@ -158,8 +157,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
         b_asset=asset_list[B_IDX],
     )
 
-    creator_after = _get_balances(addr, asset_list)
-    app_after = _get_balances(app_addr, asset_list)
+    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
 
     creator_deltas = [creator_before[idx] - creator_after[idx] for idx in range(3)]
     app_deltas = [app_before[idx] - app_after[idx] for idx in range(3)]
@@ -189,8 +187,7 @@ def test_mint(creator_app_client: ApplicationClient):
 
     asset_list = _get_tokens_from_state(creator_app_client)
 
-    creator_before = _get_balances(addr, asset_list)
-    app_before = _get_balances(app_addr, asset_list)
+    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
 
     ratio_before = _get_ratio_from_state(creator_app_client)
 
@@ -217,17 +214,19 @@ def test_mint(creator_app_client: ApplicationClient):
         b_asset=asset_list[B_IDX],
     )
 
-    creator_after = _get_balances(addr, asset_list)
-    app_after = _get_balances(app_addr, asset_list)
+    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
 
-    creator_deltas = [creator_before[idx] - creator_after[idx] for idx in range(3)]
-    app_deltas = [app_before[idx] - app_after[idx] for idx in range(3)]
+    creator_deltas = [
+        creator_before[idx] - creator_after[idx] for idx in range(len(asset_list))
+    ]
+    app_deltas = [app_before[idx] - app_after[idx] for idx in range(len(asset_list))]
 
-    # We didn't lose any tokens
-    assert creator_deltas[0] == -1 * app_deltas[0]
-    assert creator_deltas[1] == -1 * app_deltas[1]
-    assert creator_deltas[2] == -1 * app_deltas[2]
+    assert (
+        sum([creator_deltas[idx] - app_deltas[idx] for idx in range(len(asset_list))])
+        == 0
+    ), "We lost tokens somewhere?"
 
+    # Creator lost the right amount
     assert creator_deltas[A_IDX] == a_amount
     assert creator_deltas[B_IDX] == b_amount
 
@@ -260,8 +259,7 @@ def test_burn(creator_app_client: ApplicationClient):
 
     ratio_before = _get_ratio_from_state(creator_app_client)
 
-    creator_before = _get_balances(addr, asset_list)
-    app_before = _get_balances(app_addr, asset_list)
+    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
 
     burn_amt = creator_before[POOL_IDX] // 10
 
@@ -283,16 +281,17 @@ def test_burn(creator_app_client: ApplicationClient):
     except Exception as e:
         print(creator_app_client.wrap_approval_exception(e))
 
-    creator_after = _get_balances(addr, asset_list)
-    app_after = _get_balances(app_addr, asset_list)
+    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
 
-    creator_deltas = [creator_before[idx] - creator_after[idx] for idx in range(3)]
-    app_deltas = [app_before[idx] - app_after[idx] for idx in range(3)]
+    creator_deltas = [
+        creator_before[idx] - creator_after[idx] for idx in range(len(asset_list))
+    ]
+    app_deltas = [app_before[idx] - app_after[idx] for idx in range(len(asset_list))]
 
-    # We didn't lose any tokens
-    assert creator_deltas[0] == -1 * app_deltas[0]
-    assert creator_deltas[1] == -1 * app_deltas[1]
-    assert creator_deltas[2] == -1 * app_deltas[2]
+    assert (
+        sum([creator_deltas[idx] + app_deltas[idx] for idx in range(len(asset_list))])
+        == 0
+    ), "We lost tokens somewhere?"
 
     assert creator_deltas[POOL_IDX] == burn_amt
 
@@ -325,8 +324,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     asset_list = _get_tokens_from_state(creator_app_client)
 
-    creator_before = _get_balances(addr, asset_list)
-    app_before = _get_balances(app_addr, asset_list)
+    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
 
     swap_amt = creator_before[A_IDX] // 10
 
@@ -345,16 +343,16 @@ def test_swap(creator_app_client: ApplicationClient):
         b_asset=asset_list[B_IDX],
     )
 
-    creator_after = _get_balances(addr, asset_list)
-    app_after = _get_balances(app_addr, asset_list)
+    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
 
     creator_deltas = [creator_before[idx] - creator_after[idx] for idx in range(3)]
     app_deltas = [app_before[idx] - app_after[idx] for idx in range(3)]
 
     # We didn't lose any tokens
-    assert creator_deltas[0] == -1 * app_deltas[0]
-    assert creator_deltas[1] == -1 * app_deltas[1]
-    assert creator_deltas[2] == -1 * app_deltas[2]
+    assert (
+        sum([creator_deltas[idx] - app_deltas[idx] for idx in range(len(asset_list))])
+        == 0
+    ), "We lost tokens somewhere?"
 
     assert creator_deltas[A_IDX] == swap_amt
 
@@ -411,15 +409,16 @@ def _get_tokens_from_state(
     )
 
 
-def _get_balances(addr: str, assets: list[int]) -> list[int]:
-    balances: list[int] = []
+def _get_balances(addrs: list[str], assets: list[int]) -> list[list[int]]:
+    balances: list[list[int]] = []
 
-    addrbal = algod_client.account_info(addr)
-
-    for aid in assets:
-        for asset in addrbal["assets"]:
-            if asset["asset-id"] == aid:
-                balances.append(asset["amount"])
+    for addr in addrs:
+        addr_bals = {
+            asset["asset-id"]: asset["amount"]
+            for asset in algod_client.account_info(addr)["assets"]
+            if asset["asset-id"] in assets
+        }
+        balances.append([addr_bals[asset] for asset in assets])
 
     return balances
 
