@@ -48,25 +48,22 @@ class ConstantProductInvariant:
     def swap(self, amount: int, is_a: bool) -> int:
 
         if is_a:
-            swap_amt = self._get_tokens_to_swap(
-                amount, self.a_supply, self.b_supply, 1000, 0
-            )
-            self.a_supply -= swap_amt
-            self.b_supply += amount
+            swap_amt = self._get_tokens_to_swap(amount, self.a_supply, self.b_supply)
+            self.a_supply += amount
+            self.b_supply -= swap_amt
             return swap_amt
 
-        swap_amt = self._get_tokens_to_swap(
-            amount, self.b_supply, self.a_supply, 1000, 0
-        )
-        self.b_supply -= swap_amt
-        self.a_supply += amount
+        swap_amt = self._get_tokens_to_swap(amount, self.b_supply, self.a_supply)
+        self.b_supply += amount
+        self.a_supply -= swap_amt
         return swap_amt
 
-    def _get_tokens_to_swap(self, in_amount, in_supply, out_supply, scale, fee) -> int:
-        factor = scale - fee
-        return (in_amount * factor * out_supply) / (
-            (in_supply * scale) + (in_amount * factor)
-        )
+    def _get_tokens_to_swap(self, in_amount, in_supply, out_supply) -> int:
+        # (in_supp + in_amt) * (out_sup - out_amt) = product
+        # out_sup - (product / (in_supp + in_amt)) = out_amt
+        assert in_supply > 0
+        assert out_supply > 0
+        return out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
 
     def ratio(self):
         return self.a_supply / self.b_supply
@@ -75,8 +72,8 @@ class ConstantProductInvariant:
 class Simulator:
     def __init__(self):
         self.cpi = ConstantProductInvariant(
-            a_supply=int(3e10),
-            b_supply=int(1e9),
+            a_supply=int(3e7),
+            b_supply=int(1e6),
             issued=1000,
             supply=10000000,
             scale=1000,
@@ -95,25 +92,28 @@ class Simulator:
 
     def run(self, num: int = 100):
 
-        sizes = np.random.randint(1000, 1000000, num)
+        sizes = np.random.randint(10, 1000, num)
 
+        self.sizes = sizes
         for idx, size in enumerate(sizes):
-            a_swap = size % 2 == 0
+            a_swap = (idx + size) % 2 == 0
 
             if a_swap:
                 size *= self.cpi.ratio()
-            else:
-                size /= self.cpi.ratio()
 
             self.a_swaps.append(size if a_swap else 0)
             self.b_swaps.append(size if not a_swap else 0)
 
             swapped = self.cpi.swap(size, a_swap)
 
-            self.deltas.append(self.cpi.ratio() - size * swapped)
+            if a_swap:
+                self.deltas.append(self.cpi.ratio() - (size / swapped))
+            else:
+                self.deltas.append(self.cpi.ratio() - (swapped / size))
 
             self.swaps.append(swapped)
             self.ratios.append(self.cpi.ratio())
-            self.pool_supply.append(self.cpi.supply)
             self.a_supply.append(self.cpi.a_supply)
             self.b_supply.append(self.cpi.b_supply)
+
+            self.pool_supply.append(self.cpi.supply)
