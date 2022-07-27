@@ -139,16 +139,15 @@ class Simulator:
             b_size = size
 
             minted = self.cpi.mint(a_size, b_size)
-
             self.states.append(copy(self.cpi))
 
     def run_burns(self, num: int = 100):
-        self.sizes = np.random.randint(100, 10000, num)
+        self.sizes = np.random.randint(100, 10000000, num)
         for size in self.sizes:
-            # TODO: adjust size of burns?
+            # Get a reasonable size given number of issued tokens
+            # should be ~ 1% --> 0.0001% burns
             size = self.cpi.issued() // size
             burn_a, burn_b = self.cpi.burn(size)
-
             self.states.append(copy(self.cpi))
 
     def run_swaps(self, num: int = 100):
@@ -156,12 +155,9 @@ class Simulator:
         self.sizes = np.random.randint(10, 1000, num)
         for idx, size in enumerate(self.sizes):
             a_swap = (idx + size) % 2 == 0
-
-            if a_swap:
-                size *= self.cpi.ratio()
-
+            # Re-size if its an a_swap
+            size *= self.cpi.ratio() if a_swap else 1
             swapped = self.cpi.swap(size, a_swap)
-
             self.states.append(copy(self.cpi))
 
     def run_mix(self, num=100):
