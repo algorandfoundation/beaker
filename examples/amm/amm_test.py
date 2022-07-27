@@ -5,9 +5,10 @@ from algosdk.atomic_transaction_composer import *
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
-from amm import ConstantProductAMM
 from beaker import client, sandbox
 from beaker.client.application_client import ApplicationClient
+
+from .amm import ConstantProductAMM
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_client()
@@ -222,7 +223,7 @@ def test_mint(creator_app_client: ApplicationClient):
     app_deltas = [app_before[idx] - app_after[idx] for idx in range(len(asset_list))]
 
     assert (
-        sum([creator_deltas[idx] - app_deltas[idx] for idx in range(len(asset_list))])
+        sum([creator_deltas[idx] + app_deltas[idx] for idx in range(len(asset_list))])
         == 0
     ), "We lost tokens somewhere?"
 
@@ -350,7 +351,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     # We didn't lose any tokens
     assert (
-        sum([creator_deltas[idx] - app_deltas[idx] for idx in range(len(asset_list))])
+        sum([creator_deltas[idx] + app_deltas[idx] for idx in range(len(asset_list))])
         == 0
     ), "We lost tokens somewhere?"
 
