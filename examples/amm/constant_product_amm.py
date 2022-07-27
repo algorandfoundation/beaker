@@ -65,6 +65,10 @@ class ConstantProductInvariant:
         assert out_supply > 0
         return out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
 
+        # return int(
+        #    (in_amount  * out_supply) / (in_supply  + in_amount)
+        # )
+
     def ratio(self):
         return self.a_supply / self.b_supply
 
