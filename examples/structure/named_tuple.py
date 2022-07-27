@@ -57,49 +57,49 @@ class Structer(Application):
     #    )
 
 
-def demo():
-    addr, sk = sandbox.get_accounts().pop()
-    signer = AccountTransactionSigner(sk)
-
-    # Initialize Application from amm.py
-    app = Structer()
-
-    # Create an Application client containing both an algod client and my app
-    app_client = client.ApplicationClient(sandbox.get_client(), app, signer=signer)
-
-    # Create the applicatiion on chain, set the app id for the app client
-    app_id, app_addr, txid = app_client.create()
-    print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
-
-    app_client.opt_in()
-
-    # Passing in a dict as an argument that should take a tuple according to the type spec
-    order_number = 12
-    order = {"quantity": 8, "item": "cubes"}
-    app_client.call(app.place_order, order_number=order_number, order=order)
-
-    state_key = order_number.to_bytes(1, "big")
-    stored_order = app_client.get_account_state()[state_key]
-    state_decoded = Structer.Order().client_decode(stored_order)
-    print(
-        f"We can get the order we stored from local state of the sender: {state_decoded}"
-    )
-
-    # Or we could
-    result = app_client.call(app.read_item, order_number=order_number)
-    abi_decoded = Structer.Order().client_decode(result.raw_value)
-    print(f"Decoded result: {abi_decoded}")
-
-    result = app_client.call(app.increase_quantity, order_number=order_number)
-    increased_decoded = Structer.Order().client_decode(result.raw_value)
-    print(
-        f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"
-    )
-
-    state_key = order_number.to_bytes(1, "big")
-    stored_order = app_client.get_account_state()[state_key]
-    state_decoded = Structer.Order().client_decode(stored_order)
-    print(f"And it's been updated: {state_decoded}")
+# def demo():
+#    addr, sk = sandbox.get_accounts().pop()
+#    signer = AccountTransactionSigner(sk)
+#
+#    # Initialize Application from amm.py
+#    app = Structer()
+#
+#    # Create an Application client containing both an algod client and my app
+#    app_client = client.ApplicationClient(sandbox.get_client(), app, signer=signer)
+#
+#    # Create the applicatiion on chain, set the app id for the app client
+#    app_id, app_addr, txid = app_client.create()
+#    print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
+#
+#    app_client.opt_in()
+#
+#    # Passing in a dict as an argument that should take a tuple according to the type spec
+#    order_number = 12
+#    order = {"quantity": 8, "item": "cubes"}
+#    app_client.call(app.place_order, order_number=order_number, order=order)
+#
+#    state_key = order_number.to_bytes(1, "big")
+#    stored_order = app_client.get_account_state()[state_key]
+#    state_decoded = Structer.Order().client_decode(stored_order)
+#    print(
+#        f"We can get the order we stored from local state of the sender: {state_decoded}"
+#    )
+#
+#    # Or we could
+#    result = app_client.call(app.read_item, order_number=order_number)
+#    abi_decoded = Structer.Order().client_decode(result.raw_value)
+#    print(f"Decoded result: {abi_decoded}")
+#
+#    result = app_client.call(app.increase_quantity, order_number=order_number)
+#    increased_decoded = Structer.Order().client_decode(result.raw_value)
+#    print(
+#        f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"
+#    )
+#
+#    state_key = order_number.to_bytes(1, "big")
+#    stored_order = app_client.get_account_state()[state_key]
+#    state_decoded = Structer.Order().client_decode(stored_order)
+#    print(f"And it's been updated: {state_decoded}")
 
 
 if __name__ == "__main__":
