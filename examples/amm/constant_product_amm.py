@@ -59,15 +59,43 @@ class ConstantProductInvariant:
         return swap_amt
 
     def _get_tokens_to_swap(self, in_amount, in_supply, out_supply) -> int:
-        # (in_supp + in_amt) * (out_sup - out_amt) = product
-        # out_sup - (product / (in_supp + in_amt)) = out_amt
         assert in_supply > 0
         assert out_supply > 0
-        return out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
+        """ Constant product swap method with fixed input
+                 
+            X * Y = K
 
-        # return int(
-        #    (in_amount  * out_supply) / (in_supply  + in_amount)
-        # )
+            X, Y are current supply of assets, goal is to keep K the same after adding in_amt and subtracting out amt 
+
+            With no fees:
+            ------------
+
+            (X + X_in) * (Y - Y_out) = X*Y
+            *Algebra happens*
+            Y - ( X*Y / (X + X_in)) = Y_out
+
+            With fees:
+            ----------
+
+            fee_factor = scale - fee (ex 1000, 3 for a .3% fee)
+
+            X_adj = X_in * (fee_factor)
+
+            (X + X_adj) * (Y - Y_out) = X*Y
+            *Algebra happens*
+            Y - ( X*Y / (X + X_adj)) = Y_out
+
+            Or as in [Tinyman](https://github.com/tinymanorg/tinyman-contracts-v1/blob/main/contracts/validator_approval.teal#L1000): 
+            Y_out = (X_adj * Y) / (X * scale + X_adj)
+        """
+
+        # Simple, no fees
+        # return out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
+
+        factor = self.scale - self.fee
+        return (in_amount * factor * out_supply) / (
+            (in_supply * self.scale) + (in_amount * factor)
+        )
 
     def ratio(self):
         return self.a_supply / self.b_supply
@@ -81,7 +109,7 @@ class Simulator:
             issued=1000,
             supply=10000000,
             scale=1000,
-            fee=3,
+            fee=0,
         )
 
         self.pool_supply = []
