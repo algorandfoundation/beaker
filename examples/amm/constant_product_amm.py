@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
+from copy import copy
 import random
 
 # Python impl of constant product
@@ -10,50 +11,57 @@ class ConstantProductInvariant:
     a_supply: int
     b_supply: int
 
-    issued: int
-    supply: int
+    max_pool_supply: int
+    pool_supply: int
 
     scale: int
     fee: int
 
-    def mint(self, a, b) -> int:
-        to_mint = int(
-            int(
-                int(min(a / self.a_supply, b / self.b_supply) * self.scale)
-                * self.issued
-            )
-            / self.scale
-        )
+    def mint(self, a: int, b: int) -> int:
+        a_rat = (a * self.scale) // self.a_supply
+        b_rat = (b * self.scale) // self.b_supply
+
+        # Use the min of the 2 scaled assets
+        to_mint = (min(a_rat, b_rat) * self.issued()) // self.scale
+
+        if to_mint == 0:
+            return 0
+
+        # compute first, then tweak balances
         self.a_supply += a
         self.b_supply += b
-        self.issued -= to_mint
+        self.pool_supply -= to_mint
+
         return to_mint
 
     def burn(self, amount) -> tuple[int, int]:
-        # compute first
-        burn_a, burn_b = self._burn_a(amount), self._burn_b(amount)
+        burn_a = (self.a_supply * amount) // self.issued()
+        burn_b = (self.b_supply * amount) // self.issued()
 
+        if burn_a == 0 or burn_b == 0:
+            return 0, 0
+
+        # computed first, then tweak balances
         self.a_supply -= burn_a
         self.b_supply -= burn_b
-        # then add supply
-        self.supply += amount
+        self.pool_supply += amount
+
         return burn_a, burn_b
-
-    def _burn_a(self, amount) -> int:
-        return int((self.a_supply * amount) / self.issued)
-
-    def _burn_b(self, amount) -> int:
-        return int((self.b_supply * amount) / self.issued)
 
     def swap(self, amount: int, is_a: bool) -> int:
 
         if is_a:
             swap_amt = self._get_tokens_to_swap(amount, self.a_supply, self.b_supply)
+            if swap_amt == 0:
+                return 0
             self.a_supply += amount
             self.b_supply -= swap_amt
             return swap_amt
 
         swap_amt = self._get_tokens_to_swap(amount, self.b_supply, self.a_supply)
+        if swap_amt == 0:
+            return 0
+
         self.b_supply += amount
         self.a_supply -= swap_amt
         return swap_amt
@@ -92,6 +100,7 @@ class ConstantProductInvariant:
         # Simple, no fees
         # out_amt = out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
 
+        # with fees
         factor = self.scale - self.fee
         out_amt = (in_amount * factor * out_supply) / (
             (in_supply * self.scale) + (in_amount * factor)
@@ -100,7 +109,10 @@ class ConstantProductInvariant:
         return int(out_amt)
 
     def scaled_ratio(self) -> int:
-        return int((self.a_supply * self.scale) / self.b_supply)
+        return int(self.ratio() * self.scale)
+
+    def issued(self) -> int:
+        return self.max_pool_supply - self.pool_supply
 
     def ratio(self):
         return self.a_supply / self.b_supply
@@ -111,54 +123,72 @@ class Simulator:
         self.cpi = ConstantProductInvariant(
             a_supply=int(3e7),
             b_supply=int(1e6),
-            issued=1000,
-            supply=10000000,
+            max_pool_supply=int(1e9),
+            pool_supply=int(1e9) - 100000,
             scale=1000,
-            fee=0,
+            fee=3,
         )
 
-        self.pool_supply = []
-        self.a_supply = []
-        self.b_supply = []
-        self.swaps = []
-        self.ratios = []
-        self.scaled_ratios = []
+        self.states = []
 
-        self.a_swaps = []
-        self.b_swaps = []
-        self.deltas = []
+    def run_mints(self, num: int = 100):
+        self.sizes = np.random.randint(100, 1000, num)
+        for size in self.sizes:
+            # force them to be the right ratio
+            a_size = size * self.cpi.ratio()
+            b_size = size
 
-    def run(self, num: int = 100):
+            minted = self.cpi.mint(a_size, b_size)
 
-        sizes = np.random.randint(10, 1000, num)
+            self.states.append(copy(self.cpi))
 
-        self.sizes = sizes
-        for idx, size in enumerate(sizes):
+    def run_burns(self, num: int = 100):
+        self.sizes = np.random.randint(100, 10000, num)
+        for size in self.sizes:
+            # TODO: adjust size of burns?
+            size = self.cpi.issued() // size
+            burn_a, burn_b = self.cpi.burn(size)
+
+            self.states.append(copy(self.cpi))
+
+    def run_swaps(self, num: int = 100):
+
+        self.sizes = np.random.randint(10, 1000, num)
+        for idx, size in enumerate(self.sizes):
             a_swap = (idx + size) % 2 == 0
 
             if a_swap:
                 size *= self.cpi.ratio()
 
-            self.a_swaps.append(size if a_swap else 0)
-            self.b_swaps.append(size if not a_swap else 0)
-
             swapped = self.cpi.swap(size, a_swap)
 
-            if a_swap:
-                self.deltas.append(
-                    (self.cpi.scaled_ratio() - (size / swapped) * self.cpi.scale)
-                    // self.cpi.scale
-                )
-            else:
-                self.deltas.append(
-                    (self.cpi.scaled_ratio() - (swapped / size) * self.cpi.scale)
-                    // self.cpi.scale
-                )
+            self.states.append(copy(self.cpi))
 
-            self.scaled_ratios.append(self.cpi.scaled_ratio())
-            self.swaps.append(swapped)
-            self.ratios.append(self.cpi.ratio())
-            self.a_supply.append(self.cpi.a_supply)
-            self.b_supply.append(self.cpi.b_supply)
+    def run_mix(self, num=100):
+        nums = np.random.randint(1, 4, num)
+        for idx, runs in enumerate(nums):
+            v = (idx + runs) % 3
+            match v:
+                case 0:
+                    self.run_mints(runs)
+                case 1:
+                    self.run_burns(runs)
+                case 2:
+                    self.run_swaps(runs)
 
-            self.pool_supply.append(self.cpi.supply)
+    def get_states_for(self, k: str) -> list[int]:
+        if hasattr(self.cpi, k):
+            return [getattr(c, k) for c in self.states]
+        return []
+
+    def get_states(self) -> dict[str, list[int]]:
+        states: dict[str, list[int]] = {}
+        for key in self.cpi.__annotations__.keys():
+            states[key] = self.get_states_for(key)
+
+        del states["scale"]
+        del states["fee"]
+        del states["max_pool_supply"]
+
+        states["ratio"] = [s.ratio() for s in self.states]
+        return states
