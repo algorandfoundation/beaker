@@ -90,12 +90,17 @@ class ConstantProductInvariant:
         """
 
         # Simple, no fees
-        # return out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
+        # out_amt = out_supply - ((in_supply * out_supply) / (in_supply + in_amount))
 
         factor = self.scale - self.fee
-        return (in_amount * factor * out_supply) / (
+        out_amt = (in_amount * factor * out_supply) / (
             (in_supply * self.scale) + (in_amount * factor)
         )
+
+        return int(out_amt)
+
+    def scaled_ratio(self) -> int:
+        return int((self.a_supply * self.scale) / self.b_supply)
 
     def ratio(self):
         return self.a_supply / self.b_supply
@@ -117,6 +122,7 @@ class Simulator:
         self.b_supply = []
         self.swaps = []
         self.ratios = []
+        self.scaled_ratios = []
 
         self.a_swaps = []
         self.b_swaps = []
@@ -139,10 +145,17 @@ class Simulator:
             swapped = self.cpi.swap(size, a_swap)
 
             if a_swap:
-                self.deltas.append(self.cpi.ratio() - (size / swapped))
+                self.deltas.append(
+                    (self.cpi.scaled_ratio() - (size / swapped) * self.cpi.scale)
+                    // self.cpi.scale
+                )
             else:
-                self.deltas.append(self.cpi.ratio() - (swapped / size))
+                self.deltas.append(
+                    (self.cpi.scaled_ratio() - (swapped / size) * self.cpi.scale)
+                    // self.cpi.scale
+                )
 
+            self.scaled_ratios.append(self.cpi.scaled_ratio())
             self.swaps.append(swapped)
             self.ratios.append(self.cpi.ratio())
             self.a_supply.append(self.cpi.a_supply)
