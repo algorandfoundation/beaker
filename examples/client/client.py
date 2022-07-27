@@ -68,12 +68,12 @@ def demo():
     app_client2.call(app.set_nick, nick="second")
 
     # Get the local state for each account
-    print(app_client1.get_account_state(force_str=True))
+    print(app_client1.get_account_state())
 
-    print(app_client2.get_account_state(force_str=True))
+    print(app_client2.get_account_state())
 
     # Get the global state
-    print(f"Current app state: {app_client.get_application_state(force_str=True)}")
+    print(f"Current app state: {app_client.get_application_state()}")
 
     try:
         app_client2.call(app.set_manager, new_manager=addr2)
@@ -84,11 +84,11 @@ def demo():
 
     # Have addr1 set the manager to addr2
     app_client1.call(app.set_manager, new_manager=addr2)
-    print(f"Current app state: {app_client.get_application_state(force_str=True)}")
+    print(f"Current app state: {app_client.get_application_state()}")
 
     # and back
     app_client2.call(app.set_manager, new_manager=addr1)
-    print(f"Current app state: {app_client.get_application_state(force_str=True)}")
+    print(f"Current app state: {app_client.get_application_state()}")
 
 
 if __name__ == "__main__":

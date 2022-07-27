@@ -42,8 +42,9 @@ class ApplicationClient:
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
         self.signer = signer
-        self.sender = None
-        self.sender = self.get_sender(sender, self.signer)
+        self.sender = sender
+        if signer is not None and sender is None:
+            self.sender = self.get_sender(sender, self.signer)
 
         self.suggested_params = suggested_params
 
@@ -480,12 +481,12 @@ class ApplicationClient:
             return to_resolve[ResolvableTypes.Constant]
         elif ResolvableTypes.GlobalState in to_resolve:
             key = to_resolve[ResolvableTypes.GlobalState]
-            app_state = self.get_application_state(force_str=True)
+            app_state = self.get_application_state()
             return app_state[key]
         elif ResolvableTypes.LocalState in to_resolve:
             key = to_resolve[ResolvableTypes.LocalState]
             acct_state = self.get_account_state(
-                self.get_sender(None, None), force_str=True
+                self.get_sender(None, None),
             )
             return acct_state[key]
         elif ResolvableTypes.ABIMethod in to_resolve:
@@ -533,7 +534,7 @@ class ApplicationClient:
         if sender is not None:
             return sender
 
-        if self.sender is not None:
+        if signer is None and self.sender is not None:
             return self.sender
 
         signer = self.get_signer(signer)

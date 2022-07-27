@@ -97,7 +97,6 @@ def test_app_prepare():
     ac_with_signer = ApplicationClient(client, app, signer=signer)
 
     assert ac_with_signer.signer == signer, "Should have the same signer"
-    assert ac_with_signer.sender is None, "Should not have a sender"
 
     assert ac_with_signer.get_signer(None) == signer, "Should produce the same signer"
     assert (

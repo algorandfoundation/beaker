@@ -35,5 +35,5 @@ def test_op_up():
     app_acct_info = ac.get_application_account_info()
     assert len(app_acct_info["created-apps"]) == 1
 
-    state = ac.get_application_state(force_str=True)
+    state = ac.get_application_state()
     assert state["ouaid"] == created_app_id
