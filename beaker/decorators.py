@@ -5,6 +5,7 @@ from inspect import get_annotations, signature, Signature
 from typing import Optional, Callable, Final, cast, Any
 from algosdk.abi import Method
 from pyteal import (
+    abi,
     ABIReturnSubroutine,
     And,
     App,
@@ -233,7 +234,7 @@ def _on_complete(mc: MethodConfig):
     return _impl
 
 
-def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
+def _replace_named_tuples(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
 
@@ -245,9 +246,9 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
             # Generic type, not a Struct
             continue
 
-        if issubclass(cls, Struct):
-            params[k] = v.replace(annotation=cls().annotation_type())
-            annotations[k] = cls().annotation_type()
+        if issubclass(cls, abi.NamedTuple):
+            params[k] = v.replace(annotation=cls().type_spec().annotation_type())
+            annotations[k] = cls().type_spec().annotation_type()
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
@@ -322,7 +323,7 @@ def external(
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
-        fn = _replace_structs(fn)
+        fn = _replace_named_tuples(fn)
 
         if resolvable is not None:
             resolvable.check_arguments(signature(fn))

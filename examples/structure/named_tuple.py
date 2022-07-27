@@ -1,6 +1,6 @@
 from typing import Final, Literal
 
-from pyteal import abi, TealType, Int, Seq
+from pyteal import abi, TealType, Int, Seq, Assert
 from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
 )
@@ -16,9 +16,7 @@ from beaker import (
 
 
 class Structer(Application):
-
-    # Our custom Struct
-    class Order(struct.Struct):
+    class Order(abi.NamedTuple):
         item: abi.String
         quantity: abi.Uint16
 
@@ -28,31 +26,35 @@ class Structer(Application):
     )
 
     @external
-    def place_order(self, order_number: abi.Uint8, order: Order):
-        return self.orders[order_number].set(order.encode())
+    def thing(self, order_number: abi.Uint8, order: Order, *, output: abi.String):
+        return Seq(Assert(Int(1)), output.set(order.encode()))
 
-    @external(read_only=True)
-    def read_item(self, order_number: abi.Uint8, *, output: Order):
-        return output.decode(self.orders[order_number])
+    # @external
+    # def place_order(self, order_number: abi.Uint8, order: Order):
+    #    return self.orders[order_number].set(order)
 
-    @external
-    def increase_quantity(self, order_number: abi.Uint8, *, output: Order):
-        return Seq(
-            # Read the order from state
-            (new_order := Structer.Order()).decode(self.orders[order_number]),
-            # Select out in the quantity attribute, its a TupleElement type
-            # so needs to be stored somewhere
-            (quant := abi.Uint16()).set(new_order.quantity),
-            # Add 1 to quantity
-            quant.set(quant.get() + Int(1)),
-            # We've gotta set all of the fields at the same time, but we can
-            # borrow the item we already know about
-            new_order.set(new_order.item, quant),
-            # Write the new order to state
-            self.orders[order_number].set(new_order.encode()),
-            # Write new order to caller
-            output.decode(new_order.encode()),
-        )
+    # @external(read_only=True)
+    # def read_item(self, order_number: abi.Uint8, *, output: Order):
+    #    return output.decode(self.orders[order_number])
+
+    # @external
+    # def increase_quantity(self, order_number: abi.Uint8, *, output: Order):
+    #    return Seq(
+    #        # Read the order from state
+    #        (new_order := Structer.Order()).decode(self.orders[order_number]),
+    #        # Select out in the quantity attribute, its a TupleElement type
+    #        # so needs to be stored somewhere
+    #        (quant := abi.Uint16()).set(new_order.quantity),
+    #        # Add 1 to quantity
+    #        quant.set(quant.get() + Int(1)),
+    #        # We've gotta set all of the fields at the same time, but we can
+    #        # borrow the item we already know about
+    #        new_order.set(new_order.item, quant),
+    #        # Write the new order to state
+    #        self.orders[order_number].set(new_order.encode()),
+    #        # Write new order to caller
+    #        output.decode(new_order.encode()),
+    #    )
 
 
 def demo():
@@ -101,4 +103,9 @@ def demo():
 
 
 if __name__ == "__main__":
-    demo()
+    nt = Structer()
+    print(nt.approval_program)
+    import json
+
+    print(json.dumps(nt.contract.dictify()))
+    # demo()
