@@ -421,11 +421,19 @@ class State:
         """Convert the state to a dict for encoding"""
         return {
             "declared": {
-                k: {"type": stack_type_to_string(v.stack_type), "key": v.str_key()}
+                k: {
+                    "type": stack_type_to_string(v.stack_type),
+                    "key": v.str_key(),
+                    "descr": v.descr,
+                }
                 for k, v in self.declared_vals.items()
             },
             "dynamic": {
-                k: {"type": stack_type_to_string(v.stack_type), "max-keys": v.max_keys}
+                k: {
+                    "type": stack_type_to_string(v.stack_type),
+                    "max-keys": v.max_keys,
+                    "descr": v.descr,
+                }
                 for k, v in self.dynamic_vals.items()
             },
         }
