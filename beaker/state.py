@@ -237,7 +237,10 @@ class DynamicApplicationStateValue(DynamicStateValue):
 
 
 class AccountStateValue(StateValue):
-    acct: Expr = Txn.sender()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.acct = Txn.sender()
 
     def __str__(self) -> str:
         return f"AccountStateValue {self.acct} {self.key}"
@@ -249,7 +252,7 @@ class AccountStateValue(StateValue):
 
         if self.static:
             return Seq(
-                v := self.get_maybe(self.acct),
+                v := self.get_maybe(),
                 Assert(Not(v.hasValue())),
                 App.localPut(self.acct, self.key, val),
             )
