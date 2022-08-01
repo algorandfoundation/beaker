@@ -22,19 +22,8 @@ def demo():
     signer = AccountTransactionSigner(sk)
 
     app = ARC20()
-    # with open("approval.teal", "w") as f:
-    #    f.write(app.approval_program)
 
     app_client = ApplicationClient(algod_client, app=app, signer=signer)
-
-    # _, sm = app_client.compile_approval(True)
-    # print(sm.line_to_pc)
-    # lines = app.approval_program.split("\n")
-    # with open("approval.mapped.teal", "w") as f:
-    #    annotated_lines: list[str] = []
-    #    for idx, line in enumerate(lines):
-    #        annotated_lines.append(line + f" // {sm.get_pcs_for_line(idx)}")
-    #    f.write("\n".join(annotated_lines))
 
     app_id, app_addr, txid = app_client.create()
     print(f"Created app: {app_id} with address {app_addr}")
@@ -101,7 +90,6 @@ def demo():
         )
     except Exception as e:
         print(app_client.wrap_approval_exception(e, 100))
-    print(f"Optin asset id: {result}")
 
 
 if __name__ == "__main__":

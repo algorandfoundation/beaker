@@ -16,13 +16,13 @@ MetadataHash = abi.DynamicArray[abi.Byte]
 
 # Inline Validators
 valid_address_length = lambda addr: Len(addr) == Int(32)
-#valid_url_length = lambda url: Len(url) <= Int(96)
-#valid_name_length = lambda name: Len(name) <= Int(32)
-#valid_unit_name_length = lambda unit_name: Len(unit_name) <= Int(8)
+# valid_url_length = lambda url: Len(url) <= Int(96)
+# valid_name_length = lambda name: Len(name) <= Int(32)
+# valid_unit_name_length = lambda unit_name: Len(unit_name) <= Int(8)
 
-valid_url_length = lambda url: Int(1) 
-valid_name_length = lambda name: Int(1) 
-valid_unit_name_length = lambda unit_name: Int(1) 
+valid_url_length = lambda url: Int(1)
+valid_name_length = lambda name: Int(1)
+valid_unit_name_length = lambda unit_name: Int(1)
 
 # Contract Implemtation
 class ARC20(Application):
@@ -163,12 +163,12 @@ class ARC20(Application):
         reserve_addr: abi.Address,
         freeze_addr: abi.Address,
         clawback_addr: abi.Address,
-    )->Expr:
+    ) -> Expr:
         """configures the asset in global state and possibly on the ASA itself"""
 
-        update_reserve_addr = reserve_addr.get() != self.reserve_addr 
-        update_freeze_addr =  freeze_addr.get() != self.freeze_addr 
-        update_clawback_addr = clawback_addr.get() != self.clawback_addr 
+        update_reserve_addr = reserve_addr.get() != self.reserve_addr
+        update_freeze_addr = freeze_addr.get() != self.freeze_addr
+        update_clawback_addr = clawback_addr.get() != self.clawback_addr
 
         # NOTE: In ref. implementation Smart ASA total can not be configured to
         # less than its current circulating supply.
@@ -186,7 +186,7 @@ class ARC20(Application):
                 valid_url_length(url.get()),
                 valid_name_length(name.get()),
                 valid_unit_name_length(unit_name.get()),
-                # TODO: more checks for total/decimals 
+                # TODO: more checks for total/decimals
             ),
             If(update_reserve_addr).Then(
                 Assert(self.reserve_addr != Global.zero_address())
@@ -400,11 +400,7 @@ class ARC20(Application):
         )
 
     @external(method_config=MethodConfig(close_out=CallConfig.CALL))
-    def asset_app_closeout(
-        self,
-        close_asset: abi.Asset,
-        close_to: abi.Account
-    ) -> Expr:
+    def asset_app_closeout(self, close_asset: abi.Asset, close_to: abi.Account) -> Expr:
         close_out_txn = Gtxn[1]
         return Seq(
             Assert(
@@ -414,7 +410,7 @@ class ARC20(Application):
                 close_out_txn.xfer_asset() == close_asset.asset_id(),
                 close_out_txn.sender() == Txn.sender(),
                 close_out_txn.asset_amount() == Int(0),
-                close_out_txn.asset_close_to() == self.address
+                close_out_txn.asset_close_to() == self.address,
             ),
             # Effects
             If(Or(self.frozen, self.is_frozen[Txn.sender()])).Then(
@@ -424,7 +420,9 @@ class ARC20(Application):
             asset_creator := AssetParam().creator(close_asset.asset_id()),
             If(asset_creator.hasValue()).Then(
                 Seq(
-                    account_balance := AssetHolding().balance(Txn.sender(), close_asset.asset_id()),
+                    account_balance := AssetHolding().balance(
+                        Txn.sender(), close_asset.asset_id()
+                    ),
                     self.do_transfer(
                         close_asset.asset_id(),
                         account_balance.value(),
@@ -576,4 +574,4 @@ class ARC20(Application):
 
     @opt_in
     def opt_in(self) -> Expr:
-        return Reject() 
+        return Reject()
