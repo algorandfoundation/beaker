@@ -20,6 +20,8 @@ from pyteal import (
     Seq,
     If,
 )
+from beaker.lib import storage
+from beaker.lib.storage import LocalBlob
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 
 
@@ -320,6 +322,47 @@ class DynamicAccountStateValue(DynamicStateValue):
             key = self.key_generator(key)
 
         return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
+
+
+class AccountStateBlob(LocalBlob):
+    def initialize(self):
+        return self.zero()
+
+
+class AccountStateList:
+    def __init__(self, storage_type: abi.BaseType, max_keys: int = 16):
+        # TODO: make sure its a static type?
+        self.storage_type = storage_type
+        self.acct = Txn.sender()
+        self.blob = LocalBlob(max_keys=max_keys)
+
+    def get_length(self):
+        # Iterate thru keys to find first with zeros?
+        # keep track of uint32 length at start?
+        # keep keyed storage for self?
+        pass
+
+    def find_idx(self, key: Expr) -> Expr:
+        pass
+
+    def __getitem__(self, idx: Expr):
+        pass
+
+
+class AccountStateMap:
+    def __init__(self):
+        self.acct = Txn.sender()
+        self.blob = LocalBlob()
+
+    def initialize(self):
+        return self.blob.zero()
+
+    def get_key_pos(self, item: Expr):
+        pass
+
+    def __getitem__(self, item: Expr):
+        bstart, bend = self.get_key_pos(item)
+        return self.blob.read(self.acct, bstart, bend)
 
 
 def stack_type_to_string(st: TealType):

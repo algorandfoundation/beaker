@@ -25,11 +25,20 @@ from pyteal import (
     Concat,
 )
 
-from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
+from beaker import (
+    Application,
+    ApplicationStateValue,
+    DynamicAccountStateValue,
+    AccountStateBlob,
+)
 from beaker.decorators import Authorize, external, create, update, delete
+from beaker.contracts.arcs import ARC20
+
+Offer = abi.Tuple2[abi.Address, abi.Uint64]
+Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
 
-class ARC18(Application):
+class ARC18(ARC20):
 
     administrator: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address()
@@ -41,11 +50,7 @@ class ARC18(Application):
         stack_type=TealType.bytes, key=Bytes("royalty_receiver"), static=True
     )
 
-    offers: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
-        stack_type=TealType.bytes,
-        max_keys=16,
-        key_gen=Subroutine(TealType.bytes)(lambda asset_id: Itob(asset_id)),
-    )
+    offers: Final[AccountStateBlob] = AccountStateBlob(max_keys=14, model=Offer)
 
     # A basis point is 1/100 of 1%
     basis_point_multiplier: Final[Int] = Int(100 * 100)
@@ -337,15 +342,11 @@ class ARC18(Application):
     # Read State
     ###
 
-    Offer = abi.Tuple2[abi.Address, abi.Uint64]
-
     @external(read_only=True)
     def get_offer(
         self, royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer
     ):
-        return output.decode(ARC18.offers[royalty_asset][owner.address()].get_must())
-
-    Policy = abi.Tuple2[abi.Address, abi.Uint64]
+        return output.decode(ARC18.offers[owner.address()][royalty_asset.get()])
 
     @external(read_only=True)
     def get_policy(self, *, output: Policy):

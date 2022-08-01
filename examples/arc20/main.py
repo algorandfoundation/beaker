@@ -77,21 +77,41 @@ def demo():
 
     print(f"Reconfigured asset id: {smart_asa_id}")
 
-    try:
-        result = app_client.call(
-            app.asset_app_optin,
-            suggested_params=sp,
-            on_complete=OnComplete.OptInOC,
-            asset=smart_asa_id,
-            opt_in_txn=TransactionWithSigner(
-                txn=AssetOptInTxn(addr, sp, smart_asa_id),
-                signer=signer,
-            ),
-        )
-    except Exception as e:
-        print(app_client.wrap_approval_exception(e, 100))
+    result = app_client.call(
+        app.asset_app_optin,
+        suggested_params=sp,
+        on_complete=OnComplete.OptInOC,
+        asset=smart_asa_id,
+        opt_in_txn=TransactionWithSigner(
+            txn=AssetOptInTxn(addr, sp, smart_asa_id),
+            signer=signer,
+        ),
+    )
+
+    addr2, sk2 = accts.pop()
+    signer2 = AccountTransactionSigner(sk2)
+
+    client2 = app_client.prepare(signer=signer2)
+    result = client2.call(
+        app.asset_app_optin,
+        suggested_params=sp,
+        on_complete=OnComplete.OptInOC,
+        asset=smart_asa_id,
+        opt_in_txn=TransactionWithSigner(
+            txn=AssetOptInTxn(addr2, sp, smart_asa_id),
+            signer=signer2,
+        ),
+    )
+
+    app_client.call(
+        app.asset_transfer,
+        suggested_params=sp,
+        xfer_asset=smart_asa_id,
+        asset_amount=1,
+        asset_sender=app_addr,
+        asset_receiver=addr2,
+    )
 
 
 if __name__ == "__main__":
-
     demo()

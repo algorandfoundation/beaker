@@ -9,10 +9,10 @@ from tests.helpers import (
     logged_int,
 )
 
-from .local_blob import LocalBlob, max_bytes
+from .local_blob import LocalBlob
 
 # Can re-use the same blob
-b = LocalBlob()
+b = LocalBlob(16)
 
 
 def test_local_blob_zero():
@@ -60,7 +60,7 @@ def test_local_blob_write_read_past_end():
     expr = Seq(
         b.zero(Int(0)),
         Pop(b.write(Int(0), Int(0), Bytes("deadbeef" * 8))),
-        Log(b.read(Int(0), Int(0), max_bytes)),
+        Log(b.read(Int(0), Int(0), b.max_bytes)),
     )
     expected = [LOGIC_EVAL_ERROR]
     assert_stateful_fail(expr, expected)
@@ -79,7 +79,7 @@ def test_local_blob_set_get():
 def test_local_blob_set_past_end():
     expr = Seq(
         b.zero(Int(0)),
-        b.set_byte(Int(0), max_bytes, Int(123)),
+        b.set_byte(Int(0), b.max_bytes, Int(123)),
         Log(Itob(b.get_byte(Int(0), Int(32)))),
     )
     expected = [LOGIC_EVAL_ERROR]
