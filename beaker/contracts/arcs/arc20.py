@@ -368,7 +368,7 @@ class ARC20(Application):
             self.app_state.initialize(),
         )
 
-    @external(method_config=MethodConfig(opt_in=CallConfig.ALL))
+    @external(method_config=MethodConfig(opt_in=CallConfig.CALL))
     def asset_app_optin(
         self, asset: abi.Asset, opt_in_txn: abi.AssetTransferTransaction
     ):
@@ -394,7 +394,7 @@ class ARC20(Application):
             ),
         )
 
-    @external(method_config=MethodConfig(close_out=CallConfig.ALL))
+    @external(method_config=MethodConfig(close_out=CallConfig.CALL))
     def asset_app_closeout(
         self,
         close_asset: abi.Asset,
