@@ -454,7 +454,7 @@ class ARC20(Application):
         )
 
     @external(read_only=True)
-    def get_is_frozen(self, asset: abi.Asset, *, output: abi.Bool):
+    def is_asset_frozen(self, asset: abi.Asset, *, output: abi.Bool):
         return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.frozen))
 
     @external(read_only=True)
@@ -500,7 +500,7 @@ class ARC20(Application):
         )
 
     @external(read_only=True)
-    def get_is_account_frozen(
+    def is_account_frozen(
         self, asset: abi.Asset, acct: abi.Account, *, output: abi.Bool
     ):
         return Seq(
@@ -569,3 +569,7 @@ class ARC20(Application):
                 TxnField.config_asset: self.asa_id,
             }
         )
+
+    @opt_in
+    def opt_in(self) -> Expr:
+        return Reject() 
