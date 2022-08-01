@@ -303,6 +303,7 @@ class ARC20(Application):
             ),
             # Effects
             self.do_transfer(
+                self.asa_id,
                 asset_amount.get(),
                 asset_sender.address(),
                 asset_receiver.address(),
@@ -367,7 +368,7 @@ class ARC20(Application):
                 is_manager_addr,
             ),
             # Effects
-            self.do_destroy(),
+            self.do_destroy(self.asa_id),
             # Reinit state to wipe it
             self.app_state.initialize(),
         )
@@ -404,30 +405,28 @@ class ARC20(Application):
         close_asset: abi.Asset,
         close_to: abi.Account
     ) -> Expr:
+        close_out_txn = Gtxn[1]
         return Seq(
-            account_balance := AssetHolding().balance(Txn.sender(), close_asset.asset_id()),
-            asset_params := AssetParam().creator(close_asset.asset_id()),
             Assert(
-                self.asa_id,
-                self.asa_id == close_asset.asset_id(),
+                self.current_asa_id[Txn.sender()] == close_asset.asset_id(),
                 Global.group_size() >= Int(2),
-                Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                Gtxn[1].xfer_asset() == close_asset.asset_id(),
-                Gtxn[1].sender() == Txn.sender(),
-                Gtxn[1].asset_amount() == Int(0),
-                Gtxn[1].asset_close_to()
-                == Global.current_application_address(),
+                close_out_txn.type_enum() == TxnType.AssetTransfer,
+                close_out_txn.xfer_asset() == close_asset.asset_id(),
+                close_out_txn.sender() == Txn.sender(),
+                close_out_txn.asset_amount() == Int(0),
+                close_out_txn.asset_close_to() == self.address
             ),
             # Effects
             If(Or(self.frozen, self.is_frozen[Txn.sender()])).Then(
-                Assert(close_to.address() == Global.current_application_address())
+                Assert(close_to.address() == self.address)
             ),
-            # NOTE: Skip if Underlying ASA has been destroyed to avoid users'
-            # lock-in.
-            If(asset_params.hasValue()).Then(
+            # NOTE: Skip if Underlying ASA has been destroyed to avoid users' lock-in.
+            asset_creator := AssetParam().creator(close_asset.asset_id()),
+            If(asset_creator.hasValue()).Then(
                 Seq(
-                    account_balance,
+                    account_balance := AssetHolding().balance(Txn.sender(), close_asset.asset_id()),
                     self.do_transfer(
+                        close_asset.asset_id(),
                         account_balance.value(),
                         Txn.sender(),
                         close_to.address(),
@@ -549,6 +548,7 @@ class ARC20(Application):
     @internal(TealType.none)
     def do_transfer(
         self,
+        asset_id: Expr,
         asset_amount: Expr,
         asset_sender: Expr,
         asset_receiver: Expr,
@@ -557,7 +557,7 @@ class ARC20(Application):
             {
                 TxnField.fee: Int(0),
                 TxnField.type_enum: TxnType.AssetTransfer,
-                TxnField.xfer_asset: self.asa_id,
+                TxnField.xfer_asset: asset_id,
                 TxnField.asset_amount: asset_amount,
                 TxnField.asset_sender: asset_sender,
                 TxnField.asset_receiver: asset_receiver,
@@ -565,12 +565,12 @@ class ARC20(Application):
         )
 
     @internal(TealType.none)
-    def do_destroy(self):
+    def do_destroy(self, asset_id: Expr):
         return InnerTxnBuilder.Execute(
             {
                 TxnField.fee: Int(0),
                 TxnField.type_enum: TxnType.AssetConfig,
-                TxnField.config_asset: self.asa_id,
+                TxnField.config_asset: asset_id,
             }
         )
 
