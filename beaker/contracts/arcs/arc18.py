@@ -151,7 +151,7 @@ class ARC18(Application):
         valid_transfer_group = Seq(
             Assert(Global.group_size() == Int(2)),
             (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()].get(owner.address())
+                self.offers[royalty_asset.asset_id()][owner.address()]
             ),
             offer_auth_addr.store(self.offered_auth(offer.load())),
             offer_amt.store(self.offered_amount(offer.load())),
@@ -220,7 +220,7 @@ class ARC18(Application):
             Assert(Global.group_size() == Int(2)),
             # Get the offer from local state
             (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()].get_must(owner.address())
+                self.offers[royalty_asset.asset_id()][owner.address()].get_must()
             ),
             offer_auth_addr.store(ARC18.offered_auth(offer.load())),
             offer_amt.store(ARC18.offered_amount(offer.load())),
@@ -306,7 +306,7 @@ class ARC18(Application):
 
         return Seq(
             (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()].get(owner.address())
+                self.offers[royalty_asset.asset_id()][owner.address()]
             ),
             (curr_offer_amt := ScratchVar()).store(ARC18.offered_amount(offer.load())),
             (curr_offer_auth := ScratchVar()).store(ARC18.offered_auth(offer.load())),
@@ -343,7 +343,7 @@ class ARC18(Application):
     def get_offer(
         self, royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer
     ):
-        return output.decode(ARC18.offers[royalty_asset].get_must(owner.address()))
+        return output.decode(ARC18.offers[royalty_asset][owner.address()].get_must())
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
@@ -463,7 +463,7 @@ class ARC18(Application):
     def do_update_offered(acct, asset, auth, amt, prev_auth, prev_amt):
         offer_state = ARC18.offers[asset]
         return Seq(
-            previous := offer_state.get_maybe(acct),
+            previous := offer_state[acct].get_maybe(),
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
             If(
                 previous.hasValue(),
@@ -476,8 +476,8 @@ class ARC18(Application):
             # Now consider the new offer, if its 0 this is a delete, otherwise update
             If(
                 amt > Int(0),
-                offer_state.set(Concat(auth, Itob(amt)), acct),
-                offer_state.delete(acct),
+                offer_state[acct].set(Concat(auth, Itob(amt))),
+                offer_state[acct].delete(),
             ),
         )
 
