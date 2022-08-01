@@ -377,6 +377,11 @@ class ApplicationClient:
             rekey_to=rekey_to,
         )
 
+
+        txns = atc.build_group()
+        print(txns[0].txn.app_args[0].hex())
+
+
         result = atc.execute(self.client, 4)
         return result.abi_results.pop()
 

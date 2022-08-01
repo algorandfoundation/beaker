@@ -159,7 +159,7 @@ class ARC20(Application):
         reserve_addr: abi.Address,
         freeze_addr: abi.Address,
         clawback_addr: abi.Address,
-    ):
+    )->Expr:
         """configures the asset in global state and possibly on the ASA itself"""
 
         update_reserve_addr = self.reserve_addr != reserve_addr.get()
@@ -221,9 +221,9 @@ class ARC20(Application):
             Txn.sender() != self.clawback_addr,
         )
 
-        # NOTE: Ref. implementation grants _minting_ premission to `reserve_addr`,
+        # NOTE: Ref. implementation grants _minting_ permission to `reserve_addr`,
         # has restriction no restriction on who is the minting _receiver_.
-        # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switchs-off minting.
+        # WARNING: Setting Smart ASA `reserve` to ZERO_ADDRESS switches-off minting.
         is_minting = And(
             Txn.sender() == self.reserve_addr,
             Global.current_application_address() == asset_sender.address(),
@@ -473,9 +473,9 @@ class ARC20(Application):
         return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.url))
 
     @external(read_only=True)
-    def get_metadata_hash(self, asset: abi.Asset, *, output: abi.String):
+    def get_metadata_hash(self, asset: abi.Asset, *, output: MetadataHash):
         return Seq(
-            Assert(asset.asset_id() == self.asa_id), output.set(self.metadata_hash)
+            Assert(asset.asset_id() == self.asa_id), output.decode(self.metadata_hash)
         )
 
     @external(read_only=True)
