@@ -16,9 +16,13 @@ MetadataHash = abi.DynamicArray[abi.Byte]
 
 # Inline Validators
 valid_address_length = lambda addr: Len(addr) == Int(32)
-valid_url_length = lambda url: Len(url) <= Int(96)
-valid_name_length = lambda name: Len(name) <= Int(32)
-valid_unit_name_length = lambda unit_name: Len(unit_name) <= Int(8)
+#valid_url_length = lambda url: Len(url) <= Int(96)
+#valid_name_length = lambda name: Len(name) <= Int(32)
+#valid_unit_name_length = lambda unit_name: Len(unit_name) <= Int(8)
+
+valid_url_length = lambda url: Int(1) 
+valid_name_length = lambda name: Int(1) 
+valid_unit_name_length = lambda unit_name: Int(1) 
 
 # Contract Implemtation
 class ARC20(Application):
@@ -389,7 +393,7 @@ class ARC20(Application):
             ),
             self.acct_state.initialize(),
             # Effects
-            If(Or(self.frozen, account_balance.value() > Int(0))).Then(
+            If(Or(self.default_frozen, account_balance.value() > Int(0))).Then(
                 self.is_frozen[Txn.sender()].set(Int(1))
             ),
         )
@@ -400,13 +404,13 @@ class ARC20(Application):
         close_asset: abi.Asset,
         close_to: abi.Account
     ) -> Expr:
-        account_balance = AssetHolding().balance(Txn.sender(), close_asset.asset_id())
         return Seq(
+            account_balance := AssetHolding().balance(Txn.sender(), close_asset.asset_id()),
             asset_params := AssetParam().creator(close_asset.asset_id()),
             Assert(
-                Global.group_size() >= Int(2),
                 self.asa_id,
                 self.asa_id == close_asset.asset_id(),
+                Global.group_size() >= Int(2),
                 Gtxn[1].type_enum() == TxnType.AssetTransfer,
                 Gtxn[1].xfer_asset() == close_asset.asset_id(),
                 Gtxn[1].sender() == Txn.sender(),
