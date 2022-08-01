@@ -6,7 +6,7 @@ from beaker.state import (
     DynamicApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
-    get_default_for_type
+    get_default_for_type,
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
@@ -53,7 +53,6 @@ DYNAMIC_ACCOUNT_VALUE_TESTS = [
     (pt.TealType.uint64, 0, None, pt.Bytes("abc"), pt.Int(1), Exception),
     (pt.TealType.uint64, 17, None, pt.Bytes("abc"), pt.Int(1), Exception),
 ]
-
 
 
 @pytest.mark.parametrize("key, stack_type, default, val, error", ACCOUNT_VAL_TESTS)
@@ -251,7 +250,6 @@ def do_gv_test(key, stack_type, default, val, static):
         expected = pt.App.globalPut(key, val).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
-
 
     actual = lv.set_default().__teal__(options)
     expected_default = get_default_for_type(stack_type, default)

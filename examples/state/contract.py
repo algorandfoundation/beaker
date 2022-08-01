@@ -64,7 +64,7 @@ class StateExample(Application):
 
     @external
     def set_account_state_val(self, v: abi.Uint64):
-        # Accessing with `[Txn.sender()]` is redundant but 
+        # Accessing with `[Txn.sender()]` is redundant but
         # more clear what is happening
         return self.declared_account_value[Txn.sender()].set(v.get())
 
