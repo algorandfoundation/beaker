@@ -6,6 +6,7 @@ from pyteal import (
     TealInputError,
     Txn,
     MAX_TEAL_VERSION,
+    MethodConfig,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
@@ -82,6 +83,7 @@ class Application:
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
+        methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
         for name, (bound_attr, static_attr) in self.attrs.items():
 
             # Check for state vals
@@ -129,6 +131,7 @@ class Application:
                         action.action.subroutine.implementation = bound_attr
 
                     self.bare_externals[oc] = action
+
             # ABI externals
             elif handler_config.method_spec is not None:
                 # Create the ABIReturnSubroutine from the static attr
@@ -136,7 +139,7 @@ class Application:
                 abi_meth = ABIReturnSubroutine(static_attr)
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
-                self.methods[name] = abi_meth
+                methods[name] = (abi_meth, handler_config.method_config)
 
                 self.hints[name] = handler_config.hints()
 
@@ -162,9 +165,11 @@ class Application:
         )
 
         # Add method externals
-        for method in self.methods.values():
+        for method_name, method_tuple in methods.items():
+            method, method_config = method_tuple
+            self.methods[method_name] = method
             self.router.add_method_handler(
-                method_call=method, method_config=handler_config.method_config
+                method_call=method, method_config=method_config
             )
 
         (
