@@ -456,7 +456,7 @@ class AccountState(State):
         """Generate expression from state values to initialize a default value"""
         return Seq(
             *[
-                cast(AccountStateValue, v).set_default()
+                cast(AccountStateValue, v)[acct].set_default()
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
             ]

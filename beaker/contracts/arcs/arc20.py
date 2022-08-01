@@ -162,9 +162,9 @@ class ARC20(Application):
     )->Expr:
         """configures the asset in global state and possibly on the ASA itself"""
 
-        update_reserve_addr = self.reserve_addr != reserve_addr.get()
-        update_freeze_addr = self.freeze_addr != freeze_addr.get()
-        update_clawback_addr = self.clawback_addr != clawback_addr.get()
+        update_reserve_addr = reserve_addr.get() != self.reserve_addr 
+        update_freeze_addr =  freeze_addr.get() != self.freeze_addr 
+        update_clawback_addr = clawback_addr.get() != self.clawback_addr 
 
         # NOTE: In ref. implementation Smart ASA total can not be configured to
         # less than its current circulating supply.
@@ -182,6 +182,7 @@ class ARC20(Application):
                 valid_url_length(url.get()),
                 valid_name_length(name.get()),
                 valid_unit_name_length(unit_name.get()),
+                # TODO: more checks for total/decimals 
             ),
             If(update_reserve_addr).Then(
                 Assert(self.reserve_addr != Global.zero_address())
@@ -386,8 +387,8 @@ class ARC20(Application):
                 # Make sure they actually opted in
                 account_balance.hasValue(),
             ),
-            # Effects
             self.acct_state.initialize(),
+            # Effects
             If(Or(self.frozen, account_balance.value() > Int(0))).Then(
                 self.is_frozen[Txn.sender()].set(Int(1))
             ),
@@ -397,24 +398,20 @@ class ARC20(Application):
     def asset_app_closeout(
         self,
         close_asset: abi.Asset,
-        close_to: abi.Account,
-        close_txn: abi.AssetTransferTransaction,
+        close_to: abi.Account
     ) -> Expr:
         account_balance = AssetHolding().balance(Txn.sender(), close_asset.asset_id())
         return Seq(
-            # Preconditions
-            # NOTE: Smart ASA existence is not checked on close-out since
-            # would be impossible to close-out destroyed assets.
             asset_params := AssetParam().creator(close_asset.asset_id()),
             Assert(
                 Global.group_size() >= Int(2),
                 self.asa_id,
                 self.asa_id == close_asset.asset_id(),
-                close_txn.get().type_enum() == TxnType.AssetTransfer,
-                close_txn.get().xfer_asset() == close_asset.asset_id(),
-                close_txn.get().sender() == Txn.sender(),
-                close_txn.get().asset_amount() == Int(0),
-                close_txn.get().asset_close_to()
+                Gtxn[1].type_enum() == TxnType.AssetTransfer,
+                Gtxn[1].xfer_asset() == close_asset.asset_id(),
+                Gtxn[1].sender() == Txn.sender(),
+                Gtxn[1].asset_amount() == Int(0),
+                Gtxn[1].asset_close_to()
                 == Global.current_application_address(),
             ),
             # Effects

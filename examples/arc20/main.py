@@ -17,6 +17,15 @@ def demo():
 
     app_client = ApplicationClient(algod_client, app=app, signer=signer)
 
+    #_, sm = app_client.compile_approval(True)
+    #print(sm.line_to_pc)
+    #lines = app.approval_program.split("\n")
+    #with open("approval.mapped.teal", "w") as f:
+    #    annotated_lines: list[str] = []
+    #    for idx, line in enumerate(lines):
+    #        annotated_lines.append(line + f" // {sm.get_pcs_for_line(idx)}")
+    #    f.write("\n".join(annotated_lines))
+
     app_id, app_addr, txid = app_client.create()
     print(f"Created app: {app_id} with address {app_addr}")
 
@@ -70,4 +79,6 @@ def demo():
 
 
 if __name__ == "__main__":
+
+
     demo()
