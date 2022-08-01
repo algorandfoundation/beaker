@@ -1,1 +1,1 @@
-from .inline_asm import InlineAssembly
+from .inline_asm import InlineAssembly  # noqa

@@ -10,4 +10,4 @@ from .math import (
     exponential,
     factorial,
     wide_factorial,
-)
+)  # noqa

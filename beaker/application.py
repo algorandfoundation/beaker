@@ -1,5 +1,5 @@
 from inspect import getattr_static
-from typing import Final, Any, cast
+from typing import Final, Any, cast, Optional
 from algosdk.abi import Method
 from pyteal import (
     SubroutineFnWrapper,
@@ -83,7 +83,7 @@ class Application:
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
-        methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
+        methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         for name, (bound_attr, static_attr) in self.attrs.items():
 
             # Check for state vals

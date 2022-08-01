@@ -1,2 +1,2 @@
-from .local_blob import LocalBlob
-from .global_blob import GlobalBlob
+from .local_blob import LocalBlob  # noqa
+from .global_blob import GlobalBlob  # noqa
