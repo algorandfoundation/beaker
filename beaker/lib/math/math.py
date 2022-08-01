@@ -6,7 +6,7 @@ from pyteal import (
     BytesDiv,
     BytesMinus,
     BytesMul,
-    BytesZero,
+    Btoi,
     Concat,
     Exp,
     Expr,
@@ -67,6 +67,57 @@ def even(x):
 
     """
     return Not(odd(x))
+
+
+@Subroutine(TealType.uint64)
+def max(a, b) -> Expr:
+    """max returns the max of 2 integers"""
+    return If(a > b, a, b)
+
+
+@Subroutine(TealType.uint64)
+def min(a, b) -> Expr:
+    """min returns the min of 2 integers"""
+    return If(a < b, a, b)
+
+
+@Subroutine(TealType.uint64)
+def saturate(n, upper_limit, lower_limit) -> Expr:
+    """Produces an output that is the value of n bounded to the upper and lower
+    saturation values. The upper and lower limits are specified by the
+    parameters upper_limit and lower_limit."""
+    return (
+        If(n >= upper_limit)
+        .Then(Return(upper_limit))
+        .ElseIf(n <= lower_limit)
+        .Then(Return(lower_limit))
+        .Else(Return(n))
+    )
+
+
+@Subroutine(TealType.uint64)
+def div_ceil(a, b) -> Expr:
+    """Returns the result of division rounded up to the next integer
+
+    Args:
+        a: uint64 numerator for the operation
+        b: uint64 denominator for the operation
+
+    Returns:
+        uint64 result of a truncated division + 1
+
+    """
+    q = a / b
+    return If(a % b > Int(0), q + Int(1), q)
+
+
+@Subroutine(TealType.uint64)
+def pow10(x) -> Expr:
+    """
+    Returns 10^x, useful for things like total supply of an asset
+
+    """
+    return Exp(Int(10), x)
 
 
 @Subroutine(TealType.uint64)
@@ -131,7 +182,7 @@ def exponential(x, n):
     _scale = Itob(Int(1000))
 
     @Subroutine(TealType.bytes)
-    def _impl(x: TealType.bytes, f: TealType.bytes, n: TealType.uint64):
+    def _impl(x, f, n):
         return If(
             n == Int(1),
             BytesAdd(_scale, BytesMul(x, _scale)),
@@ -144,95 +195,54 @@ def exponential(x, n):
     return bytes_to_int(BytesDiv(_impl(Itob(x), wide_factorial(Itob(n)), n), _scale))
 
 
-@Subroutine(TealType.uint64)
-def log2(x):
-    """log2 is currently an alias for BitLen
-
-    TODO: implement with ufixed
-
-    """
-    return BitLen(x)  # Only returns integral component
-
-
-@Subroutine(TealType.uint64)
-def ln(x):
-    """Returns natural log of x for integer passed
-
-    This is heavily truncated since log2 does not return the fractional component yet
-
-    TODO: implement with ufixed
-
-    Args:
-        x: uint64 on which to take the natural log
-
-    Returns:
-        uint64 as the natural log of the value passed.
-    """
-    return (log2(x) * scale) / log2_e
-
-
-@Subroutine(TealType.uint64)
-def log10(x):
-    """Returns log base 10 of the integer passed
-
-    uses log10(x) = log2(x)/log2(10) identity
-
-    TODO: implement with ufixed
-
-    Args:
-        x: uint64  on which to take the log base 10
-
-    Returns:
-        uint64 as the log10 of the value passed
-
-    """
-    return (log2(x) * scale) / log2_10
-
-
-@Subroutine(TealType.uint64)
-def pow10(x) -> Expr:
-    """
-    Returns 10^x, useful for things like total supply of an asset
-
-    """
-    return Exp(Int(10), x)
-
-
-@Subroutine(TealType.uint64)
-def max(a, b) -> Expr:
-    """max returns the max of 2 integers"""
-    return If(a > b, a, b)
-
-
-@Subroutine(TealType.uint64)
-def min(a, b) -> Expr:
-    """min returns the min of 2 integers"""
-    return If(a < b, a, b)
-
-
-@Subroutine(TealType.uint64)
-def div_ceil(a, b) -> Expr:
-    """Returns the result of division rounded up to the next integer
-
-    Args:
-        a: uint64 numerator for the operation
-        b: uint64 denominator for the operation
-
-    Returns:
-        uint64 result of a truncated division + 1
-
-    """
-    q = a / b
-    return If(a % b > Int(0), q + Int(1), q)
+# @Subroutine(TealType.uint64)
+# def log2(x):
+#    """log2 is currently an alias for BitLen
+#
+#    TODO: implement with ufixed
+#
+#    """
+#    return BitLen(x)  # Only returns integral component
+#
+#
+# @Subroutine(TealType.uint64)
+# def ln(x):
+#    """Returns natural log of x for integer passed
+#
+#    This is heavily truncated since log2 does not return the fractional component yet
+#
+#    TODO: implement with ufixed
+#
+#    Args:
+#        x: uint64 on which to take the natural log
+#
+#    Returns:
+#        uint64 as the natural log of the value passed.
+#    """
+#    return (log2(x) * scale) / log2_e
+#
+#
+# @Subroutine(TealType.uint64)
+# def log10(x):
+#    """Returns log base 10 of the integer passed
+#
+#    uses log10(x) = log2(x)/log2(10) identity
+#
+#    TODO: implement with ufixed
+#
+#    Args:
+#        x: uint64  on which to take the log base 10
+#
+#    Returns:
+#        uint64 as the log10 of the value passed
+#
+#    """
+#    return (log2(x) * scale) / log2_10
 
 
 @Subroutine(TealType.uint64)
 def bytes_to_int(x):
-    return If(
-        Len(x) < Int(8),
-        ExtractUint64(Concat(BytesZero(Int(8) - Len(x)), x), Int(0)),
-        ExtractUint64(x, Len(x) - Int(8)),
-    )
+    return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
 
 
 @Subroutine(TealType.bytes)
@@ -244,18 +254,4 @@ def stack_to_wide():
         l.store(),
         h.store(),  # Take the low and high ints off the stack and combine them
         Concat(Itob(h.load()), Itob(l.load())),
-    )
-
-
-@Subroutine(TealType.uint64)
-def saturation(n, upper_limit, lower_limit) -> Expr:
-    """Produces an output that is the value of n bounded to the upper and lower
-    saturation values. The upper and lower limits are specified by the
-    parameters upper_limit and lower_limit."""
-    return (
-        If(n >= upper_limit)
-        .Then(Return(upper_limit))
-        .ElseIf(n <= lower_limit)
-        .Then(Return(lower_limit))
-        .Else(Return(n))
     )
