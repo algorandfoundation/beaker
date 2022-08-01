@@ -99,6 +99,10 @@ class StateValue(Expr):
         check_has_key(self)
         return self.set(get_default_for_type(self.stack_type, self.default))
 
+    def is_default(self) -> Expr:
+        """checks to see if the value set equals the default value"""
+        default = get_default_for_type(self.stack_type, self.default)
+        return self.get() == default 
 
     @abstractmethod
     def set(self, val: Expr) -> Expr:
@@ -123,10 +127,6 @@ class StateValue(Expr):
     @abstractmethod
     def delete(self) -> Expr:
         """deletes the key from state, if the value is static it will be a compile time error"""
-
-    @abstractmethod
-    def is_default(self) -> Expr:
-        """checks to see if the value set equals the default value"""
 
 
 class DynamicStateValue(ABC):
@@ -201,9 +201,6 @@ class ApplicationStateValue(StateValue):
         check_not_static(self)
 
         return App.globalDel(self.key)
-
-    def is_default(self) -> Expr:
-        return self.get() == self.default
 
 
 class DynamicApplicationStateValue(DynamicStateValue):
@@ -291,12 +288,6 @@ class AccountStateValue(StateValue):
         check_has_account(self)
 
         return App.localDel(self.acct, self.key)
-
-    def is_default(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
-
-        return self.get() == self.default
 
     def __getitem__(self, acct: Expr):
         asv = copy(self)

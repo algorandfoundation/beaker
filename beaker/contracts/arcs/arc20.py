@@ -88,6 +88,10 @@ class ARC20(Application):
     UNDERLYING_ASA_FREEZE_ADDR = Global.current_application_address()
     UNDERLYING_ASA_CLAWBACK_ADDR = Global.current_application_address()
 
+    #######
+    # ABI Handlers
+    #######
+
     @external(authorize=Authorize.only(Global.creator_address()))
     def asset_create(
         self,
@@ -132,7 +136,7 @@ class ARC20(Application):
             self.metadata_hash.set(metadata_hash.encode()),
             self.manager_addr.set(manager_addr.get()),
             self.reserve_addr.set(reserve_addr.get()),
-            self.freeze_addr.sett(freeze_addr.get()),
+            self.freeze_addr.set(freeze_addr.get()),
             self.clawback_addr.set(clawback_addr.get()),
             # Underlying ASA creation
             self.asa_id.set(self.do_create_asa()),
@@ -164,12 +168,12 @@ class ARC20(Application):
 
         # NOTE: In ref. implementation Smart ASA total can not be configured to
         # less than its current circulating supply.
-        is_valid_total = total.get() >= self.compute_circulating_supply(self.asa_id)
+        is_valid_total = total.get() >= self.compute_circulating_supply()
 
         return Seq(
             # Preconditions
             Assert(
-                self.asa_id == config_asset,
+                self.asa_id == config_asset.asset_id(),
                 is_valid_total,
                 valid_address_length(manager_addr.get()),
                 valid_address_length(reserve_addr.get()),
@@ -242,12 +246,8 @@ class ARC20(Application):
         # has been destroyed) requiring users to opt-in again to gain a coherent
         # new `frozen` status.
 
-        sender_asset_match = (
-            self.asa_id == self.current_asa_id[asset_sender.address()],
-        )
-        receiver_asset_match = (
-            self.asa_id == self.current_asa_id[asset_receiver.address()],
-        )
+        sender_asset_match = self.asa_id == self.current_asa_id[asset_sender.address()]
+        receiver_asset_match = self.asa_id == self.current_asa_id[asset_receiver.address()]
         is_current_smart_asa_id = And(sender_asset_match, receiver_asset_match)
 
         asset_frozen = self.frozen
@@ -278,7 +278,7 @@ class ARC20(Application):
                     Not(asset_frozen),
                     Not(asset_receiver_frozen),
                     receiver_asset_match,
-                    self.compute_circulating_supply(self.asa_id) + asset_amount.get()
+                    self.compute_circulating_supply() + asset_amount.get()
                     <= self.total,
                 ),
             )
@@ -296,7 +296,6 @@ class ARC20(Application):
             ),
             # Effects
             self.do_transfer(
-                xfer_asset.asset_id(),
                 asset_amount.get(),
                 asset_sender.address(),
                 asset_receiver.address(),
@@ -361,7 +360,7 @@ class ARC20(Application):
                 is_manager_addr,
             ),
             # Effects
-            self.do_destroy(destroy_asset.asset_id()),
+            self.do_destroy(),
             # Reinit state to wipe it
             self.app_state.initialize(),
         )
@@ -426,7 +425,6 @@ class ARC20(Application):
                 Seq(
                     account_balance,
                     self.do_transfer(
-                        close_asset.asset_id(),
                         account_balance.value(),
                         Txn.sender(),
                         close_to.address(),
@@ -439,7 +437,7 @@ class ARC20(Application):
     def get_circulating_supply(self, asset: abi.Asset, *, output: abi.Uint64):
         return Seq(
             Assert(asset.asset_id() == self.asa_id),
-            output.set(self.compute_circulating_supply(asset.asset_id())),
+            output.set(self.compute_circulating_supply()),
         )
 
     @external(read_only=True)
