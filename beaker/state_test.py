@@ -6,6 +6,7 @@ from beaker.state import (
     DynamicApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
+    get_default_for_type
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
@@ -54,15 +55,6 @@ DYNAMIC_ACCOUNT_VALUE_TESTS = [
 ]
 
 
-def get_default_for_type(stack_type, default):
-    expected_default = default
-    if expected_default is None:
-        if stack_type == pt.TealType.bytes:
-            expected_default = pt.Bytes("")
-        else:
-            expected_default = pt.Int(0)
-    return expected_default
-
 
 @pytest.mark.parametrize("key, stack_type, default, val, error", ACCOUNT_VAL_TESTS)
 def test_local_value(key, stack_type, default, val, error):
@@ -76,21 +68,26 @@ def test_local_value(key, stack_type, default, val, error):
 def do_lv_test(key, stack_type, default, val):
     lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
 
-    assert lv.__str__() == f"AccountStateValue {key}"
+    assert lv.__str__() == f"AccountStateValue (Txn Sender) {key}"
 
-    actual = lv.set(val, pt.Txn.sender()).__teal__(options)
+    actual = lv.set(val).__teal__(options)
     expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.set_default(pt.Txn.sender()).__teal__(options)
+    actual = lv.set_default().__teal__(options)
     expected_default = get_default_for_type(stack_type, default)
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.get(pt.Txn.sender()).__teal__(options)
+    actual = lv.get().__teal__(options)
     expected = pt.App.localGet(pt.Txn.sender(), key).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    actual = lv[pt.Txn.accounts[1]].get().__teal__(options)
+    expected = pt.App.localGet(pt.Txn.accounts[1], key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
@@ -99,7 +96,7 @@ def do_lv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.get_maybe(pt.Txn.sender()).__teal__(options)
+    actual = lv.get_maybe().__teal__(options)
     expected = pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -123,7 +120,12 @@ def do_lv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    actual = lv.delete(pt.Txn.sender()).__teal__(options)
+    actual = lv.delete().__teal__(options)
+    expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    actual = lv.delete().__teal__(options)
     expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -153,18 +155,18 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     if key_gen is not None:
         key = key_gen(key_seed)
 
-    actual = lv.set(val, pt.Txn.sender()).__teal__(options)
+    actual = lv.set(val).__teal__(options)
     expected = pt.App.localPut(pt.Txn.sender(), key, val).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.set_default(pt.Txn.sender()).__teal__(options)
+    actual = lv.set_default().__teal__(options)
     expected_default = get_default_for_type(stack_type, None)
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.get(pt.Txn.sender()).__teal__(options)
+    actual = lv.get().__teal__(options)
     expected = pt.App.localGet(pt.Txn.sender(), key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -174,7 +176,7 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    actual = lv.get_maybe(pt.Txn.sender()).__teal__(options)
+    actual = lv.get_maybe().__teal__(options)
     expected = pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -198,7 +200,7 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    actual = lv.delete(pt.Txn.sender()).__teal__(options)
+    actual = lv.delete().__teal__(options)
     expected = pt.App.localDel(pt.Txn.sender(), key).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -250,10 +252,20 @@ def do_gv_test(key, stack_type, default, val, static):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
+
     actual = lv.set_default().__teal__(options)
     expected_default = get_default_for_type(stack_type, default)
-    expected = pt.App.globalPut(key, expected_default).__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality():
+
+    if static:
+        expected = pt.Seq(
+            v := pt.App.globalGetEx(pt.Int(0), key),
+            pt.Assert(pt.Not(v.hasValue())),
+            pt.App.globalPut(key, expected_default),
+        ).__teal__(options)
+    else:
+        expected = pt.App.globalPut(key, expected_default).__teal__(options)
+
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
     actual = lv.get().__teal__(options)
