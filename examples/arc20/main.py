@@ -6,6 +6,7 @@ from beaker.client import ApplicationClient
 accts = get_accounts()
 algod_client = get_client()
 
+
 def demo():
 
     addr, sk = accts.pop()
@@ -19,9 +20,5 @@ def demo():
     print(f"Created app: {app_id} with address {app_addr}")
 
 
-
-
-
 if __name__ == "__main__":
     demo()
-

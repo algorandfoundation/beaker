@@ -247,7 +247,9 @@ class ARC20(Application):
         # new `frozen` status.
 
         sender_asset_match = self.asa_id == self.current_asa_id[asset_sender.address()]
-        receiver_asset_match = self.asa_id == self.current_asa_id[asset_receiver.address()]
+        receiver_asset_match = (
+            self.asa_id == self.current_asa_id[asset_receiver.address()]
+        )
         is_current_smart_asa_id = And(sender_asset_match, receiver_asset_match)
 
         asset_frozen = self.frozen

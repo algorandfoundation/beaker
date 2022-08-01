@@ -25,7 +25,7 @@ from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 
 def get_default_for_type(stack_type, default):
     if default is not None:
-        return default 
+        return default
 
     if stack_type == TealType.bytes:
         return Bytes("")
@@ -93,7 +93,6 @@ class StateValue(Expr):
         check_not_static(self)
         return self.set(self.get() - cnt)
 
-
     def set_default(self) -> Expr:
         """sets the default value if one is provided, if none provided sets the zero value for its type"""
         check_has_key(self)
@@ -102,7 +101,7 @@ class StateValue(Expr):
     def is_default(self) -> Expr:
         """checks to see if the value set equals the default value"""
         default = get_default_for_type(self.stack_type, self.default)
-        return self.get() == default 
+        return self.get() == default
 
     @abstractmethod
     def set(self, val: Expr) -> Expr:
@@ -234,7 +233,6 @@ class DynamicApplicationStateValue(DynamicStateValue):
 
 
 class AccountStateValue(StateValue):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.acct = Txn.sender()
@@ -280,7 +278,9 @@ class AccountStateValue(StateValue):
         check_match_type(self, val)
 
         return If(
-            (v := App.localGetEx(self.acct, Int(0), self.key)).hasValue(), v.value(), val
+            (v := App.localGetEx(self.acct, Int(0), self.key)).hasValue(),
+            v.value(),
+            val,
         )
 
     def delete(self) -> Expr:
@@ -330,21 +330,26 @@ def stack_type_to_string(st: TealType):
     else:
         raise Exception("Only uint64 and bytes supported")
 
+
 def check_not_static(sv: StateValue):
     if sv.static:
         raise TealInputError(f"StateValue {sv} is static")
+
 
 def check_is_int(sv: StateValue):
     if sv.stack_type != TealType.uint64:
         raise TealInputError(f"StateValue {sv} is not integer type")
 
+
 def check_has_key(sv: StateValue):
     if sv.key is None:
         raise TealInputError(f"StateValue {sv} has no key defined")
 
+
 def check_has_account(asv: AccountStateValue):
     if asv.acct is None:
         raise TealInputError(f"AccountStateValue {asv} has no account defined")
+
 
 def check_match_type(sv: StateValue, val: Expr):
     in_type = val.type_of()
