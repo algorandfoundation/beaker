@@ -10,44 +10,17 @@ UINTS_COST = 28_500
 BYTES_COST = 50_000
 
 
-SMART_ASA_APP_BINDING = "smart-asa-app-id:"
-
-# / --- --- UNDERLYING ASA CONFIG
-UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
-UNDERLYING_ASA_DECIMALS = Int(0)
-UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
-UNDERLYING_ASA_UNIT_NAME = Bytes("S-ASA")
-UNDERLYING_ASA_NAME = Bytes("SMART-ASA")
-UNDERLYING_ASA_URL = Concat(
-    Bytes(SMART_ASA_APP_BINDING), itoa(Global.current_application_id())
-)
-UNDERLYING_ASA_METADATA_HASH = Bytes("")
-UNDERLYING_ASA_MANAGER_ADDR = Global.current_application_address()
-UNDERLYING_ASA_RESERVE_ADDR = Global.current_application_address()
-UNDERLYING_ASA_FREEZE_ADDR = Global.current_application_address()
-UNDERLYING_ASA_CLAWBACK_ADDR = Global.current_application_address()
-
-
 # MetadataHash = abi.StaticArray[abi.Byte, Literal[32]]
+#: Alias for arbitrary byte array
 MetadataHash = abi.DynamicArray[abi.Byte]
 
 # Inline Validators
-def valid_address_length(addr: Expr) -> Expr:
-    return Len(addr) == Int(32)
+valid_address_length = lambda addr: Len(addr) == Int(32)
+valid_url_length = lambda url: Len(url) <= Int(96)
+valid_name_length = lambda name: Len(name) <= Int(32)
+valid_unit_name_length = lambda unit_name: Len(unit_name) <= Int(8)
 
-
-def valid_url_length(url: Expr) -> Expr:
-    return Len(url) <= Int(96)
-
-
-def valid_name_length(name: Expr) -> Expr:
-    return Len(name) <= Int(32)
-
-
-def valid_unit_name_length(unit_name: Expr) -> Expr:
-    return Len(unit_name) <= Int(8)
-
-
+# Contract Implemtation
 class ARC20(Application):
     """An implementation of the ARC20 interface"""
 
@@ -73,19 +46,19 @@ class ARC20(Application):
     metadata_hash: Final[ApplicationStateValue] = ApplicationStateValue(TealType.bytes)
     #: The address that may make changes to the configuration of the asset
     manager_addr: Final[ApplicationStateValue] = ApplicationStateValue(
-        TealType.bytes, default=Global.current_application_address()
+        TealType.bytes, default=Global.zero_address()
     )
     #: The address that holds any un-minted assets
     reserve_addr: Final[ApplicationStateValue] = ApplicationStateValue(
-        TealType.bytes, default=Global.current_application_address()
+        TealType.bytes, default=Global.zero_address()
     )
     #: The address that may issue freeze/unfreeze transactions
     freeze_addr: Final[ApplicationStateValue] = ApplicationStateValue(
-        TealType.bytes, default=Global.current_application_address()
+        TealType.bytes, default=Global.zero_address()
     )
     #: The address that may issue clawback transactions
     clawback_addr: Final[ApplicationStateValue] = ApplicationStateValue(
-        TealType.bytes, default=Global.current_application_address()
+        TealType.bytes, default=Global.zero_address()
     )
 
     #: The id of the asset this account holds, necessary in case the asset id changes in the global config
@@ -94,6 +67,26 @@ class ARC20(Application):
     )
     #: Whether or not this asset is frozen for this account
     is_frozen: Final[AccountStateValue] = AccountStateValue(TealType.uint64)
+
+    ########
+    # Class vars that may be overridden
+    ########
+
+    SMART_ASA_APP_BINDING = "smart-asa-app-id:"
+
+    UNDERLYING_ASA_TOTAL = Int(2**64 - 1)
+    UNDERLYING_ASA_DECIMALS = Int(0)
+    UNDERLYING_ASA_DEFAULT_FROZEN = Int(1)
+    UNDERLYING_ASA_UNIT_NAME = Bytes("S-ASA")
+    UNDERLYING_ASA_NAME = Bytes("SMART-ASA")
+    UNDERLYING_ASA_URL = Concat(
+        Bytes(SMART_ASA_APP_BINDING), itoa(Global.current_application_id())
+    )
+    UNDERLYING_ASA_METADATA_HASH = Bytes("")
+    UNDERLYING_ASA_MANAGER_ADDR = Global.current_application_address()
+    UNDERLYING_ASA_RESERVE_ADDR = Global.current_application_address()
+    UNDERLYING_ASA_FREEZE_ADDR = Global.current_application_address()
+    UNDERLYING_ASA_CLAWBACK_ADDR = Global.current_application_address()
 
     @external(authorize=Authorize.only(Global.creator_address()))
     def asset_create(
@@ -129,8 +122,6 @@ class ARC20(Application):
                 valid_unit_name_length(unit_name.get()),
             ),
             # Effects
-            # Underlying ASA creation
-            self.asa_id.set(self.do_create_asa()),
             # Smart ASA properties
             self.total.set(total.get()),
             self.decimals.set(decimals.get()),
@@ -143,6 +134,8 @@ class ARC20(Application):
             self.reserve_addr.set(reserve_addr.get()),
             self.freeze_addr.sett(freeze_addr.get()),
             self.clawback_addr.set(clawback_addr.get()),
+            # Underlying ASA creation
+            self.asa_id.set(self.do_create_asa()),
             # Return the asset id we just created
             output.set(self.asa_id),
         )
@@ -182,6 +175,9 @@ class ARC20(Application):
                 valid_address_length(reserve_addr.get()),
                 valid_address_length(freeze_addr.get()),
                 valid_address_length(clawback_addr.get()),
+                valid_url_length(url.get()),
+                valid_name_length(name.get()),
+                valid_unit_name_length(unit_name.get()),
             ),
             If(update_reserve_addr).Then(
                 Assert(self.reserve_addr != Global.zero_address())
@@ -215,6 +211,7 @@ class ARC20(Application):
         asset_receiver: abi.Account,
     ):
         """transfers the asset from asset_sender to asset_receiver"""
+
         is_not_clawback = And(
             Txn.sender() == asset_sender.address(),
             Txn.sender() != self.clawback_addr,
@@ -281,14 +278,12 @@ class ARC20(Application):
                     Not(asset_frozen),
                     Not(asset_receiver_frozen),
                     receiver_asset_match,
-                    # NOTE: Ref. implementation prevents minting more than `total`.
                     self.compute_circulating_supply(self.asa_id) + asset_amount.get()
                     <= self.total,
                 ),
             )
             .ElseIf(is_burning)
             .Then(
-                # Asset Burning Preconditions
                 Assert(
                     Not(asset_frozen),
                     Not(asset_sender_frozen),
@@ -296,13 +291,7 @@ class ARC20(Application):
                 ),
             )
             .Else(
-                # Asset Clawback Preconditions
                 Assert(is_clawback),
-                # NOTE: `is_current_smart_asa_id` implicitly checks that both
-                # `asset_sender` and `asset_receiver` opted-in the Smart ASA
-                # App. This ensures that _mint_ and _burn_ can not be
-                # executed as _clawback_, since the Smart ASA App can not
-                # opt-in to itself.
                 Assert(is_current_smart_asa_id),
             ),
             # Effects
@@ -377,80 +366,162 @@ class ARC20(Application):
             self.app_state.initialize(),
         )
 
+    @external(method_config=MethodConfig(opt_in=CallConfig.ALL))
+    def asset_app_optin(
+        self, asset: abi.Asset, opt_in_txn: abi.AssetTransferTransaction
+    ):
+        return Seq(
+            # Preconditions
+            account_balance := AssetHolding().balance(Txn.sender(), asset.asset_id()),
+            Assert(
+                self.asa_id,
+                self.asa_id == asset.asset_id(),
+                opt_in_txn.get().type_enum() == TxnType.AssetTransfer,
+                opt_in_txn.get().xfer_asset() == self.asa_id,
+                opt_in_txn.get().sender() == Txn.sender(),
+                opt_in_txn.get().asset_receiver() == Txn.sender(),
+                opt_in_txn.get().asset_amount() == Int(0),
+                opt_in_txn.get().asset_close_to() == Global.zero_address(),
+                # Make sure they actually opted in
+                account_balance.hasValue(),
+            ),
+            # Effects
+            self.acct_state.initialize(),
+            If(Or(self.frozen, account_balance.value() > Int(0))).Then(
+                self.is_frozen[Txn.sender()].set(Int(1))
+            ),
+        )
+
+    @external(method_config=MethodConfig(close_out=CallConfig.ALL))
+    def asset_app_closeout(
+        self,
+        close_asset: abi.Asset,
+        close_to: abi.Account,
+        close_txn: abi.AssetTransferTransaction,
+    ) -> Expr:
+        account_balance = AssetHolding().balance(Txn.sender(), close_asset.asset_id())
+        return Seq(
+            # Preconditions
+            # NOTE: Smart ASA existence is not checked on close-out since
+            # would be impossible to close-out destroyed assets.
+            asset_params := AssetParam().creator(close_asset.asset_id()),
+            Assert(
+                Global.group_size() >= Int(2),
+                self.asa_id,
+                self.asa_id == close_asset.asset_id(),
+                close_txn.get().type_enum() == TxnType.AssetTransfer,
+                close_txn.get().xfer_asset() == close_asset.asset_id(),
+                close_txn.get().sender() == Txn.sender(),
+                close_txn.get().asset_amount() == Int(0),
+                close_txn.get().asset_close_to()
+                == Global.current_application_address(),
+            ),
+            # Effects
+            If(Or(self.frozen, self.is_frozen[Txn.sender()])).Then(
+                Assert(close_to.address() == Global.current_application_address())
+            ),
+            # NOTE: Skip if Underlying ASA has been destroyed to avoid users'
+            # lock-in.
+            If(asset_params.hasValue()).Then(
+                Seq(
+                    account_balance,
+                    self.do_transfer(
+                        close_asset.asset_id(),
+                        account_balance.value(),
+                        Txn.sender(),
+                        close_to.address(),
+                    ),
+                )
+            ),
+        )
+
     @external(read_only=True)
     def get_circulating_supply(self, asset: abi.Asset, *, output: abi.Uint64):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id),
+            output.set(self.compute_circulating_supply(asset.asset_id())),
+        )
 
     @external(read_only=True)
     def get_total(self, asset: abi.Asset, *, output: abi.Uint64):
-        pass
+        return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.total))
 
     @external(read_only=True)
     def get_decimals(self, asset: abi.Asset, *, output: abi.Uint64):
-        pass
-
-    @external(read_only=True)
-    def get_decimals(self, asset: abi.Asset, *, output: abi.Uint64):
-        pass
+        return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.decimals))
 
     @external(read_only=True)
     def get_default_frozen(self, asset: abi.Asset, *, output: abi.Bool):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id), output.set(self.default_frozen)
+        )
 
     @external(read_only=True)
-    def get_default_frozen(self, asset: abi.Asset, *, output: abi.Uint64):
-        pass
+    def get_is_frozen(self, asset: abi.Asset, *, output: abi.Bool):
+        return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.frozen))
 
     @external(read_only=True)
     def get_unit_name(self, asset: abi.Asset, *, output: abi.String):
-        pass
+        return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.unit_name))
 
     @external(read_only=True)
     def get_name(self, asset: abi.Asset, *, output: abi.String):
-        pass
-
-    @external(read_only=True)
-    def get_name(self, asset: abi.Asset, *, output: abi.String):
-        pass
+        return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.name))
 
     @external(read_only=True)
     def get_url(self, asset: abi.Asset, *, output: abi.String):
-        pass
+        return Seq(Assert(asset.asset_id() == self.asa_id), output.set(self.url))
 
     @external(read_only=True)
     def get_metadata_hash(self, asset: abi.Asset, *, output: abi.String):
-        pass
-
-    @external(read_only=True)
-    def get_metadata_hash(self, asset: abi.Asset, *, output: MetadataHash):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id), output.set(self.metadata_hash)
+        )
 
     @external(read_only=True)
     def get_manager_addr(self, asset: abi.Asset, *, output: abi.Address):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id), output.set(self.manager_addr)
+        )
 
     @external(read_only=True)
     def get_reserve_addr(self, asset: abi.Asset, *, output: abi.Address):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id), output.set(self.reserve_addr)
+        )
 
     @external(read_only=True)
     def get_freeze_addr(self, asset: abi.Asset, *, output: abi.Address):
-        pass
-
-    @external(read_only=True)
-    def get_freeze_addr(self, asset: abi.Asset, *, output: abi.Address):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id), output.set(self.freeze_addr)
+        )
 
     @external(read_only=True)
     def get_clawback_addr(self, asset: abi.Asset, *, output: abi.Address):
-        pass
+        return Seq(
+            Assert(asset.asset_id() == self.asa_id), output.set(self.clawback_addr)
+        )
+
+    @external(read_only=True)
+    def get_is_account_frozen(
+        self, asset: abi.Asset, acct: abi.Account, *, output: abi.Bool
+    ):
+        return Seq(
+            Assert(
+                asset.asset_id() == self.asa_id,
+                self.current_asa_id[acct.address()] == asset.asset_id(),
+            ),
+            output.set(self.is_frozen[acct.address()]),
+        )
 
     @internal(TealType.uint64)
     def compute_circulating_supply(self):
         smart_asa_reserve = AssetHolding.balance(
             Global.current_application_address(), self.asa_id
         )
-        return Seq(smart_asa_reserve, UNDERLYING_ASA_TOTAL - smart_asa_reserve.value())
+        return Seq(
+            smart_asa_reserve, self.UNDERLYING_ASA_TOTAL - smart_asa_reserve.value()
+        )
 
     @internal(TealType.uint64)
     def do_create_asa(self) -> Expr:
@@ -459,16 +530,16 @@ class ARC20(Application):
                 {
                     TxnField.fee: Int(0),
                     TxnField.type_enum: TxnType.AssetConfig,
-                    TxnField.config_asset_total: UNDERLYING_ASA_TOTAL,
-                    TxnField.config_asset_decimals: UNDERLYING_ASA_DECIMALS,
-                    TxnField.config_asset_default_frozen: UNDERLYING_ASA_DEFAULT_FROZEN,
-                    TxnField.config_asset_unit_name: UNDERLYING_ASA_UNIT_NAME,
-                    TxnField.config_asset_name: UNDERLYING_ASA_NAME,
-                    TxnField.config_asset_url: UNDERLYING_ASA_URL,
-                    TxnField.config_asset_manager: UNDERLYING_ASA_MANAGER_ADDR,
-                    TxnField.config_asset_reserve: UNDERLYING_ASA_RESERVE_ADDR,
-                    TxnField.config_asset_freeze: UNDERLYING_ASA_FREEZE_ADDR,
-                    TxnField.config_asset_clawback: UNDERLYING_ASA_CLAWBACK_ADDR,
+                    TxnField.config_asset_total: self.UNDERLYING_ASA_TOTAL,
+                    TxnField.config_asset_decimals: self.UNDERLYING_ASA_DECIMALS,
+                    TxnField.config_asset_default_frozen: self.UNDERLYING_ASA_DEFAULT_FROZEN,
+                    TxnField.config_asset_unit_name: self.UNDERLYING_ASA_UNIT_NAME,
+                    TxnField.config_asset_name: self.UNDERLYING_ASA_NAME,
+                    TxnField.config_asset_url: self.UNDERLYING_ASA_URL,
+                    TxnField.config_asset_manager: self.UNDERLYING_ASA_MANAGER_ADDR,
+                    TxnField.config_asset_reserve: self.UNDERLYING_ASA_RESERVE_ADDR,
+                    TxnField.config_asset_freeze: self.UNDERLYING_ASA_FREEZE_ADDR,
+                    TxnField.config_asset_clawback: self.UNDERLYING_ASA_CLAWBACK_ADDR,
                 }
             ),
             InnerTxn.created_asset_id(),
