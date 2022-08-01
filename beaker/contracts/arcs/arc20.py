@@ -3,7 +3,10 @@ from pyteal import *
 from beaker import *
 
 
+MetadataHash = abi.StaticArray[abi.Byte, Literal[32]]
+
 class ARC20(Application):
+    """ An implementation of the ARC20 interface """
     @external
     def asset_create(
         self,
@@ -13,7 +16,7 @@ class ARC20(Application):
         unit_name: abi.String,
         name: abi.String,
         url: abi.String,
-        metadata_hash: abi.StaticArray[abi.Byte, Literal[32]],
+        metadata_hash: MetadataHash,
         manager_addr: abi.Address,
         reserve_addr: abi.Address,
         freeze_addr: abi.Address,
@@ -33,7 +36,7 @@ class ARC20(Application):
         unit_name: abi.String,
         name: abi.String,
         url: abi.String,
-        metadata_hash: abi.StaticArray[abi.Byte, Literal[32]],
+        metadata_hash: MetadataHash,
         manager_addr: abi.Address,
         reserve_addr: abi.Address,
         freeze_addr: abi.Address,
@@ -125,7 +128,7 @@ class ARC20(Application):
         pass
 
     @external(read_only=True)
-    def get_metadata_hash(self, asset: abi.Asset, *, output: abi.StaticArray[abi.Byte, Literal[32]]):
+    def get_metadata_hash(self, asset: abi.Asset, *, output: MetadataHash):
         pass
 
     @external(read_only=True)
