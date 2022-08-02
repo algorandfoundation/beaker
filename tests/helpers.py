@@ -9,8 +9,8 @@ from algosdk.future import transaction
 from algosdk.v2client import algod, indexer
 from pyteal import Cond, Expr, Int, Mode, Seq, Txn, compileTeal
 
-TEAL_VERSION = 5
-CLEAR_PROG = bytes([TEAL_VERSION, 129, 1])  # pragma 5; int 1
+TEAL_VERSION = 6
+CLEAR_PROG = bytes([TEAL_VERSION, 129, 1])  # pragma 6; int 1
 
 LOGIC_EVAL_ERROR = "logic eval error"
 INVALID_SYNTAX = "invalid syntax"

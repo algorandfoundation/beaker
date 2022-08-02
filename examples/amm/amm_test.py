@@ -1,4 +1,3 @@
-from ast import Constant
 import pytest
 
 from algosdk.atomic_transaction_composer import *
