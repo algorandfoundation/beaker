@@ -30,10 +30,10 @@ class Calculator(Application):
 
 
 def demo():
-    client = sandbox.get_client()
+    client = sandbox.get_algod_client()
 
-    addr, sk = sandbox.get_accounts().pop()
-    signer = AccountTransactionSigner(sk)
+    addr, sk, signer = sandbox.get_accounts().pop()
+
     # Initialize Application from amm.py
     app = Calculator()
 

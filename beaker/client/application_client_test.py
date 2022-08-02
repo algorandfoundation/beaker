@@ -23,7 +23,7 @@ from ..decorators import (
     delete,
     opt_in,
 )
-from beaker.sandbox import get_accounts, get_client
+from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, get_method_selector, get_method_spec
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
@@ -72,7 +72,7 @@ class App(Application):
 
 def test_app_client_create():
     app = App()
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app)
     assert ac.signer is None, "Should not have a signer"
     assert ac.sender is None, "Should not have a sender"
@@ -89,10 +89,9 @@ def test_app_client_create():
 
 def test_app_prepare():
     app = App()
-    client = get_client()
+    client = get_algod_client()
 
-    addr, private_key = get_accounts()[0]
-    signer = AccountTransactionSigner(private_key=private_key)
+    addr, private_key, signer = get_accounts().pop()
 
     ac_with_signer = ApplicationClient(client, app, signer=signer)
 
@@ -175,7 +174,7 @@ def test_app_prepare():
 def test_compile():
     version = 5
     app = App(version=version)
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app)
 
     approval_program, approval_map = ac.compile_approval(source_map=True)
@@ -203,10 +202,9 @@ def test_create():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, app_addr, tx_id = ac.create()
     assert app_id > 0
@@ -231,8 +229,7 @@ def test_create():
         },
     )
 
-    new_addr, new_pk = accts.pop()
-    new_signer = AccountTransactionSigner(new_pk)
+    new_addr, new_pk, new_signer = accts.pop()
     new_ac = ac.prepare(signer=new_signer)
     extra_pages = 2
     sp = client.suggested_params()
@@ -269,10 +266,9 @@ def test_update():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, app_addr, _ = ac.create()
 
@@ -297,10 +293,9 @@ def test_delete():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
@@ -325,15 +320,13 @@ def test_opt_in():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    new_addr, new_pk = accts.pop()
-    new_signer = AccountTransactionSigner(new_pk)
+    new_addr, new_pk, new_signer = accts.pop()
     new_ac = ac.prepare(signer=new_signer)
     tx_id = new_ac.opt_in()
     result_tx = client.pending_transaction_info(tx_id)
@@ -357,15 +350,13 @@ def test_close_out():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    new_addr, new_pk = accts.pop()
-    new_signer = AccountTransactionSigner(new_pk)
+    new_addr, new_pk, new_signer = accts.pop()
     new_ac = ac.prepare(signer=new_signer)
     new_ac.opt_in()
 
@@ -389,16 +380,13 @@ def test_close_out():
 def test_clear_state():
     app = App()
     accts = get_accounts()
+    addr, pk, signer = accts.pop()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
-
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    new_addr, new_pk = accts.pop()
-    new_signer = AccountTransactionSigner(new_pk)
+    new_addr, new_pk, new_signer = accts.pop()
     new_ac = ac.prepare(signer=new_signer)
     new_ac.opt_in()
 
@@ -423,10 +411,9 @@ def test_call():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
@@ -466,10 +453,9 @@ def test_add_method_call():
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
@@ -507,15 +493,30 @@ def test_add_method_call():
     )
 
 
+def test_fund():
+    app = App()
+    accts = get_accounts()
+    addr, pk, signer = accts.pop()
+    client = get_algod_client()
+
+    fund_amt = 1_000_000
+
+    ac = ApplicationClient(client, app, signer=signer)
+    ac.create()
+    ac.fund(fund_amt)
+
+    info = ac.get_application_account_info()
+    assert info["amount"] == fund_amt, "Expected balance to equal fund_amt"
+
+
 def test_resolve():
 
     app = App()
     accts = get_accounts()
 
-    addr, pk = accts.pop()
-    signer = AccountTransactionSigner(pk)
+    addr, pk, signer = accts.pop()
 
-    client = get_client()
+    client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
 
     ac.create()

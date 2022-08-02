@@ -116,11 +116,11 @@
     <span class="n">app</span> <span class="o">=</span> <span class="n">HelloBeaker</span><span class="p">()</span>
 
     <span class="c1"># Get an acct from the sandbox</span>
-    <span class="n">addr</span><span class="p">,</span> <span class="n">secret</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">addr</span><span class="p">,</span> <span class="n">secret</span><span class="p">,</span> <span class="n">signer</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Create an Application client</span>
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">secret</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">signer</span>
     <span class="p">)</span>
 
     <span class="c1"># Deploy the app</span>

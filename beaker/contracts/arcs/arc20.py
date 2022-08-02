@@ -1,7 +1,41 @@
-from typing import Literal, Final
-from pyteal import *
-from beaker import *
-from beaker.lib import itoa
+from typing import Final
+from pyteal import (
+    abi,
+    Int,
+    Len,
+    TealType,
+    Global,
+    Bytes,
+    Concat,
+    Seq,
+    Assert,
+    And,
+    Txn,
+    Not,
+    MethodConfig,
+    AssetParam,
+    AssetHolding,
+    If,
+    Expr,
+    CallConfig,
+    Gtxn,
+    TxnType,
+    Or,
+    TxnField,
+    InnerTxnBuilder,
+    Reject,
+    InnerTxn,
+)
+from beaker import (
+    internal,
+    external,
+    Application,
+    ApplicationStateValue,
+    AccountStateValue,
+    Authorize,
+    opt_in,
+)
+from beaker.lib.strings import itoa
 
 
 # NOTE: The following costs could change over time with protocol upgrades.
@@ -15,14 +49,24 @@ BYTES_COST = 50_000
 MetadataHash = abi.DynamicArray[abi.Byte]
 
 # Inline Validators
-valid_address_length = lambda addr: Len(addr) == Int(32)
-# valid_url_length = lambda url: Len(url) <= Int(96)
-# valid_name_length = lambda name: Len(name) <= Int(32)
-# valid_unit_name_length = lambda unit_name: Len(unit_name) <= Int(8)
+def valid_address_length(addr: Expr) -> Expr:
+    return Len(addr) == Int(32)
 
-valid_url_length = lambda url: Int(1)
-valid_name_length = lambda name: Int(1)
-valid_unit_name_length = lambda unit_name: Int(1)
+
+def valid_url_length(url: Expr) -> Expr:
+    # return Len(url) <= Int(96)
+    return Int(1)
+
+
+def valid_name_length(name: Expr) -> Expr:
+    # return Len(name) <= Int(32)
+    return Int(1)
+
+
+def valid_unit_name_length(unit_name: Expr) -> Expr:
+    # return Len(unit_name) <= Int(8)
+    return Int(1)
+
 
 # Contract Implemtation
 class ARC20(Application):

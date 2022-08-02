@@ -1,4 +1,5 @@
-from pyteal import CompileOptions, Expr, LeafExpr, Mode, TealBlock, TealOp, TealType
+from typing import cast
+from pyteal import CompileOptions, Expr, LeafExpr, Mode, TealBlock, TealOp, TealType, Op
 
 # Credit Julian (RandLabs)
 
@@ -40,7 +41,7 @@ class InlineAssembly(LeafExpr):
         self.args = args
 
     def __teal__(self, options: "CompileOptions"):
-        op = TealOp(self, self.op, *self.opcode_args)
+        op = TealOp(self, cast(Op, self.op), *self.opcode_args)
         return TealBlock.FromOp(options, op, *self.args[::1])
 
     def __str__(self):

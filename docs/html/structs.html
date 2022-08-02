@@ -171,16 +171,16 @@
 <p>The application exposes the ABI methods using the tuple encoded version of the fields specified in the struct. Here it would be <code class="docutils literal notranslate"><span class="pre">(string,uint32)</span></code>.</p>
 <p>A method hint is available to the caller for encoding/decoding by field name.</p>
 <p>To pass a struct we can pass a python dict <code class="docutils literal notranslate"><span class="pre">dict</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
+
     <span class="c1"># Passing in a dict as an argument that should take a tuple according to the type spec</span>
     <span class="n">order_number</span> <span class="o">=</span> <span class="mi">12</span>
-    <span class="n">order</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;item&quot;</span><span class="p">:</span> <span class="s2">&quot;cubes&quot;</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>And we can decode it from the tuple we get back</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Or we could</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+    <span class="c1"># Or we could</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">read_item</span><span class="p">,</span> <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="p">)</span>
-    <span class="n">abi_decoded</span> <span class="o">=</span> <span class="n">Structer</span><span class="o">.</span><span class="n">Order</span><span class="p">()</span><span class="o">.</span><span class="n">client_decode</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">raw_value</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

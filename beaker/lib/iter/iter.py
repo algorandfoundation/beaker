@@ -35,7 +35,7 @@ def accumulate(vals: List[Expr], op: Op) -> Expr:
     return Seq(ops)
 
 
-def iterate(sub: Expr, n: Int, i: ScratchVar = None) -> Expr:
+def iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:
     """Iterate provides a convenience method for calling a method n times
 
     Args:
@@ -46,8 +46,6 @@ def iterate(sub: Expr, n: Int, i: ScratchVar = None) -> Expr:
     Returns:
         A Subroutine expression to be passed directly into an Expr tree
     """
-    if i is None:
-        i = ScratchVar()
 
     @Subroutine(TealType.none)
     def _impl() -> Expr:

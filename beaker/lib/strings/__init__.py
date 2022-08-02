@@ -1,1 +1,3 @@
-from .string import atoi, encode_uvarint, head, itoa, prefix, rest, suffix, tail, witoa
+from .string import atoi, itoa, witoa  # noqa
+from .string import head, tail, prefix, suffix, rest  # noqa
+from .string import encode_uvarint  # noqa

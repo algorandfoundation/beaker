@@ -1,21 +1,18 @@
-from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
-    TransactionWithSigner,
-)
+from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.future.transaction import PaymentTxn
 from beaker.client import ApplicationClient
 from beaker.contracts.op_up import OpUp
 from beaker.consts import milli_algo
-from beaker.sandbox import get_client, get_accounts
+from beaker.sandbox import get_algod_client, get_accounts
 
 
 def test_op_up():
     app = OpUp()
 
     accts = get_accounts()
-    addr, sk = accts.pop()
-    signer = AccountTransactionSigner(sk)
-    client = get_client()
+    addr, sk, signer = accts.pop()
+
+    client = get_algod_client()
 
     ac = ApplicationClient(client, app, signer=signer)
 

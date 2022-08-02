@@ -446,6 +446,23 @@ class ApplicationClient:
 
         return atc
 
+    def fund(self, amt: int) -> str:
+        """fund pays the app account the amount passed using the signer"""
+        sender = self.get_sender()
+        signer = self.get_signer()
+
+        sp = self.client.suggested_params()
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.PaymentTxn(sender, sp, self.app_addr, amt),
+                signer=signer,
+            )
+        )
+        atc.execute(self.client, 4)
+        return atc.tx_ids.pop()
+
     def get_application_state(self, raw=False) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)

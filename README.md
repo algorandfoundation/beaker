@@ -31,7 +31,7 @@ if __name__ == "__main__":
     addr, secret = sandbox.get_accounts().pop()
 
     app_client = client.ApplicationClient(
-        sandbox.get_client(), app, signer=AccountTransactionSigner(secret)
+        sandbox.get_algod_client(), app, signer=AccountTransactionSigner(secret)
     )
 
     app_id, app_addr, txid = app_client.create()
