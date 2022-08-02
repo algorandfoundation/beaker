@@ -81,21 +81,26 @@ class StateValue(Expr):
 
     def increment(self, cnt: Expr = Int(1)) -> Expr:
         """helper to increment a counter"""
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
+
         check_is_int(self)
         check_not_static(self)
+
         return self.set(self.get() + cnt)
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
         """helper to decrement a counter"""
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
         check_is_int(self)
         check_not_static(self)
         return self.set(self.get() - cnt)
 
     def set_default(self) -> Expr:
         """sets the default value if one is provided, if none provided sets the zero value for its type"""
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
         return self.set(get_default_for_type(self.stack_type, self.default))
 
     def is_default(self) -> Expr:
@@ -155,8 +160,10 @@ class ApplicationStateValue(StateValue):
         return f"ApplicationStateValue {self.key}"
 
     def set(self, val: Expr) -> Expr:
-        check_has_key(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         if self.static:
             return Seq(
@@ -168,36 +175,45 @@ class ApplicationStateValue(StateValue):
         return App.globalPut(self.key, val)
 
     def increment(self, cnt: Expr = Int(1)) -> Expr:
-        check_has_key(self)
         check_is_int(self)
         check_not_static(self)
+
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         return self.set(self.get() + cnt)
 
     def get(self) -> Expr:
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         return App.globalGet(self.key)
 
     def get_maybe(self) -> MaybeValue:
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         return App.globalGetEx(Int(0), self.key)
 
     def get_must(self) -> Expr:
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
-        check_has_key(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
     def delete(self) -> Expr:
-        check_has_key(self)
         check_not_static(self)
+
+        if self.key is None:
+            raise TealInputError(f"StateValue {self} has no key defined")
 
         return App.globalDel(self.key)
 
@@ -241,9 +257,13 @@ class AccountStateValue(StateValue):
         return f"AccountStateValue {self.acct} {self.key}"
 
     def set(self, val: Expr) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         if self.static:
             return Seq(
@@ -255,27 +275,38 @@ class AccountStateValue(StateValue):
         return App.localPut(self.acct, self.key, val)
 
     def get(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return App.localGet(self.acct, self.key)
 
     def get_maybe(self) -> MaybeValue:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return App.localGetEx(self.acct, Int(0), self.key)
 
     def get_must(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return If(
             (v := App.localGetEx(self.acct, Int(0), self.key)).hasValue(),
@@ -284,8 +315,10 @@ class AccountStateValue(StateValue):
         )
 
     def delete(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return App.localDel(self.acct, self.key)
 
@@ -339,16 +372,6 @@ def check_not_static(sv: StateValue):
 def check_is_int(sv: StateValue):
     if sv.stack_type != TealType.uint64:
         raise TealInputError(f"StateValue {sv} is not integer type")
-
-
-def check_has_key(sv: StateValue):
-    if sv.key is None:
-        raise TealInputError(f"StateValue {sv} has no key defined")
-
-
-def check_has_account(asv: AccountStateValue):
-    if asv.acct is None:
-        raise TealInputError(f"AccountStateValue {asv} has no account defined")
 
 
 def check_match_type(sv: StateValue, val: Expr):

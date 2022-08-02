@@ -35,17 +35,15 @@ def demo():
     # Set up accounts we'll use
     accts = sandbox.get_accounts()
 
-    addr1, sk1 = accts.pop()
-    signer1 = AccountTransactionSigner(sk1)
+    addr1, sk1, signer1 = accts.pop()
 
-    addr2, sk2 = accts.pop()
-    signer2 = AccountTransactionSigner(sk2)
+    addr2, sk2, signer2 = accts.pop()
 
     # Instantiate app
     app = ClientExample()
 
     # Create Application client
-    app_client = client.ApplicationClient(client=sandbox.get_client(), app=app)
+    app_client = client.ApplicationClient(client=sandbox.get_algod_client(), app=app)
 
     # Create the app on chain using signer1
     app_id, app_addr, txid = app_client.create(signer=signer1)

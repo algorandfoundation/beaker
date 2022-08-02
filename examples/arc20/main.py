@@ -9,17 +9,16 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
 from beaker.contracts.arcs import ARC20
-from beaker.sandbox import get_accounts, get_client
+from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
 
 accts = get_accounts()
-algod_client = get_client()
+algod_client = get_algod_client()
 
 
 def demo():
 
-    addr, sk = accts.pop()
-    signer = AccountTransactionSigner(sk)
+    addr, sk, signer = accts.pop()
 
     app = ARC20()
 

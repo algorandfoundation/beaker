@@ -1,14 +1,13 @@
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from contract import StateExample
 from beaker.client import ApplicationClient
-from beaker.sandbox import get_client, get_accounts
+from beaker.sandbox import get_algod_client, get_accounts
 
 accts = get_accounts()
 
-acct, sk = accts[0]
-signer = AccountTransactionSigner(sk)
+acct, sk, signer = accts.pop()
 
-client = get_client()
+client = get_algod_client()
 
 app = StateExample()
 app_client = ApplicationClient(client, app, signer=signer)

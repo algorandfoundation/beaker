@@ -7,18 +7,17 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
 
-from beaker.sandbox import get_accounts, get_client
+from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
 
 from amm import ConstantProductAMM
 
 
 # Take first account from sandbox
-addr, sk = get_accounts().pop()
-signer = AccountTransactionSigner(sk)
+addr, sk, signer = get_accounts().pop()
 
 # get sandbox client
-client = get_client()
+client = get_algod_client()
 
 # Initialize Application from amm.py
 app = ConstantProductAMM()

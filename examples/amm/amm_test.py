@@ -11,7 +11,7 @@ from beaker.client.application_client import ApplicationClient
 from .amm import ConstantProductAMM
 
 accts = sandbox.get_accounts()
-algod_client: AlgodClient = sandbox.get_client()
+algod_client: AlgodClient = sandbox.get_algod_client()
 
 TOTAL_POOL_TOKENS = 10000000000
 TOTAL_ASSET_TOKENS = 10000000000
@@ -22,14 +22,14 @@ B_IDX = 2
 
 @pytest.fixture(scope="session")
 def creator_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk = accts[0]
-    return (addr, sk, AccountTransactionSigner(sk))
+    addr, sk, signer = accts[0]
+    return (addr, sk, signer)
 
 
 @pytest.fixture(scope="session")
 def user_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk = accts[1]
-    return (addr, sk, AccountTransactionSigner(sk))
+    addr, sk, signer = accts[1]
+    return (addr, sk, signer)
 
 
 @pytest.fixture(scope="session")

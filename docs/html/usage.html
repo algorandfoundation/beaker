@@ -119,7 +119,7 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <p><code class="docutils literal notranslate"><span class="pre">self</span></code> may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like <code class="docutils literal notranslate"><span class="pre">MySickApp.do_thing(data)</span></code></p>
 </div>
 <p>Lets now deploy and call our contract using an <a class="reference internal" href="client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 
     <span class="n">addr</span><span class="p">,</span> <span class="n">sk</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
     <span class="n">signer</span> <span class="o">=</span> <span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">sk</span><span class="p">)</span>
