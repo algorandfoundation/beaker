@@ -9,7 +9,7 @@ from beaker import (
     external,
     client,
     sandbox,
-    consts
+    consts,
 )
 
 
@@ -44,13 +44,15 @@ def demo():
     app = ClientExample()
 
     # Create Application client
-    app_client = client.ApplicationClient(client=sandbox.get_algod_client(), app=app, signer=signer1)
+    app_client = client.ApplicationClient(
+        client=sandbox.get_algod_client(), app=app, signer=signer1
+    )
 
-    # Create the app on chain (uses signer1) 
+    # Create the app on chain (uses signer1)
     app_id, app_addr, txid = app_client.create()
 
     # Fund the app account with 1 algo
-    app_client.fund(1*consts.algo)
+    app_client.fund(1 * consts.algo)
 
     # Create copies of the app client with specific signer, _after_ we've created and set the app id
     app_client1 = app_client.prepare(signer=signer1)

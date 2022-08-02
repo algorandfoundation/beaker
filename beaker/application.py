@@ -13,7 +13,6 @@ from pyteal import (
     Global,
     OnCompleteAction,
     OptimizeOptions,
-    Reject,
     Router,
     Bytes,
 )
@@ -22,11 +21,7 @@ from beaker.decorators import (
     get_handler_config,
     MethodHints,
     create,
-    update,
-    delete,
     opt_in,
-    close_out,
-    clear_state,
 )
 from beaker.state import (
     AccountState,
@@ -217,23 +212,3 @@ class Application:
     def opt_in(self) -> Expr:
         """default opt in behavior, initializes account state"""
         return self.initialize_account_state()
-
-    @update
-    def update(self) -> Expr:
-        """default update behavior, rejects"""
-        return Reject()
-
-    @delete
-    def delete(self) -> Expr:
-        """default delete behavior, rejects"""
-        return Reject()
-
-    @close_out
-    def close_out(self) -> Expr:
-        """default close out behavior, rejects"""
-        return Reject()
-
-    @clear_state
-    def clear_state(self) -> Expr:
-        """default clear state behavior, rejects"""
-        return Reject()
