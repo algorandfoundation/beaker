@@ -23,8 +23,12 @@ If there are multiple signers or you want to re-use some suggested parameters, t
     .. automethod:: opt_in 
     .. automethod:: close_out 
     .. automethod:: clear_state 
+    .. automethod:: fund
     .. automethod:: get_application_state 
     .. automethod:: get_application_account_info
     .. automethod:: get_account_state 
 
-    
+Full Example
+-------------
+
+.. literalinclude:: ../../examples/client/client.py

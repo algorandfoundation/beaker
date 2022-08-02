@@ -1,4 +1,4 @@
-structs
+Structs
 =======
 
 .. module:: beaker.struct

@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Contracts" href="contracts.html" />
-    <link rel="prev" title="structs" href="structs.html" /> 
+    <link rel="prev" title="Structs" href="structs.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,8 +45,11 @@
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="structs.html">structs</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structs.html">Structs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Application Client</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#full-example">Full Example</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 </ul>
 
@@ -137,6 +140,12 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="beaker.client.ApplicationClient.fund">
+<span class="sig-name descname"><span class="pre">fund</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></span><a class="reference internal" href="_modules/beaker/client/application_client.html#ApplicationClient.fund"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.client.ApplicationClient.fund" title="Permalink to this definition"></a></dt>
+<dd><p>fund pays the app account the amount passed using the signer</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="beaker.client.ApplicationClient.get_application_state">
 <span class="sig-name descname"><span class="pre">get_application_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.10)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.10)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/client/application_client.html#ApplicationClient.get_application_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.client.ApplicationClient.get_application_state" title="Permalink to this definition"></a></dt>
 <dd><p>gets the global state info for the app id set</p>
@@ -156,13 +165,115 @@
 
 </dd></dl>
 
+<section id="full-example">
+<h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Application</span><span class="p">,</span>
+    <span class="n">AccountStateValue</span><span class="p">,</span>
+    <span class="n">ApplicationStateValue</span><span class="p">,</span>
+    <span class="n">Authorize</span><span class="p">,</span>
+    <span class="n">external</span><span class="p">,</span>
+    <span class="n">client</span><span class="p">,</span>
+    <span class="n">sandbox</span><span class="p">,</span>
+    <span class="n">consts</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ClientExample</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="n">manager</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">ApplicationStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">ApplicationStateValue</span><span class="p">(</span>
+        <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="n">nickname</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">AccountStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">AccountStateValue</span><span class="p">(</span>
+        <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;what this user prefers to be called&quot;</span>
+    <span class="p">)</span>
+
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">manager</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">set_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_manager</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_manager</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">set_nick</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nick</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">nick</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">demo</span><span class="p">():</span>
+
+    <span class="c1"># Set up accounts we&#39;ll use</span>
+    <span class="n">accts</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
+
+    <span class="n">addr1</span><span class="p">,</span> <span class="n">sk1</span><span class="p">,</span> <span class="n">signer1</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="n">addr2</span><span class="p">,</span> <span class="n">sk2</span><span class="p">,</span> <span class="n">signer2</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="c1"># Instantiate app</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">ClientExample</span><span class="p">()</span>
+
+    <span class="c1"># Create Application client</span>
+    <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">signer1</span><span class="p">)</span>
+
+    <span class="c1"># Create the app on chain (uses signer1) </span>
+    <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+    <span class="c1"># Fund the app account with 1 algo</span>
+    <span class="n">app_client</span><span class="o">.</span><span class="n">fund</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="n">consts</span><span class="o">.</span><span class="n">algo</span><span class="p">)</span>
+
+    <span class="c1"># Create copies of the app client with specific signer, _after_ we&#39;ve created and set the app id</span>
+    <span class="n">app_client1</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">signer1</span><span class="p">)</span>
+    <span class="n">app_client2</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">signer2</span><span class="p">)</span>
+
+    <span class="c1"># Try calling set nickname from both accounts after opting in</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Try calling without opting in</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">app_client2</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">app_client2</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
+    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get the local state for each account</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_account_state</span><span class="p">())</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">app_client2</span><span class="o">.</span><span class="n">get_account_state</span><span class="p">())</span>
+
+    <span class="c1"># Get the global state</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr2</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shouldn&#39;t get here&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed as expected, only addr1 should be authorized to set the manager&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">app_client2</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Have addr1 set the manager to addr2</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># and back</span>
+    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">demo</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="structs.html" class="btn btn-neutral float-left" title="structs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="structs.html" class="btn btn-neutral float-left" title="Structs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="contracts.html" class="btn btn-neutral float-right" title="Contracts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
