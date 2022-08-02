@@ -28,10 +28,10 @@ if __name__ == "__main__":
 
     app = HelloBeaker()
 
-    addr, secret = sandbox.get_accounts().pop()
+    addr, private_key, signer = sandbox.get_accounts().pop()
 
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=AccountTransactionSigner(secret)
+        sandbox.get_algod_client(), app, signer=signer
     )
 
     app_id, app_addr, txid = app_client.create()
