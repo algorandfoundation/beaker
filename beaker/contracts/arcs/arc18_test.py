@@ -25,6 +25,7 @@ def buyer_acct() -> tuple[str, str, AccountTransactionSigner]:
     addr, sk, signer = accts[1]
     return (addr, sk, signer)
 
+
 @pytest.fixture(scope="session")
 def royalty_acct() -> tuple[str, str, AccountTransactionSigner]:
     addr, sk, signer = accts[2]
@@ -89,13 +90,15 @@ def royalty_asset(app_client: client.ApplicationClient, buyer_acct) -> int:
     buyer_addr, buyer_sk, buyer_signer = buyer_acct
     sp = app_client.client.suggested_params()
     atc = AtomicTransactionComposer()
-    atc.add_transaction(TransactionWithSigner(
-        txn=transaction.AssetOptInTxn(buyer_addr, sp, royalty_asset_id),
-        signer=buyer_signer
-    ))
+    atc.add_transaction(
+        TransactionWithSigner(
+            txn=transaction.AssetOptInTxn(buyer_addr, sp, royalty_asset_id),
+            signer=buyer_signer,
+        )
+    )
     atc.execute(app_client.client, 4)
 
-    return royalty_asset_id 
+    return royalty_asset_id
 
 
 def test_app_created(app_client: client.ApplicationClient):
@@ -210,7 +213,7 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
 
     assert acct_state[key_bytes] == auth_bytes + amt_bytes
 
-    try: 
+    try:
         # Wrong address
         app_client.call(
             app.offer,
@@ -225,7 +228,7 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
         # assert le.assert_comment == "wrong address"
         assert le.msg.startswith("assert failed")
 
-    try: 
+    try:
         # Wrong amount
         app_client.call(
             app.offer,
@@ -239,6 +242,7 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
         # assert le.assert_comment == "wrong amount"
         assert le.msg.startswith("assert failed")
 
+
 def test_transfer_algo_payment(
     app_client: client.ApplicationClient, royalty_asset: int, buyer_acct, royalty_acct
 ):
@@ -249,11 +253,10 @@ def test_transfer_algo_payment(
     )
 
     buyer_addr, _, buyer_signer = buyer_acct
-    rcv_addr, _, rcv_signer = royalty_acct
+    rcv_addr, _, _ = royalty_acct
 
     balance_accts = [addr, buyer_addr, app_addr, rcv_addr]
     balance_before = testing.get_balances(app_client.client, balance_accts)
-
 
     amt = 1
     payment_amt = 5 * consts.algo
@@ -276,10 +279,7 @@ def test_transfer_algo_payment(
         royalty_receiver=rcv_addr,
         payment_txn=TransactionWithSigner(
             txn=transaction.PaymentTxn(
-                buyer_addr,
-                pay_sp,
-                app_client.app_addr,
-                payment_amt
+                buyer_addr, pay_sp, app_client.app_addr, payment_amt
             ),
             signer=buyer_signer,
         ),
@@ -292,13 +292,19 @@ def test_transfer_algo_payment(
         acct: testing.balance_delta(balance_before[acct], balance_after[acct])
         for acct in balance_accts
     }
-    
+
     royalty_amt = payment_amt / 100
 
     assert deltas[app_client.app_addr][0] == 0, "App should not change algo balance"
-    assert deltas[addr][0] == payment_amt - royalty_amt 
-    assert deltas[buyer_addr][0] == -(payment_amt + pay_sp.fee)
-    assert deltas[rcv_addr][0] == royalty_amt 
+    assert (
+        deltas[addr][0] == payment_amt - royalty_amt
+    ), "Owner should receive payment - royalty amt"
+    assert deltas[buyer_addr][0] == -(
+        payment_amt + pay_sp.fee
+    ), "Buyer should have paid full payment + any fees"
+    assert (
+        deltas[rcv_addr][0] == royalty_amt
+    ), "Royalty receiver should have gotten share of royalty"
 
 
 def test_transfer_asset_payment(app_client: client.ApplicationClient):
