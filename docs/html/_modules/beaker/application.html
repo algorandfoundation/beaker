@@ -73,26 +73,26 @@
              
   <h1>Source code for beaker.application</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getattr_static</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">algosdk.abi</span> <span class="kn">import</span> <span class="n">Method</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
+    <span class="n">TealInputError</span><span class="p">,</span>
     <span class="n">Txn</span><span class="p">,</span>
     <span class="n">MAX_TEAL_VERSION</span><span class="p">,</span>
+    <span class="n">MethodConfig</span><span class="p">,</span>
     <span class="n">ABIReturnSubroutine</span><span class="p">,</span>
     <span class="n">BareCallActions</span><span class="p">,</span>
     <span class="n">Expr</span><span class="p">,</span>
     <span class="n">Global</span><span class="p">,</span>
-    <span class="n">MethodConfig</span><span class="p">,</span>
     <span class="n">OnCompleteAction</span><span class="p">,</span>
     <span class="n">OptimizeOptions</span><span class="p">,</span>
     <span class="n">Reject</span><span class="p">,</span>
     <span class="n">Router</span><span class="p">,</span>
     <span class="n">Bytes</span><span class="p">,</span>
-    <span class="n">Subroutine</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">HandlerConfig</span><span class="p">,</span>
     <span class="n">get_handler_config</span><span class="p">,</span>
     <span class="n">MethodHints</span><span class="p">,</span>
     <span class="n">create</span><span class="p">,</span>
@@ -152,11 +152,12 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OnCompleteAction</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">MethodConfig</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">acct_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">app_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
+        <span class="n">methods</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodConfig</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">bound_attr</span><span class="p">,</span> <span class="n">static_attr</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 
             <span class="c1"># Check for state vals</span>
@@ -178,47 +179,54 @@
                 <span class="k">continue</span>
 
             <span class="c1"># Check for externals and internal methods</span>
-            <span class="n">external_config</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">bound_attr</span><span class="p">)</span>
-            <span class="k">match</span> <span class="n">external_config</span><span class="p">:</span>
-                <span class="c1"># Bare externals</span>
-                <span class="k">case</span> <span class="n">HandlerConfig</span><span class="p">(</span><span class="n">bare_method</span><span class="o">=</span><span class="n">BareCallActions</span><span class="p">()):</span>
-                    <span class="n">actions</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="n">oc</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="n">OnCompleteAction</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">oc</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">external_config</span><span class="o">.</span><span class="n">bare_method</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                        <span class="k">if</span> <span class="n">action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="p">}</span>
+            <span class="n">handler_config</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">bound_attr</span><span class="p">)</span>
 
-                    <span class="k">for</span> <span class="n">oc</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">actions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="n">oc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">:</span>
-                            <span class="k">raise</span> <span class="n">BareOverwriteError</span><span class="p">(</span><span class="n">oc</span><span class="p">)</span>
+            <span class="c1"># Bare externals</span>
+            <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">bare_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">actions</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">oc</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="n">OnCompleteAction</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">oc</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">bare_method</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">action</span><span class="o">.</span><span class="n">action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="p">}</span>
 
-                        <span class="c1"># Swap the implementation with the bound version</span>
-                        <span class="k">if</span> <span class="n">external_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
-                            <span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">bound_attr</span>
+                <span class="k">for</span> <span class="n">oc</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">actions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">oc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">BareOverwriteError</span><span class="p">(</span><span class="n">oc</span><span class="p">)</span>
 
-                        <span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">[</span><span class="n">oc</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+                    <span class="c1"># Swap the implementation with the bound version</span>
+                    <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                            <span class="nb">isinstance</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">SubroutineFnWrapper</span><span class="p">)</span>
+                            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">)</span>
+                        <span class="p">):</span>
+                            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Expected Subroutine or ABIReturnSubroutine, for </span><span class="si">{</span><span class="n">oc</span><span class="si">}</span><span class="s2"> got </span><span class="si">{</span><span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                        <span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">bound_attr</span>
 
-                <span class="c1"># ABI Methods</span>
-                <span class="k">case</span> <span class="n">HandlerConfig</span><span class="p">(</span><span class="n">method_spec</span><span class="o">=</span><span class="n">Method</span><span class="p">()):</span>
-                    <span class="c1"># Create the ABIReturnSubroutine from the static attr</span>
-                    <span class="c1"># but override the implementation with the bound version</span>
-                    <span class="n">abi_meth</span> <span class="o">=</span> <span class="n">ABIReturnSubroutine</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">external_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
-                        <span class="n">abi_meth</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">bound_attr</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">abi_meth</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">[</span><span class="n">oc</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">external_config</span><span class="o">.</span><span class="n">hints</span><span class="p">()</span>
+            <span class="c1"># ABI externals</span>
+            <span class="k">elif</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Create the ABIReturnSubroutine from the static attr</span>
+                <span class="c1"># but override the implementation with the bound version</span>
+                <span class="n">abi_meth</span> <span class="o">=</span> <span class="n">ABIReturnSubroutine</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
+                    <span class="n">abi_meth</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">bound_attr</span>
+                <span class="n">methods</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">abi_meth</span><span class="p">,</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">method_config</span><span class="p">)</span>
 
-                <span class="c1"># Internal subroutines</span>
-                <span class="k">case</span> <span class="n">HandlerConfig</span><span class="p">(</span><span class="n">subroutine</span><span class="o">=</span><span class="n">Subroutine</span><span class="p">()):</span>
-                    <span class="k">if</span> <span class="n">external_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
-                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">external_config</span><span class="o">.</span><span class="n">subroutine</span><span class="p">(</span><span class="n">bound_attr</span><span class="p">))</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="nb">setattr</span><span class="p">(</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span>
-                            <span class="n">name</span><span class="p">,</span>
-                            <span class="n">external_config</span><span class="o">.</span><span class="n">subroutine</span><span class="p">(</span><span class="n">static_attr</span><span class="p">),</span>
-                        <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">hints</span><span class="p">()</span>
+
+            <span class="c1"># Internal subroutines</span>
+            <span class="k">elif</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">subroutine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">subroutine</span><span class="p">(</span><span class="n">bound_attr</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span>
+                        <span class="n">name</span><span class="p">,</span>
+                        <span class="n">handler_config</span><span class="o">.</span><span class="n">subroutine</span><span class="p">(</span><span class="n">static_attr</span><span class="p">),</span>
+                    <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span> <span class="o">=</span> <span class="n">AccountState</span><span class="p">(</span><span class="n">acct_vals</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span> <span class="o">=</span> <span class="n">ApplicationState</span><span class="p">(</span><span class="n">app_vals</span><span class="p">)</span>
@@ -231,9 +239,11 @@
         <span class="p">)</span>
 
         <span class="c1"># Add method externals</span>
-        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">method_tuple</span> <span class="ow">in</span> <span class="n">methods</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">method_config</span> <span class="o">=</span> <span class="n">method_tuple</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">method_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">router</span><span class="o">.</span><span class="n">add_method_handler</span><span class="p">(</span>
-                <span class="n">method_call</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">method_config</span><span class="o">=</span><span class="n">external_config</span><span class="o">.</span><span class="n">method_config</span>
+                <span class="n">method_call</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">method_config</span><span class="o">=</span><span class="n">method_config</span>
             <span class="p">)</span>
 
         <span class="p">(</span>

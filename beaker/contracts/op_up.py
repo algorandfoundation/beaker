@@ -73,7 +73,7 @@ class OpUp(Application):
     def call_opup(self, n):
         """internal method to issue transactions against the target app"""
         return If(
-            n,
+            n == Int(1),
             self.__call_opup(),
             For(
                 (i := ScratchVar()).store(Int(0)),

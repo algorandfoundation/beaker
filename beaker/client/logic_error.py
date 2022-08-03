@@ -31,14 +31,16 @@ class LogicException(Exception):
         logic_error: Exception,
         program: str,
         map: SourceMap,
+        lines: int,
     ):
         self.logic_error = logic_error
         self.logic_error_str = str(logic_error)
         self.program = program
         self.map = map
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
+        self.lines = lines
 
     def __str__(self):
         line_no = self.map.get_line_for_pc(self.pc)
-        trace = tiny_trace(self.program, line_no, 5)
+        trace = tiny_trace(self.program, line_no, self.lines)
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"

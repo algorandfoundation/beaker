@@ -2,15 +2,14 @@ from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.future import transaction
 
 from beaker.client import ApplicationClient
-from beaker.sandbox import get_client, get_accounts
+from beaker.sandbox import get_algod_client, get_accounts
 
 from contract import MyRoyaltyContract
 
 
-client = get_client()
+client = get_algod_client()
 
-addr, sk = get_accounts()[0]
-signer = AccountTransactionSigner(sk)
+addr, sk, signer = get_accounts().pop()
 
 
 def demo():

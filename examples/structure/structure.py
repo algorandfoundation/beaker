@@ -56,14 +56,15 @@ class Structer(Application):
 
 
 def demo():
-    addr, sk = sandbox.get_accounts().pop()
-    signer = AccountTransactionSigner(sk)
+    addr, sk, signer = sandbox.get_accounts().pop()
 
     # Initialize Application from amm.py
     app = Structer()
 
     # Create an Application client containing both an algod client and my app
-    app_client = client.ApplicationClient(sandbox.get_client(), app, signer=signer)
+    app_client = client.ApplicationClient(
+        sandbox.get_algod_client(), app, signer=signer
+    )
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
@@ -77,7 +78,7 @@ def demo():
     app_client.call(app.place_order, order_number=order_number, order=order)
 
     state_key = order_number.to_bytes(1, "big")
-    stored_order = app_client.get_account_state()[state_key]
+    stored_order = app_client.get_account_state(raw=True)[state_key]
     state_decoded = Structer.Order().client_decode(stored_order)
     print(
         f"We can get the order we stored from local state of the sender: {state_decoded}"
@@ -95,7 +96,7 @@ def demo():
     )
 
     state_key = order_number.to_bytes(1, "big")
-    stored_order = app_client.get_account_state()[state_key]
+    stored_order = app_client.get_account_state(raw=True)[state_key]
     state_decoded = Structer.Order().client_decode(stored_order)
     print(f"And it's been updated: {state_decoded}")
 

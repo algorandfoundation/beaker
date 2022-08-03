@@ -119,10 +119,10 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <p><code class="docutils literal notranslate"><span class="pre">self</span></code> may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like <code class="docutils literal notranslate"><span class="pre">MySickApp.do_thing(data)</span></code></p>
 </div>
 <p>Lets now deploy and call our contract using an <a class="reference internal" href="client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 
-    <span class="n">addr</span><span class="p">,</span> <span class="n">sk</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-    <span class="n">signer</span> <span class="o">=</span> <span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">sk</span><span class="p">)</span>
+    <span class="n">addr</span><span class="p">,</span> <span class="n">sk</span><span class="p">,</span> <span class="n">signer</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
     <span class="c1"># Initialize Application from amm.py</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">()</span>
 
@@ -239,7 +239,6 @@ The constructor may also be passed an app_id directly if one is already deployed
         <span class="o">*</span><span class="p">,</span>
         <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticArray</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">Byte</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">32</span><span class="p">]],</span>
     <span class="p">):</span>
-
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">Assert</span><span class="p">(</span><span class="n">opup_app</span><span class="o">.</span><span class="n">application_id</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">call_opup</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">255</span><span class="p">)),</span>

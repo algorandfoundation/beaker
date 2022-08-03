@@ -8,7 +8,7 @@ DEFAULT_INDEXER_ADDRESS = "http://localhost:8090"
 DEFAULT_INDEXER_TOKEN = "a" * 64
 
 
-def get_client(
+def get_algod_client(
     address: str = DEFAULT_ALGOD_ADDRESS, token: str = DEFAULT_ALGOD_TOKEN
 ) -> AlgodClient:
     return AlgodClient(token, address)

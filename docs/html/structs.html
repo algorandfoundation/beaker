@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>structs &mdash; Beaker  documentation</title>
+  <title>Structs &mdash; Beaker  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/custom.css" type="text/css" />
@@ -45,7 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">structs</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Structs</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
 </ul>
 </li>
@@ -67,7 +67,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>structs</li>
+      <li>Structs</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/structs.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -78,7 +78,7 @@
            <div itemprop="articleBody">
              
   <section id="module-beaker.struct">
-<span id="structs"></span><h1>structs<a class="headerlink" href="#module-beaker.struct" title="Permalink to this heading"></a></h1>
+<span id="structs"></span><h1>Structs<a class="headerlink" href="#module-beaker.struct" title="Permalink to this heading"></a></h1>
 <p>With Beaker we can define a custom structure and use it in our ABI methods.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.struct.Struct">
@@ -171,16 +171,16 @@
 <p>The application exposes the ABI methods using the tuple encoded version of the fields specified in the struct. Here it would be <code class="docutils literal notranslate"><span class="pre">(string,uint32)</span></code>.</p>
 <p>A method hint is available to the caller for encoding/decoding by field name.</p>
 <p>To pass a struct we can pass a python dict <code class="docutils literal notranslate"><span class="pre">dict</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
+
     <span class="c1"># Passing in a dict as an argument that should take a tuple according to the type spec</span>
     <span class="n">order_number</span> <span class="o">=</span> <span class="mi">12</span>
-    <span class="n">order</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;item&quot;</span><span class="p">:</span> <span class="s2">&quot;cubes&quot;</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>And we can decode it from the tuple we get back</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Or we could</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+    <span class="c1"># Or we could</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">read_item</span><span class="p">,</span> <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="p">)</span>
-    <span class="n">abi_decoded</span> <span class="o">=</span> <span class="n">Structer</span><span class="o">.</span><span class="n">Order</span><span class="p">()</span><span class="o">.</span><span class="n">client_decode</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">raw_value</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
