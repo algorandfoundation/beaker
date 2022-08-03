@@ -1,10 +1,12 @@
 import pytest
 from typing import cast
+from algosdk.constants import ZERO_ADDRESS
 from algosdk.atomic_transaction_composer import *
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
-from beaker import client, sandbox
+from beaker import client, sandbox, testing, consts
+from beaker.client.logic_error import LogicException
 
 from .arc18 import ARC18
 
@@ -19,43 +21,32 @@ def creator_acct() -> tuple[str, str, AccountTransactionSigner]:
 
 
 @pytest.fixture(scope="session")
-def user_acct() -> tuple[str, str, AccountTransactionSigner]:
+def buyer_acct() -> tuple[str, str, AccountTransactionSigner]:
     addr, sk, signer = accts[1]
+    return (addr, sk, signer)
+
+@pytest.fixture(scope="session")
+def royalty_acct() -> tuple[str, str, AccountTransactionSigner]:
+    addr, sk, signer = accts[2]
     return (addr, sk, signer)
 
 
 @pytest.fixture(scope="session")
-def assets(creator_acct) -> tuple[int, int]:
+def payment_asset(creator_acct) -> int:
     addr, sk, _ = creator_acct
     sp = algod_client.suggested_params()
-    txns: list[transaction.Transaction] = transaction.assign_group_id(
-        [
-            transaction.AssetCreateTxn(
-                addr,
-                sp,
-                1,
-                0,
-                False,
-                asset_name="Test NFT",
-                unit_name="tstnft",
-            ),
-            transaction.AssetCreateTxn(
-                addr,
-                sp,
-                1000000,
-                0,
-                False,
-                asset_name="Conch Shells",
-                unit_name="cshell",
-            ),
-        ]
+    txn = transaction.AssetCreateTxn(
+        addr,
+        sp,
+        1000000,
+        0,
+        False,
+        asset_name="Conch Shells",
+        unit_name="cshell",
     )
-    algod_client.send_transactions([txn.sign(sk) for txn in txns])
-    results = [
-        transaction.wait_for_confirmation(algod_client, txid, 4)
-        for txid in [t.get_txid() for t in txns]
-    ]
-    return (results[0]["asset-index"], results[1]["asset-index"])
+    txid = algod_client.send_transaction(txn.sign(sk))
+    result = transaction.wait_for_confirmation(algod_client, txid, 4)
+    return result["asset-index"]
 
 
 @pytest.fixture(scope="session")
@@ -63,443 +54,268 @@ def app_client(creator_acct) -> client.ApplicationClient:
     _, _, signer = creator_acct
     app = ARC18()
     app_client = client.ApplicationClient(algod_client, app, signer=signer)
+    app_client.create()
+    app_client.fund(1 * consts.algo)
+    app_client.opt_in()
     return app_client
 
 
-def test_app_create(app_client: client.ApplicationClient):
-    app_client.create()
+@pytest.fixture(scope="session")
+def royalty_asset(app_client: client.ApplicationClient, buyer_acct) -> int:
+    sp = algod_client.suggested_params()
+    atc = AtomicTransactionComposer()
+    atc.add_transaction(
+        TransactionWithSigner(
+            txn=transaction.AssetCreateTxn(
+                app_client.get_sender(),
+                sp,
+                1,
+                0,
+                True,
+                asset_name="Test NFT",
+                unit_name="tstnft",
+                clawback=app_client.app_addr,
+                freeze=app_client.app_addr,
+                manager=app_client.app_addr,
+                reserve=app_client.app_addr,
+            ),
+            signer=app_client.signer,
+        )
+    )
+    result = atc.execute(app_client.client, 4)
+    result = transaction.wait_for_confirmation(app_client.client, result.tx_ids[0], 4)
+    royalty_asset_id = result["asset-index"]
+
+    buyer_addr, buyer_sk, buyer_signer = buyer_acct
+    sp = app_client.client.suggested_params()
+    atc = AtomicTransactionComposer()
+    atc.add_transaction(TransactionWithSigner(
+        txn=transaction.AssetOptInTxn(buyer_addr, sp, royalty_asset_id),
+        signer=buyer_signer
+    ))
+    atc.execute(app_client.client, 4)
+
+    return royalty_asset_id 
+
+
+def test_app_created(app_client: client.ApplicationClient):
     app_state = app_client.get_application_state()
     sender = app_client.get_sender()
-
     assert (
         app_state[ARC18.administrator.str_key()] == decode_address(sender).hex()
     ), "The administrator should be my address"
 
 
-def test_set_administrator(app_client: client.ApplicationClient, user_acct):
+def test_set_administrator(app_client: client.ApplicationClient, buyer_acct):
     app = cast(ARC18, app_client.app)
     addr = app_client.get_sender()
 
-    user_addr, _, user_signer = user_acct
+    buyer_addr, _, buyer_signer = buyer_acct
 
-    app_client.call(app.set_administrator, new_admin=user_addr)
+    app_client.call(app.set_administrator, new_admin=buyer_addr)
     state = app_client.get_application_state()
-    assert state[ARC18.administrator.str_key()] == decode_address(user_addr).hex(), "Expected new admin to be addr passed"
+    assert (
+        state[ARC18.administrator.str_key()] == decode_address(buyer_addr).hex()
+    ), "Expected new admin to be addr passed"
 
     with pytest.raises(Exception):
-        app_client.call(app.set_administrator, new_admin=user_addr)
+        app_client.call(app.set_administrator, new_admin=buyer_addr)
 
-    user_client = app_client.prepare(signer=user_signer)
-    user_client.call(app.set_administrator, new_admin=addr)
+    buyer_client = app_client.prepare(signer=buyer_signer)
+    buyer_client.call(app.set_administrator, new_admin=addr)
     state = app_client.get_application_state()
-    assert state[ARC18.administrator.str_key()] == decode_address(addr).hex(), "Expected new admin to be addr passed"
+    assert (
+        state[ARC18.administrator.str_key()] == decode_address(addr).hex()
+    ), "Expected new admin to be addr passed"
 
     with pytest.raises(Exception):
-        user_client.call(app.set_administrator, new_admin=addr)
+        buyer_client.call(app.set_administrator, new_admin=addr)
 
 
+def test_set_policy(app_client: client.ApplicationClient, royalty_acct):
+    app = cast(ARC18, app_client.app)
 
-def test_set_policy(app_client: client.ApplicationClient):
-    app = cast(ARC18,app_client.app)
-
-    rcv = app_client.get_sender()
+    rcv_addr, rcv_sk, rcv_signer = royalty_acct
     basis = 100
 
-    app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver=rcv)
+    app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver=rcv_addr)
     state = app_client.get_application_state()
-    assert state[ARC18.royalty_basis.str_key()] == basis, "Expected royalty basis to match what we passed in"
-    assert state[ARC18.royalty_receiver.str_key()] == decode_address(rcv).hex(), "Expected royalty receiver to match what we passed in"
+    assert (
+        state[ARC18.royalty_basis.str_key()] == basis
+    ), "Expected royalty basis to match what we passed in"
+    assert (
+        state[ARC18.royalty_receiver.str_key()] == decode_address(rcv_addr).hex()
+    ), "Expected royalty receiver to match what we passed in"
 
     with pytest.raises(Exception):
-        app_client.call(app.set_policy, royalty_basis=ARC18._basis_point_multiplier + 1, royalty_receiver=rcv)
+        app_client.call(
+            app.set_policy,
+            royalty_basis=ARC18._basis_point_multiplier + 1,
+            royalty_receiver=rcv_addr,
+        )
 
     with pytest.raises(Exception):
         app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver="")
 
 
-def test_set_payment_asset(app_client: client.ApplicationClient, assets: tuple[int,int]):
+def test_set_payment_asset(app_client: client.ApplicationClient, payment_asset: int):
     app = cast(ARC18, app_client.app)
-    _, payment_asset = assets
-    app_client.call(app.set_payment_asset, payment_asset=payment_asset, is_allowed=True)
 
+    sp = app_client.client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = sp.min_fee * 2
+
+    app_client.call(
+        app.set_payment_asset,
+        suggested_params=sp,
+        payment_asset=payment_asset,
+        is_allowed=True,
+    )
     info = app_client.get_application_account_info()
+    balances = testing.balances(info)
+    assert balances[payment_asset] == 0, "We've opted into the payment asset"
+
+    app_client.call(
+        app.set_payment_asset,
+        suggested_params=sp,
+        payment_asset=payment_asset,
+        is_allowed=False,
+    )
+    info = app_client.get_application_account_info()
+    balances = testing.balances(info)
+    assert payment_asset not in balances, "We've opted out of the payment asset"
 
 
+def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
+    app = cast(ARC18, app_client.app)
+    addr = app_client.sender
 
-    pass
+    amt = 1
+    auth = addr
 
-def test_offer(app_client: client.ApplicationClient):
-    pass
+    app_client.call(
+        app.offer,
+        royalty_asset=royalty_asset,
+        royalty_asset_amount=amt,
+        auth_address=auth,
+        prev_offer_amt=0,
+        prev_offer_auth=ZERO_ADDRESS,
+    )
 
-def test_transfer_algo_payment(app_client: client.ApplicationClient):
-    pass
+    acct_state = app_client.get_account_state(raw=True)
+
+    key_bytes = royalty_asset.to_bytes(8, "big")
+    amt_bytes = amt.to_bytes(8, "big")
+    auth_bytes = decode_address(auth)
+
+    assert acct_state[key_bytes] == auth_bytes + amt_bytes
+
+    try: 
+        # Wrong address
+        app_client.call(
+            app.offer,
+            royalty_asset=royalty_asset,
+            royalty_asset_amount=amt,
+            auth_address=auth,
+            prev_offer_amt=1,
+            prev_offer_auth=ZERO_ADDRESS,
+        )
+    except LogicException as le:
+        # TODO: get _actual_ assert from pyteal with message
+        # assert le.assert_comment == "wrong address"
+        assert le.msg.startswith("assert failed")
+
+    try: 
+        # Wrong amount
+        app_client.call(
+            app.offer,
+            royalty_asset=royalty_asset,
+            royalty_asset_amount=amt,
+            auth_address=auth,
+            prev_offer_amt=0,
+            prev_offer_auth=auth,
+        )
+    except LogicException as le:
+        # assert le.assert_comment == "wrong amount"
+        assert le.msg.startswith("assert failed")
+
+def test_transfer_algo_payment(
+    app_client: client.ApplicationClient, royalty_asset: int, buyer_acct, royalty_acct
+):
+    app, addr, app_addr = (
+        cast(ARC18, app_client.app),
+        app_client.sender,
+        app_client.app_addr,
+    )
+
+    buyer_addr, _, buyer_signer = buyer_acct
+    rcv_addr, _, rcv_signer = royalty_acct
+
+    balance_accts = [addr, buyer_addr, app_addr, rcv_addr]
+    balance_before = testing.get_balances(app_client.client, balance_accts)
+
+
+    amt = 1
+    payment_amt = 5 * consts.algo
+
+    pay_sp = app_client.client.suggested_params()
+    pay_sp.flat_fee = True
+    pay_sp.fee = pay_sp.min_fee * 5
+
+    auth_sp = app_client.client.suggested_params()
+    auth_sp.flat_fee = True
+    auth_sp.fee = 0
+
+    app_client.call(
+        app.transfer_algo_payment,
+        suggested_params=auth_sp,
+        royalty_asset=royalty_asset,
+        royalty_asset_amount=1,
+        owner=addr,
+        buyer=buyer_addr,
+        royalty_receiver=rcv_addr,
+        payment_txn=TransactionWithSigner(
+            txn=transaction.PaymentTxn(
+                buyer_addr,
+                pay_sp,
+                app_client.app_addr,
+                payment_amt
+            ),
+            signer=buyer_signer,
+        ),
+        offered_amt=amt,
+    )
+
+    balance_after = testing.get_balances(app_client.client, balance_accts)
+
+    deltas = {
+        acct: testing.balance_delta(balance_before[acct], balance_after[acct])
+        for acct in balance_accts
+    }
+    
+    royalty_amt = payment_amt / 100
+
+    assert deltas[app_client.app_addr][0] == 0, "App should not change algo balance"
+    assert deltas[addr][0] == payment_amt - royalty_amt 
+    assert deltas[buyer_addr][0] == -(payment_amt + pay_sp.fee)
+    assert deltas[rcv_addr][0] == royalty_amt 
+
 
 def test_transfer_asset_payment(app_client: client.ApplicationClient):
     pass
 
+
 def test_transfer_royalty_free_move(app_client: client.ApplicationClient):
     pass
+
 
 def test_get_offer(app_client: client.ApplicationClient):
     pass
 
+
 def test_get_policy(app_client: client.ApplicationClient):
     pass
 
+
 def test_get_administrator(app_client: client.ApplicationClient):
     pass
-
-# def test_app_bootstrap(
-#    creator_app_client: client.ApplicationClient, assets: tuple[int, int]
-# ):
-#    asset_a, asset_b = assets
-#
-#    # Bootstrap to create pool token and set global state
-#    sp = creator_app_client.client.suggested_params()
-#    ptxn = TransactionWithSigner(
-#        txn=transaction.PaymentTxn(
-#            creator_app_client.get_sender(), sp, creator_app_client.app_addr, int(1e7)
-#        ),
-#        signer=creator_app_client.get_signer(),
-#    )
-#    result = creator_app_client.call(
-#        ConstantProductAMM.bootstrap, seed=ptxn, a_asset=asset_a, b_asset=asset_b
-#    )
-#    pool_token = result.return_value
-#    assert pool_token > 0, "We should have created a pool token with asset id>0"
-#
-#    # Check pool token params
-#    token_info = creator_app_client.client.asset_info(pool_token)
-#    assert token_info["params"]["name"] == "DPT-A-B"
-#    assert token_info["params"]["total"] == TOTAL_POOL_TOKENS
-#    assert token_info["params"]["reserve"] == creator_app_client.app_addr
-#    assert token_info["params"]["manager"] == creator_app_client.app_addr
-#    assert token_info["params"]["creator"] == creator_app_client.app_addr
-#
-#    # Make sure we're opted in
-#    ai = creator_app_client.get_application_account_info()
-#    assert len(ai["assets"]) == 3, "Should have 3 assets, A/B/Pool"
-#
-#    # Make sure our state is updated
-#    app_state = creator_app_client.get_application_state()
-#    assert app_state[ConstantProductAMM.pool_token.str_key()] == pool_token
-#    assert app_state[ConstantProductAMM.asset_a.str_key()] == asset_a
-#    assert app_state[ConstantProductAMM.asset_b.str_key()] == asset_b
-#
-#
-# def test_app_fund(creator_app_client: ApplicationClient):
-#    app_addr, addr, signer = (
-#        creator_app_client.app_addr,
-#        creator_app_client.sender,
-#        creator_app_client.signer,
-#    )
-#
-#    asset_list = _get_tokens_from_state(creator_app_client)
-#    _opt_in_to_token(addr, signer, asset_list[POOL_IDX])
-#
-#    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
-#
-#    a_amount = 10000
-#    b_amount = 3000
-#
-#    sp = algod_client.suggested_params()
-#    creator_app_client.call(
-#        ConstantProductAMM.mint,
-#        a_xfer=TransactionWithSigner(
-#            txn=transaction.AssetTransferTxn(
-#                addr, sp, app_addr, a_amount, asset_list[A_IDX]
-#            ),
-#            signer=signer,
-#        ),
-#        b_xfer=TransactionWithSigner(
-#            txn=transaction.AssetTransferTxn(
-#                addr, sp, app_addr, b_amount, asset_list[B_IDX]
-#            ),
-#            signer=signer,
-#        ),
-#        pool_asset=asset_list[POOL_IDX],
-#        a_asset=asset_list[A_IDX],
-#        b_asset=asset_list[B_IDX],
-#    )
-#
-#    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
-#
-#    creator_deltas = [creator_before[idx] - creator_after[idx] for idx in range(3)]
-#    app_deltas = [app_before[idx] - app_after[idx] for idx in range(3)]
-#
-#    # We didn't lose any tokens
-#    assert creator_deltas[0] == -1 * app_deltas[0]
-#    assert creator_deltas[1] == -1 * app_deltas[1]
-#    assert creator_deltas[2] == -1 * app_deltas[2]
-#
-#    assert creator_deltas[A_IDX] == a_amount
-#    assert creator_deltas[B_IDX] == b_amount
-#
-#    expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - ConstantProductAMM._scale)
-#    assert app_deltas[POOL_IDX] == expected_pool_tokens
-#
-#    ratio = _get_ratio_from_state(creator_app_client)
-#    expected_ratio = int((a_amount * ConstantProductAMM._scale) / b_amount)
-#    assert ratio == expected_ratio
-#
-#
-# def test_mint(creator_app_client: ApplicationClient):
-#    app_addr, addr, signer = (
-#        creator_app_client.app_addr,
-#        creator_app_client.sender,
-#        creator_app_client.signer,
-#    )
-#
-#    asset_list = _get_tokens_from_state(creator_app_client)
-#
-#    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
-#
-#    ratio_before = _get_ratio_from_state(creator_app_client)
-#
-#    a_amount = 40000
-#    b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
-#
-#    sp = algod_client.suggested_params()
-#    creator_app_client.call(
-#        ConstantProductAMM.mint,
-#        a_xfer=TransactionWithSigner(
-#            txn=transaction.AssetTransferTxn(
-#                addr, sp, app_addr, a_amount, asset_list[A_IDX]
-#            ),
-#            signer=signer,
-#        ),
-#        b_xfer=TransactionWithSigner(
-#            txn=transaction.AssetTransferTxn(
-#                addr, sp, app_addr, b_amount, asset_list[B_IDX]
-#            ),
-#            signer=signer,
-#        ),
-#        pool_asset=asset_list[POOL_IDX],
-#        a_asset=asset_list[A_IDX],
-#        b_asset=asset_list[B_IDX],
-#    )
-#
-#    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
-#
-#    creator_deltas = [
-#        creator_before[idx] - creator_after[idx] for idx in range(len(asset_list))
-#    ]
-#    app_deltas = [app_before[idx] - app_after[idx] for idx in range(len(asset_list))]
-#
-#    assert (
-#        sum([creator_deltas[idx] + app_deltas[idx] for idx in range(len(asset_list))])
-#        == 0
-#    ), "We lost tokens somewhere?"
-#
-#    # Creator lost the right amount
-#    assert creator_deltas[A_IDX] == a_amount
-#    assert creator_deltas[B_IDX] == b_amount
-#
-#    # We minted the correct amount of pool tokens
-#    issued = TOTAL_POOL_TOKENS - app_before[POOL_IDX]
-#    expected_pool_tokens = _get_tokens_to_mint(
-#        issued,
-#        a_amount,
-#        app_before[A_IDX],
-#        b_amount,
-#        app_before[B_IDX],
-#        ConstantProductAMM._scale,
-#    )
-#    assert app_deltas[POOL_IDX] == int(expected_pool_tokens)
-#
-#    # We updated the ratio accordingly
-#    actual_ratio = _get_ratio_from_state(creator_app_client)
-#    expected_ratio = _expect_ratio(app_after[A_IDX], app_after[B_IDX])
-#    assert actual_ratio == expected_ratio
-#
-#
-# def test_burn(creator_app_client: ApplicationClient):
-#    app_addr, addr, signer = (
-#        creator_app_client.app_addr,
-#        creator_app_client.sender,
-#        creator_app_client.signer,
-#    )
-#
-#    asset_list = _get_tokens_from_state(creator_app_client)
-#
-#    ratio_before = _get_ratio_from_state(creator_app_client)
-#
-#    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
-#
-#    burn_amt = creator_before[POOL_IDX] // 10
-#
-#    sp = algod_client.suggested_params()
-#
-#    try:
-#        creator_app_client.call(
-#            ConstantProductAMM.burn,
-#            pool_xfer=TransactionWithSigner(
-#                txn=transaction.AssetTransferTxn(
-#                    addr, sp, app_addr, burn_amt, asset_list[POOL_IDX]
-#                ),
-#                signer=signer,
-#            ),
-#            pool_asset=asset_list[POOL_IDX],
-#            a_asset=asset_list[A_IDX],
-#            b_asset=asset_list[B_IDX],
-#        )
-#    except Exception as e:
-#        print(creator_app_client.wrap_approval_exception(e))
-#
-#    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
-#
-#    creator_deltas = [
-#        creator_before[idx] - creator_after[idx] for idx in range(len(asset_list))
-#    ]
-#    app_deltas = [app_before[idx] - app_after[idx] for idx in range(len(asset_list))]
-#
-#    assert (
-#        sum([creator_deltas[idx] + app_deltas[idx] for idx in range(len(asset_list))])
-#        == 0
-#    ), "We lost tokens somewhere?"
-#
-#    assert creator_deltas[POOL_IDX] == burn_amt
-#
-#    # We minted the correct amount of pool tokens
-#    issued = TOTAL_POOL_TOKENS - app_before[POOL_IDX]
-#    a_supply = app_before[A_IDX]
-#    b_supply = app_before[B_IDX]
-#
-#    expected_a_tokens = _get_tokens_to_burn(a_supply, burn_amt, issued)
-#    assert app_deltas[A_IDX] == int(expected_a_tokens)
-#
-#    expected_b_tokens = _get_tokens_to_burn(b_supply, burn_amt, issued)
-#    assert app_deltas[B_IDX] == int(expected_b_tokens)
-#
-#    ratio_after = _get_ratio_from_state(creator_app_client)
-#
-#    # Ratio should be identical?
-#    # assert ratio_before == ratio_after
-#
-#    expected_ratio = _expect_ratio(app_after[A_IDX], app_after[B_IDX])
-#    assert ratio_after == expected_ratio
-#
-#
-# def test_swap(creator_app_client: ApplicationClient):
-#    app_addr, addr, signer = (
-#        creator_app_client.app_addr,
-#        creator_app_client.sender,
-#        creator_app_client.signer,
-#    )
-#
-#    asset_list = _get_tokens_from_state(creator_app_client)
-#
-#    app_before, creator_before = _get_balances([app_addr, addr], asset_list)
-#
-#    swap_amt = creator_before[A_IDX] // 10
-#
-#    sp = algod_client.suggested_params()
-#
-#    creator_app_client.call(
-#        ConstantProductAMM.swap,
-#        swap_xfer=TransactionWithSigner(
-#            txn=transaction.AssetTransferTxn(
-#                addr, sp, app_addr, swap_amt, asset_list[A_IDX]
-#            ),
-#            signer=signer,
-#        ),
-#        pool_asset=asset_list[POOL_IDX],
-#        a_asset=asset_list[A_IDX],
-#        b_asset=asset_list[B_IDX],
-#    )
-#
-#    app_after, creator_after = _get_balances([app_addr, addr], asset_list)
-#
-#    creator_deltas = [creator_before[idx] - creator_after[idx] for idx in range(3)]
-#    app_deltas = [app_before[idx] - app_after[idx] for idx in range(3)]
-#
-#    # We didn't lose any tokens
-#    assert (
-#        sum([creator_deltas[idx] + app_deltas[idx] for idx in range(len(asset_list))])
-#        == 0
-#    ), "We lost tokens somewhere?"
-#
-#    assert creator_deltas[A_IDX] == swap_amt
-#
-#    # We minted the correct amount of pool tokens
-#    a_supply = app_before[A_IDX]
-#    b_supply = app_before[B_IDX]
-#
-#    expected_b_tokens = _get_tokens_to_swap(
-#        swap_amt, a_supply, b_supply, ConstantProductAMM._scale, ConstantProductAMM._fee
-#    )
-#    assert app_deltas[B_IDX] == int(expected_b_tokens)
-#
-#    ratio_after = _get_ratio_from_state(creator_app_client)
-#    expected_ratio = _expect_ratio(app_after[A_IDX], app_after[B_IDX])
-#    assert ratio_after == expected_ratio
-#
-#
-# def _get_tokens_to_mint(
-#    issued: int, a_amt: int, a_supply: int, b_amt: int, b_supply: int, scale: int
-# ) -> int:
-#    a_ratio = (a_amt * scale) / a_supply
-#    b_ratio = (b_amt * scale) / b_supply
-#
-#    if a_ratio < b_ratio:
-#        return int((a_ratio * issued) / scale)
-#
-#    return int((b_ratio * issued) / scale)
-#
-#
-# def _get_tokens_to_swap(in_amount, in_supply, out_supply, scale, fee) -> int:
-#    factor = scale - fee
-#    return int(
-#        (in_amount * factor * out_supply) / ((in_supply * scale) + (in_amount * factor))
-#    )
-#
-#
-# def _get_tokens_to_burn(asset_supply, burn_amount, pool_issued):
-#    return int((asset_supply * burn_amount) / pool_issued)
-#
-#
-# def _get_ratio_from_state(creator_app_client: ApplicationClient):
-#    app_state = creator_app_client.get_application_state()
-#    return app_state[ConstantProductAMM.ratio.str_key()]
-#
-#
-# def _get_tokens_from_state(
-#    creator_app_client: ApplicationClient,
-# ) -> tuple[int, int, int]:
-#    app_state = creator_app_client.get_application_state()
-#    return (
-#        app_state[ConstantProductAMM.pool_token.str_key()],
-#        app_state[ConstantProductAMM.asset_a.str_key()],
-#        app_state[ConstantProductAMM.asset_b.str_key()],
-#    )
-#
-#
-# def _get_balances(addrs: list[str], assets: list[int]) -> list[list[int]]:
-#    balances: list[list[int]] = []
-#
-#    for addr in addrs:
-#        addr_bals = {
-#            asset["asset-id"]: asset["amount"]
-#            for asset in algod_client.account_info(addr)["assets"]
-#            if asset["asset-id"] in assets
-#        }
-#        balances.append([addr_bals[asset] for asset in assets])
-#
-#    return balances
-#
-#
-# def _expect_ratio(a_sup, b_sup):
-#    return int((a_sup * ConstantProductAMM._scale) / b_sup)
-#
-#
-# def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
-#    sp = algod_client.suggested_params()
-#    atc = AtomicTransactionComposer()
-#    atc.add_transaction(
-#        TransactionWithSigner(
-#            txn=transaction.AssetTransferTxn(addr, sp, addr, 0, id),
-#            signer=signer,
-#        )
-#    )
-#    atc.execute(algod_client, 2)
-#

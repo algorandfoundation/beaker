@@ -18,6 +18,7 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
+from pyteal import OnComplete
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
@@ -377,7 +378,13 @@ class ApplicationClient:
             rekey_to=rekey_to,
         )
 
-        result = atc.execute(self.client, 4)
+        try: 
+            result = atc.execute(self.client, 4)
+        except Exception as e:
+            if on_complete == transaction.OnComplete.ClearStateOC:
+                raise self.wrap_clear_exception(e)
+            raise self.wrap_approval_exception(e)
+
         return result.abi_results.pop()
 
     def add_method_call(

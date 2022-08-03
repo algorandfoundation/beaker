@@ -169,8 +169,6 @@ class ARC18(Application):
                 Global.group_size() == Int(2),
                 # App call sent by authorizing address
                 Txn.sender() == offer_auth_addr.load(),
-                # payment txn should also be from auth address
-                payment_txn.get().sender() == offer_auth_addr.load(),
                 # transfer amount <= offered amount
                 royalty_asset_amount.get() <= offer_amt.load(),
                 # Make sure payments are going to the right participants
