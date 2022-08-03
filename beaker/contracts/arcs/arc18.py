@@ -357,7 +357,7 @@ class ARC18(Application):
         self, royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer
     ):
         """get the offered details for an owner by asset id"""
-        return output.decode(self.offers[royalty_asset][owner.address()].get_must())
+        return output.decode(self.offers[royalty_asset.get()][owner.address()].get_must())
 
     @external(read_only=True)
     def get_policy(self, *, output: RoyaltyPolicy):

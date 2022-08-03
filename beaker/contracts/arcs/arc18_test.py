@@ -121,6 +121,10 @@ def test_set_administrator(app_client: client.ApplicationClient, buyer_acct):
         state[ARC18.administrator.str_key()] == decode_address(buyer_addr).hex()
     ), "Expected new admin to be addr passed"
 
+    result = app_client.call(app.get_administrator)
+    assert buyer_addr == result.return_value, "Admin should be set to buyer_addr"
+
+
     with pytest.raises(Exception):
         app_client.call(app.set_administrator, new_admin=buyer_addr)
 
@@ -149,6 +153,12 @@ def test_set_policy(app_client: client.ApplicationClient, royalty_acct):
     assert (
         state[ARC18.royalty_receiver.str_key()] == decode_address(rcv_addr).hex()
     ), "Expected royalty receiver to match what we passed in"
+
+
+    result = app_client.call(app.get_policy)
+    policy = result.return_value
+    assert policy[0] == rcv_addr, "Royalty receiver should equal rcv_addr"
+    assert policy[1] == basis, "Royalty basis should equal basis"
 
     with pytest.raises(Exception):
         app_client.call(
@@ -212,6 +222,12 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
     auth_bytes = decode_address(auth)
 
     assert acct_state[key_bytes] == auth_bytes + amt_bytes
+
+    result = app_client.call(app.get_offer, royalty_asset=royalty_asset, owner=addr)
+    offer = result.return_value
+    assert offer[0] == auth, "Offered auth should equal addr"
+    assert offer[1]  == amt, "Offered amount should equal amount"
+
 
     try:
         # Wrong address
@@ -308,16 +324,4 @@ def test_transfer_asset_payment(app_client: client.ApplicationClient):
 
 
 def test_transfer_royalty_free_move(app_client: client.ApplicationClient):
-    pass
-
-
-def test_get_offer(app_client: client.ApplicationClient):
-    pass
-
-
-def test_get_policy(app_client: client.ApplicationClient):
-    pass
-
-
-def test_get_administrator(app_client: client.ApplicationClient):
     pass
