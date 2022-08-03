@@ -448,6 +448,7 @@ class ARC20(Application):
         close_out_txn = Gtxn[1]
         return Seq(
             Assert(
+                valid_address_length(close_to.address()),
                 self.current_asa_id[Txn.sender()] == close_asset.asset_id(),
                 Global.group_size() >= Int(2),
                 close_out_txn.type_enum() == TxnType.AssetTransfer,
@@ -457,23 +458,35 @@ class ARC20(Application):
                 close_out_txn.asset_close_to() == self.address,
             ),
             # Effects
-            If(Or(self.frozen, self.is_frozen[Txn.sender()])).Then(
-                Assert(close_to.address() == self.address)
-            ),
-            # NOTE: Skip if Underlying ASA has been destroyed to avoid users' lock-in.
             asset_creator := AssetParam().creator(close_asset.asset_id()),
+            # NOTE: If Smart ASA has been destroyed:
+            #   1. The close-to address could be anyone (no check needed)
+            #   2. No InnerTxn happens
             If(asset_creator.hasValue()).Then(
-                Seq(
-                    account_balance := AssetHolding().balance(
-                        Txn.sender(), close_asset.asset_id()
-                    ),
-                    self.do_transfer(
-                        close_asset.asset_id(),
-                        account_balance.value(),
-                        Txn.sender(),
-                        close_to.address(),
-                    ),
-                )
+                # NOTE: Smart ASA has not been destroyed.
+                Assert(self.asa_id == close_asset.asset_id()),
+                If(Or(self.frozen, self.is_frozen[Txn.sender()])).Then(
+                    # NOTE: If Smart ASA is frozen, users can only close-out to
+                    # Creator
+                    Assert(close_to.address() == self.address)
+                ),
+                If(close_to.address() != self.address).Then(
+                    # NOTE: If the target of close-out is not Creator, it MUST
+                    # be opted-in to the current Smart ASA.
+                    Assert(
+                        self.current_asa_id[close_to.address()]
+                        == close_asset.asset_id()
+                    )
+                ),
+                account_balance := AssetHolding().balance(
+                    Txn.sender(), close_asset.asset_id()
+                ),
+                self.do_transfer(
+                    close_asset.asset_id(),
+                    account_balance.value(),
+                    Txn.sender(),
+                    close_to.address(),
+                ),
             ),
         )
 
