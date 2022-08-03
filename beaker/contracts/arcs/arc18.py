@@ -1,5 +1,6 @@
 from typing import Final
 from pyteal import (
+    Reject,
     abi,
     TealType,
     Subroutine,
@@ -9,8 +10,6 @@ from pyteal import (
     Bytes,
     Int,
     Seq,
-    AssetHolding,
-    AssetParam,
     Txn,
     If,
     And,
@@ -19,8 +18,6 @@ from pyteal import (
     TxnField,
     TxnType,
     Not,
-    ExtractUint64,
-    Extract,
     WideRatio,
     Concat,
 )
@@ -109,10 +106,8 @@ class ARC18(Application):
     def set_payment_asset(self, payment_asset: abi.Asset, is_allowed: abi.Bool):
         """Triggers the contract account to opt in or out of an asset that may be used for payment of royalties"""
         return Seq(
-            bal := AssetHolding.balance(
-                Global.current_application_address(), payment_asset.asset_id()
-            ),
-            creator := AssetParam.creator(payment_asset.asset_id()),
+            bal := payment_asset.holding(self.address).balance(),
+            creator := payment_asset.params().creator_address(),
             If(And(is_allowed.get(), Not(bal.hasValue())))
             .Then(
                 # Opt in to asset
@@ -122,7 +117,7 @@ class ARC18(Application):
                         TxnField.xfer_asset: payment_asset.asset_id(),
                         TxnField.asset_amount: Int(0),
                         TxnField.fee: Int(0),
-                        TxnField.asset_receiver: Global.current_application_address(),
+                        TxnField.asset_receiver: self.address,
                     }
                 )
             )
@@ -139,7 +134,8 @@ class ARC18(Application):
                         TxnField.asset_receiver: creator.value(),
                     }
                 )
-            ),
+            )
+            .Else(Reject()),
         )
 
     @external
@@ -160,23 +156,20 @@ class ARC18(Application):
         # Get the auth_addr from local state of the owner
         # If its not present, a 0 is returned and the call fails when we try
         # to compare to the bytes of Txn.sender
-        offer_amt = ScratchVar(TealType.uint64)
-        offer_auth_addr = ScratchVar(TealType.bytes)
-
         valid_transfer_group = Seq(
             (offer := abi.make(self.Offer)).decode(
                 self.offers[royalty_asset.asset_id()][owner.address()]
             ),
-            offer.auth_address.use(lambda auth: offer_auth_addr.store(auth.get())),
-            offer.amount.use(lambda amt: offer_amt.store(amt.get())),
+            (offer_amt := abi.Uint64()).set(offer.amount),
+            (offer_auth := abi.Address()).set(offer.auth_address),
             Assert(
                 Global.group_size() == Int(2),
                 # App call sent by authorizing address
-                Txn.sender() == offer_auth_addr.load(),
+                Txn.sender() == offer_auth.get(),
                 # transfer amount <= offered amount
-                royalty_asset_amount.get() <= offer_amt.load(),
+                royalty_asset_amount.get() <= offer_amt.get(),
                 # Make sure payments are going to the right participants
-                payment_txn.get().receiver() == Application.address,
+                payment_txn.get().receiver() == self.address,
                 royalty_receiver.address() == self.royalty_receiver,
             ),
         )
@@ -202,8 +195,8 @@ class ARC18(Application):
             self.do_update_offered(
                 owner.address(),
                 royalty_asset.asset_id(),
-                offer_auth_addr.load(),
-                offer_amt.load() - royalty_asset_amount.get(),
+                offer_auth.get(),
+                offer_amt.get() - royalty_asset_amount.get(),
                 Txn.sender(),
                 offered_amt.get(),
             ),
@@ -228,28 +221,26 @@ class ARC18(Application):
         # Get the auth_addr from local state of the owner
         # If its not present, a 0 is returned and the call fails when we try
         # to compare to the bytes of Txn.sender
-        offer_amt = ScratchVar(TealType.uint64)
-        offer_auth_addr = ScratchVar(TealType.bytes)
 
         valid_transfer_group = Seq(
             # Get the offer from local state
             (offer := abi.make(self.Offer)).decode(
                 self.offers[royalty_asset.asset_id()][owner.address()]
             ),
-            offer.auth_address.use(lambda auth: offer_auth_addr.store(auth.get())),
-            offer.amount.use(lambda amt: offer_amt.store(amt.get())),
+            (offer_amt := abi.Uint64()).set(offer.amount),
+            (offer_auth := abi.Address()).set(offer.auth_address),
             Assert(
                 Global.group_size() == Int(2),
                 # App call sent by authorizing address
-                Txn.sender() == offer_auth_addr.load(),
+                Txn.sender() == offer_auth.get(),
                 # payment txn should be from auth
-                payment_txn.get().sender() == offer_auth_addr.load(),
+                payment_txn.get().sender() == offer_auth.get(),
                 # transfer amount <= offered amount
-                royalty_asset_amount.get() <= offer_amt.load(),
+                royalty_asset_amount.get() <= offer_amt.get(),
                 # Passed the correct account according to the policy
                 payment_txn.get().xfer_asset() == payment_asset.asset_id(),
                 # Make sure payments go to the right participants
-                payment_txn.get().asset_receiver() == Application.address,
+                payment_txn.get().asset_receiver() == self.address,
                 royalty_receiver.address() == self.royalty_receiver,
             ),
         )
@@ -273,8 +264,8 @@ class ARC18(Application):
             self.do_update_offered(
                 owner.address(),
                 royalty_asset.asset_id(),
-                offer_auth_addr.load(),
-                offer_amt.load() - royalty_asset_amount.get(),
+                offer_auth.get(),
+                offer_amt.get() - royalty_asset_amount.get(),
                 Txn.sender(),
                 offered_amt.get(),
             ),
@@ -293,13 +284,14 @@ class ARC18(Application):
             (offer_auth := abi.Address()).set(offer.auth_address),
             (prev_amt := abi.Uint64()).set(previous_offer.amount),
             (prev_auth := abi.Address()).set(previous_offer.auth_address),
-            bal := AssetHolding.balance(Txn.sender(), royalty_asset.asset_id()),
-            cb := AssetParam.clawback(royalty_asset.asset_id()),
+            bal := royalty_asset.holding(Txn.sender()).balance(),
+            cb := royalty_asset.params().clawback_address(),
             Assert(
                 # Check that caller _has_ this asset
                 bal.value() >= offer_amt.get(),
                 # Check that this app is the clawback for it
                 cb.value() == self.address,
+                # Rest of the checks done in do_update_offered
             ),
             # Set the auth addr for this asset
             self.do_update_offered(
@@ -322,20 +314,18 @@ class ARC18(Application):
         offered_amt: abi.Uint64,
     ):
         """Moves the asset passed from one account to another"""
-        curr_offer_amt = ScratchVar(TealType.uint64)
-        curr_offer_auth = ScratchVar(TealType.bytes)
         return Seq(
             (offer := abi.make(self.Offer)).decode(
                 self.offers[royalty_asset.asset_id()][owner.address()]
             ),
-            offer.auth_address.use(lambda auth: curr_offer_auth.store(auth.get())),
-            offer.amount.use(lambda amt: curr_offer_amt.store(amt.get())),
+            (curr_offer_amt := abi.Uint64()).set(offer.amount),
+            (curr_offer_auth := abi.Address()).set(offer.auth_address),
             # Must match what is currently offered and amt to move is less than
             # or equal to what has been offered
             Assert(
-                curr_offer_amt.load() == offered_amt.get(),
-                curr_offer_amt.load() >= royalty_asset_amount.get(),
-                curr_offer_auth.load() == Txn.sender(),
+                curr_offer_amt.get() == offered_amt.get(),
+                curr_offer_amt.get() >= royalty_asset_amount.get(),
+                curr_offer_auth.get() == Txn.sender(),
             ),
             # Delete the offer
             self.do_update_offered(
@@ -343,8 +333,8 @@ class ARC18(Application):
                 royalty_asset.asset_id(),
                 Bytes(""),
                 Int(0),
-                curr_offer_auth.load(),
-                curr_offer_amt.load(),
+                curr_offer_auth.get(),
+                curr_offer_amt.get(),
             ),
             # Move it
             self.do_move_asset(
@@ -474,9 +464,8 @@ class ARC18(Application):
 
     @internal(TealType.none)
     def do_update_offered(self, acct, asset, auth, amt, prev_auth, prev_amt):
-        offer_state = self.offers[asset]
         return Seq(
-            previous := offer_state[acct].get_maybe(),
+            previous := self.offers[asset][acct].get_maybe(),
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
             If(
                 previous.hasValue(),
@@ -492,8 +481,9 @@ class ARC18(Application):
             # Now consider the new offer, if its 0 this is a delete, otherwise update
             If(
                 amt > Int(0),
-                offer_state[acct].set(Concat(auth, Itob(amt))),
-                offer_state[acct].delete(),
+                # Cheat since we know the encoding
+                self.offers[asset][acct].set(Concat(auth, Itob(amt))),
+                self.offers[asset][acct].delete(),
             ),
         )
 

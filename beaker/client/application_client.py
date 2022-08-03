@@ -18,7 +18,6 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
-from pyteal import OnComplete
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes

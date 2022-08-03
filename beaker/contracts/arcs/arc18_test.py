@@ -1,7 +1,11 @@
 import pytest
 from typing import cast
 from algosdk.constants import ZERO_ADDRESS
-from algosdk.atomic_transaction_composer import *
+from algosdk.atomic_transaction_composer import (
+    AtomicTransactionComposer,
+    AccountTransactionSigner,
+    TransactionWithSigner,
+)
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
@@ -257,7 +261,7 @@ def test_transfer_algo_payment(
 ):
     app, addr, app_addr = (
         cast(ARC18, app_client.app),
-        app_client.sender,
+        app_client.get_sender(),
         app_client.app_addr,
     )
 
@@ -304,6 +308,7 @@ def test_transfer_algo_payment(
     assert (
         deltas[addr][0] == payment_amt - royalty_amt
     ), "Owner should receive payment - royalty amt"
+
     assert deltas[buyer_addr][0] == -(
         payment_amt + pay_sp.fee
     ), "Buyer should have paid full payment + any fees"
