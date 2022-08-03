@@ -287,11 +287,7 @@ def test_transfer_algo_payment(
     )
 
     balance_after = testing.get_balances(app_client.client, balance_accts)
-
-    deltas = {
-        acct: testing.balance_delta(balance_before[acct], balance_after[acct])
-        for acct in balance_accts
-    }
+    deltas = testing.get_deltas(balance_before, balance_after)
 
     royalty_amt = payment_amt / 100
 

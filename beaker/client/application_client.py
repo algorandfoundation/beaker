@@ -378,7 +378,7 @@ class ApplicationClient:
             rekey_to=rekey_to,
         )
 
-        try: 
+        try:
             result = atc.execute(self.client, 4)
         except Exception as e:
             if on_complete == transaction.OnComplete.ClearStateOC:
