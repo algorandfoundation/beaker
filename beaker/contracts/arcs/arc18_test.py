@@ -124,7 +124,6 @@ def test_set_administrator(app_client: client.ApplicationClient, buyer_acct):
     result = app_client.call(app.get_administrator)
     assert buyer_addr == result.return_value, "Admin should be set to buyer_addr"
 
-
     with pytest.raises(Exception):
         app_client.call(app.set_administrator, new_admin=buyer_addr)
 
@@ -145,7 +144,7 @@ def test_set_policy(app_client: client.ApplicationClient, royalty_acct):
     rcv_addr, rcv_sk, rcv_signer = royalty_acct
     basis = 100
 
-    app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver=rcv_addr)
+    app_client.call(app.set_policy, royalty_policy=[rcv_addr, basis])
     state = app_client.get_application_state()
     assert (
         state[ARC18.royalty_basis.str_key()] == basis
@@ -153,7 +152,6 @@ def test_set_policy(app_client: client.ApplicationClient, royalty_acct):
     assert (
         state[ARC18.royalty_receiver.str_key()] == decode_address(rcv_addr).hex()
     ), "Expected royalty receiver to match what we passed in"
-
 
     result = app_client.call(app.get_policy)
     policy = result.return_value
@@ -163,12 +161,14 @@ def test_set_policy(app_client: client.ApplicationClient, royalty_acct):
     with pytest.raises(Exception):
         app_client.call(
             app.set_policy,
-            royalty_basis=ARC18._basis_point_multiplier + 1,
-            royalty_receiver=rcv_addr,
+            royalty_policy=[
+                rcv_addr,
+                ARC18._basis_point_multiplier + 1,
+            ],
         )
 
     with pytest.raises(Exception):
-        app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver="")
+        app_client.call(app.set_policy, royalty_policy=["", basis])
 
 
 def test_set_payment_asset(app_client: client.ApplicationClient, payment_asset: int):
@@ -209,10 +209,8 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
     app_client.call(
         app.offer,
         royalty_asset=royalty_asset,
-        royalty_asset_amount=amt,
-        auth_address=auth,
-        prev_offer_amt=0,
-        prev_offer_auth=ZERO_ADDRESS,
+        offer=[auth, amt],
+        previous_offer=[ZERO_ADDRESS, 0],
     )
 
     acct_state = app_client.get_account_state(raw=True)
@@ -226,18 +224,15 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
     result = app_client.call(app.get_offer, royalty_asset=royalty_asset, owner=addr)
     offer = result.return_value
     assert offer[0] == auth, "Offered auth should equal addr"
-    assert offer[1]  == amt, "Offered amount should equal amount"
-
+    assert offer[1] == amt, "Offered amount should equal amount"
 
     try:
         # Wrong address
         app_client.call(
             app.offer,
             royalty_asset=royalty_asset,
-            royalty_asset_amount=amt,
-            auth_address=auth,
-            prev_offer_amt=1,
-            prev_offer_auth=ZERO_ADDRESS,
+            offer=[auth, amt],
+            previous_offer=[ZERO_ADDRESS, 1],
         )
     except LogicException as le:
         # TODO: get _actual_ assert from pyteal with message
@@ -249,10 +244,8 @@ def test_offer(app_client: client.ApplicationClient, royalty_asset: int):
         app_client.call(
             app.offer,
             royalty_asset=royalty_asset,
-            royalty_asset_amount=amt,
-            auth_address=auth,
-            prev_offer_amt=0,
-            prev_offer_auth=auth,
+            offer=[auth, amt],
+            previous_offer=[auth, 0],
         )
     except LogicException as le:
         # assert le.assert_comment == "wrong amount"

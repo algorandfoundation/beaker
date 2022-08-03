@@ -50,11 +50,13 @@ class ARC18(Application):
     administrator: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address()
     )
+
     royalty_basis: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.uint64, key=Bytes("royalty_basis")
+        stack_type=TealType.uint64
     )
+
     royalty_receiver: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.bytes, key=Bytes("royalty_receiver")
+        stack_type=TealType.bytes
     )
 
     offers: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
@@ -93,12 +95,14 @@ class ARC18(Application):
         return self.administrator.set(new_admin.get())
 
     @external(authorize=Authorize.only(administrator))
-    def set_policy(self, royalty_basis: abi.Uint64, royalty_receiver: abi.Address):
+    def set_policy(self, royalty_policy: RoyaltyPolicy):
         """Sets the royalty basis and royalty receiver for this royalty enforcer"""
         return Seq(
-            Assert(royalty_basis.get() <= self.basis_point_multiplier),
-            self.royalty_basis.set(royalty_basis.get()),
-            self.royalty_receiver.set(royalty_receiver.get()),
+            (basis := abi.Uint64()).set(royalty_policy.basis),
+            (rcv := abi.Address()).set(royalty_policy.receiver),
+            Assert(basis.get() <= self.basis_point_multiplier),
+            self.royalty_basis.set(basis.get()),
+            self.royalty_receiver.set(rcv.encode()),
         )
 
     @external(authorize=Authorize.only(administrator))
@@ -160,11 +164,11 @@ class ARC18(Application):
         offer_auth_addr = ScratchVar(TealType.bytes)
 
         valid_transfer_group = Seq(
-            (offer := ScratchVar()).store(
+            (offer := abi.make(self.Offer)).decode(
                 self.offers[royalty_asset.asset_id()][owner.address()]
             ),
-            offer_auth_addr.store(self.offered_auth(offer.load())),
-            offer_amt.store(self.offered_amount(offer.load())),
+            offer.auth_address.use(lambda auth: offer_auth_addr.store(auth.get())),
+            offer.amount.use(lambda amt: offer_amt.store(amt.get())),
             Assert(
                 Global.group_size() == Int(2),
                 # App call sent by authorizing address
@@ -229,11 +233,11 @@ class ARC18(Application):
 
         valid_transfer_group = Seq(
             # Get the offer from local state
-            (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()][owner.address()].get_must()
+            (offer := abi.make(self.Offer)).decode(
+                self.offers[royalty_asset.asset_id()][owner.address()]
             ),
-            offer_auth_addr.store(self.offered_auth(offer.load())),
-            offer_amt.store(self.offered_amount(offer.load())),
+            offer.auth_address.use(lambda auth: offer_auth_addr.store(auth.get())),
+            offer.amount.use(lambda amt: offer_amt.store(amt.get())),
             Assert(
                 Global.group_size() == Int(2),
                 # App call sent by authorizing address
@@ -280,18 +284,20 @@ class ARC18(Application):
     def offer(
         self,
         royalty_asset: abi.Asset,
-        royalty_asset_amount: abi.Uint64,
-        auth_address: abi.Address,
-        prev_offer_amt: abi.Uint64,
-        prev_offer_auth: abi.Address,
+        offer: Offer,
+        previous_offer: Offer,
     ):
         """Flags that an asset is offered for sale and sets address authorized to submit the transfer"""
         return Seq(
+            (offer_amt := abi.Uint64()).set(offer.amount),
+            (offer_auth := abi.Address()).set(offer.auth_address),
+            (prev_amt := abi.Uint64()).set(previous_offer.amount),
+            (prev_auth := abi.Address()).set(previous_offer.auth_address),
             bal := AssetHolding.balance(Txn.sender(), royalty_asset.asset_id()),
             cb := AssetParam.clawback(royalty_asset.asset_id()),
             Assert(
                 # Check that caller _has_ this asset
-                bal.value() >= royalty_asset_amount.get(),
+                bal.value() >= offer_amt.get(),
                 # Check that this app is the clawback for it
                 cb.value() == self.address,
             ),
@@ -299,10 +305,10 @@ class ARC18(Application):
             self.do_update_offered(
                 Txn.sender(),
                 royalty_asset.asset_id(),
-                auth_address.get(),
-                royalty_asset_amount.get(),
-                prev_offer_auth.get(),
-                prev_offer_amt.get(),
+                offer_auth.get(),
+                offer_amt.get(),
+                prev_auth.get(),
+                prev_amt.get(),
             ),
         )
 
@@ -316,13 +322,14 @@ class ARC18(Application):
         offered_amt: abi.Uint64,
     ):
         """Moves the asset passed from one account to another"""
-
+        curr_offer_amt = ScratchVar(TealType.uint64)
+        curr_offer_auth = ScratchVar(TealType.bytes)
         return Seq(
-            (offer := ScratchVar()).store(
+            (offer := abi.make(self.Offer)).decode(
                 self.offers[royalty_asset.asset_id()][owner.address()]
             ),
-            (curr_offer_amt := ScratchVar()).store(self.offered_amount(offer.load())),
-            (curr_offer_auth := ScratchVar()).store(self.offered_auth(offer.load())),
+            offer.auth_address.use(lambda auth: curr_offer_auth.store(auth.get())),
+            offer.amount.use(lambda amt: curr_offer_amt.store(amt.get())),
             # Must match what is currently offered and amt to move is less than
             # or equal to what has been offered
             Assert(
@@ -357,15 +364,17 @@ class ARC18(Application):
         self, royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer
     ):
         """get the offered details for an owner by asset id"""
-        return output.decode(self.offers[royalty_asset.get()][owner.address()].get_must())
+        return output.decode(
+            self.offers[royalty_asset.get()][owner.address()].get_must()
+        )
 
     @external(read_only=True)
     def get_policy(self, *, output: RoyaltyPolicy):
         """get the royalty policy for this application"""
         return Seq(
-            (addr := abi.Address()).decode(self.royalty_receiver),
-            (amt := abi.Uint64()).set(self.royalty_basis),
-            output.set(addr, amt),
+            (basis := abi.Uint64()).set(self.royalty_basis.get_must()),
+            (rcv := abi.Address()).set(self.royalty_receiver.get_must()),
+            output.set(rcv, basis),
         )
 
     @external(read_only=True)
@@ -376,12 +385,6 @@ class ARC18(Application):
     ###
     # Utils
     ###
-
-    def offered_amount(self, offer):
-        return ExtractUint64(offer, Int(32))
-
-    def offered_auth(self, offer):
-        return Extract(offer, Int(0), Int(32))
 
     def compute_royalty_amount(self, payment_amt, royalty_basis):
         return WideRatio([payment_amt, royalty_basis], [self.basis_point_multiplier])
@@ -477,9 +480,12 @@ class ARC18(Application):
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
             If(
                 previous.hasValue(),
-                Assert(
-                    self.offered_amount(previous.value()) == prev_amt,
-                    self.offered_auth(previous.value()) == prev_auth,
+                Seq(
+                    (prev_offer := abi.make(self.Offer)).decode(previous.value()),
+                    prev_offer.amount.use(lambda amt: Assert(amt.get() == prev_amt)),
+                    prev_offer.auth_address.use(
+                        lambda addr: Assert(addr.get() == prev_auth)
+                    ),
                 ),
                 Assert(prev_amt == Int(0), prev_auth == Global.zero_address()),
             ),
