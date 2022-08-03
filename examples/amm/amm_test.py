@@ -7,6 +7,7 @@ from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
 from beaker import client, sandbox, testing
 from beaker.client.application_client import ApplicationClient
+from beaker.client.logic_error import LogicException
 
 from .amm import ConstantProductAMM
 
@@ -224,6 +225,57 @@ def test_mint(creator_app_client: ApplicationClient):
         balances_after[app_addr][a_asset], balances_after[app_addr][b_asset]
     )
     assert actual_ratio == expected_ratio
+
+
+def test_bad_mint(creator_app_client: ApplicationClient):
+    app_addr, addr, signer = (
+        creator_app_client.app_addr,
+        creator_app_client.sender,
+        creator_app_client.signer,
+    )
+
+    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+
+    a_amount = 40000
+    b_amount = 1000
+
+    sp = algod_client.suggested_params()
+
+    try:
+        creator_app_client.call(
+            ConstantProductAMM.mint,
+            a_xfer=TransactionWithSigner(
+                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 0, a_asset),
+                signer=signer,
+            ),
+            b_xfer=TransactionWithSigner(
+                txn=transaction.AssetTransferTxn(addr, sp, app_addr, b_amount, b_asset),
+                signer=signer,
+            ),
+            pool_asset=pool_asset,
+            a_asset=a_asset,
+            b_asset=b_asset,
+        )
+    except LogicException as le:
+        assert le.msg.startswith("assert failed")
+
+    try:
+        creator_app_client.call(
+            ConstantProductAMM.mint,
+            a_xfer=TransactionWithSigner(
+                txn=transaction.AssetTransferTxn(addr, sp, app_addr, a_amount, a_asset),
+                signer=signer,
+            ),
+            b_xfer=TransactionWithSigner(
+                txn=transaction.AssetTransferTxn(addr, sp, app_addr, 0, b_asset),
+                signer=signer,
+            ),
+            pool_asset=pool_asset,
+            a_asset=a_asset,
+            b_asset=b_asset,
+        )
+    except LogicException as le:
+        assert le.msg.startswith("assert failed")
 
 
 def test_burn(creator_app_client: ApplicationClient):
