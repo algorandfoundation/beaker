@@ -39,17 +39,22 @@ from beaker import (
 
 
 class ARC18(Application):
-    Offer = abi.Tuple2[abi.Address, abi.Uint64]
-    Policy = abi.Tuple2[abi.Address, abi.Uint64]
+    class Offer(abi.NamedTuple):
+        auth_address: abi.Field[abi.Address]
+        amount: abi.Field[abi.Uint64]
+
+    class RoyaltyPolicy(abi.NamedTuple):
+        receiver: abi.Field[abi.Address]
+        basis: abi.Field[abi.Uint64]
 
     administrator: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, key=Bytes("admin"), default=Global.creator_address()
     )
     royalty_basis: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.uint64, key=Bytes("royalty_basis"), static=True
+        stack_type=TealType.uint64, key=Bytes("royalty_basis")
     )
     royalty_receiver: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.bytes, key=Bytes("royalty_receiver"), static=True
+        stack_type=TealType.bytes, key=Bytes("royalty_receiver")
     )
 
     offers: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
@@ -357,7 +362,7 @@ class ARC18(Application):
         return output.decode(self.offers[royalty_asset][owner.address()].get_must())
 
     @external(read_only=True)
-    def get_policy(self, *, output: Policy):
+    def get_policy(self, *, output: RoyaltyPolicy):
         """get the royalty policy for this application"""
         return Seq(
             (addr := abi.Address()).decode(self.royalty_receiver),

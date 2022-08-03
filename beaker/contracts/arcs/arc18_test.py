@@ -1,5 +1,5 @@
 import pytest
-
+from typing import cast
 from algosdk.atomic_transaction_composer import *
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
@@ -26,27 +26,27 @@ def user_acct() -> tuple[str, str, AccountTransactionSigner]:
 
 @pytest.fixture(scope="session")
 def assets(creator_acct) -> tuple[int, int]:
-    addr, sk, signer = creator_acct
+    addr, sk, _ = creator_acct
     sp = algod_client.suggested_params()
     txns: list[transaction.Transaction] = transaction.assign_group_id(
         [
             transaction.AssetCreateTxn(
                 addr,
                 sp,
-                10,
                 1,
+                0,
                 False,
-                asset_name="asset a",
-                unit_name="A",
+                asset_name="Test NFT",
+                unit_name="tstnft",
             ),
             transaction.AssetCreateTxn(
                 addr,
                 sp,
-                10,
-                1,
+                1000000,
+                0,
                 False,
-                asset_name="asset b",
-                unit_name="B",
+                asset_name="Conch Shells",
+                unit_name="cshell",
             ),
         ]
     )
@@ -59,38 +59,95 @@ def assets(creator_acct) -> tuple[int, int]:
 
 
 @pytest.fixture(scope="session")
-def creator_app_client(creator_acct) -> client.ApplicationClient:
+def app_client(creator_acct) -> client.ApplicationClient:
     _, _, signer = creator_acct
     app = ARC18()
     app_client = client.ApplicationClient(algod_client, app, signer=signer)
     return app_client
 
 
-def test_app_create(creator_app_client: client.ApplicationClient):
-    creator_app_client.create()
-    app_state = creator_app_client.get_application_state()
-    sender = creator_app_client.get_sender()
+def test_app_create(app_client: client.ApplicationClient):
+    app_client.create()
+    app_state = app_client.get_application_state()
+    sender = app_client.get_sender()
 
     assert (
         app_state[ARC18.administrator.str_key()] == decode_address(sender).hex()
     ), "The administrator should be my address"
 
 
-def test_set_ratio(creator_app_client: client.ApplicationClient):
+def test_set_administrator(app_client: client.ApplicationClient, user_acct):
+    app = cast(ARC18, app_client.app)
+    addr = app_client.get_sender()
+
+    user_addr, _, user_signer = user_acct
+
+    app_client.call(app.set_administrator, new_admin=user_addr)
+    state = app_client.get_application_state()
+    assert state[ARC18.administrator.str_key()] == decode_address(user_addr).hex(), "Expected new admin to be addr passed"
+
+    with pytest.raises(Exception):
+        app_client.call(app.set_administrator, new_admin=user_addr)
+
+    user_client = app_client.prepare(signer=user_signer)
+    user_client.call(app.set_administrator, new_admin=addr)
+    state = app_client.get_application_state()
+    assert state[ARC18.administrator.str_key()] == decode_address(addr).hex(), "Expected new admin to be addr passed"
+
+    with pytest.raises(Exception):
+        user_client.call(app.set_administrator, new_admin=addr)
+
+
+
+def test_set_policy(app_client: client.ApplicationClient):
+    app = cast(ARC18,app_client.app)
+
+    rcv = app_client.get_sender()
+    basis = 100
+
+    app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver=rcv)
+    state = app_client.get_application_state()
+    assert state[ARC18.royalty_basis.str_key()] == basis, "Expected royalty basis to match what we passed in"
+    assert state[ARC18.royalty_receiver.str_key()] == decode_address(rcv).hex(), "Expected royalty receiver to match what we passed in"
+
+    with pytest.raises(Exception):
+        app_client.call(app.set_policy, royalty_basis=ARC18._basis_point_multiplier + 1, royalty_receiver=rcv)
+
+    with pytest.raises(Exception):
+        app_client.call(app.set_policy, royalty_basis=basis, royalty_receiver="")
+
+
+def test_set_payment_asset(app_client: client.ApplicationClient, assets: tuple[int,int]):
+    app = cast(ARC18, app_client.app)
+    _, payment_asset = assets
+    app_client.call(app.set_payment_asset, payment_asset=payment_asset, is_allowed=True)
+
+    info = app_client.get_application_account_info()
+
+
+
     pass
 
-
-def test_set_administrator(creator_app_client: client.ApplicationClient):
+def test_offer(app_client: client.ApplicationClient):
     pass
 
-
-def test_set_payment_asset_enable(creator_app_client: client.ApplicationClient):
+def test_transfer_algo_payment(app_client: client.ApplicationClient):
     pass
 
-
-def test_set_payment_asset_disable(creator_app_client: client.ApplicationClient):
+def test_transfer_asset_payment(app_client: client.ApplicationClient):
     pass
 
+def test_transfer_royalty_free_move(app_client: client.ApplicationClient):
+    pass
+
+def test_get_offer(app_client: client.ApplicationClient):
+    pass
+
+def test_get_policy(app_client: client.ApplicationClient):
+    pass
+
+def test_get_administrator(app_client: client.ApplicationClient):
+    pass
 
 # def test_app_bootstrap(
 #    creator_app_client: client.ApplicationClient, assets: tuple[int, int]
