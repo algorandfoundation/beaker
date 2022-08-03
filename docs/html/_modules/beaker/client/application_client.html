@@ -42,7 +42,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../structs.html">structs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../structs.html">Structs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../contracts.html">Contracts</a></li>
 </ul>
@@ -520,7 +520,7 @@
 
         <span class="k">return</span> <span class="n">atc</span></div>
 
-    <span class="k">def</span> <span class="nf">fund</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amt</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="ApplicationClient.fund"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.fund">[docs]</a>    <span class="k">def</span> <span class="nf">fund</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amt</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;fund pays the app account the amount passed using the signer&quot;&quot;&quot;</span>
         <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">()</span>
         <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signer</span><span class="p">()</span>
@@ -535,7 +535,7 @@
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">atc</span><span class="o">.</span><span class="n">tx_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">atc</span><span class="o">.</span><span class="n">tx_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ApplicationClient.get_application_state"><a class="viewcode-back" href="../../../client.html#beaker.client.ApplicationClient.get_application_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;gets the global state info for the app id set&quot;&quot;&quot;</span>
