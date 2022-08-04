@@ -11,6 +11,7 @@ def get_deltas(
     acct_balances_before: dict[str, dict[int, int]],
     acct_balances_after: dict[str, dict[int, int]],
 ) -> dict[str, dict[int, int]]:
+    """get the difference between the balances before and after some event"""
     return {
         acct: balance_delta(acct_balances_before[acct], acct_balances_after[acct])
         for acct in acct_balances_after.keys()
@@ -18,9 +19,11 @@ def get_deltas(
 
 
 def balances(acct_info: dict[str, Any]) -> dict[int, int]:
-    """
-    organize the balances into a dictionary of id=>amount
-    0 asset id is algos
+    """organize the balances into a dictionary of id=>amount
+
+    Note:
+        0 asset id is algos
+
     """
     # Init with 0 for algos
     b: dict[int, int] = {0: acct_info["amount"]}

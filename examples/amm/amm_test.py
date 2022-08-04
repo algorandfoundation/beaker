@@ -1,4 +1,3 @@
-from re import A
 import pytest
 
 from algosdk.atomic_transaction_composer import *
@@ -414,20 +413,6 @@ def _get_tokens_from_state(
         app_state[ConstantProductAMM.asset_a.str_key()],
         app_state[ConstantProductAMM.asset_b.str_key()],
     )
-
-
-def _get_balances(addrs: list[str], assets: list[int]) -> list[list[int]]:
-    balances: list[list[int]] = []
-
-    for addr in addrs:
-        addr_bals = {
-            asset["asset-id"]: asset["amount"]
-            for asset in algod_client.account_info(addr)["assets"]
-            if asset["asset-id"] in assets
-        }
-        balances.append([addr_bals[asset] for asset in assets])
-
-    return balances
 
 
 def _expect_ratio(a_sup, b_sup):

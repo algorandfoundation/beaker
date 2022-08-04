@@ -11,6 +11,7 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
     AtomicTransactionComposer,
     ABIResult,
+    ABI_RETURN_HASH,
     TransactionWithSigner,
     abi,
 )
@@ -352,9 +353,6 @@ class ApplicationClient:
                 raise Exception(f"Unspecified argument: {name}")
 
         atc = AtomicTransactionComposer()
-        if hints.read_only:
-            # TODO: do dryrun
-            pass
 
         atc.add_method_call(
             self.app_id,
@@ -377,6 +375,15 @@ class ApplicationClient:
             rekey_to=rekey_to,
         )
 
+        if hints.read_only:
+            txns = atc.gather_signatures()
+            dr_req = transaction.create_dryrun(self.client, txns)
+            dr_result = self.client.dryrun(dr_req)
+            method_results = self._parse_result(
+                {0: method}, dr_result["txns"], atc.tx_ids
+            )
+            return method_results.pop()
+
         try:
             result = atc.execute(self.client, 4)
         except Exception as e:
@@ -388,6 +395,68 @@ class ApplicationClient:
                 raise e
 
         return result.abi_results.pop()
+
+    # TEMPORARY, use SDK one when available
+    def _parse_result(
+        self,
+        methods: dict[int, abi.Method],
+        txns: list[dict[str, Any]],
+        txids: list[str],
+    ) -> list[ABIResult]:
+        method_results = []
+        for i, tx_info in enumerate(txns):
+
+            raw_value = None
+            return_value = None
+            decode_error = None
+
+            if i not in methods:
+                continue
+
+            # Parse log for ABI method return value
+            try:
+                if methods[i].returns.type == abi.Returns.VOID:
+                    method_results.append(
+                        ABIResult(
+                            tx_id=txids[i],
+                            raw_value=raw_value,
+                            return_value=return_value,
+                            decode_error=decode_error,
+                            tx_info=tx_info,
+                            method=methods[i],
+                        )
+                    )
+                    continue
+
+                logs = tx_info["logs"] if "logs" in tx_info else []
+
+                # Look for the last returned value in the log
+                if not logs:
+                    raise Exception("No logs")
+
+                result = logs[-1]
+                # Check that the first four bytes is the hash of "return"
+                result_bytes = b64decode(result)
+                if len(result_bytes) < 4 or result_bytes[:4] != ABI_RETURN_HASH:
+                    raise Exception("no logs")
+
+                raw_value = result_bytes[4:]
+                return_value = methods[i].returns.type.decode(raw_value)
+            except Exception as e:
+                decode_error = e
+
+            method_results.append(
+                ABIResult(
+                    tx_id=txids[i],
+                    raw_value=raw_value,
+                    return_value=return_value,
+                    decode_error=decode_error,
+                    tx_info=tx_info,
+                    method=methods[i],
+                )
+            )
+
+        return method_results
 
     def add_method_call(
         self,
