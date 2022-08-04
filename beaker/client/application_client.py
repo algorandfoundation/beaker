@@ -384,7 +384,16 @@ class ApplicationClient:
             )
             return method_results.pop()
 
-        result = atc.execute(self.client, 4)
+        try:
+            result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                if on_complete == transaction.OnComplete.ClearStateOC:
+                    raise self.wrap_clear_exception(e)
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return result.abi_results.pop()
 
     # TEMPORARY, use SDK one when available
