@@ -196,24 +196,27 @@ def test_mint(creator_app_client: ApplicationClient):
     b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
 
     sp = algod_client.suggested_params()
-    creator_app_client.call(
-        ConstantProductAMM.mint,
-        a_xfer=TransactionWithSigner(
-            txn=transaction.AssetTransferTxn(
-                addr, sp, app_addr, a_amount, asset_list[A_IDX]
+    try:
+        creator_app_client.call(
+            ConstantProductAMM.mint,
+            a_xfer=TransactionWithSigner(
+                txn=transaction.AssetTransferTxn(
+                    addr, sp, app_addr, a_amount, asset_list[A_IDX]
+                ),
+                signer=signer,
             ),
-            signer=signer,
-        ),
-        b_xfer=TransactionWithSigner(
-            txn=transaction.AssetTransferTxn(
-                addr, sp, app_addr, b_amount, asset_list[B_IDX]
+            b_xfer=TransactionWithSigner(
+                txn=transaction.AssetTransferTxn(
+                    addr, sp, app_addr, b_amount, asset_list[B_IDX]
+                ),
+                signer=signer,
             ),
-            signer=signer,
-        ),
-        pool_asset=asset_list[POOL_IDX],
-        a_asset=asset_list[A_IDX],
-        b_asset=asset_list[B_IDX],
-    )
+            pool_asset=asset_list[POOL_IDX],
+            a_asset=12,
+            b_asset=asset_list[B_IDX],
+        )
+    except Exception as e:
+        print(creator_app_client.wrap_approval_exception(e))
 
     app_after, creator_after = _get_balances([app_addr, addr], asset_list)
 

@@ -93,10 +93,10 @@ class ConstantProductAMM(Application):
 
         return Seq(
             Assert(
-                Global.group_size() == Int(2),
-                seed.get().receiver() == self.address,
-                seed.get().amount() >= consts.Algos(0.3),
-                a_asset.asset_id() < b_asset.asset_id(),
+                Comment(Global.group_size() == Int(2), "wrong group size"),
+                Comment(seed.get().receiver() == self.address, "wrong receiver"),
+                Comment(seed.get().amount() >= consts.Algos(0.3), "needs 0.3A"),
+                Comment(a_asset.asset_id() < b_asset.asset_id(), "asset ids swapped"),
             ),
             self.asset_a.set(a_asset.asset_id()),
             self.asset_b.set(b_asset.asset_id()),
@@ -126,36 +126,39 @@ class ConstantProductAMM(Application):
     ):
         """mint pool tokens given some amount of asset A and asset B"""
 
-        well_formed_mint = And(
-            a_asset.asset_id() == self.asset_a,
-            b_asset.asset_id() == self.asset_b,
-            pool_asset.asset_id() == self.pool_token,
-        )
+        correct_assets = [
+            Comment(a_asset.asset_id() == self.asset_a, "correct asset a"),
+            Comment(b_asset.asset_id() == self.asset_b, "correct asset b"),
+            Comment(pool_asset.asset_id() == self.pool_token, "correct pool token"),
+        ]
 
-        valid_asset_a_xfer = And(
+        valid_asset_a_xfer = [
             a_xfer.get().asset_receiver() == self.address,
             a_xfer.get().xfer_asset() == self.asset_a,
             a_xfer.get().asset_amount() > Int(0),
             a_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
-        valid_asset_b_xfer = And(
+        valid_asset_b_xfer = [
             b_xfer.get().asset_receiver() == self.address,
             b_xfer.get().xfer_asset() == self.asset_b,
             b_xfer.get().asset_amount() > Int(0),
             b_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         return Seq(
             # Check that the transaction is constructed correctly
-            Assert(well_formed_mint),
-            Assert(valid_asset_a_xfer),
-            Assert(valid_asset_b_xfer),
+            Assert(*correct_assets),
+            Comment(Assert(*valid_asset_a_xfer), "Asset A txn incorrect"),
+            Comment(Assert(*valid_asset_b_xfer), "Asset B txn incorrect"),
             # Check that we have these things
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
-            Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
+            Comment(
+                Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
+                "App account doesn't have balances",
+            ),
             # mint tokens
             self.do_axfer(
                 Txn.sender(),
@@ -193,26 +196,29 @@ class ConstantProductAMM(Application):
     ):
         """burn pool tokens to get back some amount of asset A and asset B"""
 
-        well_formed_burn = And(
+        correct_assets = [
             pool_asset.asset_id() == self.pool_token,
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
-        )
+        ]
 
-        valid_pool_xfer = And(
+        valid_pool_xfer = [
             pool_xfer.get().asset_receiver() == self.address,
             pool_xfer.get().asset_amount() > Int(0),
             pool_xfer.get().xfer_asset() == self.pool_token,
             pool_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         return Seq(
-            Assert(well_formed_burn),
-            Assert(valid_pool_xfer),
+            Comment(Assert(*correct_assets), "incorrect assets"),
+            Comment(Assert(*valid_pool_xfer), "malformed burn"),
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
-            Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
+            Comment(
+                Assert(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue()),
+                "app does not hold a balance for the assets",
+            ),
             # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
             (issued := ScratchVar()).store(
                 self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
@@ -250,19 +256,19 @@ class ConstantProductAMM(Application):
         b_asset: abi.Asset,
     ):
         """Swap some amount of either asset A or asset B for the other"""
-        well_formed_swap = And(
+        correct_assets = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
-        )
+        ]
 
-        valid_swap_xfer = And(
+        valid_swap_xfer = [
             Or(
                 swap_xfer.get().xfer_asset() == self.asset_a,
                 swap_xfer.get().xfer_asset() == self.asset_b,
             ),
             swap_xfer.get().asset_amount() > Int(0),
             swap_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         out_id = If(
             swap_xfer.get().xfer_asset() == self.asset_a,
@@ -272,11 +278,14 @@ class ConstantProductAMM(Application):
         in_id = swap_xfer.get().xfer_asset()
 
         return Seq(
-            Assert(well_formed_swap),
-            Assert(valid_swap_xfer),
+            Assert(*correct_assets),
+            Assert(*valid_swap_xfer),
             in_sup := AssetHolding.balance(self.address, in_id),
             out_sup := AssetHolding.balance(self.address, out_id),
-            Assert(And(in_sup.hasValue(), out_sup.hasValue())),
+            Comment(
+                Assert(in_sup.hasValue(), out_sup.hasValue()),
+                "app account doesnt hold assets",
+            ),
             self.do_axfer(
                 Txn.sender(),
                 out_id,
