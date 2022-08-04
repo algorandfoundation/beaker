@@ -113,7 +113,16 @@ class ApplicationClient:
             )
         )
 
-        create_result = atc.execute(self.client, 4)
+        try:
+            create_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                if on_complete == transaction.OnComplete.ClearStateOC:
+                    raise self.wrap_clear_exception(e)
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         create_txid = create_result.tx_ids[0]
 
         result = self.client.pending_transaction_info(create_txid)
@@ -163,7 +172,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        update_result = atc.execute(self.client, 4)
+
+        try:
+            update_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return update_result.tx_ids[0]
 
     def opt_in(
@@ -193,7 +210,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        opt_in_result = atc.execute(self.client, 4)
+
+        try:
+            opt_in_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return opt_in_result.tx_ids[0]
 
     def close_out(
@@ -223,7 +248,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        close_out_result = atc.execute(self.client, 4)
+
+        try:
+            close_out_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return close_out_result.tx_ids[0]
 
     def clear_state(
@@ -254,7 +287,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        clear_state_result = atc.execute(self.client, 4)
+
+        try:
+            clear_state_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_clear_exception(e)
+            else:
+                raise e
+
         return clear_state_result.tx_ids[0]
 
     def delete(
@@ -285,7 +326,14 @@ class ApplicationClient:
             )
         )
 
-        delete_result = atc.execute(self.client, 4)
+        try:
+            delete_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return delete_result.tx_ids[0]
 
     def prepare(
