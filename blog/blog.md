@@ -74,13 +74,18 @@ More details on the ABI are available [here](https://developer.algorand.org/arti
 
 PyTeal now provides the necessary components to handle encoding/decoding of types and describe methods that should be exposed externally.  The PyTeal `Router` even provides a way to route method handling logic and passing decoded types directly to a method.
 
-For example, if you want to create and handle a method that adds 1 to a uint8 you can do so very easily!
+For example, if you want to create and handle a method that adds 1 to a uint8 you can do so thusly: 
 
 ```py
 @router.method
 def increment_my_number(input: abi.Uint8, *, output: abi.Uint8):
     return output.set(input.get() + Int(1))
 ```
+
+<img src="face_touch.png" alt="facetouch" style="width:100px">
+
+So. Much. Nicer.
+
 
 For more background see the blog post [here](https://medium.com/algorand/pyteal-introduces-abi-support-for-smart-contracts-605153e91c5e)
 
@@ -96,7 +101,7 @@ Today we are sharing [Beaker](https://github.com/algorand-devrel/beaker), a Smar
 
 Heads up though, it is still experimental.
 
-![BeakerFire](beaker_fire.jpg)
+<img src="beaker_fire.jpg" alt="beaker fire" style="width:300px">
 
 
 
@@ -179,10 +184,10 @@ Initially Beaker provides helpers for validating account balances. More testing 
 
 Be like dog, use Beaker.
 
-## Before Beaker:
+*Before Beaker*
 
-![Dog before](dog_before.png)
+<img src="dog_before.png" alt="dog before" style="width:300px">
 
-## After Beaker:
+*After Beaker*
 
-![Dog after](dog_after.png)
+<img src="dog_after.png" alt="dog after" style="width:300px">
