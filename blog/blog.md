@@ -48,11 +48,10 @@ Managing state schema is often done manually with constants for the keys and rem
 Creating the application requires you to know the number and type of each state value which you have no easy way to get automatically.
 
 ## Debugging
-Debugging can be a nightmare of trying to map an error message like `assert failed: pc=XXX` 
+Debugging can be a nightmare of trying to figure out an error message like `assert failed: pc=XXX` 
 
 ![PC LOAD LETTER?](pc-load-letter-pc.gif)
 
-Dryrun doesn't handle atomic groups :(
 
 ## Testing
 Testing contracts is difficult and requires rebuilding a lot of the front end infrastructure to test different inputs/outputs. 
