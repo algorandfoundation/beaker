@@ -169,7 +169,7 @@ print(app.app_state.schema())
 
 Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source teal. The resulting LogicError allows you to see the exact source Teal line number with all the useful names of subroutines and any comments in the source teal.
 
-The pr (here)[https://github.com/algorand/go-algorand/pull/4322] should also help 
+The pr [here](https://github.com/algorand/go-algorand/pull/4322) should also help 
 
 ## Testing
 
