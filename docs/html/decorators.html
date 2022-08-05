@@ -59,7 +59,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="structs.html">Structs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 </ul>
 
@@ -87,9 +87,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-beaker.decorators">
-<span id="decorators"></span><h1>Decorators<a class="headerlink" href="#module-beaker.decorators" title="Permalink to this heading"></a></h1>
-<section id="abi-method-external">
+  <section id="decorators">
+<h1>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading"></a></h1>
+<p>Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the <code class="docutils literal notranslate"><span class="pre">Application</span></code> class to know how to expose them.</p>
+<span class="target" id="module-beaker.decorators"></span><section id="abi-method-external">
 <span id="external"></span><h2>ABI Method external<a class="headerlink" href="#abi-method-external" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="beaker.decorators.external">
@@ -199,6 +200,10 @@
 <dd><p>ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method</p>
 </dd></dl>
 
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is EXPERIMENTAL</p>
+</div>
 <p>In an above example, there is a required argument <cite>opup_app</cite>, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to <cite>resolve</cite> the appropriate app id using the <cite>resolvable</cite> keyword argument of the external.</p>
 <p>We can change the external to provide the hint.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@external</span><span class="p">(</span>

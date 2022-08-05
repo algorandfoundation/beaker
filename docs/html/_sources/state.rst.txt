@@ -5,6 +5,7 @@ State
 
 Applications that need to maintain state can declare the state they need as part of the Application. 
 
+:ref:`Full Example <state_example>`
 
 .. _application_state:
 

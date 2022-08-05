@@ -1,6 +1,9 @@
 Decorators
 ===========
 
+Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the ``Application`` class to know how to expose them.
+
+
 .. module:: beaker.decorators
 
 .. _external:
@@ -74,7 +77,11 @@ Method Hints
 
 .. _resolvable:
 
+
 .. autoclass:: ResolvableArguments
+
+.. warning:: 
+    This is EXPERIMENTAL
 
 In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the external. 
 

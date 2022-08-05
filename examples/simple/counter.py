@@ -1,7 +1,5 @@
 from typing import Final
 
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
-
 from beaker.client import ApplicationClient
 from beaker import sandbox
 
@@ -18,6 +16,8 @@ class CounterApp(Application):
         descr="A counter for showing how to use application state",
     )
 
+    # Note: this method is redundant with the one defined in Application
+    # defining it here to demonstrate functionality
     @create
     def create(self):
         """create application"""

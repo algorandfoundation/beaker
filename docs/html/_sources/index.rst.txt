@@ -51,7 +51,7 @@ Table Of Contents
    state
    decorators
    structs
-   client
+   application_client
    contracts
 
 

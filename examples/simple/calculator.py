@@ -34,11 +34,11 @@ def demo():
 
     addr, sk, signer = sandbox.get_accounts().pop()
 
-    # Initialize Application from amm.py
+    # Initialize Application
     app = Calculator()
 
-    # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app, signer=signer)
+    # Create an Application client containing both an algod client and app
+    app_client = ApplicationClient(client=client, app=app, signer=signer)
 
     # Create the application on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()

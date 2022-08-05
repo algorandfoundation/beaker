@@ -69,7 +69,7 @@
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
       <li>Application Client</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/client.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/application_client.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -79,10 +79,11 @@
              
   <section id="application-client">
 <h1>Application Client<a class="headerlink" href="#application-client" title="Permalink to this heading"></a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> provides a convenient way to interact with our <code class="docutils literal notranslate"><span class="pre">Application</span></code>.</p>
+<p id="id1">The <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> provides a convenient way to interact with our <code class="docutils literal notranslate"><span class="pre">Application</span></code>.</p>
+<p><a class="reference internal" href="#app-client-example"><span class="std std-ref">Full Example</span></a></p>
 <p>The main point of interaction with our application is done using <code class="docutils literal notranslate"><span class="pre">call</span></code>.</p>
 <p>If there are multiple signers or you want to re-use some suggested parameters, the <code class="docutils literal notranslate"><span class="pre">prepare</span></code> method may be called with the different arguments and a copy of the client is returned with the updated parameters.</p>
-<span class="target" id="id1"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="beaker.client.ApplicationClient">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.client.</span></span><span class="sig-name descname"><span class="pre">ApplicationClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="application.html#beaker.application.Application" title="beaker.application.Application"><span class="pre">Application</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">TransactionSigner</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sender</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggested_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SuggestedParams</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/client/application_client.html#ApplicationClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.client.ApplicationClient" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
@@ -166,7 +167,7 @@
 </dd></dl>
 
 <section id="full-example">
-<h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
+<span id="app-client-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>

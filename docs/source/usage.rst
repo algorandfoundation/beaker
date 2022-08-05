@@ -7,7 +7,7 @@ Tutorial
 ---------
 
 
-Lets write a bad calculator app. The full source is available `here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
+Lets write a simple calculator app.  `Full source here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
 
 First, create a class to represent our application as a subclass of the beaker `Application`. 
 
@@ -19,7 +19,9 @@ First, create a class to represent our application as a subclass of the beaker `
         pass 
 
 
-This is a full application, though it doesn't do much.  Instantiate it and take a look at some of the resulting fields. 
+This is a full application, though it doesn't do much.  
+
+Instantiate it and take a look at some of the resulting fields. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
     :lines: 61-66
@@ -27,15 +29,15 @@ This is a full application, though it doesn't do much.  Instantiate it and take 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
-Lets add some methods to be handled by an incoming ``ApplicationCallTransaction``.  
-We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/>`_ method with with the :ref:`external <external>` decorator. 
+Lets add some methods to be handled by an incoming `ApplicationCallTransaction <https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction>`_.  
+We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine>`_ method with with the :ref:`external <external>` decorator. 
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 9-15
+    :lines: 9-30
 
 
-The ``@external`` decorator adds an ABI method with signature ``add(uint64,uint64)uint64`` to our application and includes it in the routing logic for handling an ABI call. 
+The ``@external`` decorator adds an ABI method to our application and includes it in the routing logic for handling an ABI call. 
 
 The python method must return an ``Expr`` of some kind, invoked when the external is called. 
 
@@ -55,11 +57,11 @@ To summarize, we:
  * Wrote an application using Beaker and PyTeal
     By subclassing ``Application`` and adding an ``external`` method
  * Compiled it to TEAL 
-    Done automatically by Application, PyTeal's ``Router.compile`` 
+    Done automatically by the ``Application`` class, and PyTeal's ``Router.compile`` 
  * Assembled the TEAL to binary
-    Done automatically by the ApplicationClient by sending the TEAL to the Algod ``compile`` endpoint
- * Created the application on chain
-    Done by invoking the ``app_client.create``, which takes our binary and submits an ApplicationCallTransaction.
+    Done automatically by the ``ApplicationClient`` by sending the TEAL to the algod ``compile`` endpoint
+ * Deployed the application on-chain
+    Done by invoking the ``app_client.create``, which submits an ApplicationCallTransaction including our binary.
 
     .. note:: 
         Once created, subsequent calls to the app_client are directed to the ``app_id``. 
@@ -71,7 +73,18 @@ To summarize, we:
     .. note::
         The args passed must match the type of the method (i.e. don't pass a string when it wants an int). 
 
-    The result contains the parsed ``return_value`` which should match the type the ABI method returns.
+    The result contains the parsed ``return_value`` which is a python native type that mirrors the return type of the ABI method.
+
+.. _use_decorators: 
+
+Decorators
+-----------
+
+Above, we used the decorator ``@external`` to mark a method as being exposed in the ABI and available to be called from off-chain.
+
+The ``@external`` decorator can take parameters to change how it may be called or what accounts may call it, see examples :ref:`here <external>`.
+
+Other decorators include :ref:`@internal <internal_methods>` which marks the method as being callable only from inside the application or with one of the :ref:`bare <bare_externals>` OnComplete handlers (e.g. ``create``, ``opt_in``, etc...)
 
 
 .. _manage_state:
@@ -88,7 +101,7 @@ Beaker provides a way to define state values as class variables and use them thr
 Lets write a new app with Application State (or `Global State <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract>`_ in Algorand parlance) to our Application. 
 
 .. literalinclude:: ../../examples/simple/counter.py
-    :lines: 14-40
+    :lines: 12-40
 
 We've added an :ref:`ApplicationStateValue <application_state_value>` attribute to our class with several configuration options and we can reference it by name throughout our application.
 
