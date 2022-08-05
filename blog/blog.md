@@ -217,13 +217,17 @@ We're also working on getting this mapping all the way back to the source PyTeal
 Initially Beaker provides helpers for validating account balances. More testing infrastructure is needed. 
 
 
+## More
 
-# Go Forth and Experiment With Beaker
+There is a lot more not covered here and a lot still to be done. 
 
-Code: https://github.com/algorand-devrel/beaker
+See the docs at https://beaker.algo.xyz 
 
-Questions? Ping `@barnji` in the `#beaker` channel on the [Algorand discord](https://discord.gg/algorand)
+The code at https://github.com/algorand-devrel/beaker
 
+And for any questions, ping `@barnji` in the `#beaker` channel on the [Algorand discord](https://discord.gg/algorand)
+
+I want all the feedback.
 
 # TL;DR
 
