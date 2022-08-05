@@ -1,9 +1,4 @@
-Hello, Beaker
---------------
-
-# Intro
-
-Hello, Developer.
+# Hello Developer
 
 If you've written and deployed a Smart Contract for Algorand using PyTeal before today, you've probably chewed a lot of glass to do so.  You've overcome a number of technical limitations and struggled through parsing obscure error messages, well done. 
 
@@ -93,7 +88,7 @@ For detailed docs on PyTeal ABI see docs [here](https://pyteal.readthedocs.io/en
 
 
 
-# Beaker
+# Hello Beaker
 
 The above improvements allow us to provide much more structure to applications. 
 
