@@ -142,7 +142,7 @@ result = app_client.call(app.addr, a=31, b=10)
 print(result.return_value) # 41
 ```
 
-For more see (ApplicationClient docs)[https://algorand-devrel.github.io/beaker/html/application_client.html]
+For more see [ApplicationClient docs](https://algorand-devrel.github.io/beaker/html/application_client.html)
 ## Managing state
 
 Beaker allows you to declare typed state values as class variables.
