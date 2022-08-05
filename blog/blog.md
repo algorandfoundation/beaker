@@ -50,7 +50,7 @@ Creating the application requires you to know the number and type of each state 
 ## Debugging
 Debugging can be a nightmare of trying to figure out an error message like `assert failed: pc=XXX` 
 
-![PC LOAD LETTER?](pc-load-letter-pc.gif)
+<img src="pc-load-letter-pc.gif" alt="pc load letter??" style="width:200px">
 
 
 ## Testing
