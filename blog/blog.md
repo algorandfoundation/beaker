@@ -168,7 +168,33 @@ print(app.app_state.schema())
 
 Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source teal. The resulting LogicError allows you to see the exact source Teal line number with all the useful names of subroutines and any comments in the source teal.
 
-The pr [here](https://github.com/algorand/go-algorand/pull/4322) should also help 
+This is an actual print from a logic error that tells me exactly where my program failed and the context provided from the source TEAL shows me _why_ it failed.
+```
+Txn WWVF5P2BXRNQDFFSGAGMCXJNDMZ224RJUGSMVPJVTBCVHEZMOMNA had error 'assert failed pc=883' at PC 883 and Source Line 579: 
+
+        store 50
+        store 49
+        store 48
+        store 47
+        // correct asset a
+        load 50
+        txnas Assets
+        bytec_0 // "a"
+        app_global_get
+        ==
+        assert          <-- Error
+        // correct asset b
+        load 51
+        txnas Assets
+        bytec_1 // "b"
+        app_global_get
+        ==
+        assert
+        // correct pool token
+        load 49
+```
+
+
 
 ## Testing
 
