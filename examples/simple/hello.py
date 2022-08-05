@@ -1,18 +1,17 @@
-from pyteal import *
-from beaker import *
+from pyteal import abi, Concat, Bytes
+from beaker import Application, external
 
 # Create a class, subclassing Application from beaker
 class HelloBeaker(Application):
 
-    # Add an external method, ABI method signature will be `hello(string)string`
+    # Add an external method with ABI method signature `hello(string)string`
     @external
     def hello(self, name: abi.String, *, output: abi.String):
-        # Return the result of `Hello, `+name
+        # Set output to the result of `Hello, `+name
         return output.set(Concat(Bytes("Hello, "), name.get()))
 
 
 if __name__ == "__main__":
-    from algosdk.atomic_transaction_composer import AccountTransactionSigner
     from beaker import sandbox, client
 
     # Instantiate our app
@@ -28,7 +27,8 @@ if __name__ == "__main__":
 
     # Deploy the app
     app_id, app_addr, txid = app_client.create()
+    print(f"Deployed app with id {app_id} and address {app_addr} in txid {txid}")
 
-    # Call the method we defined
+    # Call the `hello` method
     result = app_client.call(app.hello, name="Beaker")
-    print(result.return_value)  # Hello, Beaker
+    assert result.return_value == "Hello, Beaker"

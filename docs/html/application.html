@@ -79,7 +79,7 @@
 <p>This is the base class that all Beaker Applications should inherit from.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.application.Application">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.application.</span></span><span class="sig-name descname"><span class="pre">Application</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/application.html#Application"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.application.</span></span><span class="sig-name descname"><span class="pre">Application</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/application.html#Application"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application" title="Permalink to this definition"></a></dt>
 <dd><p>Application contains logic to detect State Variables, Bare methods
 ABI Methods and internal subroutines.</p>
 <p>It should be subclassed to provide basic behavior to a custom application.</p>
@@ -120,33 +120,9 @@ ABI Methods and internal subroutines.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.application.Application.update">
-<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.update" title="Permalink to this definition"></a></dt>
-<dd><p>default update behavior, rejects</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="beaker.application.Application.delete">
-<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.delete" title="Permalink to this definition"></a></dt>
-<dd><p>default delete behavior, rejects</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="beaker.application.Application.opt_in">
 <span class="sig-name descname"><span class="pre">opt_in</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.opt_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.opt_in" title="Permalink to this definition"></a></dt>
 <dd><p>default opt in behavior, initializes account state</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="beaker.application.Application.clear_state">
-<span class="sig-name descname"><span class="pre">clear_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.clear_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.clear_state" title="Permalink to this definition"></a></dt>
-<dd><p>default clear state behavior, rejects</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="beaker.application.Application.close_out">
-<span class="sig-name descname"><span class="pre">close_out</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.close_out"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.close_out" title="Permalink to this definition"></a></dt>
-<dd><p>default close out behavior, rejects</p>
 </dd></dl>
 
 </dd></dl>

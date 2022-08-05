@@ -87,7 +87,6 @@
     <span class="n">Global</span><span class="p">,</span>
     <span class="n">OnCompleteAction</span><span class="p">,</span>
     <span class="n">OptimizeOptions</span><span class="p">,</span>
-    <span class="n">Reject</span><span class="p">,</span>
     <span class="n">Router</span><span class="p">,</span>
     <span class="n">Bytes</span><span class="p">,</span>
 <span class="p">)</span>
@@ -96,11 +95,7 @@
     <span class="n">get_handler_config</span><span class="p">,</span>
     <span class="n">MethodHints</span><span class="p">,</span>
     <span class="n">create</span><span class="p">,</span>
-    <span class="n">update</span><span class="p">,</span>
-    <span class="n">delete</span><span class="p">,</span>
     <span class="n">opt_in</span><span class="p">,</span>
-    <span class="n">close_out</span><span class="p">,</span>
-    <span class="n">clear_state</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.state</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AccountState</span><span class="p">,</span>
@@ -290,27 +285,7 @@
 <div class="viewcode-block" id="Application.opt_in"><a class="viewcode-back" href="../../application.html#beaker.application.Application.opt_in">[docs]</a>    <span class="nd">@opt_in</span>
     <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;default opt in behavior, initializes account state&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_account_state</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.update"><a class="viewcode-back" href="../../application.html#beaker.application.Application.update">[docs]</a>    <span class="nd">@update</span>
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default update behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.delete"><a class="viewcode-back" href="../../application.html#beaker.application.Application.delete">[docs]</a>    <span class="nd">@delete</span>
-    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default delete behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.close_out"><a class="viewcode-back" href="../../application.html#beaker.application.Application.close_out">[docs]</a>    <span class="nd">@close_out</span>
-    <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default close out behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.clear_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.clear_state">[docs]</a>    <span class="nd">@clear_state</span>
-    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default clear state behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_account_state</span><span class="p">()</span></div></div>
 </pre></div>
 
            </div>

@@ -95,21 +95,20 @@
 </section>
 <section id="hello-beaker">
 <span id="id2"></span><h2>Hello, Beaker<a class="headerlink" href="#hello-beaker" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">abi</span><span class="p">,</span> <span class="n">Concat</span><span class="p">,</span> <span class="n">Bytes</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">external</span>
 
 <span class="c1"># Create a class, subclassing Application from beaker</span>
 <span class="k">class</span> <span class="nc">HelloBeaker</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
 
-    <span class="c1"># Add an external method, ABI method signature will be `hello(string)string`</span>
+    <span class="c1"># Add an external method with ABI method signature `hello(string)string`</span>
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
-        <span class="c1"># Return the result of `Hello, `+name</span>
+        <span class="c1"># Set output to the result of `Hello, `+name</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;Hello, &quot;</span><span class="p">),</span> <span class="n">name</span><span class="o">.</span><span class="n">get</span><span class="p">()))</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
     <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">client</span>
 
     <span class="c1"># Instantiate our app</span>
@@ -125,10 +124,11 @@
 
     <span class="c1"># Deploy the app</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deployed app with id </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> and address </span><span class="si">{</span><span class="n">app_addr</span><span class="si">}</span><span class="s2"> in txid </span><span class="si">{</span><span class="n">txid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Call the method we defined</span>
+    <span class="c1"># Call the `hello` method</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">hello</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Beaker&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="p">)</span>  <span class="c1"># Hello, Beaker</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">return_value</span> <span class="o">==</span> <span class="s2">&quot;Hello, Beaker&quot;</span>
 </pre></div>
 </div>
 </section>
