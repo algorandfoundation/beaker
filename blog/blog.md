@@ -93,13 +93,11 @@ For detailed docs on PyTeal ABI see docs [here](https://pyteal.readthedocs.io/en
 
 The above improvements allow us to provide much more structure to applications. 
 
-Today we are sharing `Beaker`, a Smart Contract development framework meant to improve the development experience. 
-
+Today we are sharing [Beaker](https://github.com/algorand-devrel/beaker), a Smart Contract development framework meant to improve the development experience. 
 
 Heads up though, it is still experimental.
 
 ![BeakerFire](beaker_fire.jpg)
-
 
 
 
@@ -120,7 +118,6 @@ class MyApp(Application):
 
 This is a full application! Not a `Cond` in sight.
 
-TODO: zomg
 
 ## Interacting with the application
 Beaker provides an `ApplicationClient` to deal with the common needs like creation/opt_in/calling methods.
