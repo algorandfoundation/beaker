@@ -120,7 +120,7 @@ This is a full application! Not a `Cond` in sight.
 
 
 ## Interacting with the application
-Beaker provides an `ApplicationClient` to deal with the common needs like creation/opt_in/calling methods.
+Beaker provides an `ApplicationClient` to deal with the common needs like creation/opt-in/calling methods.
 
 
 It uses your `Application` definition to provide context like the schema or the arguments required for the methods being called.
@@ -139,13 +139,14 @@ app_client = client.ApplicationClient(sandbox.get_algod_client(), app, signer=si
 app_client.create()
 
 # call the method
-result = app_client.call(app.addr, a=31, b=10)
-print(result.return_value) # 41
+result = app_client.call(app.add, a=32, b=10)
+print(result.return_value) # 42
 
-# go outside and touch some grass cuz you're done
+# now go outside and touch some grass cuz you're done
 ```
 
 For more see [ApplicationClient docs](https://algorand-devrel.github.io/beaker/html/application_client.html)
+
 ## Managing state
 
 Beaker allows you to declare typed state values as class variables.
@@ -203,6 +204,12 @@ We're also working on getting this mapping all the way back to the source PyTeal
 ## Testing
 
 Initially Beaker provides helpers for validating account balances. More testing infrastructure is needed. 
+
+
+# Go Forth and Experiment With Beaker
+
+
+https://github.com/algorand-devrel/beaker
 
 
 # TL;DR
