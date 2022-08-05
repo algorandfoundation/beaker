@@ -163,8 +163,8 @@ def assert_stateful_output(expr: Expr, output: List[str]):
     )
 
     logs, cost, callstack = call_app(client, app_id)
-    print("\nCost: {}, CallStack: {}".format(cost, callstack))
-    print(logs)
+    # print("\nCost: {}, CallStack: {}".format(cost, callstack))
+    # print(logs)
 
     destroy_app(client, app_id)
 
@@ -210,8 +210,8 @@ def assert_output(expr: Expr, output: List[str], **kwargs):
     assert len(compiled["hash"]) == 58
 
     logs, cost, callstack = execute_app(client, compiled["result"], **kwargs)
-    print("\nCost: {}, CallStack: {}".format(cost, callstack))
-    print(logs)
+    # print("\nCost: {}, CallStack: {}".format(cost, callstack))
+    # print(logs)
     assert logs == output
 
 
@@ -225,8 +225,8 @@ def assert_application_output(expr: Expr, output: List[str], **kwargs):
     assert len(compiled["hash"]) == 58
 
     logs, cost, callstack = execute_app(client, compiled["result"], **kwargs)
-    print("\nCost: {}, CallStack: {}".format(cost, callstack))
-    print(logs)
+    # print("\nCost: {}, CallStack: {}".format(cost, callstack))
+    # print(logs)
     assert logs == output
 
 

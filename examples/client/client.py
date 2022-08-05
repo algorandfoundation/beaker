@@ -9,7 +9,7 @@ from beaker import (
     external,
     client,
     sandbox,
-    consts
+    consts,
 )
 
 
@@ -30,6 +30,10 @@ class ClientExample(Application):
     def set_nick(self, nick: abi.String):
         return self.nickname.set(nick.get())
 
+    @external(read_only=True)
+    def get_nick(self, *, output: abi.String):
+        return output.set(self.nickname)
+
 
 def demo():
 
@@ -44,13 +48,15 @@ def demo():
     app = ClientExample()
 
     # Create Application client
-    app_client = client.ApplicationClient(client=sandbox.get_algod_client(), app=app, signer=signer1)
+    app_client = client.ApplicationClient(
+        client=sandbox.get_algod_client(), app=app, signer=signer1
+    )
 
-    # Create the app on chain (uses signer1) 
+    # Create the app on chain (uses signer1)
     app_id, app_addr, txid = app_client.create()
 
     # Fund the app account with 1 algo
-    app_client.fund(1*consts.algo)
+    app_client.fund(1 * consts.algo)
 
     # Create copies of the app client with specific signer, _after_ we've created and set the app id
     app_client1 = app_client.prepare(signer=signer1)
@@ -60,6 +66,10 @@ def demo():
     app_client1.opt_in()
     app_client1.call(app.set_nick, nick="first")
 
+    result = app_client1.call(app.get_nick)
+    print(result.__dict__)
+
+    return
     # Try calling without opting in
     try:
         app_client2.call(app.set_nick, nick="second")
