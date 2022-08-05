@@ -290,8 +290,17 @@
 <section id="full-example">
 <span id="state-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Application</span><span class="p">,</span>
+    <span class="n">ApplicationStateValue</span><span class="p">,</span>
+    <span class="n">DynamicApplicationStateValue</span><span class="p">,</span>
+    <span class="n">AccountStateValue</span><span class="p">,</span>
+    <span class="n">DynamicAccountStateValue</span><span class="p">,</span>
+    <span class="n">create</span><span class="p">,</span>
+    <span class="n">opt_in</span><span class="p">,</span>
+    <span class="n">external</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">abi</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Bytes</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Txn</span>
 
 
 <span class="k">class</span> <span class="nc">StateExample</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>

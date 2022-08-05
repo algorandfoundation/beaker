@@ -169,8 +169,7 @@
 <section id="full-example">
 <span id="app-client-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
-<span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">abi</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Global</span>
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Application</span><span class="p">,</span>
     <span class="n">AccountStateValue</span><span class="p">,</span>
@@ -181,6 +180,7 @@
     <span class="n">sandbox</span><span class="p">,</span>
     <span class="n">consts</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span>
 
 
 <span class="k">class</span> <span class="nc">ClientExample</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
@@ -210,9 +210,9 @@
     <span class="c1"># Set up accounts we&#39;ll use</span>
     <span class="n">accts</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
 
-    <span class="n">addr1</span><span class="p">,</span> <span class="n">sk1</span><span class="p">,</span> <span class="n">signer1</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">addr1</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">signer1</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
-    <span class="n">addr2</span><span class="p">,</span> <span class="n">sk2</span><span class="p">,</span> <span class="n">signer2</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">addr2</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">signer2</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Instantiate app</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">ClientExample</span><span class="p">()</span>
@@ -223,7 +223,7 @@
     <span class="p">)</span>
 
     <span class="c1"># Create the app on chain (uses signer1)</span>
-    <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="c1"># Fund the app account with 1 algo</span>
     <span class="n">app_client</span><span class="o">.</span><span class="n">fund</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="n">consts</span><span class="o">.</span><span class="n">algo</span><span class="p">)</span>
@@ -236,15 +236,11 @@
     <span class="n">app_client1</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
     <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">get_nick</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
-
-    <span class="k">return</span>
     <span class="c1"># Try calling without opting in</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">app_client2</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">LogicException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="n">app_client2</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
     <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
@@ -260,9 +256,9 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr2</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shouldn&#39;t get here&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">except</span> <span class="n">LogicException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed as expected, only addr1 should be authorized to set the manager&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">app_client2</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Have addr1 set the manager to addr2</span>
     <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr2</span><span class="p">)</span>

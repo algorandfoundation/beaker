@@ -24,7 +24,7 @@ This is a full application, though it doesn't do much.
 Instantiate it and take a look at some of the resulting fields. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
-    :lines: 61-66
+    :lines: 60-65
 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
@@ -34,7 +34,7 @@ We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 9-30
+    :lines: 9-28
 
 
 The ``@external`` decorator adds an ABI method to our application and includes it in the routing logic for handling an ABI call. 
@@ -47,7 +47,7 @@ The python method must return an ``Expr`` of some kind, invoked when the externa
 Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 33-48
+    :lines: 32-47
 
 
 Thats it! 

@@ -105,8 +105,7 @@
 <p>Nice!  This is already enough to provide the TEAL programs and ABI specification.</p>
 <p>Lets add some methods to be handled by an incoming <a class="reference external" href="https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction">ApplicationCallTransaction</a>.
 We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#external"><span class="std std-ref">external</span></a> decorator.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-<span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a and b, return the result&quot;&quot;&quot;</span>
@@ -126,7 +125,6 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
     <span class="k">def</span> <span class="nf">div</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Divide a by b, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">/</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
-
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> decorator adds an ABI method to our application and includes it in the routing logic for handling an ABI call.</p>
@@ -138,7 +136,7 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <p>Lets now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 
-    <span class="n">addr</span><span class="p">,</span> <span class="n">sk</span><span class="p">,</span> <span class="n">signer</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">signer</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Initialize Application</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">()</span>
