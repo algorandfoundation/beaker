@@ -128,18 +128,21 @@ It uses your `Application` definition to provide context like the schema or the 
 ```py
 from beaker import sandbox, client
 
-accts = sandbox.get_accts()
-
-_, _, signer = accts.pop()
-
 app = MyApp()
 
+# get the first acct in the sandbox
+_, _, signer = sandbox.get_accts().pop()
+
 app_client = client.ApplicationClient(sandbox.get_algod_client(), app, signer=signer)
-# Create the app using its definition including any state schema defined
+
+# deploy the app on-chain
 app_client.create()
 
+# call the method
 result = app_client.call(app.addr, a=31, b=10)
 print(result.return_value) # 41
+
+# go outside and touch some grass cuz you're done
 ```
 
 For more see [ApplicationClient docs](https://algorand-devrel.github.io/beaker/html/application_client.html)
