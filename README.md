@@ -23,7 +23,6 @@ class HelloBeaker(Application):
         return output.set(Concat(Bytes("Hello, "), name.get()))
 
 if __name__ == "__main__":
-    from algosdk.atomic_transaction_composer import AccountTransactionSigner
     from beaker import sandbox, client
 
     app = HelloBeaker()
@@ -31,13 +30,13 @@ if __name__ == "__main__":
     addr, private_key, signer = sandbox.get_accounts().pop()
 
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=signer
+        client=sandbox.get_algod_client(), app=app, signer=signer
     )
-
     app_id, app_addr, txid = app_client.create()
+    print(f"Deployed app with id {app_id} and address {app_addr} in txid {txid})
 
     result = app_client.call(app.hello, name="Beaker")
-    print(result.return_value) # Hello, Beaker
+    assert result.return_value == "Hello, Beaker"
 ```
 
 ## Install
