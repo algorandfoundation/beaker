@@ -5,7 +5,6 @@ from algosdk.future.transaction import (
     OnComplete,
 )
 from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
     TransactionWithSigner,
 )
 from beaker.contracts.arcs import ARC20

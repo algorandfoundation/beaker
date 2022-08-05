@@ -1,6 +1,5 @@
 from typing import Final
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
-from pyteal import *
+from pyteal import abi, TealType, Global
 from beaker import (
     Application,
     AccountStateValue,
@@ -11,6 +10,7 @@ from beaker import (
     sandbox,
     consts,
 )
+from beaker.client.logic_error import LogicException
 
 
 class ClientExample(Application):
@@ -40,9 +40,9 @@ def demo():
     # Set up accounts we'll use
     accts = sandbox.get_accounts()
 
-    addr1, sk1, signer1 = accts.pop()
+    addr1, _, signer1 = accts.pop()
 
-    addr2, sk2, signer2 = accts.pop()
+    addr2, _, signer2 = accts.pop()
 
     # Instantiate app
     app = ClientExample()
@@ -53,7 +53,7 @@ def demo():
     )
 
     # Create the app on chain (uses signer1)
-    app_id, app_addr, txid = app_client.create()
+    app_client.create()
 
     # Fund the app account with 1 algo
     app_client.fund(1 * consts.algo)
@@ -66,15 +66,11 @@ def demo():
     app_client1.opt_in()
     app_client1.call(app.set_nick, nick="first")
 
-    result = app_client1.call(app.get_nick)
-    print(result.__dict__)
-
-    return
     # Try calling without opting in
     try:
         app_client2.call(app.set_nick, nick="second")
-    except Exception as e:
-        print(f"\n{app_client2.wrap_approval_exception(e)}\n")
+    except LogicException as e:
+        print(f"\n{e}\n")
 
     app_client2.opt_in()
     app_client2.call(app.set_nick, nick="second")
@@ -90,9 +86,9 @@ def demo():
     try:
         app_client2.call(app.set_manager, new_manager=addr2)
         print("Shouldn't get here")
-    except Exception as e:
+    except LogicException as e:
         print("Failed as expected, only addr1 should be authorized to set the manager")
-        print(f"\n{app_client2.wrap_approval_exception(e)}\n")
+        print(f"\n{e}\n")
 
     # Have addr1 set the manager to addr2
     app_client1.call(app.set_manager, new_manager=addr2)

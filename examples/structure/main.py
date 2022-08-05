@@ -1,9 +1,6 @@
 from typing import Final
 
 from pyteal import abi, TealType, Int, Seq
-from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
-)
 
 from beaker import (
     Application,

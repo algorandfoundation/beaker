@@ -36,4 +36,4 @@ If there are multiple signers or you want to re-use some suggested parameters, t
 Full Example
 -------------
 
-.. literalinclude:: ../../examples/client/client.py
+.. literalinclude:: ../../examples/client/main.py

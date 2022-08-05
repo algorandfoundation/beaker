@@ -1,5 +1,28 @@
 from typing import Final
-from pyteal import *
+from pyteal import (
+    abi,
+    TealType,
+    Bytes,
+    Global,
+    Expr,
+    Int,
+    Seq,
+    Assert,
+    Txn,
+    And,
+    ScratchVar,
+    AssetHolding,
+    AssetParam,
+    WideRatio,
+    If,
+    Or,
+    InnerTxn,
+    InnerTxnBuilder,
+    TxnField,
+    Concat,
+    TxnType,
+    Sqrt,
+)
 
 from beaker import (
     consts,
@@ -392,5 +415,5 @@ if __name__ == "__main__":
 
     amm = ConstantProductAMM()
     print(f"\nApproval program:\n{amm.approval_program}")
-    # print(f"\nClear State program:\n{amm.approval_program}")
-    # print(f"\nabi:\n{json.dumps(amm.contract.dictify(), indent=2)}")
+    print(f"\nClear State program:\n{amm.approval_program}")
+    print(f"\nabi:\n{json.dumps(amm.contract.dictify(), indent=2)}")

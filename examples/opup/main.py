@@ -1,12 +1,11 @@
 from hashlib import sha256
 from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
     TransactionWithSigner,
 )
 from algosdk.future import transaction
 
 from beaker.client import ApplicationClient
-from beaker.consts import algo, milli_algo
+from beaker.consts import milli_algo
 from beaker.sandbox import get_algod_client, get_accounts
 
 from contract import ExpensiveApp

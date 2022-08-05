@@ -1,4 +1,3 @@
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.future import transaction
 
 from beaker.client import ApplicationClient
