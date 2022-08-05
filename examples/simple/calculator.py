@@ -1,5 +1,4 @@
-from pyteal import *
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
+from pyteal import abi
 
 from beaker.client import ApplicationClient
 from beaker.application import Application
@@ -32,7 +31,7 @@ class Calculator(Application):
 def demo():
     client = sandbox.get_algod_client()
 
-    addr, sk, signer = sandbox.get_accounts().pop()
+    _, _, signer = sandbox.get_accounts().pop()
 
     # Initialize Application
     app = Calculator()

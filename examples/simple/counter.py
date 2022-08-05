@@ -3,7 +3,7 @@ from typing import Final
 from beaker.client import ApplicationClient
 from beaker import sandbox
 
-from pyteal import *
+from pyteal import abi, TealType, Global, Int, Seq
 from beaker.application import Application
 from beaker.state import ApplicationStateValue
 from beaker.decorators import external, create, Authorize

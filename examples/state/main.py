@@ -1,4 +1,3 @@
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from contract import StateExample
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_algod_client, get_accounts
@@ -17,7 +16,7 @@ print(
 )
 
 app_client.opt_in()
-print(f"Opted in")
+print("Opted in")
 
 app_client.call(app.set_account_state_val, v=123)
 result = app_client.call(app.get_account_state_val)
