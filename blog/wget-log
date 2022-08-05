@@ -1,6 +1,0 @@
---2022-08-05 10:58:33--  https://wompampsupport.azureedge.net/fetchimage?siteId=7575
-Resolving wompampsupport.azureedge.net (wompampsupport.azureedge.net)... 72.21.81.200, 2606:2800:11f:17a5:191a:18d5:537:22f9
-Connecting to wompampsupport.azureedge.net (wompampsupport.azureedge.net)|72.21.81.200|:443... connected.
-HTTP request sent, awaiting response... 400 Bad Request
-2022-08-05 10:58:34 ERROR 400: Bad Request.
-

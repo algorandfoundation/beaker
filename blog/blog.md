@@ -2,7 +2,9 @@
 
 If you've written and deployed a Smart Contract for Algorand using PyTeal before today, you've probably chewed a lot of glass to do so.  You've overcome a number of technical limitations and struggled through parsing obscure error messages, well done. 
 
-The Algorand team has been working very hard to improve the development experience, but before we dive in, lets review some common things folks struggle with while developing.
+Take heart that the Algorand team has been working very hard to improve the development experience. 
+
+Before we dive in to the improvements, lets review some common things folks struggle with while developing.
 
 ## Code Organization
 When you start writing a contract, how should you structure the logic? How should you handle inputs and outputs from the contract? 
@@ -64,10 +66,13 @@ With the ABI we have a standard way to both organize code and interact with the 
 
 More details on the ABI are available [here](https://developer.algorand.org/articles/contract-to-contract-calls-and-an-abi-come-to-algorand/)
 
+## Atomic Transaction Composer
+
+Using the [Atomic Transaction Composer](https://developer.algorand.org/docs/get-details/atc/) and the the ABI spec for your contract, you can easily compose atomic group transactions and have the arguments encoded and return values decoded for you!
 
 ## Pyteal ABI
 
-PyTeal now provides the necessary components to handle encoding/decoding of types and describe methods that should be exposed externally.  The PyTeal `Router` even provides a way to route method handling logic and passing decoded types directly to a method.
+PyTeal now provides the necessary components to handle encoding/decoding of types in a contract.  The PyTeal `Router` class even provides a way to route method handling logic and passing decoded types directly to a method as well as providing the ABI contract spec.
 
 For example, if you want to create and handle a method that adds 1 to a uint8 you can do so thusly: 
 
@@ -81,11 +86,17 @@ def increment_my_number(input: abi.Uint8, *, output: abi.Uint8):
 
 So. Much. Nicer.
 
-
 For more background see the blog post [here](https://medium.com/algorand/pyteal-introduces-abi-support-for-smart-contracts-605153e91c5e)
 
 For detailed docs on PyTeal ABI see docs [here](https://pyteal.readthedocs.io/en/stable/abi.html)
 
+## Source Maps
+
+Getting a `pc` returned from an algod error message meant you had to assemble, then disassemble your teal contract to find the TEAL line it might be associated to. Even then the names and formatting is mangled in the process so it was hard to track exactly where you were in your program.
+
+You can now compile TEAL with the `sourcemap` flag [enabled](https://developer.algorand.org/docs/rest-apis/algod/v2/#post-v2tealcompile).  The resulting map comes back according to [this spec](https://sourcemaps.info/spec.html) and can be decoded with any of the SDKs using the new `SourceMap` object.
+
+This means you can associate a `pc` directly to the source TEAL line with all the familiar names and formatting you're used to looking at.
 
 
 # Hello Beaker
@@ -206,15 +217,17 @@ We're also working on getting this mapping all the way back to the source PyTeal
 Initially Beaker provides helpers for validating account balances. More testing infrastructure is needed. 
 
 
+
 # Go Forth and Experiment With Beaker
 
+Code: https://github.com/algorand-devrel/beaker
 
-https://github.com/algorand-devrel/beaker
+Questions? Ping `@barnji` in the `#beaker` channel on the [Algorand discord](https://discord.gg/algorand)
 
 
 # TL;DR
 
-Be like dog, use Beaker.
+Be like this truly inspiring golden retriever, use Beaker.
 
 *Before Beaker*
 
