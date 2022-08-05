@@ -99,6 +99,7 @@ Heads up though, it is still experimental.
 <img src="beaker_fire.jpg" alt="beaker fire" style="width:300px">
 
 
+Full Docs are [here](https://algorand-devrel.github.io/beaker/html/index.html).
 
 Taking the above issues, lets see how Beaker helps.
 
@@ -194,7 +195,7 @@ Txn WWVF5P2BXRNQDFFSGAGMCXJNDMZ224RJUGSMVPJVTBCVHEZMOMNA had error 'assert faile
         load 49
 ```
 
-
+We're also working on getting this mapping all the way back to the source PyTeal with this [issue](https://github.com/algorand/pyteal/issues/449)
 
 ## Testing
 
