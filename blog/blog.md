@@ -32,9 +32,10 @@ A very common pattern is something like:
 
 This works, but is far from obvious to a newcomer.
 
+
 ## Interacting with the Application
 
-To create the application you need to compile the teal programs and declare the state ("How many global uints do I need again?").
+To create the application on-chain you need to compile the teal programs then create a transaction with the programs,  schema ("How many global uints do I need again?"), and extra pages. 
 
 Calling the application involves crafting transactions with the appropriate routing and data arguments if not using the ABI.
 
@@ -49,7 +50,7 @@ Creating the application requires you to know the number and type of each state 
 ## Debugging
 Debugging can be a nightmare of trying to map an error message like `assert failed: pc=XXX` 
 
-TODO: PC LOAD LETTER?!
+![PC LOAD LETTER?](pc-load-letter-pc.gif)
 
 Dryrun doesn't handle atomic groups :(
 
@@ -63,13 +64,12 @@ Now let's see how things have changed.
 
 ## ABI
 
-The ABI (Application Binary Interface) provides standards for encoding types, describing methods, and internally routing method calls to the appropriate logic.
+The [ABI](https://arc.algorand.foundation/ARCs/arc-0004) provides standards for encoding types, describing methods, and internally routing method calls to the appropriate logic.
 
 With the ABI we have a standard way to both organize code and interact with the application. 
 
-TODO: link to blog
+More details on the ABI are available [here](https://developer.algorand.org/articles/contract-to-contract-calls-and-an-abi-come-to-algorand/)
 
-TODO: link to arc
 
 ## Pyteal ABI
 
@@ -83,19 +83,27 @@ def increment_my_number(input: abi.Uint8, *, output: abi.Uint8):
     return output.set(input.get() + Int(1))
 ```
 
-TODO: link to blog 
+For more background see the blog post [here](https://medium.com/algorand/pyteal-introduces-abi-support-for-smart-contracts-605153e91c5e)
 
-TODO: link to docs
+For detailed docs on PyTeal ABI see docs [here](https://pyteal.readthedocs.io/en/stable/abi.html)
 
 
 
 # Beaker
 
-TODO: we have to go deeper
-
 The above improvements allow us to provide much more structure to applications. 
 
 Today we are sharing `Beaker`, a Smart Contract development framework meant to improve the development experience. 
+
+
+Heads up though, it is still experimental.
+
+![BeakerFire](beaker_fire.jpg)
+
+
+
+
+Taking the above issues, lets see how Beaker helps.
 
 ## Code Organization
 
@@ -164,6 +172,21 @@ print(app.app_state.schema())
 
 Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source teal. The resulting LogicError allows you to see the exact source Teal line number with all the useful names of subroutines and any comments in the source teal.
 
+The pr (here)[https://github.com/algorand/go-algorand/pull/4322] should also help 
+
 ## Testing
 
 Initially Beaker provides helpers for validating account balances. More testing infrastructure is needed. 
+
+
+# TL;DR
+
+Be like dog, use Beaker.
+
+## Before Beaker:
+
+![Dog before](dog_before.png)
+
+## After Beaker:
+
+![Dog after](dog_after.png)
