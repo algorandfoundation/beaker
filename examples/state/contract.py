@@ -77,6 +77,11 @@ class StateExample(Application):
         # more clear what is happening
         return self.declared_account_value[Txn.sender()].set(v.get())
 
+    @external
+    def incr_account_state_val(self, v: abi.Uint64):
+        # Omitting [Txn.sender()] just for demo purposes
+        return self.declared_account_value.increment(v.get())
+
     @external(read_only=True)
     def get_account_state_val(self, *, output: abi.Uint64):
         return output.set(self.declared_account_value[Txn.sender()])

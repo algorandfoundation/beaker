@@ -73,12 +73,6 @@ class StateValue(Expr):
         """returns the string held by the key Bytes object"""
         return cast(Bytes, self.key).byte_str.replace('"', "")
 
-    def __iadd__(self, other) -> Expr:
-        return self.increment(other)
-
-    def __isub__(self, other) -> Expr:
-        return self.decrement(other)
-
     def increment(self, cnt: Expr = Int(1)) -> Expr:
         """helper to increment a counter"""
         if self.key is None:
@@ -322,7 +316,7 @@ class AccountStateValue(StateValue):
 
         return App.localDel(self.acct, self.key)
 
-    def __getitem__(self, acct: Expr):
+    def __getitem__(self, acct: Expr) -> "AccountStateValue":
         asv = copy(self)
         asv.acct = acct
         return asv
