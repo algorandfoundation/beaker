@@ -210,27 +210,25 @@
     <span class="c1"># Set up accounts we&#39;ll use</span>
     <span class="n">accts</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
 
-    <span class="n">addr1</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">signer1</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-
-    <span class="n">addr2</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">signer2</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">acct1</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">acct2</span> <span class="o">=</span> <span class="n">accts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Instantiate app</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">ClientExample</span><span class="p">()</span>
 
     <span class="c1"># Create Application client</span>
-    <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">signer1</span>
+    <span class="n">app_client1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span>
     <span class="p">)</span>
 
     <span class="c1"># Create the app on chain (uses signer1)</span>
-    <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
-
-    <span class="c1"># Fund the app account with 1 algo</span>
-    <span class="n">app_client</span><span class="o">.</span><span class="n">fund</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="n">consts</span><span class="o">.</span><span class="n">algo</span><span class="p">)</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="c1"># Create copies of the app client with specific signer, _after_ we&#39;ve created and set the app id</span>
-    <span class="n">app_client1</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">signer1</span><span class="p">)</span>
-    <span class="n">app_client2</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">signer2</span><span class="p">)</span>
+    <span class="n">app_client2</span> <span class="o">=</span> <span class="n">app_client1</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">signer</span><span class="p">)</span>
+
+    <span class="c1"># Fund the app account with 1 algo</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">fund</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="n">consts</span><span class="o">.</span><span class="n">algo</span><span class="p">)</span>
 
     <span class="c1"># Try calling set nickname from both accounts after opting in</span>
     <span class="n">app_client1</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
@@ -247,26 +245,25 @@
 
     <span class="c1"># Get the local state for each account</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_account_state</span><span class="p">())</span>
-
     <span class="nb">print</span><span class="p">(</span><span class="n">app_client2</span><span class="o">.</span><span class="n">get_account_state</span><span class="p">())</span>
 
     <span class="c1"># Get the global state</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr2</span><span class="p">)</span>
+        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shouldn&#39;t get here&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">LogicException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed as expected, only addr1 should be authorized to set the manager&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Have addr1 set the manager to addr2</span>
-    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr2</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># and back</span>
-    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">addr1</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

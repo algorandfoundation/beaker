@@ -136,13 +136,13 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <p>Lets now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 
-    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">signer</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">acct</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Initialize Application</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">()</span>
 
     <span class="c1"># Create an Application client containing both an algod client and app</span>
-    <span class="n">app_client</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">)</span>
+    <span class="n">app_client</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="p">)</span>
 
     <span class="c1"># Create the application on chain, set the app id for the app client</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
