@@ -43,19 +43,19 @@ class CounterApp(Application):
 def demo():
     client = sandbox.get_algod_client()
 
-    addr, sk, signer = sandbox.get_accounts().pop()
+    acct = sandbox.get_accounts().pop()
 
     # Initialize Application from amm.py
     app = CounterApp()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app, signer=signer)
+    app_client = ApplicationClient(client, app, signer=acct.signer)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    app_client = app_client.prepare(signer=signer)
+    app_client = app_client.prepare(signer=acct.signer)
 
     app_client.call(app.increment)
     app_client.call(app.increment)

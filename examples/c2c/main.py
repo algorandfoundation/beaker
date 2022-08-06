@@ -71,12 +71,12 @@ class C2CMain(Application):
 if __name__ == "__main__":
 
     accts = sandbox.get_accounts()
-    addr, _, signer = accts.pop()
+    acct = accts.pop()
 
     # Create sub app and fund it
     app_sub = C2CSub()
     app_client_sub = client.ApplicationClient(
-        sandbox.get_algod_client(), app_sub, signer=signer
+        sandbox.get_algod_client(), app_sub, signer=acct.signer
     )
     app_client_sub.create()
     app_client_sub.fund(1 * consts.algo)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # Create main app and fund it
     app_main = C2CMain()
     app_client_main = client.ApplicationClient(
-        sandbox.get_algod_client(), app_main, signer=signer
+        sandbox.get_algod_client(), app_main, signer=acct.signer
     )
     app_client_main.create()
     app_client_main.fund(1 * consts.algo)

@@ -23,14 +23,12 @@ TOTAL_ASSET_TOKENS = 10000000000
 
 @pytest.fixture(scope="session")
 def creator_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk, signer = accts[0]
-    return (addr, sk, signer)
+    return accts[0].address, accts[0].private_key, accts[0].signer
 
 
 @pytest.fixture(scope="session")
 def user_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk, signer = accts[1]
-    return (addr, sk, signer)
+    return accts[1].address, accts[1].private_key, accts[1].signer
 
 
 @pytest.fixture(scope="session")

@@ -70,6 +70,14 @@ class App(Application):
         return output.set("deadbeef")
 
 
+SandboxAccounts = list[tuple[str, str, AccountTransactionSigner]]
+
+
+@pytest.fixture(scope="session")
+def sb_accts() -> SandboxAccounts:
+    return [(acct.address, acct.private_key, acct.signer) for acct in get_accounts()]
+
+
 def test_app_client_create():
     app = App()
     client = get_algod_client()
@@ -87,11 +95,11 @@ def test_app_client_create():
         ac.get_sender(None, None)
 
 
-def test_app_prepare():
+def test_app_prepare(sb_accts: SandboxAccounts):
     app = App()
     client = get_algod_client()
 
-    addr, private_key, signer = get_accounts().pop()
+    (addr, sk, signer) = sb_accts[0]
 
     ac_with_signer = ApplicationClient(client, app, signer=signer)
 
@@ -198,11 +206,10 @@ def expect_dict(actual: dict[str, Any], expected: dict[str, Any]):
             assert actual[k] == v, f"for field {k}, expected {v} got {actual[k]}"
 
 
-def test_create():
+def test_create(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
 
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
@@ -229,7 +236,7 @@ def test_create():
         },
     )
 
-    new_addr, new_pk, new_signer = accts.pop()
+    new_addr, new_pk, new_signer = sb_accts[1]
     new_ac = ac.prepare(signer=new_signer)
     extra_pages = 2
     sp = client.suggested_params()
@@ -262,11 +269,10 @@ def test_create():
     )
 
 
-def test_update():
+def test_update(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
 
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
@@ -289,11 +295,9 @@ def test_update():
     )
 
 
-def test_delete():
+def test_delete(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
-
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
@@ -316,17 +320,16 @@ def test_delete():
     )
 
 
-def test_opt_in():
+def test_opt_in(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
 
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    new_addr, new_pk, new_signer = accts.pop()
+    new_addr, new_pk, new_signer = sb_accts[1]
     new_ac = ac.prepare(signer=new_signer)
     tx_id = new_ac.opt_in()
     result_tx = client.pending_transaction_info(tx_id)
@@ -345,18 +348,17 @@ def test_opt_in():
     )
 
 
-def test_close_out():
+def test_close_out(sb_accts: SandboxAccounts):
 
     app = App()
-    accts = get_accounts()
 
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    new_addr, new_pk, new_signer = accts.pop()
+    new_addr, new_pk, new_signer = sb_accts[1]
     new_ac = ac.prepare(signer=new_signer)
     new_ac.opt_in()
 
@@ -377,16 +379,15 @@ def test_close_out():
     )
 
 
-def test_clear_state():
+def test_clear_state(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    new_addr, new_pk, new_signer = accts.pop()
+    new_addr, new_pk, new_signer = sb_accts[1]
     new_ac = ac.prepare(signer=new_signer)
     new_ac.opt_in()
 
@@ -407,11 +408,9 @@ def test_clear_state():
     )
 
 
-def test_call():
+def test_call(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
-
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
@@ -449,11 +448,10 @@ def test_call():
     # TODO: need way more tests with diff signers/txn vals
 
 
-def test_add_method_call():
+def test_add_method_call(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
 
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
@@ -493,10 +491,9 @@ def test_add_method_call():
     )
 
 
-def test_fund():
+def test_fund(sb_accts: SandboxAccounts):
     app = App()
-    accts = get_accounts()
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
     client = get_algod_client()
 
     fund_amt = 1_000_000
@@ -509,12 +506,11 @@ def test_fund():
     assert info["amount"] == fund_amt, "Expected balance to equal fund_amt"
 
 
-def test_resolve():
+def test_resolve(sb_accts: SandboxAccounts):
 
     app = App()
-    accts = get_accounts()
 
-    addr, pk, signer = accts.pop()
+    addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
     ac = ApplicationClient(client, app, signer=signer)
@@ -522,23 +518,19 @@ def test_resolve():
     ac.create()
     ac.opt_in()
 
-    to_resolve = {ResolvableTypes.Constant: 1}
-    assert ac.resolve(to_resolve) == 1
+    assert ac.resolve({ResolvableTypes.Constant: 1}) == 1
 
-    to_resolve = {ResolvableTypes.Constant: "stringy"}
-    assert ac.resolve(to_resolve) == "stringy"
+    assert ac.resolve({ResolvableTypes.Constant: "stringy"}) == "stringy"
 
-    to_resolve = {ResolvableTypes.GlobalState: "app_state_val_int"}
-    assert ac.resolve(to_resolve) == 1
+    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_int"}) == 1
 
-    to_resolve = {ResolvableTypes.GlobalState: "app_state_val_byte"}
-    assert ac.resolve(to_resolve) == "test"
+    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_byte"}) == "test"
 
-    to_resolve = {ResolvableTypes.LocalState: "acct_state_val_int"}
-    assert ac.resolve(to_resolve) == 1
+    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_int"}) == 1
 
-    to_resolve = {ResolvableTypes.LocalState: "acct_state_val_byte"}
-    assert ac.resolve(to_resolve) == "test"
+    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_byte"}) == "test"
 
-    to_resolve = {ResolvableTypes.ABIMethod: get_method_spec(app.dummy).dictify()}
-    assert ac.resolve(to_resolve) == "deadbeef"
+    assert (
+        ac.resolve({ResolvableTypes.ABIMethod: get_method_spec(app.dummy).dictify()})
+        == "deadbeef"
+    )

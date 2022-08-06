@@ -31,13 +31,13 @@ class Calculator(Application):
 def demo():
     client = sandbox.get_algod_client()
 
-    _, _, signer = sandbox.get_accounts().pop()
+    acct = sandbox.get_accounts().pop()
 
     # Initialize Application
     app = Calculator()
 
     # Create an Application client containing both an algod client and app
-    app_client = ApplicationClient(client=client, app=app, signer=signer)
+    app_client = ApplicationClient(client=client, app=app, signer=acct.signer)
 
     # Create the application on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()

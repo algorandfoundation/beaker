@@ -18,11 +18,11 @@ if __name__ == "__main__":
     app = HelloBeaker()
 
     # Get an acct from the sandbox
-    addr, secret, signer = sandbox.get_accounts().pop()
+    acct = sandbox.get_accounts().pop()
 
     # Create an Application client
     app_client = client.ApplicationClient(
-        client=sandbox.get_algod_client(), app=app, signer=signer
+        client=sandbox.get_algod_client(), app=app, signer=acct.signer
     )
 
     # Deploy the app

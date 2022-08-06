@@ -4,12 +4,12 @@ from beaker.sandbox import get_algod_client, get_accounts
 
 accts = get_accounts()
 
-acct, sk, signer = accts.pop()
+acct = accts.pop()
 
 client = get_algod_client()
 
 app = StateExample()
-app_client = ApplicationClient(client, app, signer=signer)
+app_client = ApplicationClient(client, app, signer=acct.signer)
 app_id, app_address, transaction_id = app_client.create()
 print(
     f"DEPLOYED: App ID: {app_id} Address: {app_address} Transaction ID: {transaction_id}"

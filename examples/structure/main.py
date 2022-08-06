@@ -53,14 +53,14 @@ class Structer(Application):
 
 
 def demo():
-    addr, sk, signer = sandbox.get_accounts().pop()
+    acct = sandbox.get_accounts().pop()
 
     # Initialize Application from amm.py
     app = Structer()
 
     # Create an Application client containing both an algod client and my app
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=signer
+        sandbox.get_algod_client(), app, signer=acct.signer
     )
 
     # Create the applicatiion on chain, set the app id for the app client

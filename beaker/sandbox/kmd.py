@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.kmd import KMDClient
 
@@ -7,12 +8,19 @@ DEFAULT_KMD_WALLET_NAME = "unencrypted-default-wallet"
 DEFAULT_KMD_WALLET_PASSWORD = ""
 
 
+@dataclass
+class SandboxAccount:
+    address: str
+    private_key: str
+    signer: AccountTransactionSigner
+
+
 def get_accounts(
     kmd_address: str = DEFAULT_KMD_ADDRESS,
     kmd_token: str = DEFAULT_KMD_TOKEN,
     wallet_name: str = DEFAULT_KMD_WALLET_NAME,
     wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
-) -> list[tuple[str, str, AccountTransactionSigner]]:
+) -> list[SandboxAccount]:
 
     kmd = KMDClient(kmd_token, kmd_address)
     wallets = kmd.list_wallets()
@@ -34,7 +42,9 @@ def get_accounts(
             kmd.export_key(wallet_handle, wallet_password, addr) for addr in addresses
         ]
         kmd_accounts = [
-            (addresses[i], private_keys[i], AccountTransactionSigner(private_keys[i]))
+            SandboxAccount(
+                addresses[i], private_keys[i], AccountTransactionSigner(private_keys[i])
+            )
             for i in range(len(private_keys))
         ]
     finally:
