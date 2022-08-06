@@ -10,8 +10,13 @@ DEFAULT_KMD_WALLET_PASSWORD = ""
 
 @dataclass
 class SandboxAccount:
+    """ SandboxAccount is a simple dataclass to hold a sandbox account details"""
+
+    #: The address of a sandbox account
     address: str
+    #: The base64 encoded private key of the account
     private_key: str
+    #: An AccountTransactionSigner that can be used as a TransactionSigner 
     signer: AccountTransactionSigner
 
 
@@ -21,6 +26,7 @@ def get_accounts(
     wallet_name: str = DEFAULT_KMD_WALLET_NAME,
     wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
 ) -> list[SandboxAccount]:
+    """gets all the accounts in the sandbox kmd, defaults to the `unencrypted-default-wallet` created on private networks automatically"""
 
     kmd = KMDClient(kmd_token, kmd_address)
     wallets = kmd.list_wallets()
@@ -60,6 +66,7 @@ def add_account(
     wallet_name: str = DEFAULT_KMD_WALLET_NAME,
     wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
 ) -> str:
+    """Adds a new account to the sandbox kmd"""
 
     kmd = KMDClient(kmd_token, kmd_address)
     wallets = kmd.list_wallets()
