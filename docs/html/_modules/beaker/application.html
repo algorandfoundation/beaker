@@ -96,8 +96,8 @@
     <span class="n">get_handler_config</span><span class="p">,</span>
     <span class="n">MethodHints</span><span class="p">,</span>
     <span class="n">create</span><span class="p">,</span>
-    <span class="n">opt_in</span><span class="p">,</span>
 <span class="p">)</span>
+
 <span class="kn">from</span> <span class="nn">beaker.state</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AccountState</span><span class="p">,</span>
     <span class="n">ApplicationState</span><span class="p">,</span>
@@ -255,7 +255,7 @@
 <div class="viewcode-block" id="Application.application_spec"><a class="viewcode-back" href="../../application.html#beaker.application.Application.application_spec">[docs]</a>    <span class="k">def</span> <span class="nf">application_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;returns a dictionary, helpful to provide to callers with information about the application specification&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;hints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="s2">&quot;hints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">empty</span><span class="p">()},</span>
             <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span><span class="o">.</span><span class="n">dictify</span><span class="p">(),</span>
                 <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span><span class="o">.</span><span class="n">dictify</span><span class="p">(),</span>
@@ -281,12 +281,7 @@
 <div class="viewcode-block" id="Application.create"><a class="viewcode-back" href="../../application.html#beaker.application.Application.create">[docs]</a>    <span class="nd">@create</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;default create behavior, initializes application state&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.opt_in"><a class="viewcode-back" href="../../application.html#beaker.application.Application.opt_in">[docs]</a>    <span class="nd">@opt_in</span>
-    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default opt in behavior, initializes account state&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_account_state</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">()</span></div></div>
 </pre></div>
 
            </div>
