@@ -21,7 +21,8 @@ from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
+from beaker.decorators import HandlerFunc, MethodHints
+from beaker.annotations import ResolvableArgument
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException

@@ -36,6 +36,7 @@ HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
 
+
 @dataclass
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
@@ -47,7 +48,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
 
-    param_annotations: Optional[list["ResolvableArgument"]] = field(kw_only=True, default=None)
+    param_annotations: Optional[Any] = field(kw_only=True, default=None)
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 
@@ -94,7 +95,11 @@ class MethodHints:
     param_annotations: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
 
     def empty(self) -> bool:
-        return self.structs is None and self.param_annotations is None and not self.read_only
+        return (
+            self.structs is None
+            and self.param_annotations is None
+            and not self.read_only
+        )
 
     def dictify(self) -> dict[str, Any]:
         d: dict[str, Any] = {}
@@ -105,6 +110,7 @@ class MethodHints:
         if self.structs is not None:
             d["structs"] = self.structs
         return d
+
 
 class Authorize:
     """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""
@@ -117,7 +123,7 @@ class Authorize:
             raise TealTypeError(addr.type_of(), TealType.bytes)
 
         @Subroutine(TealType.uint64, name="auth_only")
-        def _impl(sender: Expr)->Expr:
+        def _impl(sender: Expr) -> Expr:
             return sender == addr
 
         return _impl
@@ -232,11 +238,20 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
 
     # TODO:
     print(arg_annotations)
-    #set_handler_config(fn, annotations=arg_annotations)
 
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
     fn.__annotations__ = fn_annotations
+
+    # def _decorate(fn: HandlerFunc):
+    #    @wraps(fn)
+    #    def _impl(*args, **kwargs):
+    #        print(args, kwargs)
+    #        return Seq(arg_annotations.values(), fn(*args, **kwargs))
+    #    return _impl
+    # return _decorate
+
+    # set_handler_config(fn, annotations=arg_annotations)
 
     return fn
 

@@ -1,11 +1,7 @@
 import pytest
 import pyteal as pt
 
-from beaker.state import ApplicationStateValue
-
-from .application import Application, get_method_spec
 from .decorators import (
-    ResolvableArgument,
     external,
     get_handler_config,
     Authorize,
@@ -16,7 +12,6 @@ from .decorators import (
     update,
     no_op,
     opt_in,
-    annotated,
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -259,75 +254,3 @@ def test_bare():
 
     hc = get_handler_config(impl)
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
-
-
-def test_resolvable():
-    from .state import (
-        AccountStateValue,
-        ApplicationStateValue,
-        DynamicAccountStateValue,
-        DynamicApplicationStateValue,
-    )
-
-    x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArgument('x', x)
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "local-state"
-    assert r.resolve_with == "x"
-
-    x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArgument('x', x[pt.Bytes("x")])
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "local-state"
-    assert r.resolve_with == "x"
-
-    x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArgument('x',x)
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "global-state"
-    assert r.resolve_with == "x"
-
-    x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArgument('x',x[pt.Bytes("x")])
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "global-state"
-    assert r.resolve_with == "x"
-
-
-    @external(read_only=True)
-    def x():
-        return pt.Assert(pt.Int(1))
-
-    r = ResolvableArgument('x',x)
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "abi-method"
-    assert r.resolve_with == get_method_spec(x).dictify()
-
-    r = ResolvableArgument('x',"1")
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "constant"
-    assert r.resolve_with == "1"
-
-    r = ResolvableArgument('x',1)
-    assert r.parameter_name == 'x' 
-    assert r.resolve_from == "constant"
-    assert r.resolve_with == 1
-
-
-
-def test_annotations():
-
-    class AnnotatedApp(Application):
-        z = ApplicationStateValue(pt.TealType.uint64)
-
-        default_x = pt.Bytes("hi")
-
-        @external
-        def meth(self, x: annotated(pt.abi.String, checked_default(default_x))):
-            return pt.Seq(
-                pt.Assert(x.get() == self.default_x),
-                pt.Approve()
-            )
-
-    aa = AnnotatedApp()
-    print(get_handler_config(aa.meth))
