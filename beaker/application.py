@@ -180,7 +180,7 @@ class Application:
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
-            "hints": {k: v.dictify() for k, v in self.hints.items()},
+            "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "schema": {
                 "local": self.acct_state.dictify(),
                 "global": self.app_state.dictify(),

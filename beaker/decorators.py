@@ -92,6 +92,9 @@ class MethodHints:
         kw_only=True, default=None
     )
 
+    def empty(self) -> bool:
+        return self.resolvable is None and self.structs is None and not self.read_only
+
     def dictify(self) -> dict[str, Any]:
         d: dict[str, Any] = {}
         if self.read_only:
