@@ -19,7 +19,7 @@ from .decorators import (
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
-def test_external_config():
+def test_handler_config():
     @external
     def handleable():
         pass
@@ -167,6 +167,19 @@ def test_authorize():
     expected = expr.__teal__(options)
     actual = opted_in_only().__teal__(options)
 
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    # Bare handler
+
+    @delete(authorize=auth_only)
+    def deleter():
+        return pt.Approve()
+
+    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender())), pt.Approve())
+
+    expected = expr.__teal__(options)
+    actual = deleter().__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 

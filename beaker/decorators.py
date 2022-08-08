@@ -416,69 +416,127 @@ def create(fn: HandlerFunc):
     return bare_external(no_op=CallConfig.CREATE)(fn)
 
 
-def delete(fn: HandlerFunc):
+def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """set method to be handled by a bare :code:`DeleteApplication` call
 
     Args:
         fn: The method to be wrapped.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_external(delete_application=CallConfig.CALL)(fn)
+
+    def _impl(fn: HandlerFunc):
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        return bare_external(delete_application=CallConfig.CALL)(fn)
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
-def update(fn: HandlerFunc):
+def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """set method to be handled by a bare :code:`UpdateApplication` call
 
     Args:
         fn: The method to be wrapped.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_external(update_application=CallConfig.CALL)(fn)
+
+    def _impl(fn: HandlerFunc):
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        return bare_external(update_application=CallConfig.CALL)(fn)
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
-def opt_in(fn: HandlerFunc):
+def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """set method to be handled by a bare :code:`OptIn` call
 
     Args:
         fn: The method to be wrapped.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_external(opt_in=CallConfig.CALL)(fn)
+
+    def _impl(fn: HandlerFunc):
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        return bare_external(opt_in=CallConfig.CALL)(fn)
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
-def clear_state(fn: HandlerFunc):
+def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """set method to be handled by a bare :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
-    return bare_external(clear_state=CallConfig.CALL)(fn)
+    def _impl(fn: HandlerFunc):
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        return bare_external(clear_state=CallConfig.CALL)(fn)
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
-def close_out(fn: HandlerFunc):
+def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """set method to be handled by a bare :code:`CloseOut` call
 
     Args:
         fn: The method to be wrapped.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
-    return bare_external(close_out=CallConfig.CALL)(fn)
+    def _impl(fn: HandlerFunc):
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        return bare_external(close_out=CallConfig.CALL)(fn)
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
-def no_op(fn: HandlerFunc):
+def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """set method to be handled by a bare :code:`NoOp` call
 
     Args:
         fn: The method to be wrapped.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_external(no_op=CallConfig.CALL)(fn)
+
+    def _impl(fn: HandlerFunc):
+        if authorize is not None:
+            fn = _authorize(authorize)(fn)
+        return bare_external(no_op=CallConfig.CALL)(fn)
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
