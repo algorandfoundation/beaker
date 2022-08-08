@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Signature
-from typing import Optional, Callable, Final, cast, Any, Annotated
+from typing import Optional, Callable, Final, cast, Any, Annotated, TypeVar
 from algosdk.abi import Method
 from pyteal import (
     abi,
@@ -35,16 +35,6 @@ from beaker.struct import Struct
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
-
-
-def annotated(t: type[abi.BaseType], *annos: Any) -> type[abi.BaseType]:
-    return Annotated[t, annos[0]]
-
-
-def TxnMatch(t: type[abi.Transaction], matches: dict[TxnField, Expr]):
-    pass
-
-
 
 @dataclass
 class HandlerConfig:
@@ -115,47 +105,6 @@ class MethodHints:
         if self.structs is not None:
             d["structs"] = self.structs
         return d
-
-
-class ResolvableTypes(str, Enum):
-    ABIMethod = "abi-method"
-    LocalState = "local-state"
-    GlobalState = "global-state"
-    Constant = "constant"
-
-
-class ResolvableArgument:
-    """ResolvableArgument is a container for any arguments that may be resolved prior to calling some target method"""
-
-    def __init__(
-        self,
-        param_name: str,
-        param_resolver: AccountStateValue | ApplicationStateValue | HandlerFunc | str | int
-    ):
-
-        self.parameter_name = param_name
-
-        self.resolve_from: ResolvableTypes = None
-        self.resolve_with: Any = None
-        
-        match param_resolver:
-            case AccountStateValue():
-                self.resolve_from = ResolvableTypes.LocalState
-                self.resolve_with = param_resolver.str_key()
-            case ApplicationStateValue():
-                self.resolve_from = ResolvableTypes.GlobalState
-                self.resolve_with = param_resolver.str_key()
-            case str() | int():
-                self.resolve_from = ResolvableTypes.Constant
-                self.resolve_with = param_resolver
-            case _:
-                hc = get_handler_config(cast(HandlerFunc, param_resolver))
-                if hc.method_spec is None or not hc.read_only:
-                    raise Exception(
-                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
-                    )
-                self.resolve_from = ResolvableTypes.ABIMethod
-                self.resolve_with = hc.method_spec.dictify()
 
 class Authorize:
     """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""

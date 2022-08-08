@@ -320,9 +320,14 @@ def test_annotations():
     class AnnotatedApp(Application):
         z = ApplicationStateValue(pt.TealType.uint64)
 
+        default_x = pt.Bytes("hi")
+
         @external
-        def meth(self, x: annotated(pt.abi.String, "blah")):
-            return pt.Approve()
+        def meth(self, x: annotated(pt.abi.String, checked_default(default_x))):
+            return pt.Seq(
+                pt.Assert(x.get() == self.default_x),
+                pt.Approve()
+            )
 
     aa = AnnotatedApp()
     print(get_handler_config(aa.meth))
