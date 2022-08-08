@@ -207,8 +207,3 @@ class Application:
     def create(self) -> Expr:
         """default create behavior, initializes application state"""
         return self.initialize_application_state()
-
-    @opt_in
-    def opt_in(self) -> Expr:
-        """default opt in behavior, initializes account state"""
-        return self.initialize_account_state()
