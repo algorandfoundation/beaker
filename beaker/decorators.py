@@ -2,14 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
-from inspect import get_annotations, isclass, signature, Signature
-from typing import Annotated, Callable, Final, cast, Any, get_type_hints, Generic, TypeVar
-from typing_extensions import _AnnotatedAlias
 from inspect import get_annotations, signature, Signature
 from typing import Optional, Callable, Final, cast, Any
 from algosdk.abi import Method
 from pyteal import (
-    abi,
     ABIReturnSubroutine,
     And,
     App,
@@ -51,7 +47,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
 
-    annotations: list[Any]  = field(kw_only=True, default=None)
+    annotations: list[Any] = field(kw_only=True, default=None)
     resolvable: Optional["ResolvableArguments"] = field(kw_only=True, default=None)
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
@@ -257,14 +253,6 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     annotations = get_annotations(fn)
     for k, v in params.items():
         cls = v.annotation
-        if hasattr(cls, "__origin__"):
-            # Generic type, not a Model
-            continue
-
-        if issubclass(cls, Model):
-            orig = cls().annotation_type()
-            params[k] = v.replace(annotation=orig)
-            annotations[k] = orig 
         if hasattr(v.annotation, "__origin__"):
             # Generic type, not a Struct
             continue
@@ -283,6 +271,7 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
 
     return fn
 
+
 def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     fn_annotations = get_annotations(fn)
@@ -292,9 +281,9 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
     params = sig.parameters.copy()
     for k, v in params.items():
         tv = v.annotation
-        if hasattr(tv, '__origin__'):
+        if hasattr(tv, "__origin__"):
             orig = tv.__origin__
-            if hasattr(tv, '__metadata__'):
+            if hasattr(tv, "__metadata__"):
                 arg_annotations[k] = tv.__metadata__
 
                 params[k] = v.replace(annotation=orig)
@@ -304,9 +293,10 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
     set_handler_config(fn, annotations=arg_annotations)
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
-    fn.__annotations__ = fn_annotations 
+    fn.__annotations__ = fn_annotations
 
     return fn
+
 
 def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
@@ -320,8 +310,6 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     fn.__signature__ = newsig  # type: ignore[attr-defined]
 
     return fn
-
-
 
 
 def internal(return_type: TealType):
