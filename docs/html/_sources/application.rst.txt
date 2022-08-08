@@ -5,6 +5,7 @@ Application
 
 This is the base class that all Beaker Applications should inherit from.
 
+This should _not_ be initialized directly.
 
 .. autoclass:: Application
 
