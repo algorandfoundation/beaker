@@ -100,8 +100,8 @@ def test_bare_external():
     bh = Bareexternal()
 
     assert (
-        len(bh.bare_externals) == 4
-    ), "Expected 4 bare externals: create,update,delete,optin"
+        len(bh.bare_externals) == 3
+    ), "Expected 4 bare externals: create,update,delete"
 
     class FailBareexternal(Application):
         @create
@@ -288,7 +288,6 @@ def test_resolvable_hint():
 
 EXPECTED_BARE_HANDLERS = [
     "create",
-    "opt_in",
 ]
 
 

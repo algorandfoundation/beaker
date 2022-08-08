@@ -10,13 +10,13 @@ DEFAULT_KMD_WALLET_PASSWORD = ""
 
 @dataclass
 class SandboxAccount:
-    """ SandboxAccount is a simple dataclass to hold a sandbox account details"""
+    """SandboxAccount is a simple dataclass to hold a sandbox account details"""
 
     #: The address of a sandbox account
     address: str
     #: The base64 encoded private key of the account
     private_key: str
-    #: An AccountTransactionSigner that can be used as a TransactionSigner 
+    #: An AccountTransactionSigner that can be used as a TransactionSigner
     signer: AccountTransactionSigner
 
 

@@ -21,8 +21,8 @@ from beaker.decorators import (
     get_handler_config,
     MethodHints,
     create,
-    opt_in,
 )
+
 from beaker.state import (
     AccountState,
     ApplicationState,
@@ -180,7 +180,7 @@ class Application:
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
-            "hints": {k: v.dictify() for k, v in self.hints.items()},
+            "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "schema": {
                 "local": self.acct_state.dictify(),
                 "global": self.app_state.dictify(),
@@ -207,8 +207,3 @@ class Application:
     def create(self) -> Expr:
         """default create behavior, initializes application state"""
         return self.initialize_application_state()
-
-    @opt_in
-    def opt_in(self) -> Expr:
-        """default opt in behavior, initializes account state"""
-        return self.initialize_account_state()
