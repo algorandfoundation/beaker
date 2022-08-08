@@ -52,12 +52,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#method-hints">Method Hints</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#internal-methods">Internal Methods</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#bare-externals">Bare externals</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#single-bare-externals">Single Bare externals</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#multiple-bare-externals">Multiple Bare externals</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#internal-methods">Internal Methods</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="structs.html">Structs</a></li>
@@ -93,6 +93,8 @@
 <p>Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the <code class="docutils literal notranslate"><span class="pre">Application</span></code> class to know how to expose them.</p>
 <span class="target" id="module-beaker.decorators"></span><section id="abi-method-external">
 <span id="external"></span><h2>ABI Method external<a class="headerlink" href="#abi-method-external" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">external</span></code> decorator is how we can add methods to be handled as ABI methods.</p>
+<p>Tagging a method as <code class="docutils literal notranslate"><span class="pre">external</span></code> adds it to the internal <code class="docutils literal notranslate"><span class="pre">Router</span></code> with whatever configuration is passed, if any.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="beaker.decorators.external">
 <span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">external</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">authorize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">MethodConfig</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolvable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#beaker.decorators.ResolvableArguments" title="beaker.decorators.ResolvableArguments"><span class="pre">ResolvableArguments</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/decorators.html#external"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.external" title="Permalink to this definition"></a></dt>
@@ -238,8 +240,36 @@
 </div>
 </section>
 </section>
+<section id="internal-methods">
+<span id="id3"></span><h2>Internal Methods<a class="headerlink" href="#internal-methods" title="Permalink to this heading"></a></h2>
+<p>An Application will often need a number of internal <code class="docutils literal notranslate"><span class="pre">utility</span></code> type methods to handle common logic.
+We don’t want to expose these methods to the ABI but we do want to allow them to access any instance variables.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you want some method to return the expression only and not be triggered with <code class="docutils literal notranslate"><span class="pre">callsub</span></code>, omit the <code class="docutils literal notranslate"><span class="pre">&#64;internal</span></code> decorator and the expression will be inlined</p>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="beaker.decorators.internal">
+<span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">internal</span></span><a class="reference internal" href="_modules/beaker/decorators.html#internal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.internal" title="Permalink to this definition"></a></dt>
+<dd><p>creates a subroutine to be called by logic internally</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>return_type</strong> – The type this method’s returned Expression should evaluate to</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The wrapped subroutine</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@internal</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">do_logic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">&gt;</span><span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_asset</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
 <section id="bare-externals">
-<span id="id3"></span><h2>Bare externals<a class="headerlink" href="#bare-externals" title="Permalink to this heading"></a></h2>
+<span id="id4"></span><h2>Bare externals<a class="headerlink" href="#bare-externals" title="Permalink to this heading"></a></h2>
 <p>The ARC4 spec allows applications to define externals for <code class="docutils literal notranslate"><span class="pre">bare</span></code> methods, that is methods with no application arguments.</p>
 <p>Routing for <code class="docutils literal notranslate"><span class="pre">bare</span></code> methods is based on the transaction’s <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> and whether or not it’s a Create transaction.</p>
 <section id="single-bare-externals">
@@ -355,33 +385,6 @@
 </dd></dl>
 
 </section>
-</section>
-<section id="internal-methods">
-<span id="id4"></span><h2>Internal Methods<a class="headerlink" href="#internal-methods" title="Permalink to this heading"></a></h2>
-<p>An Application will often need a number of internal <code class="docutils literal notranslate"><span class="pre">utility</span></code> type methods to handle common logic.  We don’t want to expose these methods to the ABI but we do want to allow them to access any instance variables.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you want some method to return the expression only and not be triggered with <code class="docutils literal notranslate"><span class="pre">callsub</span></code>, omit the <code class="docutils literal notranslate"><span class="pre">&#64;internal</span></code> decorator and the expression will be inlined</p>
-</div>
-<dl class="py function">
-<dt class="sig sig-object py" id="beaker.decorators.internal">
-<span class="sig-prename descclassname"><span class="pre">&#64;</span></span><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">internal</span></span><a class="reference internal" href="_modules/beaker/decorators.html#internal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.internal" title="Permalink to this definition"></a></dt>
-<dd><p>creates a subroutine to be called by logic internally</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>return_type</strong> – The type this method’s returned Expression should evaluate to</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The wrapped subroutine</p>
-</dd>
-</dl>
-</dd></dl>
-
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@internal</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">do_logic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">&gt;</span><span class="mi">10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_asset</span><span class="p">())</span>
-</pre></div>
-</div>
 </section>
 </section>
 
