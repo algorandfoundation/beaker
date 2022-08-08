@@ -1,6 +1,6 @@
 from typing import Final
 
-from beaker.client import ApplicationClient
+from beaker.client import ApplicationClient, LogicException
 from beaker import sandbox
 
 from pyteal import abi, TealType, Global, Int, Seq
@@ -43,7 +43,8 @@ class CounterApp(Application):
 def demo():
     client = sandbox.get_algod_client()
 
-    acct = sandbox.get_accounts().pop()
+    accts = sandbox.get_accounts()
+    acct = accts.pop()
 
     # Initialize Application from amm.py
     app = CounterApp()
@@ -66,9 +67,17 @@ def demo():
     result = app_client.call(app.decrement)
     print(f"Currrent counter value: {result.return_value}")
 
+    try:
+        # Try to call the increment method with a different signer, it should fail
+        # since we have the auth check
+        other_acct = accts.pop()
+        other_client = app_client.prepare(signer=other_acct.signer)
+        other_client.call(app.increment)
+    except LogicException as e:
+        print("App call failed as expected.")
+        print(e)
+
 
 if __name__ == "__main__":
     ca = CounterApp()
-    print(ca.app_state.schema().__dict__)
-
     demo()
