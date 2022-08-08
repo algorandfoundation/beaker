@@ -1,5 +1,6 @@
 from abc import ABC
 from enum import Enum
+import re
 from typing import Callable, TypeVar, Annotated, Any, cast
 
 from pyteal import (
@@ -89,25 +90,19 @@ def annotated(t: ABIType, *annotations: AnnotationFunction) -> ABIType:
     return t
 
 
-def unchecked(val: Expr | ResolvableArgument) -> AnnotationFunction:
-    match val:
+def resolvable_arg(val: Any):
+    pass
 
-        case Expr():
 
-            def _impl(field):
-                return Seq()
+def with_hints(t: ABIType, **kwargs) -> ABIType:
+    pass
 
-            return _impl
 
-        case ResolvableArgument():
+def default_arg(val: Expr | ResolvableArgument) -> AnnotationFunction:
+    def _impl(field):
+        return Seq()
 
-            def _impl(field):
-                return Seq()
-
-            return _impl
-
-        case _:
-            raise Exception(f"Invalid type of val: {val}")
+    return _impl
 
 
 def checked(val: Expr | ResolvableArgument | TransactionMatcher) -> AnnotationFunction:

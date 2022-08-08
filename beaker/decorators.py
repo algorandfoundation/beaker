@@ -236,22 +236,15 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
                 params[k] = v.replace(annotation=orig)
                 fn_annotations[k] = orig
 
-    # TODO:
+    # TODO: apply
     print(arg_annotations)
+    # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
+    # set_handler_config(fn, annotations=arg_annotations)
 
+    # Fix function sig/annotations
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
     fn.__annotations__ = fn_annotations
-
-    # def _decorate(fn: HandlerFunc):
-    #    @wraps(fn)
-    #    def _impl(*args, **kwargs):
-    #        print(args, kwargs)
-    #        return Seq(arg_annotations.values(), fn(*args, **kwargs))
-    #    return _impl
-    # return _decorate
-
-    # set_handler_config(fn, annotations=arg_annotations)
 
     return fn
 
