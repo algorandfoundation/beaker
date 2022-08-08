@@ -1,11 +1,11 @@
-from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Signature
-from typing import Optional, Callable, Final, cast, Any
+from typing import Optional, Callable, Final, cast, Any, Annotated
 from algosdk.abi import Method
 from pyteal import (
+    abi,
     ABIReturnSubroutine,
     And,
     App,
@@ -23,6 +23,7 @@ from pyteal import (
     TealInputError,
     TealType,
     TealTypeError,
+    TxnField,
     Txn,
 )
 from beaker.state import (
@@ -36,6 +37,15 @@ HandlerFunc = Callable[..., Expr]
 _handler_config_attr: Final[str] = "__handler_config__"
 
 
+def annotated(t: type[abi.BaseType], *annos: Any) -> type[abi.BaseType]:
+    return Annotated[t, annos[0]]
+
+
+def TxnMatch(t: type[abi.Transaction], matches: dict[TxnField, Expr]):
+    pass
+
+
+
 @dataclass
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
@@ -47,19 +57,15 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
 
-    annotations: list[Any] = field(kw_only=True, default=None)
-    resolvable: Optional["ResolvableArguments"] = field(kw_only=True, default=None)
+    param_annotations: Optional[list["ResolvableArgument"]] = field(kw_only=True, default=None)
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
         mh = MethodHints(read_only=self.read_only)
 
-        if self.annotations is not None:
-            mh.annotations = self.annotations
-
-        if self.resolvable is not None:
-            mh.resolvable = self.resolvable.__dict__
+        if self.param_annotations is not None:
+            mh.param_annotations = self.param_annotations
 
         if self.structs is not None:
             mh.structs = {
@@ -88,8 +94,6 @@ def set_handler_config(fn: HandlerFunc, **kwargs):
 class MethodHints:
     """MethodHints provides hints to the caller about how to call the method"""
 
-    #: hints to resolve a given argument, see :ref:`resolvable <resolvable>` for more
-    resolvable: Optional[dict[str, dict[str, Any]]] = field(kw_only=True, default=None)
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
     #: hint to provide names for tuple argument indices, see :doc:`structs` for more
@@ -97,21 +101,19 @@ class MethodHints:
         kw_only=True, default=None
     )
     #: annotations
-    annotations: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
+    param_annotations: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
 
     def empty(self) -> bool:
-        return self.resolvable is None and self.structs is None and not self.read_only
+        return self.structs is None and self.param_annotations is None and not self.read_only
 
     def dictify(self) -> dict[str, Any]:
         d: dict[str, Any] = {}
         if self.read_only:
             d["read_only"] = True
-        if self.annotations is not None:
-            d["annotations"] = self.annotations
+        if self.param_annotations is not None:
+            d["param_annotations"] = self.param_annotations
         if self.structs is not None:
             d["structs"] = self.structs
-        if self.resolvable is not None:
-            d["resolvable"] = self.resolvable
         return d
 
 
@@ -122,48 +124,38 @@ class ResolvableTypes(str, Enum):
     Constant = "constant"
 
 
-class ResolvableArguments:
-    """ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method"""
+class ResolvableArgument:
+    """ResolvableArgument is a container for any arguments that may be resolved prior to calling some target method"""
 
     def __init__(
         self,
-        **kwargs: dict[
-            str, AccountStateValue | ApplicationStateValue | HandlerFunc | str | int
-        ],
+        param_name: str,
+        param_resolver: AccountStateValue | ApplicationStateValue | HandlerFunc | str | int
     ):
 
-        resolvable_args = {}
-        for arg_name, arg_resolver in kwargs.items():
-            match arg_resolver:
-                case AccountStateValue():
-                    resolvable_args[arg_name] = {
-                        ResolvableTypes.LocalState: arg_resolver.str_key()
-                    }
-                case ApplicationStateValue():
-                    resolvable_args[arg_name] = {
-                        ResolvableTypes.GlobalState: arg_resolver.str_key()
-                    }
-                case str() | int():
-                    resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
-                case _:
-                    hc = get_handler_config(cast(HandlerFunc, arg_resolver))
-                    if hc.method_spec is None or not hc.read_only:
-                        raise Exception(
-                            "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
-                        )
-                    resolvable_args[arg_name] = {
-                        ResolvableTypes.ABIMethod: hc.method_spec.dictify()
-                    }
+        self.parameter_name = param_name
 
-        self.__dict__.update(**resolvable_args)
-
-    def check_arguments(self, sig: Signature):
-        for k in self.__dict__.keys():
-            if k not in sig.parameters:
-                raise Exception(
-                    f"The ResolvableArgument field {k} not present in function signature"
-                )
-
+        self.resolve_from: ResolvableTypes = None
+        self.resolve_with: Any = None
+        
+        match param_resolver:
+            case AccountStateValue():
+                self.resolve_from = ResolvableTypes.LocalState
+                self.resolve_with = param_resolver.str_key()
+            case ApplicationStateValue():
+                self.resolve_from = ResolvableTypes.GlobalState
+                self.resolve_with = param_resolver.str_key()
+            case str() | int():
+                self.resolve_from = ResolvableTypes.Constant
+                self.resolve_with = param_resolver
+            case _:
+                hc = get_handler_config(cast(HandlerFunc, param_resolver))
+                if hc.method_spec is None or not hc.read_only:
+                    raise Exception(
+                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
+                    )
+                self.resolve_from = ResolvableTypes.ABIMethod
+                self.resolve_with = hc.method_spec.dictify()
 
 class Authorize:
     """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""
@@ -176,7 +168,7 @@ class Authorize:
             raise TealTypeError(addr.type_of(), TealType.bytes)
 
         @Subroutine(TealType.uint64, name="auth_only")
-        def _impl(sender: Expr):
+        def _impl(sender: Expr)->Expr:
             return sender == addr
 
         return _impl
@@ -290,7 +282,9 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
                 fn_annotations[k] = orig
 
     # TODO:
-    set_handler_config(fn, annotations=arg_annotations)
+    print(arg_annotations)
+    #set_handler_config(fn, annotations=arg_annotations)
+
     newsig = sig.replace(parameters=params.values())
     fn.__signature__ = newsig
     fn.__annotations__ = fn_annotations
@@ -341,7 +335,6 @@ def external(
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
-    resolvable: ResolvableArguments = None,
 ) -> HandlerFunc:
 
     """
@@ -363,9 +356,6 @@ def external(
         fn = _capture_annotations(fn)
         fn = _replace_structs(fn)
 
-        if resolvable is not None:
-            resolvable.check_arguments(signature(fn))
-            set_handler_config(fn, resolvable=resolvable)
         if authorize is not None:
             fn = _authorize(authorize)(fn)
         if method_config is not None:

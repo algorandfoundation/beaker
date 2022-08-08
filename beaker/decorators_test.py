@@ -1,9 +1,11 @@
 import pytest
 import pyteal as pt
 
-from .application import get_method_spec
+from beaker.state import ApplicationStateValue
+
+from .application import Application, get_method_spec
 from .decorators import (
-    ResolvableArguments,
+    ResolvableArgument,
     external,
     get_handler_config,
     Authorize,
@@ -14,6 +16,7 @@ from .decorators import (
     update,
     no_op,
     opt_in,
+    annotated,
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -254,49 +257,59 @@ def test_resolvable():
     )
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArguments(x=x)
-    assert r.x == {"local-state": "x"}
+    r = ResolvableArgument('x', x)
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "local-state"
+    assert r.resolve_with == "x"
 
     x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes("x")])
-    assert r.x == {"local-state": "x"}
+    r = ResolvableArgument('x', x[pt.Bytes("x")])
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "local-state"
+    assert r.resolve_with == "x"
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArguments(x=x)
-    assert r.x == {"global-state": "x"}
+    r = ResolvableArgument('x',x)
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "global-state"
+    assert r.resolve_with == "x"
 
     x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes("x")])
-    assert r.x == {"global-state": "x"}
+    r = ResolvableArgument('x',x[pt.Bytes("x")])
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "global-state"
+    assert r.resolve_with == "x"
 
-    x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes("x")])
-    assert r.x == {"global-state": "x"}
 
     @external(read_only=True)
     def x():
         return pt.Assert(pt.Int(1))
 
-    r = ResolvableArguments(x=x)
-    assert r.x == {"abi-method": get_method_spec(x).dictify()}
+    r = ResolvableArgument('x',x)
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "abi-method"
+    assert r.resolve_with == get_method_spec(x).dictify()
 
-    r = ResolvableArguments(x="1")
-    assert r.x == {"constant": "1"}
+    r = ResolvableArgument('x',"1")
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "constant"
+    assert r.resolve_with == "1"
 
-    r = ResolvableArguments(x=1)
-    assert r.x == {"constant": 1}
+    r = ResolvableArgument('x',1)
+    assert r.parameter_name == 'x' 
+    assert r.resolve_from == "constant"
+    assert r.resolve_with == 1
 
-    with pytest.raises(Exception):
 
-        @external(resolvable=ResolvableArguments(x=1))
-        def doit(a: pt.abi.Uint64):
-            pass
 
-    with pytest.raises(Exception):
+def test_annotations():
+
+    class AnnotatedApp(Application):
+        z = ApplicationStateValue(pt.TealType.uint64)
 
         @external
-        def x():
-            return pt.Assert(pt.Int(1))
+        def meth(self, x: annotated(pt.abi.String, "blah")):
+            return pt.Approve()
 
-        r = ResolvableArguments(x=x)
-        assert r.x == {"abi-method": get_method_spec(x).dictify()}
+    aa = AnnotatedApp()
+    print(get_handler_config(aa.meth))
