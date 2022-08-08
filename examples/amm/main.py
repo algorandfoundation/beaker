@@ -1,30 +1,27 @@
-import base64
-
 from algosdk.future import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
-    AccountTransactionSigner,
     TransactionWithSigner,
 )
 
-from beaker.sandbox import get_accounts, get_client
+from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
 
 from amm import ConstantProductAMM
 
 
 # Take first account from sandbox
-addr, sk = get_accounts().pop()
-signer = AccountTransactionSigner(sk)
+acct = get_accounts().pop()
+addr, sk, signer = acct.address, acct.private_key, acct.signer
 
 # get sandbox client
-client = get_client()
+client = get_algod_client()
 
 # Initialize Application from amm.py
 app = ConstantProductAMM()
 
 # Create an Application client containing both an algod client and my app
-app_client = ApplicationClient(client, app, signer=signer)
+app_client = ApplicationClient(client, app, signer=acct.signer)
 
 
 def demo():
@@ -34,11 +31,6 @@ def demo():
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
     # Fund App address so it can create the pool token and hold balances
-    sp = client.suggested_params()
-    txid = client.send_transaction(
-        transaction.PaymentTxn(addr, sp, app_addr, int(1e7)).sign(sk)
-    )
-    transaction.wait_for_confirmation(client, txid, 4)
 
     # Create assets
     asset_a = create_asset(addr, sk, "A")
@@ -47,7 +39,11 @@ def demo():
 
     # Call app to create pool token
     print("Calling bootstrap")
-    result = app_client.call(app.bootstrap, a_asset=asset_a, b_asset=asset_b)
+    sp = client.suggested_params()
+    ptxn = TransactionWithSigner(
+        txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e7)), signer=signer
+    )
+    result = app_client.call(app.bootstrap, seed=ptxn, a_asset=asset_a, b_asset=asset_b)
     pool_token = result.return_value
     print(f"Created pool token with id: {pool_token}")
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
@@ -187,7 +183,7 @@ def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
         if asset["asset-id"] == b:
             print("\tAssetB Balance {}".format(asset["amount"]))
 
-    state = app_client.get_application_state(force_str=True)
+    state = app_client.get_application_state()
     state_key = ConstantProductAMM.ratio.str_key()
     if state_key in state:
         print(f"\tCurrent ratio a/b == {state[state_key] / ConstantProductAMM._scale}")

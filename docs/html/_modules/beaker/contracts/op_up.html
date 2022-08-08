@@ -40,10 +40,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../structs.html">structs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../structs.html">Structs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../contracts.html">Contracts</a></li>
 </ul>
 
@@ -74,6 +75,7 @@
   <h1>Source code for beaker.contracts.op_up</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">If</span><span class="p">,</span>
     <span class="n">Txn</span><span class="p">,</span>
     <span class="n">Return</span><span class="p">,</span>
     <span class="n">Global</span><span class="p">,</span>
@@ -86,6 +88,7 @@
     <span class="n">InnerTxn</span><span class="p">,</span>
     <span class="n">TxnField</span><span class="p">,</span>
     <span class="n">Assert</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
     <span class="n">Int</span><span class="p">,</span>
     <span class="n">ScratchVar</span><span class="p">,</span>
     <span class="n">For</span><span class="p">,</span>
@@ -108,7 +111,7 @@
     <span class="sd">&quot;&quot;&quot;OpUp creates a &quot;target&quot; application to make opup calls against in order to increase our opcode budget.&quot;&quot;&quot;</span>
 
     <span class="c1">#: The minimum balance required for this class</span>
-    <span class="n">min_balance</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">Int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Algos</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">min_balance</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">Expr</span><span class="p">]</span> <span class="o">=</span> <span class="n">Algos</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 
     <span class="c1">#: The id of the app created during `bootstrap`</span>
     <span class="n">opup_app_id</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">ApplicationStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">ApplicationStateValue</span><span class="p">(</span>
@@ -144,24 +147,25 @@
 <div class="viewcode-block" id="OpUp.call_opup"><a class="viewcode-back" href="../../../contracts.html#beaker.contracts.OpUp.call_opup">[docs]</a>    <span class="nd">@internal</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">call_opup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;internal method to issue transactions against the target app&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span>
+            <span class="n">n</span> <span class="o">==</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__call_opup</span><span class="p">(),</span>
+            <span class="n">For</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">i</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">,</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__call_opup</span><span class="p">())),</span>
+        <span class="p">)</span></div>
 
-        <span class="c1"># TODO: conditional cheaper? offer 2 methods?</span>
-        <span class="k">return</span> <span class="n">For</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">i</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span> <span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span>
-            <span class="n">Seq</span><span class="p">(</span>
-                <span class="c1"># TODO:  group together into 16 at a time? does this help anything?</span>
-                <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Begin</span><span class="p">(),</span>
-                <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">SetFields</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
-                        <span class="n">TxnField</span><span class="o">.</span><span class="n">application_id</span><span class="p">:</span> <span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">,</span>
-                        <span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-                    <span class="p">}</span>
-                <span class="p">),</span>
-                <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Submit</span><span class="p">(),</span>
-            <span class="p">)</span>
-        <span class="p">)</span></div></div>
+    <span class="c1"># No decorator, inline it</span>
+    <span class="k">def</span> <span class="nf">__call_opup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">application_id</span><span class="p">:</span> <span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">,</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
 </pre></div>
 
            </div>

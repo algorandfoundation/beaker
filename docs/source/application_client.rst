@@ -4,13 +4,15 @@ Application Client
 .. currentmodule:: beaker.client
 
 
+.. _application_client:
+
 The ``ApplicationClient`` provides a convenient way to interact with our ``Application``.
+
+:ref:`Full Example <app_client_example>`
 
 The main point of interaction with our application is done using ``call``.  
 
 If there are multiple signers or you want to re-use some suggested parameters, the ``prepare`` method may be called with the different arguments and a copy of the client is returned with the updated parameters.
-
-.. _application_client:
 
 .. autoclass:: ApplicationClient
 
@@ -23,8 +25,15 @@ If there are multiple signers or you want to re-use some suggested parameters, t
     .. automethod:: opt_in 
     .. automethod:: close_out 
     .. automethod:: clear_state 
+    .. automethod:: fund
     .. automethod:: get_application_state 
     .. automethod:: get_application_account_info
     .. automethod:: get_account_state 
 
-    
+
+.. _app_client_example:
+
+Full Example
+-------------
+
+.. literalinclude:: ../../examples/client/main.py

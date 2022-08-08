@@ -1,12 +1,19 @@
 Decorators
 ===========
 
+Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the ``Application`` class to know how to expose them.
+
+
 .. module:: beaker.decorators
 
 .. _external:
 
 ABI Method external
 --------------------
+
+The ``external`` decorator is how we can add methods to be handled as ABI methods. 
+
+Tagging a method as ``external`` adds it to the internal ``Router`` with whatever configuration is passed, if any.
 
 .. autodecorator:: external
 
@@ -74,7 +81,11 @@ Method Hints
 
 .. _resolvable:
 
+
 .. autoclass:: ResolvableArguments
+
+.. warning:: 
+    This is EXPERIMENTAL
 
 In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the external. 
 
@@ -123,6 +134,27 @@ See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more detai
         return output.set(self.count)
 
 
+.. _internal_methods:
+
+Internal Methods
+----------------
+
+An Application will often need a number of internal ``utility`` type methods to handle common logic.  
+We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
+
+.. note:: 
+    If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@internal`` decorator and the expression will be inlined 
+
+
+.. autodecorator:: internal
+
+.. code-block:: python
+
+    @internal(TealType.uint64)
+    def do_logic(self):
+        return If(self.counter>10, self.send_asset())
+
+
 
 .. _bare_externals:
 
@@ -153,25 +185,3 @@ Multiple Bare externals
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
 
 .. autodecorator:: bare_external
-
-
-.. _internal_methods:
-
-Internal Methods
-----------------
-
-An Application will often need a number of internal ``utility`` type methods to handle common logic.  We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
-
-.. note:: 
-    If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@internal`` decorator and the expression will be inlined 
-
-
-.. autodecorator:: internal
-
-.. code-block:: python
-
-    @internal(TealType.uint64)
-    def do_logic(self):
-        return If(self.counter>10, self.send_asset())
-
-

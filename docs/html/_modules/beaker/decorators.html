@@ -40,10 +40,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../structs.html">structs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structs.html">Structs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 </ul>
 
@@ -76,7 +77,7 @@
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">Signature</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Final</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Final</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Any</span>
 <span class="kn">from</span> <span class="nn">algosdk.abi</span> <span class="kn">import</span> <span class="n">Method</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ABIReturnSubroutine</span><span class="p">,</span>
@@ -113,15 +114,15 @@
 <span class="k">class</span> <span class="nc">HandlerConfig</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;HandlerConfig contains all the extra bits of info about a given ABI method&quot;&quot;&quot;</span>
 
-    <span class="n">method_spec</span><span class="p">:</span> <span class="n">Method</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">subroutine</span><span class="p">:</span> <span class="n">Subroutine</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">bare_method</span><span class="p">:</span> <span class="n">BareCallActions</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">method_spec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Method</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">subroutine</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Subroutine</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">bare_method</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BareCallActions</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="n">referenced_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">structs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Struct</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Struct</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">resolvable</span><span class="p">:</span> <span class="s2">&quot;ResolvableArguments&quot;</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">resolvable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ResolvableArguments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">method_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">hints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MethodHints&quot;</span><span class="p">:</span>
@@ -133,7 +134,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mh</span><span class="o">.</span><span class="n">structs</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">arg_name</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">model_spec</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">model_spec</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
                     <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_spec</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">model_spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -158,14 +159,19 @@
     <span class="sd">&quot;&quot;&quot;MethodHints provides hints to the caller about how to call the method&quot;&quot;&quot;</span>
 
     <span class="c1">#: hints to resolve a given argument, see :ref:`resolvable &lt;resolvable&gt;` for more</span>
-    <span class="n">resolvable</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">resolvable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="c1">#: hint to indicate this method can be called through Dryrun</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="c1">#: hint to provide names for tuple argument indices, see :doc:`structs` for more</span>
-    <span class="n">structs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolvable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span>
 
     <span class="k">def</span> <span class="nf">dictify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
             <span class="n">d</span><span class="p">[</span><span class="s2">&quot;read_only&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -206,7 +212,7 @@
                 <span class="k">case</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">int</span><span class="p">():</span>
                     <span class="n">resolvable_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">Constant</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="p">}</span>
                 <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
-                    <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">arg_resolver</span><span class="p">)</span>
+                    <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">arg_resolver</span><span class="p">))</span>
                     <span class="k">if</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hc</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
                             <span class="s2">&quot;Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method&quot;</span>
@@ -325,8 +331,8 @@
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">replaced</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">structs</span><span class="o">=</span><span class="n">replaced</span><span class="p">)</span>
 
-    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>
+    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
     <span class="n">fn</span><span class="o">.</span><span class="vm">__annotations__</span> <span class="o">=</span> <span class="n">annotations</span>
 
     <span class="k">return</span> <span class="n">fn</span>
@@ -340,8 +346,8 @@
         <span class="k">del</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;self&quot;</span><span class="p">]</span>
         <span class="c1"># Flag that this method did have a `self` argument</span>
         <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">referenced_self</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>
+    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
 
     <span class="k">return</span> <span class="n">fn</span>
 
@@ -423,7 +429,7 @@
     <span class="n">delete_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">update_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">close_out</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">HandlerFunc</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Add method to be handled by specific bare :code:`OnComplete` actions.</span>
 
 <span class="sd">    Args:</span>
@@ -439,32 +445,32 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OnCompleteAction</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
         <span class="n">fun</span> <span class="o">=</span> <span class="n">_remove_self</span><span class="p">(</span><span class="n">fun</span><span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)(</span><span class="n">fun</span><span class="p">)</span>
         <span class="n">bca</span> <span class="o">=</span> <span class="n">BareCallActions</span><span class="p">(</span>
             <span class="n">no_op</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">no_op</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">no_op</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
             <span class="n">delete_application</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span>
                 <span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">delete_application</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">delete_application</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
             <span class="n">update_application</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span>
                 <span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">update_application</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">update_application</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
             <span class="n">opt_in</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">opt_in</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">opt_in</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
             <span class="n">close_out</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">close_out</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">close_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
             <span class="n">clear_state</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">clear_state</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">clear_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
         <span class="p">)</span>
 
         <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">bare_method</span><span class="o">=</span><span class="n">bca</span><span class="p">)</span>

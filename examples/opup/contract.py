@@ -1,5 +1,5 @@
 from typing import Literal
-from pyteal import *
+from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
 from beaker.contracts import OpUp
 from beaker.decorators import ResolvableArguments, external
 

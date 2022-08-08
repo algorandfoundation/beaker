@@ -1,18 +1,18 @@
 from inspect import getattr_static
-from typing import Final, Any, cast
+from typing import Final, Any, cast, Optional
 from algosdk.abi import Method
 from pyteal import (
     SubroutineFnWrapper,
     TealInputError,
     Txn,
     MAX_TEAL_VERSION,
+    MethodConfig,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
     Global,
     OnCompleteAction,
     OptimizeOptions,
-    Reject,
     Router,
     Bytes,
 )
@@ -21,12 +21,8 @@ from beaker.decorators import (
     get_handler_config,
     MethodHints,
     create,
-    update,
-    delete,
-    opt_in,
-    close_out,
-    clear_state,
 )
+
 from beaker.state import (
     AccountState,
     ApplicationState,
@@ -82,6 +78,7 @@ class Application:
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
+        methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         for name, (bound_attr, static_attr) in self.attrs.items():
 
             # Check for state vals
@@ -129,6 +126,7 @@ class Application:
                         action.action.subroutine.implementation = bound_attr
 
                     self.bare_externals[oc] = action
+
             # ABI externals
             elif handler_config.method_spec is not None:
                 # Create the ABIReturnSubroutine from the static attr
@@ -136,7 +134,7 @@ class Application:
                 abi_meth = ABIReturnSubroutine(static_attr)
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
-                self.methods[name] = abi_meth
+                methods[name] = (abi_meth, handler_config.method_config)
 
                 self.hints[name] = handler_config.hints()
 
@@ -162,9 +160,11 @@ class Application:
         )
 
         # Add method externals
-        for method in self.methods.values():
+        for method_name, method_tuple in methods.items():
+            method, method_config = method_tuple
+            self.methods[method_name] = method
             self.router.add_method_handler(
-                method_call=method, method_config=handler_config.method_config
+                method_call=method, method_config=method_config
             )
 
         (
@@ -180,7 +180,7 @@ class Application:
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
-            "hints": {k: v.dictify() for k, v in self.hints.items()},
+            "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "schema": {
                 "local": self.acct_state.dictify(),
                 "global": self.app_state.dictify(),
@@ -207,28 +207,3 @@ class Application:
     def create(self) -> Expr:
         """default create behavior, initializes application state"""
         return self.initialize_application_state()
-
-    @opt_in
-    def opt_in(self) -> Expr:
-        """default opt in behavior, initializes account state"""
-        return self.initialize_account_state()
-
-    @update
-    def update(self) -> Expr:
-        """default update behavior, rejects"""
-        return Reject()
-
-    @delete
-    def delete(self) -> Expr:
-        """default delete behavior, rejects"""
-        return Reject()
-
-    @close_out
-    def close_out(self) -> Expr:
-        """default close out behavior, rejects"""
-        return Reject()
-
-    @clear_state
-    def clear_state(self) -> Expr:
-        """default clear state behavior, rejects"""
-        return Reject()

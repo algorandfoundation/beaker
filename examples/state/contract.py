@@ -1,6 +1,15 @@
 from typing import Final
-from beaker import *
-from pyteal import *
+from beaker import (
+    Application,
+    ApplicationStateValue,
+    DynamicApplicationStateValue,
+    AccountStateValue,
+    DynamicAccountStateValue,
+    create,
+    opt_in,
+    external,
+)
+from pyteal import abi, TealType, Bytes, Int, Txn
 
 
 class StateExample(Application):
@@ -64,19 +73,26 @@ class StateExample(Application):
 
     @external
     def set_account_state_val(self, v: abi.Uint64):
-        return self.declared_account_value.set(v.get())
+        # Accessing with `[Txn.sender()]` is redundant but
+        # more clear what is happening
+        return self.declared_account_value[Txn.sender()].set(v.get())
+
+    @external
+    def incr_account_state_val(self, v: abi.Uint64):
+        # Omitting [Txn.sender()] just for demo purposes
+        return self.declared_account_value.increment(v.get())
 
     @external(read_only=True)
     def get_account_state_val(self, *, output: abi.Uint64):
-        return output.set(self.declared_account_value)
+        return output.set(self.declared_account_value[Txn.sender()])
 
     @external
     def set_dynamic_account_state_val(self, k: abi.Uint8, v: abi.String):
-        return self.dynamic_account_value[k].set(v.get())
+        return self.dynamic_account_value[k][Txn.sender()].set(v.get())
 
     @external(read_only=True)
     def get_dynamic_account_state_val(self, k: abi.Uint8, *, output: abi.String):
-        return output.set(self.dynamic_account_value[k])
+        return output.set(self.dynamic_account_value[k][Txn.sender()])
 
 
 if __name__ == "__main__":

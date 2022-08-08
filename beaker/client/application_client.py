@@ -11,6 +11,7 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
     AtomicTransactionComposer,
     ABIResult,
+    ABI_RETURN_HASH,
     TransactionWithSigner,
     abi,
 )
@@ -43,6 +44,8 @@ class ApplicationClient:
 
         self.signer = signer
         self.sender = sender
+        if signer is not None and sender is None:
+            self.sender = self.get_sender(sender, self.signer)
 
         self.suggested_params = suggested_params
 
@@ -107,7 +110,16 @@ class ApplicationClient:
             )
         )
 
-        create_result = atc.execute(self.client, 4)
+        try:
+            create_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                if on_complete == transaction.OnComplete.ClearStateOC:
+                    raise self.wrap_clear_exception(e)
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         create_txid = create_result.tx_ids[0]
 
         result = self.client.pending_transaction_info(create_txid)
@@ -157,7 +169,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        update_result = atc.execute(self.client, 4)
+
+        try:
+            update_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return update_result.tx_ids[0]
 
     def opt_in(
@@ -187,7 +207,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        opt_in_result = atc.execute(self.client, 4)
+
+        try:
+            opt_in_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return opt_in_result.tx_ids[0]
 
     def close_out(
@@ -217,7 +245,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        close_out_result = atc.execute(self.client, 4)
+
+        try:
+            close_out_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return close_out_result.tx_ids[0]
 
     def clear_state(
@@ -248,7 +284,15 @@ class ApplicationClient:
                 signer=signer,
             )
         )
-        clear_state_result = atc.execute(self.client, 4)
+
+        try:
+            clear_state_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_clear_exception(e)
+            else:
+                raise e
+
         return clear_state_result.tx_ids[0]
 
     def delete(
@@ -279,7 +323,14 @@ class ApplicationClient:
             )
         )
 
-        delete_result = atc.execute(self.client, 4)
+        try:
+            delete_result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return delete_result.tx_ids[0]
 
     def prepare(
@@ -347,9 +398,6 @@ class ApplicationClient:
                 raise Exception(f"Unspecified argument: {name}")
 
         atc = AtomicTransactionComposer()
-        if hints.read_only:
-            # TODO: do dryrun
-            pass
 
         atc.add_method_call(
             self.app_id,
@@ -372,8 +420,88 @@ class ApplicationClient:
             rekey_to=rekey_to,
         )
 
-        result = atc.execute(self.client, 4)
+        if hints.read_only:
+            txns = atc.gather_signatures()
+            dr_req = transaction.create_dryrun(self.client, txns)
+            dr_result = self.client.dryrun(dr_req)
+            method_results = self._parse_result(
+                {0: method}, dr_result["txns"], atc.tx_ids
+            )
+            return method_results.pop()
+
+        try:
+            result = atc.execute(self.client, 4)
+        except Exception as e:
+            if "logic" in str(e):
+                if on_complete == transaction.OnComplete.ClearStateOC:
+                    raise self.wrap_clear_exception(e)
+                raise self.wrap_approval_exception(e)
+            else:
+                raise e
+
         return result.abi_results.pop()
+
+    # TEMPORARY, use SDK one when available
+    def _parse_result(
+        self,
+        methods: dict[int, abi.Method],
+        txns: list[dict[str, Any]],
+        txids: list[str],
+    ) -> list[ABIResult]:
+        method_results = []
+        for i, tx_info in enumerate(txns):
+
+            raw_value = None
+            return_value = None
+            decode_error = None
+
+            if i not in methods:
+                continue
+
+            # Parse log for ABI method return value
+            try:
+                if methods[i].returns.type == abi.Returns.VOID:
+                    method_results.append(
+                        ABIResult(
+                            tx_id=txids[i],
+                            raw_value=raw_value,
+                            return_value=return_value,
+                            decode_error=decode_error,
+                            tx_info=tx_info,
+                            method=methods[i],
+                        )
+                    )
+                    continue
+
+                logs = tx_info["logs"] if "logs" in tx_info else []
+
+                # Look for the last returned value in the log
+                if not logs:
+                    raise Exception("No logs")
+
+                result = logs[-1]
+                # Check that the first four bytes is the hash of "return"
+                result_bytes = b64decode(result)
+                if len(result_bytes) < 4 or result_bytes[:4] != ABI_RETURN_HASH:
+                    raise Exception("no logs")
+
+                raw_value = result_bytes[4:]
+                return_value = methods[i].returns.type.decode(raw_value)
+            except Exception as e:
+                decode_error = e
+
+            method_results.append(
+                ABIResult(
+                    tx_id=txids[i],
+                    raw_value=raw_value,
+                    return_value=return_value,
+                    decode_error=decode_error,
+                    tx_info=tx_info,
+                    method=methods[i],
+                )
+            )
+
+        return method_results
 
     def add_method_call(
         self,
@@ -441,17 +569,32 @@ class ApplicationClient:
 
         return atc
 
-    def get_application_state(
-        self, force_str=False
-    ) -> dict[bytes | str, bytes | str | int]:
+    def fund(self, amt: int) -> str:
+        """fund pays the app account the amount passed using the signer"""
+        sender = self.get_sender()
+        signer = self.get_signer()
+
+        sp = self.client.suggested_params()
+
+        atc = AtomicTransactionComposer()
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.PaymentTxn(sender, sp, self.app_addr, amt),
+                signer=signer,
+            )
+        )
+        atc.execute(self.client, 4)
+        return atc.tx_ids.pop()
+
+    def get_application_state(self, raw=False) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)
         if "params" not in app_state or "global-state" not in app_state["params"]:
             return {}
-        return decode_state(app_state["params"]["global-state"], force_str=force_str)
+        return decode_state(app_state["params"]["global-state"], raw=raw)
 
     def get_account_state(
-        self, account: str = None, force_str: bool = False
+        self, account: str = None, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
         """gets the local state info for the app id set and the account specified"""
@@ -466,9 +609,7 @@ class ApplicationClient:
         ):
             return {}
 
-        return decode_state(
-            acct_state["app-local-state"]["key-value"], force_str=force_str
-        )
+        return decode_state(acct_state["app-local-state"]["key-value"], raw=raw)
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""
@@ -480,12 +621,12 @@ class ApplicationClient:
             return to_resolve[ResolvableTypes.Constant]
         elif ResolvableTypes.GlobalState in to_resolve:
             key = to_resolve[ResolvableTypes.GlobalState]
-            app_state = self.get_application_state(force_str=True)
+            app_state = self.get_application_state()
             return app_state[key]
         elif ResolvableTypes.LocalState in to_resolve:
             key = to_resolve[ResolvableTypes.LocalState]
             acct_state = self.get_account_state(
-                self.get_sender(None, None), force_str=True
+                self.get_sender(None, None),
             )
             return acct_state[key]
         elif ResolvableTypes.ABIMethod in to_resolve:
@@ -511,16 +652,15 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def wrap_approval_exception(self, e: Exception) -> LogicException:
+    def wrap_approval_exception(self, e: Exception, lines: int = 10) -> LogicException:
         _, map = self.compile_approval(True)
-        return LogicException(e, self.app.approval_program, map)
+        return LogicException(e, self.app.approval_program, map, lines)
 
-    def wrap_clear_exception(self, e: Exception) -> LogicException:
+    def wrap_clear_exception(self, e: Exception, lines: int = 10) -> LogicException:
         _, map = self.compile_clear(True)
-        return LogicException(e, self.app.clear_program, map)
+        return LogicException(e, self.app.clear_program, map, lines)
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
-
         if signer is not None:
             return signer
 
@@ -533,7 +673,7 @@ class ApplicationClient:
         if sender is not None:
             return sender
 
-        if self.sender is not None:
+        if signer is None and self.sender is not None:
             return self.sender
 
         signer = self.get_signer(signer)

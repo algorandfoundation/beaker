@@ -47,8 +47,8 @@ def test_empty_application():
     ), "Expected no schema"
 
     assert len(ea.bare_externals.keys()) == len(
-        EXPECTED_BARE_externalS
-    ), f"Expected {len(EXPECTED_BARE_externalS)} bare externals: {EXPECTED_BARE_externalS}"
+        EXPECTED_BARE_HANDLERS
+    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
         len(ea.approval_program) > 0
     ), "Expected approval program to be compiled to teal"
@@ -98,9 +98,10 @@ def test_bare_external():
             return pt.Approve()
 
     bh = Bareexternal()
-    assert len(bh.bare_externals) == len(
-        EXPECTED_BARE_externalS
-    ), f"Expected {len(EXPECTED_BARE_externalS)} bare externals: {EXPECTED_BARE_externalS}"
+
+    assert (
+        len(bh.bare_externals) == 3
+    ), "Expected 4 bare externals: create,update,delete"
 
     class FailBareexternal(Application):
         @create
@@ -285,13 +286,8 @@ def test_resolvable_hint():
     ), "Expected the hint to match the method spec"
 
 
-EXPECTED_BARE_externalS = [
+EXPECTED_BARE_HANDLERS = [
     "create",
-    "update",
-    "delete",
-    "opt_in",
-    "clear_state",
-    "close_out",
 ]
 
 
