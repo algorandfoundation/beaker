@@ -21,8 +21,8 @@ from beaker.decorators import (
     get_handler_config,
     MethodHints,
     create,
-    opt_in,
 )
+
 from beaker.state import (
     AccountState,
     ApplicationState,
