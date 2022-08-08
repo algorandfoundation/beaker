@@ -1,14 +1,21 @@
 Decorators
 ===========
 
+Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the ``Application`` class to know how to expose them.
+
+
 .. module:: beaker.decorators
 
-.. _handler:
+.. _external:
 
-ABI Method Handler
-------------------
+ABI Method external
+--------------------
 
-.. autodecorator:: handler
+The ``external`` decorator is how we can add methods to be handled as ABI methods. 
+
+Tagging a method as ``external`` adds it to the internal ``Router`` with whatever configuration is passed, if any.
+
+.. autodecorator:: external
 
 
 
@@ -22,7 +29,7 @@ Often, we would like to restrict the accounts that may call certain methods.
 .. autoclass:: Authorize
 
 
-Lets add a parameter to the handler to allow only the app creator to call this method.
+Lets add a parameter to the external to allow only the app creator to call this method.
 
 .. code-block:: python
 
@@ -30,7 +37,7 @@ Lets add a parameter to the handler to allow only the app creator to call this m
 
     #...
 
-    @handler(authorize=Authorize.only(Global.creator_address()))
+    @external(authorize=Authorize.only(Global.creator_address()))
     def increment(self, *, output: abi.Uint64):
         return Seq(
             self.counter.set(self.counter + Int(1)),
@@ -57,7 +64,7 @@ But we can define our own
         # Only allow accounts with 1mm algos
         return Balance(acct)>Algos(1_000_000)
 
-    @handler(authorize=is_whale)
+    @external(authorize=is_whale)
     def greet(*, output: abi.String):
         return output.set("hello whale")
 
@@ -74,21 +81,25 @@ Method Hints
 
 .. _resolvable:
 
+
 .. autoclass:: ResolvableArguments
 
-In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the handler. 
+.. warning:: 
+    This is EXPERIMENTAL
 
-We can change the handler to provide the hint.
+In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the external. 
+
+We can change the external to provide the hint.
 
 .. code-block:: python
 
-    @handler(
+    @external(
         resolvable=ResolvableArguments(
             opup_app=OpUp.opup_app_id 
         )
     )
 
-With this handler config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
+With this external config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
 
 Options for resolving arguments are:
 
@@ -118,41 +129,9 @@ See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more detai
 
     count = ApplicationStateValue(stack_type=TealType.uint64) 
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def get_count(self, id_of_thing: abi.Uint8, *, output: abi.Uint64):
         return output.set(self.count)
-
-
-
-.. _bare_handlers:
-
-Bare Handlers
---------------
-
-The ARC4 spec allows applications to define handlers for ``bare`` methods, that is methods with no application arguments. 
-
-Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
-
-Single Bare Handlers
-^^^^^^^^^^^^^^^^^^^^
-
-If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.
-
-.. autodecorator:: create
-.. autodecorator:: delete 
-.. autodecorator:: update 
-.. autodecorator:: opt_in 
-.. autodecorator:: close_out 
-.. autodecorator:: clear_state 
-    
-
-
-Multiple Bare Handlers
-^^^^^^^^^^^^^^^^^^^^^^
-
-If a method requires handling multiple ``OnComplete`` actions, use ``bare_handler``
-
-.. autodecorator:: bare_handler
 
 
 .. _internal_methods:
@@ -160,7 +139,8 @@ If a method requires handling multiple ``OnComplete`` actions, use ``bare_handle
 Internal Methods
 ----------------
 
-An Application will often need a number of internal ``utility`` type methods to handle common logic.  We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
+An Application will often need a number of internal ``utility`` type methods to handle common logic.  
+We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
 
 .. note:: 
     If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@internal`` decorator and the expression will be inlined 
@@ -175,3 +155,33 @@ An Application will often need a number of internal ``utility`` type methods to 
         return If(self.counter>10, self.send_asset())
 
 
+
+.. _bare_externals:
+
+Bare externals
+---------------
+
+The ARC4 spec allows applications to define externals for ``bare`` methods, that is methods with no application arguments. 
+
+Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
+
+Single Bare externals
+^^^^^^^^^^^^^^^^^^^^^^
+
+If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.
+
+.. autodecorator:: create
+.. autodecorator:: delete 
+.. autodecorator:: update 
+.. autodecorator:: opt_in 
+.. autodecorator:: close_out 
+.. autodecorator:: clear_state 
+    
+
+
+Multiple Bare externals
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
+
+.. autodecorator:: bare_external

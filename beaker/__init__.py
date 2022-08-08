@@ -10,9 +10,9 @@ from .state import (
 from .decorators import (
     Authorize,
     ResolvableArguments,
-    handler,
+    external,
     internal,
-    bare_handler,
+    bare_external,
     create,
     no_op,
     update,
@@ -21,3 +21,9 @@ from .decorators import (
     close_out,
     clear_state,
 )
+
+from . import client
+from . import sandbox
+from . import consts
+from . import lib
+from . import testing

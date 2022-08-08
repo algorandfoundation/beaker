@@ -1,16 +1,13 @@
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.future import transaction
 
 from beaker.client import ApplicationClient
-from beaker.sandbox import get_client, get_accounts
+from beaker.sandbox import get_algod_client, get_accounts
 
 from contract import MyRoyaltyContract
 
 
-client = get_client()
-
-addr, sk = get_accounts()[0]
-signer = AccountTransactionSigner(sk)
+client = get_algod_client()
+acct = get_accounts().pop()
 
 
 def demo():
@@ -18,7 +15,7 @@ def demo():
     app = MyRoyaltyContract()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app, signer=signer)
+    app_client = ApplicationClient(client, app, signer=acct.signer)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
@@ -26,7 +23,9 @@ def demo():
 
     sp = client.suggested_params()
     txid = client.send_transaction(
-        transaction.PaymentTxn(addr, sp, app_addr, int(1e6)).sign(sk)
+        transaction.PaymentTxn(acct.address, sp, app_addr, int(1e6)).sign(
+            acct.private_key
+        )
     )
     transaction.wait_for_confirmation(client, txid, 4)
 

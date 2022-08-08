@@ -23,11 +23,10 @@ from pyteal import (
     Extract,
     WideRatio,
     Concat,
-    App,
 )
 
 from beaker import Application, ApplicationStateValue, DynamicAccountStateValue
-from beaker.decorators import Authorize, handler, create, update, delete
+from beaker.decorators import Authorize, external, create, update, delete
 
 
 class ARC18(Application):
@@ -71,12 +70,12 @@ class ARC18(Application):
     # Admin
     ###
 
-    @handler(authorize=Authorize.only(administrator))
+    @external(authorize=Authorize.only(administrator))
     def set_administrator(self, new_admin: abi.Address):
         """Sets the administrator for this royalty enforcer"""
         return self.administrator.set(new_admin.get())
 
-    @handler(authorize=Authorize.only(administrator))
+    @external(authorize=Authorize.only(administrator))
     def set_policy(self, royalty_basis: abi.Uint64, royalty_receiver: abi.Address):
         """Sets the royalty basis and royalty receiver for this royalty enforcer"""
         return Seq(
@@ -85,8 +84,8 @@ class ARC18(Application):
             self.royalty_receiver.set(royalty_receiver.get()),
         )
 
-    @handler(authorize=Authorize.only(administrator))
-    def set_payment_asset(payment_asset: abi.Asset, is_allowed: abi.Bool):
+    @external(authorize=Authorize.only(administrator))
+    def set_payment_asset(self, payment_asset: abi.Asset, is_allowed: abi.Bool):
         """Triggers the contract account to opt in or out of an asset that may be used for payment of royalties"""
         return Seq(
             bal := AssetHolding.balance(
@@ -128,7 +127,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def transfer_algo_payment(
         self,
         royalty_asset: abi.Asset,
@@ -152,7 +151,7 @@ class ARC18(Application):
         valid_transfer_group = Seq(
             Assert(Global.group_size() == Int(2)),
             (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()].get(owner.address())
+                self.offers[royalty_asset.asset_id()][owner.address()]
             ),
             offer_auth_addr.store(self.offered_auth(offer.load())),
             offer_amt.store(self.offered_amount(offer.load())),
@@ -195,7 +194,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def transfer_asset_payment(
         self,
         royalty_asset: abi.Asset,
@@ -221,7 +220,7 @@ class ARC18(Application):
             Assert(Global.group_size() == Int(2)),
             # Get the offer from local state
             (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()].get_must(owner.address())
+                self.offers[royalty_asset.asset_id()][owner.address()].get_must()
             ),
             offer_auth_addr.store(ARC18.offered_auth(offer.load())),
             offer_amt.store(ARC18.offered_amount(offer.load())),
@@ -264,7 +263,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def offer(
         self,
         royalty_asset: abi.Asset,
@@ -294,7 +293,7 @@ class ARC18(Application):
             ),
         )
 
-    @handler
+    @external
     def royalty_free_move(
         self,
         royalty_asset: abi.Asset,
@@ -305,11 +304,9 @@ class ARC18(Application):
     ):
         """Moves the asset passed from one account to another"""
 
-        offer = App.localGet(owner.address(), Itob(royalty_asset.asset_id()))
-
         return Seq(
             (offer := ScratchVar()).store(
-                self.offers[royalty_asset.asset_id()].get(owner.address())
+                self.offers[royalty_asset.asset_id()][owner.address()]
             ),
             (curr_offer_amt := ScratchVar()).store(ARC18.offered_amount(offer.load())),
             (curr_offer_auth := ScratchVar()).store(ARC18.offered_auth(offer.load())),
@@ -342,22 +339,24 @@ class ARC18(Application):
 
     Offer = abi.Tuple2[abi.Address, abi.Uint64]
 
-    @handler(read_only=True)
-    def get_offer(royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer):
-        return output.decode(ARC18.offers[royalty_asset].get_must(owner.address()))
+    @external(read_only=True)
+    def get_offer(
+        self, royalty_asset: abi.Uint64, owner: abi.Account, *, output: Offer
+    ):
+        return output.decode(ARC18.offers[royalty_asset][owner.address()].get_must())
 
     Policy = abi.Tuple2[abi.Address, abi.Uint64]
 
-    @handler(read_only=True)
-    def get_policy(*, output: Policy):
+    @external(read_only=True)
+    def get_policy(self, *, output: Policy):
         return Seq(
             (addr := abi.Address()).decode(ARC18.royalty_receiver),
             (amt := abi.Uint64()).set(ARC18.royalty_basis),
             output.set(addr, amt),
         )
 
-    @handler(read_only=True)
-    def get_administrator(*, output: abi.Address):
+    @external(read_only=True)
+    def get_administrator(self, *, output: abi.Address):
         return output.decode(ARC18.administrator)
 
     ###
@@ -464,7 +463,7 @@ class ARC18(Application):
     def do_update_offered(acct, asset, auth, amt, prev_auth, prev_amt):
         offer_state = ARC18.offers[asset]
         return Seq(
-            previous := offer_state.get_maybe(acct),
+            previous := offer_state[acct].get_maybe(),
             # If we had something before, make sure its the same as what was passed. Otherwise make sure that a 0 was passed
             If(
                 previous.hasValue(),
@@ -477,8 +476,8 @@ class ARC18(Application):
             # Now consider the new offer, if its 0 this is a delete, otherwise update
             If(
                 amt > Int(0),
-                offer_state.set(Concat(auth, Itob(amt)), acct),
-                offer_state.delete(acct),
+                offer_state[acct].set(Concat(auth, Itob(amt))),
+                offer_state[acct].delete(),
             ),
         )
 

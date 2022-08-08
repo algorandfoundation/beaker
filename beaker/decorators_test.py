@@ -4,7 +4,7 @@ import pyteal as pt
 from .application import get_method_spec
 from .decorators import (
     ResolvableArguments,
-    handler,
+    external,
     get_handler_config,
     Authorize,
     create,
@@ -19,8 +19,8 @@ from .decorators import (
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
-def test_handler_config():
-    @handler
+def test_external_config():
+    @external
     def handleable():
         pass
 
@@ -39,7 +39,7 @@ def test_handler_config():
 
     ###
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def handleable():
         pass
 
@@ -58,7 +58,7 @@ def test_handler_config():
 
     ###
 
-    @handler(authorize=Authorize.only(pt.Global.creator_address()))
+    @external(authorize=Authorize.only(pt.Global.creator_address()))
     def handleable():
         pass
 
@@ -73,7 +73,7 @@ def test_handler_config():
 
     ###
 
-    @handler(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
     def handleable():
         pass
 
@@ -104,7 +104,7 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    @handler(authorize=auth_only)
+    @external(authorize=auth_only)
     def creator_only():
         return pt.Approve()
 
@@ -132,7 +132,7 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    @handler(authorize=auth_holds_token)
+    @external(authorize=auth_holds_token)
     def holds_token_only():
         return pt.Approve()
 
@@ -158,7 +158,7 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    @handler(authorize=auth_opted_in)
+    @external(authorize=auth_opted_in)
     def opted_in_only():
         return pt.Approve()
 
@@ -179,7 +179,7 @@ def test_authorize():
         def thing(a, b):
             return pt.Int(1)
 
-        @handler(authorize=thing)
+        @external(authorize=thing)
         def other_thing():
             pass
 
@@ -189,7 +189,7 @@ def test_authorize():
         def thing(x):
             return pt.Bytes("fail")
 
-        @handler(authorize=thing)
+        @external(authorize=thing)
         def other_other_thing():
             pass
 
@@ -273,7 +273,7 @@ def test_resolvable():
     r = ResolvableArguments(x=x[pt.Bytes("x")])
     assert r.x == {"global-state": "x"}
 
-    @handler(read_only=True)
+    @external(read_only=True)
     def x():
         return pt.Assert(pt.Int(1))
 
@@ -288,13 +288,13 @@ def test_resolvable():
 
     with pytest.raises(Exception):
 
-        @handler(resolvable=ResolvableArguments(x=1))
+        @external(resolvable=ResolvableArguments(x=1))
         def doit(a: pt.abi.Uint64):
             pass
 
     with pytest.raises(Exception):
 
-        @handler
+        @external
         def x():
             return pt.Assert(pt.Int(1))
 

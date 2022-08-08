@@ -1,9 +1,8 @@
-from typing import Literal, Annotated, get_type_hints
-from pyteal import *
+from typing import Literal, Annotated
+from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256, Expr, And, Bytes, Len
+from beaker.decorators import external
 from beaker.contracts import OpUp
 from beaker.consts import AppCallBudget, MaxOps
-
-from beaker.decorators import ResolvableArguments, handler
 
 
 def nonzero():
@@ -55,16 +54,18 @@ Checked = Annotated
 class ExpensiveApp(OpUp):
     """Do expensive work to demonstrate inheriting from OpUp"""
 
-    @handler
+    @external(resolvable=ResolvableArguments(opup_app=OpUp.opup_app_id))
     def hash_it(
         self,
         input: Checked[abi.String, nonzero()],
         iters: Checked[abi.Uint64, nonzero()],
-        _: Checked[abi.Application, equal(OpUp.opup_app_id)],
+        opup_app: Checked[abi.Application, equal(OpUp.opup_app_id)],
         *,
         output: abi.StaticArray[abi.Byte, Literal[32]],
     ):
-        _hasher = Seq(
+        return Seq(
+            Assert(opup_app.application_id() == self.opup_app_id),
+            self.call_opup(Int(255)),
             (current := ScratchVar()).store(input.get()),
             For(
                 (i := ScratchVar()).store(Int(0)),
@@ -72,10 +73,6 @@ class ExpensiveApp(OpUp):
                 i.store(i.load() + Int(1)),
             ).Do(current.store(Sha256(current.load()))),
             current.load(),
-        )
-        return Seq(
-            self.call_opup(num_opups(get_op_cost(_hasher) * iters.get())),
-            output.decode(_hasher),
         )
 
 

@@ -43,15 +43,17 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#tutorial">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decorators">Decorators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#state-management">State Management</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#inheritance">Inheritance</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structs.html">Structs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 </ul>
 
@@ -83,7 +85,7 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h1>
 <section id="tutorial">
 <span id="id1"></span><h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this heading"></a></h2>
-<p>Lets write a bad calculator app. The full source is available <a class="reference external" href="https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py">here</a>.</p>
+<p>Lets write a simple calculator app.  <a class="reference external" href="https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py">Full source here</a>.</p>
 <p>First, create a class to represent our application as a subclass of the beaker <cite>Application</cite>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Application</span>
 
@@ -91,7 +93,8 @@
     <span class="k">pass</span>
 </pre></div>
 </div>
-<p>This is a full application, though it doesn’t do much.  Instantiate it and take a look at some of the resulting fields.</p>
+<p>This is a full application, though it doesn’t do much.</p>
+<p>Instantiate it and take a look at some of the resulting fields.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="kn">import</span> <span class="nn">json</span>
 
     <span class="n">calc</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">()</span>
@@ -101,32 +104,46 @@
 </pre></div>
 </div>
 <p>Nice!  This is already enough to provide the TEAL programs and ABI specification.</p>
-<p>Lets add some methods to be handled by an incoming <code class="docutils literal notranslate"><span class="pre">ApplicationCallTransaction</span></code>.  We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#handler"><span class="std std-ref">handler</span></a> decorator.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-<span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
-    <span class="nd">@handler</span>
+<p>Lets add some methods to be handled by an incoming <a class="reference external" href="https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction">ApplicationCallTransaction</a>.
+We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#external"><span class="std std-ref">external</span></a> decorator.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a and b, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Multiply a and b, return the result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">*</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">sub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Subtract b from a, return the result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">-</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">div</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Divide a by b, return the result&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">/</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">&#64;handler</span></code> decorator adds an ABI method with signature <code class="docutils literal notranslate"><span class="pre">add(uint64,uint64)uint64</span></code> to our application and includes it in the routing logic for handling an ABI call.</p>
-<p>The python method must return an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> of some kind, invoked when the handler is called.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> decorator adds an ABI method to our application and includes it in the routing logic for handling an ABI call.</p>
+<p>The python method must return an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> of some kind, invoked when the external is called.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><code class="docutils literal notranslate"><span class="pre">self</span></code> may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like <code class="docutils literal notranslate"><span class="pre">MySickApp.do_thing(data)</span></code></p>
 </div>
-<p>Lets now deploy and call our contract using an <a class="reference internal" href="client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
+<p>Lets now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 
-    <span class="n">addr</span><span class="p">,</span> <span class="n">sk</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-    <span class="n">signer</span> <span class="o">=</span> <span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">sk</span><span class="p">)</span>
-    <span class="c1"># Initialize Application from amm.py</span>
+    <span class="n">acct</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="c1"># Initialize Application</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">()</span>
 
-    <span class="c1"># Create an Application client containing both an algod client and my app</span>
-    <span class="n">app_client</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">)</span>
+    <span class="c1"># Create an Application client containing both an algod client and app</span>
+    <span class="n">app_client</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="p">)</span>
 
     <span class="c1"># Create the application on chain, set the app id for the app client</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
@@ -141,22 +158,22 @@
 <blockquote>
 <div><ul>
 <li><dl class="simple">
-<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By subclassing <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding a <code class="docutils literal notranslate"><span class="pre">handler</span></code> method</p>
+<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By subclassing <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding an <code class="docutils literal notranslate"><span class="pre">external</span></code> method</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Compiled it to TEAL</dt><dd><p>Done automatically by Application, PyTeal’s <code class="docutils literal notranslate"><span class="pre">Router.compile</span></code></p>
+<dt>Compiled it to TEAL</dt><dd><p>Done automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code> class, and PyTeal’s <code class="docutils literal notranslate"><span class="pre">Router.compile</span></code></p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Assembled the TEAL to binary</dt><dd><p>Done automatically by the ApplicationClient by sending the TEAL to the Algod <code class="docutils literal notranslate"><span class="pre">compile</span></code> endpoint</p>
+<dt>Assembled the TEAL to binary</dt><dd><p>Done automatically by the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> by sending the TEAL to the algod <code class="docutils literal notranslate"><span class="pre">compile</span></code> endpoint</p>
 </dd>
 </dl>
 </li>
 <li><dl>
-<dt>Created the application on chain</dt><dd><p>Done by invoking the <code class="docutils literal notranslate"><span class="pre">app_client.create</span></code>, which takes our binary and submits an ApplicationCallTransaction.</p>
+<dt>Deployed the application on-chain</dt><dd><p>Done by invoking the <code class="docutils literal notranslate"><span class="pre">app_client.create</span></code>, which submits an ApplicationCallTransaction including our binary.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Once created, subsequent calls to the app_client are directed to the <code class="docutils literal notranslate"><span class="pre">app_id</span></code>.
@@ -171,12 +188,18 @@ The constructor may also be passed an app_id directly if one is already deployed
 <p class="admonition-title">Note</p>
 <p>The args passed must match the type of the method (i.e. don’t pass a string when it wants an int).</p>
 </div>
-<p>The result contains the parsed <code class="docutils literal notranslate"><span class="pre">return_value</span></code> which should match the type the ABI method returns.</p>
+<p>The result contains the parsed <code class="docutils literal notranslate"><span class="pre">return_value</span></code> which is a python native type that mirrors the return type of the ABI method.</p>
 </dd>
 </dl>
 </li>
 </ul>
 </div></blockquote>
+</section>
+<section id="decorators">
+<span id="use-decorators"></span><h2>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading"></a></h2>
+<p>Above, we used the decorator <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> to mark a method as being exposed in the ABI and available to be called from off-chain.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> decorator can take parameters to change how it may be called or what accounts may call it, see examples <a class="reference internal" href="decorators.html#external"><span class="std std-ref">here</span></a>.</p>
+<p>Other decorators include <a class="reference internal" href="decorators.html#internal-methods"><span class="std std-ref">&#64;internal</span></a> which marks the method as being callable only from inside the application or with one of the <a class="reference internal" href="decorators.html#bare-externals"><span class="std std-ref">bare</span></a> OnComplete handlers (e.g. <code class="docutils literal notranslate"><span class="pre">create</span></code>, <code class="docutils literal notranslate"><span class="pre">opt_in</span></code>, etc…)</p>
 </section>
 <section id="state-management">
 <span id="manage-state"></span><h2>State Management<a class="headerlink" href="#state-management" title="Permalink to this heading"></a></h2>
@@ -193,12 +216,14 @@ The constructor may also be passed an app_id directly if one is already deployed
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A counter for showing how to use application state&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="c1"># Note: this method is redundant with the one defined in Application</span>
+    <span class="c1"># defining it here to demonstrate functionality</span>
     <span class="nd">@create</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;create application&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">()</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;increment the counter&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
@@ -206,7 +231,7 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">decrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;decrement the counter&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
@@ -218,7 +243,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 <p>We’ve added an <a class="reference internal" href="state.html#application-state-value"><span class="std std-ref">ApplicationStateValue</span></a> attribute to our class with several configuration options and we can reference it by name throughout our application.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The base <code class="docutils literal notranslate"><span class="pre">Application</span></code> class has several handlers pre-defined, including <code class="docutils literal notranslate"><span class="pre">create</span></code> which performs <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> initialization for us, setting the keys to default values.</p>
+<p>The base <code class="docutils literal notranslate"><span class="pre">Application</span></code> class has several externals pre-defined, including <code class="docutils literal notranslate"><span class="pre">create</span></code> which performs <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> initialization for us, setting the keys to default values.</p>
 </div>
 <p>You may also define state values for applications, called <a class="reference internal" href="state.html#account-state"><span class="std std-ref">AccountState</span></a> (or Local storage) and even allow for dynamic state keys.</p>
 <p>For more example usage see the example <a class="reference internal" href="state.html#state-example"><span class="std std-ref">here</span></a>.</p>
@@ -229,7 +254,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ExpensiveApp</span><span class="p">(</span><span class="n">OpUp</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Do expensive work to demonstrate inheriting from OpUp&quot;&quot;&quot;</span>
 
-    <span class="nd">@handler</span><span class="p">(</span><span class="n">resolvable</span><span class="o">=</span><span class="n">ResolvableArguments</span><span class="p">(</span><span class="n">opup_app</span><span class="o">=</span><span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">))</span>
+    <span class="nd">@external</span><span class="p">(</span><span class="n">resolvable</span><span class="o">=</span><span class="n">ResolvableArguments</span><span class="p">(</span><span class="n">opup_app</span><span class="o">=</span><span class="n">OpUp</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">))</span>
     <span class="k">def</span> <span class="nf">hash_it</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span>
@@ -238,7 +263,6 @@ The constructor may also be passed an app_id directly if one is already deployed
         <span class="o">*</span><span class="p">,</span>
         <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticArray</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">Byte</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">32</span><span class="p">]],</span>
     <span class="p">):</span>
-
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">Assert</span><span class="p">(</span><span class="n">opup_app</span><span class="o">.</span><span class="n">application_id</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">call_opup</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">255</span><span class="p">)),</span>

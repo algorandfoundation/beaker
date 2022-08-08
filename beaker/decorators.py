@@ -5,6 +5,8 @@ from functools import wraps
 from inspect import get_annotations, isclass, signature, Signature
 from typing import Annotated, Callable, Final, cast, Any, get_type_hints, Generic, TypeVar
 from typing_extensions import _AnnotatedAlias
+from inspect import get_annotations, signature, Signature
+from typing import Optional, Callable, Final, cast, Any
 from algosdk.abi import Method
 from pyteal import (
     abi,
@@ -31,7 +33,7 @@ from beaker.state import (
     ApplicationStateValue,
     AccountStateValue,
 )
-from beaker.model import Model
+from beaker.struct import Struct
 
 HandlerFunc = Callable[..., Expr]
 
@@ -42,17 +44,16 @@ _handler_config_attr: Final[str] = "__handler_config__"
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
-    method_spec: Method = field(kw_only=True, default=None)
-    subroutine: Subroutine = field(kw_only=True, default=None)
-    bare_method: BareCallActions = field(kw_only=True, default=None)
+    method_spec: Optional[Method] = field(kw_only=True, default=None)
+    subroutine: Optional[Subroutine] = field(kw_only=True, default=None)
+    bare_method: Optional[BareCallActions] = field(kw_only=True, default=None)
 
     referenced_self: bool = field(kw_only=True, default=False)
-    models: dict[str, Model] = field(kw_only=True, default=None)
+    structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
 
     annotations: list[Any]  = field(kw_only=True, default=None)
-
-    resolvable: "ResolvableArguments" = field(kw_only=True, default=None)
-    method_config: MethodConfig = field(kw_only=True, default=None)
+    resolvable: Optional["ResolvableArguments"] = field(kw_only=True, default=None)
+    method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
@@ -64,13 +65,13 @@ class HandlerConfig:
         if self.resolvable is not None:
             mh.resolvable = self.resolvable.__dict__
 
-        if self.models is not None:
-            mh.models = {
+        if self.structs is not None:
+            mh.structs = {
                 arg_name: {
-                    "name": model_spec.__name__,
+                    "name": model_spec.__name__,  # type: ignore[attr-defined]
                     "elements": list(model_spec.__annotations__.keys()),
                 }
-                for arg_name, model_spec in self.models.items()
+                for arg_name, model_spec in self.structs.items()
             }
 
         return mh
@@ -92,23 +93,27 @@ class MethodHints:
     """MethodHints provides hints to the caller about how to call the method"""
 
     #: hints to resolve a given argument, see :ref:`resolvable <resolvable>` for more
-    resolvable: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
+    resolvable: Optional[dict[str, dict[str, Any]]] = field(kw_only=True, default=None)
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices, see :doc:`models` for more
-    models: dict[str, dict[str, str | list[str]]] = field(kw_only=True, default=None)
+    #: hint to provide names for tuple argument indices, see :doc:`structs` for more
+    structs: Optional[dict[str, dict[str, str | list[str]]]] = field(
+        kw_only=True, default=None
+    )
     #: annotations
     annotations: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
 
+    def empty(self) -> bool:
+        return self.resolvable is None and self.structs is None and not self.read_only
 
     def dictify(self) -> dict[str, Any]:
-        d = {}
+        d: dict[str, Any] = {}
         if self.read_only:
             d["read_only"] = True
         if self.annotations is not None:
             d["annotations"] = self.annotations
-        if self.models is not None:
-            d["models"] = self.models
+        if self.structs is not None:
+            d["structs"] = self.structs
         if self.resolvable is not None:
             d["resolvable"] = self.resolvable
         return d
@@ -145,7 +150,7 @@ class ResolvableArguments:
                 case str() | int():
                     resolvable_args[arg_name] = {ResolvableTypes.Constant: arg_resolver}
                 case _:
-                    hc = get_handler_config(arg_resolver)
+                    hc = get_handler_config(cast(HandlerFunc, arg_resolver))
                     if hc.method_spec is None or not hc.read_only:
                         raise Exception(
                             "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
@@ -244,7 +249,7 @@ def _on_complete(mc: MethodConfig):
     return _impl
 
 
-def _replace_models(fn: HandlerFunc) -> HandlerFunc:
+def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
 
@@ -260,13 +265,20 @@ def _replace_models(fn: HandlerFunc) -> HandlerFunc:
             orig = cls().annotation_type()
             params[k] = v.replace(annotation=orig)
             annotations[k] = orig 
+        if hasattr(v.annotation, "__origin__"):
+            # Generic type, not a Struct
+            continue
+
+        if issubclass(cls, Struct):
+            params[k] = v.replace(annotation=cls().annotation_type())
+            annotations[k] = cls().annotation_type()
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
-        set_handler_config(fn, models=replaced)
+        set_handler_config(fn, structs=replaced)
 
-    newsig = sig.replace(parameters=params.values())
-    fn.__signature__ = newsig
+    newsig = sig.replace(parameters=list(params.values()))
+    fn.__signature__ = newsig  # type: ignore[attr-defined]
     fn.__annotations__ = annotations
 
     return fn
@@ -304,8 +316,8 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
         del params["self"]
         # Flag that this method did have a `self` argument
         set_handler_config(fn, referenced_self=True)
-    newsig = sig.replace(parameters=params.values())
-    fn.__signature__ = newsig
+    newsig = sig.replace(parameters=list(params.values()))
+    fn.__signature__ = newsig  # type: ignore[attr-defined]
 
     return fn
 
@@ -334,7 +346,7 @@ def internal(return_type: TealType):
     return _impl
 
 
-def handler(
+def external(
     fn: HandlerFunc = None,
     /,
     *,
@@ -361,7 +373,7 @@ def handler(
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
         fn = _capture_annotations(fn)
-        fn = _replace_models(fn)
+        fn = _replace_structs(fn)
 
         if resolvable is not None:
             resolvable.check_arguments(signature(fn))
@@ -383,14 +395,14 @@ def handler(
     return _impl(fn)
 
 
-def bare_handler(
+def bare_external(
     no_op: CallConfig = None,
     opt_in: CallConfig = None,
     clear_state: CallConfig = None,
     delete_application: CallConfig = None,
     update_application: CallConfig = None,
     close_out: CallConfig = None,
-) -> HandlerFunc:
+) -> Callable[..., HandlerFunc]:
     """Add method to be handled by specific bare :code:`OnComplete` actions.
 
     Args:
@@ -406,32 +418,32 @@ def bare_handler(
 
     """
 
-    def _impl(fun: HandlerFunc) -> OnCompleteAction:
+    def _impl(fun: HandlerFunc) -> HandlerFunc:
         fun = _remove_self(fun)
         fn = Subroutine(TealType.none)(fun)
         bca = BareCallActions(
             no_op=OnCompleteAction(action=fn, call_config=no_op)
             if no_op is not None
-            else None,
+            else OnCompleteAction.never(),
             delete_application=OnCompleteAction(
                 action=fn, call_config=delete_application
             )
             if delete_application is not None
-            else None,
+            else OnCompleteAction.never(),
             update_application=OnCompleteAction(
                 action=fn, call_config=update_application
             )
             if update_application is not None
-            else None,
+            else OnCompleteAction.never(),
             opt_in=OnCompleteAction(action=fn, call_config=opt_in)
             if opt_in is not None
-            else None,
+            else OnCompleteAction.never(),
             close_out=OnCompleteAction(action=fn, call_config=close_out)
             if close_out is not None
-            else None,
+            else OnCompleteAction.never(),
             clear_state=OnCompleteAction(action=fn, call_config=clear_state)
             if clear_state is not None
-            else None,
+            else OnCompleteAction.never(),
         )
 
         set_handler_config(fun, bare_method=bca)
@@ -449,7 +461,7 @@ def create(fn: HandlerFunc):
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_handler(no_op=CallConfig.CREATE)(fn)
+    return bare_external(no_op=CallConfig.CREATE)(fn)
 
 
 def delete(fn: HandlerFunc):
@@ -460,7 +472,7 @@ def delete(fn: HandlerFunc):
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_handler(delete_application=CallConfig.CALL)(fn)
+    return bare_external(delete_application=CallConfig.CALL)(fn)
 
 
 def update(fn: HandlerFunc):
@@ -471,7 +483,7 @@ def update(fn: HandlerFunc):
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_handler(update_application=CallConfig.CALL)(fn)
+    return bare_external(update_application=CallConfig.CALL)(fn)
 
 
 def opt_in(fn: HandlerFunc):
@@ -482,7 +494,7 @@ def opt_in(fn: HandlerFunc):
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_handler(opt_in=CallConfig.CALL)(fn)
+    return bare_external(opt_in=CallConfig.CALL)(fn)
 
 
 def clear_state(fn: HandlerFunc):
@@ -494,7 +506,7 @@ def clear_state(fn: HandlerFunc):
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
-    return bare_handler(clear_state=CallConfig.CALL)(fn)
+    return bare_external(clear_state=CallConfig.CALL)(fn)
 
 
 def close_out(fn: HandlerFunc):
@@ -506,7 +518,7 @@ def close_out(fn: HandlerFunc):
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
-    return bare_handler(close_out=CallConfig.CALL)(fn)
+    return bare_external(close_out=CallConfig.CALL)(fn)
 
 
 def no_op(fn: HandlerFunc):
@@ -517,4 +529,4 @@ def no_op(fn: HandlerFunc):
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_handler(no_op=CallConfig.CALL)(fn)
+    return bare_external(no_op=CallConfig.CALL)(fn)

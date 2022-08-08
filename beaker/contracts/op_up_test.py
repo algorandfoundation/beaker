@@ -1,23 +1,19 @@
-from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
-    TransactionWithSigner,
-)
+from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.future.transaction import PaymentTxn
 from beaker.client import ApplicationClient
 from beaker.contracts.op_up import OpUp
 from beaker.consts import milli_algo
-from beaker.sandbox import get_client, get_accounts
+from beaker.sandbox import get_algod_client, get_accounts
 
 
 def test_op_up():
     app = OpUp()
 
-    accts = get_accounts()
-    addr, sk = accts.pop()
-    signer = AccountTransactionSigner(sk)
-    client = get_client()
+    acct = get_accounts().pop()
 
-    ac = ApplicationClient(client, app, signer=signer)
+    client = get_algod_client()
+
+    ac = ApplicationClient(client, app, signer=acct.signer)
 
     _, app_addr, _ = ac.create()
 
@@ -25,7 +21,7 @@ def test_op_up():
     sp.flat_fee = True
     sp.fee = 256 * milli_algo
     ptxn = TransactionWithSigner(
-        txn=PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
+        txn=PaymentTxn(acct.address, sp, app_addr, int(1e6)), signer=acct.signer
     )
 
     result = ac.call(app.opup_bootstrap, ptxn=ptxn)
@@ -35,5 +31,5 @@ def test_op_up():
     app_acct_info = ac.get_application_account_info()
     assert len(app_acct_info["created-apps"]) == 1
 
-    state = ac.get_application_state(force_str=True)
+    state = ac.get_application_state()
     assert state["ouaid"] == created_app_id

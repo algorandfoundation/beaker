@@ -13,6 +13,7 @@ from pyteal import (
     InnerTxn,
     TxnField,
     Assert,
+    Expr,
     Int,
     ScratchVar,
     For,
@@ -21,7 +22,7 @@ from pyteal import (
 from beaker.application import Application
 from beaker.state import ApplicationStateValue
 from beaker.consts import Algos
-from beaker.decorators import internal, handler
+from beaker.decorators import internal, external
 
 
 OpUpTarget = Return(Txn.sender() == Global.creator_address())
@@ -35,14 +36,14 @@ class OpUp(Application):
     """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget."""
 
     #: The minimum balance required for this class
-    min_balance: Final[Int] = Algos(0.1)
+    min_balance: Final[Expr] = Algos(0.1)
 
     #: The id of the app created during `bootstrap`
     opup_app_id: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
     )
 
-    @handler
+    @external
     def opup_bootstrap(self, ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
         """initialize opup with bootstrap to create a target app"""
         return Seq(
@@ -72,7 +73,7 @@ class OpUp(Application):
     def call_opup(self, n):
         """internal method to issue transactions against the target app"""
         return If(
-            n,
+            n == Int(1),
             self.__call_opup(),
             For(
                 (i := ScratchVar()).store(Int(0)),
