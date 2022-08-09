@@ -519,15 +519,9 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.opt_in()
 
     assert ac.resolve(DefaultArgument(pt.Int(1))) == 1
-
     assert ac.resolve(DefaultArgument(pt.Bytes("stringy"))) == "stringy"
-
     assert ac.resolve(DefaultArgument(app.app_state_val_int)) == 1
-
     assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == "test"
-
     assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
-
     assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == "test"
-
     assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"

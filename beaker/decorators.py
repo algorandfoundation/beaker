@@ -118,7 +118,7 @@ class TransactionMatcher:
 @dataclass
 class ParameterAnnotation:
     descr: Optional[str] = field(kw_only=True, default=None)
-    default: Optional[DefaultArgument] = field(kw_only=True, default=None)
+    default: Optional[DefaultArgumentType] = field(kw_only=True, default=None)
 
 
 @dataclass

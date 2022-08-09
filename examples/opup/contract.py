@@ -18,7 +18,7 @@ class ExpensiveApp(OpUp):
             abi.Application,
             ParameterAnnotation(
                 descr="The app id to use for opup reququests",
-                default=DefaultArgument(OpUp.opup_app_id),
+                default=OpUp.opup_app_id,
             ),
         ],
         *,

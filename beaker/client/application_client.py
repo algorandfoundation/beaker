@@ -405,7 +405,7 @@ class ApplicationClient:
             ):
                 annos = hints.param_annotations[name]
                 if annos.default is not None:
-                    args.append(self.resolve(annos.default))
+                    args.append(self.resolve(DefaultArgument(annos.default)))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -558,7 +558,7 @@ class ApplicationClient:
             ):
                 annos = hints.param_annotations[name]
                 if annos.default is not None:
-                    args.append(self.resolve(annos.default))
+                    args.append(self.resolve(DefaultArgument(annos.default)))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
