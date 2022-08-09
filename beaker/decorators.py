@@ -120,6 +120,17 @@ class ParameterAnnotation:
     descr: Optional[str] = field(kw_only=True, default=None)
     default: Optional[DefaultArgumentType] = field(kw_only=True, default=None)
 
+    def dictify(self) -> dict[str, Any]:
+        ret: dict[str, Any] = {}
+        if self.descr is not None:
+            ret["descr"] = self.descr
+
+        if self.default is not None:
+            def_arg = DefaultArgument(self.default)
+            ret["default"] = {def_arg.resolvable_class.value: def_arg.resolve_hint()}
+
+        return ret
+
 
 @dataclass
 class HandlerConfig:
@@ -198,7 +209,9 @@ class MethodHints:
         if self.read_only:
             d["read_only"] = True
         if self.param_annotations is not None:
-            d["param_annotations"] = self.param_annotations
+            d["param_annotations"] = {
+                k: v.dictify() for k, v in self.param_annotations.items()
+            }
         if self.structs is not None:
             d["structs"] = self.structs
         return d

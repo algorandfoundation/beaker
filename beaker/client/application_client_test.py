@@ -14,6 +14,7 @@ from algosdk.atomic_transaction_composer import (
 )
 
 from ..decorators import (
+    Authorize,
     DefaultArgument,
     create,
     external,
@@ -25,8 +26,11 @@ from ..decorators import (
 )
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, get_method_selector
+from beaker.struct import Struct
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
+from beaker.client.logic_error import LogicException
+from beaker.consts import MilliAlgo
 
 
 class App(Application):
@@ -39,27 +43,35 @@ class App(Application):
 
     @create
     def create(self):
-        return pt.Seq(self.initialize_application_state(), pt.Approve())
+        return pt.Seq(
+            self.initialize_application_state(),
+            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+            pt.Approve(),
+        )
 
-    @opt_in
-    def opt_in(self):
-        return pt.Seq(self.initialize_account_state(), pt.Approve())
-
-    @update
+    @update(authorize=Authorize.only(pt.Global.creator_address()))
     def update(self):
         return pt.Approve()
 
+    @delete(authorize=Authorize.only(pt.Global.creator_address()))
+    def delete(self):
+        return pt.Approve()
+
+    @opt_in
+    def opt_in(self):
+        return pt.Seq(
+            self.initialize_account_state(),
+            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+            pt.Approve(),
+        )
+
     @clear_state
     def clear_state(self):
-        return pt.Approve()
+        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
     @close_out
     def close_out(self):
-        return pt.Approve()
-
-    @delete
-    def delete(self):
-        return pt.Approve()
+        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
     @external
     def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
@@ -68,6 +80,14 @@ class App(Application):
     @external(read_only=True)
     def dummy(self, *, output: pt.abi.String):
         return output.set("deadbeef")
+
+    # class Structy(Struct):
+    #    a: pt.abi.Uint64
+    #    b: pt.abi.Uint32
+
+    # @external
+    # def structy(self, s: Structy, *, output: pt.abi.Uint64):
+    #    return output.set(s.a)
 
 
 SandboxAccounts = list[tuple[str, str, AccountTransactionSigner]]
@@ -268,6 +288,9 @@ def test_create(sb_accts: SandboxAccounts):
         },
     )
 
+    with pytest.raises(LogicException):
+        ac.create(note="failmeplz")
+
 
 def test_update(sb_accts: SandboxAccounts):
     app = App()
@@ -294,6 +317,11 @@ def test_update(sb_accts: SandboxAccounts):
         },
     )
 
+    with pytest.raises(LogicException):
+        addr, pk, signer2 = sb_accts[1]
+        ac2 = ac.prepare(signer=signer2)
+        ac2.update()
+
 
 def test_delete(sb_accts: SandboxAccounts):
     app = App()
@@ -318,6 +346,14 @@ def test_delete(sb_accts: SandboxAccounts):
             },
         },
     )
+
+    with pytest.raises(LogicException):
+        ac = ApplicationClient(client, app, signer=signer)
+        app_id, _, _ = ac.create()
+
+        _, _, signer2 = sb_accts[1]
+        ac2 = ac.prepare(signer=signer2)
+        ac2.delete()
 
 
 def test_opt_in(sb_accts: SandboxAccounts):
@@ -346,6 +382,11 @@ def test_opt_in(sb_accts: SandboxAccounts):
             },
         },
     )
+
+    with pytest.raises(LogicException):
+        _, _, newer_signer = sb_accts[2]
+        newer_ac = ac.prepare(signer=newer_signer)
+        newer_ac.opt_in(note="failmeplz")
 
 
 def test_close_out(sb_accts: SandboxAccounts):
@@ -377,6 +418,12 @@ def test_close_out(sb_accts: SandboxAccounts):
             },
         },
     )
+
+    with pytest.raises(LogicException):
+        _, _, newer_signer = sb_accts[2]
+        newer_ac = ac.prepare(signer=newer_signer)
+        newer_ac.opt_in()
+        newer_ac.close_out(note="failmeplz")
 
 
 def test_clear_state(sb_accts: SandboxAccounts):
@@ -445,7 +492,22 @@ def test_call(sb_accts: SandboxAccounts):
         },
     )
 
-    # TODO: need way more tests with diff signers/txn vals
+
+# def test_call_with_struct():
+#    app = App()
+#    addr, pk, signer = sb_accts[0]
+#
+#    client = get_algod_client()
+#    ac = ApplicationClient(client, app, signer=signer)
+#    app_id, _, _ = ac.create()
+#
+#    result = ac.call(app.structy, s={'a':1, 'b':2})
+#    assert result.return_value == 1
+#    assert result.decode_error is None
+#    assert result.raw_value == (1).to_bytes(8, "big")
+#
+#    with pytest.raises(Exception):
+#        ac.call(app.structy, s=4)
 
 
 def test_add_method_call(sb_accts: SandboxAccounts):

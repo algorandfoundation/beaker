@@ -88,3 +88,32 @@ def add_account(
         kmd.release_wallet_handle(wallet_handle)
 
     return added
+
+
+def delete_account(
+    address: str,
+    kmd_address: str = DEFAULT_KMD_ADDRESS,
+    kmd_token: str = DEFAULT_KMD_TOKEN,
+    wallet_name: str = DEFAULT_KMD_WALLET_NAME,
+    wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
+):
+    """Adds a new account to the sandbox kmd"""
+
+    kmd = KMDClient(kmd_token, kmd_address)
+    wallets = kmd.list_wallets()
+
+    wallet_id = None
+    for wallet in wallets:
+        if wallet["name"] == wallet_name:
+            wallet_id = wallet["id"]
+            break
+
+    if wallet_id is None:
+        raise Exception("Wallet not found: {}".format(wallet_name))
+
+    wallet_handle = kmd.init_wallet_handle(wallet_id, wallet_password)
+
+    try:
+        kmd.delete_key(wallet_handle, password=wallet_password, address=address)
+    finally:
+        kmd.release_wallet_handle(wallet_handle)

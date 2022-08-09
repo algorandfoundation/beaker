@@ -75,9 +75,6 @@ class StateValue(Expr):
 
     def increment(self, cnt: Expr = Int(1)) -> Expr:
         """helper to increment a counter"""
-        if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
-
         check_is_int(self)
         check_not_static(self)
 
@@ -85,16 +82,14 @@ class StateValue(Expr):
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
         """helper to decrement a counter"""
-        if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
         check_is_int(self)
         check_not_static(self)
+
         return self.set(self.get() - cnt)
 
     def set_default(self) -> Expr:
         """sets the default value if one is provided, if none provided sets the zero value for its type"""
-        if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+
         return self.set(get_default_for_type(self.stack_type, self.default))
 
     def is_default(self) -> Expr:
@@ -157,7 +152,7 @@ class ApplicationStateValue(StateValue):
         check_match_type(self, val)
 
         if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         if self.static:
             return Seq(
@@ -168,30 +163,21 @@ class ApplicationStateValue(StateValue):
 
         return App.globalPut(self.key, val)
 
-    def increment(self, cnt: Expr = Int(1)) -> Expr:
-        check_is_int(self)
-        check_not_static(self)
-
-        if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
-
-        return self.set(self.get() + cnt)
-
     def get(self) -> Expr:
         if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return App.globalGet(self.key)
 
     def get_maybe(self) -> MaybeValue:
         if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return App.globalGetEx(Int(0), self.key)
 
     def get_must(self) -> Expr:
         if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
@@ -199,7 +185,7 @@ class ApplicationStateValue(StateValue):
         check_match_type(self, val)
 
         if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
@@ -207,7 +193,7 @@ class ApplicationStateValue(StateValue):
         check_not_static(self)
 
         if self.key is None:
-            raise TealInputError(f"StateValue {self} has no key defined")
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return App.globalDel(self.key)
 

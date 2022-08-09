@@ -122,8 +122,6 @@ class ApplicationClient:
             create_result = atc.execute(self.client, 4)
         except Exception as e:
             if "logic" in str(e):
-                if on_complete == transaction.OnComplete.ClearStateOC:
-                    raise self.wrap_clear_exception(e)
                 raise self.wrap_approval_exception(e)
             else:
                 raise e
@@ -293,13 +291,7 @@ class ApplicationClient:
             )
         )
 
-        try:
-            clear_state_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_clear_exception(e)
-            else:
-                raise e
+        clear_state_result = atc.execute(self.client, 4)
 
         return clear_state_result.tx_ids[0]
 
@@ -388,18 +380,21 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             name = method_arg.name
+
             if name in kwargs:
-                thing = kwargs[name]
-                if type(thing) is dict and hints.structs is not None:
-                    if name in hints.structs:
-                        thing = [
-                            thing[field_name]
-                            for field_name in hints.structs[name]["elements"]
-                        ]
-                    else:
-                        # todo error if wrong keys
-                        thing = list(thing.values())
-                args.append(thing)
+                argument = kwargs[name]
+
+                if type(argument) is dict:
+                    if hints.structs is not None or name not in hints.structs:
+                        raise Exception(f"Name {name} name in struct hints")
+
+                    argument = [
+                        argument[field_name]
+                        for field_name in hints.structs[name]["elements"]
+                    ]
+
+                args.append(argument)
+
             elif (
                 hints.param_annotations is not None and name in hints.param_annotations
             ):
@@ -445,8 +440,6 @@ class ApplicationClient:
             result = atc.execute(self.client, 4)
         except Exception as e:
             if "logic" in str(e):
-                if on_complete == transaction.OnComplete.ClearStateOC:
-                    raise self.wrap_clear_exception(e)
                 raise self.wrap_approval_exception(e)
             else:
                 raise e
@@ -671,10 +664,6 @@ class ApplicationClient:
     def wrap_approval_exception(self, e: Exception, lines: int = 10) -> LogicException:
         _, map = self.compile_approval(True)
         return LogicException(e, self.app.approval_program, map, lines)
-
-    def wrap_clear_exception(self, e: Exception, lines: int = 10) -> LogicException:
-        _, map = self.compile_clear(True)
-        return LogicException(e, self.app.clear_program, map, lines)
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
         if signer is not None:
