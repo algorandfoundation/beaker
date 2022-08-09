@@ -26,13 +26,12 @@ AppCallBudget = Int(APP_CALL_BUDGET)
 MaxOps = Int(MAX_OPS)
 
 
-# aliases for 1/0
+#: TRUE used as an alias for 1
 TRUE: Final[Int] = Int(1)
+#: FALSE used as an alias for 0
 FALSE: Final[Int] = Int(0)
 
-# TODO: find consts
+#: The max number of local state values that may be declared
 MAX_LOCAL_STATE = 16
+#: The max number of global state values that may be declared
 MAX_GLOBAL_STATE = 64
-
-# TODO: replace with pysdk when its released
-APP_MAX_PAGE_SIZE = 2048

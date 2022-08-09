@@ -33,6 +33,15 @@ def get_default_for_type(stack_type, default):
         return Int(0)
 
 
+def stack_type_to_string(st: TealType):
+    if st == TealType.uint64:
+        return "uint64"
+    if st == TealType.bytes:
+        return "bytes"
+    else:
+        raise Exception("Only uint64 and bytes supported")
+
+
 class StateValue(Expr):
     def __init__(
         self,
@@ -316,7 +325,6 @@ class DynamicAccountStateValue(DynamicStateValue):
         key_gen: SubroutineFnWrapper = None,
         descr: str = None,
     ):
-
         super().__init__(stack_type, max_keys, key_gen, descr)
 
         if max_keys <= 0 or max_keys > MAX_LOCAL_STATE:
@@ -333,15 +341,6 @@ class DynamicAccountStateValue(DynamicStateValue):
             key = self.key_generator(key)
 
         return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
-
-
-def stack_type_to_string(st: TealType):
-    if st == TealType.uint64:
-        return "uint64"
-    if st == TealType.bytes:
-        return "bytes"
-    else:
-        raise Exception("Only uint64 and bytes supported")
 
 
 def check_not_static(sv: StateValue):

@@ -19,6 +19,7 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
+from algosdk.constants import APP_PAGE_MAX_SIZE
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import (
@@ -27,7 +28,6 @@ from beaker.decorators import (
     DefaultArgument,
     DefaultArgumentClass,
 )
-from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
 
@@ -92,7 +92,7 @@ class ApplicationClient:
 
         if extra_pages is None:
             extra_pages = ceil(
-                ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
+                ((len(approval) + len(clear)) - APP_PAGE_MAX_SIZE) / APP_PAGE_MAX_SIZE
             )
 
         sp = self.get_suggested_params(suggested_params)
