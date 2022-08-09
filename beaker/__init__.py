@@ -9,7 +9,6 @@ from .state import (
 )
 from .decorators import (
     Authorize,
-    ResolvableArguments,
     external,
     internal,
     bare_external,

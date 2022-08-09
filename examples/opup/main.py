@@ -20,6 +20,10 @@ def demo():
     # Initialize Application from amm.py
     app = ExpensiveApp()
 
+    # import json
+    # print(json.dumps(app.contract.dictify()))
+    # return
+
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()
     # we need to cover 255 inner transactions + ours
