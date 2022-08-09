@@ -56,8 +56,6 @@ def demo():
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    app_client = app_client.prepare(signer=acct.signer)
-
     app_client.call(app.increment)
     app_client.call(app.increment)
     app_client.call(app.increment)
