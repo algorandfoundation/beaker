@@ -95,7 +95,7 @@ if __name__ == "__main__":
     accts = sandbox.get_accounts()
     acct = accts.pop()
 
-    # Create sub app and fund it
+    # Create sub app 
     app_sub = C2CSub()
     app_client_sub = client.ApplicationClient(
         sandbox.get_algod_client(), app_sub, signer=acct.signer
@@ -110,7 +110,11 @@ if __name__ == "__main__":
     app_client_main.create()
     app_client_main.fund(1 * consts.algo)
 
-    # Call main app method to create and send asset to sub app
+    # Call main app method to:
+    #   create the asset 
+    #   call the sub app optin method
+    #   send asset to sub app
+    #   call the sub app return asset method
     sp = app_client_main.client.suggested_params()
     sp.flat_fee = True
     sp.fee = 1 * consts.algo
@@ -121,9 +125,6 @@ if __name__ == "__main__":
         suggested_params=sp,
     )
     print(f"Created asset id: {result.return_value}")
-
-    # Print the transaction result
-    # print(app_client_main.client.pending_transaction_info(result.tx_id))
 
     print(
         testing.get_balances(
