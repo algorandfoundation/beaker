@@ -121,7 +121,7 @@
     <span class="n">referenced_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Struct</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">resolvable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ResolvableArguments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">resolvable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;DefaultArguments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">method_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -181,15 +181,15 @@
         <span class="k">return</span> <span class="n">d</span></div>
 
 
-<span class="k">class</span> <span class="nc">ResolvableTypes</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">DefaultArgumentTypes</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
     <span class="n">ABIMethod</span> <span class="o">=</span> <span class="s2">&quot;abi-method&quot;</span>
     <span class="n">LocalState</span> <span class="o">=</span> <span class="s2">&quot;local-state&quot;</span>
     <span class="n">GlobalState</span> <span class="o">=</span> <span class="s2">&quot;global-state&quot;</span>
     <span class="n">Constant</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span>
 
 
-<div class="viewcode-block" id="ResolvableArguments"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.ResolvableArguments">[docs]</a><span class="k">class</span> <span class="nc">ResolvableArguments</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;ResolvableArguments is a container for any arguments that may be resolved prior to calling some target method&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="DefaultArguments"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.DefaultArguments">[docs]</a><span class="k">class</span> <span class="nc">DefaultArguments</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;DefaultArguments is a container for any arguments that may be resolved prior to calling some target method&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -203,14 +203,14 @@
             <span class="k">match</span> <span class="n">arg_resolver</span><span class="p">:</span>
                 <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">():</span>
                     <span class="n">resolvable_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">LocalState</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="o">.</span><span class="n">str_key</span><span class="p">()</span>
+                        <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">LocalState</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="o">.</span><span class="n">str_key</span><span class="p">()</span>
                     <span class="p">}</span>
                 <span class="k">case</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
                     <span class="n">resolvable_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">GlobalState</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="o">.</span><span class="n">str_key</span><span class="p">()</span>
+                        <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">GlobalState</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="o">.</span><span class="n">str_key</span><span class="p">()</span>
                     <span class="p">}</span>
                 <span class="k">case</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">int</span><span class="p">():</span>
-                    <span class="n">resolvable_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">Constant</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="p">}</span>
+                    <span class="n">resolvable_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">Constant</span><span class="p">:</span> <span class="n">arg_resolver</span><span class="p">}</span>
                 <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
                     <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">arg_resolver</span><span class="p">))</span>
                     <span class="k">if</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hc</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
@@ -218,7 +218,7 @@
                             <span class="s2">&quot;Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method&quot;</span>
                         <span class="p">)</span>
                     <span class="n">resolvable_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">ABIMethod</span><span class="p">:</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span>
+                        <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">ABIMethod</span><span class="p">:</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span>
                     <span class="p">}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">resolvable_args</span><span class="p">)</span>
@@ -227,7 +227,7 @@
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;The ResolvableArgument field </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> not present in function signature&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;The DefaultArgument field </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> not present in function signature&quot;</span>
                 <span class="p">)</span></div>
 
 
@@ -381,7 +381,7 @@
     <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">resolvable</span><span class="p">:</span> <span class="n">ResolvableArguments</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">resolvable</span><span class="p">:</span> <span class="n">DefaultArguments</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
 
     <span class="sd">&quot;&quot;&quot;</span>

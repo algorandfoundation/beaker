@@ -24,8 +24,8 @@ from beaker.application import Application, get_method_spec
 from beaker.decorators import (
     HandlerFunc,
     MethodHints,
-    ResolvableArgument,
-    ResolvableClass,
+    DefaultArgument,
+    DefaultArgumentClass,
 )
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
@@ -632,20 +632,20 @@ class ApplicationClient:
         app_state = self.client.account_info(self.app_addr)
         return app_state
 
-    def resolve(self, to_resolve: ResolvableArgument) -> Any:
-        if to_resolve.resolvable_class == ResolvableClass.Constant:
+    def resolve(self, to_resolve: DefaultArgument) -> Any:
+        if to_resolve.resolvable_class == DefaultArgumentClass.Constant:
             return to_resolve.resolve_hint()
-        elif to_resolve.resolvable_class == ResolvableClass.GlobalState:
+        elif to_resolve.resolvable_class == DefaultArgumentClass.GlobalState:
             key = to_resolve.resolve_hint()
             app_state = self.get_application_state()
             return app_state[key]
-        elif to_resolve.resolvable_class == ResolvableClass.LocalState:
+        elif to_resolve.resolvable_class == DefaultArgumentClass.LocalState:
             key = to_resolve.resolve_hint()
             acct_state = self.get_account_state(
                 self.get_sender(),
             )
             return acct_state[key]
-        elif to_resolve.resolvable_class == ResolvableClass.ABIMethod:
+        elif to_resolve.resolvable_class == DefaultArgumentClass.ABIMethod:
             method = abi.Method.undictify(to_resolve.resolve_hint())
             result = self.call(method)
             return result.return_value

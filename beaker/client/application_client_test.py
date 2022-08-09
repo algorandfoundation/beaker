@@ -14,7 +14,7 @@ from algosdk.atomic_transaction_composer import (
 )
 
 from ..decorators import (
-    ResolvableArgument,
+    DefaultArgument,
     create,
     external,
     update,
@@ -518,16 +518,16 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.create()
     ac.opt_in()
 
-    assert ac.resolve(ResolvableArgument(pt.Int(1))) == 1
+    assert ac.resolve(DefaultArgument(pt.Int(1))) == 1
 
-    assert ac.resolve(ResolvableArgument(pt.Bytes("stringy"))) == "stringy"
+    assert ac.resolve(DefaultArgument(pt.Bytes("stringy"))) == "stringy"
 
-    assert ac.resolve(ResolvableArgument(app.app_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(app.app_state_val_int)) == 1
 
-    assert ac.resolve(ResolvableArgument(app.app_state_val_byte)) == "test"
+    assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == "test"
 
-    assert ac.resolve(ResolvableArgument(app.acct_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
 
-    assert ac.resolve(ResolvableArgument(app.acct_state_val_byte)) == "test"
+    assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == "test"
 
-    assert ac.resolve(ResolvableArgument(app.dummy)) == "deadbeef"
+    assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"

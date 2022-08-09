@@ -40,36 +40,36 @@ CheckExpr = Callable[..., Expr]
 ABIType = TypeVar("ABIType", bound=abi.BaseType)
 
 
-ResolvableType = (
+DefaultArgumentType = (
     AccountStateValue | ApplicationStateValue | Expr | HandlerFunc | Bytes | Int
 )
 
 
-class ResolvableClass(str, Enum):
+class DefaultArgumentClass(str, Enum):
     ABIMethod = "abi-method"
     LocalState = "local-state"
     GlobalState = "global-state"
     Constant = "constant"
 
 
-class ResolvableArgument:
-    """ResolvableArgument is a container for any arguments that may be resolved prior to calling some target method"""
+class DefaultArgument:
+    """DefaultArgument is a container for any arguments that may be resolved prior to calling some target method"""
 
     def __init__(
         self,
-        resolver: ResolvableType,
+        resolver: DefaultArgumentType,
     ):
         self.resolver = resolver
 
         match resolver:
             case AccountStateValue():
-                self.resolvable_class = ResolvableClass.LocalState
+                self.resolvable_class = DefaultArgumentClass.LocalState
             case ApplicationStateValue():
-                self.resolvable_class = ResolvableClass.GlobalState
+                self.resolvable_class = DefaultArgumentClass.GlobalState
             case Bytes():
-                self.resolvable_class = ResolvableClass.Constant
+                self.resolvable_class = DefaultArgumentClass.Constant
             case Int():
-                self.resolvable_class = ResolvableClass.Constant
+                self.resolvable_class = DefaultArgumentClass.Constant
             case _:
                 # Fall through, if its not got a valid handler config, raise error
                 hc = get_handler_config(cast(HandlerFunc, resolver))
@@ -77,7 +77,7 @@ class ResolvableArgument:
                     raise Exception(
                         "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
                     )
-                self.resolvable_class = ResolvableClass.ABIMethod
+                self.resolvable_class = DefaultArgumentClass.ABIMethod
 
     def resolve_hint(self):
         match self.resolver:
@@ -117,11 +117,8 @@ class TransactionMatcher:
 
 @dataclass
 class ParameterAnnotation:
-    checks: Optional[TransactionMatcher | list[Expr]] = field(
-        kw_only=True, default=None
-    )
     descr: Optional[str] = field(kw_only=True, default=None)
-    default: Optional[ResolvableArgument] = field(kw_only=True, default=None)
+    default: Optional[DefaultArgument] = field(kw_only=True, default=None)
 
 
 @dataclass
@@ -331,12 +328,12 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
                 params[k] = v.replace(annotation=orig)
                 fn_annotations[k] = orig
 
-    for param_name, param_annos in param_annotations.items():
-        if param_annos.checks is not None:
-            # TODO: apply
-            # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
-            # print(f"CHECKS: {param_annos.checks}")
-            pass
+    # for param_name, param_annos in param_annotations.items():
+    #    if param_annos.checks is not None:
+    #        # TODO: apply
+    #        # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
+    #        # print(f"CHECKS: {param_annos.checks}")
+    #        pass
 
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)

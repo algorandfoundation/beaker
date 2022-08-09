@@ -1,6 +1,6 @@
 from typing import Literal, Annotated
 from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
-from beaker.decorators import ParameterAnnotation, external, ResolvableArgument
+from beaker.decorators import ParameterAnnotation, external, DefaultArgument
 from beaker.contracts import OpUp
 from beaker.consts import AppCallBudget, MaxOps
 
@@ -19,11 +19,16 @@ class ExpensiveApp(OpUp):
             abi.Application,
             ParameterAnnotation(
                 descr="The app id to use for opup reququests",
-                default=ResolvableArgument(OpUp.opup_app_id),
+                default=DefaultArgument(OpUp.opup_app_id),
             ),
         ],
         *,
-        output: abi.StaticArray[abi.Byte, Literal[32]],
+        output: Annotated[
+            abi.StaticArray[abi.Byte, Literal[32]],
+            ParameterAnnotation(
+                descr="The result of hashing the input a number of times"
+            ),
+        ],
     ):
         return Seq(
             Assert(opup_app.application_id() == self.opup_app_id),

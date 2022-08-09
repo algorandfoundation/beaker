@@ -4,7 +4,7 @@ import pyteal as pt
 from .decorators import (
     external,
     get_handler_config,
-    ResolvableArgument,
+    DefaultArgument,
     Authorize,
     create,
     clear_state,
@@ -266,30 +266,30 @@ def test_resolvable():
     )
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArgument(x)
+    r = DefaultArgument(x)
     assert r.resolvable_class == "local-state"
 
     x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArgument(x[pt.Bytes("x")])
+    r = DefaultArgument(x[pt.Bytes("x")])
     assert r.resolvable_class == "local-state"
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArgument(x)
+    r = DefaultArgument(x)
     assert r.resolvable_class == "global-state"
 
     x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArgument(x[pt.Bytes("x")])
+    r = DefaultArgument(x[pt.Bytes("x")])
     assert r.resolvable_class == "global-state"
 
     @external(read_only=True)
     def x():
         return pt.Assert(pt.Int(1))
 
-    r = ResolvableArgument(x)
+    r = DefaultArgument(x)
     assert r.resolvable_class == "abi-method"
 
-    r = ResolvableArgument(pt.Bytes("1"))
+    r = DefaultArgument(pt.Bytes("1"))
     assert r.resolvable_class == "constant"
 
-    r = ResolvableArgument(pt.Int(1))
+    r = DefaultArgument(pt.Int(1))
     assert r.resolvable_class == "constant"

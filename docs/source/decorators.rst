@@ -82,7 +82,7 @@ Method Hints
 .. _resolvable:
 
 
-.. autoclass:: ResolvableArguments
+.. autoclass:: DefaultArguments
 
 .. warning:: 
     This is EXPERIMENTAL
@@ -94,7 +94,7 @@ We can change the external to provide the hint.
 .. code-block:: python
 
     @external(
-        resolvable=ResolvableArguments(
+        resolvable=DefaultArguments(
             opup_app=OpUp.opup_app_id 
         )
     )

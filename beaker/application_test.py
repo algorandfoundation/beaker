@@ -19,8 +19,8 @@ from beaker.application import (
 )
 from beaker.decorators import (
     ParameterAnnotation,
-    ResolvableArgument,
-    ResolvableClass,
+    DefaultArgument,
+    DefaultArgumentClass,
     external,
     internal,
     create,
@@ -278,7 +278,7 @@ def test_resolvable_hint():
             aid: Annotated[
                 pt.abi.Asset,
                 ParameterAnnotation(
-                    descr="Testing asset id", default=ResolvableArgument(get_asset_id)
+                    descr="Testing asset id", default=DefaultArgument(get_asset_id)
                 ),
             ],
         ):
@@ -296,7 +296,7 @@ def test_resolvable_hint():
     assert anno.descr == "Testing asset id"
 
     assert anno.default is not None
-    assert anno.default.resolvable_class == ResolvableClass.ABIMethod
+    assert anno.default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
         anno.default.resolve_hint() == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"

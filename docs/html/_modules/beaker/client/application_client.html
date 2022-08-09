@@ -96,7 +96,7 @@
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">get_method_spec</span>
-<span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">,</span> <span class="n">ResolvableTypes</span>
+<span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">,</span> <span class="n">DefaultArgumentTypes</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">APP_MAX_PAGE_SIZE</span>
 <span class="kn">from</span> <span class="nn">beaker.client.state_decode</span> <span class="kn">import</span> <span class="n">decode_state</span>
 <span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span>
@@ -695,20 +695,20 @@
         <span class="k">return</span> <span class="n">app_state</span></div>
 
     <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_resolve</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">Constant</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">to_resolve</span><span class="p">[</span><span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">Constant</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">GlobalState</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">to_resolve</span><span class="p">[</span><span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">GlobalState</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">Constant</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">to_resolve</span><span class="p">[</span><span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">Constant</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">GlobalState</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">to_resolve</span><span class="p">[</span><span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">GlobalState</span><span class="p">]</span>
             <span class="n">app_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">app_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">LocalState</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">to_resolve</span><span class="p">[</span><span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">LocalState</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">LocalState</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">to_resolve</span><span class="p">[</span><span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">LocalState</span><span class="p">]</span>
             <span class="n">acct_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_account_state</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">acct_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">ABIMethod</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span><span class="o">.</span><span class="n">undictify</span><span class="p">(</span><span class="n">to_resolve</span><span class="p">[</span><span class="n">ResolvableTypes</span><span class="o">.</span><span class="n">ABIMethod</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">ABIMethod</span> <span class="ow">in</span> <span class="n">to_resolve</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span><span class="o">.</span><span class="n">undictify</span><span class="p">(</span><span class="n">to_resolve</span><span class="p">[</span><span class="n">DefaultArgumentTypes</span><span class="o">.</span><span class="n">ABIMethod</span><span class="p">])</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">return_value</span>
         <span class="k">else</span><span class="p">:</span>
