@@ -14,7 +14,7 @@ from algosdk.atomic_transaction_composer import (
 )
 
 from ..decorators import (
-    ResolvableTypes,
+    DefaultArgument,
     create,
     external,
     update,
@@ -24,7 +24,7 @@ from ..decorators import (
     opt_in,
 )
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, get_method_selector, get_method_spec
+from beaker.application import Application, get_method_selector
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 
@@ -518,19 +518,10 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.create()
     ac.opt_in()
 
-    assert ac.resolve({ResolvableTypes.Constant: 1}) == 1
-
-    assert ac.resolve({ResolvableTypes.Constant: "stringy"}) == "stringy"
-
-    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_int"}) == 1
-
-    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_byte"}) == "test"
-
-    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_int"}) == 1
-
-    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_byte"}) == "test"
-
-    assert (
-        ac.resolve({ResolvableTypes.ABIMethod: get_method_spec(app.dummy).dictify()})
-        == "deadbeef"
-    )
+    assert ac.resolve(DefaultArgument(pt.Int(1))) == 1
+    assert ac.resolve(DefaultArgument(pt.Bytes("stringy"))) == "stringy"
+    assert ac.resolve(DefaultArgument(app.app_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == "test"
+    assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == "test"
+    assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"

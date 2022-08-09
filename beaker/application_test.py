@@ -1,5 +1,5 @@
 import pytest
-from typing import Final, cast
+from typing import Final, cast, Annotated
 from Cryptodome.Hash import SHA512
 import pyteal as pt
 
@@ -18,8 +18,9 @@ from beaker.application import (
     get_method_spec,
 )
 from beaker.decorators import (
-    ResolvableArguments,
-    ResolvableTypes,
+    ParameterAnnotation,
+    DefaultArgument,
+    DefaultArgumentClass,
     external,
     internal,
     create,
@@ -271,8 +272,16 @@ def test_resolvable_hint():
         def get_asset_id(self, *, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
-        @external(resolvable=ResolvableArguments(aid=get_asset_id))
-        def hintymeth(self, aid: pt.abi.Asset):
+        @external
+        def hintymeth(
+            self,
+            aid: Annotated[
+                pt.abi.Asset,
+                ParameterAnnotation(
+                    descr="Testing asset id", default=DefaultArgument(get_asset_id)
+                ),
+            ],
+        ):
             return pt.Assert(pt.Int(1))
 
     h = Hinty()
@@ -280,9 +289,16 @@ def test_resolvable_hint():
     assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
     hint = h.hints[h.hintymeth.__name__]
+
+    assert "aid" in hint.param_annotations, "Expected annotation available for param"
+    anno = hint.param_annotations["aid"]
+
+    assert anno.descr == "Testing asset id"
+
+    assert anno.default is not None
+    assert anno.default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
-        hint.resolvable["aid"][ResolvableTypes.ABIMethod]
-        == get_method_spec(h.get_asset_id).dictify()
+        anno.default.resolve_hint() == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
 
 

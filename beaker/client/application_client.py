@@ -21,7 +21,12 @@ from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
+from beaker.decorators import (
+    HandlerFunc,
+    MethodHints,
+    DefaultArgument,
+    DefaultArgumentClass,
+)
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
@@ -395,8 +400,12 @@ class ApplicationClient:
                         # todo error if wrong keys
                         thing = list(thing.values())
                 args.append(thing)
-            elif hints.resolvable is not None and name in hints.resolvable:
-                args.append(self.resolve(hints.resolvable[name]))
+            elif (
+                hints.param_annotations is not None and name in hints.param_annotations
+            ):
+                annos = hints.param_annotations[name]
+                if annos.default is not None:
+                    args.append(self.resolve(DefaultArgument(annos.default)))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -544,8 +553,12 @@ class ApplicationClient:
             name = method_arg.name
             if name in kwargs:
                 args.append(kwargs[name])
-            elif hints.resolvable is not None and name in hints.resolvable:
-                args.append(self.resolve(hints.resolvable[name]))
+            elif (
+                hints.param_annotations is not None and name in hints.param_annotations
+            ):
+                annos = hints.param_annotations[name]
+                if annos.default is not None:
+                    args.append(self.resolve(DefaultArgument(annos.default)))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -619,21 +632,21 @@ class ApplicationClient:
         app_state = self.client.account_info(self.app_addr)
         return app_state
 
-    def resolve(self, to_resolve) -> Any:
-        if ResolvableTypes.Constant in to_resolve:
-            return to_resolve[ResolvableTypes.Constant]
-        elif ResolvableTypes.GlobalState in to_resolve:
-            key = to_resolve[ResolvableTypes.GlobalState]
+    def resolve(self, to_resolve: DefaultArgument) -> Any:
+        if to_resolve.resolvable_class == DefaultArgumentClass.Constant:
+            return to_resolve.resolve_hint()
+        elif to_resolve.resolvable_class == DefaultArgumentClass.GlobalState:
+            key = to_resolve.resolve_hint()
             app_state = self.get_application_state()
             return app_state[key]
-        elif ResolvableTypes.LocalState in to_resolve:
-            key = to_resolve[ResolvableTypes.LocalState]
+        elif to_resolve.resolvable_class == DefaultArgumentClass.LocalState:
+            key = to_resolve.resolve_hint()
             acct_state = self.get_account_state(
-                self.get_sender(None, None),
+                self.get_sender(),
             )
             return acct_state[key]
-        elif ResolvableTypes.ABIMethod in to_resolve:
-            method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])
+        elif to_resolve.resolvable_class == DefaultArgumentClass.ABIMethod:
+            method = abi.Method.undictify(to_resolve.resolve_hint())
             result = self.call(method)
             return result.return_value
         else:

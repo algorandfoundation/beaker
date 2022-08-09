@@ -79,43 +79,6 @@ Method Hints
     :members:
 
 
-.. _resolvable:
-
-
-.. autoclass:: ResolvableArguments
-
-.. warning:: 
-    This is EXPERIMENTAL
-
-In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the external. 
-
-We can change the external to provide the hint.
-
-.. code-block:: python
-
-    @external(
-        resolvable=ResolvableArguments(
-            opup_app=OpUp.opup_app_id 
-        )
-    )
-
-With this external config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
-
-Options for resolving arguments are:
-
-- A constant, `str | int`
-- State Values, `ApplicationStateValue | AccountStateValue`
-- A read-only ABI method  
-
-
-Here we call the method, omitting the `opup_app` argument:
-
-.. code-block:: python
-
-    result = app_client.call(app.hash_it, input="hashme", iters=10)
-
-When invoked, the `ApplicationClient` consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.
-
 
 .. _read_only:
 
@@ -185,3 +148,4 @@ Multiple Bare externals
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
 
 .. autodecorator:: bare_external
+
