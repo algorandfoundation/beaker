@@ -491,72 +491,130 @@
     <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="delete"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.delete">[docs]</a><span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<div class="viewcode-block" id="delete"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.delete">[docs]</a><span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`DeleteApplication` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="update"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.update">[docs]</a><span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<div class="viewcode-block" id="update"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.update">[docs]</a><span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`UpdateApplication` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="opt_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.opt_in">[docs]</a><span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<div class="viewcode-block" id="opt_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.opt_in">[docs]</a><span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`OptIn` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.clear_state">[docs]</a><span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<div class="viewcode-block" id="clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.clear_state">[docs]</a><span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`ClearState` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="close_out"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.close_out">[docs]</a><span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<div class="viewcode-block" id="close_out"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.close_out">[docs]</a><span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`CloseOut` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`NoOp` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 </pre></div>
 
            </div>
