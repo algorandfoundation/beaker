@@ -75,4 +75,4 @@ def test_annotations():
             return output.set(pt.Concat(greeting.get(), pt.Bytes(" "), name.get()))
 
     aa = AnnotatedApp()
-    print(get_handler_config(aa.default_meth_arg))
+    # print(get_handler_config(aa.default_meth_arg))

@@ -84,7 +84,7 @@ class ResolvableArgument:
             case AccountStateValue() | ApplicationStateValue():
                 return self.resolver.str_key()
             case Bytes():
-                return self.resolver.byte_str.replace("'", "")
+                return self.resolver.byte_str.replace('"', "")
             case Int():
                 return self.resolver.value
             case _:
@@ -335,7 +335,8 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
         if param_annos.checks is not None:
             # TODO: apply
             # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
-            print(f"CHECKS: {param_annos.checks}")
+            # print(f"CHECKS: {param_annos.checks}")
+            pass
 
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)
