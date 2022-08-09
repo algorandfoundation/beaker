@@ -29,6 +29,8 @@ def test_handler_config():
     assert len(meth.args) == 0, "Expected no args"
     assert meth.name == "handleable", "Expected name to match"
 
+    print(hc)
+    print(hc.__dict__)
     config_dict = hc.__dict__
     del config_dict["method_spec"]
 

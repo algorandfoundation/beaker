@@ -14,7 +14,7 @@ from algosdk.atomic_transaction_composer import (
 )
 
 from ..decorators import (
-    ResolvableTypes,
+    ResolvableClass,
     create,
     external,
     update,
@@ -518,19 +518,19 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.create()
     ac.opt_in()
 
-    assert ac.resolve({ResolvableTypes.Constant: 1}) == 1
+    assert ac.resolve({ResolvableClass.Constant: 1}) == 1
 
-    assert ac.resolve({ResolvableTypes.Constant: "stringy"}) == "stringy"
+    assert ac.resolve({ResolvableClass.Constant: "stringy"}) == "stringy"
 
-    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_int"}) == 1
+    assert ac.resolve({ResolvableClass.GlobalState: "app_state_val_int"}) == 1
 
-    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_byte"}) == "test"
+    assert ac.resolve({ResolvableClass.GlobalState: "app_state_val_byte"}) == "test"
 
-    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_int"}) == 1
+    assert ac.resolve({ResolvableClass.LocalState: "acct_state_val_int"}) == 1
 
-    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_byte"}) == "test"
+    assert ac.resolve({ResolvableClass.LocalState: "acct_state_val_byte"}) == "test"
 
     assert (
-        ac.resolve({ResolvableTypes.ABIMethod: get_method_spec(app.dummy).dictify()})
+        ac.resolve({ResolvableClass.ABIMethod: get_method_spec(app.dummy).dictify()})
         == "deadbeef"
     )

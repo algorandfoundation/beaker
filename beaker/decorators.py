@@ -1,3 +1,4 @@
+from ast import Param
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
@@ -57,7 +58,7 @@ class ResolvableArgument:
         self,
         resolver: ResolvableType,
     ):
-        self.resolve_type: ResolvableClass = None
+        self.resolve_class: ResolvableClass = None
         self.resolver = resolver
 
         match resolver:
@@ -78,11 +79,22 @@ class ResolvableArgument:
                     )
                 self.resolvable_class = ResolvableClass.ABIMethod
 
-    def resolve(self) -> Expr:
-        if self.resolvable_class == ResolvableClass.ABIMethod:
-            return self.resolver()
-
-        return self.resolver
+    def resolve_hint(self):
+        match self.resolver:
+            case AccountStateValue() | ApplicationStateValue():
+                return self.resolver.str_key()
+            case Bytes():
+                return self.resolver.byte_str.replace("'", "")
+            case Int():
+                return self.resolver.value
+            case _:
+                # Fall through, if its not got a valid handler config, raise error
+                hc = get_handler_config(cast(HandlerFunc, self.resolver))
+                if hc.method_spec is None or not hc.read_only:
+                    raise Exception(
+                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
+                    )
+                return hc.method_spec.dictify()
 
 
 class TransactionMatcher:
@@ -105,34 +117,11 @@ class TransactionMatcher:
 
 @dataclass
 class ParameterAnnotation:
-    checks: Optional[list[Expr]] = field(kw_only=True, default=None)
+    checks: Optional[TransactionMatcher | list[Expr]] = field(
+        kw_only=True, default=None
+    )
     descr: Optional[str] = field(kw_only=True, default=None)
     default: Optional[ResolvableArgument] = field(kw_only=True, default=None)
-
-
-def annotated(
-    t: ABIType,
-    descr: Optional[str] = None,
-    default: Optional[ResolvableType] = None,
-    check: Optional[Expr | CheckExpr | dict[TxnField, Expr | CheckExpr]] = None,
-) -> ABIType:
-
-    pa: ParameterAnnotation = ParameterAnnotation(descr=descr)
-
-    if abi.contains_type_spec(t, abi.TransactionTypeSpecs):
-        if default is not None:
-            raise Exception("Default may not be set on a transaction")
-
-        pa = ParameterAnnotation(
-            checks=TransactionMatcher(check).get_checks(), descr=descr
-        )
-    else:
-        if default is not None:
-            default = ResolvableArgument(default)
-
-        pa = ParameterAnnotation(default=default, descr=descr, checks=check)
-
-    return Annotated[t, pa]
 
 
 @dataclass
@@ -146,14 +135,20 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
 
-    param_annotations: Optional[ParameterAnnotation] = field(kw_only=True, default=None)
+    param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
+        kw_only=True, default=None
+    )
+
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
         mh = MethodHints(read_only=self.read_only)
 
-        if self.param_annotations is not None:
+        if (
+            self.param_annotations is not None
+            and len(self.param_annotations.keys()) > 0
+        ):
             mh.param_annotations = self.param_annotations
 
         if self.structs is not None:
@@ -190,7 +185,9 @@ class MethodHints:
         kw_only=True, default=None
     )
     #: annotations
-    param_annotations: dict[str, dict[str, Any]] = field(kw_only=True, default=None)
+    param_annotations: dict[str, ParameterAnnotation] = field(
+        kw_only=True, default=None
+    )
 
     def empty(self) -> bool:
         return (
@@ -321,7 +318,7 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     fn_annotations = get_annotations(fn)
 
-    arg_annotations = {}
+    param_annotations: dict[str, ParameterAnnotation] = {}
 
     params = sig.parameters.copy()
     for k, v in params.items():
@@ -329,15 +326,19 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
         if hasattr(tv, "__origin__"):
             orig = tv.__origin__
             if hasattr(tv, "__metadata__"):
-                arg_annotations[k] = tv.__metadata__
+                param_annotations[k] = tv.__metadata__[0]
 
                 params[k] = v.replace(annotation=orig)
                 fn_annotations[k] = orig
 
-    # TODO: apply
-    print(arg_annotations)
-    # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
-    # set_handler_config(fn, annotations=arg_annotations)
+    for param_name, param_annos in param_annotations.items():
+        if param_annos.checks is not None:
+            # TODO: apply
+            # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
+            print(f"CHECKS: {param_annos.checks}")
+
+    if len(param_annotations.items()) > 0:
+        set_handler_config(fn, param_annotations=param_annotations)
 
     # Fix function sig/annotations
     newsig = sig.replace(parameters=params.values())
@@ -400,7 +401,6 @@ def external(
         authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
         method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.
         read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).
-        resolvable: **Experimental** Provides a means to resolve some required input to the caller.
 
     Returns:
         The original method with additional elements set in its  :code:`__handler_config__` attribute

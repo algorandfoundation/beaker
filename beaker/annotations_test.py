@@ -2,9 +2,14 @@ import pytest
 
 import pyteal as pt
 
-from .consts import Algos, MilliAlgo
 from .state import ApplicationStateValue
-from .decorators import external, get_handler_config, ResolvableArgument, annotated
+from typing import Annotated
+from .decorators import (
+    ParameterAnnotation,
+    external,
+    get_handler_config,
+    ResolvableArgument,
+)
 from .application import Application
 
 
@@ -48,49 +53,26 @@ def test_resolvable():
 
 def test_annotations():
     class AnnotatedApp(Application):
-        target_app_id = ApplicationStateValue(pt.TealType.uint64)
-
         default_greeting = pt.Bytes("hello")
 
         @external
         def default_meth_arg(
             self,
-            greeting: annotated(
+            greeting: Annotated[
                 pt.abi.String,
-                default=default_greeting,
-                descr="The greeting message to apply",
-            ),
+                ParameterAnnotation(
+                    default=ResolvableArgument(default_greeting),
+                    descr="The greeting message to apply",
+                ),
+            ],
+            name: Annotated[
+                pt.abi.String,
+                ParameterAnnotation(descr="The name to use when greeting"),
+            ],
+            *,
+            output: pt.abi.String
         ):
-            return pt.Approve()
-
-        @external
-        def resolvable_meth_arg(
-            self,
-            target_app: annotated(
-                pt.abi.Application,
-                default=target_app_id,
-                descr="The target app to make OpUp calls against",
-            ),
-        ):
-            return pt.Approve()
-
-        @external
-        def checked_meth_arg(
-            self,
-            _: annotated(
-                pt.abi.PaymentTransaction,
-                descr="The payment to the app address for 10A to cover stuff",
-                check={
-                    pt.TxnField.type_enum: pt.TxnType.Payment,
-                    pt.TxnField.receiver: Application.address,
-                    pt.TxnField.rekey_to: pt.Global.zero_address(),
-                    pt.TxnField.close_remainder_to: pt.Global.zero_address(),
-                    pt.TxnField.amount: lambda amt: amt > Algos(10),
-                    pt.TxnField.fee: lambda fee: fee >= MilliAlgo,
-                },
-            ),
-        ):
-            return pt.Approve()
+            return output.set(pt.Concat(greeting.get(), pt.Bytes(" "), name.get()))
 
     aa = AnnotatedApp()
-    print(get_handler_config(aa.checked_meth_arg))
+    print(get_handler_config(aa.default_meth_arg))
