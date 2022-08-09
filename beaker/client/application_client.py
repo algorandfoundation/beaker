@@ -21,8 +21,7 @@ from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import HandlerFunc, MethodHints
-from beaker.annotations import ResolvableArgument
+from beaker.decorators import HandlerFunc, MethodHints, ResolvableClass
 from beaker.consts import APP_MAX_PAGE_SIZE
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
@@ -621,20 +620,20 @@ class ApplicationClient:
         return app_state
 
     def resolve(self, to_resolve) -> Any:
-        if ResolvableTypes.Constant in to_resolve:
-            return to_resolve[ResolvableTypes.Constant]
-        elif ResolvableTypes.GlobalState in to_resolve:
-            key = to_resolve[ResolvableTypes.GlobalState]
+        if ResolvableClass.Constant in to_resolve:
+            return to_resolve[ResolvableClass.Constant]
+        elif ResolvableClass.GlobalState in to_resolve:
+            key = to_resolve[ResolvableClass.GlobalState]
             app_state = self.get_application_state()
             return app_state[key]
-        elif ResolvableTypes.LocalState in to_resolve:
-            key = to_resolve[ResolvableTypes.LocalState]
+        elif ResolvableClass.LocalState in to_resolve:
+            key = to_resolve[ResolvableClass.LocalState]
             acct_state = self.get_account_state(
                 self.get_sender(None, None),
             )
             return acct_state[key]
-        elif ResolvableTypes.ABIMethod in to_resolve:
-            method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])
+        elif ResolvableClass.ABIMethod in to_resolve:
+            method = abi.Method.undictify(to_resolve[ResolvableClass.ABIMethod])
             result = self.call(method)
             return result.return_value
         else:

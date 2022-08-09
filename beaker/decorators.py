@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
-from inspect import get_annotations, signature, Signature
-from typing import Optional, Callable, Final, cast, Any, Annotated, TypeVar
+from inspect import get_annotations, signature
+from typing import Optional, Callable, Final, cast, Any, TypeVar, Annotated
 from algosdk.abi import Method
 from pyteal import (
     abi,
@@ -23,18 +23,116 @@ from pyteal import (
     TealInputError,
     TealType,
     TealTypeError,
+    Bytes,
     TxnField,
     Txn,
 )
-from beaker.state import (
-    ApplicationStateValue,
-    AccountStateValue,
-)
+
+from beaker.state import AccountStateValue, ApplicationStateValue
 from beaker.struct import Struct
 
 HandlerFunc = Callable[..., Expr]
 
 _handler_config_attr: Final[str] = "__handler_config__"
+
+
+CheckExpr = Callable[..., Expr]
+ABIType = TypeVar("ABIType", bound=abi.BaseType)
+
+
+ResolvableType = AccountStateValue | ApplicationStateValue | HandlerFunc | Bytes | Int
+
+
+class ResolvableClass(str, Enum):
+    ABIMethod = "abi-method"
+    LocalState = "local-state"
+    GlobalState = "global-state"
+    Constant = "constant"
+
+
+class ResolvableArgument:
+    """ResolvableArgument is a container for any arguments that may be resolved prior to calling some target method"""
+
+    def __init__(
+        self,
+        resolver: ResolvableType,
+    ):
+        self.resolve_type: ResolvableClass = None
+        self.resolver = resolver
+
+        match resolver:
+            case AccountStateValue():
+                self.resolvable_class = ResolvableClass.LocalState
+            case ApplicationStateValue():
+                self.resolvable_class = ResolvableClass.GlobalState
+            case Bytes():
+                self.resolvable_class = ResolvableClass.Constant
+            case Int():
+                self.resolvable_class = ResolvableClass.Constant
+            case _:
+                # Fall through, if its not got a valid handler config, raise error
+                hc = get_handler_config(cast(HandlerFunc, resolver))
+                if hc.method_spec is None or not hc.read_only:
+                    raise Exception(
+                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
+                    )
+                self.resolvable_class = ResolvableClass.ABIMethod
+
+    def resolve(self) -> Expr:
+        if self.resolvable_class == ResolvableClass.ABIMethod:
+            return self.resolver()
+
+        return self.resolver
+
+
+class TransactionMatcher:
+    def __init__(self, fields: dict[TxnField, Expr | CheckExpr]):
+        self.fields = fields
+
+    def get_checks(self, t: abi.Transaction) -> list[Expr]:
+        checks = []
+
+        for f, field_val in self.fields.items():
+            field_getter = t.get().makeTxnExpr(f)
+            match field_val:
+                case Expr():
+                    checks.append(field_getter == field_val)
+                case CheckExpr():
+                    checks.append(field_val(field_getter))
+
+        return checks
+
+
+@dataclass
+class ParameterAnnotation:
+    checks: Optional[list[Expr]] = field(kw_only=True, default=None)
+    descr: Optional[str] = field(kw_only=True, default=None)
+    default: Optional[ResolvableArgument] = field(kw_only=True, default=None)
+
+
+def annotated(
+    t: ABIType,
+    descr: Optional[str] = None,
+    default: Optional[ResolvableType] = None,
+    check: Optional[Expr | CheckExpr | dict[TxnField, Expr | CheckExpr]] = None,
+) -> ABIType:
+
+    pa: ParameterAnnotation = ParameterAnnotation(descr=descr)
+
+    if abi.contains_type_spec(t, abi.TransactionTypeSpecs):
+        if default is not None:
+            raise Exception("Default may not be set on a transaction")
+
+        pa = ParameterAnnotation(
+            checks=TransactionMatcher(check).get_checks(), descr=descr
+        )
+    else:
+        if default is not None:
+            default = ResolvableArgument(default)
+
+        pa = ParameterAnnotation(default=default, descr=descr, checks=check)
+
+    return Annotated[t, pa]
 
 
 @dataclass
@@ -48,7 +146,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
 
-    param_annotations: Optional[Any] = field(kw_only=True, default=None)
+    param_annotations: Optional[ParameterAnnotation] = field(kw_only=True, default=None)
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
 

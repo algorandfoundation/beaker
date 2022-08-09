@@ -4,12 +4,8 @@ import pyteal as pt
 
 from .consts import Algos, MilliAlgo
 from .state import ApplicationStateValue
-from .annotations import (
-    ResolvableArgument,
-    annotated,
-)
-from .decorators import external, get_handler_config
-from .application import Application, get_method_spec
+from .decorators import external, get_handler_config, ResolvableArgument, annotated
+from .application import Application
 
 
 def test_resolvable():
@@ -22,39 +18,32 @@ def test_resolvable():
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = ResolvableArgument(x)
-    assert r.resolve_from == "local-state"
-    assert r.resolve_with == "x"
+    assert r.resolvable_class == "local-state"
 
     x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
     r = ResolvableArgument(x[pt.Bytes("x")])
-    assert r.resolve_from == "local-state"
-    assert r.resolve_with == "x"
+    assert r.resolvable_class == "local-state"
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = ResolvableArgument(x)
-    assert r.resolve_from == "global-state"
-    assert r.resolve_with == "x"
+    assert r.resolvable_class == "global-state"
 
     x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
     r = ResolvableArgument(x[pt.Bytes("x")])
-    assert r.resolve_from == "global-state"
-    assert r.resolve_with == "x"
+    assert r.resolvable_class == "global-state"
 
     @external(read_only=True)
     def x():
         return pt.Assert(pt.Int(1))
 
     r = ResolvableArgument(x)
-    assert r.resolve_from == "abi-method"
-    assert r.resolve_with == get_method_spec(x).dictify()
+    assert r.resolvable_class == "abi-method"
 
     r = ResolvableArgument(pt.Bytes("1"))
-    assert r.resolve_from == "constant"
-    assert r.resolve_with == "1"
+    assert r.resolvable_class == "constant"
 
     r = ResolvableArgument(pt.Int(1))
-    assert r.resolve_from == "constant"
-    assert r.resolve_with == 1
+    assert r.resolvable_class == "constant"
 
 
 def test_annotations():
@@ -104,3 +93,4 @@ def test_annotations():
             return pt.Approve()
 
     aa = AnnotatedApp()
+    print(get_handler_config(aa.checked_meth_arg))
