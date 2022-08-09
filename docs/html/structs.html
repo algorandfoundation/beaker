@@ -130,7 +130,8 @@
 
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Structer</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="k">class</span> <span class="nc">Structer</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
 
     <span class="c1"># Our custom Struct</span>
     <span class="k">class</span> <span class="nc">Order</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">):</span>
@@ -141,6 +142,10 @@
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="nd">@opt_in</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">place_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">):</span>
@@ -163,24 +168,19 @@
             <span class="c1"># We&#39;ve gotta set all of the fields at the same time, but we can</span>
             <span class="c1"># borrow the item we already know about</span>
             <span class="n">new_order</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_order</span><span class="o">.</span><span class="n">item</span><span class="p">,</span> <span class="n">quant</span><span class="p">),</span>
-            <span class="c1"># Write the new order to state</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="n">order_number</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_order</span><span class="o">.</span><span class="n">encode</span><span class="p">()),</span>
-            <span class="c1"># Write new order to caller</span>
-            <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">new_order</span><span class="o">.</span><span class="n">encode</span><span class="p">()),</span>
-        <span class="p">)</span>
 </pre></div>
 </div>
 <p>The application exposes the ABI methods using the tuple encoded version of the fields specified in the struct. Here it would be <code class="docutils literal notranslate"><span class="pre">(string,uint32)</span></code>.</p>
 <p>A method hint is available to the caller for encoding/decoding by field name.</p>
 <p>To pass a struct we can pass a python dict <code class="docutils literal notranslate"><span class="pre">dict</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">order_number</span> <span class="o">=</span> <span class="mi">12</span>
-    <span class="n">order</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;item&quot;</span><span class="p">:</span> <span class="s2">&quot;cubes&quot;</span><span class="p">}</span>
-    <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">place_order</span><span class="p">,</span> <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created App with id: </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> and address addr: </span><span class="si">{</span><span class="n">app_addr</span><span class="si">}</span><span class="s2"> in tx: </span><span class="si">{</span><span class="n">txid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">app_client</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>And we can decode it from the tuple we get back</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">abi_decoded</span> <span class="o">=</span> <span class="n">Structer</span><span class="o">.</span><span class="n">Order</span><span class="p">()</span><span class="o">.</span><span class="n">client_decode</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">raw_value</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Decoded result: </span><span class="si">{</span><span class="n">abi_decoded</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>        <span class="sa">f</span><span class="s2">&quot;We can get the order we stored from local state of the sender: </span><span class="si">{</span><span class="n">state_decoded</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 </pre></div>
 </div>
 </section>

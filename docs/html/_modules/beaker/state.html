@@ -108,6 +108,15 @@
         <span class="k">return</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
 
+<span class="k">def</span> <span class="nf">stack_type_to_string</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;uint64&quot;</span>
+    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;bytes&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Only uint64 and bytes supported&quot;</span><span class="p">)</span>
+
+
 <span class="k">class</span> <span class="nc">StateValue</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -150,9 +159,6 @@
 
     <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cnt</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;helper to increment a counter&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
-
         <span class="n">check_is_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
@@ -160,16 +166,14 @@
 
     <span class="k">def</span> <span class="nf">decrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cnt</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;helper to decrement a counter&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
         <span class="n">check_is_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">-</span> <span class="n">cnt</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_default</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;sets the default value if one is provided, if none provided sets the zero value for its type&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">is_default</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
@@ -232,7 +236,7 @@
         <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
@@ -243,30 +247,21 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ApplicationStateValue.increment"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.increment">[docs]</a>    <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cnt</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="n">check_is_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">cnt</span><span class="p">)</span></div>
-
 <div class="viewcode-block" id="ApplicationStateValue.get"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ApplicationStateValue.get_maybe"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ApplicationStateValue.get_must"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">Assert</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">()),</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
 
@@ -274,7 +269,7 @@
         <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">If</span><span class="p">((</span><span class="n">v</span> <span class="o">:=</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">))</span><span class="o">.</span><span class="n">hasValue</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="n">val</span><span class="p">)</span></div>
 
@@ -282,7 +277,7 @@
         <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalDel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div></div>
 
@@ -405,7 +400,6 @@
         <span class="n">key_gen</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">,</span> <span class="n">key_gen</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">max_keys</span> <span class="o">&gt;</span> <span class="n">MAX_LOCAL_STATE</span><span class="p">:</span>
@@ -422,15 +416,6 @@
             <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_generator</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">AccountStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">Expr</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span></div></div>
-
-
-<span class="k">def</span> <span class="nf">stack_type_to_string</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;uint64&quot;</span>
-    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;bytes&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Only uint64 and bytes supported&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">check_not_static</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">StateValue</span><span class="p">):</span>

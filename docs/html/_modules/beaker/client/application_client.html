@@ -94,6 +94,7 @@
 <span class="kn">from</span> <span class="nn">algosdk.logic</span> <span class="kn">import</span> <span class="n">get_application_address</span>
 <span class="kn">from</span> <span class="nn">algosdk.source_map</span> <span class="kn">import</span> <span class="n">SourceMap</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
+<span class="kn">from</span> <span class="nn">algosdk.constants</span> <span class="kn">import</span> <span class="n">APP_PAGE_MAX_SIZE</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">get_method_spec</span>
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="p">(</span>
@@ -102,7 +103,6 @@
     <span class="n">DefaultArgument</span><span class="p">,</span>
     <span class="n">DefaultArgumentClass</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">APP_MAX_PAGE_SIZE</span>
 <span class="kn">from</span> <span class="nn">beaker.client.state_decode</span> <span class="kn">import</span> <span class="n">decode_state</span>
 <span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span>
 
@@ -167,7 +167,7 @@
 
         <span class="k">if</span> <span class="n">extra_pages</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">extra_pages</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
-                <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">approval</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">clear</span><span class="p">))</span> <span class="o">-</span> <span class="n">APP_MAX_PAGE_SIZE</span><span class="p">)</span> <span class="o">/</span> <span class="n">APP_MAX_PAGE_SIZE</span>
+                <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">approval</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">clear</span><span class="p">))</span> <span class="o">-</span> <span class="n">APP_PAGE_MAX_SIZE</span><span class="p">)</span> <span class="o">/</span> <span class="n">APP_PAGE_MAX_SIZE</span>
             <span class="p">)</span>
 
         <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_suggested_params</span><span class="p">(</span><span class="n">suggested_params</span><span class="p">)</span>
@@ -197,8 +197,6 @@
             <span class="n">create_result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">&quot;logic&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">on_complete</span> <span class="o">==</span> <span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">ClearStateOC</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_clear_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">e</span>
@@ -368,13 +366,7 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">clear_state_result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">&quot;logic&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_clear_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">e</span>
+        <span class="n">clear_state_result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">clear_state_result</span><span class="o">.</span><span class="n">tx_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
@@ -463,18 +455,21 @@
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">method_arg</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">method_arg</span><span class="o">.</span><span class="n">name</span>
+
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">thing</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span> <span class="ow">and</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">:</span>
-                        <span class="n">thing</span> <span class="o">=</span> <span class="p">[</span>
-                            <span class="n">thing</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
-                            <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
-                        <span class="p">]</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># todo error if wrong keys</span>
-                        <span class="n">thing</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">thing</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span>
+                <span class="n">argument</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> name in struct hints&quot;</span><span class="p">)</span>
+
+                    <span class="n">argument</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">argument</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
+                    <span class="p">]</span>
+
+                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
+
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span>
             <span class="p">):</span>
@@ -520,8 +515,6 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">&quot;logic&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">on_complete</span> <span class="o">==</span> <span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">ClearStateOC</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_clear_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">e</span>
@@ -626,8 +619,20 @@
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">method_arg</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">method_arg</span><span class="o">.</span><span class="n">name</span>
+
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+                <span class="n">argument</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> name in struct hints&quot;</span><span class="p">)</span>
+
+                    <span class="n">argument</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">argument</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
+                    <span class="p">]</span>
+
+                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span>
             <span class="p">):</span>
@@ -746,10 +751,6 @@
     <span class="k">def</span> <span class="nf">wrap_approval_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicException</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="nb">map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_approval</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">LogicException</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="nb">map</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">wrap_clear_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicException</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="nb">map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_clear</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">LogicException</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">clear_program</span><span class="p">,</span> <span class="nb">map</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_signer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionSigner</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">signer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
