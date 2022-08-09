@@ -178,17 +178,15 @@ class Application:
         )
 
         # Add the method argument descriptions if provided
-        for meth_idx, method in enumerate(self.contract.methods):
-            if method.name in self.hints:
-                hint = self.hints[method.name]
-
+        for meth_idx, meth in enumerate(self.contract.methods):
+            if meth.name in self.hints:
+                hint = self.hints[meth.name]
                 if hint.param_annotations is None:
                     continue
 
-                for arg_idx, arg in enumerate(method.args):
+                for arg_idx, arg in enumerate(meth.args):
                     if arg.name not in hint.param_annotations:
                         continue
-
                     self.contract.methods[meth_idx].args[
                         arg_idx
                     ].desc = hint.param_annotations[arg.name].descr
