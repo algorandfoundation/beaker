@@ -24,7 +24,7 @@ from ..decorators import (
     opt_in,
 )
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, get_method_selector, get_method_spec
+from beaker.application import Application, get_method_selector
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 

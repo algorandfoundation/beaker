@@ -1,9 +1,8 @@
-from ast import Param
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature
-from typing import Optional, Callable, Final, cast, Any, TypeVar, Annotated
+from typing import Optional, Callable, Final, cast, Any, TypeVar
 from algosdk.abi import Method
 from pyteal import (
     abi,
@@ -41,7 +40,9 @@ CheckExpr = Callable[..., Expr]
 ABIType = TypeVar("ABIType", bound=abi.BaseType)
 
 
-ResolvableType = AccountStateValue | ApplicationStateValue | HandlerFunc | Bytes | Int
+ResolvableType = (
+    AccountStateValue | ApplicationStateValue | Expr | HandlerFunc | Bytes | Int
+)
 
 
 class ResolvableClass(str, Enum):
@@ -58,7 +59,6 @@ class ResolvableArgument:
         self,
         resolver: ResolvableType,
     ):
-        self.resolve_class: ResolvableClass = None
         self.resolver = resolver
 
         match resolver:
@@ -109,7 +109,7 @@ class TransactionMatcher:
             match field_val:
                 case Expr():
                     checks.append(field_getter == field_val)
-                case CheckExpr():
+                case _:
                     checks.append(field_val(field_getter))
 
         return checks
@@ -185,7 +185,7 @@ class MethodHints:
         kw_only=True, default=None
     )
     #: annotations
-    param_annotations: dict[str, ParameterAnnotation] = field(
+    param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
         kw_only=True, default=None
     )
 
@@ -342,8 +342,8 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
         set_handler_config(fn, param_annotations=param_annotations)
 
     # Fix function sig/annotations
-    newsig = sig.replace(parameters=params.values())
-    fn.__signature__ = newsig
+    newsig = sig.replace(parameters=list(params.values()))
+    fn.__signature__ = newsig  # type: ignore[attr-defined]
     fn.__annotations__ = fn_annotations
 
     return fn
