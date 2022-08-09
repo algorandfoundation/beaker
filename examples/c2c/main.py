@@ -22,7 +22,21 @@ class C2CSub(Application):
                 TxnField.type_enum: TxnType.AssetTransfer,
                 TxnField.xfer_asset: asset.asset_id(),
                 TxnField.asset_receiver: self.address,
+                TxnField.fee: Int(0),
                 TxnField.asset_amount: Int(0),
+            }
+        )
+
+    @external
+    def return_asset(self, asset: abi.Asset, addr: abi.Account):
+        return InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.AssetTransfer,
+                TxnField.xfer_asset: asset.asset_id(),
+                TxnField.asset_receiver: addr.address(),
+                TxnField.fee: Int(0),
+                TxnField.asset_amount: Int(0),
+                TxnField.asset_close_to: addr.address(),
             }
         )
 
@@ -64,6 +78,14 @@ class C2CMain(Application):
                 }
             ),
             InnerTxnBuilder.Submit(),
+            # Tell the sub app to send me back the stuff i sent it
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.MethodCall(
+                app_id=sub_app.application_id(),
+                method_signature=get_method_signature(C2CSub.return_asset),
+                args=[asset_id.load(), self.address],
+            ),
+            InnerTxnBuilder.Submit(),
             output.set(asset_id.load()),
         )
 
@@ -79,7 +101,6 @@ if __name__ == "__main__":
         sandbox.get_algod_client(), app_sub, signer=acct.signer
     )
     app_client_sub.create()
-    app_client_sub.fund(1 * consts.algo)
 
     # Create main app and fund it
     app_main = C2CMain()
@@ -90,8 +111,14 @@ if __name__ == "__main__":
     app_client_main.fund(1 * consts.algo)
 
     # Call main app method to create and send asset to sub app
+    sp = app_client_main.client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 1 * consts.algo
     result = app_client_main.call(
-        app_main.create_asset_and_send, name="dope asset", sub_app=app_client_sub.app_id
+        app_main.create_asset_and_send,
+        name="dope asset",
+        sub_app=app_client_sub.app_id,
+        suggested_params=sp,
     )
     print(f"Created asset id: {result.return_value}")
 
