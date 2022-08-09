@@ -385,7 +385,7 @@ class ApplicationClient:
                 argument = kwargs[name]
 
                 if type(argument) is dict:
-                    if hints.structs is not None or name not in hints.structs:
+                    if hints.structs is None or name not in hints.structs:
                         raise Exception(f"Name {name} name in struct hints")
 
                     argument = [
@@ -544,8 +544,20 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             name = method_arg.name
+
             if name in kwargs:
-                args.append(kwargs[name])
+                argument = kwargs[name]
+
+                if type(argument) is dict:
+                    if hints.structs is None or name not in hints.structs:
+                        raise Exception(f"Name {name} name in struct hints")
+
+                    argument = [
+                        argument[field_name]
+                        for field_name in hints.structs[name]["elements"]
+                    ]
+
+                args.append(argument)
             elif (
                 hints.param_annotations is not None and name in hints.param_annotations
             ):

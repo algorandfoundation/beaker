@@ -5,6 +5,7 @@ from pyteal import abi, TealType, Int, Seq
 from beaker import (
     Application,
     DynamicAccountStateValue,
+    opt_in,
     external,
     sandbox,
     client,
@@ -23,6 +24,10 @@ class Structer(Application):
         stack_type=TealType.bytes,
         max_keys=16,
     )
+
+    @opt_in
+    def opt_in(self):
+        return self.acct_state.initialize()
 
     @external
     def place_order(self, order_number: abi.Uint8, order: Order):
