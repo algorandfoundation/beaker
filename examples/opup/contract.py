@@ -36,8 +36,3 @@ class ExpensiveApp(OpUp):
             ).Do(current.store(Sha256(current.load()))),
             output.decode(current.load()),
         )
-
-
-e = ExpensiveApp()
-print(e.approval_program)
-print(e.hints)

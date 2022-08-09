@@ -177,6 +177,18 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
+        for meth_idx, method in enumerate(self.contract.methods):
+            if method.name in self.hints:
+                hint = self.hints[method.name]
+                if hint.param_annotations is None:
+                    continue
+
+                for arg_idx, arg in enumerate(method.args):
+                    if arg.name in hint.param_annotations:
+                        self.contract.methods[meth_idx].args[
+                            arg_idx
+                        ].desc = hint.param_annotations[arg.name].descr
+
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
