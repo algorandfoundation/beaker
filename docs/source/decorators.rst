@@ -79,43 +79,6 @@ Method Hints
     :members:
 
 
-.. _resolvable:
-
-
-.. autoclass:: DefaultArguments
-
-.. warning:: 
-    This is EXPERIMENTAL
-
-In an above example, there is a required argument `opup_app`, the id of the application that we use to increase our budget via inner app calls. This value should not change frequently, if at all, but is still required to be passed so we may _use_ it in our logic. We can provide a caller the information to `resolve` the appropriate app id using the `resolvable` keyword argument of the external. 
-
-We can change the external to provide the hint.
-
-.. code-block:: python
-
-    @external(
-        resolvable=DefaultArguments(
-            opup_app=OpUp.opup_app_id 
-        )
-    )
-
-With this external config argument, we communicate to a caller the application expects be passed a value that can bee resolved by retrieving the state value in the application state for `opup_app_id`.  This allows the `ApplicationClient` to figure out what the appropriate application id _should_ be if necessary. 
-
-Options for resolving arguments are:
-
-- A constant, `str | int`
-- State Values, `ApplicationStateValue | AccountStateValue`
-- A read-only ABI method  
-
-
-Here we call the method, omitting the `opup_app` argument:
-
-.. code-block:: python
-
-    result = app_client.call(app.hash_it, input="hashme", iters=10)
-
-When invoked, the `ApplicationClient` consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.
-
 
 .. _read_only:
 
@@ -185,3 +148,98 @@ Multiple Bare externals
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
 
 .. autodecorator:: bare_external
+
+
+.. _parameter_annotations:
+
+Parameter Annotations
+---------------------
+
+.. autoclass:: ParameterAnnotation
+
+
+
+A caller of our application should be provided with all the information they might need in order to make a successful application call.
+
+One example of this of information is of course the parameter name and type. These bits of information are already provided by the normal method definition. 
+
+ 
+.. _parameter_description:
+
+Parameter Description
+^^^^^^^^^^^^^^^^^^^^^^
+
+Another example that is harder to provide is the description of the parameter. The plain english explanation of what the parameter _should_ be can be quite helpful in determining what to pass the method. To set a description on a parameter you can use the python ``typing.Annotated`` generic class and pass it an instance of ``ParameterAnnotation``.
+
+.. code-block:: python
+
+    from typing import Annotated
+
+    #...
+
+    @external
+    def unhelpful_method_name(self, num: Annotated[
+        abi.Uint64, 
+        ParameterAnnotation(
+            descr="The magic number, which should be prime, else fail"
+        )
+    ]):
+        return is_prime(num.get())
+
+
+Here we've annotated the ``num`` parameter with a description that should help the caller figure out what should be passed. This description is added to the appropriate method args description field in the json spec.
+
+
+.. _parameter_default:
+
+Parameter Default Value
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In the ``OpUp`` example the argument ``opup_app`` should be the id of the application that we use to increase our budget via inner app calls.  This value should not change frequently, if at all, but is still required to be passed by the caller so we may _use_ it in our logic. 
+
+Using the ``default`` field of the ``ParameterAnnotation``, we can specify a default value for the parameter.  This allows the caller to know this pseudo-magic number ahead of time and makes calling your application easier.
+
+We can change the method signature of the ``hash_it`` function to something like:
+
+.. code-block:: python
+
+    @external
+    def hash_it(
+        self,
+        input: Annotated[abi.String, ParameterAnnotation(descr="The input to hash")],
+        iters: Annotated[
+            abi.Uint64, ParameterAnnotation(descr="The number of times to iterate")
+        ],
+        opup_app: Annotated[
+            abi.Application,
+            ParameterAnnotation(
+                descr="The app id to use for opup reququests",
+                default=OpUp.opup_app_id,
+            ),
+        ],
+        *,
+        output: Annotated[
+            abi.StaticArray[abi.Byte, Literal[32]],
+            ParameterAnnotation(
+                descr="The result of hashing the input a number of times"
+            ),
+        ],
+    ):
+
+
+
+The ``opup_app`` parameter now has a default value, the value stored at the ApplicationStateValue of ``opup_app_id``.  This information is communicated through the full ApplicationSpec as a hint the caller can use to figure out what the value should be.
+
+Options for default arguments are:
+
+- A constant, `Bytes | Int`
+- State Values, `ApplicationStateValue | AccountStateValue`
+- A read-only ABI method  
+
+The result is that we can call the method, omitting the `opup_app` argument:
+
+.. code-block:: python
+
+    result = app_client.call(app.hash_it, input="hashme", iters=10)
+
+When invoked, the `ApplicationClient` consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.
