@@ -148,14 +148,12 @@ def test_exponential():
 #   output = [logged_int(int(pymath.log(num)))]
 #   assert_output(expr, output, pad_budget=15)
 
-
 # def test_log2():
 #   num = 17
 #   expr = Log(Itob(log2(Int(num))))
 #   output = [logged_int(int(pymath.log2(num)))]
 #   print(pymath.log2(num))
 #   assert_output(expr, output, pad_budget=15)
-
 
 # def test_log10():
 #    num = 123123123
