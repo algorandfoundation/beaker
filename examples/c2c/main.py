@@ -43,19 +43,18 @@ class C2CSub(Application):
 
 
 class C2CMain(Application):
-
     @internal(TealType.uint64)
     def create_asset(self, name):
         return Seq(
             InnerTxnBuilder.Execute(
-            {
-                TxnField.type_enum: TxnType.AssetConfig,
-                TxnField.config_asset_name: name,
-                TxnField.config_asset_total: Int(10),
-                TxnField.config_asset_manager: self.address,
-            }
+                {
+                    TxnField.type_enum: TxnType.AssetConfig,
+                    TxnField.config_asset_name: name,
+                    TxnField.config_asset_total: Int(10),
+                    TxnField.config_asset_manager: self.address,
+                }
             ),
-        # Get the asset id
+            # Get the asset id
             InnerTxn.created_asset_id(),
         )
 
@@ -82,10 +81,9 @@ class C2CMain(Application):
 
     @internal(TealType.none)
     def trigger_return(self, app_id, asset_id):
-            # Create the group txn to ask sub app to opt in and send sub app 1 token
-            # Tell the sub app to send me back the stuff i sent it
-            return Seq(
-
+        # Create the group txn to ask sub app to opt in and send sub app 1 token
+        # Tell the sub app to send me back the stuff i sent it
+        return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.MethodCall(
                 app_id=app_id,
@@ -93,8 +91,7 @@ class C2CMain(Application):
                 args=[asset_id, self.address],
             ),
             InnerTxnBuilder.Submit(),
-            )
-
+        )
 
     @external
     def create_asset_and_send(
@@ -102,16 +99,17 @@ class C2CMain(Application):
     ):
         return Seq(
             Assert(Len(name.get())),
-
             # Create the asset
             (asset_id := ScratchVar()).store(self.create_asset(name.get())),
             # Get the sub app addr
             (sub_app_addr := sub_app.params().address()),
-            # Ask sub app to opt in, and send asset in the same group 
-            self.trigger_opt_in_and_xfer(sub_app.application_id(), sub_app_addr.value(), asset_id.load()),
+            # Ask sub app to opt in, and send asset in the same group
+            self.trigger_opt_in_and_xfer(
+                sub_app.application_id(), sub_app_addr.value(), asset_id.load()
+            ),
             # Get the asset back
             self.trigger_return(sub_app.application_id(), asset_id.load()),
-            # Return the asset id 
+            # Return the asset id
             output.set(asset_id.load()),
         )
 

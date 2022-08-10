@@ -5,7 +5,6 @@ LOGIC_ERROR = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval err
 
 
 def parse_logic_error(error_str: str) -> tuple[str, str, int]:
-
     matches = re.match(LOGIC_ERROR, error_str)
     if matches is None:
         return "", "", 0

@@ -118,7 +118,12 @@ def assert_abi_output(
     app_client = bkr.client.ApplicationClient(client, app, signer=accounts[0].signer)
     app_client.create()
 
-    for idx, input in enumerate(inputs):
+    if app.acct_state.num_byte_slices > 0 or app.acct_state.num_uints > 0:
+        app_client.opt_in()
+
+    for idx, output in enumerate(outputs):
+        input = {} if len(inputs) == 0 else inputs[idx]
+
         if opups > 0:
             atc = AtomicTransactionComposer()
 
@@ -126,11 +131,16 @@ def assert_abi_output(
             for x in range(opups):
                 app_client.add_method_call(atc, app.opup, note=str(x).encode())
 
-            results = atc.execute(client, 2)
-            assert results.abi_results[0].return_value == outputs[idx]
+            try:
+                results = atc.execute(client, 2)
+            except Exception as e:
+                raise app_client.wrap_approval_exception(e)
+
+            assert results.abi_results[0].return_value == output
         else:
             result = app_client.call(app.unit_test, **input)
-            assert result.return_value == outputs[idx]
+            # print(result.return_value, output)
+            assert result.return_value == output
 
     app_client.delete()
 
