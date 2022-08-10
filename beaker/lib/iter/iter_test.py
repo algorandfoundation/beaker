@@ -10,9 +10,9 @@ from pyteal import (
     TealType,
 )
 
-from tests.helpers import assert_output, logged_bytes, logged_int
+from beaker.testing.helpers import assert_output, logged_bytes, logged_int
 
-from .iter import accumulate, iterate
+from .iter import iterate
 
 
 def test_iterate():
@@ -34,10 +34,4 @@ def test_iterate_with_closure():
     assert type(expr) is SubroutineCall
 
     output = [logged_int(x) for x in range(10)]
-    assert_output(expr, output)
-
-
-def test_accumulate():
-    expr = Log(Itob(accumulate([Int(1) for _ in range(10)], Op.add)))
-    output = [logged_int(10)]
     assert_output(expr, output)

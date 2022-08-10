@@ -1,6 +1,6 @@
 from pyteal import Bytes, Int, Itob, Log
 
-from tests.helpers import (
+from beaker.testing.helpers import (
     LOGIC_EVAL_ERROR,
     assert_fail,
     assert_output,

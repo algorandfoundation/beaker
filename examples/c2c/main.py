@@ -1,5 +1,6 @@
 from pyteal import (
     abi,
+    TealType,
     TxnType,
     Seq,
     Assert,
@@ -10,7 +11,7 @@ from pyteal import (
     InnerTxn,
     ScratchVar,
 )
-from beaker import Application, external, sandbox, client, consts, testing
+from beaker import Application, external, sandbox, client, consts, testing, internal
 from beaker.application import get_method_signature
 
 
@@ -42,6 +43,56 @@ class C2CSub(Application):
 
 
 class C2CMain(Application):
+    @internal(TealType.uint64)
+    def create_asset(self, name):
+        return Seq(
+            InnerTxnBuilder.Execute(
+                {
+                    TxnField.type_enum: TxnType.AssetConfig,
+                    TxnField.config_asset_name: name,
+                    TxnField.config_asset_total: Int(10),
+                    TxnField.config_asset_manager: self.address,
+                }
+            ),
+            # Get the asset id
+            InnerTxn.created_asset_id(),
+        )
+
+    @internal(TealType.none)
+    def trigger_opt_in_and_xfer(self, app_id, app_addr, asset_id):
+        return Seq(
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.MethodCall(
+                app_id=app_id,
+                method_signature=get_method_signature(C2CSub.opt_in_to_asset),
+                args=[asset_id],
+            ),
+            InnerTxnBuilder.Next(),
+            InnerTxnBuilder.SetFields(
+                {
+                    TxnField.type_enum: TxnType.AssetTransfer,
+                    TxnField.xfer_asset: asset_id,
+                    TxnField.asset_amount: Int(1),
+                    TxnField.asset_receiver: app_addr,
+                }
+            ),
+            InnerTxnBuilder.Submit(),
+        )
+
+    @internal(TealType.none)
+    def trigger_return(self, app_id, asset_id):
+        # Create the group txn to ask sub app to opt in and send sub app 1 token
+        # Tell the sub app to send me back the stuff i sent it
+        return Seq(
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.MethodCall(
+                app_id=app_id,
+                method_signature=get_method_signature(C2CSub.return_asset),
+                args=[asset_id, self.address],
+            ),
+            InnerTxnBuilder.Submit(),
+        )
+
     @external
     def create_asset_and_send(
         self, name: abi.String, sub_app: abi.Application, *, output: abi.Uint64
@@ -49,43 +100,16 @@ class C2CMain(Application):
         return Seq(
             Assert(Len(name.get())),
             # Create the asset
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.AssetConfig,
-                    TxnField.config_asset_name: name.get(),
-                    TxnField.config_asset_total: Int(10),
-                    TxnField.config_asset_manager: self.address,
-                }
-            ),
-            # Get the asset id
-            (asset_id := ScratchVar()).store(InnerTxn.created_asset_id()),
+            (asset_id := ScratchVar()).store(self.create_asset(name.get())),
+            # Get the sub app addr
             (sub_app_addr := sub_app.params().address()),
-            Assert(sub_app_addr.hasValue()),
-            # Create the group txn to ask sub app to opt in and send sub app 1 token
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.MethodCall(
-                app_id=sub_app.application_id(),
-                method_signature=get_method_signature(C2CSub.opt_in_to_asset),
-                args=[asset_id.load()],
+            # Ask sub app to opt in, and send asset in the same group
+            self.trigger_opt_in_and_xfer(
+                sub_app.application_id(), sub_app_addr.value(), asset_id.load()
             ),
-            InnerTxnBuilder.Next(),
-            InnerTxnBuilder.SetFields(
-                {
-                    TxnField.type_enum: TxnType.AssetTransfer,
-                    TxnField.xfer_asset: asset_id.load(),
-                    TxnField.asset_amount: Int(1),
-                    TxnField.asset_receiver: sub_app_addr.value(),
-                }
-            ),
-            InnerTxnBuilder.Submit(),
-            # Tell the sub app to send me back the stuff i sent it
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.MethodCall(
-                app_id=sub_app.application_id(),
-                method_signature=get_method_signature(C2CSub.return_asset),
-                args=[asset_id.load(), self.address],
-            ),
-            InnerTxnBuilder.Submit(),
+            # Get the asset back
+            self.trigger_return(sub_app.application_id(), asset_id.load()),
+            # Return the asset id
             output.set(asset_id.load()),
         )
 

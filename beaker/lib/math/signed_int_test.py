@@ -1,6 +1,6 @@
 from pyteal import Int, Itob, Log, Seq
 
-from tests.helpers import assert_output, logged_int
+from beaker.testing.helpers import assert_output, logged_int
 
 from .signed_int import SignedInt
 
