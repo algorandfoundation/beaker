@@ -2,20 +2,9 @@ import pytest
 import pyteal as pt
 import beaker as bkr
 
-from beaker.testing.helpers import (
-    LOGIC_EVAL_ERROR,
-    UnitTestingApp,
-    assert_abi_output,
-    assert_fail,
-    assert_stateful_fail,
-    assert_stateful_output,
-    logged_bytes,
-    logged_int,
-)
+from beaker.testing.helpers import UnitTestingApp, assert_abi_output
 
-from .local_blob import LocalBlob, max_bytes
-
-b = LocalBlob()
+from beaker.lib.storage.local_blob import LocalBlob, max_bytes
 
 
 class LocalBlobTest(UnitTestingApp):
