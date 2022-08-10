@@ -26,11 +26,9 @@ from ..decorators import (
 )
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, get_method_selector
-from beaker.struct import Struct
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
-from beaker.consts import MilliAlgo
 
 
 class App(Application):

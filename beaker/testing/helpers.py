@@ -1,6 +1,4 @@
 """Module containing helper functions for testing PyTeal Utils."""
-from abc import ABC, abstractclassmethod
-import pytest
 from base64 import b64decode
 from typing import List, Optional, Any
 
@@ -15,7 +13,6 @@ from algosdk.atomic_transaction_composer import (
 
 import pyteal as pt
 import beaker as bkr
-from beaker.decorators import create
 
 
 TEAL_VERSION = 5
@@ -32,11 +29,12 @@ def logged_bytes(b: str):
 def logged_int(i: int, bits: int = 64):
     return i.to_bytes(bits // 8, "big").hex()
 
+
 def returned_int(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
 
-class UnitTestingApp(bkr.Application):
 
+class UnitTestingApp(bkr.Application):
     def __init__(self, e: pt.Expr = None):
         self.expr = e
         super().__init__()
@@ -63,10 +61,7 @@ class UnitTestingApp(bkr.Application):
 
     @bkr.external
     def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
-        return pt.Seq(
-            (s := pt.abi.String()).set(self.expr),
-            output.decode(s.encode())
-        )
+        return pt.Seq((s := pt.abi.String()).set(self.expr), output.decode(s.encode()))
 
 
 class TestAccount:
@@ -153,7 +148,7 @@ def assert_abi_output(
     app_client.delete()
 
 
-## Teal Helpers
+# Teal Helpers
 def assert_stateful_output(expr: pt.Expr, output: List[str]):
     assert expr is not None
 
@@ -400,7 +395,7 @@ def create_app(
     bytecode: str,
     local_schema: transaction.StateSchema,
     global_schema: transaction.StateSchema,
-    **kwargs
+    **kwargs,
 ):
     sp = client.suggested_params()
 
@@ -415,7 +410,7 @@ def create_app(
         global_schema,
         b64decode(bytecode),
         CLEAR_PROG,
-        **kwargs
+        **kwargs,
     )
 
     txid = client.send_transaction(txn.sign(acct.private_key))
@@ -460,7 +455,7 @@ def destroy_app(client: algod.AlgodClient, app_id: int, **kwargs):
                 app_id,
                 transaction.OnComplete.DeleteApplicationOC,
                 app_args=["cleanup"],
-                **kwargs
+                **kwargs,
             )
         ]
     )

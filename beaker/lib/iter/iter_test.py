@@ -3,7 +3,6 @@ from pyteal import (
     Int,
     Itob,
     Log,
-    Op,
     ScratchVar,
     Subroutine,
     SubroutineCall,

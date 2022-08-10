@@ -6,9 +6,6 @@ from beaker.testing.helpers import (
     UnitTestingApp,
     assert_abi_output,
     LOGIC_EVAL_ERROR,
-    assert_fail,
-    assert_output,
-    logged_bytes,
     returned_int,
 )
 
@@ -48,9 +45,9 @@ def test_head_empty():
 
 
 def test_tail():
-   ut = UnitTestingApp(tail(pt.Bytes("deadbeef")))
-   output = [list(b"eadbeef")]
-   assert_abi_output(ut, [], output)
+    ut = UnitTestingApp(tail(pt.Bytes("deadbeef")))
+    output = [list(b"eadbeef")]
+    assert_abi_output(ut, [], output)
 
 
 def test_tail_empty():
@@ -60,9 +57,9 @@ def test_tail_empty():
 
 
 def test_suffix():
-   ut = UnitTestingApp(suffix(pt.Bytes("deadbeef"), pt.Int(2)))
-   output = [list(b"ef")]
-   assert_abi_output(ut, [], output)
+    ut = UnitTestingApp(suffix(pt.Bytes("deadbeef"), pt.Int(2)))
+    output = [list(b"ef")]
+    assert_abi_output(ut, [], output)
 
 
 def test_suffix_past_length():
@@ -72,9 +69,9 @@ def test_suffix_past_length():
 
 
 def test_prefix():
-   ut = UnitTestingApp(prefix(pt.Bytes("deadbeef"), pt.Int(2)))
-   output = [list(b"de")]
-   assert_abi_output(ut, [], output)
+    ut = UnitTestingApp(prefix(pt.Bytes("deadbeef"), pt.Int(2)))
+    output = [list(b"de")]
+    assert_abi_output(ut, [], output)
 
 
 def test_prefix_past_length():
@@ -84,7 +81,6 @@ def test_prefix_past_length():
 
 
 def test_encode_uvarint():
-   ut = UnitTestingApp(encode_uvarint(pt.Int(500), pt.Bytes("")))
-   output = [[244, 3]]
-   assert_abi_output(ut, [], output)
-
+    ut = UnitTestingApp(encode_uvarint(pt.Int(500), pt.Bytes("")))
+    output = [[244, 3]]
+    assert_abi_output(ut, [], output)
