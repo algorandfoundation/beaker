@@ -61,6 +61,22 @@ Or from github directly (no promises on stability):
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
+## Testing
+
+You can run test files using `pytest`
+
+If you do not have `pytest` you can install from pip:
+
+`pip install pytest`
+
+Run Sandbox in your terminal:
+
+`./sandbox up source`
+
+Then run the tests inside the beaker directory:
+
+`pytest`
+
 ## Use
 
 [Examples](/examples/)
