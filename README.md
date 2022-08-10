@@ -25,6 +25,7 @@ class HelloBeaker(Application):
         # Set output to the result of `Hello, `+name
         return output.set(Concat(Bytes("Hello, "), name.get()))
 
+
 # Create an Application client
 app_client = client.ApplicationClient(
     # Get sandbox algod client
@@ -37,11 +38,17 @@ app_client = client.ApplicationClient(
 
 # Deploy the app on-chain
 app_id, app_addr, txid = app_client.create()
-print(f"Deployed app with id {app_id} and address {app_addr} in txid {txid}")
+print(
+    f"""Deployed app in txid {txid}
+    App ID: {app_id} 
+    Address: {app_addr} 
+"""
+)
 
 # Call the `hello` method
 result = app_client.call(HelloBeaker.hello, name="Beaker")
-print(result.return_value) # "Hello, Beaker"
+print(result.return_value)  # "Hello, Beaker"
+
 ```
 
 ## Install
