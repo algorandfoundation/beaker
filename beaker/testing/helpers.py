@@ -35,8 +35,8 @@ def returned_int(i: int, bits: int = 64):
 
 
 class UnitTestingApp(bkr.Application):
-    def __init__(self, e: pt.Expr = None):
-        self.expr = e
+    def __init__(self, expr_to_test: pt.Expr = None):
+        self.expr = expr_to_test
         super().__init__()
 
     @bkr.create
