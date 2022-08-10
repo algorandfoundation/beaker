@@ -187,9 +187,10 @@ class Application:
                 for arg_idx, arg in enumerate(meth.args):
                     if arg.name not in hint.param_annotations:
                         continue
-                    self.contract.methods[meth_idx].args[
-                        arg_idx
-                    ].desc = hint.param_annotations[arg.name].descr
+                    if hint.param_annotations[arg.name].descr is not None:
+                        self.contract.methods[meth_idx].args[
+                            arg_idx
+                        ].desc = hint.param_annotations[arg.name].descr
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
