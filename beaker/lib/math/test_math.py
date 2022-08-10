@@ -1,86 +1,145 @@
 import math as pymath
-from pyteal import Int, Itob, Log, Seq
 
-from beaker.testing.helpers import logged_int, assert_output
+import pyteal as pt
+import beaker as bkr
 
+from beaker.testing.helpers import UnitTestingApp, assert_abi_output
 
-from .math import (
-    div_ceil,
-    even,
-    max,
-    odd,
-    pow10,
-    saturate,
-    wide_factorial,
-    bytes_to_int,
-    exponential,
-)
+import beaker.lib.math as math
 
 
 def test_even():
+    class EvenTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Bool):
+            return output.set(math.even(num.get()))
+
     num = 5
-    expr = Seq(Log(Itob(even(Int(num)))), Log(Itob(even(Int(num - 1)))))
-    output = [logged_int(0), logged_int(1)]
-    assert_output(expr, output)
+    inputs = [num, num - 1]
+    output = [x % 2 == 0 for x in inputs]
+    assert_abi_output(EvenTester(), [{"num": n} for n in inputs], output)
 
 
 def test_odd():
-    num = 6
-    expr = Seq(Log(Itob(odd(Int(num)))), Log(Itob(odd(Int(num - 1)))))
-    output = [logged_int(0), logged_int(1)]
-    assert_output(expr, output)
+    class OddTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Bool):
+            return output.set(math.odd(num.get()))
+
+    num = 5
+    inputs = [num, num - 1]
+    output = [x % 2 != 0 for x in inputs]
+
+    assert_abi_output(OddTester(), [{"num": n} for n in inputs], output)
 
 
 def test_pow10():
-    expr = Log(Itob(pow10(Int(3))))
-    output = [logged_int(int(1e3))]
-    assert_output(expr, output)
+    class Pow10Tester(UnitTestingApp):
+        @bkr.external
+        def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Uint64):
+            return output.set(math.pow10(num.get()))
+
+    num = 3
+    inputs = [num]
+    output = [int(10**x) for x in inputs]
+
+    assert_abi_output(Pow10Tester(), [{"num": n} for n in inputs], output)
 
 
 def test_min():
-    expr = Log(Itob(min(Int(100), Int(10))))
-    output = [logged_int(int(10))]
-    assert_output(expr, output)
+    class MinTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(
+            self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ):
+            return output.set(math.min(a.get(), b.get()))
+
+    inputs = [(100, 10)]
+    output = [min(a, b) for a, b in inputs]
+
+    assert_abi_output(MinTester(), [{"a": a, "b": b} for a, b in inputs], output)
 
 
 def test_max():
-    expr = Log(Itob(max(Int(100), Int(10))))
-    output = [logged_int(int(100))]
-    assert_output(expr, output)
+    class MaxTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(
+            self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ):
+            return output.set(math.max(a.get(), b.get()))
+
+    inputs = [(100, 10)]
+    output = [max(a, b) for a, b in inputs]
+
+    assert_abi_output(MaxTester(), [{"a": a, "b": b} for a, b in inputs], output)
 
 
 def test_div_ceil():
-    expr = Log(Itob(div_ceil(Int(100), Int(3))))
-    output = [logged_int(int(34))]
-    assert_output(expr, output)
+    class DivCeilTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(
+            self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ):
+            return output.set(math.div_ceil(a.get(), b.get()))
+
+    inputs = [(100, 3)]
+    output = [pymath.ceil(a / b) for a, b in inputs]
+
+    assert_abi_output(DivCeilTester(), [{"a": a, "b": b} for a, b in inputs], output)
 
 
 def test_saturate():
-    expr = Log(Itob(saturate(Int(50), Int(100), Int(20))))
-    output = [logged_int(int(50))]
-    assert_output(expr, output)
+    class DivCeilTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(
+            self,
+            a: pt.abi.Uint64,
+            b: pt.abi.Uint64,
+            c: pt.abi.Uint64,
+            *,
+            output: pt.abi.Uint64
+        ):
+            return output.set(math.saturate(a.get(), b.get(), c.get()))
 
-    expr = Log(Itob(saturate(Int(15), Int(100), Int(20))))
-    output = [logged_int(int(20))]
-    assert_output(expr, output)
+    inputs = [(50, 100, 20), (15, 100, 20), (150, 100, 20)]
+    output = [max(min(b, a), c) for a, b, c in inputs]
 
-    expr = Log(Itob(saturate(Int(150), Int(100), Int(20))))
-    output = [logged_int(int(100))]
-    assert_output(expr, output)
+    assert_abi_output(
+        DivCeilTester(), [{"a": a, "b": b, "c": c} for a, b, c in inputs], output
+    )
 
 
 def test_wide_factorial():
+    class WideFactorialTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Uint64):
+            return output.set(pt.Btoi(math.wide_factorial(num.encode())))
+
     num = 5
-    expr = Log(Itob(bytes_to_int(wide_factorial(Itob(Int(num))))))
-    output = [logged_int(int(pymath.factorial(num)))]
-    assert_output(expr, output, pad_budget=15)
+    inputs = [num]
+    output = [pymath.factorial(num) for num in inputs]
+    assert_abi_output(WideFactorialTester(), [{"num": num} for num in inputs], output)
 
 
 def test_exponential():
+    class WideFactorialTester(UnitTestingApp):
+        @bkr.external
+        def unit_test(
+            self, num: pt.abi.Uint64, iters: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ):
+            return output.set(math.exponential(num.get(), iters.get()))
+
     num = 10
-    expr = Log(Itob(exponential(Int(num), Int(30))))
-    output = [logged_int(int(pymath.exp(num)))]
-    assert_output(expr, output, pad_budget=15)
+    iters = 30
+    inputs = [(num, iters)]
+    output = [int(pymath.exp(num)) for num, _ in inputs]
+
+    assert_abi_output(
+        WideFactorialTester(),
+        [{"num": num, "iters": iters} for num, iters in inputs],
+        output,
+        opups=15,
+    )
 
 
 # def test_ln():

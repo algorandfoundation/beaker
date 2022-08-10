@@ -8,10 +8,11 @@ import algosdk.abi as sdkabi
 from algosdk import account, encoding, logic, mnemonic
 from algosdk.future import transaction
 from algosdk.v2client import algod
-from algosdk.atomic_transaction_composer import AccountTransactionSigner
+from algosdk.atomic_transaction_composer import AccountTransactionSigner, AtomicTransactionComposer
 
 import pyteal as pt
 import beaker as bkr
+from beaker.decorators import create
 
 
 TEAL_VERSION = 5
@@ -28,6 +29,31 @@ def logged_bytes(b: str):
 def logged_int(i: int, bits: int = 64):
     return i.to_bytes(bits // 8, "big").hex()
 
+class UnitTestingApp(bkr.Application):
+    @bkr.create
+    def create(self):
+        return self.app_state.initialize()
+
+    @bkr.delete
+    def delete(self):
+        return pt.Approve() 
+
+    @bkr.update
+    def update(self):
+        return pt.Approve() 
+
+    @bkr.opt_in
+    def opt_in(self):
+        return self.acct_state.initialize() 
+
+    @bkr.external
+    def opup(self):
+        return pt.Approve()
+
+    @bkr.external
+    def unit_test(self):
+        # Implement this method
+        pass
 
 class TestAccount:
     def __init__(
@@ -77,6 +103,27 @@ accounts = [
     TestAccount(acct.address, acct.private_key) for acct in bkr.sandbox.get_accounts()
 ]
 
+def assert_abi_output(app: UnitTestingApp, inputs: list[dict[str, Any]], outputs: list[Any], opups: int = 0):
+    app_client = bkr.client.ApplicationClient(client, app, signer=accounts[0].signer)
+    app_client.create()
+
+    for idx, input in enumerate(inputs):
+        if opups>0:
+            atc = AtomicTransactionComposer()
+
+            app_client.add_method_call(atc, app.unit_test, **input)
+            for x in range(opups):
+                app_client.add_method_call(atc, app.opup, note=str(x).encode())
+
+            results = atc.execute(client, 2)
+            print(results.abi_results[0].return_value, outputs[idx])
+            assert results.abi_results[0].return_value == outputs[idx]
+        else:
+            result = app_client.call(app.unit_test, **input)
+            #print(result.return_value, outputs[idx])
+            assert result.return_value == outputs[idx]
+
+    app_client.delete()
 
 ## Teal Helpers
 def assert_stateful_output(expr: pt.Expr, output: List[str]):
