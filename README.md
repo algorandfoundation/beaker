@@ -61,21 +61,22 @@ Or from github directly (no promises on stability):
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
+
+# Dev Environment 
+
+Requires a local [sandbox](https://github.com/algorand/sandbox).
+
+*NOTE:* Currently requires a sandbox running with the `source` config (or any config that contains [this commit](https://github.com/algorand/go-algorand/pull/4198))
+
+```sh
+$ git clone git@github.com:algorand/sandbox.git
+$ cd sandbox
+$ sandbox up source
+```
+
 ## Testing
 
-You can run test files using `pytest`
-
-If you do not have `pytest` you can install from pip:
-
-`pip install pytest`
-
-Run Sandbox in your terminal:
-
-`./sandbox up source`
-
-Then run the tests inside the beaker directory:
-
-`pytest`
+You can run tests from the root of the project using `pytest`
 
 ## Use
 
