@@ -1,6 +1,6 @@
 from pyteal import ScratchSlot, Itob, Log, Int, Seq
 
-from tests.helpers import logged_int, assert_output
+from beaker.testing.helpers import logged_int, assert_output
 
 from .inline_asm import InlineAssembly
 

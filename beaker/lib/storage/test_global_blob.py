@@ -1,7 +1,7 @@
 from algosdk.future.transaction import StateSchema
 from pyteal import Bytes, BytesZero, Int, Itob, Log, Pop, Seq
 
-from tests.helpers import (
+from beaker.testing.helpers import (
     LOGIC_EVAL_ERROR,
     assert_fail,
     assert_output,

@@ -10,8 +10,8 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 
-import pyteal as pt 
-import beaker as bkr 
+import pyteal as pt
+import beaker as bkr
 
 
 TEAL_VERSION = 5
@@ -20,11 +20,12 @@ CLEAR_PROG = bytes([TEAL_VERSION, 129, 1])  # pragma 5; int 1
 LOGIC_EVAL_ERROR = "logic eval error"
 INVALID_SYNTAX = "invalid syntax"
 
+
 def logged_bytes(b: str):
     return bytes(b, "ascii").hex()
 
 
-def logged_int(i: int, bits: int = 63):
+def logged_int(i: int, bits: int = 64):
     return i.to_bytes(bits // 8, "big").hex()
 
 
@@ -73,8 +74,7 @@ class TestAccount:
 
 client = bkr.sandbox.get_algod_client()
 accounts = [
-    TestAccount(acct.address, acct.private_key)
-    for acct in bkr.sandbox.get_accounts()
+    TestAccount(acct.address, acct.private_key) for acct in bkr.sandbox.get_accounts()
 ]
 
 
@@ -104,8 +104,6 @@ def assert_stateful_output(expr: pt.Expr, output: List[str]):
 
 def assert_stateful_fail(expr: pt.Expr, output: List[str]):
     assert expr is not None
-
-    emsg = None
 
     try:
         src = compile_stateful_app(expr)
@@ -140,9 +138,7 @@ def assert_output(expr: pt.Expr, output: List[str], **kwargs):
     compiled = assemble_bytecode(client, src)
     assert len(compiled["hash"]) == 58
 
-    logs, _,_ = execute_app(client, compiled["result"], **kwargs)
-    print(logs)
-    print(output)
+    logs, _, _ = execute_app(client, compiled["result"], **kwargs)
     assert logs == output
 
 
@@ -190,9 +186,6 @@ def assert_close_enough(
 
 def assert_fail(expr: pt.Expr, output: List[str], **kwargs):
     assert expr is not None
-
-    emsg = None
-
     try:
         src = compile_method(expr)
         assert len(src) > 0
@@ -209,20 +202,28 @@ def assert_fail(expr: pt.Expr, output: List[str], **kwargs):
 
 
 def compile_method(method: pt.Expr, version: int = TEAL_VERSION):
-    return pt.compileTeal(pt.Seq(method, pt.Int(1)), mode=pt.Mode.Application, version=version)
+    return pt.compileTeal(
+        pt.Seq(method, pt.Int(1)), mode=pt.Mode.Application, version=version
+    )
+
+
+def compile_stateful_app(method: pt.Expr, version: int = TEAL_VERSION) -> str:
+    return compile_app(
+        pt.Cond(
+            [pt.Txn.application_id() == pt.Int(0), pt.Approve()],
+            [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Approve()],
+            [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Approve()],
+            # for budget padding
+            [pt.Txn.application_args.length() > pt.Int(0), pt.Approve()],
+            # handle the actual method
+            [pt.Int(1), pt.Seq(method, pt.Approve())],
+        ),
+        version=version,
+    )
 
 
 def compile_app(application: pt.Expr, version: int = TEAL_VERSION):
     return pt.compileTeal(application, mode=pt.Mode.Application, version=version)
-
-
-def compile_stateful_app(method: pt.Expr, version: int = TEAL_VERSION):
-    expr = pt.Cond(
-        [pt.Txn.application_id() == pt.Int(0), pt.Int(1)],
-        [pt.Txn.application_args.length() > pt.Int(0), pt.Int(1)],
-        [pt.Int(1), pt.Seq(method, pt.Int(1))],
-    )
-    return pt.compileTeal(expr, mode=pt.Mode.Application, version=version)
 
 
 def compile_sig(method: pt.Expr, version: int = TEAL_VERSION):
@@ -238,10 +239,12 @@ def assemble_bytecode(client: algod.AlgodClient, src: str):
     return client.compile(src)
 
 
-def execute_app(client: algod.AlgodClient, bytecode: str, **kwargs) -> tuple[list[str], Any, Any]:
+def execute_app(
+    client: algod.AlgodClient, bytecode: str, pad_budget: int = 0, **kwargs
+) -> tuple[list[str], Any, Any]:
     sp = client.suggested_params()
 
-    acct = bkr.sandbox.get_accounts().pop()
+    acct = bkr.sandbox.get_accounts()[0]
 
     if "local_schema" not in kwargs:
         kwargs["local_schema"] = transaction.StateSchema(0, 0)
@@ -249,44 +252,56 @@ def execute_app(client: algod.AlgodClient, bytecode: str, **kwargs) -> tuple[lis
     if "global_schema" not in kwargs:
         kwargs["global_schema"] = transaction.StateSchema(0, 0)
 
-    txns: list[transaction.Transaction] = [
-        transaction.ApplicationCallTxn(
-            acct.address,
-            sp,
-            0,
-            transaction.OnComplete.DeleteApplicationOC,
-            kwargs["local_schema"],
-            kwargs["global_schema"],
-            b64decode(bytecode),
-            CLEAR_PROG,
-        )
-    ]
-
-    if "pad_budget" in kwargs:
-        for i in range(kwargs["pad_budget"]):
-            txns.append(
-                transaction.ApplicationCallTxn(
-                    acct.address,
-                    sp,
-                    0,
-                    transaction.OnComplete.DeleteApplicationOC,
-                    kwargs["local_schema"],
-                    kwargs["global_schema"],
-                    CLEAR_PROG,
-                    CLEAR_PROG,
-                    note=str(i).encode(),
-                )
+    txns: list[transaction.Transaction] = transaction.assign_group_id(
+        [
+            transaction.ApplicationCallTxn(
+                acct.address,
+                sp,
+                0,
+                transaction.OnComplete.DeleteApplicationOC,
+                kwargs["local_schema"],
+                kwargs["global_schema"],
+                b64decode(bytecode),
+                CLEAR_PROG,
             )
+        ]
+        + [
+            transaction.ApplicationCallTxn(
+                acct.address,
+                sp,
+                0,
+                transaction.OnComplete.DeleteApplicationOC,
+                kwargs["local_schema"],
+                kwargs["global_schema"],
+                CLEAR_PROG,
+                CLEAR_PROG,
+                note=str(i).encode(),
+            )
+            for i in range(pad_budget)
+        ]
+    )
 
-    txns = [txn.sign(acct.private_key) for txn in transaction.assign_group_id(txns)]
-    drr = transaction.create_dryrun(client, txns)
+    # First tx id is the only one we care about
+    txid = client.send_transactions([txn.sign(acct.private_key) for txn in txns])
+    return get_stats_from_result(transaction.wait_for_confirmation(client, txid))
 
-    result = client.dryrun(drr)
+    # TODO: once we have simulate, maybe use that
+    # drr = transaction.create_dryrun(
+    #    client, [txn.sign(acct.private_key) for txn in txns]
+    # )
+    # return get_stats_from_dryrun(client.dryrun(drr))
 
-    return get_stats_from_dryrun(result)
+
+def get_stats_from_result(
+    result: dict[str, Any]
+) -> tuple[list[str], list[int], list[int]]:
+    logs, cost, trace_len = [], [0], [0]
+    if "logs" in result:
+        logs.extend([b64decode(l).hex() for l in result["logs"]])
+    return logs, cost, trace_len
 
 
-def get_stats_from_dryrun(dryrun_result):
+def get_stats_from_dryrun(dryrun_result) -> tuple[list[str], list[int], list[int]]:
     logs, cost, trace_len = [], [], []
     txn = dryrun_result["txns"][0]
     raise_rejected(txn)
@@ -314,7 +329,7 @@ def create_app(
 ):
     sp = client.suggested_params()
 
-    acct = get_accounts().pop()
+    acct = accounts[0]
 
     txn = transaction.ApplicationCallTxn(
         acct.address,
@@ -337,7 +352,7 @@ def create_app(
 def call_app(client: algod.AlgodClient, app_id: int, **kwargs):
     sp = client.suggested_params()
 
-    acct = get_accounts().pop()
+    acct = accounts[0]
 
     txns = transaction.assign_group_id(
         [
@@ -360,7 +375,7 @@ def call_app(client: algod.AlgodClient, app_id: int, **kwargs):
 def destroy_app(client: algod.AlgodClient, app_id: int, **kwargs):
     sp = client.suggested_params()
 
-    acct = get_accounts().pop()
+    acct = accounts[0]
 
     txns = transaction.assign_group_id(
         [
