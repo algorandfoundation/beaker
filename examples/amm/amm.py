@@ -149,31 +149,31 @@ class ConstantProductAMM(Application):
     ):
         """mint pool tokens given some amount of asset A and asset B"""
 
-        well_formed_mint = And(
+        well_formed_mint = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
             pool_asset.asset_id() == self.pool_token,
-        )
+        ]
 
-        valid_asset_a_xfer = And(
+        valid_asset_a_xfer = [
             a_xfer.get().asset_receiver() == self.address,
             a_xfer.get().xfer_asset() == self.asset_a,
             a_xfer.get().asset_amount() > Int(0),
             a_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
-        valid_asset_b_xfer = And(
+        valid_asset_b_xfer = [
             b_xfer.get().asset_receiver() == self.address,
             b_xfer.get().xfer_asset() == self.asset_b,
             b_xfer.get().asset_amount() > Int(0),
             b_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         return Seq(
             # Check that the transaction is constructed correctly
-            Assert(well_formed_mint),
-            Assert(valid_asset_a_xfer),
-            Assert(valid_asset_b_xfer),
+            Assert(*well_formed_mint),
+            Assert(*valid_asset_a_xfer),
+            Assert(*valid_asset_b_xfer),
             # Check that we have these things
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
@@ -216,22 +216,22 @@ class ConstantProductAMM(Application):
     ):
         """burn pool tokens to get back some amount of asset A and asset B"""
 
-        well_formed_burn = And(
+        well_formed_burn = [
             pool_asset.asset_id() == self.pool_token,
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
-        )
+        ]
 
-        valid_pool_xfer = And(
+        valid_pool_xfer = [
             pool_xfer.get().asset_receiver() == self.address,
             pool_xfer.get().asset_amount() > Int(0),
             pool_xfer.get().xfer_asset() == self.pool_token,
             pool_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         return Seq(
-            Assert(well_formed_burn),
-            Assert(valid_pool_xfer),
+            Assert(*well_formed_burn),
+            Assert(*valid_pool_xfer),
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
@@ -273,19 +273,19 @@ class ConstantProductAMM(Application):
         b_asset: abi.Asset,
     ):
         """Swap some amount of either asset A or asset B for the other"""
-        well_formed_swap = And(
+        well_formed_swap = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
-        )
+        ]
 
-        valid_swap_xfer = And(
+        valid_swap_xfer = [
             Or(
                 swap_xfer.get().xfer_asset() == self.asset_a,
                 swap_xfer.get().xfer_asset() == self.asset_b,
             ),
             swap_xfer.get().asset_amount() > Int(0),
             swap_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         out_id = If(
             swap_xfer.get().xfer_asset() == self.asset_a,
@@ -295,8 +295,8 @@ class ConstantProductAMM(Application):
         in_id = swap_xfer.get().xfer_asset()
 
         return Seq(
-            Assert(well_formed_swap),
-            Assert(valid_swap_xfer),
+            Assert(*well_formed_swap),
+            Assert(*valid_swap_xfer),
             in_sup := AssetHolding.balance(self.address, in_id),
             out_sup := AssetHolding.balance(self.address, out_id),
             Assert(And(in_sup.hasValue(), out_sup.hasValue())),
