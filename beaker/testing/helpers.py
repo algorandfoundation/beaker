@@ -32,8 +32,15 @@ def logged_bytes(b: str):
 def logged_int(i: int, bits: int = 64):
     return i.to_bytes(bits // 8, "big").hex()
 
+def returned_int(i: int, bits: int = 64):
+    return list(i.to_bytes(bits // 8, "big"))
 
 class UnitTestingApp(bkr.Application):
+
+    def __init__(self, e: pt.Expr = None):
+        self.expr = e
+        super().__init__()
+
     @bkr.create
     def create(self):
         return self.app_state.initialize()
@@ -55,9 +62,11 @@ class UnitTestingApp(bkr.Application):
         return pt.Approve()
 
     @bkr.external
-    def unit_test(self):
-        # Implement this method
-        pass
+    def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+        return pt.Seq(
+            (s := pt.abi.String()).set(self.expr),
+            output.decode(s.encode())
+        )
 
 
 class TestAccount:
@@ -139,7 +148,6 @@ def assert_abi_output(
             assert results.abi_results[0].return_value == output
         else:
             result = app_client.call(app.unit_test, **input)
-            # print(result.return_value, output)
             assert result.return_value == output
 
     app_client.delete()

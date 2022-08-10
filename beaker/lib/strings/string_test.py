@@ -1,78 +1,90 @@
-from pyteal import Bytes, Int, Itob, Log
+import pytest
+import pyteal as pt
+import beaker as bkr
 
 from beaker.testing.helpers import (
+    UnitTestingApp,
+    assert_abi_output,
     LOGIC_EVAL_ERROR,
     assert_fail,
     assert_output,
     logged_bytes,
-    logged_int,
+    returned_int,
 )
 
-from .string import atoi, encode_uvarint, head, itoa, prefix, suffix, tail
+from beaker.lib.strings import atoi, encode_uvarint, head, itoa, prefix, suffix, tail
 
 
 def test_atoi():
-    expr = Log(Itob(atoi(Bytes("123"))))
-    output = [logged_int(int(123))]
-    assert_output(expr, output)
+    ut = UnitTestingApp(pt.Itob(atoi(pt.Bytes("123"))))
+    output = [returned_int(int(123))]
+    assert_abi_output(ut, [], output)
 
 
 def test_atoi_invalid():
-    expr = Log(Itob(atoi(Bytes("abc"))))
-    assert_fail(expr, [LOGIC_EVAL_ERROR])
+    ut = UnitTestingApp(pt.Itob(atoi(pt.Bytes("abc"))))
+    output = [returned_int(int(123))]
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(ut, [], output)
 
 
 def test_itoa():
-    expr = Log(itoa(Int(123)))
-    output = [logged_bytes("123")]
-    assert_output(expr, output)
+    ut = UnitTestingApp(itoa(pt.Int(123)))
+    output = [list(b"123")]
+    assert_abi_output(ut, [], output)
 
 
 def test_head():
-    expr = Log(head(Bytes("deadbeef")))
-    output = [logged_bytes("d")]
-    assert_output(expr, output)
+    ut = UnitTestingApp(head(pt.Bytes("deadbeef")))
+    output = [list(b"d")]
+    assert_abi_output(ut, [], output)
 
 
 def test_head_empty():
-    expr = Log(tail(Bytes("")))
-    assert_fail(expr, [LOGIC_EVAL_ERROR])
+    ut = UnitTestingApp(tail(pt.Bytes("")))
+
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(ut, [], [LOGIC_EVAL_ERROR])
 
 
 def test_tail():
-    expr = Log(tail(Bytes("deadbeef")))
-    output = [logged_bytes("eadbeef")]
-    assert_output(expr, output)
+   ut = UnitTestingApp(tail(pt.Bytes("deadbeef")))
+   output = [list(b"eadbeef")]
+   assert_abi_output(ut, [], output)
 
 
 def test_tail_empty():
-    expr = Log(tail(Bytes("")))
-    assert_fail(expr, [LOGIC_EVAL_ERROR])
+    ut = UnitTestingApp(tail(pt.Bytes("")))
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(ut, [], [LOGIC_EVAL_ERROR])
 
 
 def test_suffix():
-    expr = Log(suffix(Bytes("deadbeef"), Int(2)))
-    output = [logged_bytes("ef")]
-    assert_output(expr, output)
+   ut = UnitTestingApp(suffix(pt.Bytes("deadbeef"), pt.Int(2)))
+   output = [list(b"ef")]
+   assert_abi_output(ut, [], output)
 
 
 def test_suffix_past_length():
-    expr = Log(suffix(Bytes("deadbeef"), Int(9)))
-    assert_fail(expr, [LOGIC_EVAL_ERROR])
+    ut = UnitTestingApp(suffix(pt.Bytes("deadbeef"), pt.Int(9)))
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(ut, [], [LOGIC_EVAL_ERROR])
 
 
 def test_prefix():
-    expr = Log(prefix(Bytes("deadbeef"), Int(2)))
-    output = [logged_bytes("de")]
-    assert_output(expr, output)
+   ut = UnitTestingApp(prefix(pt.Bytes("deadbeef"), pt.Int(2)))
+   output = [list(b"de")]
+   assert_abi_output(ut, [], output)
 
 
 def test_prefix_past_length():
-    expr = Log(prefix(Bytes("deadbeef"), Int(9)))
-    assert_fail(expr, [LOGIC_EVAL_ERROR])
+    ut = UnitTestingApp(prefix(pt.Bytes("deadbeef"), pt.Int(9)))
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(ut, [], [LOGIC_EVAL_ERROR])
 
 
 def test_encode_uvarint():
-    expr = Log(encode_uvarint(Int(500), Bytes("")))
-    output = ["f403"]
-    assert_output(expr, output)
+   ut = UnitTestingApp(encode_uvarint(pt.Int(500), pt.Bytes("")))
+   output = [[244, 3]]
+   assert_abi_output(ut, [], output)
+
