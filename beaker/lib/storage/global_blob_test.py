@@ -1,76 +1,107 @@
-from algosdk.future.transaction import StateSchema
-from pyteal import Bytes, BytesZero, Int, Itob, Log, Pop, Seq
+import pytest
+import pyteal as pt
+import beaker as bkr
 
-from beaker.testing.helpers import (
-    LOGIC_EVAL_ERROR,
-    assert_fail,
-    assert_output,
-    logged_bytes,
-    logged_int,
-)
+from beaker.testing.helpers import UnitTestingApp, assert_abi_output
 
-from .global_blob import GlobalBlob, max_bytes
+from beaker.lib.storage.global_blob import GlobalBlob, max_bytes
 
-# Can re-use the same blob
-b = GlobalBlob()
+
+class GlobalBlobTest(UnitTestingApp):
+    lb = bkr.DynamicApplicationStateValue(pt.TealType.bytes, max_keys=64)
+    blob = GlobalBlob()
 
 
 def test_global_blob_zero():
-    expr = Seq(b.zero(), Log(b.read(Int(0), Int(64))))
-    expected = [logged_int(0) * 8]
-    assert_output(expr, expected, global_schema=StateSchema(0, 64))
+    class LBZero(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+            return pt.Seq(
+                self.blob.zero(),
+                (s := pt.abi.String()).set(self.blob.read(pt.Int(0), pt.Int(64))),
+                output.decode(s.encode()),
+            )
 
-
-def test_global_blob_zero_no_schema():
-    expr = Seq(b.zero(), Log(b.read(Int(0), Int(64))))
-    # Not providing the required schema
-    expected = [LOGIC_EVAL_ERROR]
-    assert_fail(expr, expected)
+    expected = list(bytes(64))
+    assert_abi_output(LBZero(), [], [expected], opups=1)
 
 
 def test_global_blob_write_read():
-    expr = Seq(
-        b.zero(),
-        Pop(b.write(Int(0), Bytes("deadbeef" * 2))),
-        Log(b.read(Int(0), Int(8))),
-    )
-    expected = [logged_bytes("deadbeef")]
-    assert_output(expr, expected, global_schema=StateSchema(0, 64), pad_budget=3)
+    class LB(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+            return pt.Seq(
+                self.blob.zero(),
+                pt.Pop(self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8))),
+                (s := pt.abi.String()).set(self.blob.read(pt.Int(32), pt.Int(40))),
+                output.decode(s.encode()),
+            )
+
+    expected = list(b"deadbeef")
+    assert_abi_output(LB(), [], [expected], opups=1)
 
 
 def test_global_blob_write_read_boundary():
-    expr = Seq(
-        b.zero(),
-        Pop(b.write(Int(0), BytesZero(Int(381)))),
-        Log(b.read(Int(32), Int(40))),
-    )
-    expected = ["00" * 8]
-    assert_output(expr, expected, global_schema=StateSchema(0, 64), pad_budget=3)
+    class LB(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+            return pt.Seq(
+                self.blob.zero(),
+                pt.Pop(self.blob.write(pt.Int(0), pt.BytesZero(pt.Int(381)))),
+                (s := pt.abi.String()).set(self.blob.read(pt.Int(32), pt.Int(40))),
+                output.decode(s.encode()),
+            )
 
-
-def test_global_blob_write_read_no_zero():
-    expr = Seq(Pop(b.write(Int(0), Bytes("deadbeef" * 2))), Log(b.read(Int(0), Int(8))))
-    expected = [LOGIC_EVAL_ERROR]
-    assert_fail(expr, expected, global_schema=StateSchema(0, 64), pad_budget=3)
+    expected = list(bytes(8))
+    assert_abi_output(LB(), [], [expected], opups=1)
 
 
 def test_global_blob_write_read_past_end():
-    expr = Seq(
-        b.zero(),
-        Pop(b.write(Int(0), Bytes("deadbeef" * 2))),
-        Log(b.read(Int(0), max_bytes)),
-    )
-    expected = [LOGIC_EVAL_ERROR]
-    assert_fail(expr, expected, global_schema=StateSchema(0, 64), pad_budget=3)
+    class LB(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+            return pt.Seq(
+                self.blob.zero(),
+                pt.Pop(self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8))),
+                (s := pt.abi.String()).set(self.blob.read(pt.Int(0), max_bytes)),
+                output.decode(s.encode()),
+            )
+
+    expected = list(bytes(8))
+
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(LB(), [], [expected], opups=1)
 
 
 def test_global_blob_set_get():
-    expr = Seq(b.zero(), b.set_byte(Int(32), Int(123)), Log(Itob(b.get_byte(Int(32)))))
-    expected = [logged_int(123)]
-    assert_output(expr, expected, global_schema=StateSchema(0, 64))
+    num = 123
+
+    class LB(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.Uint8):
+            return pt.Seq(
+                self.blob.zero(),
+                self.blob.set_byte(pt.Int(32), pt.Int(num)),
+                output.set(self.blob.get_byte(pt.Int(32))),
+            )
+
+    expected = [num]
+    assert_abi_output(LB(), [], expected, opups=1)
 
 
 def test_global_blob_set_past_end():
-    expr = Seq(b.zero(), b.set_byte(max_bytes, Int(123)))
-    expected = [LOGIC_EVAL_ERROR]
-    assert_fail(expr, expected, global_schema=StateSchema(0, 64))
+    num = 123
+
+    class LB(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.Uint8):
+            return pt.Seq(
+                self.blob.zero(),
+                self.blob.set_byte(max_bytes, pt.Int(num)),
+                output.set(self.blob.get_byte(pt.Int(32))),
+            )
+
+    expected = [num]
+
+    with pytest.raises(bkr.client.LogicException):
+        assert_abi_output(LB(), [], expected, opups=1)
