@@ -1,7 +1,8 @@
 import math as pymath
 from pyteal import Int, Itob, Log, Seq
 
-from tests.helpers import assert_output, logged_int
+from beaker.testing.helpers import logged_int, assert_output
+
 
 from .math import (
     div_ceil,
@@ -20,14 +21,14 @@ def test_even():
     num = 5
     expr = Seq(Log(Itob(even(Int(num)))), Log(Itob(even(Int(num - 1)))))
     output = [logged_int(0), logged_int(1)]
-    assert_output(expr, output, pad_budget=15)
+    assert_output(expr, output)
 
 
 def test_odd():
     num = 6
     expr = Seq(Log(Itob(odd(Int(num)))), Log(Itob(odd(Int(num - 1)))))
     output = [logged_int(0), logged_int(1)]
-    assert_output(expr, output, pad_budget=15)
+    assert_output(expr, output)
 
 
 def test_pow10():
