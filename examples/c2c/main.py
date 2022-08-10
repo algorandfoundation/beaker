@@ -95,7 +95,7 @@ if __name__ == "__main__":
     accts = sandbox.get_accounts()
     acct = accts.pop()
 
-    # Create sub app 
+    # Create sub app
     app_sub = C2CSub()
     app_client_sub = client.ApplicationClient(
         sandbox.get_algod_client(), app_sub, signer=acct.signer
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     app_client_main.fund(1 * consts.algo)
 
     # Call main app method to:
-    #   create the asset 
+    #   create the asset
     #   call the sub app optin method
     #   send asset to sub app
     #   call the sub app return asset method
