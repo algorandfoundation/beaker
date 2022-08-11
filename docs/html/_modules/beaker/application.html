@@ -253,17 +253,15 @@
         <span class="p">)</span>
 
         <span class="c1"># Add the method argument descriptions if provided</span>
-        <span class="k">for</span> <span class="n">meth_idx</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
-                <span class="n">hint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
-
+        <span class="k">for</span> <span class="n">meth_idx</span><span class="p">,</span> <span class="n">meth</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">meth</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
+                <span class="n">hint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">meth</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">continue</span>
 
-                <span class="k">for</span> <span class="n">arg_idx</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">arg_idx</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">meth</span><span class="o">.</span><span class="n">args</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span><span class="p">:</span>
                         <span class="k">continue</span>
-
                     <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">meth_idx</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="p">[</span>
                         <span class="n">arg_idx</span>
                     <span class="p">]</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span><span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">descr</span>
