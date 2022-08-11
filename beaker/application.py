@@ -15,6 +15,7 @@ from pyteal import (
     OptimizeOptions,
     Router,
     Bytes,
+    Approve,
 )
 
 from beaker.decorators import (
@@ -220,5 +221,4 @@ class Application:
 
     @create
     def create(self) -> Expr:
-        """default create behavior, initializes application state"""
-        return self.initialize_application_state()
+        return Approve()

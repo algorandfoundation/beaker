@@ -13,8 +13,10 @@ import beaker as bkr
 client = bkr.sandbox.get_algod_client()
 accounts = bkr.sandbox.get_accounts()
 
+
 def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
+
 
 class UnitTestingApp(bkr.Application):
 
