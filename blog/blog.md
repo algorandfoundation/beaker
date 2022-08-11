@@ -71,7 +71,7 @@ Now, let's see how things have changed.
 
 The [ABI](https://arc.algorand.foundation/ARCs/arc-0004) provides standards for encoding types, describing methods, and internally routing method calls to the appropriate logic.
 
-With the ABI we have a standard way to both organize code and interact with the application. 
+With the ABI, we now have a standard way to both organize code and interact with the application. 
 
 More details on the ABI are available [here](https://developer.algorand.org/articles/contract-to-contract-calls-and-an-abi-come-to-algorand/)
 
