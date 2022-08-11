@@ -18,7 +18,7 @@ Example
 --------
 
 .. literalinclude:: ../../examples/structure/main.py
-    :lines: 15-52
+    :lines: 16-57
 
 
 The application exposes the ABI methods using the tuple encoded version of the fields specified in the struct. Here it would be ``(string,uint32)``.
@@ -28,9 +28,9 @@ A method hint is available to the caller for encoding/decoding by field name.
 To pass a struct we can pass a python dict ``dict``
 
 .. literalinclude:: ../../examples/structure/main.py
-    :lines: 73-75
+    :lines: 77-80
 
 And we can decode it from the tuple we get back
 
 .. literalinclude:: ../../examples/structure/main.py
-    :lines: 86-87
+    :lines: 90-92
