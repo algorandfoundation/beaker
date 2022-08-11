@@ -498,22 +498,3 @@ def test_abi_method_details():
     with pytest.raises(Exception):
         get_method_selector(meth2)
 
-
-def test_instance_state():
-    class A(Application):
-        asv = ApplicationStateValue(pt.TealType.uint64)
-
-        @create
-        def create(self):
-            return self.initialize_application_state()
-
-    class B(Application):
-        bsv = ApplicationStateValue(pt.TealType.bytes)
-
-    a = A()
-    print(a.approval_program)
-
-    print()
-
-    b = B()
-    print(b.approval_program)
