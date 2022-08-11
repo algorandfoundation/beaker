@@ -2,7 +2,7 @@
 
 If you've written and deployed a Smart Contract for Algorand using PyTeal before today, you've probably chewed a lot of glass to do so, well done!
 
-Take heart that the Algorand team has been working very hard to improve the development experience. 
+Take heart; the Algorand team has been working hard to improve the development experience. 
 
 Before we dive into the improvements, let's review some common things folks struggle with while developing.
 
@@ -10,7 +10,7 @@ Before we dive into the improvements, let's review some common things folks stru
 
 When you start writing a contract, how do you structure the program logic? How do you handle inputs and outputs from the contract? 
 
-A very common pattern is something like:
+A very common pattern for writing the approval program in PyTeal is something like:
 
 ```py
 
@@ -101,11 +101,11 @@ For detailed docs on PyTeal ABI see docs [here](https://pyteal.readthedocs.io/en
 
 ## Source Maps
 
-Getting a `pc` line returned from an algod error message meant you had to assemble, then disassemble your TEAL contract to find the corresponding TEAL line that caused the error. Even then, the names and formatting are mangled in the process so it is challenging to identify exactly where you were in your program.
+Getting a `pc` returned from an algod error message meant you had disassemble your binary teal program to find the TEAL line it might be associated to. Even then, the names and formatting is mangled in the process making it challenging to identify exactly where you were in your program.
 
 You can now compile TEAL with the `sourcemap` flag [enabled](https://developer.algorand.org/docs/rest-apis/algod/v2/#post-v2tealcompile).  The resulting map comes back according to [this spec](https://sourcemaps.info/spec.html) and can be decoded with any of the SDKs using the new `SourceMap` object.
 
-This means you can associate a `pc` directly to the source TEAL line with all the familiar names and formatting you're used to looking at.
+This means you can associate a `pc` directly to the _source_ TEAL line, with all the familiar names and formatting you're used to looking at.
 
 
 # Hello Beaker
@@ -136,13 +136,13 @@ class MyApp(Application):
         return output.set(a.get() + b.get())
 ```
 
-This is a full application! It's got an `approval program`, `clear program`, an implicitly empty `state` and provides the ABI `contract` to export for other clients.
+This is a full application! It's got an `approval program`, `clear program`, an implicitly empty `state`. The methods defined are provided in an ABI `contract` to export for other clients.
 
-The `@external` decorator on the method exposes our defined method to callers and provides routing based on its `method selector`. The resulting method signature of this method is `add(uint64,uint64)uint64`.
+The `@external` decorator on the method exposes our defined method to callers and provides routing based on its `method signature`. The resulting method signature of this method is `add(uint64,uint64)uint64`.
 
-The method that has been tagged is a (mostly) valid [PyTeal ABI Method](https://pyteal.readthedocs.io/en/stable/abi.html#subroutines-with-abi-types). The exception here is that Beaker allows you to pass `self`, meaning you can take advantage of instance variables passed on initialization.
+The `add` method is a (mostly) valid [PyTeal ABI Method](https://pyteal.readthedocs.io/en/stable/abi.html#subroutines-with-abi-types). The exception that makes it mostly valid here, is that Beaker lets you to pass `self`, allowing references to instance vars.
 
-There is much more you can do with this method, including defining the [access control](https://algorand-devrel.github.io/beaker/html/decorators.html#authorization), changing which `OnComplete` types may be used to call it, or marking it as a `read-only` method.
+There is much more you can do including; [access control](https://algorand-devrel.github.io/beaker/html/decorators.html#authorization), changing which `OnComplete` types may be used to call it, or marking it as a `read-only` method.
 
 For more information, see the [Decorator docs](https://algorand-devrel.github.io/beaker/html/decorators.html)
 
@@ -200,9 +200,10 @@ For more see [State docs](https://algorand-devrel.github.io/beaker/html/state.ht
 
 ## Debugging
 
-Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source TEAL. The resulting LogicError allows you to see the exact source TEAL line number that caused the error.
+Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source teal. The resulting `LogicException` allows you to see the exact source Teal line number with all the useful names of subroutines and any comments in the source teal.
 
-This is an actual print from a logic error that tells me exactly where my program failed. The context provided from the source TEAL shows me _why_ it failed.
+Below is the result of a simple print of a `LogicException` telling me exactly where my program failed. More importantly it provides the context from the source TEAL showing me _why_ it failed.
+
 ```
 Txn WWVF5P2BXRNQDFFSGAGMCXJNDMZ224RJUGSMVPJVTBCVHEZMOMNA had error 'assert failed pc=883' at PC 883 and Source Line 579: 
 
