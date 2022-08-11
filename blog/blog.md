@@ -8,7 +8,7 @@ Before we dive into the improvements, let's review some common things folks stru
 
 ## Code Organization
 
-When you start writing a contract, how should you structure the logic? How should you handle inputs and outputs from the contract? 
+When you start writing a contract, how do you structure the program logic? How do you handle inputs and outputs from the contract? 
 
 A very common pattern is something like:
 
