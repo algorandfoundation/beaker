@@ -10,7 +10,7 @@ ignore =
 
 
 per-file-ignores =
-    beaker/__init__.py:          F401
+    */__init__.py:          F401
 
 # from flake8-tidy-imports
 ban-relative-imports = true
