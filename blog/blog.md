@@ -241,7 +241,7 @@ For more information, see [Testing docs](https://algorand-devrel.github.io/beake
 
 ## More
 
-There is a lot more not covered here and a lot still to be done. 
+There is a lot more not covered here, and a lot still to be done. 
 
 See the docs at https://beaker.algo.xyz 
 
