@@ -16,8 +16,13 @@ A very common pattern is something like:
     def approval():
         #...
         return Cond(
+            # Infer that this is create 
             [Txn.application_id() == Int(0), do_create_method()],
+            # Check on complete manually
             [Txn.on_complete() == OnComplete.UpdateApplication, do_update()],
+            # Use some const that you have to somehow communicate to the caller 
+            # to route to the right method, then figure out how to parse the rest 
+            # of the app args
             [Txn.application_args[0] == "do_the_thing", do_the_thing()],
             #...
         )
@@ -57,7 +62,7 @@ Debugging can be a nightmare of trying to figure out an error message like `asse
 Testing contracts is difficult and requires rebuilding a lot of the front end infrastructure to test different inputs/outputs. 
 
 
-# Improvements 
+# The devs did something 
 
 Now, let's see how things have changed.
 
