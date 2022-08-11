@@ -1,6 +1,6 @@
 # Hello Developer
 
-If you've written and deployed a Smart Contract for Algorand using PyTeal before today, you've probably chewed a lot of glass to do so.  You've overcome a number of technical limitations and struggled through parsing obscure error messages, well done. 
+If you've written and deployed a Smart Contract for Algorand using PyTeal before today, you've probably chewed a lot of glass to do so, well done!
 
 Take heart that the Algorand team has been working very hard to improve the development experience. 
 
@@ -60,7 +60,7 @@ Debugging can be a nightmare of trying to figure out an error message like `asse
 
 ## Testing
 
-Testing contracts is difficult and requires rebuilding a lot of the front end infrastructure to test different inputs/outputs. 
+Testing contracts can be difficult and little guidance is provided. Often it requires rebuilding a lot of the front end infrastructure to test different inputs/outputs. 
 
 
 # The devs did something 
@@ -245,7 +245,7 @@ There is a lot more not covered here, and a lot still to be done.
 
 See the docs at https://beaker.algo.xyz 
 
-The code at https://github.com/algorand-devrel/beaker
+The code at https://github.com/algorand-devrel/beaker. Please feel free to file issues or PRs!
 
 And for any questions, ping `@barnji` in the `#beaker` channel on the [Algorand discord](https://discord.gg/algorand)
 
