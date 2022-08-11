@@ -120,7 +120,7 @@ Inheritance
 What about extending our Application with some other functionality?
 
 .. literalinclude:: ../../examples/opup/contract.py
-    :lines: 7-29
+    :lines: 7-42
 
 Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 

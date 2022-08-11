@@ -278,6 +278,19 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="n">ParameterAnnotation</span><span class="p">(</span>
                 <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;The result of hashing the input a number of times&quot;</span>
             <span class="p">),</span>
+        <span class="p">],</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="n">Assert</span><span class="p">(</span><span class="n">opup_app</span><span class="o">.</span><span class="n">application_id</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">opup_app_id</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">call_opup</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">255</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">current</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">()),</span>
+            <span class="n">For</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">i</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">iters</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Sha256</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()))),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()),</span>
+        <span class="p">)</span>
 </pre></div>
 </div>
 <p>Here we subclassed the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.</p>
