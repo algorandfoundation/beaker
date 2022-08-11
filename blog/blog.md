@@ -7,6 +7,7 @@ Take heart that the Algorand team has been working very hard to improve the deve
 Before we dive in to the improvements, lets review some common things folks struggle with while developing.
 
 ## Code Organization
+
 When you start writing a contract, how should you structure the logic? How should you handle inputs and outputs from the contract? 
 
 A very common pattern is something like:
