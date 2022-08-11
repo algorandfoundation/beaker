@@ -142,7 +142,7 @@ The `@external` decorator on the method exposes our defined method to callers an
 
 The method that has been tagged is a (mostly) valid [PyTeal ABI Method](https://pyteal.readthedocs.io/en/stable/abi.html#subroutines-with-abi-types). The exception here is that Beaker allows you to pass `self`, meaning you can take advantage of instance vars passed on initialization.
 
-There is much more you can do with it including [access control](https://algorand-devrel.github.io/beaker/html/decorators.html#authorization), changing which `OnComplete` types may be used to call it, or marking it as a `read-only` method.
+There is much more you can do with this method, including defining the [access control](https://algorand-devrel.github.io/beaker/html/decorators.html#authorization), changing which `OnComplete` types may be used to call it, or marking it as a `read-only` method.
 
 For more see the [Decorator docs](https://algorand-devrel.github.io/beaker/html/decorators.html)
 
