@@ -81,9 +81,9 @@ Using the [Atomic Transaction Composer](https://developer.algorand.org/docs/get-
 
 ## Pyteal ABI
 
-PyTeal now provides the necessary components to handle encoding/decoding of types in a contract.  The PyTeal `Router` class even provides a way to route method handling logic and passing decoded types directly to a method as well as providing the ABI contract spec.
+PyTeal now handles encoding/decoding of data types in a contract.  The PyTeal `Router` class even provides a way to handle method routing logic, passing decoded types directly to a method, and provides the ABI contract spec.
 
-For example, if you want to create and handle a method that adds 1 to a uint8 you can do so thusly: 
+For example, if you want a method that adds 1 to a uint8, you can write it thusly: 
 
 ```py
 @router.method
@@ -101,7 +101,7 @@ For detailed docs on PyTeal ABI see docs [here](https://pyteal.readthedocs.io/en
 
 ## Source Maps
 
-Getting a `pc` returned from an algod error message meant you had to assemble, then disassemble your teal contract to find the TEAL line it might be associated to. Even then the names and formatting is mangled in the process so it was hard to track exactly where you were in your program.
+Getting a `pc` line returned from an algod error message meant you had to assemble, then disassemble your TEAL contract to find the corresponding TEAL line that caused the error. Even then, the names and formatting are mangled in the process so it is challenging to identify exactly where you were in your program.
 
 You can now compile TEAL with the `sourcemap` flag [enabled](https://developer.algorand.org/docs/rest-apis/algod/v2/#post-v2tealcompile).  The resulting map comes back according to [this spec](https://sourcemaps.info/spec.html) and can be decoded with any of the SDKs using the new `SourceMap` object.
 
@@ -110,7 +110,7 @@ This means you can associate a `pc` directly to the source TEAL line with all th
 
 # Hello Beaker
 
-Today we are sharing [Beaker](https://github.com/algorand-devrel/beaker), a Smart Contract development framework meant to improve the development experience. 
+Today we are sharing [Beaker](https://github.com/algorand-devrel/beaker), a Smart Contract development framework meant to further improve the development experience. 
 
 Beaker takes advantage of the above improvements, allowing us to provide much more structure to applications. 
 
@@ -121,11 +121,11 @@ Heads up though, it is still experimental.
 
 Full Docs are [here](https://algorand-devrel.github.io/beaker/html/index.html).
 
-Taking the above issues, lets see how Beaker helps.
+Let's see how Beaker solves our problems.
 
 ## Code Organization
 
-Beaker provides standard way to organize code using a class to encapsulate functionality.
+Beaker provides a standard way to organize code by using a class to encapsulate functionality.
 
 ```py
 from beaker import Application, external
@@ -140,15 +140,15 @@ This is a full application! It's got an `approval program`, `clear program`, an 
 
 The `@external` decorator on the method exposes our defined method to callers and provides routing based on its `method selector`. The resulting method signature of this method is `add(uint64,uint64)uint64`.
 
-The method that has been tagged is a (mostly) valid [PyTeal ABI Method](https://pyteal.readthedocs.io/en/stable/abi.html#subroutines-with-abi-types). The exception here is that Beaker allows you to pass `self`, meaning you can take advantage of instance vars passed on initialization.
+The method that has been tagged is a (mostly) valid [PyTeal ABI Method](https://pyteal.readthedocs.io/en/stable/abi.html#subroutines-with-abi-types). The exception here is that Beaker allows you to pass `self`, meaning you can take advantage of instance variables passed on initialization.
 
 There is much more you can do with this method, including defining the [access control](https://algorand-devrel.github.io/beaker/html/decorators.html#authorization), changing which `OnComplete` types may be used to call it, or marking it as a `read-only` method.
 
-For more see the [Decorator docs](https://algorand-devrel.github.io/beaker/html/decorators.html)
+For more information, see the [Decorator docs](https://algorand-devrel.github.io/beaker/html/decorators.html)
 
 ## Interacting with the application
 
-Beaker provides an `ApplicationClient` to deal with the common needs like creation/opt-in/calling methods.
+Beaker provides an `ApplicationClient` to deal with common needs like creating/opting-in to/calling methods.
 
 
 It uses your `Application` definition to provide context like the schema or the arguments required for the methods being called.
