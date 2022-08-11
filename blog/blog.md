@@ -33,7 +33,7 @@ A very common pattern is something like:
 
 ``` 
 
-This works, but is far from obvious to a newcomer. 
+This works, but is difficult to understand for a newcomer. 
 
 
 ## Interacting with the Application
