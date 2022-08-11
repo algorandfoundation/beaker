@@ -60,6 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structs.html">Structs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
         </div>
@@ -221,11 +222,8 @@ The constructor may also be passed an app_id directly if one is already deployed
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A counter for showing how to use application state&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Note: this method is redundant with the one defined in Application</span>
-    <span class="c1"># defining it here to demonstrate functionality</span>
     <span class="nd">@create</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;create application&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">()</span>
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
@@ -243,6 +241,7 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">-</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
             <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
         <span class="p">)</span>
+
 </pre></div>
 </div>
 <p>We’ve added an <a class="reference internal" href="state.html#application-state-value"><span class="std std-ref">ApplicationStateValue</span></a> attribute to our class with several configuration options and we can reference it by name throughout our application.</p>
