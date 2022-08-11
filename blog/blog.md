@@ -42,7 +42,7 @@ To deploy an application on-chain, you submit an app create transaction. In this
 
 Calling an on-chain application involves crafting app call transactions with the appropriate routing and data arguments if not using the ABI.
 
-Even when using the ABI, calling methods involves importing the json contract and constructing an AtomicTransactionComposer passing args as list with no context about what they should be.
+Even when using the ABI, calling methods involves importing the JSON contract and constructing an AtomicTransactionComposer, passing arguments as a list with no context about what they should be.
 
 
 ## Managing State 
