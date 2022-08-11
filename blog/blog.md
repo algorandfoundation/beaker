@@ -200,7 +200,7 @@ For more see [State docs](https://algorand-devrel.github.io/beaker/html/state.ht
 
 ## Debugging
 
-Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source teal. The resulting LogicError allows you to see the exact source Teal line number with all the useful names of subroutines and any comments in the source teal.
+Beaker improves the `pc=xxx` error message using the source map endpoint during compilation and mapping the pc back to the source TEAL. The resulting LogicError allows you to see the exact source TEAL line number that caused the error.
 
 This is an actual print from a logic error that tells me exactly where my program failed. The context provided from the source TEAL shows me _why_ it failed.
 ```
