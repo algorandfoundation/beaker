@@ -1,36 +1,38 @@
-from pyteal import (
-    Bytes,
-    Int,
-    Itob,
-    Log,
-    ScratchVar,
-    Subroutine,
-    SubroutineCall,
-    TealType,
-)
+import pyteal as pt
+from beaker.testing.helpers import UnitTestingApp, assert_abi_output
 
-from beaker.testing.helpers import assert_output, logged_bytes, logged_int
-
-from .iter import iterate
+from beaker.lib.iter import iterate
 
 
 def test_iterate():
-    expr = iterate(Log(Bytes("a")), Int(10))
-    assert type(expr) is SubroutineCall
+    ut = UnitTestingApp(
+        pt.Seq(
+            (buff := pt.ScratchVar()).store(pt.Bytes("")),
+            iterate(buff.store(pt.Concat(buff.load(), pt.Bytes("a"))), pt.Int(10)),
+            buff.load(),
+        )
+    )
 
-    output = [logged_bytes("a")] * 10
-    assert_output(expr, output)
+    output = [list(b"a" * 10)]
+    assert_abi_output(ut, [], output)
 
 
 def test_iterate_with_closure():
-    i = ScratchVar()
+    i = pt.ScratchVar()
+    buff = pt.ScratchVar()
 
-    @Subroutine(TealType.none)
-    def logthing():
-        return Log(Itob(i.load()))
+    @pt.Subroutine(pt.TealType.none)
+    def concat_thing():
+        return buff.store(pt.Concat(buff.load(), pt.Itob(i.load())))
 
-    expr = iterate(logthing(), Int(10), i)
-    assert type(expr) is SubroutineCall
+    ut = UnitTestingApp(
+        pt.Seq(
+            buff.store(pt.Bytes("")),
+            iterate(concat_thing(), pt.Int(10), i),
+            buff.load(),
+        )
+    )
 
-    output = [logged_int(x) for x in range(10)]
-    assert_output(expr, output)
+    output = [list(b"".join([x.to_bytes(8, "big") for x in range(10)]))]
+
+    assert_abi_output(ut, [], output)

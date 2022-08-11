@@ -1,29 +1,20 @@
-from pyteal import ScratchSlot, Itob, Log, Int, Seq
+import pyteal as pt
 
-from beaker.testing.helpers import logged_int, assert_output
-
-from .inline_asm import InlineAssembly
+from beaker.testing.helpers import UnitTestingApp, assert_abi_output
+from beaker.lib.inline import InlineAssembly
 
 
 def test_inline_assembly():
+
     get_uint8 = """
 extract 7 1
 """
-    s = ScratchSlot()
-    expr = Seq(InlineAssembly(get_uint8, Itob(Int(255))), s.store(), Log(s.load()))
 
-    expected = [logged_int(255)[-2:]]
-    assert_output(expr, expected)
+    s = pt.ScratchSlot()
 
+    ut = UnitTestingApp(
+        InlineAssembly(get_uint8, pt.Itob(pt.Int(255)), type=pt.TealType.bytes),
+    )
 
-# def test_inline_assembly_invalid():
-#    get_uint8 = """
-# extract a b
-# """
-#    s = ScratchSlot()
-#    expr = Seq(InlineAssembly(get_uint8, Itob(Int(255))), s.store(), Log(s.load()))
-#
-#    expected = [
-#        INVALID_SYNTAX
-#    ]  # TODO: in the next version, this will be "unable to parse"
-#    assert_fail(expr, expected)
+    expected = [255]
+    assert_abi_output(ut, [], [expected])

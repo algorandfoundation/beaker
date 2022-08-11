@@ -143,6 +143,7 @@ def assert_abi_output(
             assert results.abi_results[0].return_value == output
         else:
             result = app_client.call(app.unit_test, **input)
+            print(result.return_value, output)
             assert result.return_value == output
 
     app_client.delete()
