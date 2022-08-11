@@ -2,7 +2,7 @@ import pytest
 import pyteal as pt
 import beaker as bkr
 
-from beaker.testing.helpers import UnitTestingApp, assert_abi_output
+from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
 from beaker.lib.storage.global_blob import GlobalBlob, max_bytes
 
@@ -23,7 +23,7 @@ def test_global_blob_zero():
             )
 
     expected = list(bytes(64))
-    assert_abi_output(LBZero(), [], [expected], opups=1)
+    assert_output(LBZero(), [], [expected], opups=1)
 
 
 def test_global_blob_write_read():
@@ -38,7 +38,7 @@ def test_global_blob_write_read():
             )
 
     expected = list(b"deadbeef")
-    assert_abi_output(LB(), [], [expected], opups=1)
+    assert_output(LB(), [], [expected], opups=1)
 
 
 def test_global_blob_write_read_boundary():
@@ -53,7 +53,7 @@ def test_global_blob_write_read_boundary():
             )
 
     expected = list(bytes(8))
-    assert_abi_output(LB(), [], [expected], opups=1)
+    assert_output(LB(), [], [expected], opups=1)
 
 
 def test_global_blob_write_read_past_end():
@@ -70,7 +70,7 @@ def test_global_blob_write_read_past_end():
     expected = list(bytes(8))
 
     with pytest.raises(bkr.client.LogicException):
-        assert_abi_output(LB(), [], [expected], opups=1)
+        assert_output(LB(), [], [expected], opups=1)
 
 
 def test_global_blob_set_get():
@@ -86,7 +86,7 @@ def test_global_blob_set_get():
             )
 
     expected = [num]
-    assert_abi_output(LB(), [], expected, opups=1)
+    assert_output(LB(), [], expected, opups=1)
 
 
 def test_global_blob_set_past_end():
@@ -104,4 +104,4 @@ def test_global_blob_set_past_end():
     expected = [num]
 
     with pytest.raises(bkr.client.LogicException):
-        assert_abi_output(LB(), [], expected, opups=1)
+        assert_output(LB(), [], expected, opups=1)

@@ -1,6 +1,6 @@
 import pyteal as pt
 
-from beaker.testing.helpers import UnitTestingApp, assert_abi_output
+from beaker.testing import UnitTestingApp, assert_output
 from beaker.lib.inline import InlineAssembly
 
 
@@ -17,4 +17,4 @@ extract 7 1
     )
 
     expected = [255]
-    assert_abi_output(ut, [], [expected])
+    assert_output(ut, [], [expected])

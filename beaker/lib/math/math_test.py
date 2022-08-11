@@ -3,7 +3,7 @@ import math as pymath
 import pyteal as pt
 import beaker as bkr
 
-from beaker.testing.helpers import UnitTestingApp, assert_abi_output
+from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
 import beaker.lib.math as math
 
@@ -17,7 +17,7 @@ def test_even():
     num = 5
     inputs = [num, num - 1]
     output = [x % 2 == 0 for x in inputs]
-    assert_abi_output(EvenTester(), [{"num": n} for n in inputs], output)
+    assert_output(EvenTester(), [{"num": n} for n in inputs], output)
 
 
 def test_odd():
@@ -30,7 +30,7 @@ def test_odd():
     inputs = [num, num - 1]
     output = [x % 2 != 0 for x in inputs]
 
-    assert_abi_output(OddTester(), [{"num": n} for n in inputs], output)
+    assert_output(OddTester(), [{"num": n} for n in inputs], output)
 
 
 def test_pow10():
@@ -43,7 +43,7 @@ def test_pow10():
     inputs = [num]
     output = [int(10**x) for x in inputs]
 
-    assert_abi_output(Pow10Tester(), [{"num": n} for n in inputs], output)
+    assert_output(Pow10Tester(), [{"num": n} for n in inputs], output)
 
 
 def test_min():
@@ -57,7 +57,7 @@ def test_min():
     inputs = [(100, 10)]
     output = [min(a, b) for a, b in inputs]
 
-    assert_abi_output(MinTester(), [{"a": a, "b": b} for a, b in inputs], output)
+    assert_output(MinTester(), [{"a": a, "b": b} for a, b in inputs], output)
 
 
 def test_max():
@@ -71,7 +71,7 @@ def test_max():
     inputs = [(100, 10)]
     output = [max(a, b) for a, b in inputs]
 
-    assert_abi_output(MaxTester(), [{"a": a, "b": b} for a, b in inputs], output)
+    assert_output(MaxTester(), [{"a": a, "b": b} for a, b in inputs], output)
 
 
 def test_div_ceil():
@@ -85,7 +85,7 @@ def test_div_ceil():
     inputs = [(100, 3)]
     output = [pymath.ceil(a / b) for a, b in inputs]
 
-    assert_abi_output(DivCeilTester(), [{"a": a, "b": b} for a, b in inputs], output)
+    assert_output(DivCeilTester(), [{"a": a, "b": b} for a, b in inputs], output)
 
 
 def test_saturate():
@@ -104,7 +104,7 @@ def test_saturate():
     inputs = [(50, 100, 20), (15, 100, 20), (150, 100, 20)]
     output = [max(min(b, a), c) for a, b, c in inputs]
 
-    assert_abi_output(
+    assert_output(
         DivCeilTester(), [{"a": a, "b": b, "c": c} for a, b, c in inputs], output
     )
 
@@ -118,7 +118,7 @@ def test_wide_factorial():
     num = 5
     inputs = [num]
     output = [pymath.factorial(num) for num in inputs]
-    assert_abi_output(WideFactorialTester(), [{"num": num} for num in inputs], output)
+    assert_output(WideFactorialTester(), [{"num": num} for num in inputs], output)
 
 
 def test_exponential():
@@ -134,7 +134,7 @@ def test_exponential():
     inputs = [(num, iters)]
     output = [int(pymath.exp(num)) for num, _ in inputs]
 
-    assert_abi_output(
+    assert_output(
         WideFactorialTester(),
         [{"num": num, "iters": iters} for num, iters in inputs],
         output,

@@ -1,5 +1,5 @@
 import pyteal as pt
-from beaker.testing.helpers import UnitTestingApp, assert_abi_output
+from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
 from beaker.lib.iter import iterate
 
@@ -14,7 +14,7 @@ def test_iterate():
     )
 
     output = [list(b"a" * 10)]
-    assert_abi_output(ut, [], output)
+    assert_output(ut, [], output)
 
 
 def test_iterate_with_closure():
@@ -35,4 +35,4 @@ def test_iterate_with_closure():
 
     output = [list(b"".join([x.to_bytes(8, "big") for x in range(10)]))]
 
-    assert_abi_output(ut, [], output)
+    assert_output(ut, [], output)
