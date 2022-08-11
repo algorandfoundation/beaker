@@ -38,7 +38,7 @@ This works, but is difficult to understand for a newcomer.
 
 ## Interacting with the Application
 
-To create the application on-chain you need to compile the teal programs then create a transaction with the programs,  schema ("How many global uints do I need again?"), and extra pages. 
+To deploy an application on-chain, you submit an app create transaction. In this transaction, you specify the compiled TEAL programs, the application schema ("How many global uints do I need again?"), and extra program pages. 
 
 Calling the application involves crafting transactions with the appropriate routing and data arguments if not using the ABI.
 
