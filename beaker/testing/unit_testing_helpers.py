@@ -11,59 +11,10 @@ import pyteal as pt
 import beaker as bkr
 
 client = bkr.sandbox.get_algod_client()
-
+accounts = bkr.sandbox.get_accounts()
 
 def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
-
-
-class TestAccount:
-    def __init__(
-        self,
-        address: str,
-        private_key: Optional[str],
-        lsig: Optional[transaction.LogicSig] = None,
-        app_id: Optional[int] = None,
-    ):
-        self.address = address
-        self.private_key = private_key
-        self.signer = AccountTransactionSigner(private_key)
-        self.lsig = lsig
-        self.app_id = app_id
-
-        assert self.private_key or self.lsig or self.app_id
-
-    def mnemonic(self) -> str:
-        return mnemonic.from_private_key(self.private_key)
-
-    def is_lsig(self) -> bool:
-        return bool(not self.private_key and not self.app_id and self.lsig)
-
-    def application_address(self) -> str:
-        return logic.get_application_address(self.app_id)
-
-    def sign(self, txn: transaction.Transaction):
-        """Sign a transaction with an TestAccount."""
-        if self.is_lsig():
-            return transaction.LogicSigTransaction(txn, self.lsig)
-        else:
-            assert self.private_key
-            return txn.sign(self.private_key)
-
-    @classmethod
-    def create(cls) -> "TestAccount":
-        private_key, address = account.generate_account()
-        return cls(private_key=private_key, address=str(address))
-
-    @property
-    def decoded_address(self):
-        return encoding.decode_address(self.address)
-
-
-accounts = [
-    TestAccount(acct.address, acct.private_key) for acct in bkr.sandbox.get_accounts()
-]
-
 
 class UnitTestingApp(bkr.Application):
 
@@ -73,10 +24,9 @@ class UnitTestingApp(bkr.Application):
 
 
     1) Initialize with a single Expr that returns bytes
-        The bytes output from the Expr are returned from the abi method `unit_test()[]byte`
+        The bytes output from the Expr are returned from the abi method ``unit_test()[]byte``
 
-    2) Subclass UnitTestingApp and override `unit_test` or any other methods with custom
-        functionality.
+    2) Subclass UnitTestingApp and override `unit_test`
         Any inputs or output may be specified but you're responsible for encoding the incoming
         arguments as a dict with keys matching the argument names of the custom `unit_test` method
 
@@ -86,12 +36,7 @@ class UnitTestingApp(bkr.Application):
 
     def __init__(self, expr_to_test: pt.Expr = None):
         self.expr = expr_to_test
-
         super().__init__()
-
-    @bkr.create
-    def create(self):
-        return self.app_state.initialize()
 
     @bkr.delete
     def delete(self):
