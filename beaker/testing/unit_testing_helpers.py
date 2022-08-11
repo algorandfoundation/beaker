@@ -115,6 +115,10 @@ class UnitTestingApp(bkr.Application):
 
     @bkr.external
     def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+        if self.expr is None:
+            raise Exception(
+                "Expression undefined. Either set the expr to test on init or override unit_test method"
+            )
         return pt.Seq((s := pt.abi.String()).set(self.expr), output.decode(s.encode()))
 
 
