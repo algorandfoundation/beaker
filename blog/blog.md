@@ -237,7 +237,7 @@ Initially Beaker provides helpers for:
 1) Retrieving and comparing account balances.  
 2) Unit testing functionality by passing inputs and comparing to expected outputs.
 
-For more see [Testing docs](https://algorand-devrel.github.io/beaker/html/testing.html) for more.
+For more information, see [Testing docs](https://algorand-devrel.github.io/beaker/html/testing.html).
 
 ## More
 
