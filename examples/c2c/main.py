@@ -11,12 +11,12 @@ from pyteal import (
     InnerTxn,
     ScratchVar,
 )
-from beaker import Application, external, sandbox, client, consts, testing, internal
+import beaker as bkr
 from beaker.application import get_method_signature
 
 
-class C2CSub(Application):
-    @external
+class C2CSub(bkr.Application):
+    @bkr.external
     def opt_in_to_asset(self, asset: abi.Asset):
         return InnerTxnBuilder.Execute(
             {
@@ -28,7 +28,7 @@ class C2CSub(Application):
             }
         )
 
-    @external
+    @bkr.external
     def return_asset(self, asset: abi.Asset, addr: abi.Account):
         return InnerTxnBuilder.Execute(
             {
@@ -42,8 +42,8 @@ class C2CSub(Application):
         )
 
 
-class C2CMain(Application):
-    @internal(TealType.uint64)
+class C2CMain(bkr.Application):
+    @bkr.internal(TealType.uint64)
     def create_asset(self, name):
         return Seq(
             InnerTxnBuilder.Execute(
@@ -58,7 +58,7 @@ class C2CMain(Application):
             InnerTxn.created_asset_id(),
         )
 
-    @internal(TealType.none)
+    @bkr.internal(TealType.none)
     def trigger_opt_in_and_xfer(self, app_id, app_addr, asset_id):
         return Seq(
             InnerTxnBuilder.Begin(),
@@ -79,7 +79,7 @@ class C2CMain(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @internal(TealType.none)
+    @bkr.internal(TealType.none)
     def trigger_return(self, app_id, asset_id):
         # Create the group txn to ask sub app to opt in and send sub app 1 token
         # Tell the sub app to send me back the stuff i sent it
@@ -93,7 +93,7 @@ class C2CMain(Application):
             InnerTxnBuilder.Submit(),
         )
 
-    @external
+    @bkr.external
     def create_asset_and_send(
         self, name: abi.String, sub_app: abi.Application, *, output: abi.Uint64
     ):
@@ -114,25 +114,25 @@ class C2CMain(Application):
         )
 
 
-if __name__ == "__main__":
+def demo():
 
-    accts = sandbox.get_accounts()
+    accts = bkr.sandbox.get_accounts()
     acct = accts.pop()
 
     # Create sub app
     app_sub = C2CSub()
-    app_client_sub = client.ApplicationClient(
-        sandbox.get_algod_client(), app_sub, signer=acct.signer
+    app_client_sub = bkr.client.ApplicationClient(
+        bkr.sandbox.get_algod_client(), app_sub, signer=acct.signer
     )
     app_client_sub.create()
 
     # Create main app and fund it
     app_main = C2CMain()
-    app_client_main = client.ApplicationClient(
-        sandbox.get_algod_client(), app_main, signer=acct.signer
+    app_client_main = bkr.client.ApplicationClient(
+        bkr.sandbox.get_algod_client(), app_main, signer=acct.signer
     )
     app_client_main.create()
-    app_client_main.fund(1 * consts.algo)
+    app_client_main.fund(1 * bkr.consts.algo)
 
     # Call main app method to:
     #   create the asset
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     #   call the sub app return asset method
     sp = app_client_main.client.suggested_params()
     sp.flat_fee = True
-    sp.fee = 1 * consts.algo
+    sp.fee = 1 * bkr.consts.algo
     result = app_client_main.call(
         app_main.create_asset_and_send,
         name="dope asset",
@@ -151,7 +151,11 @@ if __name__ == "__main__":
     print(f"Created asset id: {result.return_value}")
 
     print(
-        testing.get_balances(
+        bkr.testing.get_balances(
             app_client_sub.client, [app_client_sub.app_addr, app_client_main.app_addr]
         )
     )
+
+
+if __name__ == "__main__":
+    demo()

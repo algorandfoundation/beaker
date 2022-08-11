@@ -89,8 +89,10 @@
 <span class="n">client</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 <span class="n">accounts</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
 
+
 <span class="k">def</span> <span class="nf">returned_int_as_bytes</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">bits</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">))</span>
+
 
 <div class="viewcode-block" id="UnitTestingApp"><a class="viewcode-back" href="../../../testing.html#beaker.testing.UnitTestingApp">[docs]</a><span class="k">class</span> <span class="nc">UnitTestingApp</span><span class="p">(</span><span class="n">bkr</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
 

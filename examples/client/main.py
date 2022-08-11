@@ -1,11 +1,15 @@
 from typing import Final
-from pyteal import abi, TealType, Global
+from pyteal import abi, TealType, Global, Approve
 from beaker import (
     Application,
     AccountStateValue,
     ApplicationStateValue,
     Authorize,
+    create,
     external,
+    opt_in,
+    close_out,
+    delete,
     client,
     sandbox,
     consts,
@@ -22,6 +26,23 @@ class ClientExample(Application):
         stack_type=TealType.bytes, descr="what this user prefers to be called"
     )
 
+    @create
+    def create(self):
+        return self.initialize_application_state()
+
+    @opt_in
+    def opt_in(self):
+        # Defaults to sender
+        return self.initialize_account_state()
+
+    @close_out
+    def close_out(self):
+        return Approve()
+
+    @delete(authorize=Authorize.only(manager))
+    def delete(self):
+        return Approve()
+
     @external(authorize=Authorize.only(manager))
     def set_manager(self, new_manager: abi.Address):
         return self.manager.set(new_manager.get())
@@ -36,7 +57,6 @@ class ClientExample(Application):
 
 
 def demo():
-
     # Set up accounts we'll use
     accts = sandbox.get_accounts()
 
@@ -45,24 +65,27 @@ def demo():
 
     # Instantiate app
     app = ClientExample()
+    print("Create example", app.create())
 
     # Create Application client
     app_client1 = client.ApplicationClient(
         client=sandbox.get_algod_client(), app=app, signer=acct1.signer
     )
 
-    # Create the app on chain (uses signer1)
+    # Create the app on-chain (uses signer1)
     app_client1.create()
-
-    # Create copies of the app client with specific signer, _after_ we've created and set the app id
-    app_client2 = app_client1.prepare(signer=acct2.signer)
-
+    print(f"Current app state: {app_client1.get_application_state()}")
     # Fund the app account with 1 algo
     app_client1.fund(1 * consts.algo)
 
     # Try calling set nickname from both accounts after opting in
     app_client1.opt_in()
     app_client1.call(app.set_nick, nick="first")
+
+    print(f"Current app state: {app_client1.get_application_state()}")
+    # Create copies of the app client with specific signer, _after_ we've created and set the app id
+    app_client2 = app_client1.prepare(signer=acct2.signer)
+    print(f"Current app state: {app_client1.get_application_state()}")
 
     # Try calling without opting in
     try:
@@ -91,9 +114,17 @@ def demo():
     app_client1.call(app.set_manager, new_manager=acct2.address)
     print(f"Current app state: {app_client1.get_application_state()}")
 
+    print(app_client1.get_application_state())
     # and back
     app_client2.call(app.set_manager, new_manager=acct1.address)
     print(f"Current app state: {app_client1.get_application_state()}")
+
+    try:
+        app_client1.close_out()
+        app_client2.close_out()
+        app_client1.delete()
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,6 @@
 """Module containing helper functions for testing PyTeal Utils."""
-from typing import Optional, Any
-from algosdk import account, encoding, logic, mnemonic
-from algosdk.future import transaction
-from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
-    AtomicTransactionComposer,
-)
+from typing import Any
+from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 import pyteal as pt
 import beaker as bkr
@@ -13,8 +8,10 @@ import beaker as bkr
 client = bkr.sandbox.get_algod_client()
 accounts = bkr.sandbox.get_accounts()
 
+
 def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
+
 
 class UnitTestingApp(bkr.Application):
 

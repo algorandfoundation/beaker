@@ -101,7 +101,7 @@ Beaker provides a way to define state values as class variables and use them thr
 Lets write a new app with Application State (or `Global State <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract>`_ in Algorand parlance) to our Application. 
 
 .. literalinclude:: ../../examples/simple/counter.py
-    :lines: 12-40
+    :lines: 12-38
 
 We've added an :ref:`ApplicationStateValue <application_state_value>` attribute to our class with several configuration options and we can reference it by name throughout our application.
 
@@ -120,7 +120,7 @@ Inheritance
 What about extending our Application with some other functionality?
 
 .. literalinclude:: ../../examples/opup/contract.py
-    :lines: 7-29
+    :lines: 7-42
 
 Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 

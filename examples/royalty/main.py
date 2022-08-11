@@ -3,7 +3,7 @@ from algosdk.future import transaction
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_algod_client, get_accounts
 
-from contract import MyRoyaltyContract
+from .contract import MyRoyaltyContract
 
 
 client = get_algod_client()

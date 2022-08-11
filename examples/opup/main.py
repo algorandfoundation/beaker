@@ -8,7 +8,7 @@ from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_algod_client, get_accounts
 
-from contract import ExpensiveApp
+from .contract import ExpensiveApp
 
 
 client = get_algod_client()
@@ -19,10 +19,6 @@ acct = get_accounts().pop()
 def demo():
     # Initialize Application from amm.py
     app = ExpensiveApp()
-
-    # import json
-    # print(json.dumps(app.contract.dictify()))
-    # return
 
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()

@@ -16,11 +16,8 @@ class CounterApp(Application):
         descr="A counter for showing how to use application state",
     )
 
-    # Note: this method is redundant with the one defined in Application
-    # defining it here to demonstrate functionality
     @create
     def create(self):
-        """create application"""
         return self.initialize_application_state()
 
     @external(authorize=Authorize.only(Global.creator_address()))
