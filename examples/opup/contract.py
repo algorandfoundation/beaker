@@ -1,20 +1,33 @@
-from typing import Literal
-from pyteal import *
+from typing import Literal, Annotated
+from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
+from beaker.decorators import ParameterAnnotation, external, DefaultArgument
 from beaker.contracts import OpUp
-from beaker.decorators import ResolvableArguments, external
 
 
 class ExpensiveApp(OpUp):
     """Do expensive work to demonstrate inheriting from OpUp"""
 
-    @external(resolvable=ResolvableArguments(opup_app=OpUp.opup_app_id))
+    @external
     def hash_it(
         self,
-        input: abi.String,
-        iters: abi.Uint64,
-        opup_app: abi.Application,
+        input: Annotated[abi.String, ParameterAnnotation(descr="The input to hash")],
+        iters: Annotated[
+            abi.Uint64, ParameterAnnotation(descr="The number of times to iterate")
+        ],
+        opup_app: Annotated[
+            abi.Application,
+            ParameterAnnotation(
+                descr="The app id to use for opup reququests",
+                default=OpUp.opup_app_id,
+            ),
+        ],
         *,
-        output: abi.StaticArray[abi.Byte, Literal[32]],
+        output: Annotated[
+            abi.StaticArray[abi.Byte, Literal[32]],
+            ParameterAnnotation(
+                descr="The result of hashing the input a number of times"
+            ),
+        ],
     ):
         return Seq(
             Assert(opup_app.application_id() == self.opup_app_id),

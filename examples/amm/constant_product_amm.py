@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
 from copy import copy
-import random
 
 # Python impl of constant product
 
@@ -70,7 +69,7 @@ class ConstantProductInvariant:
         assert in_supply > 0
         assert out_supply > 0
         """ Constant product swap method with fixed input
-                 
+
             X * Y = K
 
             X, Y are current supply of assets, goal is to keep K the same after adding in_amt and subtracting out amt 
@@ -138,7 +137,7 @@ class Simulator:
             a_size = size * self.cpi.ratio()
             b_size = size
 
-            minted = self.cpi.mint(a_size, b_size)
+            self.cpi.mint(a_size, b_size)
             self.states.append(copy(self.cpi))
 
     def run_burns(self, num: int = 100):
@@ -147,7 +146,7 @@ class Simulator:
             # Get a reasonable size given number of issued tokens
             # should be ~ 1% --> 0.0001% burns
             size = self.cpi.issued() // size
-            burn_a, burn_b = self.cpi.burn(size)
+            self.cpi.burn(size)
             self.states.append(copy(self.cpi))
 
     def run_swaps(self, num: int = 100):
@@ -157,7 +156,7 @@ class Simulator:
             a_swap = (idx + size) % 2 == 0
             # Re-size if its an a_swap
             size *= self.cpi.ratio() if a_swap else 1
-            swapped = self.cpi.swap(size, a_swap)
+            _ = self.cpi.swap(size, a_swap)
             self.states.append(copy(self.cpi))
 
     def run_mix(self, num=100):

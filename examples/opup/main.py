@@ -1,12 +1,11 @@
 from hashlib import sha256
 from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
     TransactionWithSigner,
 )
 from algosdk.future import transaction
 
 from beaker.client import ApplicationClient
-from beaker.consts import algo, milli_algo
+from beaker.consts import milli_algo
 from beaker.sandbox import get_algod_client, get_accounts
 
 from contract import ExpensiveApp
@@ -14,26 +13,31 @@ from contract import ExpensiveApp
 
 client = get_algod_client()
 
-addr, sk, signer = get_accounts().pop()
+acct = get_accounts().pop()
 
 
 def demo():
     # Initialize Application from amm.py
     app = ExpensiveApp()
 
+    # import json
+    # print(json.dumps(app.contract.dictify()))
+    # return
+
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()
     # we need to cover 255 inner transactions + ours
     sp.flat_fee = True
     sp.fee = 256 * milli_algo
-    app_client = ApplicationClient(client, app, signer=signer, suggested_params=sp)
+    app_client = ApplicationClient(client, app, signer=acct.signer, suggested_params=sp)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
     txn = TransactionWithSigner(
-        txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
+        txn=transaction.PaymentTxn(acct.address, sp, app_addr, int(1e6)),
+        signer=acct.signer,
     )
     result = app_client.call(app.opup_bootstrap, ptxn=txn)
     print(f"Created op up app: {result.return_value}")

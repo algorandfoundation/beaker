@@ -1,11 +1,10 @@
 import pytest
 import pyteal as pt
 
-from .application import get_method_spec
 from .decorators import (
-    ResolvableArguments,
     external,
     get_handler_config,
+    DefaultArgument,
     Authorize,
     create,
     clear_state,
@@ -19,7 +18,7 @@ from .decorators import (
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
-def test_external_config():
+def test_handler_config():
     @external
     def handleable():
         pass
@@ -170,6 +169,19 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+    # Bare handler
+
+    @delete(authorize=auth_only)
+    def deleter():
+        return pt.Approve()
+
+    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender())), pt.Approve())
+
+    expected = expr.__teal__(options)
+    actual = deleter().__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
     with pytest.raises(pt.TealTypeError):
         Authorize.opted_in(pt.Bytes("abc"))
 
@@ -254,49 +266,30 @@ def test_resolvable():
     )
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArguments(x=x)
-    assert r.x == {"local-state": "x"}
+    r = DefaultArgument(x)
+    assert r.resolvable_class == "local-state"
 
     x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes("x")])
-    assert r.x == {"local-state": "x"}
+    r = DefaultArgument(x[pt.Bytes("x")])
+    assert r.resolvable_class == "local-state"
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = ResolvableArguments(x=x)
-    assert r.x == {"global-state": "x"}
+    r = DefaultArgument(x)
+    assert r.resolvable_class == "global-state"
 
     x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes("x")])
-    assert r.x == {"global-state": "x"}
-
-    x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = ResolvableArguments(x=x[pt.Bytes("x")])
-    assert r.x == {"global-state": "x"}
+    r = DefaultArgument(x[pt.Bytes("x")])
+    assert r.resolvable_class == "global-state"
 
     @external(read_only=True)
     def x():
         return pt.Assert(pt.Int(1))
 
-    r = ResolvableArguments(x=x)
-    assert r.x == {"abi-method": get_method_spec(x).dictify()}
+    r = DefaultArgument(x)
+    assert r.resolvable_class == "abi-method"
 
-    r = ResolvableArguments(x="1")
-    assert r.x == {"constant": "1"}
+    r = DefaultArgument(pt.Bytes("1"))
+    assert r.resolvable_class == "constant"
 
-    r = ResolvableArguments(x=1)
-    assert r.x == {"constant": 1}
-
-    with pytest.raises(Exception):
-
-        @external(resolvable=ResolvableArguments(x=1))
-        def doit(a: pt.abi.Uint64):
-            pass
-
-    with pytest.raises(Exception):
-
-        @external
-        def x():
-            return pt.Assert(pt.Int(1))
-
-        r = ResolvableArguments(x=x)
-        assert r.x == {"abi-method": get_method_spec(x).dictify()}
+    r = DefaultArgument(pt.Int(1))
+    assert r.resolvable_class == "constant"

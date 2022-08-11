@@ -24,7 +24,7 @@ This is a full application, though it doesn't do much.
 Instantiate it and take a look at some of the resulting fields. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
-    :lines: 61-66
+    :lines: 60-65
 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
@@ -34,7 +34,7 @@ We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 9-30
+    :lines: 9-28
 
 
 The ``@external`` decorator adds an ABI method to our application and includes it in the routing logic for handling an ABI call. 
@@ -47,7 +47,7 @@ The python method must return an ``Expr`` of some kind, invoked when the externa
 Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 33-48
+    :lines: 32-47
 
 
 Thats it! 
@@ -125,3 +125,69 @@ What about extending our Application with some other functionality?
 Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 
 We inherit the methods and class variables that ``OpUp`` defined, allowing us to encapsulate and compose behavior.
+
+
+.. _parameter_annotations:
+
+Parameter Annotations
+---------------------
+
+.. currentmodule:: beaker.decorators
+.. autoclass:: ParameterAnnotation
+
+
+A caller of our application should be provided with all the information they might need in order to make a successful application call.
+
+One example of this of information is of course the parameter name and type. These bits of information are already provided by the normal method definition. 
+
+ 
+.. _parameter_description:
+
+Parameter Description
+^^^^^^^^^^^^^^^^^^^^^^
+
+Another example that is harder to provide is the description of the parameter. The plain english explanation of what the parameter _should_ be can be quite helpful in determining what to pass the method. To set a description on a parameter you can use the python ``typing.Annotated`` generic class and pass it an instance of ``ParameterAnnotation``.
+
+.. code-block:: python
+
+    from typing import Annotated
+
+    #...
+
+    @external
+    def unhelpful_method_name(self, num: Annotated[
+        abi.Uint64, 
+        ParameterAnnotation(
+            descr="The magic number, which should be prime, else fail"
+        )
+    ]):
+        return is_prime(num.get())
+
+
+Here we've annotated the ``num`` parameter with a description that should help the caller figure out what should be passed. This description is added to the appropriate method args description field in the json spec.
+
+
+.. _parameter_default:
+
+Parameter Default Value
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In the ``OpUp`` example the argument ``opup_app`` should be the id of the application that we use to increase our budget via inner app calls.  This value should not change frequently, if at all, but is still required to be passed by the caller so we may _use_ it in our logic. 
+
+Using the ``default`` field of the ``ParameterAnnotation``, we can specify a default value for the parameter.  
+
+This allows the caller to know this pseudo-magic number ahead of time and makes calling your application easier.  The information is communicated through the full ApplicationSpec as a hint the caller can use to figure out what the value should be.
+
+Options for default arguments are:
+
+- A constant, `Bytes | Int`
+- State Values, `ApplicationStateValue | AccountStateValue`
+- A read-only ABI method  
+
+The result is that we can call the method, omitting the `opup_app` argument:
+
+.. code-block:: python
+
+    result = app_client.call(app.hash_it, input="hashme", iters=10)
+
+When invoked, the `ApplicationClient` consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.

@@ -1,13 +1,11 @@
 from typing import Final
 
 from pyteal import abi, TealType, Int, Seq
-from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
-)
 
 from beaker import (
     Application,
     DynamicAccountStateValue,
+    opt_in,
     external,
     sandbox,
     client,
@@ -26,6 +24,10 @@ class Structer(Application):
         stack_type=TealType.bytes,
         max_keys=16,
     )
+
+    @opt_in
+    def opt_in(self):
+        return self.acct_state.initialize()
 
     @external
     def place_order(self, order_number: abi.Uint8, order: Order):
@@ -56,14 +58,14 @@ class Structer(Application):
 
 
 def demo():
-    addr, sk, signer = sandbox.get_accounts().pop()
+    acct = sandbox.get_accounts().pop()
 
     # Initialize Application from amm.py
     app = Structer()
 
     # Create an Application client containing both an algod client and my app
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=signer
+        sandbox.get_algod_client(), app, signer=acct.signer
     )
 
     # Create the applicatiion on chain, set the app id for the app client

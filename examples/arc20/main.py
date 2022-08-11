@@ -5,7 +5,6 @@ from algosdk.future.transaction import (
     OnComplete,
 )
 from algosdk.atomic_transaction_composer import (
-    AccountTransactionSigner,
     TransactionWithSigner,
 )
 from beaker.contracts.arcs import ARC20
@@ -18,18 +17,18 @@ algod_client = get_algod_client()
 
 def demo():
 
-    addr, sk, signer = accts.pop()
+    acct = accts.pop()
 
     app = ARC20()
 
-    app_client = ApplicationClient(algod_client, app=app, signer=signer)
+    app_client = ApplicationClient(algod_client, app=app, signer=acct.signer)
 
     app_id, app_addr, txid = app_client.create()
     print(f"Created app: {app_id} with address {app_addr}")
 
     sp = algod_client.suggested_params()
     txid = algod_client.send_transaction(
-        PaymentTxn(addr, sp, app_addr, int(1e6)).sign(sk)
+        PaymentTxn(acct.address, sp, app_addr, int(1e6)).sign(acct.private_key)
     )
     wait_for_confirmation(algod_client=algod_client, txid=txid, wait_rounds=4)
 
@@ -47,10 +46,10 @@ def demo():
         name="Tester",
         url="https://test.com",
         metadata_hash="",
-        manager_addr=addr,
-        freeze_addr=addr,
-        clawback_addr=addr,
-        reserve_addr=addr,
+        manager_addr=acct.address,
+        freeze_addr=acct.address,
+        clawback_addr=acct.address,
+        reserve_addr=acct.address,
     )
 
     smart_asa_id = result.return_value
@@ -68,10 +67,10 @@ def demo():
         name="Tester",
         url="https://test.com",
         metadata_hash="",
-        manager_addr=addr,
-        freeze_addr=addr,
-        clawback_addr=addr,
-        reserve_addr=addr,
+        manager_addr=acct.address,
+        freeze_addr=acct.address,
+        clawback_addr=acct.address,
+        reserve_addr=acct.address,
     )
 
     print(f"Reconfigured asset id: {smart_asa_id}")
@@ -83,8 +82,8 @@ def demo():
             on_complete=OnComplete.OptInOC,
             asset=smart_asa_id,
             opt_in_txn=TransactionWithSigner(
-                txn=AssetOptInTxn(addr, sp, smart_asa_id),
-                signer=signer,
+                txn=AssetOptInTxn(acct.address, sp, smart_asa_id),
+                signer=acct.signer,
             ),
         )
     except Exception as e:

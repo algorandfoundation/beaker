@@ -9,12 +9,11 @@ from beaker.sandbox import get_algod_client, get_accounts
 def test_op_up():
     app = OpUp()
 
-    accts = get_accounts()
-    addr, sk, signer = accts.pop()
+    acct = get_accounts().pop()
 
     client = get_algod_client()
 
-    ac = ApplicationClient(client, app, signer=signer)
+    ac = ApplicationClient(client, app, signer=acct.signer)
 
     _, app_addr, _ = ac.create()
 
@@ -22,7 +21,7 @@ def test_op_up():
     sp.flat_fee = True
     sp.fee = 256 * milli_algo
     ptxn = TransactionWithSigner(
-        txn=PaymentTxn(addr, sp, app_addr, int(1e6)), signer=signer
+        txn=PaymentTxn(acct.address, sp, app_addr, int(1e6)), signer=acct.signer
     )
 
     result = ac.call(app.opup_bootstrap, ptxn=ptxn)

@@ -1,9 +1,6 @@
-import base64
-
 from algosdk.future import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
-    AccountTransactionSigner,
     TransactionWithSigner,
 )
 
@@ -14,7 +11,8 @@ from amm import ConstantProductAMM
 
 
 # Take first account from sandbox
-addr, sk, signer = get_accounts().pop()
+acct = get_accounts().pop()
+addr, sk, signer = acct.address, acct.private_key, acct.signer
 
 # get sandbox client
 client = get_algod_client()
@@ -23,7 +21,7 @@ client = get_algod_client()
 app = ConstantProductAMM()
 
 # Create an Application client containing both an algod client and my app
-app_client = ApplicationClient(client, app, signer=signer)
+app_client = ApplicationClient(client, app, signer=acct.signer)
 
 
 def demo():

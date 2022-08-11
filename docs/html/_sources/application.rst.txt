@@ -5,6 +5,7 @@ Application
 
 This is the base class that all Beaker Applications should inherit from.
 
+This should _not_ be initialized directly.
 
 .. autoclass:: Application
 
@@ -14,10 +15,9 @@ This is the base class that all Beaker Applications should inherit from.
     .. automethod:: initialize_application_state
     .. automethod:: initialize_account_state
 
-    Override the following methods to define custom behavior
+    Override the create method define custom behavior
 
     .. automethod:: create
-    .. automethod:: opt_in
 
 
 

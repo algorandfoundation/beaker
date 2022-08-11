@@ -53,11 +53,13 @@ See full examples `here <https://github.com/algorand-devrel/beaker/tree/master/e
 
     usage
     application
+    application_client
+    sandbox
     state
     decorators
     structs
-    application_client
     contracts
+    testing
 
 
 Indices and tables

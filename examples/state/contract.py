@@ -1,6 +1,15 @@
 from typing import Final
-from beaker import *
-from pyteal import *
+from beaker import (
+    Application,
+    ApplicationStateValue,
+    DynamicApplicationStateValue,
+    AccountStateValue,
+    DynamicAccountStateValue,
+    create,
+    opt_in,
+    external,
+)
+from pyteal import abi, TealType, Bytes, Int, Txn
 
 
 class StateExample(Application):
@@ -67,6 +76,11 @@ class StateExample(Application):
         # Accessing with `[Txn.sender()]` is redundant but
         # more clear what is happening
         return self.declared_account_value[Txn.sender()].set(v.get())
+
+    @external
+    def incr_account_state_val(self, v: abi.Uint64):
+        # Omitting [Txn.sender()] just for demo purposes
+        return self.declared_account_value.increment(v.get())
 
     @external(read_only=True)
     def get_account_state_val(self, *, output: abi.Uint64):
