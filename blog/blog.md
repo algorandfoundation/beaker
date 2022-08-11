@@ -47,7 +47,7 @@ Even when using the ABI, calling methods involves importing the JSON contract an
 
 ## Managing State 
 
-Managing state schema is often done manually with constants for the keys and remembering what the type associated should be. 
+Managing the application state schema is often done manually with constants for the keys and remembering what the type associated should be. 
 
 Creating the application requires you to know the number and type of each state value which you have no easy way to get automatically.
 
