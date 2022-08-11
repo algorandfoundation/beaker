@@ -18,7 +18,7 @@ A very common pattern is something like:
         return Cond(
             [Txn.application_id() == Int(0), do_create_method()],
             [Txn.on_complete() == OnComplete.UpdateApplication, do_update()],
-            [Txn.application_args[0] == "doit", doit()],
+            [Txn.application_args[0] == "do_the_thing", do_the_thing()],
             #...
         )
 
@@ -27,7 +27,7 @@ A very common pattern is something like:
 
 ``` 
 
-This works, but is far from obvious to a newcomer.
+This works, but is far from obvious to a newcomer. 
 
 
 ## Interacting with the Application
@@ -40,23 +40,26 @@ Even when using the ABI, calling methods involves importing the json contract an
 
 
 ## Managing State 
+
 Managing state schema is often done manually with constants for the keys and remembering what the type associated should be. 
 
 Creating the application requires you to know the number and type of each state value which you have no easy way to get automatically.
 
 ## Debugging
+
 Debugging can be a nightmare of trying to figure out an error message like `assert failed: pc=XXX` 
 
 <img src="pc-load-letter-pc.gif" alt="pc load letter??" style="width:200px">
 
 
 ## Testing
+
 Testing contracts is difficult and requires rebuilding a lot of the front end infrastructure to test different inputs/outputs. 
 
 
 # Improvements 
 
-Now let's see how things have changed.
+Now, let's see how things have changed.
 
 ## ABI
 
@@ -101,9 +104,9 @@ This means you can associate a `pc` directly to the source TEAL line with all th
 
 # Hello Beaker
 
-The above improvements allow us to provide much more structure to applications. 
-
 Today we are sharing [Beaker](https://github.com/algorand-devrel/beaker), a Smart Contract development framework meant to improve the development experience. 
+
+Beaker takes advantage of the above improvements, allowing us to provide much more structure to applications. 
 
 Heads up though, it is still experimental.
 
@@ -127,10 +130,18 @@ class MyApp(Application):
         return output.set(a.get() + b.get())
 ```
 
-This is a full application! Not a `Cond` in sight.
+This is a full application! It's got an `approval program`, `clear program`, an implicitly empty `state` and provides the ABI `contract` to export for other clients.
 
+The `@external` decorator on the method exposes our defined method to callers and provides routing based on its `method selector`. The resulting method signature of this method is `add(uint64,uint64)uint64`.
+
+The method that has been tagged is a (mostly) valid [PyTeal ABI Method](https://pyteal.readthedocs.io/en/stable/abi.html#subroutines-with-abi-types). The exception here is that Beaker allows you to pass `self`, meaning you can take advantage of instance vars passed on initialization.
+
+There is much more you can do with it including [access control](https://algorand-devrel.github.io/beaker/html/decorators.html#authorization), changing which `OnComplete` types may be used to call it, or marking it as a `read-only` method.
+
+For more see the [Decorator docs](https://algorand-devrel.github.io/beaker/html/decorators.html)
 
 ## Interacting with the application
+
 Beaker provides an `ApplicationClient` to deal with the common needs like creation/opt-in/calling methods.
 
 
@@ -142,9 +153,9 @@ from beaker import sandbox, client
 app = MyApp()
 
 # get the first acct in the sandbox
-_, _, signer = sandbox.get_accts().pop()
+acct = sandbox.get_accts().pop()
 
-app_client = client.ApplicationClient(sandbox.get_algod_client(), app, signer=signer)
+app_client = client.ApplicationClient(sandbox.get_algod_client(), app, signer=acct.signer)
 
 # deploy the app on-chain
 app_client.create()
@@ -179,6 +190,7 @@ app = CounterApp()
 print(app.app_state.schema())
 ```
 
+For more see [State docs](https://algorand-devrel.github.io/beaker/html/state.html)
 
 ## Debugging
 
@@ -214,8 +226,12 @@ We're also working on getting this mapping all the way back to the source PyTeal
 
 ## Testing
 
-Initially Beaker provides helpers for validating account balances. More testing infrastructure is needed. 
+Initially Beaker provides helpers for:
 
+1) Retrieving and comparing account balances.  
+2) Unit testing functionality by passing inputs and comparing to expected outputs.
+
+For more see [Testing docs](https://algorand-devrel.github.io/beaker/html/testing.html) for more.
 
 ## More
 
@@ -228,6 +244,7 @@ The code at https://github.com/algorand-devrel/beaker
 And for any questions, ping `@barnji` in the `#beaker` channel on the [Algorand discord](https://discord.gg/algorand)
 
 I want all the feedback.
+
 
 # TL;DR
 
