@@ -497,4 +497,3 @@ def test_abi_method_details():
 
     with pytest.raises(Exception):
         get_method_selector(meth2)
-
