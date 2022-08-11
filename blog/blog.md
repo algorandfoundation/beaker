@@ -40,7 +40,7 @@ This works, but is difficult to understand for a newcomer.
 
 To deploy an application on-chain, you submit an app create transaction. In this transaction, you specify the compiled TEAL programs, the application schema ("How many global uints do I need again?"), and extra program pages. 
 
-Calling the application involves crafting transactions with the appropriate routing and data arguments if not using the ABI.
+Calling an on-chain application involves crafting app call transactions with the appropriate routing and data arguments if not using the ABI.
 
 Even when using the ABI, calling methods involves importing the json contract and constructing an AtomicTransactionComposer passing args as list with no context about what they should be.
 
