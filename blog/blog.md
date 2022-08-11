@@ -4,7 +4,7 @@ If you've written and deployed a Smart Contract for Algorand using PyTeal before
 
 Take heart that the Algorand team has been working very hard to improve the development experience. 
 
-Before we dive in to the improvements, lets review some common things folks struggle with while developing.
+Before we dive into the improvements, let's review some common things folks struggle with while developing.
 
 ## Code Organization
 
