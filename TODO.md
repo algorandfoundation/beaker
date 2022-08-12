@@ -12,9 +12,8 @@
 
 - [X] Use Dryrun for `read-only` methods
 
-- [ ] Integration Testing
+- [X] Automated testing of examples
 
-- [ ] Automated testing of examples
 
 ### Utils
 
@@ -39,10 +38,11 @@ https://github.com/algorand-devrel/beaker/pull/33
 - Membership Token creation/validation
 
 - Make OpUp on Public nets and hardcode it 
+  
 
 ## features
 
-- Add `Debug` mode using Dryrun 
+- Add `Debug` mode using Dryrun/Simulate 
 
 - Add Box state interface (take into account that callers need to know what box names they'll need access to)
 
