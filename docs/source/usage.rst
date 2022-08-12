@@ -6,6 +6,10 @@ Usage
 Tutorial
 ---------
 
+.. note::
+    This tutorial assumes you've already installed the `sandbox <https://github.com/algorand/sandbox>`_ and have it running. 
+    Currently Beaker requires sandbox running with ``source`` config (or any config with `this <https://github.com/algorand/go-algorand/pull/4198>`_ commit).
+
 
 Lets write a simple calculator app.  `Full source here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
 

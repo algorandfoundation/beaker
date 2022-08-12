@@ -81,8 +81,9 @@
 <span class="kn">import</span> <span class="nn">pyteal</span> <span class="k">as</span> <span class="nn">pt</span>
 <span class="kn">import</span> <span class="nn">beaker</span> <span class="k">as</span> <span class="nn">bkr</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
-<span class="n">accounts</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="kc">None</span> 
+<span class="n">accounts</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span> <span class="nf">returned_int_as_bytes</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
@@ -155,6 +156,14 @@
 <span class="sd">    :param opups: A number of additional app call transactions to make to increase our budget</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: make these avail in a pytest session context? pass them in directly?</span>
+    <span class="k">global</span> <span class="n">client</span><span class="p">,</span> <span class="n">accounts</span>
+    <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">accounts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">accounts</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
+
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">bkr</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">accounts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">signer</span><span class="p">)</span>
     <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
