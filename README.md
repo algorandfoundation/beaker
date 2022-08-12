@@ -84,6 +84,4 @@ You can run tests from the root of the project using `pytest`
 
 [Docs](https://beaker.algo.xyz)
 
-[TODO](TODO.md)
-
 *Please feel free to file issues/prs*
