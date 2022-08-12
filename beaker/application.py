@@ -205,7 +205,12 @@ class Application:
         }
 
     def initialize_application_state(self) -> Expr:
-        """Initialize any application state variables declared"""
+        """
+        Initialize any application state variables declared
+
+        :return: The Expr to initialize the application state.
+        :rtype: pyteal.Expr
+        """
         return self.app_state.initialize()
 
     def initialize_account_state(self, addr=Txn.sender()) -> Expr:

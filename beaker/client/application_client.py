@@ -74,7 +74,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         extra_pages: int = None,
@@ -141,7 +141,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -190,7 +190,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -228,7 +228,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -266,7 +266,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -299,7 +299,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -673,9 +673,12 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def wrap_approval_exception(self, e: Exception, lines: int = 10) -> LogicException:
-        _, map = self.compile_approval(True)
-        return LogicException(e, self.app.approval_program, map, lines)
+    def wrap_approval_exception(self, e: Exception) -> LogicException:
+        if self.approval_src_map is None:
+            _, map = self.compile_approval(True)
+            self.approval_src_map = map
+
+        return LogicException(e, self.app.approval_program, self.approval_src_map)
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
         if signer is not None:

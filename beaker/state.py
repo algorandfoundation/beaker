@@ -435,7 +435,7 @@ class State:
 class ApplicationState(State):
     def __init__(
         self,
-        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue] = {},
+        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue],
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
