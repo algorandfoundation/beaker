@@ -5,8 +5,9 @@ from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 import pyteal as pt
 import beaker as bkr
 
-client = bkr.sandbox.get_algod_client()
-accounts = bkr.sandbox.get_accounts()
+
+client = None 
+accounts = None
 
 
 def returned_int_as_bytes(i: int, bits: int = 64):
@@ -79,6 +80,14 @@ def assert_output(
     :param opups: A number of additional app call transactions to make to increase our budget
 
     """
+    # TODO: make these avail in a pytest session context? pass them in directly?
+    global client, accounts
+    if client is None:
+        client = bkr.sandbox.get_algod_client()
+
+    if accounts is None:
+        accounts = bkr.sandbox.get_accounts()
+
     app_client = bkr.client.ApplicationClient(client, app, signer=accounts[0].signer)
     app_client.create()
 
