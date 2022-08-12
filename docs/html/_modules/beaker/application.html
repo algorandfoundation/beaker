@@ -281,7 +281,12 @@
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="Application.initialize_application_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_application_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_application_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Initialize any application state variables declared&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize any application state variables declared</span>
+
+<span class="sd">        :return: The Expr to initialize the application state.</span>
+<span class="sd">        :rtype: pyteal.Expr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Application.initialize_account_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_account_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_account_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>

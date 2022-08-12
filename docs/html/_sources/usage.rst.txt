@@ -24,7 +24,7 @@ This is a full application, though it doesn't do much.
 Instantiate it and take a look at some of the resulting fields. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
-    :lines: 60-65
+    :lines: 59-62
 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
@@ -47,7 +47,7 @@ The python method must return an ``Expr`` of some kind, invoked when the externa
 Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 32-47
+    :lines: 32-44
 
 
 Thats it! 

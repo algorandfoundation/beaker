@@ -75,13 +75,8 @@
              
   <h1>Source code for beaker.testing.unit_testing_helpers</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Module containing helper functions for testing PyTeal Utils.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
-<span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">account</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">logic</span><span class="p">,</span> <span class="n">mnemonic</span>
-<span class="kn">from</span> <span class="nn">algosdk.future</span> <span class="kn">import</span> <span class="n">transaction</span>
-<span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AccountTransactionSigner</span><span class="p">,</span>
-    <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AtomicTransactionComposer</span>
 
 <span class="kn">import</span> <span class="nn">pyteal</span> <span class="k">as</span> <span class="nn">pt</span>
 <span class="kn">import</span> <span class="nn">beaker</span> <span class="k">as</span> <span class="nn">bkr</span>

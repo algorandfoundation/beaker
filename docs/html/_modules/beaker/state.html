@@ -46,6 +46,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../structs.html">Structs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
 </ul>
 
         </div>
@@ -510,7 +511,7 @@
 <div class="viewcode-block" id="ApplicationState"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationState">[docs]</a><span class="k">class</span> <span class="nc">ApplicationState</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span><span class="p">],</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">total</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_uints</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_byte_slices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_GLOBAL_STATE</span><span class="p">:</span>
