@@ -19,25 +19,19 @@ def demo():
 
     acct = accts.pop()
 
-    app = ARC20()
-
-    app_client = ApplicationClient(algod_client, app=app, signer=acct.signer)
+    app_client = ApplicationClient(algod_client, app=ARC20(), signer=acct.signer)
 
     app_id, app_addr, txid = app_client.create()
     print(f"Created app: {app_id} with address {app_addr}")
 
-    sp = algod_client.suggested_params()
-    txid = algod_client.send_transaction(
-        PaymentTxn(acct.address, sp, app_addr, int(1e6)).sign(acct.private_key)
-    )
-    wait_for_confirmation(algod_client=algod_client, txid=txid, wait_rounds=4)
+    app_client.fund(int(1e6))
 
     sp = algod_client.suggested_params()
     sp.flat_fee = True
     sp.fee = sp.min_fee * 2
 
     result = app_client.call(
-        app.asset_create,
+        ARC20.asset_create,
         suggested_params=sp,
         total=100,
         decimals=0,
@@ -57,7 +51,7 @@ def demo():
     print(f"Created asset with asset id: {smart_asa_id}")
 
     result = app_client.call(
-        app.asset_config,
+        ARC20.asset_config,
         suggested_params=sp,
         config_asset=smart_asa_id,
         total=200,
@@ -77,7 +71,7 @@ def demo():
 
     try:
         result = app_client.call(
-            app.asset_app_optin,
+            ARC20.asset_app_optin,
             suggested_params=sp,
             on_complete=OnComplete.OptInOC,
             asset=smart_asa_id,
@@ -91,5 +85,4 @@ def demo():
 
 
 if __name__ == "__main__":
-
     demo()

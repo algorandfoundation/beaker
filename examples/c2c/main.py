@@ -120,16 +120,14 @@ def demo():
     acct = accts.pop()
 
     # Create sub app
-    app_sub = C2CSub()
     app_client_sub = bkr.client.ApplicationClient(
-        bkr.sandbox.get_algod_client(), app_sub, signer=acct.signer
+        bkr.sandbox.get_algod_client(), C2CSub(), signer=acct.signer
     )
     app_client_sub.create()
 
     # Create main app and fund it
-    app_main = C2CMain()
     app_client_main = bkr.client.ApplicationClient(
-        bkr.sandbox.get_algod_client(), app_main, signer=acct.signer
+        bkr.sandbox.get_algod_client(), C2CMain(), signer=acct.signer
     )
     app_client_main.create()
     app_client_main.fund(1 * bkr.consts.algo)
@@ -143,7 +141,7 @@ def demo():
     sp.flat_fee = True
     sp.fee = 1 * bkr.consts.algo
     result = app_client_main.call(
-        app_main.create_asset_and_send,
+        C2CMain.create_asset_and_send,
         name="dope asset",
         sub_app=app_client_sub.app_id,
         suggested_params=sp,

@@ -60,12 +60,9 @@ class Structer(Application):
 def demo():
     acct = sandbox.get_accounts().pop()
 
-    # Initialize Application from amm.py
-    app = Structer()
-
     # Create an Application client containing both an algod client and my app
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=acct.signer
+        sandbox.get_algod_client(), Structer(), signer=acct.signer
     )
 
     # Create the applicatiion on chain, set the app id for the app client
@@ -77,7 +74,7 @@ def demo():
     # Passing in a dict as an argument that should take a tuple according to the type spec
     order_number = 12
     order = {"quantity": 8, "item": "cubes"}
-    app_client.call(app.place_order, order_number=order_number, order=order)
+    app_client.call(Structer.place_order, order_number=order_number, order=order)
 
     state_key = order_number.to_bytes(1, "big")
     stored_order = app_client.get_account_state(raw=True)[state_key]
@@ -87,11 +84,11 @@ def demo():
     )
 
     # Or we could
-    result = app_client.call(app.read_item, order_number=order_number)
+    result = app_client.call(Structer.read_item, order_number=order_number)
     abi_decoded = Structer.Order().client_decode(result.raw_value)
     print(f"Decoded result: {abi_decoded}")
 
-    result = app_client.call(app.increase_quantity, order_number=order_number)
+    result = app_client.call(Structer.increase_quantity, order_number=order_number)
     increased_decoded = Structer.Order().client_decode(result.raw_value)
     print(
         f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"

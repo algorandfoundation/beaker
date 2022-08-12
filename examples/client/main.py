@@ -63,13 +63,9 @@ def demo():
     acct1 = accts.pop()
     acct2 = accts.pop()
 
-    # Instantiate app
-    app = ClientExample()
-    print("Create example", app.create())
-
     # Create Application client
     app_client1 = client.ApplicationClient(
-        client=sandbox.get_algod_client(), app=app, signer=acct1.signer
+        client=sandbox.get_algod_client(), app=ClientExample(), signer=acct1.signer
     )
 
     # Create the app on-chain (uses signer1)
@@ -80,7 +76,7 @@ def demo():
 
     # Try calling set nickname from both accounts after opting in
     app_client1.opt_in()
-    app_client1.call(app.set_nick, nick="first")
+    app_client1.call(ClientExample.set_nick, nick="first")
 
     print(f"Current app state: {app_client1.get_application_state()}")
     # Create copies of the app client with specific signer, _after_ we've created and set the app id
@@ -89,12 +85,12 @@ def demo():
 
     # Try calling without opting in
     try:
-        app_client2.call(app.set_nick, nick="second")
+        app_client2.call(ClientExample.set_nick, nick="second")
     except LogicException as e:
         print(f"\n{e}\n")
 
     app_client2.opt_in()
-    app_client2.call(app.set_nick, nick="second")
+    app_client2.call(ClientExample.set_nick, nick="second")
 
     # Get the local state for each account
     print(app_client1.get_account_state())
@@ -104,19 +100,19 @@ def demo():
     print(f"Current app state: {app_client1.get_application_state()}")
 
     try:
-        app_client2.call(app.set_manager, new_manager=acct2.address)
+        app_client2.call(ClientExample.set_manager, new_manager=acct2.address)
         print("Shouldn't get here")
     except LogicException as e:
         print("Failed as expected, only addr1 should be authorized to set the manager")
         print(f"\n{e}\n")
 
     # Have addr1 set the manager to addr2
-    app_client1.call(app.set_manager, new_manager=acct2.address)
+    app_client1.call(ClientExample.set_manager, new_manager=acct2.address)
     print(f"Current app state: {app_client1.get_application_state()}")
 
     print(app_client1.get_application_state())
     # and back
-    app_client2.call(app.set_manager, new_manager=acct1.address)
+    app_client2.call(ClientExample.set_manager, new_manager=acct1.address)
     print(f"Current app state: {app_client1.get_application_state()}")
 
     try:

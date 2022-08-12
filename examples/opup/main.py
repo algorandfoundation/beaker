@@ -17,15 +17,14 @@ acct = get_accounts().pop()
 
 
 def demo():
-    # Initialize Application from amm.py
-    app = ExpensiveApp()
-
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()
     # we need to cover 255 inner transactions + ours
     sp.flat_fee = True
     sp.fee = 256 * milli_algo
-    app_client = ApplicationClient(client, app, signer=acct.signer, suggested_params=sp)
+    app_client = ApplicationClient(
+        client, ExpensiveApp(), signer=acct.signer, suggested_params=sp
+    )
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
@@ -35,7 +34,7 @@ def demo():
         txn=transaction.PaymentTxn(acct.address, sp, app_addr, int(1e6)),
         signer=acct.signer,
     )
-    result = app_client.call(app.opup_bootstrap, ptxn=txn)
+    result = app_client.call(ExpensiveApp.opup_bootstrap, ptxn=txn)
     print(f"Created op up app: {result.return_value}")
 
     input = "stuff"
@@ -46,7 +45,7 @@ def demo():
     # app_client.add_method_call(atc, app.hash_it, input=input, iters=iters)
     # result = atc.execute(client, 4)
 
-    result = app_client.call(app.hash_it, input=input, iters=iters)
+    result = app_client.call(ExpensiveApp.hash_it, input=input, iters=iters)
     result_hash = bytes(result.return_value)
 
     local_hash = input.encode()

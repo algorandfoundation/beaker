@@ -33,26 +33,23 @@ def demo():
 
     acct = sandbox.get_accounts().pop()
 
-    # Initialize Application
-    app = Calculator()
-
     # Create an Application client containing both an algod client and app
-    app_client = ApplicationClient(client=client, app=app, signer=acct.signer)
+    app_client = ApplicationClient(client=client, app=Calculator(), signer=acct.signer)
 
     # Create the application on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    result = app_client.call(app.add, a=2, b=2)
+    result = app_client.call(Calculator.add, a=2, b=2)
     print(f"add result: {result.return_value}")
 
-    result = app_client.call(app.mul, a=2, b=2)
+    result = app_client.call(Calculator.mul, a=2, b=2)
     print(f"mul result: {result.return_value}")
 
-    result = app_client.call(app.sub, a=6, b=2)
+    result = app_client.call(Calculator.sub, a=6, b=2)
     print(f"sub result: {result.return_value}")
 
-    result = app_client.call(app.div, a=16, b=4)
+    result = app_client.call(Calculator.div, a=16, b=4)
     print(f"div result: {result.return_value}")
 
 
