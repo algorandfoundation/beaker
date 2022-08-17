@@ -19,7 +19,13 @@ class EthEcdsaVerify(LogicSignature):
     def evaluate(self):
         return Seq(
             Assert(
+                # Don't let it be rekeyed
+                Txn.rekey_to() == Global.zero_address(),
+                # Don't take a fee from me
+                Txn.fee() == Int(0),
+                # Make sure I've signed an app call
                 Txn.type_enum() == TxnType.ApplicationCall,
+                # Make sure I have the args I expect [method_selector, hash_value, signature]
                 Txn.application_args.length() == Int(3),
             ),
             self.eth_ecdsa_validate(Txn.application_args[1], Txn.application_args[2]),

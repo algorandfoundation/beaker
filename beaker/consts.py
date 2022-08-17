@@ -41,3 +41,6 @@ MAX_GLOBAL_STATE = 64
 
 #: The maximum number of args that may be included in an lsig
 LSIG_MAX_ARGS = 255
+
+#: The prefix used when hashing bytecode to produce a unique hash
+PROGRAM_DOMAIN_SEPARATOR = "Program"
