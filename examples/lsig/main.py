@@ -1,9 +1,28 @@
+from typing import Final
 from Cryptodome.Hash import keccak
 from pyteal import *
 from beaker import *
 
-from lsig import EthEcdsaVerify
-from contract import EthChecker
+if __name__ == "__main__":
+    from lsig import EthEcdsaVerify, HashValue, Signature
+else:
+    from .lsig import EthEcdsaVerify, HashValue, Signature
+
+
+class EthChecker(Application):
+
+    # The lsig that will be responsible for validating the
+    # incoming signature against the incoming hash
+    verifier: Final[Precompile] = Precompile(EthEcdsaVerify(version=6))
+
+    @external
+    def check_eth_sig(
+        self, hash: HashValue, signature: Signature, *, output: abi.String
+    ):
+        return Seq(
+            Assert(Txn.sender() == self.verifier.address()),
+            output.set("lsig validated"),
+        )
 
 
 if __name__ == "__main__":
@@ -13,7 +32,6 @@ if __name__ == "__main__":
         TransactionWithSigner,
     )
     from algosdk.future.transaction import *
-    from beaker import sandbox, client, consts
 
     algod_client = sandbox.get_algod_client()
     accts = sandbox.get_accounts()
