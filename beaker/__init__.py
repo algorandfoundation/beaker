@@ -10,7 +10,6 @@ from .state import (
 from .logic_signature import LogicSignature
 from .decorators import (
     Authorize,
-    ResolvableArguments,
     external,
     internal,
     bare_external,

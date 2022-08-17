@@ -16,11 +16,8 @@ class CounterApp(Application):
         descr="A counter for showing how to use application state",
     )
 
-    # Note: this method is redundant with the one defined in Application
-    # defining it here to demonstrate functionality
     @create
     def create(self):
-        """create application"""
         return self.initialize_application_state()
 
     @external(authorize=Authorize.only(Global.creator_address()))
@@ -46,25 +43,20 @@ def demo():
     accts = sandbox.get_accounts()
     acct = accts.pop()
 
-    # Initialize Application from amm.py
-    app = CounterApp()
-
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, app, signer=acct.signer)
+    app_client = ApplicationClient(client, CounterApp(), signer=acct.signer)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    app_client = app_client.prepare(signer=acct.signer)
-
-    app_client.call(app.increment)
-    app_client.call(app.increment)
-    app_client.call(app.increment)
-    result = app_client.call(app.increment)
+    app_client.call(CounterApp.increment)
+    app_client.call(CounterApp.increment)
+    app_client.call(CounterApp.increment)
+    result = app_client.call(CounterApp.increment)
     print(f"Currrent counter value: {result.return_value}")
 
-    result = app_client.call(app.decrement)
+    result = app_client.call(CounterApp.decrement)
     print(f"Currrent counter value: {result.return_value}")
 
     try:
@@ -72,7 +64,7 @@ def demo():
         # since we have the auth check
         other_acct = accts.pop()
         other_client = app_client.prepare(signer=other_acct.signer)
-        other_client.call(app.increment)
+        other_client.call(CounterApp.increment)
     except LogicException as e:
         print("App call failed as expected.")
         print(e)

@@ -14,7 +14,8 @@ from algosdk.atomic_transaction_composer import (
 )
 
 from ..decorators import (
-    ResolvableTypes,
+    Authorize,
+    DefaultArgument,
     create,
     external,
     update,
@@ -24,9 +25,10 @@ from ..decorators import (
     opt_in,
 )
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, get_method_selector, get_method_spec
+from beaker.application import Application, get_method_selector
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
+from beaker.client.logic_error import LogicException
 
 
 class App(Application):
@@ -39,27 +41,35 @@ class App(Application):
 
     @create
     def create(self):
-        return pt.Seq(self.initialize_application_state(), pt.Approve())
+        return pt.Seq(
+            self.initialize_application_state(),
+            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+            pt.Approve(),
+        )
 
-    @opt_in
-    def opt_in(self):
-        return pt.Seq(self.initialize_account_state(), pt.Approve())
-
-    @update
+    @update(authorize=Authorize.only(pt.Global.creator_address()))
     def update(self):
         return pt.Approve()
 
+    @delete(authorize=Authorize.only(pt.Global.creator_address()))
+    def delete(self):
+        return pt.Approve()
+
+    @opt_in
+    def opt_in(self):
+        return pt.Seq(
+            self.initialize_account_state(),
+            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+            pt.Approve(),
+        )
+
     @clear_state
     def clear_state(self):
-        return pt.Approve()
+        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
     @close_out
     def close_out(self):
-        return pt.Approve()
-
-    @delete
-    def delete(self):
-        return pt.Approve()
+        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
     @external
     def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
@@ -268,6 +278,9 @@ def test_create(sb_accts: SandboxAccounts):
         },
     )
 
+    with pytest.raises(LogicException):
+        ac.create(note="failmeplz")
+
 
 def test_update(sb_accts: SandboxAccounts):
     app = App()
@@ -294,6 +307,11 @@ def test_update(sb_accts: SandboxAccounts):
         },
     )
 
+    with pytest.raises(LogicException):
+        addr, pk, signer2 = sb_accts[1]
+        ac2 = ac.prepare(signer=signer2)
+        ac2.update()
+
 
 def test_delete(sb_accts: SandboxAccounts):
     app = App()
@@ -318,6 +336,14 @@ def test_delete(sb_accts: SandboxAccounts):
             },
         },
     )
+
+    with pytest.raises(LogicException):
+        ac = ApplicationClient(client, app, signer=signer)
+        app_id, _, _ = ac.create()
+
+        _, _, signer2 = sb_accts[1]
+        ac2 = ac.prepare(signer=signer2)
+        ac2.delete()
 
 
 def test_opt_in(sb_accts: SandboxAccounts):
@@ -346,6 +372,11 @@ def test_opt_in(sb_accts: SandboxAccounts):
             },
         },
     )
+
+    with pytest.raises(LogicException):
+        _, _, newer_signer = sb_accts[2]
+        newer_ac = ac.prepare(signer=newer_signer)
+        newer_ac.opt_in(note="failmeplz")
 
 
 def test_close_out(sb_accts: SandboxAccounts):
@@ -377,6 +408,12 @@ def test_close_out(sb_accts: SandboxAccounts):
             },
         },
     )
+
+    with pytest.raises(LogicException):
+        _, _, newer_signer = sb_accts[2]
+        newer_ac = ac.prepare(signer=newer_signer)
+        newer_ac.opt_in()
+        newer_ac.close_out(note="failmeplz")
 
 
 def test_clear_state(sb_accts: SandboxAccounts):
@@ -444,8 +481,6 @@ def test_call(sb_accts: SandboxAccounts):
             "logs": [log_msg],
         },
     )
-
-    # TODO: need way more tests with diff signers/txn vals
 
 
 def test_add_method_call(sb_accts: SandboxAccounts):
@@ -518,19 +553,10 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.create()
     ac.opt_in()
 
-    assert ac.resolve({ResolvableTypes.Constant: 1}) == 1
-
-    assert ac.resolve({ResolvableTypes.Constant: "stringy"}) == "stringy"
-
-    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_int"}) == 1
-
-    assert ac.resolve({ResolvableTypes.GlobalState: "app_state_val_byte"}) == "test"
-
-    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_int"}) == 1
-
-    assert ac.resolve({ResolvableTypes.LocalState: "acct_state_val_byte"}) == "test"
-
-    assert (
-        ac.resolve({ResolvableTypes.ABIMethod: get_method_spec(app.dummy).dictify()})
-        == "deadbeef"
-    )
+    assert ac.resolve(DefaultArgument(pt.Int(1))) == 1
+    assert ac.resolve(DefaultArgument(pt.Bytes("stringy"))) == "stringy"
+    assert ac.resolve(DefaultArgument(app.app_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == "test"
+    assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == "test"
+    assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"

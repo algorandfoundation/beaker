@@ -19,10 +19,15 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
+from algosdk.constants import APP_PAGE_MAX_SIZE
 
 from beaker.application import Application, get_method_spec
-from beaker.decorators import HandlerFunc, MethodHints, ResolvableTypes
-from beaker.consts import APP_MAX_PAGE_SIZE
+from beaker.decorators import (
+    HandlerFunc,
+    MethodHints,
+    DefaultArgument,
+    DefaultArgumentClass,
+)
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
 
@@ -66,7 +71,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         extra_pages: int = None,
@@ -84,7 +89,7 @@ class ApplicationClient:
 
         if extra_pages is None:
             extra_pages = ceil(
-                ((len(approval) + len(clear)) - APP_MAX_PAGE_SIZE) / APP_MAX_PAGE_SIZE
+                ((len(approval) + len(clear)) - APP_PAGE_MAX_SIZE) / APP_PAGE_MAX_SIZE
             )
 
         sp = self.get_suggested_params(suggested_params)
@@ -114,8 +119,6 @@ class ApplicationClient:
             create_result = atc.execute(self.client, 4)
         except Exception as e:
             if "logic" in str(e):
-                if on_complete == transaction.OnComplete.ClearStateOC:
-                    raise self.wrap_clear_exception(e)
                 raise self.wrap_approval_exception(e)
             else:
                 raise e
@@ -135,7 +138,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -184,7 +187,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -222,7 +225,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -260,7 +263,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -285,13 +288,7 @@ class ApplicationClient:
             )
         )
 
-        try:
-            clear_state_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_clear_exception(e)
-            else:
-                raise e
+        clear_state_result = atc.execute(self.client, 4)
 
         return clear_state_result.tx_ids[0]
 
@@ -299,7 +296,7 @@ class ApplicationClient:
         self,
         sender: str = None,
         signer: TransactionSigner = None,
-        args: list[Any] = [],
+        args: list[Any] = None,
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
@@ -380,20 +377,27 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             name = method_arg.name
+
             if name in kwargs:
-                thing = kwargs[name]
-                if type(thing) is dict and hints.structs is not None:
-                    if name in hints.structs:
-                        thing = [
-                            thing[field_name]
-                            for field_name in hints.structs[name]["elements"]
-                        ]
-                    else:
-                        # todo error if wrong keys
-                        thing = list(thing.values())
-                args.append(thing)
-            elif hints.resolvable is not None and name in hints.resolvable:
-                args.append(self.resolve(hints.resolvable[name]))
+                argument = kwargs[name]
+
+                if type(argument) is dict:
+                    if hints.structs is None or name not in hints.structs:
+                        raise Exception(f"Name {name} name in struct hints")
+
+                    argument = [
+                        argument[field_name]
+                        for field_name in hints.structs[name]["elements"]
+                    ]
+
+                args.append(argument)
+
+            elif (
+                hints.param_annotations is not None and name in hints.param_annotations
+            ):
+                annos = hints.param_annotations[name]
+                if annos.default is not None:
+                    args.append(self.resolve(DefaultArgument(annos.default)))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -433,8 +437,6 @@ class ApplicationClient:
             result = atc.execute(self.client, 4)
         except Exception as e:
             if "logic" in str(e):
-                if on_complete == transaction.OnComplete.ClearStateOC:
-                    raise self.wrap_clear_exception(e)
                 raise self.wrap_approval_exception(e)
             else:
                 raise e
@@ -539,10 +541,26 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             name = method_arg.name
+
             if name in kwargs:
-                args.append(kwargs[name])
-            elif hints.resolvable is not None and name in hints.resolvable:
-                args.append(self.resolve(hints.resolvable[name]))
+                argument = kwargs[name]
+
+                if type(argument) is dict:
+                    if hints.structs is None or name not in hints.structs:
+                        raise Exception(f"Name {name} name in struct hints")
+
+                    argument = [
+                        argument[field_name]
+                        for field_name in hints.structs[name]["elements"]
+                    ]
+
+                args.append(argument)
+            elif (
+                hints.param_annotations is not None and name in hints.param_annotations
+            ):
+                annos = hints.param_annotations[name]
+                if annos.default is not None:
+                    args.append(self.resolve(DefaultArgument(annos.default)))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
@@ -616,21 +634,21 @@ class ApplicationClient:
         app_state = self.client.account_info(self.app_addr)
         return app_state
 
-    def resolve(self, to_resolve) -> Any:
-        if ResolvableTypes.Constant in to_resolve:
-            return to_resolve[ResolvableTypes.Constant]
-        elif ResolvableTypes.GlobalState in to_resolve:
-            key = to_resolve[ResolvableTypes.GlobalState]
+    def resolve(self, to_resolve: DefaultArgument) -> Any:
+        if to_resolve.resolvable_class == DefaultArgumentClass.Constant:
+            return to_resolve.resolve_hint()
+        elif to_resolve.resolvable_class == DefaultArgumentClass.GlobalState:
+            key = to_resolve.resolve_hint()
             app_state = self.get_application_state()
             return app_state[key]
-        elif ResolvableTypes.LocalState in to_resolve:
-            key = to_resolve[ResolvableTypes.LocalState]
+        elif to_resolve.resolvable_class == DefaultArgumentClass.LocalState:
+            key = to_resolve.resolve_hint()
             acct_state = self.get_account_state(
-                self.get_sender(None, None),
+                self.get_sender(),
             )
             return acct_state[key]
-        elif ResolvableTypes.ABIMethod in to_resolve:
-            method = abi.Method.undictify(to_resolve[ResolvableTypes.ABIMethod])
+        elif to_resolve.resolvable_class == DefaultArgumentClass.ABIMethod:
+            method = abi.Method.undictify(to_resolve.resolve_hint())
             result = self.call(method)
             return result.return_value
         else:
@@ -652,13 +670,12 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def wrap_approval_exception(self, e: Exception, lines: int = 10) -> LogicException:
-        _, map = self.compile_approval(True)
-        return LogicException(e, self.app.approval_program, map, lines)
+    def wrap_approval_exception(self, e: Exception) -> LogicException:
+        if self.approval_src_map is None:
+            _, map = self.compile_approval(True)
+            self.approval_src_map = map
 
-    def wrap_clear_exception(self, e: Exception, lines: int = 10) -> LogicException:
-        _, map = self.compile_clear(True)
-        return LogicException(e, self.app.clear_program, map, lines)
+        return LogicException(e, self.app.approval_program, self.approval_src_map)
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
         if signer is not None:
