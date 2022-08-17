@@ -397,6 +397,7 @@ def test_app_spec():
 
     # TODO: come back and check methods, the sorting gets weird
     actual_spec["contract"]["methods"] = []
+    del actual_spec["source"]
 
     assert json.dumps(actual_spec, sort_keys=True) == json.dumps(
         expected_spec, sort_keys=True
