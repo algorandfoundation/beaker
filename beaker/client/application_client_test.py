@@ -79,14 +79,6 @@ class App(Application):
     def dummy(self, *, output: pt.abi.String):
         return output.set("deadbeef")
 
-    # class Structy(Struct):
-    #    a: pt.abi.Uint64
-    #    b: pt.abi.Uint32
-
-    # @external
-    # def structy(self, s: Structy, *, output: pt.abi.Uint64):
-    #    return output.set(s.a)
-
 
 SandboxAccounts = list[tuple[str, str, AccountTransactionSigner]]
 
@@ -489,23 +481,6 @@ def test_call(sb_accts: SandboxAccounts):
             "logs": [log_msg],
         },
     )
-
-
-# def test_call_with_struct():
-#    app = App()
-#    addr, pk, signer = sb_accts[0]
-#
-#    client = get_algod_client()
-#    ac = ApplicationClient(client, app, signer=signer)
-#    app_id, _, _ = ac.create()
-#
-#    result = ac.call(app.structy, s={'a':1, 'b':2})
-#    assert result.return_value == 1
-#    assert result.decode_error is None
-#    assert result.raw_value == (1).to_bytes(8, "big")
-#
-#    with pytest.raises(Exception):
-#        ac.call(app.structy, s=4)
 
 
 def test_add_method_call(sb_accts: SandboxAccounts):
