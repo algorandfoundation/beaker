@@ -19,15 +19,12 @@ if __name__ == "__main__":
     accts = sandbox.get_accounts()
 
     acct = accts.pop()
-    app = EthChecker()
 
+    app = EthChecker()
     app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
     app_id, app_addr, txid = app_client.create()
 
-    eev = EthEcdsaVerify(version=6)
-    program, src_map = app_client.compile(eev.program, True)
-
-    lsa = LogicSigAccount(program)
+    lsa = LogicSigAccount(app.verifier.binary)
     lsig_signer = LogicSigTransactionSigner(lsa)
     lsig_client = app_client.prepare(signer=lsig_signer)
 

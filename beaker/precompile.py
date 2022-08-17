@@ -5,15 +5,15 @@ from beaker.logic_signature import LogicSignature
 
 
 class Precompile:
-    def __init__(self, lsig_type: type[LogicSignature]):
-        self.lsig_type = lsig_type
+    def __init__(self, lsig: LogicSignature):
+        self.lsig = lsig
 
         self.binary = None
         self.addr = None
         self.map = None
 
-    def teal(self, *args) -> str:
-        return self.lsig_type(*args).program
+    def teal(self) -> str:
+        return self.lsig.program
 
     def set_compiled(self, binary: bytes, addr: str, map: SourceMap):
         self.binary = binary

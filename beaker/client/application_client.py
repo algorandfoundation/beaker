@@ -70,9 +70,8 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-
         recompile = False
-        for k, v in self.app.precompiles.items():
+        for _, v in self.app.precompiles.items():
             if v.binary is None:
                 binary, addr, map = self.compile(v.teal(), True)
                 v.set_compiled(binary, addr, map)

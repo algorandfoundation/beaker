@@ -140,7 +140,7 @@ class Application:
                 abi_meth = ABIReturnSubroutine(static_attr)
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
-                methods[name] = (abi_meth, handler_config.method_config)
+                self.methods[name] = (abi_meth, handler_config.method_config)
 
                 self.hints[name] = handler_config.hints()
 
@@ -165,19 +165,19 @@ class Application:
             descr=self.__doc__,
         )
 
+        # If there are no precompiles, we can build the programs
+        # with what we already have
+        if len(self.precompiles) == 0:
+            self.compile()
+
+    def compile(self):
         # Add method externals
-        for method_name, method_tuple in methods.items():
+        for _, method_tuple in self.methods.items():
             method, method_config = method_tuple
-            self.methods[method_name] = method
             self.router.add_method_handler(
                 method_call=method, method_config=method_config
             )
 
-        if len(self.precompiles)==0:
-            self.compile()
-
-
-    def compile(self):
         (
             self.approval_program,
             self.clear_program,
@@ -202,7 +202,6 @@ class Application:
                         self.contract.methods[meth_idx].args[
                             arg_idx
                         ].desc = hint.param_annotations[arg.name].descr
-
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
