@@ -412,10 +412,10 @@ def test_model_args():
     from algosdk.abi import Method, Argument, Returns
 
     class Structed(Application):
-        class UserRecord(Struct):
-            addr: pt.abi.Address
-            balance: pt.abi.Uint64
-            nickname: pt.abi.String
+        class UserRecord(pt.abi.NamedTuple):
+            addr: pt.abi.Field[pt.abi.Address]
+            balance: pt.abi.Field[pt.abi.Uint64]
+            nickname: pt.abi.Field[pt.abi.String]
 
         @external
         def structy(self, user_record: UserRecord):

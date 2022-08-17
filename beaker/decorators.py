@@ -161,7 +161,7 @@ class HandlerConfig:
         if self.structs is not None:
             mh.structs = {
                 arg_name: {
-                    "name": model_spec.__name__,  # type: ignore[attr-defined]
+                    "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": list(model_spec.__annotations__.keys()),
                 }
                 for arg_name, model_spec in self.structs.items()
