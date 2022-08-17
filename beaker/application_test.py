@@ -28,7 +28,6 @@ from beaker.decorators import (
     update,
     delete,
 )
-from beaker.struct import Struct
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -322,9 +321,9 @@ def test_app_spec():
         ):
             return pt.Assert(pt.Int(1))
 
-        class Thing(Struct):
-            a: pt.abi.Uint64
-            b: pt.abi.Uint32
+        class Thing(pt.abi.NamedTuple):
+            a: pt.abi.Field[pt.abi.Uint64]
+            b: pt.abi.Field[pt.abi.Uint32]
 
         @external
         def struct_meth(self, thing: Thing):

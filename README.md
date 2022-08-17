@@ -2,7 +2,7 @@ Beaker
 ------
 <img align="left" src="beaker.png" margin="10px" >
 
-Beaker is a smart contract development framework for [PyTeal](https://github.com/algorand/pyteal) inspired by Flask
+Beaker is a smart contract development framework for [PyTeal](https://github.com/algorand/pyteal).
 
 
 With Beaker, we build a class that represents our entire application including state and routing.

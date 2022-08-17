@@ -1,5 +1,6 @@
 from typing import Final
 
+from algosdk.abi import ABIType
 from pyteal import abi, TealType, Int, Seq
 
 from beaker import (
@@ -16,9 +17,9 @@ from beaker import (
 class Structer(Application):
 
     # Our custom Struct
-    class Order(struct.Struct):
-        item: abi.String
-        quantity: abi.Uint16
+    class Order(abi.NamedTuple):
+        item: abi.Field[abi.String]
+        quantity: abi.Field[abi.Uint16]
 
     orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
@@ -47,9 +48,10 @@ class Structer(Application):
             (quant := abi.Uint16()).set(new_order.quantity),
             # Add 1 to quantity
             quant.set(quant.get() + Int(1)),
+            (item := abi.String()).set(new_order.item),
             # We've gotta set all of the fields at the same time, but we can
             # borrow the item we already know about
-            new_order.set(new_order.item, quant),
+            new_order.set(item, quant),
             # Write the new order to state
             self.orders[order_number].set(new_order.encode()),
             # Write new order to caller
@@ -58,6 +60,9 @@ class Structer(Application):
 
 
 def demo():
+
+    order_codec = ABIType.from_string(str(Structer.Order().type_spec()))
+
     acct = sandbox.get_accounts().pop()
 
     # Create an Application client containing both an algod client and my app
@@ -78,25 +83,26 @@ def demo():
 
     state_key = order_number.to_bytes(1, "big")
     stored_order = app_client.get_account_state(raw=True)[state_key]
-    state_decoded = Structer.Order().client_decode(stored_order)
+    state_decoded = order_codec.decode(stored_order)
+    
     print(
         f"We can get the order we stored from local state of the sender: {state_decoded}"
     )
 
     # Or we could
     result = app_client.call(Structer.read_item, order_number=order_number)
-    abi_decoded = Structer.Order().client_decode(result.raw_value)
+    abi_decoded = order_codec.decode(result.raw_value)
     print(f"Decoded result: {abi_decoded}")
 
     result = app_client.call(Structer.increase_quantity, order_number=order_number)
-    increased_decoded = Structer.Order().client_decode(result.raw_value)
+    increased_decoded = order_codec.decode(result.raw_value)
     print(
         f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"
     )
 
     state_key = order_number.to_bytes(1, "big")
     stored_order = app_client.get_account_state(raw=True)[state_key]
-    state_decoded = Structer.Order().client_decode(stored_order)
+    state_decoded = order_codec.decode(stored_order)
     print(f"And it's been updated: {state_decoded}")
 
 

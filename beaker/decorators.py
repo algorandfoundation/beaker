@@ -29,7 +29,6 @@ from pyteal import (
 )
 
 from beaker.state import AccountStateValue, ApplicationStateValue
-from beaker.struct import Struct
 
 HandlerFunc = Callable[..., Expr]
 
@@ -141,7 +140,7 @@ class HandlerConfig:
     bare_method: Optional[BareCallActions] = field(kw_only=True, default=None)
 
     referenced_self: bool = field(kw_only=True, default=False)
-    structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
+    structs: Optional[dict[str, abi.NamedTuple]] = field(kw_only=True, default=None)
 
     param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
         kw_only=True, default=None
@@ -309,10 +308,11 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
             # Generic type, not a Struct
             continue
 
-        if issubclass(cls, Struct):
-            params[k] = v.replace(annotation=cls().annotation_type())
-            annotations[k] = cls().annotation_type()
+        if issubclass(cls, abi.NamedTuple):
+            params[k] = v.replace(annotation=cls().type_spec().annotation_type())
+            annotations[k] = cls().type_spec().annotation_type()
             replaced[k] = cls
+
 
     if len(replaced.keys()) > 0:
         set_handler_config(fn, structs=replaced)
