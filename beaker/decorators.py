@@ -187,7 +187,7 @@ class MethodHints:
 
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices, see :doc:`structs` for more
+    #: hint to provide names for tuple argument indices
     structs: Optional[dict[str, dict[str, str | list[str]]]] = field(
         kw_only=True, default=None
     )
