@@ -483,7 +483,6 @@ def test_call(sb_accts: SandboxAccounts):
     )
 
 
-
 def test_add_method_call(sb_accts: SandboxAccounts):
     app = App()
 

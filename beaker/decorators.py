@@ -313,7 +313,6 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
             annotations[k] = cls().type_spec().annotation_type()
             replaced[k] = cls
 
-
     if len(replaced.keys()) > 0:
         set_handler_config(fn, structs=replaced)
 

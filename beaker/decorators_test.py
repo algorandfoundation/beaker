@@ -205,6 +205,7 @@ def test_authorize():
         def other_other_thing():
             pass
 
+
 def test_named_tuple():
     class Order(pt.abi.NamedTuple):
         item: pt.abi.Field[pt.abi.String]

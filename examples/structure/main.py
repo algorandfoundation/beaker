@@ -10,7 +10,6 @@ from beaker import (
     external,
     sandbox,
     client,
-    struct,
 )
 
 
@@ -61,6 +60,7 @@ class Structer(Application):
 
 def demo():
 
+    # Create a codec from the python sdk
     order_codec = ABIType.from_string(str(Structer.Order().type_spec()))
 
     acct = sandbox.get_accounts().pop()
@@ -74,6 +74,7 @@ def demo():
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
+    # Since we're using local state, opt in
     app_client.opt_in()
 
     # Passing in a dict as an argument that should take a tuple according to the type spec
@@ -81,25 +82,28 @@ def demo():
     order = {"quantity": 8, "item": "cubes"}
     app_client.call(Structer.place_order, order_number=order_number, order=order)
 
+    # Get the order from the state field
     state_key = order_number.to_bytes(1, "big")
     stored_order = app_client.get_account_state(raw=True)[state_key]
     state_decoded = order_codec.decode(stored_order)
-    
+
     print(
         f"We can get the order we stored from local state of the sender: {state_decoded}"
     )
 
-    # Or we could
+    # Or we could call the read-only method, passing the order number
     result = app_client.call(Structer.read_item, order_number=order_number)
     abi_decoded = order_codec.decode(result.raw_value)
     print(f"Decoded result: {abi_decoded}")
 
+    # Update the order to increase the quantity
     result = app_client.call(Structer.increase_quantity, order_number=order_number)
     increased_decoded = order_codec.decode(result.raw_value)
     print(
         f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"
     )
 
+    # And read it back out from state
     state_key = order_number.to_bytes(1, "big")
     stored_order = app_client.get_account_state(raw=True)[state_key]
     state_decoded = order_codec.decode(stored_order)
