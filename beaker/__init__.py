@@ -7,7 +7,6 @@ from .state import (
     ApplicationStateValue,
     AccountStateValue,
 )
-from .logic_signature import LogicSignature
 from .decorators import (
     Authorize,
     external,
@@ -21,6 +20,8 @@ from .decorators import (
     close_out,
     clear_state,
 )
+from .logic_signature import LogicSignature
+from .precompile import Precompile
 
 from . import client
 from . import sandbox

@@ -34,6 +34,7 @@ from beaker.state import (
     DynamicApplicationStateValue,
 )
 from beaker.errors import BareOverwriteError
+from beaker.precompile import Precompile
 
 
 def get_method_spec(fn) -> Method:
@@ -76,6 +77,7 @@ class Application:
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, ABIReturnSubroutine] = {}
+        self.precompiles: dict[str, Precompile] = {}
 
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
@@ -97,6 +99,8 @@ class Application:
                     app_vals[name] = bound_attr
                 case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
+                case Precompile():
+                    self.precompiles[name] = bound_attr
 
             if name in app_vals or name in acct_vals:
                 continue
@@ -198,9 +202,11 @@ class Application:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
-            "source":{
-                "approval":base64.b64encode(self.approval_program.encode()).decode("utf8"),
-                "clear":base64.b64encode(self.clear_program.encode()).decode("utf8"),
+            "source": {
+                "approval": base64.b64encode(self.approval_program.encode()).decode(
+                    "utf8"
+                ),
+                "clear": base64.b64encode(self.clear_program.encode()).decode("utf8"),
             },
             "schema": {
                 "local": self.acct_state.dictify(),

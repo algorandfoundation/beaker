@@ -52,20 +52,39 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
+        self.approval_binary = None
+        self.approval_src_map = None
+
+        self.clear_binary = None
+        self.clear_src_map = None
+
         self.suggested_params = suggested_params
 
-    def compile(self, teal: str, source_map: bool = False) -> tuple[bytes, SourceMap]:
+    def compile(
+        self, teal: str, source_map: bool = False
+    ) -> tuple[bytes, str, SourceMap]:
         result = self.client.compile(teal, source_map=source_map)
         src_map = None
         if source_map:
             src_map = result["sourcemap"]
-        return (b64decode(result["result"]), src_map)
+        return (b64decode(result["result"]), result["hash"], src_map)
 
-    def compile_approval(self, source_map: bool = False) -> tuple[bytes, SourceMap]:
-        return self.compile(self.app.approval_program, source_map)
+    def build(self):
 
-    def compile_clear(self, source_map: bool = False) -> tuple[bytes, SourceMap]:
-        return self.compile(self.app.clear_program, source_map)
+        for k, v in self.app.precompiles.items():
+            if v.binary is None:
+                binary, addr, map = self.compile(v.teal(), True)
+                v.set_compiled(binary, addr, map)
+
+        if self.approval_binary is None:
+            approval, _, approval_map = self.compile(self.app.approval_program, True)
+            self.approval_binary = approval
+            self.approval_src_map = approval_map
+
+        if self.clear_binary is None:
+            clear, _, clear_map = self.compile(self.app.clear_program, True)
+            self.clear_binary = clear
+            self.clear_src_map = clear_map
 
     def create(
         self,
@@ -79,17 +98,15 @@ class ApplicationClient:
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
-        approval, approval_map = self.compile_approval()
-        self.approval_binary = approval
-        self.approval_src_map = approval_map
-
-        clear, clear_map = self.compile_clear()
-        self.clear_binary = clear
-        self.clear_src_map = clear_map
+        self.build()
 
         if extra_pages is None:
             extra_pages = ceil(
-                ((len(approval) + len(clear)) - APP_PAGE_MAX_SIZE) / APP_PAGE_MAX_SIZE
+                (
+                    (len(self.approval_binary) + len(self.clear_binary))
+                    - APP_PAGE_MAX_SIZE
+                )
+                / APP_PAGE_MAX_SIZE
             )
 
         sp = self.get_suggested_params(suggested_params)
@@ -103,8 +120,8 @@ class ApplicationClient:
                     sender=sender,
                     sp=sp,
                     on_complete=on_complete,
-                    approval_program=approval,
-                    clear_program=clear,
+                    approval_program=self.approval_binary,
+                    clear_program=self.clear_binary,
                     global_schema=self.app.app_state.schema(),
                     local_schema=self.app.acct_state.schema(),
                     extra_pages=extra_pages,
@@ -144,14 +161,7 @@ class ApplicationClient:
     ) -> str:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
-
-        approval, approval_map = self.compile_approval()
-        self.approval_binary = approval
-        self.approval_src_map = approval_map
-
-        clear, clear_map = self.compile_clear()
-        self.clear_binary = clear
-        self.clear_src_map = clear_map
+        self.build()
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
@@ -164,8 +174,8 @@ class ApplicationClient:
                     sender=sender,
                     sp=sp,
                     index=self.app_id,
-                    approval_program=approval,
-                    clear_program=clear,
+                    approval_program=self.approval_binary,
+                    clear_program=self.clear_binary,
                     app_args=args,
                     **kwargs,
                 ),
