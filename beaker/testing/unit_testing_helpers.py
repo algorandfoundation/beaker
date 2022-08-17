@@ -6,7 +6,7 @@ import pyteal as pt
 import beaker as bkr
 
 
-client = None 
+client = None
 accounts = None
 
 

@@ -29,7 +29,6 @@ from pyteal import (
 )
 
 from beaker.state import AccountStateValue, ApplicationStateValue
-from beaker.struct import Struct
 
 HandlerFunc = Callable[..., Expr]
 
@@ -141,7 +140,7 @@ class HandlerConfig:
     bare_method: Optional[BareCallActions] = field(kw_only=True, default=None)
 
     referenced_self: bool = field(kw_only=True, default=False)
-    structs: Optional[dict[str, Struct]] = field(kw_only=True, default=None)
+    structs: Optional[dict[str, abi.NamedTuple]] = field(kw_only=True, default=None)
 
     param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
         kw_only=True, default=None
@@ -162,7 +161,7 @@ class HandlerConfig:
         if self.structs is not None:
             mh.structs = {
                 arg_name: {
-                    "name": model_spec.__name__,  # type: ignore[attr-defined]
+                    "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": list(model_spec.__annotations__.keys()),
                 }
                 for arg_name, model_spec in self.structs.items()
@@ -188,7 +187,7 @@ class MethodHints:
 
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices, see :doc:`structs` for more
+    #: hint to provide names for tuple argument indices
     structs: Optional[dict[str, dict[str, str | list[str]]]] = field(
         kw_only=True, default=None
     )
@@ -309,9 +308,9 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
             # Generic type, not a Struct
             continue
 
-        if issubclass(cls, Struct):
-            params[k] = v.replace(annotation=cls().annotation_type())
-            annotations[k] = cls().annotation_type()
+        if issubclass(cls, abi.NamedTuple):
+            params[k] = v.replace(annotation=cls().type_spec().annotation_type())
+            annotations[k] = cls().type_spec().annotation_type()
             replaced[k] = cls
 
     if len(replaced.keys()) > 0:
