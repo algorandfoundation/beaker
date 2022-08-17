@@ -71,17 +71,22 @@ class ApplicationClient:
 
     def build(self):
 
+        recompile = False
         for k, v in self.app.precompiles.items():
             if v.binary is None:
                 binary, addr, map = self.compile(v.teal(), True)
                 v.set_compiled(binary, addr, map)
+                recompile = True
 
-        if self.approval_binary is None:
+        if recompile:
+            self.app.compile()
+
+        if self.approval_binary is None or recompile:
             approval, _, approval_map = self.compile(self.app.approval_program, True)
             self.approval_binary = approval
             self.approval_src_map = approval_map
 
-        if self.clear_binary is None:
+        if self.clear_binary is None or recompile:
             clear, _, clear_map = self.compile(self.app.clear_program, True)
             self.clear_binary = clear
             self.clear_src_map = clear_map

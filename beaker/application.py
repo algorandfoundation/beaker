@@ -173,6 +173,11 @@ class Application:
                 method_call=method, method_config=method_config
             )
 
+        if len(self.precompiles)==0:
+            self.compile()
+
+
+    def compile(self):
         (
             self.approval_program,
             self.clear_program,
@@ -197,6 +202,7 @@ class Application:
                         self.contract.methods[meth_idx].args[
                             arg_idx
                         ].desc = hint.param_annotations[arg.name].descr
+
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""

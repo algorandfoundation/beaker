@@ -18,11 +18,8 @@ def test_precompile():
 
         @external
         def check_it(self):
-            return pt.Txn.sender() == self.pc.address()
+            return pt.Assert(pt.Txn.sender() == self.pc.address())
 
     app = App()
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
-
-    ac.build()
-
-    print(app.pc.binary)
+    print(ac.create())
