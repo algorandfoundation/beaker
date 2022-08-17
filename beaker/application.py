@@ -74,6 +74,11 @@ class Application:
             if not m.startswith("__")
         }
 
+        # Initialize these ahead of time, may not
+        # be set after init if len(precompiles)>0
+        self.approval_program = None
+        self.clear_program = None
+
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, ABIReturnSubroutine] = {}
