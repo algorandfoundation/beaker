@@ -121,32 +121,37 @@ class LocalBlob:
 
         @Subroutine(TealType.bytes)
         def _impl(acct, bstart, bend):
-            start_key = self._key_idx(bstart)
+            start_key_idx = self._key_idx(bstart)
             start_offset = self._offset_for_idx(bstart)
-            stop_key = self._key_idx(bend)
+
+            stop_key_idx = self._key_idx(bend)
             stop_offset = self._offset_for_idx(bend)
 
-            key = ScratchVar()
+            key_idx = ScratchVar()
             buff = ScratchVar()
 
             start = ScratchVar()
             stop = ScratchVar()
 
-            init = key.store(start_key)
-            cond = key.load() <= stop_key
-            incr = key.store(key.load() + Int(1))
+            init = key_idx.store(start_key_idx)
+            cond = key_idx.load() <= stop_key_idx
+            incr = key_idx.store(key_idx.load() + Int(1))
 
             return Seq(
                 buff.store(Bytes("")),
                 For(init, cond, incr).Do(
                     Seq(
-                        start.store(If(key.load() == start_key, start_offset, Int(0))),
-                        stop.store(If(key.load() == stop_key, stop_offset, page_size)),
+                        start.store(
+                            If(key_idx.load() == start_key_idx, start_offset, Int(0))
+                        ),
+                        stop.store(
+                            If(key_idx.load() == stop_key_idx, stop_offset, page_size)
+                        ),
                         buff.store(
                             Concat(
                                 buff.load(),
                                 Substring(
-                                    App.localGet(acct, self._key(key.load())),
+                                    App.localGet(acct, self._key(key_idx.load())),
                                     start.load(),
                                     stop.load(),
                                 ),
@@ -167,20 +172,20 @@ class LocalBlob:
         @Subroutine(TealType.uint64)
         def _impl(acct, bstart, buff):
 
-            start_key = self._key_idx(bstart)
+            start_key_idx = self._key_idx(bstart)
             start_offset = self._offset_for_idx(bstart)
 
-            stop_key = self._key_idx(bstart + Len(buff))
+            stop_key_idx = self._key_idx(bstart + Len(buff))
             stop_offset = self._offset_for_idx(bstart + Len(buff))
 
-            key = ScratchVar()
+            key_idx = ScratchVar()
             start = ScratchVar()
             stop = ScratchVar()
             written = ScratchVar()
 
-            init = key.store(start_key)
-            cond = key.load() <= stop_key
-            incr = key.store(key.load() + Int(1))
+            init = key_idx.store(start_key_idx)
+            cond = key_idx.load() <= stop_key_idx
+            incr = key_idx.store(key_idx.load() + Int(1))
 
             delta = ScratchVar()
 
@@ -188,11 +193,15 @@ class LocalBlob:
                 written.store(Int(0)),
                 For(init, cond, incr).Do(
                     Seq(
-                        start.store(If(key.load() == start_key, start_offset, Int(0))),
-                        stop.store(If(key.load() == stop_key, stop_offset, page_size)),
+                        start.store(
+                            If(key_idx.load() == start_key_idx, start_offset, Int(0))
+                        ),
+                        stop.store(
+                            If(key_idx.load() == stop_key_idx, stop_offset, page_size)
+                        ),
                         App.localPut(
                             acct,
-                            self._key(key.load()),
+                            self._key(key_idx.load()),
                             If(
                                 Or(stop.load() != page_size, start.load() != Int(0))
                             )  # Its a partial write
@@ -201,13 +210,17 @@ class LocalBlob:
                                     delta.store(stop.load() - start.load()),
                                     Concat(
                                         Substring(
-                                            App.localGet(acct, self._key(key.load())),
+                                            App.localGet(
+                                                acct, self._key(key_idx.load())
+                                            ),
                                             Int(0),
                                             start.load(),
                                         ),
                                         Extract(buff, written.load(), delta.load()),
                                         Substring(
-                                            App.localGet(acct, self._key(key.load())),
+                                            App.localGet(
+                                                acct, self._key(key_idx.load())
+                                            ),
                                             stop.load(),
                                             page_size,
                                         ),
