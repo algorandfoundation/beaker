@@ -50,7 +50,10 @@ class LogicSignature:
                         )
 
         self.program = compileTeal(
-            self.evaluate(), mode=Mode.Signature, version=self.teal_version
+            self.evaluate(),
+            mode=Mode.Signature,
+            version=self.teal_version,
+            assembleConstants=True,
         )
 
     def evaluate(self):

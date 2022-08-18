@@ -2,7 +2,6 @@ from typing import Final, cast
 from Cryptodome.Hash import keccak
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
-    LogicSigTransactionSigner,
     TransactionWithSigner,
 )
 from algosdk.future.transaction import *
