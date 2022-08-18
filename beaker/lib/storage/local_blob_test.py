@@ -4,7 +4,7 @@ import beaker as bkr
 
 from beaker.testing import UnitTestingApp, assert_output
 
-from beaker.lib.storage.local_blob import LocalBlob
+from beaker.lib.storage.local_blob import LocalBlob, _page_size
 
 
 class LocalBlobTest(UnitTestingApp):
@@ -51,7 +51,9 @@ def test_local_blob_write_read_boundary():
         def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
             return pt.Seq(
                 self.blob.zero(pt.Int(0)),
-                self.blob.write(pt.Int(0), pt.Int(0), pt.BytesZero(pt.Int(381))),
+                self.blob.write(
+                    pt.Int(0), pt.Int(0), pt.BytesZero(pt.Int(_page_size * 3))
+                ),
                 (s := pt.abi.String()).set(
                     self.blob.read(pt.Int(0), pt.Int(32), pt.Int(40))
                 ),
@@ -59,7 +61,7 @@ def test_local_blob_write_read_boundary():
             )
 
     expected = list(bytes(8))
-    assert_output(LB(), [], [expected], opups=1)
+    assert_output(LB(), [], [expected])
 
 
 def test_local_blob_write_read_past_end():
