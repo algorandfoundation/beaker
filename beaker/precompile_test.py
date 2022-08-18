@@ -14,12 +14,11 @@ def test_precompile():
             return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
     class App(Application):
-        pc = Precompile(Lsig)
+        pc = Precompile(Lsig())
 
         @external
         def check_it(self):
             return pt.Assert(pt.Txn.sender() == self.pc.address())
 
-    app = App()
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
+    ac = ApplicationClient(get_algod_client(), App(), signer=get_accounts().pop().signer)
     print(ac.create())

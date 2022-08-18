@@ -66,7 +66,7 @@ class ApplicationClient:
         result = self.client.compile(teal, source_map=source_map)
         src_map = None
         if source_map:
-            src_map = result["sourcemap"]
+            src_map = SourceMap(result["sourcemap"])
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):

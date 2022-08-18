@@ -176,6 +176,9 @@ class Application:
             self.compile()
 
     def compile(self):
+
+        #TODO: reset router?
+
         # Add method externals
         for _, method_tuple in self.methods.items():
             method, method_config = method_tuple

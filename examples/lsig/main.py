@@ -1,5 +1,12 @@
-from typing import Final
+from typing import Final, cast
 from Cryptodome.Hash import keccak
+from algosdk.atomic_transaction_composer import (
+    AtomicTransactionComposer,
+    LogicSigTransactionSigner,
+    TransactionWithSigner,
+)
+from algosdk.future.transaction import *
+
 from pyteal import *
 from beaker import *
 
@@ -24,42 +31,32 @@ class EthChecker(Application):
             output.set("lsig validated"),
         )
 
-
-if __name__ == "__main__":
-    from algosdk.atomic_transaction_composer import (
-        AtomicTransactionComposer,
-        LogicSigTransactionSigner,
-        TransactionWithSigner,
-    )
-    from algosdk.future.transaction import *
-
+def demo():
     algod_client = sandbox.get_algod_client()
     acct = sandbox.get_accounts().pop()
 
-    # Initialize the app
-    app = EthChecker()
-
-    # shouldnt have an approval program yet, since 
-    # the number of precompiles is > 0
-    assert app.approval_program is None
-
     # Create app client
-    app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
+    app_client = client.ApplicationClient(
+        algod_client, EthChecker(), signer=acct.signer
+    )
+
+    # shouldnt have an approval program yet, since
+    # the number of precompiles is > 0
+    assert app_client.app.approval_program is None
 
     # This will first compile the precompiles, then compile the approval program
     # with the precompiles in place, not required to call manually since create/update will also do this
     app_client.build()
 
     # Now we should have the approval program available
-    assert app.approval_program is not None
+    assert app_client.app.approval_program is not None
 
     app_id, app_addr, txid = app_client.create()
 
     # Use the precompiled verifier binary to create a LogicSigAccount
-    lsa = LogicSigAccount(app.verifier.binary)
+    lsa = LogicSigAccount(cast(EthChecker(), app_client.app).verifier.binary)
     lsig_signer = LogicSigTransactionSigner(lsa)
     lsig_client = app_client.prepare(signer=lsig_signer)
-
 
     atc = AtomicTransactionComposer()
 
@@ -106,3 +103,7 @@ if __name__ == "__main__":
     result = atc.execute(algod_client, 4)
     for result in result.abi_results:
         print(result.return_value)
+
+
+if __name__ == "__main__":
+    demo()
