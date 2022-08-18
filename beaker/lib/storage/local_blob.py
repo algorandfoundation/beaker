@@ -169,7 +169,7 @@ class LocalBlob:
         write bytes between bstart and len(buff) to local storage of an account
         """
 
-        @Subroutine(TealType.uint64)
+        @Subroutine(TealType.none)
         def _impl(acct, bstart, buff):
 
             start_key_idx = self._key_idx(bstart)
@@ -237,7 +237,6 @@ class LocalBlob:
                         written.store(written.load() + delta.load()),
                     )
                 ),
-                written.load(),
             )
 
         return _impl(acct, bstart, buff)
