@@ -394,6 +394,7 @@ def stack_type_to_string(st: TealType):
     else:
         raise Exception("Only uint64 and bytes supported")
 
+
 def check_not_static(sv: StateValue):
     if sv.static:
         raise TealInputError(f"StateValue {sv} is static")
