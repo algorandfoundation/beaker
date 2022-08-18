@@ -4,12 +4,12 @@ import beaker as bkr
 
 from beaker.testing import UnitTestingApp, assert_output
 
-from beaker.lib.storage.local_blob import LocalBlob, max_bytes
+from beaker.lib.storage.local_blob import LocalBlob
 
 
 class LocalBlobTest(UnitTestingApp):
     lb = bkr.DynamicAccountStateValue(pt.TealType.bytes, max_keys=16)
-    blob = LocalBlob()
+    blob = LocalBlob(keys=[x for x in range(10) if x % 2 == 0])
 
 
 def test_local_blob_zero():
@@ -72,7 +72,7 @@ def test_local_blob_write_read_past_end():
                 self.blob.zero(pt.Int(0)),
                 pt.Pop(self.blob.write(pt.Int(0), pt.Int(0), pt.Bytes("deadbeef" * 8))),
                 (s := pt.abi.String()).set(
-                    self.blob.read(pt.Int(0), pt.Int(0), max_bytes)
+                    self.blob.read(pt.Int(0), pt.Int(0), self.blob.max_bytes)
                 ),
                 output.decode(s.encode()),
             )
@@ -107,7 +107,7 @@ def test_local_blob_set_past_end():
         def unit_test(self, *, output: pt.abi.Uint8):
             return pt.Seq(
                 self.blob.zero(pt.Int(0)),
-                self.blob.set_byte(pt.Int(0), max_bytes, pt.Int(num)),
+                self.blob.set_byte(pt.Int(0), self.blob.max_bytes, pt.Int(num)),
                 output.set(self.blob.get_byte(pt.Int(0), pt.Int(32))),
             )
 

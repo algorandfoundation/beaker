@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from pyteal import (
     App,
     Bytes,
@@ -27,14 +25,6 @@ _page_size = 128 - 1  # 128 is max local storage bytes - 1 byte for key
 page_size = Int(_page_size)
 
 
-def intkey(i, start) -> Expr:
-    return Extract(Itob(i + start), Int(7), Int(1))
-
-
-def _key_and_offset(idx: Int) -> Tuple[Int, Int]:
-    return idx / page_size, idx % page_size
-
-
 class LocalBlob:
     """
     Blob is a class holding static methods to work with the local storage of an account as a binary large object
@@ -42,17 +32,35 @@ class LocalBlob:
     The `zero` method must be called on an account on opt in and the schema of the local storage should be 16 bytes
     """
 
-    def __init__(self, max_keys: int, start_key: int = 0):
-        self.start_key = Int(start_key)
-        # TODO: if max_keys == 16 and start_key == 1, we overflow
-        assert max_keys <= 16 - start_key
+    def __init__(self, keys: list[int] = None):
+        if keys is None or len(keys) == 0:
+            keys = [x for x in range(16)]
 
-        self._max_keys = max_keys
+        assert len(keys) <= 16
+        assert max(keys) <= 255
+        assert sorted(keys) == keys
+
+        self.byte_keys = [key.to_bytes(1, "big") for key in keys]
+        self.byte_key_str = Bytes("base16", b"".join(self.byte_keys).hex())
+
+        self.int_keys = [Int(key) for key in keys]
+        self.start_key = self.int_keys[0]
+
+        self._max_keys = len(keys)
         self._max_bytes = self._max_keys * _page_size
         self._max_bits = self._max_bytes * 8
 
         self.max_keys = Int(self._max_keys)
         self.max_bytes = Int(self._max_bytes)
+
+    def _key(self, i) -> Expr:
+        return Extract(self.byte_key_str, i, Int(1))
+
+    def _key_idx(self, idx: Int) -> Expr:
+        return idx / page_size
+
+    def _offset_for_idx(self, idx: Int) -> Expr:
+        return idx % page_size
 
     def zero(self, acct) -> Expr:
         """
@@ -64,15 +72,11 @@ class LocalBlob:
 
         @Subroutine(TealType.none)
         def _impl(acct):
-            i = ScratchVar()
-            init = i.store(self.start_key)
-            cond = i.load() < self.max_keys
-            iter = i.store(i.load() + Int(1))
-            return For(init, cond, iter).Do(
-                App.localPut(
-                    acct, intkey(i.load(), self.start_key), BytesZero(page_size)
-                )
-            )
+            writes: list[Expr] = [
+                App.localPut(acct, Bytes(bk), BytesZero(page_size))
+                for bk in self.byte_keys
+            ]
+            return Seq(*writes)
 
         return _impl(acct)
 
@@ -83,8 +87,10 @@ class LocalBlob:
 
         @Subroutine(TealType.uint64)
         def _impl(acct, idx):
-            key, offset = _key_and_offset(idx)
-            return GetByte(App.localGet(acct, intkey(key, self.start_key)), offset)
+            return GetByte(
+                App.localGet(acct, self._key(self._key_idx(idx))),
+                self._offset_for_idx(idx),
+            )
 
         return _impl(acct, idx)
 
@@ -95,11 +101,15 @@ class LocalBlob:
 
         @Subroutine(TealType.none)
         def _impl(acct, idx, byte):
-            key, offset = _key_and_offset(idx)
-            return App.localPut(
-                acct,
-                intkey(key, self.start_key),
-                SetByte(App.localGet(acct, intkey(key, self.start_key)), offset, byte),
+            return Seq(
+                (key := ScratchVar()).store(self._key(self._key_idx(idx))),
+                App.localPut(
+                    acct,
+                    key.load(),
+                    SetByte(
+                        App.localGet(acct, key.load()), self._offset_for_idx(idx), byte
+                    ),
+                ),
             )
 
         return _impl(acct, idx, byte)
@@ -111,8 +121,10 @@ class LocalBlob:
 
         @Subroutine(TealType.bytes)
         def _impl(acct, bstart, bend):
-            start_key, start_offset = _key_and_offset(bstart)
-            stop_key, stop_offset = _key_and_offset(bend)
+            start_key = self._key_idx(bstart)
+            start_offset = self._offset_for_idx(bstart)
+            stop_key = self._key_idx(bend)
+            stop_offset = self._offset_for_idx(bend)
 
             key = ScratchVar()
             buff = ScratchVar()
@@ -134,9 +146,7 @@ class LocalBlob:
                             Concat(
                                 buff.load(),
                                 Substring(
-                                    App.localGet(
-                                        acct, intkey(key.load(), self.start_key)
-                                    ),
+                                    App.localGet(acct, self._key(key.load())),
                                     start.load(),
                                     stop.load(),
                                 ),
@@ -157,8 +167,11 @@ class LocalBlob:
         @Subroutine(TealType.uint64)
         def _impl(acct, bstart, buff):
 
-            start_key, start_offset = _key_and_offset(bstart)
-            stop_key, stop_offset = _key_and_offset(bstart + Len(buff))
+            start_key = self._key_idx(bstart)
+            start_offset = self._offset_for_idx(bstart)
+
+            stop_key = self._key_idx(bstart + Len(buff))
+            stop_offset = self._offset_for_idx(bstart + Len(buff))
 
             key = ScratchVar()
             start = ScratchVar()
@@ -179,7 +192,7 @@ class LocalBlob:
                         stop.store(If(key.load() == stop_key, stop_offset, page_size)),
                         App.localPut(
                             acct,
-                            intkey(key.load(), self.start_key),
+                            self._key(key.load()),
                             If(
                                 Or(stop.load() != page_size, start.load() != Int(0))
                             )  # Its a partial write
@@ -188,17 +201,13 @@ class LocalBlob:
                                     delta.store(stop.load() - start.load()),
                                     Concat(
                                         Substring(
-                                            App.localGet(
-                                                acct, intkey(key.load(), self.start_key)
-                                            ),
+                                            App.localGet(acct, self._key(key.load())),
                                             Int(0),
                                             start.load(),
                                         ),
                                         Extract(buff, written.load(), delta.load()),
                                         Substring(
-                                            App.localGet(
-                                                acct, intkey(key.load(), self.start_key)
-                                            ),
+                                            App.localGet(acct, self._key(key.load())),
                                             stop.load(),
                                             page_size,
                                         ),
