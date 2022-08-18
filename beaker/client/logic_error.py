@@ -5,7 +5,6 @@ LOGIC_ERROR = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval err
 
 
 def parse_logic_error(error_str: str) -> tuple[str, str, int]:
-
     matches = re.match(LOGIC_ERROR, error_str)
     if matches is None:
         return "", "", 0
@@ -31,16 +30,18 @@ class LogicException(Exception):
         logic_error: Exception,
         program: str,
         map: SourceMap,
-        lines: int,
     ):
         self.logic_error = logic_error
         self.logic_error_str = str(logic_error)
+
         self.program = program
         self.map = map
+
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
-        self.lines = lines
+        self.line_no = self.map.get_line_for_pc(self.pc)
 
     def __str__(self):
-        line_no = self.map.get_line_for_pc(self.pc)
-        trace = tiny_trace(self.program, line_no, self.lines)
-        return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {line_no}: \n\n\t{trace}"
+        return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"
+
+    def trace(self, lines: int = 5) -> str:
+        return tiny_trace(self.program, self.line_no, lines)

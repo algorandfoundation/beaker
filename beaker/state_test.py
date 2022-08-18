@@ -2,6 +2,7 @@ import pytest
 import pyteal as pt
 from beaker.state import (
     ApplicationState,
+    AccountState,
     DynamicAccountStateValue,
     DynamicApplicationStateValue,
     ApplicationStateValue,
@@ -21,7 +22,9 @@ ACCOUNT_VAL_TESTS = [
     (pt.Bytes("k"), pt.TealType.bytes, pt.Bytes("abc"), pt.Bytes("def"), None),
     (pt.Bytes("k"), pt.TealType.bytes, pt.Bytes("abc"), pt.Bytes("def"), None),
     (pt.Bytes("k"), pt.TealType.bytes, None, pt.Int(1), pt.TealTypeError),
+    (pt.Bytes("k"), pt.TealType.bytes, pt.Int(1), pt.Bytes("abc"), pt.TealTypeError),
     (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealTypeError),
+    (None, pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealInputError),
 ]
 
 
@@ -217,6 +220,7 @@ APPLICATION_VAL_TESTS = [
     (pt.Bytes("k"), pt.TealType.bytes, None, pt.Int(1), False, pt.TealTypeError),
     (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealTypeError),
     (pt.Bytes("k"), pt.TealType.bytes, None, pt.Bytes("abc"), True, pt.TealInputError),
+    (None, pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealInputError),
 ]
 
 
@@ -463,6 +467,21 @@ def test_application_state():
     assert astate.num_byte_slices == 1
     assert astate.num_uints == 1
 
+    statevals["c"] = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=64)
+    with pytest.raises(Exception):
+        ApplicationState(statevals)
+
 
 def test_account_state():
-    pass
+    statevals = {
+        "a": AccountStateValue(pt.TealType.uint64),
+        "b": AccountStateValue(pt.TealType.bytes),
+    }
+    astate = AccountState(statevals)
+
+    assert astate.num_byte_slices == 1
+    assert astate.num_uints == 1
+
+    statevals["c"] = DynamicAccountStateValue(pt.TealType.uint64, max_keys=16)
+    with pytest.raises(Exception):
+        AccountState(statevals)

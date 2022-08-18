@@ -42,11 +42,12 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="structs.html">structs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
         </div>
@@ -73,11 +74,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <img alt="_images/beaker.png" src="_images/beaker.png" />
-<section id="module-beaker">
-<span id="beaker"></span><h1>Beaker<a class="headerlink" href="#module-beaker" title="Permalink to this heading"></a></h1>
-<p><strong>Beaker</strong> is a Python framework for building Smart Contracts on Algorand using <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal</a>.</p>
-<p>Check out the <a class="reference internal" href="usage.html"><span class="doc">Usage</span></a> section for further information.</p>
+  <section id="beaker">
+<h1>Beaker<a class="headerlink" href="#beaker" title="Permalink to this heading"></a></h1>
+<img alt="_images/beaker.png" src="_images/beaker.png" />
+<span class="target" id="module-beaker"></span><p><strong>Beaker</strong> is a Python framework for building Smart Contracts on Algorand using <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/">PyTeal</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This project is under active development</p>
@@ -100,90 +100,48 @@
 
 <span class="c1"># Create a class, subclassing Application from beaker</span>
 <span class="k">class</span> <span class="nc">HelloBeaker</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
-
-    <span class="c1"># Add an external method, ABI method signature will be `hello(string)string`</span>
+    <span class="c1"># Add an external method with ABI method signature `hello(string)string`</span>
     <span class="nd">@external</span>
-    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
-        <span class="c1"># Return the result of `Hello, `+name</span>
+    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+        <span class="c1"># Set output to the result of `Hello, `+name</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;Hello, &quot;</span><span class="p">),</span> <span class="n">name</span><span class="o">.</span><span class="n">get</span><span class="p">()))</span>
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
-    <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">client</span>
-
-    <span class="c1"># Instantiate our app</span>
-    <span class="n">app</span> <span class="o">=</span> <span class="n">HelloBeaker</span><span class="p">()</span>
-
-    <span class="c1"># Get an acct from the sandbox</span>
-    <span class="n">addr</span><span class="p">,</span> <span class="n">secret</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-
+<span class="k">def</span> <span class="nf">demo</span><span class="p">():</span>
     <span class="c1"># Create an Application client</span>
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">secret</span><span class="p">)</span>
+        <span class="c1"># Get sandbox algod client</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span>
+        <span class="c1"># Instantiate app with the program version (default is MAX_TEAL_VERSION)</span>
+        <span class="n">app</span><span class="o">=</span><span class="n">HelloBeaker</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">),</span>
+        <span class="c1"># Get acct from sandbox and pass the signer</span>
+        <span class="n">signer</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Deploy the app</span>
+    <span class="c1"># Deploy the app on-chain</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;Deployed app in txid </span><span class="si">{</span><span class="n">txid</span><span class="si">}</span><span class="s2"></span>
+<span class="s2">        App ID: </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> </span>
+<span class="s2">        Address: </span><span class="si">{</span><span class="n">app_addr</span><span class="si">}</span><span class="s2"> </span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="p">)</span>
 
-    <span class="c1"># Call the method we defined</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">hello</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Beaker&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="p">)</span>  <span class="c1"># Hello, Beaker</span>
+    <span class="c1"># Call the `hello` method</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">HelloBeaker</span><span class="o">.</span><span class="n">hello</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Beaker&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="p">)</span>  <span class="c1"># &quot;Hello, Beaker&quot;</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">demo</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
-<section id="table-of-contents">
-<h2>Table Of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this heading"></a></h2>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
+<p>Check out the <a class="reference internal" href="usage.html"><span class="doc">Usage</span></a> section for further information.</p>
+<p>See full examples <a class="reference external" href="https://github.com/algorand-devrel/beaker/tree/master/examples">here</a>.</p>
 <div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#tutorial">Tutorial</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#state-management">State Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#inheritance">Inheritance</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="state.html">State</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="state.html#application-state">Application State</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="state.html#application-state-value">Application State Value</a></li>
-<li class="toctree-l3"><a class="reference internal" href="state.html#dynamic-application-state-value">Dynamic Application State Value</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="state.html#account-state">Account State</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="state.html#accountstatevalue">AccountStateValue</a></li>
-<li class="toctree-l3"><a class="reference internal" href="state.html#dynamicaccountstatevalue">DynamicAccountStateValue</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="state.html#full-example">Full Example</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="decorators.html#abi-method-external">ABI Method external</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="decorators.html#authorization">Authorization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="decorators.html#method-hints">Method Hints</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="decorators.html#bare-externals">Bare externals</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="decorators.html#single-bare-externals">Single Bare externals</a></li>
-<li class="toctree-l3"><a class="reference internal" href="decorators.html#multiple-bare-externals">Multiple Bare externals</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="decorators.html#internal-methods">Internal Methods</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="structs.html">structs</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="structs.html#example">Example</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="client.html">Application Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="contracts.html#utility">Utility</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="contracts.html#opup">OpUp</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
 </div>
 </section>
 </section>

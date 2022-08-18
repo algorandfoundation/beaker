@@ -1,5 +1,6 @@
 import pytest
-from typing import Final, cast
+import json
+from typing import Final, cast, Annotated
 from Cryptodome.Hash import SHA512
 import pyteal as pt
 
@@ -18,15 +19,15 @@ from beaker.application import (
     get_method_spec,
 )
 from beaker.decorators import (
-    ResolvableArguments,
-    ResolvableTypes,
+    ParameterAnnotation,
+    DefaultArgument,
+    DefaultArgumentClass,
     external,
     internal,
     create,
     update,
     delete,
 )
-from beaker.struct import Struct
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -47,8 +48,8 @@ def test_empty_application():
     ), "Expected no schema"
 
     assert len(ea.bare_externals.keys()) == len(
-        EXPECTED_BARE_externalS
-    ), f"Expected {len(EXPECTED_BARE_externalS)} bare externals: {EXPECTED_BARE_externalS}"
+        EXPECTED_BARE_HANDLERS
+    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
         len(ea.approval_program) > 0
     ), "Expected approval program to be compiled to teal"
@@ -98,9 +99,10 @@ def test_bare_external():
             return pt.Approve()
 
     bh = Bareexternal()
-    assert len(bh.bare_externals) == len(
-        EXPECTED_BARE_externalS
-    ), f"Expected {len(EXPECTED_BARE_externalS)} bare externals: {EXPECTED_BARE_externalS}"
+
+    assert (
+        len(bh.bare_externals) == 3
+    ), "Expected 4 bare externals: create,update,delete"
 
     class FailBareexternal(Application):
         @create
@@ -264,14 +266,21 @@ def test_internal():
         assert actual == expected
 
 
-def test_resolvable_hint():
+def test_hints():
     class Hinty(Application):
         @external(read_only=True)
         def get_asset_id(self, *, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
-        @external(resolvable=ResolvableArguments(aid=get_asset_id))
-        def hintymeth(self, aid: pt.abi.Asset):
+        @external
+        def hintymeth(
+            self,
+            aid: Annotated[
+                pt.abi.Asset,
+                ParameterAnnotation(descr="Testing asset id", default=get_asset_id),
+            ],
+            num: pt.abi.Uint64,
+        ):
             return pt.Assert(pt.Int(1))
 
     h = Hinty()
@@ -279,19 +288,124 @@ def test_resolvable_hint():
     assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
     hint = h.hints[h.hintymeth.__name__]
+
+    assert "aid" in hint.param_annotations, "Expected annotation available for param"
+    anno = hint.param_annotations["aid"]
+
+    assert anno.descr == "Testing asset id"
+
+    assert anno.default is not None
+    default = DefaultArgument(anno.default)
+    assert default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
-        hint.resolvable["aid"][ResolvableTypes.ABIMethod]
-        == get_method_spec(h.get_asset_id).dictify()
+        default.resolve_hint() == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
 
 
-EXPECTED_BARE_externalS = [
+def test_app_spec():
+    class Specd(Application):
+        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
+        decl_acct_val = AccountStateValue(pt.TealType.uint64)
+
+        @external(read_only=True)
+        def get_asset_id(self, *, output: pt.abi.Uint64):
+            return output.set(pt.Int(123))
+
+        @external
+        def annotated_meth(
+            self,
+            aid: Annotated[
+                pt.abi.Asset,
+                ParameterAnnotation(descr="Testing asset id", default=get_asset_id),
+            ],
+        ):
+            return pt.Assert(pt.Int(1))
+
+        class Thing(pt.abi.NamedTuple):
+            a: pt.abi.Field[pt.abi.Uint64]
+            b: pt.abi.Field[pt.abi.Uint32]
+
+        @external
+        def struct_meth(self, thing: Thing):
+            return pt.Approve()
+
+    s = Specd()
+
+    actual_spec = s.application_spec()
+    expected_spec = {
+        "hints": {
+            "get_asset_id": {"read_only": True},
+            "annotated_meth": {
+                "param_annotations": {
+                    "aid": {
+                        "descr": "Testing asset id",
+                        "default": {
+                            "abi-method": {
+                                "name": "get_asset_id",
+                                "args": [],
+                                "returns": {"type": "uint64"},
+                            }
+                        },
+                    }
+                }
+            },
+            "struct_meth": {
+                "structs": {"thing": {"name": "Thing", "elements": ["a", "b"]}}
+            },
+        },
+        "schema": {
+            "local": {
+                "declared": {
+                    "decl_acct_val": {
+                        "type": "uint64",
+                        "key": "decl_acct_val",
+                        "descr": None,
+                    }
+                },
+                "dynamic": {},
+            },
+            "global": {
+                "declared": {
+                    "decl_app_val": {
+                        "type": "uint64",
+                        "key": "decl_app_val",
+                        "descr": None,
+                    }
+                },
+                "dynamic": {},
+            },
+        },
+        "contract": {
+            "name": "Specd",
+            "methods": [
+                # {"name": "get_asset_id", "args": [], "returns": {"type": "uint64"}},
+                # {
+                #    "name": "annotated_meth",
+                #    "args": [ {"type": "asset", "name": "aid", "desc": "Testing asset id"} ],
+                #    "returns": {"type": "void"},
+                # },
+                # {
+                #    "name": "struct_meth",
+                #    "args": [{"type": "(uint64,uint32)", "name": "thing"}],
+                #    "returns": {"type": "void"},
+                # },
+            ],
+            "desc": None,
+            "networks": {},
+        },
+    }
+
+    # TODO: come back and check methods, the sorting gets weird
+    actual_spec["contract"]["methods"] = []
+    del actual_spec["source"]
+
+    assert json.dumps(actual_spec, sort_keys=True) == json.dumps(
+        expected_spec, sort_keys=True
+    )
+
+
+EXPECTED_BARE_HANDLERS = [
     "create",
-    "update",
-    "delete",
-    "opt_in",
-    "clear_state",
-    "close_out",
 ]
 
 
@@ -299,10 +413,10 @@ def test_model_args():
     from algosdk.abi import Method, Argument, Returns
 
     class Structed(Application):
-        class UserRecord(Struct):
-            addr: pt.abi.Address
-            balance: pt.abi.Uint64
-            nickname: pt.abi.String
+        class UserRecord(pt.abi.NamedTuple):
+            addr: pt.abi.Field[pt.abi.Address]
+            balance: pt.abi.Field[pt.abi.Uint64]
+            nickname: pt.abi.Field[pt.abi.String]
 
         @external
         def structy(self, user_record: UserRecord):

@@ -35,6 +35,15 @@ def get_default_for_type(stack_type, default):
         return Int(0)
 
 
+def stack_type_to_string(st: TealType):
+    if st == TealType.uint64:
+        return "uint64"
+    if st == TealType.bytes:
+        return "bytes"
+    else:
+        raise Exception("Only uint64 and bytes supported")
+
+
 class StateValue(Expr):
     def __init__(
         self,
@@ -75,29 +84,23 @@ class StateValue(Expr):
         """returns the string held by the key Bytes object"""
         return cast(Bytes, self.key).byte_str.replace('"', "")
 
-    def __iadd__(self, other) -> Expr:
-        return self.increment(other)
-
-    def __isub__(self, other) -> Expr:
-        return self.decrement(other)
-
     def increment(self, cnt: Expr = Int(1)) -> Expr:
         """helper to increment a counter"""
-        check_has_key(self)
         check_is_int(self)
         check_not_static(self)
+
         return self.set(self.get() + cnt)
 
     def decrement(self, cnt: Expr = Int(1)) -> Expr:
         """helper to decrement a counter"""
-        check_has_key(self)
         check_is_int(self)
         check_not_static(self)
+
         return self.set(self.get() - cnt)
 
     def set_default(self) -> Expr:
         """sets the default value if one is provided, if none provided sets the zero value for its type"""
-        check_has_key(self)
+
         return self.set(get_default_for_type(self.stack_type, self.default))
 
     def is_default(self) -> Expr:
@@ -157,8 +160,10 @@ class ApplicationStateValue(StateValue):
         return f"ApplicationStateValue {self.key}"
 
     def set(self, val: Expr) -> Expr:
-        check_has_key(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         if self.static:
             return Seq(
@@ -169,37 +174,37 @@ class ApplicationStateValue(StateValue):
 
         return App.globalPut(self.key, val)
 
-    def increment(self, cnt: Expr = Int(1)) -> Expr:
-        check_has_key(self)
-        check_is_int(self)
-        check_not_static(self)
-
-        return self.set(self.get() + cnt)
-
     def get(self) -> Expr:
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return App.globalGet(self.key)
 
     def get_maybe(self) -> MaybeValue:
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return App.globalGetEx(Int(0), self.key)
 
     def get_must(self) -> Expr:
-        check_has_key(self)
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
-        check_has_key(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
     def delete(self) -> Expr:
-        check_has_key(self)
         check_not_static(self)
+
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
         return App.globalDel(self.key)
 
@@ -243,9 +248,13 @@ class AccountStateValue(StateValue):
         return f"AccountStateValue {self.acct} {self.key}"
 
     def set(self, val: Expr) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         if self.static:
             return Seq(
@@ -257,27 +266,38 @@ class AccountStateValue(StateValue):
         return App.localPut(self.acct, self.key, val)
 
     def get(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return App.localGet(self.acct, self.key)
 
     def get_maybe(self) -> MaybeValue:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return App.localGetEx(self.acct, Int(0), self.key)
 
     def get_must(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return Seq(val := self.get_maybe(), Assert(val.hasValue()), val.value())
 
     def get_else(self, val: Expr) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
         check_match_type(self, val)
+
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return If(
             (v := App.localGetEx(self.acct, Int(0), self.key)).hasValue(),
@@ -286,12 +306,14 @@ class AccountStateValue(StateValue):
         )
 
     def delete(self) -> Expr:
-        check_has_key(self)
-        check_has_account(self)
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
 
         return App.localDel(self.acct, self.key)
 
-    def __getitem__(self, acct: Expr):
+    def __getitem__(self, acct: Expr) -> "AccountStateValue":
         asv = copy(self)
         asv.acct = acct
         return asv
@@ -305,7 +327,6 @@ class DynamicAccountStateValue(DynamicStateValue):
         key_gen: SubroutineFnWrapper = None,
         descr: str = None,
     ):
-
         super().__init__(stack_type, max_keys, key_gen, descr)
 
         if max_keys <= 0 or max_keys > MAX_LOCAL_STATE:
@@ -373,7 +394,6 @@ def stack_type_to_string(st: TealType):
     else:
         raise Exception("Only uint64 and bytes supported")
 
-
 def check_not_static(sv: StateValue):
     if sv.static:
         raise TealInputError(f"StateValue {sv} is static")
@@ -382,16 +402,6 @@ def check_not_static(sv: StateValue):
 def check_is_int(sv: StateValue):
     if sv.stack_type != TealType.uint64:
         raise TealInputError(f"StateValue {sv} is not integer type")
-
-
-def check_has_key(sv: StateValue):
-    if sv.key is None:
-        raise TealInputError(f"StateValue {sv} has no key defined")
-
-
-def check_has_account(asv: AccountStateValue):
-    if asv.acct is None:
-        raise TealInputError(f"AccountStateValue {asv} has no account defined")
 
 
 def check_match_type(sv: StateValue, val: Expr):
@@ -476,7 +486,7 @@ class State:
 class ApplicationState(State):
     def __init__(
         self,
-        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue] = {},
+        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue],
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
