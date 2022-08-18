@@ -20,5 +20,7 @@ def test_precompile():
         def check_it(self):
             return pt.Assert(pt.Txn.sender() == self.pc.address())
 
-    ac = ApplicationClient(get_algod_client(), App(), signer=get_accounts().pop().signer)
+    ac = ApplicationClient(
+        get_algod_client(), App(), signer=get_accounts().pop().signer
+    )
     print(ac.create())

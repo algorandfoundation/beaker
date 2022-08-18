@@ -32,10 +32,11 @@ class EthChecker(Application):
         return Seq(
             # The precompiled lsig should have its address and binary available
             # here so we can use it to make sure we've been called
-            # with the correct lsig  
+            # with the correct lsig
             Assert(Txn.sender() == self.verifier.address()),
             output.set("lsig validated"),
         )
+
 
 def demo():
     algod_client = sandbox.get_algod_client()
@@ -61,9 +62,8 @@ def demo():
 
     app_client.create()
 
-    # Use the precompiled verifier binary to create a LogicSigAccount
-    lsa = LogicSigAccount(cast(EthChecker(), app_client.app).verifier.binary)
-    lsig_signer = LogicSigTransactionSigner(lsa)
+    # Create a new app client with the lsig signer
+    lsig_signer = cast(EthChecker, app_client.app).verifier.signer()
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()

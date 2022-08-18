@@ -1,5 +1,7 @@
 from pyteal import Expr, Bytes, Addr
 from algosdk.source_map import SourceMap
+from algosdk.future.transaction import LogicSigAccount
+from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 
 from beaker.logic_signature import LogicSignature
 
@@ -22,6 +24,10 @@ class Precompile:
 
     def address(self) -> Expr:
         return Addr(self.addr)
+
+    def signer(self) -> LogicSigTransactionSigner:
+        lsa = LogicSigAccount(self.binary)
+        return LogicSigTransactionSigner(lsa)
 
     # def template_address(key: TealType.bytes):
     #    return Sha512_256(
