@@ -177,7 +177,8 @@ class Application:
 
     def compile(self):
 
-        #TODO: reset router?
+        # TODO: reset router?
+        # It will fail if compile is re-called but we shouldn't rely on that
 
         # Add method externals
         for _, method_tuple in self.methods.items():
@@ -206,6 +207,7 @@ class Application:
                 for arg_idx, arg in enumerate(meth.args):
                     if arg.name not in hint.param_annotations:
                         continue
+
                     if hint.param_annotations[arg.name].descr is not None:
                         self.contract.methods[meth_idx].args[
                             arg_idx

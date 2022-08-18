@@ -20,6 +20,9 @@ class EthChecker(Application):
 
     # The lsig that will be responsible for validating the
     # incoming signature against the incoming hash
+    # When passed to Precompile, it flags the init of the Application
+    # to prevent building approval/clear programs until the precompile is
+    # compiled so we have access to compiled information (its address for instance)
     verifier: Final[Precompile] = Precompile(EthEcdsaVerify(version=6))
 
     @external
@@ -27,6 +30,9 @@ class EthChecker(Application):
         self, hash: HashValue, signature: Signature, *, output: abi.String
     ):
         return Seq(
+            # The precompiled lsig should have its address and binary available
+            # here so we can use it to make sure we've been called
+            # with the correct lsig  
             Assert(Txn.sender() == self.verifier.address()),
             output.set("lsig validated"),
         )
@@ -40,18 +46,20 @@ def demo():
         algod_client, EthChecker(), signer=acct.signer
     )
 
-    # shouldnt have an approval program yet, since
+    # shouldn't have an approval program yet, since
     # the number of precompiles is > 0
     assert app_client.app.approval_program is None
 
     # This will first compile the precompiles, then compile the approval program
-    # with the precompiles in place, not required to call manually since create/update will also do this
+    # with the precompiles in place
+    # not required to call manually since create/update will also do this
+    # if necessary
     app_client.build()
 
     # Now we should have the approval program available
     assert app_client.app.approval_program is not None
 
-    app_id, app_addr, txid = app_client.create()
+    app_client.create()
 
     # Use the precompiled verifier binary to create a LogicSigAccount
     lsa = LogicSigAccount(cast(EthChecker(), app_client.app).verifier.binary)
