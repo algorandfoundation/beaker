@@ -36,51 +36,58 @@ def demo():
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), DiskHungry(), signer=acct.signer
     )
+
     app_client.create()
 
     tmpl_acct = cast(DiskHungry, app_client.app).tmpl_acct
 
     for _ in range(10):
-        nonce = (
-            "".join(random.choice(string.ascii_uppercase) for i in range(10))
-        ).encode()
+        create_account(app_client, tmpl_acct, get_nonce())
 
-        lsig_signer = tmpl_acct.template_signer(nonce)
-        lsig_client = app_client.prepare(signer=lsig_signer)
 
-        print(
-            f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
+def get_nonce(n: int = 10) -> bytes:
+    return ("".join(random.choice(string.ascii_uppercase) for i in range(10))).encode()
+
+
+def create_account(
+    app_client: client.ApplicationClient, lsig_precompile: Precompile, nonce: bytes
+):
+    lsig_signer = lsig_precompile.template_signer(nonce)
+    lsig_client = app_client.prepare(signer=lsig_signer)
+
+    print(
+        f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
+    )
+
+    atc = AtomicTransactionComposer()
+
+    sp = app_client.get_suggested_params()
+    sp.flat_fee = True
+    sp.fee = 2 * consts.milli_algo
+    atc.add_transaction(
+        TransactionWithSigner(
+            txn=txns.PaymentTxn(
+                app_client.get_sender(), sp, lsig_signer.lsig.address(), consts.algo
+            ),
+            signer=app_client.signer,
         )
+    )
 
-        atc = AtomicTransactionComposer()
+    sp = app_client.get_suggested_params()
+    sp.flat_fee = True
+    sp.fee = 0
+    lsig_client.add_method_call(
+        atc,
+        DiskHungry.add_account,
+        nonce=nonce,
+        suggested_params=sp,
+        rekey_to=app_client.app_addr,
+        on_complete=txns.OnComplete.OptInOC,
+    )
 
-        sp = app_client.get_suggested_params()
-        sp.flat_fee = True
-        sp.fee = 2 * consts.milli_algo
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=txns.PaymentTxn(
-                    acct.address, sp, lsig_signer.lsig.address(), consts.algo
-                ),
-                signer=acct.signer,
-            )
-        )
+    atc.execute(app_client.client, 4)
 
-        sp = app_client.get_suggested_params()
-        sp.flat_fee = True
-        sp.fee = 0
-        lsig_client.add_method_call(
-            atc,
-            DiskHungry.add_account,
-            nonce=nonce,
-            suggested_params=sp,
-            rekey_to=app_client.app_addr,
-            on_complete=txns.OnComplete.OptInOC,
-        )
-
-        atc.execute(app_client.client, 4)
-
-        print(f"Done, currernt local state: {lsig_client.get_account_state()}")
+    print(f"Done, current local state: {lsig_client.get_account_state()}")
 
 
 if __name__ == "__main__":
