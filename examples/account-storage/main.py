@@ -21,9 +21,11 @@ class DiskHungry(Application):
     @external(method_config=MethodConfig(opt_in=CallConfig.CALL))
     def add_account(self, nonce: abi.DynamicArray[abi.Byte]):
         return Seq(
+            (expected_sender := ScratchVar()).store(
+                self.tmpl_acct.template_address(Suffix(nonce.encode(), Int(2)))
+            ),
             Assert(
-                Txn.sender()
-                == self.tmpl_acct.template_address(Suffix(nonce.encode(), Int(2))),
+                Txn.sender() == expected_sender.load(),
                 Txn.rekey_to() == self.address,
             ),
             self.initialize_account_state(),
@@ -36,11 +38,9 @@ def demo():
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), DiskHungry(), signer=acct.signer
     )
-
     app_client.create()
 
     tmpl_acct = cast(DiskHungry, app_client.app).tmpl_acct
-
     for _ in range(10):
         create_account(app_client, tmpl_acct, get_nonce())
 
