@@ -5,7 +5,6 @@ import algosdk.future.transaction as txns
 from algosdk.atomic_transaction_composer import *
 from pyteal import *
 from beaker import *
-from beaker.consts import AppCallBudget
 
 if __name__ == "__main__":
     from lsig import KeySig
