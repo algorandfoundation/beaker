@@ -8,23 +8,24 @@ from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
 
 
-def test_precompile():
-    class Lsig(LogicSignature):
-        def evaluate(self):
-            return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
-
-    class App(Application):
-        pc = Precompile(Lsig())
-
-        @external
-        def check_it(self):
-            return pt.Assert(pt.Txn.sender() == self.pc.address())
-
-    ac = ApplicationClient(
-        get_algod_client(), App(), signer=get_accounts().pop().signer
-    )
-    print(ac.create())
-
-
-def test_templated_address():
-    pass
+# def test_precompile():
+#    class Lsig(LogicSignature):
+#        def evaluate(self):
+#            return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
+#
+#    class App(Application):
+#        pc = Precompile(Lsig())
+#
+#        @external
+#        def check_it(self):
+#            return pt.Assert(pt.Txn.sender() == self.pc.address())
+#
+#    ac = ApplicationClient(
+#        get_algod_client(), App(), signer=get_accounts().pop().signer
+#    )
+#    print(ac.create())
+#
+#
+# def test_templated_address():
+#    pass
+#

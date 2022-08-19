@@ -676,6 +676,7 @@ class ApplicationClient:
     def get_suggested_params(
         self, sp: transaction.SuggestedParams = None
     ) -> transaction.SuggestedParams:
+
         if sp is not None:
             return sp
 

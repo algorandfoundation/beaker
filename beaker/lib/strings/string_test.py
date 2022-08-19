@@ -80,6 +80,6 @@ def test_prefix_past_length():
 
 
 def test_encode_uvarint():
-    ut = UnitTestingApp(encode_uvarint(pt.Int(500), pt.Bytes("")))
+    ut = UnitTestingApp(encode_uvarint(pt.Int(500)))
     output = [[244, 3]]
     assert_output(ut, [], output)

@@ -79,6 +79,9 @@ class Precompile:
             tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
 
     def address(self) -> Expr:
+        assert self.binary is not None
+        assert len(self.template_values) == 0
+
         return Addr(self.addr)
 
     def signer(self) -> LogicSigTransactionSigner:
@@ -112,7 +115,7 @@ class Precompile:
     def template_signer(self, *args) -> LogicSigTransactionSigner:
         return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
 
-    def template_address(self, *args: Expr) -> Expr:
+    def populate_template_expr(self, *args: Expr) -> Expr:
         assert self.binary_bytes is not None
         assert len(self.template_values)
         assert len(args) == len(self.template_values)
@@ -124,19 +127,11 @@ class Precompile:
             (buff := ScratchVar(TealType.bytes)).store(Bytes("")),
         ]
 
-        for idx, tc in enumerate(self.template_values):
-            if tc.is_bytes:
-                populate_program += [
-                    curr_val.store(
-                        Concat(encode_uvarint(Len(args[idx]), Bytes("")), args[idx])
-                    ),
-                ]
-            else:
-                populate_program += [
-                    curr_val.store(encode_uvarint(args[idx], Bytes(""))),
-                ]
-
+        for idx, tv in enumerate(self.template_values):
             populate_program += [
+                curr_val.store(Concat(encode_uvarint(Len(args[idx])), args[idx]))
+                if tv.is_bytes
+                else curr_val.store(encode_uvarint(args[idx])),
                 buff.store(
                     Concat(
                         buff.load(),
@@ -144,13 +139,13 @@ class Precompile:
                             self.binary_bytes,
                             last_pos.load(),
                             # Length not next pos
-                            Int(tc.pc),
+                            Int(tv.pc),
                         ),
                         curr_val.load(),
                     )
                 ),
                 offset.store(offset.load() + Len(curr_val.load()) - Int(1)),
-                last_pos.store(Int(tc.pc) + Int(1)),
+                last_pos.store(Int(tv.pc) + Int(1)),
             ]
 
         ## append the bytes from the last template variable to the end
@@ -160,6 +155,8 @@ class Precompile:
         ]
 
         return Seq(*populate_program)
-        # return Sha512_256(
-        #    Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), Seq(*populate_program))
-        # )
+
+    def template_address(self, *args) -> Expr:
+        return Sha512_256(
+            Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(*args))
+        )
