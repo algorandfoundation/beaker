@@ -1,3 +1,5 @@
+import random
+import string
 from typing import cast
 import algosdk.future.transaction as txns
 from algosdk.atomic_transaction_composer import *
@@ -21,7 +23,8 @@ class DiskHungry(Application):
         return Seq(
             Assert(
                 Txn.sender()
-                == self.tmpl_acct.template_address(Suffix(nonce.encode(), Int(2)))
+                == self.tmpl_acct.template_address(Suffix(nonce.encode(), Int(2))),
+                Txn.rekey_to() == self.address,
             ),
             self.initialize_account_state(),
         )
@@ -36,11 +39,18 @@ def demo():
     app_client.create()
 
     tmpl_acct = cast(DiskHungry, app_client.app).tmpl_acct
-    for x in range(10):
-        nonce = x.to_bytes(8, "big")
+
+    for _ in range(10):
+        nonce = (
+            "".join(random.choice(string.ascii_uppercase) for i in range(10))
+        ).encode()
 
         lsig_signer = tmpl_acct.template_signer(nonce)
         lsig_client = app_client.prepare(signer=lsig_signer)
+
+        print(
+            f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
+        )
 
         atc = AtomicTransactionComposer()
 
@@ -64,12 +74,13 @@ def demo():
             DiskHungry.add_account,
             nonce=nonce,
             suggested_params=sp,
+            rekey_to=app_client.app_addr,
             on_complete=txns.OnComplete.OptInOC,
         )
 
         atc.execute(app_client.client, 4)
 
-        print(lsig_client.get_account_state())
+        print(f"Done, currernt local state: {lsig_client.get_account_state()}")
 
 
 if __name__ == "__main__":
