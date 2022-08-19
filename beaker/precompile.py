@@ -84,25 +84,28 @@ class Precompile:
     def signer(self) -> LogicSigTransactionSigner:
         return LogicSigTransactionSigner(LogicSigAccount(self.binary))
 
-    def populate_template(self, *args)->bytes:
+    def populate_template(self, *args) -> bytes:
         assert self.binary is not None
         assert len(self.template_values) > 0
         assert len(args) == len(self.template_values)
 
-        print(list(self.binary))
         populated_binary = list(self.binary).copy()
-        pos, offset = self.template_values[0].pc, 0
+        offset = 0
 
         for idx, tv in enumerate(self.template_values):
-            print(offset, pos)
-            if tv.is_bytes:
-                curr_val = py_encode_uvarint(len(args[idx])) + args[idx]
-            else:
-                curr_val = py_encode_uvarint(args[idx])
+            arg: str | bytes | int = args[idx]
 
-            populated_binary[pos:pos+1] = curr_val
+            if tv.is_bytes:
+                if type(arg) is str:
+                    arg = arg.encode()
+                curr_val = py_encode_uvarint(len(arg)) + arg
+            else:
+                if type(arg) is not int:
+                    raise Exception("no")
+                curr_val = py_encode_uvarint(arg)
+
+            populated_binary[tv.pc + offset : tv.pc + offset + 1] = curr_val
             offset += len(curr_val) - 1
-            pos = tv.pc + offset
 
         return bytes(populated_binary)
 
@@ -110,53 +113,53 @@ class Precompile:
         return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
 
     def template_address(self, *args: Expr) -> Expr:
+        assert self.binary_bytes is not None
+        assert len(self.template_values)
+        assert len(args) == len(self.template_values)
+
         populate_program: list[Expr] = [
+            (last_pos := ScratchVar(TealType.uint64)).store(Int(0)),
             (offset := ScratchVar(TealType.uint64)).store(Int(0)),
             (curr_val := ScratchVar(TealType.bytes)).store(Bytes("")),
             (buff := ScratchVar(TealType.bytes)).store(Bytes("")),
         ]
 
-        last_pc = 0
         for idx, tc in enumerate(self.template_values):
-
             if tc.is_bytes:
-                populate_program.append(
+                populate_program += [
                     curr_val.store(
                         Concat(encode_uvarint(Len(args[idx]), Bytes("")), args[idx])
                     ),
-                )
+                ]
             else:
-                populate_program.append(
+                populate_program += [
                     curr_val.store(encode_uvarint(args[idx], Bytes(""))),
-                )
+                ]
 
             populate_program += [
                 buff.store(
                     Concat(
                         buff.load(),
-                        Extract(
+                        Substring(
                             self.binary_bytes,
-                            Int(last_pc) + offset.load(),
-                            Int(tc.pc) + offset.load(),
+                            last_pos.load(),
+                            # Length not next pos
+                            Int(tc.pc),
                         ),
                         curr_val.load(),
                     )
                 ),
                 offset.store(offset.load() + Len(curr_val.load()) - Int(1)),
+                last_pos.store(Int(tc.pc) + Int(1)),
             ]
-
-            last_pc = tc.pc
 
         ## append the bytes from the last template variable to the end
         populate_program += [
-            buff.store(
-                Concat(
-                    buff.load(), Suffix(self.binary_bytes, Int(last_pc) + offset.load())
-                )
-            ),
+            buff.store(Concat(buff.load(), Suffix(self.binary_bytes, last_pos.load()))),
             buff.load(),
         ]
 
-        return Sha512_256(
-            Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), Seq(*populate_program))
-        )
+        return Seq(*populate_program)
+        # return Sha512_256(
+        #    Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), Seq(*populate_program))
+        # )

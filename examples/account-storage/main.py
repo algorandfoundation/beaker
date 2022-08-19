@@ -1,11 +1,21 @@
 from typing import cast
+from algosdk.future.transaction import PaymentTxn
+from algosdk.atomic_transaction_composer import *
 from pyteal import *
 from beaker import *
+from beaker.consts import AppCallBudget
 
 if __name__ == "__main__":
     from lsig import KeySig
 else:
     from .lsig import KeySig
+
+
+class TmplStruct(abi.NamedTuple):
+    nonce: abi.Field[abi.String]
+    inty: abi.Field[abi.Uint64]
+    noncer: abi.Field[abi.String]
+    interoo: abi.Field[abi.Uint64]
 
 
 class DiskHungry(Application):
@@ -15,8 +25,19 @@ class DiskHungry(Application):
     tmpl_acct = Precompile(KeySig(version=6))
 
     @external
-    def add_account(self, acct_name: abi.String, *, output: abi.Address):
-        return output.set(self.tmpl_acct.template_address(acct_name.get()))
+    def add_account(self, fields: TmplStruct, *, output: abi.DynamicArray[abi.Byte]):
+        return Seq(
+            (nonce := abi.String()).set(fields.nonce),
+            (inty := abi.Uint64()).set(fields.inty),
+            (noncer := abi.String()).set(fields.noncer),
+            (interoo := abi.Uint64()).set(fields.interoo),
+            (s := abi.String()).set(
+                self.tmpl_acct.template_address(
+                    nonce.get(), inty.get(), noncer.get(), interoo.get()
+                )
+            ),
+            output.decode(s.encode()),
+        )
 
 
 def demo():
@@ -25,16 +46,35 @@ def demo():
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), DiskHungry(), signer=acct.signer
     )
-    app_client.build()
+    # app_client.build()
 
-    # app_client.create()
+    app_client.create()
+
+    atc = AtomicTransactionComposer()
+    sp = app_client.get_suggested_params()
+    sp.flat_fee = True
+    sp.fee = 3 * consts.milli_algo
+    atc.add_transaction(
+        TransactionWithSigner(
+            txn=PaymentTxn(acct.address, sp, acct.address, 0), signer=acct.signer
+        )
+    )
+
+    tmpl_vals = {"nonce": "dead", "inty": 123, "noncer": "beef", "interoo": 222}
+
+    app_client.add_method_call(atc, DiskHungry.add_account, fields=tmpl_vals)
+
+    result = atc.execute(app_client.client, 4)
+    print(result.abi_results[0].return_value)
 
     dh = cast(DiskHungry, app_client.app)
     ta = dh.tmpl_acct
-    print(ta.populate_template(b"blah"))
-    print(ta.template_signer(b"blah").lsig.address())
+    # print(list(ta.binary))
+    vals = list(tmpl_vals.values())
+    # print(vals)
+    print(list(ta.populate_template(*vals)))
+    # print(ta.template_signer(b"dead", 123).lsig.address())
 
-    # tmpl_signer = cast(DiskHungry, app_client.app).tmpl_acct.template_signer(b"blah")
     # print(tmpl_signer.lsig.address())
     # app_client.call(DiskHungry.add_account, "blah")
 
