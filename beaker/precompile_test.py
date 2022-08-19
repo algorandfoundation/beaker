@@ -24,3 +24,7 @@ def test_precompile():
         get_algod_client(), App(), signer=get_accounts().pop().signer
     )
     print(ac.create())
+
+
+def test_templated_address():
+    pass

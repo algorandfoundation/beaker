@@ -16,6 +16,31 @@ class TemplateValue:
     pc: int = 0
 
 
+TMPL_PREFIX = "TMPL_"
+PUSH_BYTES = "pushbytes"
+PUSH_INT = "pushint"
+
+
+def py_encode_uvarint(integer: int) -> bytes:
+    """Encodes an integer as an uvarint.
+    :param integer: the integer to encode
+    :return: bytes containing the integer encoded as an uvarint
+    """
+
+    def to_byte(integer: int) -> int:
+        return integer & 0b1111_1111
+
+    buffer: bytearray = bytearray()
+
+    while integer >= 0b1000_0000:
+        buffer.append(to_byte(integer) | 0b1000_0000)
+        integer >>= 7
+
+    buffer.append(to_byte(integer))
+
+    return bytes(buffer)
+
+
 class Precompile:
     def __init__(self, lsig: LogicSignature):
         self.lsig = lsig
@@ -28,16 +53,16 @@ class Precompile:
 
         self.template_values: list[TemplateValue] = []
 
+        # Replace the program text with 0 value
         lines = self.program.splitlines()
         for idx, line in enumerate(lines):
-            if "TMPL_" in line:
+            if TMPL_PREFIX in line:
                 op, name, _, _ = line.split(" ")
-                is_bytes = op == "pushbytes"
-
-                self.template_values.append(
-                    TemplateValue(name=name[5:], is_bytes=is_bytes, line=idx)
+                tv = TemplateValue(
+                    name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
                 )
-                lines[idx] = line.replace(name, '""' if is_bytes else "0")
+                lines[idx] = line.replace(name, '""' if tv.is_bytes else "0")
+                self.template_values.append(tv)
         self.program = "\n".join(lines)
 
     def teal(self) -> str:
@@ -58,6 +83,31 @@ class Precompile:
 
     def signer(self) -> LogicSigTransactionSigner:
         return LogicSigTransactionSigner(LogicSigAccount(self.binary))
+
+    def populate_template(self, *args)->bytes:
+        assert self.binary is not None
+        assert len(self.template_values) > 0
+        assert len(args) == len(self.template_values)
+
+        print(list(self.binary))
+        populated_binary = list(self.binary).copy()
+        pos, offset = self.template_values[0].pc, 0
+
+        for idx, tv in enumerate(self.template_values):
+            print(offset, pos)
+            if tv.is_bytes:
+                curr_val = py_encode_uvarint(len(args[idx])) + args[idx]
+            else:
+                curr_val = py_encode_uvarint(args[idx])
+
+            populated_binary[pos:pos+1] = curr_val
+            offset += len(curr_val) - 1
+            pos = tv.pc + offset
+
+        return bytes(populated_binary)
+
+    def template_signer(self, *args) -> LogicSigTransactionSigner:
+        return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
 
     def template_address(self, *args: Expr) -> Expr:
         populate_program: list[Expr] = [
@@ -85,7 +135,9 @@ class Precompile:
                     Concat(
                         buff.load(),
                         Extract(
-                            self.binary_bytes, Int(last_pc), Int(tc.pc) + offset.load()
+                            self.binary_bytes,
+                            Int(last_pc) + offset.load(),
+                            Int(tc.pc) + offset.load(),
                         ),
                         curr_val.load(),
                     )
