@@ -45,7 +45,7 @@ def demo():
 
 
 def get_nonce(n: int = 10) -> bytes:
-    return ("".join(random.choice(string.ascii_uppercase) for i in range(10))).encode()
+    return ("".join(random.choice(string.ascii_uppercase) for _ in range(n))).encode()
 
 
 def create_account(
