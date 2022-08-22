@@ -401,6 +401,12 @@ def external(
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
+    no_op: CallConfig = None,
+    opt_in: CallConfig = None,
+    clear_state: CallConfig = None,
+    close_out: CallConfig = None,
+    update_application: CallConfig = None,
+    delete_application: CallConfig = None,
 ) -> HandlerFunc:
 
     """
@@ -415,6 +421,27 @@ def external(
     Returns:
         The original method with additional elements set in its  :code:`__handler_config__` attribute
     """
+    if (
+        no_op is not None
+        or opt_in is not None
+        or clear_state is not None
+        or close_out is not None
+        or update_application is not None
+        or delete_application is not None
+    ):
+        if method_config is not None:
+            raise TealInputError(
+                "setting MethodConfig and explicit OnComplete handlers is not allowed"
+            )
+
+        method_config = MethodConfig(
+            no_op=no_op,
+            opt_in=opt_in,
+            close_out=close_out,
+            clear_state=clear_state,
+            delete_application=delete_application,
+            update_application=update_application,
+        )
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
