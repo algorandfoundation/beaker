@@ -28,6 +28,7 @@ class KeySig(LogicSignature):
 class DiskHungry(Application):
     # Reserve 16 byte keys in local state
     stuff = DynamicAccountStateValue(TealType.bytes, max_keys=16)
+
     # Create a LocalBlob to be used for arbitrary read/writes of the 127*16 bytes avail
     blob = LocalBlob()
 
@@ -38,20 +39,13 @@ class DiskHungry(Application):
     # Add account during opt in  by checking the sender against the address
     # we expect given the precompile && nonce
     @external(method_config=MethodConfig(opt_in=CallConfig.CALL))
-    def add_account(self, nonce: abi.DynamicArray[abi.Byte]):
+    def add_account(self, nonce: abi.DynamicBytes):
         return Seq(
-            # Compute the expected sender given the precompile `tmpl_account` and the nonce
-            (expected_sender := ScratchVar()).store(
-                self.tmpl_acct.template_address(
-                    # Chop off uint16 length of incoming nonce to get
-                    # the actual bytes
-                    Suffix(nonce.encode(), Int(2))
-                )
-            ),
-            # Make sure the opt-in'er is our lsig
-            # and that its being rekeyed to us
             Assert(
-                Txn.sender() == expected_sender.load(),
+                # Make sure the opt-in'er is our lsig
+                # Compute the expected sender given the precompile `tmpl_account` and the nonce
+                Txn.sender() == self.tmpl_acct.template_address(nonce.get()),
+                # and that its being rekeyed to us
                 Txn.rekey_to() == self.address,
             ),
             # Zero out the local storage

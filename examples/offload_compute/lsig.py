@@ -3,8 +3,8 @@ from pyteal import *
 from beaker import *
 
 
-HashValue = abi.StaticArray[abi.Byte, Literal[32]]
-Signature = abi.StaticArray[abi.Byte, Literal[65]]
+HashValue = abi.StaticBytes[Literal[32]]
+Signature = abi.StaticBytes[Literal[65]]
 
 
 class EthEcdsaVerify(LogicSignature):
