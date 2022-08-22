@@ -1,5 +1,4 @@
-from main import demo
-
+from .main import demo
 
 def test_demo():
     demo()

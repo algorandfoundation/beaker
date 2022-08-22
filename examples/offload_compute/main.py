@@ -12,7 +12,7 @@ from beaker import *
 if __name__ == "__main__":
     from lsig import EthEcdsaVerify, HashValue, Signature
 else:
-    from lsig import EthEcdsaVerify, HashValue, Signature
+    from .lsig import EthEcdsaVerify, HashValue, Signature
 
 
 class EthChecker(Application):
