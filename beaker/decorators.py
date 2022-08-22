@@ -416,7 +416,14 @@ def external(
         fn: The function being wrapped.
         authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
         method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.
-        read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).
+        read_only: Mark a method as callable with no fee using dryrun or simulate
+        no_op:  Specify the on complete of NoOp and when it may be called.
+        opt_in: Specify the on complete of OptIn and when it may be called.
+        clear_state: Specify the on complete of ClearState and when it may be called.
+        close_out: Specify the on complete of CloseOut and when it may be called.
+        update_application: Specify the on complete of UpdateApplication and when it may be called.
+        delete_application: Specify the on complete of DeleteApplication and when it may be called.
+
 
     Returns:
         The original method with additional elements set in its  :code:`__handler_config__` attribute
@@ -435,12 +442,12 @@ def external(
             )
 
         method_config = MethodConfig(
-            no_op=no_op,
-            opt_in=opt_in,
-            close_out=close_out,
-            clear_state=clear_state,
-            delete_application=delete_application,
-            update_application=update_application,
+            no_op=no_op if no_op is not None else CallConfig.NEVER,
+            opt_in=opt_in if opt_in is not None else CallConfig.NEVER,
+            close_out=close_out if close_out is not None else CallConfig.NEVER,
+            clear_state=clear_state if clear_state is not None else CallConfig.NEVER,
+            delete_application=delete_application if delete_application is not None else CallConfig.NEVER,
+            update_application=update_application if update_application is not None else CallConfig.NEVER,
         )
 
     def _impl(fn: HandlerFunc):
