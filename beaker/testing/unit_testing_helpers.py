@@ -3,8 +3,8 @@ from typing import Any
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 import pyteal as pt
-import beaker as bkr
-
+from beaker import client, sandbox
+from beaker import Application, external, delete, update, opt_in, close_out
 
 client = None
 accounts = None
@@ -14,7 +14,7 @@ def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
 
 
-class UnitTestingApp(bkr.Application):
+class UnitTestingApp(Application):
 
     """Base unit testable application.
 
@@ -36,27 +36,27 @@ class UnitTestingApp(bkr.Application):
         self.expr = expr_to_test
         super().__init__()
 
-    @bkr.delete
+    @delete
     def delete(self):
         return pt.Approve()
 
-    @bkr.update
+    @update
     def update(self):
         return pt.Approve()
 
-    @bkr.opt_in
+    @opt_in
     def opt_in(self):
         return self.acct_state.initialize()
 
-    @bkr.close_out
+    @close_out
     def close_out(self):
         return pt.Approve()
 
-    @bkr.external
+    @external
     def opup(self):
         return pt.Approve()
 
-    @bkr.external
+    @external
     def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
         if self.expr is None:
             raise Exception(
@@ -83,12 +83,12 @@ def assert_output(
     # TODO: make these avail in a pytest session context? pass them in directly?
     global client, accounts
     if client is None:
-        client = bkr.sandbox.get_algod_client()
+        client = sandbox.get_algod_client()
 
     if accounts is None:
-        accounts = bkr.sandbox.get_accounts()
+        accounts = sandbox.get_accounts()
 
-    app_client = bkr.client.ApplicationClient(client, app, signer=accounts[0].signer)
+    app_client = client.ApplicationClient(client, app, signer=accounts[0].signer)
     app_client.create()
 
     has_state = app.acct_state.num_byte_slices + app.acct_state.num_uints > 0
