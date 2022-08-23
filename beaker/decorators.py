@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace, astuple
 from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature
@@ -150,16 +150,16 @@ class HandlerConfig:
     read_only: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
-        mh = MethodHints(read_only=self.read_only)
+        mh: dict[str, Any] = {"read_only": self.read_only}
 
         if (
             self.param_annotations is not None
             and len(self.param_annotations.keys()) > 0
         ):
-            mh.param_annotations = self.param_annotations
+            mh["param_annotations"] = self.param_annotations
 
         if self.structs is not None:
-            mh.structs = {
+            mh["structs"] = {
                 arg_name: {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": list(model_spec.__annotations__.keys()),
@@ -167,7 +167,45 @@ class HandlerConfig:
                 for arg_name, model_spec in self.structs.items()
             }
 
-        return mh
+        return MethodHints(**mh)
+
+    def is_create(self) -> bool:
+        if self.method_config is None:
+            return False
+
+        return any(
+            map(
+                lambda cc: cc == CallConfig.CREATE or cc == CallConfig.ALL,
+                astuple(self.method_config),
+            )
+        )
+
+    def is_update(self) -> bool:
+        if self.method_config is None:
+            return False
+
+        return self.method_config.update_application != CallConfig.NEVER
+
+    def is_delete(self) -> bool:
+        if self.method_config is None:
+            return False
+
+        return self.method_config.delete_application != CallConfig.NEVER
+
+    def is_opt_in(self) -> bool:
+        if self.method_config is None:
+            return False
+        return self.method_config.opt_in != CallConfig.NEVER
+
+    def is_clear_state(self) -> bool:
+        if self.method_config is None:
+            return False
+        return self.method_config.clear_state != CallConfig.NEVER
+
+    def is_close_out(self) -> bool:
+        if self.method_config is None:
+            return False
+        return self.method_config.close_out != CallConfig.NEVER
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -340,13 +378,6 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
                 params[k] = v.replace(annotation=orig)
                 fn_annotations[k] = orig
 
-    # for param_name, param_annos in param_annotations.items():
-    #    if param_annos.checks is not None:
-    #        # TODO: apply
-    #        # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
-    #        # print(f"CHECKS: {param_annos.checks}")
-    #        pass
-
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)
 
@@ -401,12 +432,6 @@ def external(
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
-    no_op: CallConfig = None,
-    opt_in: CallConfig = None,
-    clear_state: CallConfig = None,
-    close_out: CallConfig = None,
-    update_application: CallConfig = None,
-    delete_application: CallConfig = None,
 ) -> HandlerFunc:
 
     """
@@ -417,38 +442,10 @@ def external(
         authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
         method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.
         read_only: Mark a method as callable with no fee using dryrun or simulate
-        no_op:  Specify the on complete of NoOp and when it may be called.
-        opt_in: Specify the on complete of OptIn and when it may be called.
-        clear_state: Specify the on complete of ClearState and when it may be called.
-        close_out: Specify the on complete of CloseOut and when it may be called.
-        update_application: Specify the on complete of UpdateApplication and when it may be called.
-        delete_application: Specify the on complete of DeleteApplication and when it may be called.
-
 
     Returns:
         The original method with additional elements set in its  :code:`__handler_config__` attribute
     """
-    if (
-        no_op is not None
-        or opt_in is not None
-        or clear_state is not None
-        or close_out is not None
-        or update_application is not None
-        or delete_application is not None
-    ):
-        if method_config is not None:
-            raise TealInputError(
-                "setting MethodConfig and explicit OnComplete handlers is not allowed"
-            )
-
-        method_config = MethodConfig(
-            no_op=no_op if no_op is not None else CallConfig.NEVER,
-            opt_in=opt_in if opt_in is not None else CallConfig.NEVER,
-            close_out=close_out if close_out is not None else CallConfig.NEVER,
-            clear_state=clear_state if clear_state is not None else CallConfig.NEVER,
-            delete_application=delete_application if delete_application is not None else CallConfig.NEVER,
-            update_application=update_application if update_application is not None else CallConfig.NEVER,
-        )
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
@@ -530,7 +527,20 @@ def bare_external(
     return _impl
 
 
-def create(fn: HandlerFunc):
+def is_bare(fn: HandlerFunc) -> bool:
+    sig = signature(fn)
+    return len(sig.parameters) == 0 or (
+        len(sig.parameters) == 1 and "self" in sig.parameters
+    )
+
+
+def create(
+    fn: HandlerFunc = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper = None,
+    method_config: Optional[MethodConfig] = None,
+):
     """set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0
 
     Args:
@@ -538,7 +548,32 @@ def create(fn: HandlerFunc):
     Returns:
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
-    return bare_external(no_op=CallConfig.CREATE)(fn)
+
+    mconfig = (
+        {"no_op": CallConfig.CREATE} if method_config is None else asdict(method_config)
+    )
+
+    if not all(
+        [cc == CallConfig.CREATE or cc == CallConfig.ALL for cc in mconfig.values()]
+    ):
+        raise TealInputError(
+            "method_config for create may not have non create call configs"
+        )
+
+    def _impl(fn: HandlerFunc):
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(**mconfig)(fn)
+        else:
+            return external(method_config=MethodConfig(**mconfig), authorize=authorize)(
+                fn
+            )
+
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
 def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
@@ -552,9 +587,15 @@ def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """
 
     def _impl(fn: HandlerFunc):
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        return bare_external(delete_application=CallConfig.CALL)(fn)
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(delete_application=CallConfig.CALL)(fn)
+        else:
+            return external(
+                method_config=MethodConfig(delete_application=CallConfig.CALL),
+                authorize=authorize,
+            )(fn)
 
     if fn is None:
         return _impl
@@ -572,10 +613,19 @@ def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
         The original method with changes made to its signature and attributes set in its `__handler_config__`
     """
 
+    # If fn has abi args, call external
+    # else bare
+
     def _impl(fn: HandlerFunc):
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        return bare_external(update_application=CallConfig.CALL)(fn)
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(update_application=CallConfig.CALL)(fn)
+        else:
+            return external(
+                method_config=MethodConfig(update_application=CallConfig.CALL),
+                authorize=authorize,
+            )(fn)
 
     if fn is None:
         return _impl
@@ -594,9 +644,14 @@ def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """
 
     def _impl(fn: HandlerFunc):
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        return bare_external(opt_in=CallConfig.CALL)(fn)
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(opt_in=CallConfig.CALL)(fn)
+        else:
+            return external(
+                method_config=MethodConfig(opt_in=CallConfig.CALL), authorize=authorize
+            )(fn)
 
     if fn is None:
         return _impl
@@ -615,9 +670,15 @@ def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = N
     """
 
     def _impl(fn: HandlerFunc):
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        return bare_external(clear_state=CallConfig.CALL)(fn)
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(clear_state=CallConfig.CALL)(fn)
+        else:
+            return external(
+                method_config=MethodConfig(clear_state=CallConfig.CALL),
+                authorize=authorize,
+            )(fn)
 
     if fn is None:
         return _impl
@@ -636,9 +697,15 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
     """
 
     def _impl(fn: HandlerFunc):
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        return bare_external(close_out=CallConfig.CALL)(fn)
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(close_out=CallConfig.CALL)(fn)
+        else:
+            return external(
+                method_config=MethodConfig(clear_state=CallConfig.CALL),
+                authorize=authorize,
+            )(fn)
 
     if fn is None:
         return _impl
@@ -657,9 +724,14 @@ def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     """
 
     def _impl(fn: HandlerFunc):
-        if authorize is not None:
-            fn = _authorize(authorize)(fn)
-        return bare_external(no_op=CallConfig.CALL)(fn)
+        if is_bare(fn):
+            if authorize is not None:
+                fn = _authorize(authorize)(fn)
+            return bare_external(no_op=CallConfig.CALL)(fn)
+        else:
+            return external(
+                method_config=MethodConfig(no_op=CallConfig.CALL), authorize=authorize
+            )(fn)
 
     if fn is None:
         return _impl
