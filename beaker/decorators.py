@@ -276,7 +276,7 @@ def _authorize(allowed: SubroutineFnWrapper):
     def _decorate(fn: HandlerFunc):
         @wraps(fn)
         def _impl(*args, **kwargs):
-            return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
+            return Seq(Assert(allowed(Txn.sender()), comment="unauthorized"), fn(*args, **kwargs))
 
         return _impl
 
@@ -339,13 +339,6 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
 
                 params[k] = v.replace(annotation=orig)
                 fn_annotations[k] = orig
-
-    # for param_name, param_annos in param_annotations.items():
-    #    if param_annos.checks is not None:
-    #        # TODO: apply
-    #        # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
-    #        # print(f"CHECKS: {param_annos.checks}")
-    #        pass
 
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)
