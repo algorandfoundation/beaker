@@ -1,4 +1,5 @@
 import re
+from copy import copy
 from algosdk.source_map import SourceMap
 
 LOGIC_ERROR = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: (.*). Details: pc=([0-9]+), opcodes=.*"
@@ -14,14 +15,6 @@ def parse_logic_error(error_str: str) -> tuple[str, str, int]:
     pc = int(matches.group(3))
 
     return txid, msg, pc
-
-
-def tiny_trace(lines: list[str], line_no: int, num_lines: int) -> str:
-    lines[line_no] += "\t\t<-- Error"
-    lines_before = max(0, line_no - num_lines)
-    lines_after = min(len(lines), line_no + num_lines)
-    return "\n\t".join(lines[lines_before:lines_after])
-
 
 class LogicException(Exception):
     def __init__(
@@ -44,4 +37,8 @@ class LogicException(Exception):
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"
 
     def trace(self, lines: int = 5) -> str:
-        return tiny_trace(self.lines, self.line_no, lines)
+        program_lines = copy(self.lines)
+        program_lines[self.line_no] += "\t\t<-- Error"
+        lines_before = max(0, self.line_no - lines)
+        lines_after = min(len(program_lines), self.line_no + lines)
+        return "\n\t".join(program_lines[lines_before:lines_after])
