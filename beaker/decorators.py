@@ -314,7 +314,7 @@ def _authorize(allowed: SubroutineFnWrapper):
     def _decorate(fn: HandlerFunc):
         @wraps(fn)
         def _impl(*args, **kwargs):
-            return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
+            return Seq(Assert(allowed(Txn.sender()), comment="unauthorized"), fn(*args, **kwargs))
 
         return _impl
 
