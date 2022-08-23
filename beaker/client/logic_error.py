@@ -16,8 +16,7 @@ def parse_logic_error(error_str: str) -> tuple[str, str, int]:
     return txid, msg, pc
 
 
-def tiny_trace(program: str, line_no: int, num_lines: int) -> str:
-    lines = program.split("\n")
+def tiny_trace(lines: list[str], line_no: int, num_lines: int) -> str:
     lines[line_no] += "\t\t<-- Error"
     lines_before = max(0, line_no - num_lines)
     lines_after = min(len(lines), line_no + num_lines)
@@ -36,6 +35,7 @@ class LogicException(Exception):
 
         self.program = program
         self.map = map
+        self.lines = program.split("\n")
 
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
         self.line_no = self.map.get_line_for_pc(self.pc)
@@ -44,4 +44,4 @@ class LogicException(Exception):
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"
 
     def trace(self, lines: int = 5) -> str:
-        return tiny_trace(self.program, self.line_no, lines)
+        return tiny_trace(self.lines, self.line_no, lines)
