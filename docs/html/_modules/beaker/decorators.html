@@ -351,7 +351,7 @@
     <span class="k">def</span> <span class="nf">_decorate</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
         <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">Assert</span><span class="p">(</span><span class="n">allowed</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())),</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">Assert</span><span class="p">(</span><span class="n">allowed</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()),</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;unauthorized&quot;</span><span class="p">),</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">_impl</span>
 
@@ -414,13 +414,6 @@
 
                 <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">annotation</span><span class="o">=</span><span class="n">orig</span><span class="p">)</span>
                 <span class="n">fn_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">orig</span>
-
-    <span class="c1"># for param_name, param_annos in param_annotations.items():</span>
-    <span class="c1">#    if param_annos.checks is not None:</span>
-    <span class="c1">#        # TODO: apply</span>
-    <span class="c1">#        # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))</span>
-    <span class="c1">#        # print(f&quot;CHECKS: {param_annos.checks}&quot;)</span>
-    <span class="c1">#        pass</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">param_annotations</span><span class="o">=</span><span class="n">param_annotations</span><span class="p">)</span>
