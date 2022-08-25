@@ -27,7 +27,7 @@ jobs:
         run: cd .. && git clone https://github.com/algorand/sandbox.git
 
       - name: Prepare config
-        run: cp beaker/config.test .
+        run: cd - && cp config.test ../sandbox/ && cd -
 
       - name: Run Algorand Sandbox
         shell: 'script -q -e -c "bash {0}"' # hacky hack to make TTY work
