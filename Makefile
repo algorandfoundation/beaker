@@ -32,7 +32,7 @@ lint: black flake8 mypy
 # ---- Tests ---- #
 
 tests:
-	pytest 
+	pytest beaker 
 
 lint-and-test: lint tests
 

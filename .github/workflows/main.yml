@@ -31,7 +31,7 @@ jobs:
 
       - name: Run Algorand Sandbox
         shell: 'script -q -e -c "bash {0}"' # hacky hack to make TTY work
-        run: cd ../sandbox && ./sandbox up test 
+        run: cd ../sandbox && ./sandbox up test -v 
 
       - name: Delay before testing
         run: sleep 10
