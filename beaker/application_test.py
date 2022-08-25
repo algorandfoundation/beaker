@@ -1,5 +1,4 @@
 import pytest
-import json
 from typing import Final, cast, Annotated
 from Cryptodome.Hash import SHA512
 import pyteal as pt
