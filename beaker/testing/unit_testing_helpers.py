@@ -124,3 +124,6 @@ def assert_output(
         if has_state:
             app_client.close_out()
         app_client.delete()
+
+
+assert_output(UnitTestingApp, list[dict[str, Any]], list[Any], 0)
