@@ -28,13 +28,8 @@ mypy:
 
 lint: black flake8 mypy
 
-# ---- Unit Tests (no algod) ---- #
 
-sandbox-dev-up:
-	docker-compose up -d algod
-
-sandbox-dev-stop:
-	docker-compose stop algod
+# ---- Tests ---- #
 
 test-unit:
 	pytest 
