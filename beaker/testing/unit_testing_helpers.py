@@ -6,8 +6,8 @@ import pyteal as pt
 from beaker import client, sandbox
 from beaker import Application, external, delete, update, opt_in, close_out
 
-# client = None
-accounts = None
+algod_client = None
+sandbox_accounts = None
 
 
 def returned_int_as_bytes(i: int, bits: int = 64):
@@ -81,15 +81,16 @@ def assert_output(
 
     """
     # TODO: make these avail in a pytest session context? pass them in directly?
-    # global client, accounts
-    global accounts
-    # if client is None:
-    #     client = sandbox.get_algod_client()
+    global algod_client, sandbox_accounts
+    if algod_client in None:
+        algod_client = sandbox.get_algod_client()
 
-    if accounts is None:
-        accounts = sandbox.get_accounts()
+    if sandbox_accounts is None:
+        sandbox_accounts = sandbox.get_accounts()
 
-    app_client = client.ApplicationClient(client, app, signer=accounts[0].signer)
+    app_client = client.ApplicationClient(
+        client, app, signer=sandbox_accounts[0].signer
+    )
     app_client.create()
 
     has_state = app.acct_state.num_byte_slices + app.acct_state.num_uints > 0
@@ -109,7 +110,7 @@ def assert_output(
                     app_client.add_method_call(atc, app.opup, note=str(x).encode())
 
                 try:
-                    results = atc.execute(client, 2)
+                    results = atc.execute(algod_client, 2)
                 except Exception as e:
                     raise app_client.wrap_approval_exception(e)
 
