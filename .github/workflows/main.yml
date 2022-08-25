@@ -7,19 +7,20 @@ on:
 
 jobs:
   build-test:
-    runs-on: ubuntu-20.04
-    container: python:${{ matrix.python }}
-    strategy:
-      matrix:
-        python: ["3.10"]
-    steps:
-      - run: python3 --version
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+    runs-on: ubuntu-latest
 
-      - name: Clone Algorand Sanbox
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10.4
+
+      - name: Install python dependencies
+        run: make setup-development
+
+      - name: Clone Algorand Sandbox
         run: cd .. && git clone https://github.com/algorand/sandbox.git
 
       - name: Run Algorand Sandbox
@@ -28,9 +29,6 @@ jobs:
 
       - name: Delay before testing
         run: sleep 60
-
-      - name: Install python dependencies
-        run: make setup-development
 
       - name: Tests
         run: make all-tests
