@@ -26,9 +26,12 @@ jobs:
       - name: Clone Algorand Sandbox
         run: cd .. && git clone https://github.com/algorand/sandbox.git
 
+      - name: Prepare config
+        run: cp beaker/config.test .
+
       - name: Run Algorand Sandbox
         shell: 'script -q -e -c "bash {0}"' # hacky hack to make TTY work
-        run: cd ../sandbox && ./sandbox up dev -v
+        run: cd ../sandbox && ./sandbox up test 
 
       - name: Delay before testing
         run: sleep 10
