@@ -302,7 +302,7 @@ def test_hints():
     ), "Expected the hint to match the method spec"
 
 
-#def test_app_spec():
+# def test_app_spec():
 #    class Specd(Application):
 #        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
 #        decl_acct_val = AccountStateValue(pt.TealType.uint64)
