@@ -40,4 +40,4 @@ jobs:
         run: make tests
 
       - name: Stop running images
-        run: make sandbox-dev-stop
+        run: cd ../sandbox && ./sandbox down 
