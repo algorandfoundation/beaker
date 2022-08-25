@@ -89,7 +89,7 @@ def assert_output(
         sandbox_accounts = sandbox.get_accounts()
 
     app_client = client.ApplicationClient(
-        client, app, signer=sandbox_accounts[0].signer
+        algod_client, app, signer=sandbox_accounts[0].signer
     )
     app_client.create()
 
