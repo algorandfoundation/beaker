@@ -23,11 +23,15 @@ jobs:
       - name: lint
         run: make lint
 
+      - name: copy config 
+        run: cp config.test ../
+
       - name: Clone Algorand Sandbox
         run: cd .. && git clone https://github.com/algorand/sandbox.git
 
-      - name: Prepare config
-        run: cd - && cp config.test ../sandbox/ && cd -
+      - name: copy config (again)
+        run: cp config.test ./sandbox/
+
 
       - name: Run Algorand Sandbox
         shell: 'script -q -e -c "bash {0}"' # hacky hack to make TTY work
