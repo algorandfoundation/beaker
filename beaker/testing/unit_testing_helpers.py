@@ -6,7 +6,7 @@ import pyteal as pt
 from beaker import client, sandbox
 from beaker import Application, external, delete, update, opt_in, close_out
 
-client = None
+# client = None
 accounts = None
 
 
@@ -81,9 +81,10 @@ def assert_output(
 
     """
     # TODO: make these avail in a pytest session context? pass them in directly?
-    global client, accounts
-    if client is None:
-        client = sandbox.get_algod_client()
+    # global client, accounts
+    global accounts
+    # if client is None:
+    #     client = sandbox.get_algod_client()
 
     if accounts is None:
         accounts = sandbox.get_accounts()
