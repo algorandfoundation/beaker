@@ -31,10 +31,10 @@ lint: black flake8 mypy
 
 # ---- Tests ---- #
 
-test-unit:
+tests:
 	pytest 
 
-lint-and-test: lint test-unit
+lint-and-test: lint tests
 
 # ---- Integration Tests (algod required) ---- #
 

@@ -20,6 +20,9 @@ jobs:
       - name: Install python dependencies
         run: make setup-development
 
+      - name: lint
+        run: make lint
+
       - name: Clone Algorand Sandbox
         run: cd .. && git clone https://github.com/algorand/sandbox.git
 
@@ -28,10 +31,10 @@ jobs:
         run: cd ../sandbox && ./sandbox up dev -v
 
       - name: Delay before testing
-        run: sleep 60
+        run: sleep 10
 
       - name: Tests
-        run: make all-tests
+        run: make tests
 
       - name: Stop running images
         run: make sandbox-dev-stop

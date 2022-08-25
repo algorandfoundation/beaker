@@ -16,6 +16,7 @@ def parse_logic_error(error_str: str) -> tuple[str, str, int]:
 
     return txid, msg, pc
 
+
 class LogicException(Exception):
     def __init__(
         self,
