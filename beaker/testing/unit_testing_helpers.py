@@ -82,7 +82,7 @@ def assert_output(
     """
     # TODO: make these avail in a pytest session context? pass them in directly?
     global algod_client, sandbox_accounts
-    if algod_client in None:
+    if algod_client is None:
         algod_client = sandbox.get_algod_client()
 
     if sandbox_accounts is None:
