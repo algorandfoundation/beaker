@@ -16,11 +16,9 @@ With Beaker, we build a class that represents our entire application including s
 
 ## WARNING
 
-> :warning: 
+ :warning: *Mostly Untested - Expect Breaking Changes*  :warning:
 
-*Mostly Untested - Expect Breaking Changes* 
-
-> :warning:
+ **Please file issues or prs and get any contracts audited**
 
 ## Hello, Beaker
 
