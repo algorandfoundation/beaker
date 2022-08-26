@@ -8,6 +8,12 @@ Beaker is a smart contract development framework for [PyTeal](https://github.com
 With Beaker, we build a class that represents our entire application including state and routing.
 
 
+&nbsp;
+
+&nbsp;
+
+
+
 ## WARNING
 
 > :warning: 
