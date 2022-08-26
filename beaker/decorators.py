@@ -159,13 +159,16 @@ class HandlerConfig:
             mh.param_annotations = self.param_annotations
 
         if self.structs is not None:
-            mh.structs = {
-                arg_name: {
+            mh.structs = {}
+            for arg_name, model_spec in self.structs.items():
+                annos =  list(model_spec.__annotations__.items())
+                mh.structs[arg_name] = {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
-                    "elements": list(model_spec.__annotations__.keys()),
+                    "elements": [
+                        (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
+                        for name, typ in annos
+                    ]
                 }
-                for arg_name, model_spec in self.structs.items()
-            }
 
         return mh
 
