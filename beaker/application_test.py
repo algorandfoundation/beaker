@@ -408,7 +408,7 @@ EXPECTED_BARE_HANDLERS = [
 ]
 
 
-def test_model_args():
+def test_struct_args():
     from algosdk.abi import Method, Argument, Returns
 
     class Structed(Application):
@@ -430,7 +430,7 @@ def test_model_args():
     assert m.hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
-            "elements": ["addr", "balance", "nickname"],
+            "elements": [("addr", "address"), ("balance", "uint64"), ("nickname", "string")],
         }
     }
 
