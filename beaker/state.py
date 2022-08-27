@@ -345,8 +345,8 @@ class DynamicAccountStateValue(DynamicStateValue):
 
 
 class StateBlob(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, num_keys: int):
+        self.num_keys = num_keys
 
     @abstractmethod
     def initialize(self) -> Expr:
@@ -357,6 +357,8 @@ class AccountStateBlob(StateBlob):
     def __init__(self, max_keys: int = None, keys: list[int] = None):
         self.blob = LocalBlob(max_keys=max_keys, keys=keys)
         self.acct: Expr = Txn.sender()
+
+        super().__init__(self.blob._max_keys)
 
     def __getitem__(self, acct: Expr) -> "AccountStateBlob":
         asv = copy(self)
@@ -441,12 +443,7 @@ class State:
                     if l.stack_type == TealType.bytes
                 ]
             )
-            + sum(
-                [
-                    cast(AccountStateBlob, b).blob._max_keys
-                    for b in self.blob_vals.values()
-                ]
-            )
+            + sum([b.num_keys for b in self.blob_vals.values()])
         )
 
     def dictify(self) -> dict[str, dict[str, Any]]:
