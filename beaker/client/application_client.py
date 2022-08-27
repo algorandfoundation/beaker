@@ -379,51 +379,17 @@ class ApplicationClient:
 
         """Handles calling the application"""
 
-        sp = self.get_suggested_params(suggested_params)
-        signer = self.get_signer(signer)
-        sender = self.get_sender(sender, signer)
-
         if not isinstance(method, abi.Method):
             method = get_method_spec(method)
 
         hints = self.method_hints(method.name)
 
-        args = []
-        for method_arg in method.args:
-            name = method_arg.name
-
-            if name in kwargs:
-                argument = kwargs[name]
-
-                if type(argument) is dict:
-                    if hints.structs is None or name not in hints.structs:
-                        raise Exception(f"Name {name} name in struct hints")
-
-                    argument = [
-                        argument[field_name]
-                        for field_name in hints.structs[name]["elements"]
-                    ]
-
-                args.append(argument)
-
-            elif (
-                hints.param_annotations is not None and name in hints.param_annotations
-            ):
-                annos = hints.param_annotations[name]
-                if annos.default is not None:
-                    args.append(self.resolve(DefaultArgument(annos.default)))
-            else:
-                raise Exception(f"Unspecified argument: {name}")
-
-        atc = AtomicTransactionComposer()
-
-        atc.add_method_call(
-            self.app_id,
+        atc = self.add_method_call(
+            AtomicTransactionComposer(),
             method,
             sender,
-            sp,
             signer,
-            method_args=args,
+            suggested_params=suggested_params,
             on_complete=on_complete,
             local_schema=local_schema,
             global_schema=global_schema,
@@ -436,11 +402,12 @@ class ApplicationClient:
             note=note,
             lease=lease,
             rekey_to=rekey_to,
+            **kwargs,
         )
 
+        # If its a read-only method, use dryrun (TODO: swap with simulate later?)
         if hints.read_only:
-            txns = atc.gather_signatures()
-            dr_req = transaction.create_dryrun(self.client, txns)
+            dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())
             dr_result = self.client.dryrun(dr_req)
             method_results = self._parse_result(
                 {0: method}, dr_result["txns"], atc.tx_ids
@@ -565,10 +532,11 @@ class ApplicationClient:
 
                     argument = [
                         argument[field_name]
-                        for field_name in hints.structs[name]["elements"]
+                        for field_name, field_type in hints.structs[name]["elements"]
                     ]
 
                 args.append(argument)
+
             elif (
                 hints.param_annotations is not None and name in hints.param_annotations
             ):

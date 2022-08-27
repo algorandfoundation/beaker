@@ -159,13 +159,16 @@ class HandlerConfig:
             mh.param_annotations = self.param_annotations
 
         if self.structs is not None:
-            mh.structs = {
-                arg_name: {
+            mh.structs = {}
+            for arg_name, model_spec in self.structs.items():
+                annos = list(model_spec.__annotations__.items())
+                mh.structs[arg_name] = {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
-                    "elements": list(model_spec.__annotations__.keys()),
+                    "elements": [
+                        (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
+                        for name, typ in annos
+                    ],
                 }
-                for arg_name, model_spec in self.structs.items()
-            }
 
         return mh
 
@@ -276,7 +279,10 @@ def _authorize(allowed: SubroutineFnWrapper):
     def _decorate(fn: HandlerFunc):
         @wraps(fn)
         def _impl(*args, **kwargs):
-            return Seq(Assert(allowed(Txn.sender())), fn(*args, **kwargs))
+            return Seq(
+                Assert(allowed(Txn.sender()), comment="unauthorized"),
+                fn(*args, **kwargs),
+            )
 
         return _impl
 
@@ -339,13 +345,6 @@ def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
 
                 params[k] = v.replace(annotation=orig)
                 fn_annotations[k] = orig
-
-    # for param_name, param_annos in param_annotations.items():
-    #    if param_annos.checks is not None:
-    #        # TODO: apply
-    #        # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))
-    #        # print(f"CHECKS: {param_annos.checks}")
-    #        pass
 
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)

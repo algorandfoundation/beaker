@@ -1,0 +1,43 @@
+name: "Build workflow"
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10.4
+
+      - name: Install python dependencies
+        run: make setup-development
+
+      - name: lint
+        run: make lint
+
+      - name: Clone Algorand Sandbox
+        run: cd .. && git clone https://github.com/algorand/sandbox.git
+
+      - name: copy config
+        run: cp config.test ../sandbox/
+
+      - name: Run Algorand Sandbox
+        shell: 'script -q -e -c "bash {0}"' # hacky hack to make TTY work
+        run: cd ../sandbox && ./sandbox up test -v 
+
+      - name: Delay before testing
+        run: sleep 10
+
+      - name: Tests
+        run: make tests
+
+      - name: Stop running images
+        run: cd ../sandbox && ./sandbox down 
