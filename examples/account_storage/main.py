@@ -52,6 +52,10 @@ class DiskHungry(Application):
 
     @external
     def flip_bit(self, nonce_acct: abi.Account, bit_idx: abi.Uint32):
+        """
+        Allows caller to flip a bit at a given index for some account that has already opted in
+        """
+
         return Seq(
             # Read byte (take only the last byte of the 8 byte int it returns)
             (byte := ScratchVar()).store(
@@ -80,6 +84,8 @@ class DiskHungry(Application):
 
 
 def demo():
+
+    # Create app client
     app_client = client.ApplicationClient(
         client=sandbox.get_algod_client(),
         app=DiskHungry(),
@@ -95,9 +101,15 @@ def demo():
     # Create 10 random nonces for unique lsig accounts
     # and make them opt in to the app
     for _ in range(10):
+        # Get a rando val
         nonce = get_nonce()
+
+        # Populate the binary template with the nonce and get back a Signer obj
+        # to submit transactions
         lsig_signer = tmpl_lsig.template_signer(nonce)
-        create_account_and_opt_in(app_client, lsig_signer, nonce)
+
+        # Create the account and opt it into the app, also rekeys it to the app address
+        create_and_opt_in_account(app_client, lsig_signer, nonce)
 
         # Max is 8 (bits per byte) * 127 (bytes per key) * 16 (max keys) == 16256
         idx = 16255
@@ -105,12 +117,15 @@ def demo():
             DiskHungry.flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx
         )
 
+        # Get the full state for the lsig we used to store this bit
         acct_state = app_client.get_account_state(lsig_signer.lsig.address(), raw=True)
+
+        # Make sure the blob is in the right order
         blob = b""
         for x in range(16):
-            key = x.to_bytes(1, "big")
-            blob += cast(bytes, acct_state[key])
+            blob += cast(bytes, acct_state[x.to_bytes(1, "big")])
 
+        # Did the expected byte have the expected integer value?
         assert int(blob[idx // 8]) == 2 ** (idx % 8)
         print(f"bit set correctly at index {idx}")
 
@@ -119,7 +134,7 @@ def get_nonce(n: int = 10) -> bytes:
     return ("".join(random.choice(string.ascii_uppercase) for _ in range(n))).encode()
 
 
-def create_account_and_opt_in(
+def create_and_opt_in_account(
     app_client: client.ApplicationClient,
     lsig_signer: LogicSigTransactionSigner,
     nonce: bytes,
