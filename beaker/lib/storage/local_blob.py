@@ -33,8 +33,10 @@ class LocalBlob:
     """
 
     def __init__(self, max_keys: int = None, keys: list[int] = None):
-        assert not (max_keys is not None and keys is not None), "cant supply both max_keys and keys"
-            
+        assert not (
+            max_keys is not None and keys is not None
+        ), "cant supply both max_keys and keys"
+
         if keys is None or len(keys) == 0:
             if max_keys is not None:
                 keys = [x for x in range(max_keys)]

@@ -346,13 +346,13 @@ class DynamicAccountStateValue(DynamicStateValue):
 
 
 class BlobStateValue(ABC):
-
     def __init__(self):
         pass
 
     @abstractmethod
-    def initialize(self)->Expr:
+    def initialize(self) -> Expr:
         ...
+
 
 class AccountStateBlob(BlobStateValue):
     def __init__(self, max_keys: int = None, keys: list[int] = None):
@@ -364,19 +364,19 @@ class AccountStateBlob(BlobStateValue):
         asv.acct = acct
         return asv
 
-    def initialize(self)->Expr:
+    def initialize(self) -> Expr:
         return self.blob.zero(self.acct)
-    
-    def write(self, start: Expr, buff: Expr)->Expr:
+
+    def write(self, start: Expr, buff: Expr) -> Expr:
         return self.blob.write(self.acct, start, buff)
-    
-    def read(self, start: Expr, stop: Expr)->Expr:
+
+    def read(self, start: Expr, stop: Expr) -> Expr:
         return self.blob.read(self.acct, start, stop)
 
-    def read_byte(self, idx: Expr)->Expr:
+    def read_byte(self, idx: Expr) -> Expr:
         return self.blob.get_byte(self.acct, idx)
 
-    def read_byte(self, idx: Expr, byte: Expr)->Expr:
+    def read_byte(self, idx: Expr, byte: Expr) -> Expr:
         return self.blob.set_byte(self.acct, idx, byte)
 
 
@@ -408,14 +408,16 @@ def check_match_type(sv: StateValue, val: Expr):
 class State:
     """holds all the declared and dynamic state values for this storage type"""
 
-    def __init__(self, fields: Mapping[str, StateValue | DynamicStateValue | BlobStateValue]):
+    def __init__(
+        self, fields: Mapping[str, StateValue | DynamicStateValue | BlobStateValue]
+    ):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
         }
         self.__dict__.update(self.declared_vals)
 
         self.blob_vals: dict[str, BlobStateValue] = {
-            k:v for k,v in fields.items() if isinstance(v, BlobStateValue)
+            k: v for k, v in fields.items() if isinstance(v, BlobStateValue)
         }
         self.__dict__.update(self.blob_vals)
 
@@ -432,21 +434,30 @@ class State:
                 for l in self.dynamic_vals.values()
                 if l.stack_type == TealType.uint64
             ]
-        ) 
+        )
 
-        self.num_byte_slices = len(
-            [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
-        ) + sum(
-            [
-                l.max_keys
-                for l in self.dynamic_vals.values()
-                if l.stack_type == TealType.bytes
-            ]
-        ) + sum([
-            cast(AccountStateBlob, b).blob._max_keys
-            for b in self.blob_vals.values()
-        ])
-
+        self.num_byte_slices = (
+            len(
+                [
+                    l
+                    for l in self.declared_vals.values()
+                    if l.stack_type == TealType.bytes
+                ]
+            )
+            + sum(
+                [
+                    l.max_keys
+                    for l in self.dynamic_vals.values()
+                    if l.stack_type == TealType.bytes
+                ]
+            )
+            + sum(
+                [
+                    cast(AccountStateBlob, b).blob._max_keys
+                    for b in self.blob_vals.values()
+                ]
+            )
+        )
 
     def dictify(self) -> dict[str, dict[str, Any]]:
         """Convert the state to a dict for encoding"""
@@ -477,10 +488,8 @@ class State:
                 v.set_default()
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
-            ] + [
-                v.initialize()
-                for v in self.blob_vals.values()
             ]
+            + [v.initialize() for v in self.blob_vals.values()]
         )
 
     def schema(self) -> StateSchema:
@@ -519,9 +528,6 @@ class AccountState(State):
                 cast(AccountStateValue, v)[acct].set_default()
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
-            ] + [
-                v.initialize()
-                for v in self.blob_vals.values()
             ]
+            + [v.initialize() for v in self.blob_vals.values()]
         )
-

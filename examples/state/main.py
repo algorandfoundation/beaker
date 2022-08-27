@@ -48,10 +48,9 @@ def demo():
     msg = "write this message please and make it readable"
     app_client.call(StateExample.write_blob, v=msg)
     result = app_client.call(StateExample.read_blob)
-    got_msg = bytes(result.return_value[:len(msg)]).decode()
+    got_msg = bytes(result.return_value[: len(msg)]).decode()
     assert msg == got_msg
     print(got_msg)
-
 
 
 if __name__ == "__main__":

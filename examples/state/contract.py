@@ -47,7 +47,6 @@ class StateExample(Application):
 
     account_blob: Final[AccountStateBlob] = AccountStateBlob(max_keys=3)
 
-
     @create
     def create(self):
         return self.initialize_application_state()
@@ -56,14 +55,15 @@ class StateExample(Application):
     def opt_in(self):
         return self.initialize_account_state()
 
-
     @external
     def write_blob(self, v: abi.String):
         return self.account_blob.write(Int(0), v.get())
 
     @external
     def read_blob(self, *, output: abi.DynamicBytes):
-        return output.set(self.account_blob.read(Int(0), self.account_blob.blob.max_bytes - Int(1)))
+        return output.set(
+            self.account_blob.read(Int(0), self.account_blob.blob.max_bytes - Int(1))
+        )
 
     @external
     def set_app_state_val(self, v: abi.String):
