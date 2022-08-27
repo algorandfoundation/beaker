@@ -161,13 +161,13 @@ class HandlerConfig:
         if self.structs is not None:
             mh.structs = {}
             for arg_name, model_spec in self.structs.items():
-                annos =  list(model_spec.__annotations__.items())
+                annos = list(model_spec.__annotations__.items())
                 mh.structs[arg_name] = {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": [
                         (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
                         for name, typ in annos
-                    ]
+                    ],
                 }
 
         return mh
