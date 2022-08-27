@@ -20,7 +20,7 @@ from .decorators import (
     close_out,
     clear_state,
 )
-from .logic_signature import LogicSignature
+from .logic_signature import LogicSignature, TemplateValue
 from .precompile import Precompile
 
 from . import client

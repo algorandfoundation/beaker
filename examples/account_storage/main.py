@@ -12,13 +12,9 @@ from beaker.lib.storage import LocalBlob
 # creating unique account that will do whatever we need.
 # In this case, we need it to opt in and rekey to the app address
 class KeySig(LogicSignature):
+    nonce = TemplateValue(TealType.bytes)
     def evaluate(self):
-        return Seq(
-            # Single template value, popped so it doesnt end up on the stack
-            Pop(Tmpl.Bytes("TMPL_NONCE")),
-            # oprah_you_get_a_car.gif
-            Approve(),
-        )
+        return Approve() 
 
 
 # App that needs lots of storage so we use the local storage of
