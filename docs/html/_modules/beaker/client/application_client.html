@@ -443,51 +443,17 @@
 
         <span class="sd">&quot;&quot;&quot;Handles calling the application&quot;&quot;&quot;</span>
 
-        <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_suggested_params</span><span class="p">(</span><span class="n">suggested_params</span><span class="p">)</span>
-        <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signer</span><span class="p">(</span><span class="n">signer</span><span class="p">)</span>
-        <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">signer</span><span class="p">)</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span><span class="p">):</span>
             <span class="n">method</span> <span class="o">=</span> <span class="n">get_method_spec</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
 
         <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_hints</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">method_arg</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">method_arg</span><span class="o">.</span><span class="n">name</span>
-
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">argument</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-
-                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> name in struct hints&quot;</span><span class="p">)</span>
-
-                    <span class="n">argument</span> <span class="o">=</span> <span class="p">[</span>
-                        <span class="n">argument</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
-                        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
-                    <span class="p">]</span>
-
-                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
-
-            <span class="k">elif</span> <span class="p">(</span>
-                <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span>
-            <span class="p">):</span>
-                <span class="n">annos</span> <span class="o">=</span> <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">annos</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">DefaultArgument</span><span class="p">(</span><span class="n">annos</span><span class="o">.</span><span class="n">default</span><span class="p">)))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unspecified argument: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
-
-        <span class="n">atc</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
+        <span class="n">atc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
+            <span class="n">AtomicTransactionComposer</span><span class="p">(),</span>
             <span class="n">method</span><span class="p">,</span>
             <span class="n">sender</span><span class="p">,</span>
-            <span class="n">sp</span><span class="p">,</span>
             <span class="n">signer</span><span class="p">,</span>
-            <span class="n">method_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">suggested_params</span><span class="o">=</span><span class="n">suggested_params</span><span class="p">,</span>
             <span class="n">on_complete</span><span class="o">=</span><span class="n">on_complete</span><span class="p">,</span>
             <span class="n">local_schema</span><span class="o">=</span><span class="n">local_schema</span><span class="p">,</span>
             <span class="n">global_schema</span><span class="o">=</span><span class="n">global_schema</span><span class="p">,</span>
@@ -500,11 +466,12 @@
             <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
             <span class="n">lease</span><span class="o">=</span><span class="n">lease</span><span class="p">,</span>
             <span class="n">rekey_to</span><span class="o">=</span><span class="n">rekey_to</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="c1"># If its a read-only method, use dryrun (TODO: swap with simulate later?)</span>
         <span class="k">if</span> <span class="n">hints</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
-            <span class="n">txns</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">gather_signatures</span><span class="p">()</span>
-            <span class="n">dr_req</span> <span class="o">=</span> <span class="n">transaction</span><span class="o">.</span><span class="n">create_dryrun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">txns</span><span class="p">)</span>
+            <span class="n">dr_req</span> <span class="o">=</span> <span class="n">transaction</span><span class="o">.</span><span class="n">create_dryrun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">atc</span><span class="o">.</span><span class="n">gather_signatures</span><span class="p">())</span>
             <span class="n">dr_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">dryrun</span><span class="p">(</span><span class="n">dr_req</span><span class="p">)</span>
             <span class="n">method_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_result</span><span class="p">(</span>
                 <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">method</span><span class="p">},</span> <span class="n">dr_result</span><span class="p">[</span><span class="s2">&quot;txns&quot;</span><span class="p">],</span> <span class="n">atc</span><span class="o">.</span><span class="n">tx_ids</span>
@@ -629,10 +596,11 @@
 
                     <span class="n">argument</span> <span class="o">=</span> <span class="p">[</span>
                         <span class="n">argument</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
-                        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
                     <span class="p">]</span>
 
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
+
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hints</span><span class="o">.</span><span class="n">param_annotations</span>
             <span class="p">):</span>

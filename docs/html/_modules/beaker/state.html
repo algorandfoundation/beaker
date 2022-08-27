@@ -477,14 +477,15 @@
                     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
                     <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">str_key</span><span class="p">(),</span>
                     <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span><span class="p">,</span>
+                    <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">},</span>
             <span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="n">k</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
-                    <span class="s2">&quot;max-keys&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">max_keys</span><span class="p">,</span>
-                    <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span><span class="p">,</span>
+                    <span class="s2">&quot;max_keys&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">max_keys</span><span class="p">,</span>
+                    <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">},</span>
