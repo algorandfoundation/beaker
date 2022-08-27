@@ -430,7 +430,11 @@ def test_struct_args():
     assert m.hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
-            "elements": [("addr", "address"), ("balance", "uint64"), ("nickname", "string")],
+            "elements": [
+                ("addr", "address"),
+                ("balance", "uint64"),
+                ("nickname", "string"),
+            ],
         }
     }
 

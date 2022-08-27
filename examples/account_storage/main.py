@@ -15,7 +15,7 @@ class KeySig(LogicSignature):
     nonce = TemplateVariable(TealType.bytes)
 
     def evaluate(self):
-        return Approve() 
+        return Approve()
 
 
 # App that needs lots of storage so we use the local storage of
@@ -51,9 +51,9 @@ class DiskHungry(Application):
 
 def demo():
     app_client = client.ApplicationClient(
-        client=sandbox.get_algod_client(), 
-        app=DiskHungry(), 
-        signer=sandbox.get_accounts().pop().signer
+        client=sandbox.get_algod_client(),
+        app=DiskHungry(),
+        signer=sandbox.get_accounts().pop().signer,
     )
     # Create the app
     app_client.create()

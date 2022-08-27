@@ -2,13 +2,14 @@ from inspect import getattr_static
 from pyteal import *
 from beaker.decorators import get_handler_config, HandlerConfig, Method
 
+
 class TemplateVariable:
     def __init__(self, stack_type: TealType, name: str = None):
         self.stack_type = stack_type
         self.name = name
 
-    def get_expr(self)->Expr:
-        name = f"TMPL_"+self.name.upper()
+    def get_expr(self) -> Expr:
+        name = f"TMPL_" + self.name.upper()
 
         if self.stack_type is TealType.bytes:
             return Tmpl.Bytes(name)
@@ -61,8 +62,7 @@ class LogicSignature:
                         )
 
         template_expressions: list[Expr] = [
-            Pop(tv.get_expr())
-            for tv in self.template_values
+            Pop(tv.get_expr()) for tv in self.template_values
         ]
 
         self.program = compileTeal(
