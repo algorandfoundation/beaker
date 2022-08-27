@@ -57,7 +57,7 @@ class DiskHungry(Application):
         """
 
         return Seq(
-            # Read byte (take only the last byte of the 8 byte int it returns)
+            # Read byte
             (byte := ScratchVar()).store(
                 self.data[nonce_acct.address()].read_byte(self.byte_idx(bit_idx.get()))
             ),
@@ -118,7 +118,6 @@ def demo():
         for x in range(16):
             blob += cast(bytes, acct_state[x.to_bytes(1, "big")])
 
-        print(int(blob[idx // 8]))
         # Did the expected byte have the expected integer value?
         assert int(blob[idx // 8]) == 2 ** (idx % 8)
         print(f"bit set correctly at index {idx}")
