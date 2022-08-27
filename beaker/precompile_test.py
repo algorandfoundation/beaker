@@ -50,7 +50,7 @@ def test_templated_bytes(tmpl_val: str):
         tv = TemplateVariable(pt.TealType.bytes)
 
         def evaluate(self):
-            return pt.Seq(pt.Assert(pt.Len(self.tv.get())), pt.Int(1))
+            return pt.Seq(pt.Assert(pt.Len(self.tv)), pt.Int(1))
 
     class App(Application):
         pc = Precompile(Lsig(version=6))
@@ -94,7 +94,7 @@ def test_templated_ints(tmpl_val: int):
         tv = TemplateVariable(pt.TealType.uint64)
 
         def evaluate(self):
-            return pt.Seq(pt.Assert(self.tv.get()), pt.Int(1))
+            return pt.Seq(pt.Assert(self.tv), pt.Int(1))
 
     class App(Application):
         pc = Precompile(Lsig(version=6))

@@ -1,5 +1,6 @@
 from inspect import getattr_static
 from pyteal import (
+    CompileOptions,
     TealInputError,
     TealType,
     Tmpl,
@@ -12,12 +13,11 @@ from pyteal import (
     Reject,
     Mode,
     ScratchVar,
-    ScratchLoad,
 )
 from beaker.decorators import get_handler_config
 
 
-class TemplateVariable:
+class TemplateVariable(Expr):
     def __init__(self, stack_type: TealType, name: str = None):
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
 
@@ -31,13 +31,22 @@ class TemplateVariable:
         )
         return f"TMPL_{self.name.upper()}"
 
+    def __str__(self) -> str:
+        return f"(TemplateVariable {self.name})"
+
+    def __teal__(self, options: CompileOptions):
+        return self.scratch.load().__teal__(options)
+
+    def has_return(self):
+        return False
+
+    def type_of(self):
+        return self.stack_type
+
     def init_expr(self) -> Expr:
         if self.stack_type is TealType.bytes:
             return self.scratch.store(Tmpl.Bytes(self.get_name()))
         return self.scratch.store(Tmpl.Int(self.get_name()))
-
-    def get(self) -> ScratchLoad:
-        return self.scratch.load()
 
 
 class LogicSignature:
