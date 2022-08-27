@@ -118,9 +118,7 @@ def demo():
         )
 
         # Make sure the blob is in the right order
-        blob = b""
-        for x in range(16):
-            blob += acct_state[x.to_bytes(1, "big")]
+        blob = b"".join([acct_state[x.to_bytes(1, "big")] for x in range(16)])
 
         # Did the expected byte have the expected integer value?
         assert int(blob[idx // 8]) == 2 ** (idx % 8)
