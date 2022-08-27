@@ -107,7 +107,9 @@ def test_authorize():
     def creator_only():
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender())), pt.Approve())
+    expr = pt.Seq(
+        pt.Assert(auth_only(pt.Txn.sender()), comment="unauthorized"), pt.Approve()
+    )
 
     expected = expr.__teal__(options)
     actual = creator_only().__teal__(options)
@@ -135,7 +137,10 @@ def test_authorize():
     def holds_token_only():
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_holds_token(pt.Txn.sender())), pt.Approve())
+    expr = pt.Seq(
+        pt.Assert(auth_holds_token(pt.Txn.sender()), comment="unauthorized"),
+        pt.Approve(),
+    )
 
     expected = expr.__teal__(options)
     actual = holds_token_only().__teal__(options)
@@ -161,7 +166,9 @@ def test_authorize():
     def opted_in_only():
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender())), pt.Approve())
+    expr = pt.Seq(
+        pt.Assert(auth_opted_in(pt.Txn.sender()), comment="unauthorized"), pt.Approve()
+    )
 
     expected = expr.__teal__(options)
     actual = opted_in_only().__teal__(options)
@@ -175,7 +182,9 @@ def test_authorize():
     def deleter():
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender())), pt.Approve())
+    expr = pt.Seq(
+        pt.Assert(auth_only(pt.Txn.sender()), comment="unauthorized"), pt.Approve()
+    )
 
     expected = expr.__teal__(options)
     actual = deleter().__teal__(options)

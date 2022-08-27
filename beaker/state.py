@@ -454,14 +454,15 @@ class State:
                     "type": stack_type_to_string(v.stack_type),
                     "key": v.str_key(),
                     "descr": v.descr,
+                    "descr": v.descr if v.descr is not None else "",
                 }
                 for k, v in self.declared_vals.items()
             },
             "dynamic": {
                 k: {
                     "type": stack_type_to_string(v.stack_type),
-                    "max-keys": v.max_keys,
-                    "descr": v.descr,
+                    "max_keys": v.max_keys,
+                    "descr": v.descr if v.descr is not None else "",
                 }
                 for k, v in self.dynamic_vals.items()
             },
