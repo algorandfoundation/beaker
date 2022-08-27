@@ -44,10 +44,10 @@ class DiskHungry(Application):
         )
 
     # Inline these
-    def byte_idx(self, bit_idx)->Int:
+    def byte_idx(self, bit_idx) -> Int:
         return bit_idx / Int(8)
 
-    def bit_in_byte_idx(self, bit_idx)->Int:
+    def bit_in_byte_idx(self, bit_idx) -> Int:
         return bit_idx % Int(8)
 
     @external
@@ -55,7 +55,14 @@ class DiskHungry(Application):
         return Seq(
             # Read byte (take only the last byte of the 8 byte int it returns)
             (byte := ScratchVar()).store(
-                Suffix(Itob(self.data[nonce_acct.address()].read_byte(self.byte_idx(bit_idx.get()))), Int(7))
+                Suffix(
+                    Itob(
+                        self.data[nonce_acct.address()].read_byte(
+                            self.byte_idx(bit_idx.get())
+                        )
+                    ),
+                    Int(7),
+                )
             ),
             # Flip bit
             byte.store(
@@ -66,7 +73,9 @@ class DiskHungry(Application):
                 )
             ),
             # Write byte
-            self.data[nonce_acct.address()].write_byte(self.byte_idx(bit_idx.get()), Btoi(byte.load())),
+            self.data[nonce_acct.address()].write_byte(
+                self.byte_idx(bit_idx.get()), Btoi(byte.load())
+            ),
         )
 
 
@@ -78,7 +87,7 @@ def demo():
     )
     # Create the app
     app_client.create()
-    app_client.fund(2*consts.algo)
+    app_client.fund(2 * consts.algo)
 
     # Get the `precompile` wrapped LSig from the app instance
     tmpl_lsig: Precompile = cast(DiskHungry, app_client.app).tmpl_acct
@@ -90,23 +99,20 @@ def demo():
         lsig_signer = tmpl_lsig.template_signer(nonce)
         create_account_and_opt_in(app_client, lsig_signer, nonce)
 
-        # Max is 8 (bits per byte) * 127 (bytes per key) * 16 (max keys) == 16256 
-        idx =  16255 
-        app_client.call(DiskHungry.flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx)
+        # Max is 8 (bits per byte) * 127 (bytes per key) * 16 (max keys) == 16256
+        idx = 16255
+        app_client.call(
+            DiskHungry.flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx
+        )
 
         acct_state = app_client.get_account_state(lsig_signer.lsig.address(), raw=True)
         blob = b""
         for x in range(16):
-            key = x.to_bytes(1, 'big')
-            blob +=  cast(bytes, acct_state[key])
+            key = x.to_bytes(1, "big")
+            blob += cast(bytes, acct_state[key])
 
-        assert int(blob[idx//8]) == 2**(idx%8)
+        assert int(blob[idx // 8]) == 2 ** (idx % 8)
         print(f"bit set correctly at index {idx}")
-
-
-        
-
-
 
 
 def get_nonce(n: int = 10) -> bytes:
@@ -114,7 +120,9 @@ def get_nonce(n: int = 10) -> bytes:
 
 
 def create_account_and_opt_in(
-    app_client: client.ApplicationClient, lsig_signer: LogicSigTransactionSigner, nonce: bytes
+    app_client: client.ApplicationClient,
+    lsig_signer: LogicSigTransactionSigner,
+    nonce: bytes,
 ):
     lsig_client = app_client.prepare(signer=lsig_signer)
 
