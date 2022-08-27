@@ -198,9 +198,11 @@ class Application:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
-            "source":{
-                "approval":base64.b64encode(self.approval_program.encode()).decode("utf8"),
-                "clear":base64.b64encode(self.clear_program.encode()).decode("utf8"),
+            "source": {
+                "approval": base64.b64encode(self.approval_program.encode()).decode(
+                    "utf8"
+                ),
+                "clear": base64.b64encode(self.clear_program.encode()).decode("utf8"),
             },
             "schema": {
                 "local": self.acct_state.dictify(),
