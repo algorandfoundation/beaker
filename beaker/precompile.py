@@ -109,7 +109,7 @@ class Precompile:
                 curr_val = py_encode_uvarint(len(arg)) + arg
             else:
                 if type(arg) is not int:
-                    raise Exception("no")
+                    raise TealTypeError(type(arg), int)
                 curr_val = py_encode_uvarint(arg)
 
             populated_binary[tv.pc + offset : tv.pc + offset + 1] = curr_val
@@ -133,6 +133,7 @@ class Precompile:
         ]
 
         for idx, tv in enumerate(self.template_values):
+            # Add expressions to encode the values and insert them into the working buffer
             populate_program += [
                 curr_val.store(Concat(encode_uvarint(Len(args[idx])), args[idx]))
                 if tv.is_bytes
@@ -152,13 +153,17 @@ class Precompile:
                 last_pos.store(Int(tv.pc) + Int(1)),
             ]
 
-        ## append the bytes from the last template variable to the end
+        # append the bytes from the last template variable to the end
         populate_program += [
             buff.store(Concat(buff.load(), Suffix(self.binary_bytes, last_pos.load()))),
             buff.load(),
         ]
 
-        return Seq(*populate_program)
+        @Subroutine(TealType.bytes)
+        def populate_template_lsig():
+            return Seq(*populate_program)
+
+        return populate_template_lsig()
 
     def template_address(self, *args) -> Expr:
         return Sha512_256(
