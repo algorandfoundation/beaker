@@ -79,19 +79,19 @@ class DiskHungry(Application):
 
 def demo():
 
+    # Instantiate our app, since we're using a precompile we want this instance
+    # to access the precompiled lsig
     app = DiskHungry()
+
     # Create app client
     app_client = client.ApplicationClient(
         client=sandbox.get_algod_client(),
         app=app,
         signer=sandbox.get_accounts().pop().signer,
     )
-    # Create the app
-    app_client.create()
-    app_client.fund(2 * consts.algo)
 
-    # Get the `precompile` wrapped LSig from the app instance
-    tmpl_lsig: Precompile = app.tmpl_acct
+    # Deploy the app
+    app_client.create()
 
     # Create 10 random nonces for unique lsig accounts
     # and make them opt in to the app
@@ -99,7 +99,7 @@ def demo():
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
         nonce: str = get_nonce()
-        lsig_signer: LogicSigTransactionSigner = tmpl_lsig.template_signer(nonce)
+        lsig_signer: LogicSigTransactionSigner = app.tmpl_acct.template_signer(nonce)
 
         print(
             f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
@@ -122,7 +122,7 @@ def demo():
         )
 
         # Make sure the blob is in the right order
-        blob = b"".join([acct_state[x.to_bytes(1, "big")] for x in range(16)])
+        blob: bytes = b"".join([acct_state[x.to_bytes(1, "big")] for x in range(16)])
 
         # Did the expected byte have the expected integer value?
         assert int(blob[idx // 8]) == 2 ** (idx % 8)
@@ -134,21 +134,20 @@ def get_nonce(n: int = 10) -> bytes:
 
 
 def create_and_opt_in_account(
-    app_client: client.ApplicationClient,
+    user_client: client.ApplicationClient,
     lsig_client: client.ApplicationClient,
     nonce: bytes,
 ):
-    sp = app_client.get_suggested_params()
-
+    sp = user_client.get_suggested_params()
     lsig_address = cast(LogicSigTransactionSigner, lsig_client.signer).lsig.address()
 
     atc = AtomicTransactionComposer()
+
     # Give the lsig 2 algo for min balance (More than needed)
-    #  TODO: get min bal reqs for optin from app
-    app_client.add_transaction(
+    user_client.add_transaction(
         atc,
         txns.PaymentTxn(
-            sender=app_client.get_sender(),
+            sender=user_client.sender,
             sp=sp,
             receiver=lsig_address,
             amt=2 * consts.algo,
@@ -160,12 +159,12 @@ def create_and_opt_in_account(
         DiskHungry.add_account,
         suggested_params=sp,
         nonce=nonce,
-        rekey_to=app_client.app_addr,
+        rekey_to=lsig_client.app_addr,
         on_complete=txns.OnComplete.OptInOC,
     )
 
     # Run it
-    atc.execute(app_client.client, 4)
+    atc.execute(user_client.client, 4)
 
 
 if __name__ == "__main__":
