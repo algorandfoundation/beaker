@@ -101,6 +101,10 @@ def demo():
         nonce: str = get_nonce()
         lsig_signer: LogicSigTransactionSigner = tmpl_lsig.template_signer(nonce)
 
+        print(
+            f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
+        )
+
         # Create the account and opt it into the app, also rekeys it to the app address
         create_and_opt_in_account(
             app_client, app_client.prepare(signer=lsig_signer), nonce
@@ -134,44 +138,33 @@ def create_and_opt_in_account(
     lsig_client: client.ApplicationClient,
     nonce: bytes,
 ):
-    lsig_signer = cast(LogicSigTransactionSigner, lsig_client.signer)
+    sp = app_client.get_suggested_params()
 
-    print(
-        f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
-    )
+    lsig_address = cast(LogicSigTransactionSigner, lsig_client.signer).lsig.address()
 
     atc = AtomicTransactionComposer()
-
-    sp = lsig_client.get_suggested_params()
-    sp.flat_fee = True
-
-    covers_fee = copy.copy(sp)
-    covers_fee.fee = 2 * consts.milli_algo
-    atc.add_transaction(
-        TransactionWithSigner(
-            txn=txns.PaymentTxn(
-                # Give the lsig 1 algo for min balance (really less than that needed but I'm lazy)
-                # TODO: get min bal reqs for optin from app?
-                app_client.get_sender(),
-                covers_fee,
-                lsig_signer.lsig.address(),
-                consts.algo,
-            ),
-            signer=app_client.signer,
-        )
+    # Give the lsig 2 algo for min balance (More than needed)
+    #  TODO: get min bal reqs for optin from app
+    app_client.add_transaction(
+        atc,
+        txns.PaymentTxn(
+            sender=app_client.get_sender(),
+            sp=sp,
+            receiver=lsig_address,
+            amt=2 * consts.algo,
+        ),
     )
-
-    free_fee = copy.copy(sp)
-    free_fee.fee = 0
+    # Add opt in method call on behalf of lsig
     lsig_client.add_method_call(
         atc,
         DiskHungry.add_account,
+        suggested_params=sp,
         nonce=nonce,
-        suggested_params=free_fee,
         rekey_to=app_client.app_addr,
         on_complete=txns.OnComplete.OptInOC,
     )
 
+    # Run it
     atc.execute(app_client.client, 4)
 
 
