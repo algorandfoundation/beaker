@@ -11,28 +11,33 @@ from pyteal import (
     compileTeal,
     Reject,
     Mode,
-    Pop,
+    ScratchVar,
+    ScratchLoad,
 )
 from beaker.decorators import get_handler_config
 
 
 class TemplateVariable:
     def __init__(self, stack_type: TealType, name: str = None):
+        assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
+
         self.stack_type = stack_type
+        self.scratch = ScratchVar(stack_type)
         self.name = name
 
     def get_name(self) -> str:
-        if self.name is None:
-            raise TealInputError("Name undefined in template variable")
+        assert self.name is not None, TealInputError(
+            "Name undefined in template variable"
+        )
         return f"TMPL_{self.name.upper()}"
 
-    def get_expr(self) -> Expr:
-        name = self.get_name()
-
+    def init_expr(self) -> Expr:
         if self.stack_type is TealType.bytes:
-            return Tmpl.Bytes(name)
-        else:
-            return Tmpl.Int(name)
+            return self.scratch.store(Tmpl.Bytes(self.get_name()))
+        return self.scratch.store(Tmpl.Int(self.get_name()))
+
+    def get(self) -> ScratchLoad:
+        return self.scratch.load()
 
 
 class LogicSignature:
@@ -78,7 +83,7 @@ class LogicSignature:
                     )
 
         template_expressions: list[Expr] = [
-            Pop(tv.get_expr()) for tv in self.template_values
+            tv.init_expr() for tv in self.template_values
         ]
 
         self.program = compileTeal(

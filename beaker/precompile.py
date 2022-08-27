@@ -127,7 +127,7 @@ class Precompile:
                     raise TealTypeError(type(arg), bytes | str)
 
                 if type(arg) is str:
-                    arg = arg.encode()
+                    arg = arg.encode("utf-8")
 
                 assert type(arg) is bytes
 
