@@ -52,14 +52,15 @@ class LogicSignature:
 
         for name, (bound_attr, static_attr) in self.attrs.items():
 
+            # Check for externals and internal methods
+            external_config = get_handler_config(bound_attr)
+
             if isinstance(static_attr, TemplateVariable):
                 if static_attr.name is None:
                     static_attr.name = name
                 self.template_values.append(static_attr)
 
-            # Check for externals and internal methods
-            external_config = get_handler_config(bound_attr)
-            if external_config.method_spec is not None:
+            elif external_config.method_spec is not None:
                 abi_meth = ABIReturnSubroutine(static_attr)
                 if external_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
