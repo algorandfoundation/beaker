@@ -138,7 +138,6 @@ class Precompile:
                         Substring(
                             self.binary_bytes,
                             last_pos.load(),
-                            # Length not next pos
                             Int(tv.pc),
                         ),
                         curr_val.load(),

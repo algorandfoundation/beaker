@@ -12,7 +12,8 @@ from beaker.lib.storage import LocalBlob
 # creating unique account that will do whatever we need.
 # In this case, we need it to opt in and rekey to the app address
 class KeySig(LogicSignature):
-    nonce = TemplateValue(TealType.bytes)
+    nonce = TemplateVariable(TealType.bytes)
+
     def evaluate(self):
         return Approve() 
 
@@ -39,7 +40,6 @@ class DiskHungry(Application):
         return Seq(
             Assert(
                 # Make sure the opt-in'er is our lsig
-                # Compute the expected sender given the precompile `tmpl_account` and the nonce
                 Txn.sender() == self.tmpl_acct.template_address(nonce.get()),
                 # and that its being rekeyed to us
                 Txn.rekey_to() == self.address,
@@ -50,17 +50,19 @@ class DiskHungry(Application):
 
 
 def demo():
-    acct = sandbox.get_accounts().pop()
-
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), DiskHungry(), signer=acct.signer
+        client=sandbox.get_algod_client(), 
+        app=DiskHungry(), 
+        signer=sandbox.get_accounts().pop().signer
     )
     # Create the app
     app_client.create()
 
+    # Get the `precompile` wrapped LSig from the app instance
+    tmpl_lsig: Precompile = cast(DiskHungry, app_client.app).tmpl_acct
+
     # Create 10 random nonces for unique lsig accounts
     # and make them opt in to the app
-    tmpl_lsig = cast(DiskHungry, app_client.app).tmpl_acct
     for _ in range(10):
         create_account(app_client, tmpl_lsig, get_nonce())
 

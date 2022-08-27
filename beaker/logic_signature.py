@@ -2,17 +2,7 @@ from inspect import getattr_static
 from pyteal import *
 from beaker.decorators import get_handler_config, HandlerConfig, Method
 
-"""
-    How do we handle routing for lsigs?
-
-    we can have up to 255 args passed which should be plenty for ABI style stuff 
-    but ABI stuff requires the args be passed in Txn.application_args
-
-    Instead of creating a Router and adding methods, create our own Router like thing and 
-    force use of the first app arg to route handling to correct method?
-"""
-
-class TemplateValue:
+class TemplateVariable:
     def __init__(self, stack_type: TealType, name: str = None):
         self.stack_type = stack_type
         self.name = name
@@ -39,11 +29,11 @@ class LogicSignature:
 
         self.methods: dict[str, Subroutine] = {}
 
-        self.template_values: list[TemplateValue] = []
+        self.template_values: list[TemplateVariable] = []
 
         for name, (bound_attr, static_attr) in self.attrs.items():
 
-            if isinstance(static_attr, TemplateValue):
+            if isinstance(static_attr, TemplateVariable):
                 if static_attr.name is None:
                     static_attr.name = name
                 self.template_values.append(static_attr)
