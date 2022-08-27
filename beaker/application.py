@@ -85,7 +85,9 @@ class Application:
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         self.precompiles: dict[str, Precompile] = {}
 
-        acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
+        acct_vals: dict[
+            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+        ] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():

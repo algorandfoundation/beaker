@@ -344,7 +344,7 @@ class DynamicAccountStateValue(DynamicStateValue):
         return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
 
 
-class BlobStateValue(ABC):
+class StateBlob(ABC):
     def __init__(self):
         pass
 
@@ -353,7 +353,7 @@ class BlobStateValue(ABC):
         ...
 
 
-class AccountStateBlob(BlobStateValue):
+class AccountStateBlob(StateBlob):
     def __init__(self, max_keys: int = None, keys: list[int] = None):
         self.blob = LocalBlob(max_keys=max_keys, keys=keys)
         self.acct: Expr = Txn.sender()
@@ -399,15 +399,15 @@ class State:
     """holds all the declared and dynamic state values for this storage type"""
 
     def __init__(
-        self, fields: Mapping[str, StateValue | DynamicStateValue | BlobStateValue]
+        self, fields: Mapping[str, StateValue | DynamicStateValue | StateBlob]
     ):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
         }
         self.__dict__.update(self.declared_vals)
 
-        self.blob_vals: dict[str, BlobStateValue] = {
-            k: v for k, v in fields.items() if isinstance(v, BlobStateValue)
+        self.blob_vals: dict[str, StateBlob] = {
+            k: v for k, v in fields.items() if isinstance(v, StateBlob)
         }
         self.__dict__.update(self.blob_vals)
 
@@ -502,7 +502,10 @@ class ApplicationState(State):
 
 class AccountState(State):
     def __init__(
-        self, fields: Mapping[str, AccountStateValue | DynamicAccountStateValue]
+        self,
+        fields: Mapping[
+            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+        ],
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
