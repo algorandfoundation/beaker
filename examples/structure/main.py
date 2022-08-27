@@ -111,9 +111,9 @@ def demo():
 
 
 if __name__ == "__main__":
-    #demo()
+    #import json
+    #s = Structer()    
+    #with open("structer.json", "w") as f:
+    #    f.write(json.dumps((s.application_spec())))
 
-    import json
-    s = Structer()    
-    with open("structer.json", "w") as f:
-        f.write(json.dumps((s.application_spec())))
+    demo()
