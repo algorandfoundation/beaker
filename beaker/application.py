@@ -1,6 +1,6 @@
 import base64
 from inspect import getattr_static
-from typing import Final, Any, cast
+from typing import Final, Any, cast, Optional
 from algosdk.abi import Method
 from pyteal import (
     SubroutineFnWrapper,
@@ -21,6 +21,7 @@ from pyteal import (
 from beaker.decorators import (
     get_handler_config,
     MethodHints,
+    MethodConfig,
     create,
 )
 
@@ -80,7 +81,7 @@ class Application:
 
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
-        self.methods: dict[str, ABIReturnSubroutine] = {}
+        self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         self.precompiles: dict[str, Precompile] = {}
 
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
@@ -213,6 +214,12 @@ class Application:
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
+
+        if self.approval_program is None or self.clear_program is None:
+            raise Exception(
+                "approval or clear program are none, please build the programs first"
+            )
+
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "source": {

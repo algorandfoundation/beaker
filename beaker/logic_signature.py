@@ -1,10 +1,11 @@
 from inspect import getattr_static
 from pyteal import (
+    TealInputError,
     TealType,
     Tmpl,
     Expr,
     MAX_TEAL_VERSION,
-    Subroutine,
+    SubroutineDefinition,
     ABIReturnSubroutine,
     Seq,
     compileTeal,
@@ -12,7 +13,7 @@ from pyteal import (
     Mode,
     Pop,
 )
-from beaker.decorators import get_handler_config, HandlerConfig, Method
+from beaker.decorators import get_handler_config
 
 
 class TemplateVariable:
@@ -21,6 +22,8 @@ class TemplateVariable:
         self.name = name
 
     def get_name(self) -> str:
+        if self.name is None:
+            raise TealInputError("Name undefined in template variable")
         return f"TMPL_{self.name.upper()}"
 
     def get_expr(self) -> Expr:
@@ -43,7 +46,7 @@ class LogicSignature:
             if not m.startswith("__")
         }
 
-        self.methods: dict[str, Subroutine] = {}
+        self.methods: dict[str, SubroutineDefinition] = {}
 
         self.template_values: list[TemplateVariable] = []
 
@@ -56,25 +59,22 @@ class LogicSignature:
 
             # Check for externals and internal methods
             external_config = get_handler_config(bound_attr)
-            match external_config:
-                # ABI Methods
-                case HandlerConfig(method_spec=Method()):
-                    abi_meth = ABIReturnSubroutine(static_attr)
-                    if external_config.referenced_self:
-                        abi_meth.subroutine.implementation = bound_attr
+            if external_config.method_spec is not None:
+                abi_meth = ABIReturnSubroutine(static_attr)
+                if external_config.referenced_self:
+                    abi_meth.subroutine.implementation = bound_attr
 
-                    self.methods[name] = abi_meth.subroutine
+                self.methods[name] = abi_meth.subroutine
 
-                # Internal subroutines
-                case HandlerConfig(subroutine=Subroutine()):
-                    if external_config.referenced_self:
-                        setattr(self, name, external_config.subroutine(bound_attr))
-                    else:
-                        setattr(
-                            self.__class__,
-                            name,
-                            external_config.subroutine(static_attr),
-                        )
+            elif external_config.subroutine is not None:
+                if external_config.referenced_self:
+                    setattr(self, name, external_config.subroutine(bound_attr))
+                else:
+                    setattr(
+                        self.__class__,
+                        name,
+                        external_config.subroutine(static_attr),
+                    )
 
         template_expressions: list[Expr] = [
             Pop(tv.get_expr()) for tv in self.template_values

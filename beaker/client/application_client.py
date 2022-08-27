@@ -1,7 +1,7 @@
 from base64 import b64decode
 import copy
 from math import ceil
-from typing import Any
+from typing import Any, cast
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -103,6 +103,7 @@ class ApplicationClient:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
         self.build()
+        assert self.clear_binary is not None and self.approval_binary is not None
 
         if extra_pages is None:
             extra_pages = ceil(
@@ -530,9 +531,12 @@ class ApplicationClient:
                     if hints.structs is None or name not in hints.structs:
                         raise Exception(f"Name {name} name in struct hints")
 
+                    elems: list[tuple[str, str]] = cast(
+                        list[tuple[str, str]], hints.structs[name]["elements"]
+                    )
+
                     argument = [
-                        argument[field_name]
-                        for field_name, field_type in hints.structs[name]["elements"]
+                        argument[field_name] for field_name, field_type in elems
                     ]
 
                 args.append(argument)
@@ -653,9 +657,12 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def wrap_approval_exception(self, e: Exception) -> LogicException:
+    def wrap_approval_exception(self, e: Exception) -> Exception:
         if self.approval_src_map is None:
-            _, map = self.compile_approval(True)
+            if self.app.approval_program is None:
+                return e
+
+            _, _, map = self.compile(self.app.approval_program, True)
             self.approval_src_map = map
 
         return LogicException(e, self.app.approval_program, self.approval_src_map)

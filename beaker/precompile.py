@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 from pyteal import (
     Seq,
     Bytes,
@@ -7,6 +8,7 @@ from pyteal import (
     ScratchVar,
     TealType,
     TealTypeError,
+    TealInputError,
     Int,
     Concat,
     Len,
@@ -66,9 +68,9 @@ class Precompile:
 
         self.program = lsig.program
 
-        self.binary = None
-        self.addr = None
-        self.map = None
+        self.binary: Optional[bytes] = None
+        self.addr: Optional[str] = None
+        self.map: Optional[SourceMap] = None
 
         self.template_values: list[PrecompileTemplateValue] = []
 
@@ -101,6 +103,8 @@ class Precompile:
     def address(self) -> Expr:
         assert self.binary is not None
         assert len(self.template_values) == 0
+        if self.addr is None:
+            raise TealInputError("No address defined for precompile lsig")
 
         return Addr(self.addr)
 
@@ -119,8 +123,14 @@ class Precompile:
             arg: str | bytes | int = args[idx]
 
             if tv.is_bytes:
+                if type(arg) is int:
+                    raise TealTypeError(type(arg), bytes | str)
+
                 if type(arg) is str:
                     arg = arg.encode()
+
+                assert type(arg) is bytes
+
                 curr_val = py_encode_uvarint(len(arg)) + arg
             else:
                 if type(arg) is not int:

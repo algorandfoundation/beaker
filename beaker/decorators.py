@@ -161,7 +161,7 @@ class HandlerConfig:
         if self.structs is not None:
             mh.structs = {}
             for arg_name, model_spec in self.structs.items():
-                annos = list(model_spec.__annotations__.items())
+                annos: list[tuple[str, Any]] = list(model_spec.__annotations__.items())
                 mh.structs[arg_name] = {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": [
@@ -190,8 +190,8 @@ class MethodHints:
 
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices
-    structs: Optional[dict[str, dict[str, str | list[str]]]] = field(
+    #: hint to provide names for tuple argument indices method_name=>param_name=>{name:str, elements:[str,str]}
+    structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
         kw_only=True, default=None
     )
     #: annotations
