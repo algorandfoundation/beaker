@@ -1,5 +1,6 @@
 import random
 import string
+import copy
 from typing import cast
 import algosdk.future.transaction as txns
 from algosdk.atomic_transaction_composer import *
@@ -78,10 +79,11 @@ class DiskHungry(Application):
 
 def demo():
 
+    app = DiskHungry()
     # Create app client
     app_client = client.ApplicationClient(
         client=sandbox.get_algod_client(),
-        app=DiskHungry(),
+        app=app,
         signer=sandbox.get_accounts().pop().signer,
     )
     # Create the app
@@ -89,34 +91,36 @@ def demo():
     app_client.fund(2 * consts.algo)
 
     # Get the `precompile` wrapped LSig from the app instance
-    tmpl_lsig: Precompile = cast(DiskHungry, app_client.app).tmpl_acct
+    tmpl_lsig: Precompile = app.tmpl_acct
 
     # Create 10 random nonces for unique lsig accounts
     # and make them opt in to the app
     for _ in range(10):
-        # Get a rando val
-        nonce = get_nonce()
-
-        # Populate the binary template with the nonce and get back a Signer obj
-        # to submit transactions
-        lsig_signer = tmpl_lsig.template_signer(nonce)
+        # Populate the binary template with the random nonce and get back
+        # a Signer obj to submit transactions
+        nonce: str = get_nonce()
+        lsig_signer: LogicSigTransactionSigner = tmpl_lsig.template_signer(nonce)
 
         # Create the account and opt it into the app, also rekeys it to the app address
-        create_and_opt_in_account(app_client, lsig_signer, nonce)
+        create_and_opt_in_account(
+            app_client, app_client.prepare(signer=lsig_signer), nonce
+        )
 
         # Max is 8 (bits per byte) * 127 (bytes per key) * 16 (max keys) == 16256
-        idx = 16255
+        idx: int = 16255
         app_client.call(
             DiskHungry.flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx
         )
 
         # Get the full state for the lsig we used to store this bit
-        acct_state = app_client.get_account_state(lsig_signer.lsig.address(), raw=True)
+        acct_state: dict[bytes, bytes] = app_client.get_account_state(
+            lsig_signer.lsig.address(), raw=True
+        )
 
         # Make sure the blob is in the right order
         blob = b""
         for x in range(16):
-            blob += cast(bytes, acct_state[x.to_bytes(1, "big")])
+            blob += acct_state[x.to_bytes(1, "big")]
 
         # Did the expected byte have the expected integer value?
         assert int(blob[idx // 8]) == 2 ** (idx % 8)
@@ -129,10 +133,10 @@ def get_nonce(n: int = 10) -> bytes:
 
 def create_and_opt_in_account(
     app_client: client.ApplicationClient,
-    lsig_signer: LogicSigTransactionSigner,
+    lsig_client: client.ApplicationClient,
     nonce: bytes,
 ):
-    lsig_client = app_client.prepare(signer=lsig_signer)
+    lsig_signer = cast(LogicSigTransactionSigner, lsig_client.signer)
 
     print(
         f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
@@ -140,16 +144,18 @@ def create_and_opt_in_account(
 
     atc = AtomicTransactionComposer()
 
-    sp = app_client.get_suggested_params()
+    sp = lsig_client.get_suggested_params()
     sp.flat_fee = True
-    sp.fee = 2 * consts.milli_algo
+
+    covers_fee = copy.copy(sp)
+    covers_fee.fee = 2 * consts.milli_algo
     atc.add_transaction(
         TransactionWithSigner(
             txn=txns.PaymentTxn(
                 # Give the lsig 1 algo for min balance (really less than that needed but I'm lazy)
                 # TODO: get min bal reqs for optin from app?
                 app_client.get_sender(),
-                sp,
+                covers_fee,
                 lsig_signer.lsig.address(),
                 consts.algo,
             ),
@@ -157,14 +163,13 @@ def create_and_opt_in_account(
         )
     )
 
-    sp = app_client.get_suggested_params()
-    sp.flat_fee = True
-    sp.fee = 0
+    free_fee = copy.copy(sp)
+    free_fee.fee = 0
     lsig_client.add_method_call(
         atc,
         DiskHungry.add_account,
         nonce=nonce,
-        suggested_params=sp,
+        suggested_params=free_fee,
         rekey_to=app_client.app_addr,
         on_complete=txns.OnComplete.OptInOC,
     )
