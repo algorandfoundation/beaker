@@ -9,7 +9,7 @@ from beaker.lib.strings import encode_uvarint
 
 
 @dataclass
-class TemplateValue:
+class PrecompileTemplateValue:
     name: str = field(kw_only=True)
     is_bytes: bool = field(kw_only=True)
     line: int = field(kw_only=True)
@@ -17,8 +17,12 @@ class TemplateValue:
 
 
 TMPL_PREFIX = "TMPL_"
+
 PUSH_BYTES = "pushbytes"
 PUSH_INT = "pushint"
+
+ZERO_BYTES = '""'
+ZERO_INT = "0"
 
 
 def py_encode_uvarint(integer: int) -> bytes:
@@ -51,18 +55,19 @@ class Precompile:
         self.addr = None
         self.map = None
 
-        self.template_values: list[TemplateValue] = []
+        self.template_values: list[PrecompileTemplateValue] = []
 
         # Replace the program text with 0 value
         lines = self.program.splitlines()
         for idx, line in enumerate(lines):
             if TMPL_PREFIX in line:
                 op, name, _, _ = line.split(" ")
-                tv = TemplateValue(
+                tv = PrecompileTemplateValue(
                     name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
                 )
-                lines[idx] = line.replace(name, '""' if tv.is_bytes else "0")
+                lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
                 self.template_values.append(tv)
+
         self.program = "\n".join(lines)
 
     def teal(self) -> str:

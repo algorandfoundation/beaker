@@ -8,8 +8,11 @@ class TemplateVariable:
         self.stack_type = stack_type
         self.name = name
 
+    def get_name(self) -> str:
+        return f"TMPL_" + self.name.upper()
+
     def get_expr(self) -> Expr:
-        name = f"TMPL_" + self.name.upper()
+        name = self.get_name()
 
         if self.stack_type is TealType.bytes:
             return Tmpl.Bytes(name)
