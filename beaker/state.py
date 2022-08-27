@@ -345,45 +345,39 @@ class DynamicAccountStateValue(DynamicStateValue):
         return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
 
 
-class AccountStateBlob(LocalBlob):
-    def initialize(self):
-        return self.zero()
+class BlobStateValue(ABC):
 
-
-class AccountStateList:
-    def __init__(self, storage_type: abi.BaseType, max_keys: int = 16):
-        # TODO: make sure its a static type?
-        self.storage_type = storage_type
-        self.acct = Txn.sender()
-        self.blob = LocalBlob(max_keys=max_keys)
-
-    def get_length(self):
-        # Iterate thru keys to find first with zeros?
-        # keep track of uint32 length at start?
-        # keep keyed storage for self?
-        pass
-
-    def find_idx(self, key: Expr) -> Expr:
-        pass
-
-    def __getitem__(self, idx: Expr):
-        pass
-
-
-class AccountStateMap:
     def __init__(self):
-        self.acct = Txn.sender()
-        self.blob = LocalBlob()
-
-    def initialize(self):
-        return self.blob.zero()
-
-    def get_key_pos(self, item: Expr):
         pass
 
-    def __getitem__(self, item: Expr):
-        bstart, bend = self.get_key_pos(item)
-        return self.blob.read(self.acct, bstart, bend)
+    @abstractmethod
+    def initialize(self)->Expr:
+        ...
+
+class AccountStateBlob(BlobStateValue):
+    def __init__(self, max_keys: int = None, keys: list[int] = None):
+        self.blob = LocalBlob(max_keys=max_keys, keys=keys)
+        self.acct = Txn.sender()
+
+    def __getitem__(self, acct: Expr) -> "AccountStateBlob":
+        asv = copy(self)
+        asv.acct = acct
+        return asv
+
+    def initialize(self)->Expr:
+        return self.blob.zero(self.acct)
+    
+    def write(self, start: Expr, buff: Expr)->Expr:
+        return self.blob.write(self.acct, start, buff)
+    
+    def read(self, start: Expr, stop: Expr)->Expr:
+        return self.blob.read(self.acct, start, stop)
+
+    def read_byte(self, idx: Expr)->Expr:
+        return self.blob.get_byte(self.acct, idx)
+
+    def read_byte(self, idx: Expr, byte: Expr)->Expr:
+        return self.blob.set_byte(self.acct, idx, byte)
 
 
 def stack_type_to_string(st: TealType):
@@ -414,12 +408,16 @@ def check_match_type(sv: StateValue, val: Expr):
 class State:
     """holds all the declared and dynamic state values for this storage type"""
 
-    def __init__(self, fields: Mapping[str, StateValue | DynamicStateValue]):
+    def __init__(self, fields: Mapping[str, StateValue | DynamicStateValue | BlobStateValue]):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
         }
-
         self.__dict__.update(self.declared_vals)
+
+        self.blob_vals: dict[str, BlobStateValue] = {
+            k:v for k,v in fields.items() if isinstance(v, BlobStateValue)
+        }
+        self.__dict__.update(self.blob_vals)
 
         self.dynamic_vals: dict[str, DynamicStateValue] = {
             k: v for k, v in fields.items() if isinstance(v, DynamicStateValue)
@@ -434,7 +432,7 @@ class State:
                 for l in self.dynamic_vals.values()
                 if l.stack_type == TealType.uint64
             ]
-        )
+        ) 
 
         self.num_byte_slices = len(
             [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
@@ -444,7 +442,11 @@ class State:
                 for l in self.dynamic_vals.values()
                 if l.stack_type == TealType.bytes
             ]
-        )
+        ) + sum([
+            cast(AccountStateBlob, b).blob._max_keys
+            for b in self.blob_vals.values()
+        ])
+
 
     def dictify(self) -> dict[str, dict[str, Any]]:
         """Convert the state to a dict for encoding"""
@@ -475,6 +477,9 @@ class State:
                 v.set_default()
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
+            ] + [
+                v.initialize()
+                for v in self.blob_vals.values()
             ]
         )
 
@@ -514,5 +519,9 @@ class AccountState(State):
                 cast(AccountStateValue, v)[acct].set_default()
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
+            ] + [
+                v.initialize()
+                for v in self.blob_vals.values()
             ]
         )
+

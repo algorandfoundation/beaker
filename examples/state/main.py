@@ -30,8 +30,8 @@ def demo():
     result = app_client.call(StateExample.get_account_state_val)
     print(f"Set/get acct state result: {result.return_value}")
 
-    app_client.call(StateExample.set_dynamic_account_state_val, k=0, v="stuff")
-    result = app_client.call(StateExample.get_dynamic_account_state_val, k=0)
+    app_client.call(StateExample.set_dynamic_account_state_val, k=123, v="stuff")
+    result = app_client.call(StateExample.get_dynamic_account_state_val, k=123)
     print(f"Set/get dynamic acct state result: {result.return_value}")
 
     try:
@@ -44,6 +44,14 @@ def demo():
     app_client.call(StateExample.set_dynamic_app_state_val, k=15, v=123)
     result = app_client.call(StateExample.get_dynamic_app_state_val, k=15)
     print(f"Set/get dynamic app state result: {result.return_value}")
+
+    msg = "write this message please and make it readable"
+    app_client.call(StateExample.write_blob, v=msg)
+    result = app_client.call(StateExample.read_blob)
+    got_msg = bytes(result.return_value[:len(msg)]).decode()
+    assert msg == got_msg
+    print(got_msg)
+
 
 
 if __name__ == "__main__":

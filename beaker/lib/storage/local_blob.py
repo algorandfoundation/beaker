@@ -32,9 +32,14 @@ class LocalBlob:
     The `zero` method must be called on an account on opt in and the schema of the local storage should be 16 bytes
     """
 
-    def __init__(self, keys: list[int] = None):
+    def __init__(self, max_keys: int = None, keys: list[int] = None):
+        assert not (max_keys is not None and keys is not None), "cant supply both max_keys and keys"
+            
         if keys is None or len(keys) == 0:
-            keys = [x for x in range(16)]
+            if max_keys is not None:
+                keys = [x for x in range(max_keys)]
+            else:
+                keys = [x for x in range(16)]
 
         assert len(keys) <= 16
         assert max(keys) <= 255

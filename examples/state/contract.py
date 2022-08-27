@@ -11,6 +11,8 @@ from beaker import (
 )
 from pyteal import abi, TealType, Bytes, Int, Txn
 
+from beaker.state import AccountStateBlob
+
 
 class StateExample(Application):
 
@@ -43,6 +45,9 @@ class StateExample(Application):
         descr="A dynamic state value, allowing 8 keys to be reserved, in this case byte type",
     )
 
+    account_blob: Final[AccountStateBlob] = AccountStateBlob(max_keys=3)
+
+
     @create
     def create(self):
         return self.initialize_application_state()
@@ -50,6 +55,15 @@ class StateExample(Application):
     @opt_in
     def opt_in(self):
         return self.initialize_account_state()
+
+
+    @external
+    def write_blob(self, v: abi.String):
+        return self.account_blob.write(Int(0), v.get())
+
+    @external
+    def read_blob(self, *, output: abi.DynamicBytes):
+        return output.set(self.account_blob.read(Int(0), self.account_blob.blob.max_bytes - Int(1)))
 
     @external
     def set_app_state_val(self, v: abi.String):

@@ -27,6 +27,7 @@ from beaker.decorators import (
 
 from beaker.state import (
     AccountState,
+    AccountStateBlob,
     ApplicationState,
     DynamicAccountStateValue,
     AccountStateValue,
@@ -90,6 +91,8 @@ class Application:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
                 case DynamicAccountStateValue():
+                    acct_vals[name] = bound_attr
+                case AccountStateBlob():
                     acct_vals[name] = bound_attr
                 case ApplicationStateValue():
                     if bound_attr.key is None:
