@@ -401,7 +401,6 @@ class State:
                 k: {
                     "type": stack_type_to_string(v.stack_type),
                     "key": v.str_key(),
-                    "descr": v.descr,
                     "descr": v.descr if v.descr is not None else "",
                 }
                 for k, v in self.declared_vals.items()

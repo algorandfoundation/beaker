@@ -1,13 +1,12 @@
 import base64
 from inspect import getattr_static
-from typing import Final, Any, cast, Optional
+from typing import Final, Any, cast
 from algosdk.abi import Method
 from pyteal import (
     SubroutineFnWrapper,
     TealInputError,
     Txn,
     MAX_TEAL_VERSION,
-    MethodConfig,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
@@ -87,7 +86,6 @@ class Application:
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
-        methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         for name, (bound_attr, static_attr) in self.attrs.items():
 
             # Check for state vals

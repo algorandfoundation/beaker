@@ -1,5 +1,17 @@
 from inspect import getattr_static
-from pyteal import *
+from pyteal import (
+    TealType,
+    Tmpl,
+    Expr,
+    MAX_TEAL_VERSION,
+    Subroutine,
+    ABIReturnSubroutine,
+    Seq,
+    compileTeal,
+    Reject,
+    Mode,
+    Pop,
+)
 from beaker.decorators import get_handler_config, HandlerConfig, Method
 
 
@@ -9,7 +21,7 @@ class TemplateVariable:
         self.name = name
 
     def get_name(self) -> str:
-        return f"TMPL_" + self.name.upper()
+        return f"TMPL_{self.name.upper()}"
 
     def get_expr(self) -> Expr:
         name = self.get_name()

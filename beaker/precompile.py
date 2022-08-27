@@ -1,5 +1,20 @@
 from dataclasses import dataclass, field
-from pyteal import *
+from pyteal import (
+    Seq,
+    Bytes,
+    Expr,
+    Addr,
+    ScratchVar,
+    TealType,
+    TealTypeError,
+    Int,
+    Concat,
+    Len,
+    Substring,
+    Suffix,
+    Subroutine,
+    Sha512_256,
+)
 from algosdk.source_map import SourceMap
 from algosdk.future.transaction import LogicSigAccount
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
