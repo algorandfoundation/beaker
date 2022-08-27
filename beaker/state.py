@@ -20,7 +20,6 @@ from pyteal import (
     Seq,
     If,
 )
-from beaker.lib import storage
 from beaker.lib.storage import LocalBlob
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 
@@ -357,7 +356,7 @@ class BlobStateValue(ABC):
 class AccountStateBlob(BlobStateValue):
     def __init__(self, max_keys: int = None, keys: list[int] = None):
         self.blob = LocalBlob(max_keys=max_keys, keys=keys)
-        self.acct = Txn.sender()
+        self.acct: Expr = Txn.sender()
 
     def __getitem__(self, acct: Expr) -> "AccountStateBlob":
         asv = copy(self)
@@ -376,17 +375,8 @@ class AccountStateBlob(BlobStateValue):
     def read_byte(self, idx: Expr) -> Expr:
         return self.blob.get_byte(self.acct, idx)
 
-    def read_byte(self, idx: Expr, byte: Expr) -> Expr:
+    def write_byte(self, idx: Expr, byte: Expr) -> Expr:
         return self.blob.set_byte(self.acct, idx, byte)
-
-
-def stack_type_to_string(st: TealType):
-    if st == TealType.uint64:
-        return "uint64"
-    if st == TealType.bytes:
-        return "bytes"
-    else:
-        raise Exception("Only uint64 and bytes supported")
 
 
 def check_not_static(sv: StateValue):
@@ -466,7 +456,6 @@ class State:
                 k: {
                     "type": stack_type_to_string(v.stack_type),
                     "key": v.str_key(),
-                    "descr": v.descr,
                     "descr": v.descr if v.descr is not None else "",
                 }
                 for k, v in self.declared_vals.items()

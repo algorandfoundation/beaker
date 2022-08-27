@@ -28,7 +28,6 @@ from pyteal import (
 from beaker import (
     Application,
     ApplicationStateValue,
-    AccountStateBlob,
     DynamicAccountStateValue,
 )
 from beaker.decorators import Authorize, external, create, update, delete

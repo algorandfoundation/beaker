@@ -9,7 +9,6 @@ from pyteal import (
     GetByte,
     If,
     Int,
-    Itob,
     Len,
     Or,
     ScratchVar,
