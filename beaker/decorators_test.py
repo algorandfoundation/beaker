@@ -220,7 +220,7 @@ def test_named_tuple():
         pass
 
     hc = get_handler_config(thing)
-    # TODO
+    assert hc.structs["o"] is Order
 
 
 def test_bare():
