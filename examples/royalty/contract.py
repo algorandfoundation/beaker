@@ -1,11 +1,11 @@
-from pyteal import *
+from pyteal import abi, TxnField, InnerTxnBuilder, Seq, InnerTxn, TxnType, Int
 
 from beaker.contracts.arcs import ARC18
-from beaker.decorators import handler
+from beaker.decorators import external
 
 
 class MyRoyaltyContract(ARC18):
-    @handler
+    @external
     def create_nft(name: abi.String, *, output: abi.Uint64):
         """Create an nft with a name, to demo subclassing ARC18"""
         return Seq(

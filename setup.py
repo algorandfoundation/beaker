@@ -1,14 +1,14 @@
 from distutils.core import setup
-
 from setuptools import find_packages
+
 
 setup(
     name="beaker",
-    version="0.0.1dev",
+    version="0.1.4-alpha",
+    python_requires=">=3.10",
     packages=find_packages(),
     license="MIT",
     long_description=open("README.md").read(),
-    install_requires=[
-        "pyteal @ git+https://github.com/algorand/pyteal@feature/abi#egg=pyteal"
-    ],
+    package_data={"beaker": ["py.typed"]},
+    install_requires=["pyteal>=0.17.0", "py-algorand-sdk>=1.16.1"],
 )

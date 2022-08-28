@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>beaker.decorators &mdash; Beaker  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Beaker
+            <img src="../../_static/beaker.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Beaker</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>beaker.decorators</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for beaker.decorators</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">signature</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Final</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span> <span class="nn">algosdk.abi</span> <span class="kn">import</span> <span class="n">Method</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">abi</span><span class="p">,</span>
+    <span class="n">ABIReturnSubroutine</span><span class="p">,</span>
+    <span class="n">And</span><span class="p">,</span>
+    <span class="n">App</span><span class="p">,</span>
+    <span class="n">Assert</span><span class="p">,</span>
+    <span class="n">AssetHolding</span><span class="p">,</span>
+    <span class="n">BareCallActions</span><span class="p">,</span>
+    <span class="n">CallConfig</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">MethodConfig</span><span class="p">,</span>
+    <span class="n">OnCompleteAction</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">Subroutine</span><span class="p">,</span>
+    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
+    <span class="n">TealInputError</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TealTypeError</span><span class="p">,</span>
+    <span class="n">Bytes</span><span class="p">,</span>
+    <span class="n">TxnField</span><span class="p">,</span>
+    <span class="n">Txn</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">beaker.state</span> <span class="kn">import</span> <span class="n">AccountStateValue</span><span class="p">,</span> <span class="n">ApplicationStateValue</span>
+
+<span class="n">HandlerFunc</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Expr</span><span class="p">]</span>
+
+<span class="n">_handler_config_attr</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;__handler_config__&quot;</span>
+
+
+<span class="n">CheckExpr</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Expr</span><span class="p">]</span>
+<span class="n">ABIType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;ABIType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span>
+
+
+<span class="n">DefaultArgumentType</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">HandlerFunc</span> <span class="o">|</span> <span class="n">Bytes</span> <span class="o">|</span> <span class="n">Int</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">DefaultArgumentClass</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">ABIMethod</span> <span class="o">=</span> <span class="s2">&quot;abi-method&quot;</span>
+    <span class="n">LocalState</span> <span class="o">=</span> <span class="s2">&quot;local-state&quot;</span>
+    <span class="n">GlobalState</span> <span class="o">=</span> <span class="s2">&quot;global-state&quot;</span>
+    <span class="n">Constant</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">DefaultArgument</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;DefaultArgument is a container for any arguments that may be resolved prior to calling some target method&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">resolver</span><span class="p">:</span> <span class="n">DefaultArgumentType</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span> <span class="o">=</span> <span class="n">resolver</span>
+
+        <span class="k">match</span> <span class="n">resolver</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">LocalState</span>
+            <span class="k">case</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">GlobalState</span>
+            <span class="k">case</span> <span class="n">Bytes</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">Constant</span>
+            <span class="k">case</span> <span class="n">Int</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">Constant</span>
+            <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
+                <span class="c1"># Fall through, if its not got a valid handler config, raise error</span>
+                <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">resolver</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hc</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="s2">&quot;Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method&quot;</span>
+                    <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">ABIMethod</span>
+
+    <span class="k">def</span> <span class="nf">resolve_hint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">()</span> <span class="o">|</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">str_key</span><span class="p">()</span>
+            <span class="k">case</span> <span class="n">Bytes</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">byte_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">Int</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
+                <span class="c1"># Fall through, if its not got a valid handler config, raise error</span>
+                <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hc</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="s2">&quot;Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">return</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">TransactionMatcher</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">CheckExpr</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span>
+
+    <span class="k">def</span> <span class="nf">get_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]:</span>
+        <span class="n">checks</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">field_val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">field_getter</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">makeTxnExpr</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">match</span> <span class="n">field_val</span><span class="p">:</span>
+                <span class="k">case</span> <span class="n">Expr</span><span class="p">():</span>
+                    <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_getter</span> <span class="o">==</span> <span class="n">field_val</span><span class="p">)</span>
+                <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
+                    <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_val</span><span class="p">(</span><span class="n">field_getter</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">checks</span>
+
+
+<div class="viewcode-block" id="ParameterAnnotation"><a class="viewcode-back" href="../../usage.html#beaker.decorators.ParameterAnnotation">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ParameterAnnotation</span><span class="p">:</span>
+    <span class="n">descr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DefaultArgumentType</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dictify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">ret</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;descr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">descr</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">def_arg</span> <span class="o">=</span> <span class="n">DefaultArgument</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+            <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">def_arg</span><span class="o">.</span><span class="n">resolvable_class</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">def_arg</span><span class="o">.</span><span class="n">resolve_hint</span><span class="p">()}</span>
+
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">HandlerConfig</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;HandlerConfig contains all the extra bits of info about a given ABI method&quot;&quot;&quot;</span>
+
+    <span class="n">method_spec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Method</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">subroutine</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Subroutine</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">bare_method</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BareCallActions</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">referenced_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">param_annotations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+
+    <span class="n">method_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MethodHints&quot;</span><span class="p">:</span>
+        <span class="n">mh</span> <span class="o">=</span> <span class="n">MethodHints</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="n">mh</span><span class="o">.</span><span class="n">param_annotations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mh</span><span class="o">.</span><span class="n">structs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">arg_name</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">model_spec</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                    <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_spec</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">model_spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">mh</span>
+
+
+<span class="k">def</span> <span class="nf">get_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerConfig</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">_handler_config_attr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">HandlerConfig</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">_handler_config_attr</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">HandlerConfig</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">handler_config</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">_handler_config_attr</span><span class="p">,</span> <span class="n">replace</span><span class="p">(</span><span class="n">handler_config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="MethodHints"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.MethodHints">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">MethodHints</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;MethodHints provides hints to the caller about how to call the method&quot;&quot;&quot;</span>
+
+    <span class="c1">#: hint to indicate this method can be called through Dryrun</span>
+    <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1">#: hint to provide names for tuple argument indices, see :doc:`structs` for more</span>
+    <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="c1">#: annotations</span>
+    <span class="n">param_annotations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dictify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;read_only&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;param_annotations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;structs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+
+<div class="viewcode-block" id="Authorize"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize">[docs]</a><span class="k">class</span> <span class="nc">Authorize</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Authorize.only"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize.only">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">only</span><span class="p">(</span><span class="n">addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;require that the sender of the app call match exactly the address passed&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">addr</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">addr</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+
+        <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;auth_only&quot;</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">sender</span> <span class="o">==</span> <span class="n">addr</span>
+
+        <span class="k">return</span> <span class="n">_impl</span></div>
+
+<div class="viewcode-block" id="Authorize.holds_token"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize.holds_token">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">holds_token</span><span class="p">(</span><span class="n">asset_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;require that the sender of the app call holds &gt;0 of the asset id passed&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">asset_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">asset_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+        <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;auth_holds_token&quot;</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+                <span class="n">bal</span> <span class="o">:=</span> <span class="n">AssetHolding</span><span class="o">.</span><span class="n">balance</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">asset_id</span><span class="p">),</span>
+                <span class="n">And</span><span class="p">(</span><span class="n">bal</span><span class="o">.</span><span class="n">hasValue</span><span class="p">(),</span> <span class="n">bal</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_impl</span></div>
+
+<div class="viewcode-block" id="Authorize.opted_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize.opted_in">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">opted_in</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;require that the sender of the app call has already opted-in to a given app id&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+        <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;auth_opted_in&quot;</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">optedIn</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">app_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_impl</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_authorize</span><span class="p">(</span><span class="n">allowed</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span><span class="p">):</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">allowed</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">expected_arg_types</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span>
+            <span class="s2">&quot;Expected a single expression argument to authorize function&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">allowed</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">allowed</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_decorate</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">Assert</span><span class="p">(</span><span class="n">allowed</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())),</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_decorate</span>
+
+
+<span class="k">def</span> <span class="nf">_readonly</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+    <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fn</span>
+
+
+<span class="k">def</span> <span class="nf">_on_complete</span><span class="p">(</span><span class="n">mc</span><span class="p">:</span> <span class="n">MethodConfig</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">method_config</span><span class="o">=</span><span class="n">mc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fn</span>
+
+    <span class="k">return</span> <span class="n">_impl</span>
+
+
+<span class="k">def</span> <span class="nf">_replace_structs</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">replaced</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">annotations</span> <span class="o">=</span> <span class="n">get_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">annotation</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;__origin__&quot;</span><span class="p">):</span>
+            <span class="c1"># Generic type, not a Struct</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">annotation</span><span class="o">=</span><span class="bp">cls</span><span class="p">()</span><span class="o">.</span><span class="n">type_spec</span><span class="p">()</span><span class="o">.</span><span class="n">annotation_type</span><span class="p">())</span>
+            <span class="n">annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span><span class="o">.</span><span class="n">type_spec</span><span class="p">()</span><span class="o">.</span><span class="n">annotation_type</span><span class="p">()</span>
+            <span class="n">replaced</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">replaced</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">structs</span><span class="o">=</span><span class="n">replaced</span><span class="p">)</span>
+
+    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="n">fn</span><span class="o">.</span><span class="vm">__annotations__</span> <span class="o">=</span> <span class="n">annotations</span>
+
+    <span class="k">return</span> <span class="n">fn</span>
+
+
+<span class="k">def</span> <span class="nf">_capture_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">fn_annotations</span> <span class="o">=</span> <span class="n">get_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="n">param_annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">tv</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">annotation</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tv</span><span class="p">,</span> <span class="s2">&quot;__origin__&quot;</span><span class="p">):</span>
+            <span class="n">orig</span> <span class="o">=</span> <span class="n">tv</span><span class="o">.</span><span class="n">__origin__</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tv</span><span class="p">,</span> <span class="s2">&quot;__metadata__&quot;</span><span class="p">):</span>
+                <span class="n">param_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">tv</span><span class="o">.</span><span class="n">__metadata__</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">annotation</span><span class="o">=</span><span class="n">orig</span><span class="p">)</span>
+                <span class="n">fn_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">orig</span>
+
+    <span class="c1"># for param_name, param_annos in param_annotations.items():</span>
+    <span class="c1">#    if param_annos.checks is not None:</span>
+    <span class="c1">#        # TODO: apply</span>
+    <span class="c1">#        # add expr to deal with checked annotations return Seq(arg_annotations.values(), fn(*args, **kwargs))</span>
+    <span class="c1">#        # print(f&quot;CHECKS: {param_annos.checks}&quot;)</span>
+    <span class="c1">#        pass</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">param_annotations</span><span class="o">=</span><span class="n">param_annotations</span><span class="p">)</span>
+
+    <span class="c1"># Fix function sig/annotations</span>
+    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="n">fn</span><span class="o">.</span><span class="vm">__annotations__</span> <span class="o">=</span> <span class="n">fn_annotations</span>
+
+    <span class="k">return</span> <span class="n">fn</span>
+
+
+<span class="k">def</span> <span class="nf">_remove_self</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;self&quot;</span><span class="p">]</span>
+        <span class="c1"># Flag that this method did have a `self` argument</span>
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">referenced_self</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
+
+    <span class="k">return</span> <span class="n">fn</span>
+
+
+<div class="viewcode-block" id="internal"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.internal">[docs]</a><span class="k">def</span> <span class="nf">internal</span><span class="p">(</span><span class="n">return_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;creates a subroutine to be called by logic internally</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        return_type: The type this method&#39;s returned Expression should evaluate to</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The wrapped subroutine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+        <span class="n">hc</span><span class="o">.</span><span class="n">subroutine</span> <span class="o">=</span> <span class="n">Subroutine</span><span class="p">(</span><span class="n">return_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">hc</span><span class="o">.</span><span class="n">referenced_self</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">hc</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fn</span>
+
+    <span class="k">return</span> <span class="n">_impl</span></div>
+
+
+<div class="viewcode-block" id="external"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.external">[docs]</a><span class="k">def</span> <span class="nf">external</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">/</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add the method decorated to be handled as an ABI method for the Application</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The function being wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">        method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.</span>
+<span class="sd">        read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with additional elements set in its  :code:`__handler_config__` attribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">_remove_self</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">_capture_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">_replace_structs</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_on_complete</span><span class="p">(</span><span class="n">method_config</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">read_only</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_readonly</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">method_spec</span><span class="o">=</span><span class="n">ABIReturnSubroutine</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">method_spec</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">fn</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="bare_external"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.bare_external">[docs]</a><span class="k">def</span> <span class="nf">bare_external</span><span class="p">(</span>
+    <span class="n">no_op</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">opt_in</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">clear_state</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">delete_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">update_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">close_out</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">HandlerFunc</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Add method to be handled by specific bare :code:`OnComplete` actions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        no_op: CallConfig to handle a `NoOp`</span>
+<span class="sd">        opt_in: CallConfig to handle an `OptIn`</span>
+<span class="sd">        clear_state: CallConfig to handle a `ClearState`</span>
+<span class="sd">        delete_application: CallConfig to handle a `DeleteApplication`</span>
+<span class="sd">        update_application: CallConfig to handle a `UpdateApplication`</span>
+<span class="sd">        close_out: CallConfig to handle a `CloseOut`</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+        <span class="n">fun</span> <span class="o">=</span> <span class="n">_remove_self</span><span class="p">(</span><span class="n">fun</span><span class="p">)</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)(</span><span class="n">fun</span><span class="p">)</span>
+        <span class="n">bca</span> <span class="o">=</span> <span class="n">BareCallActions</span><span class="p">(</span>
+            <span class="n">no_op</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">no_op</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">no_op</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
+            <span class="n">delete_application</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span>
+                <span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">delete_application</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">delete_application</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
+            <span class="n">update_application</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span>
+                <span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">update_application</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">update_application</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
+            <span class="n">opt_in</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">opt_in</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">opt_in</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
+            <span class="n">close_out</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">close_out</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">close_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
+            <span class="n">clear_state</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">clear_state</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">clear_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">bare_method</span><span class="o">=</span><span class="n">bca</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fun</span>
+
+    <span class="k">return</span> <span class="n">_impl</span></div>
+
+
+<div class="viewcode-block" id="create"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.create">[docs]</a><span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="delete"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.delete">[docs]</a><span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`DeleteApplication` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="update"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.update">[docs]</a><span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`UpdateApplication` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="opt_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.opt_in">[docs]</a><span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`OptIn` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.clear_state">[docs]</a><span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`ClearState` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="close_out"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.close_out">[docs]</a><span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`CloseOut` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`NoOp` call</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The method to be wrapped.</span>
+<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Algorand.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

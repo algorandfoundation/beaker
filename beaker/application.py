@@ -1,36 +1,31 @@
+import base64
 from inspect import getattr_static
-from typing import Final, Any, cast
+from typing import Final, Any, cast, Optional
 from algosdk.abi import Method
 from pyteal import (
+    SubroutineFnWrapper,
+    TealInputError,
     Txn,
     MAX_TEAL_VERSION,
     ABIReturnSubroutine,
-    Approve,
     BareCallActions,
     Expr,
     Global,
-    MethodConfig,
     OnCompleteAction,
     OptimizeOptions,
-    Reject,
     Router,
     Bytes,
-    Subroutine,
-    Seq,
+    Approve,
 )
 
 from beaker.decorators import (
-    HandlerConfig,
-    MethodHints,
     get_handler_config,
+    MethodHints,
+    MethodConfig,
     create,
-    update,
-    delete,
-    opt_in,
-    close_out,
-    clear_state,
 )
-from beaker.application_schema import (
+
+from beaker.state import (
     AccountState,
     ApplicationState,
     DynamicAccountStateValue,
@@ -39,6 +34,7 @@ from beaker.application_schema import (
     DynamicApplicationStateValue,
 )
 from beaker.errors import BareOverwriteError
+from beaker.precompile import Precompile
 
 
 def get_method_spec(fn) -> Method:
@@ -57,30 +53,47 @@ def get_method_selector(fn) -> bytes:
 
 
 class Application:
-    """Application should be subclassed to add functionality"""
+    """Application contains logic to detect State Variables, Bare methods
+    ABI Methods and internal subroutines.
+
+    It should be subclassed to provide basic behavior to a custom application.
+    """
 
     # Convenience constant fields
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
 
     def __init__(self, version: int = MAX_TEAL_VERSION):
+        """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
 
+        # Is there a better way to get all the attrs declared in subclasses?
         self.attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in list(set(dir(self.__class__)) - set(dir(super())))
             if not m.startswith("__")
         }
 
+        # Initialize these ahead of time, may not
+        # be set after init if len(precompiles)>0
+        self.approval_program = None
+        self.clear_program = None
+        self.on_create = None
+        self.on_update = None
+        self.on_delete = None
+        self.on_opt_in = None
+        self.on_close_out = None
+        self.on_clear_state = None
+
         self.hints: dict[str, MethodHints] = {}
-        self.bare_handlers: dict[str, OnCompleteAction] = {}
-        self.methods: dict[str, tuple[ABIReturnSubroutine, MethodConfig]] = {}
+        self.bare_externals: dict[str, OnCompleteAction] = {}
+        self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
+        self.precompiles: dict[str, Precompile] = {}
 
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
-
             # Check for state vals
             match bound_attr:
                 case AccountStateValue():
@@ -95,69 +108,125 @@ class Application:
                     app_vals[name] = bound_attr
                 case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
+                case Precompile():
+                    self.precompiles[name] = bound_attr
 
+            # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
                 continue
 
-            # Check for handlers and internal methods
+            # Check for externals and internal methods
             handler_config = get_handler_config(bound_attr)
-            match handler_config:
-                # Bare Handlers
-                case HandlerConfig(bare_method=BareCallActions()):
-                    actions = {
-                        oc: cast(OnCompleteAction, action)
-                        for oc, action in handler_config.bare_method.__dict__.items()
-                        if action is not None
-                    }
 
-                    for oc, action in actions.items():
-                        if oc in self.bare_handlers:
-                            raise BareOverwriteError(oc)
+            # Bare externals
+            if handler_config.bare_method is not None:
+                actions = {
+                    oc: cast(OnCompleteAction, action)
+                    for oc, action in handler_config.bare_method.__dict__.items()
+                    if action.action is not None
+                }
 
-                        # Swap the implementation with the bound version
-                        if handler_config.referenced_self:
-                            action.action.subroutine.implementation = bound_attr
+                for oc, action in actions.items():
+                    if oc in self.bare_externals:
+                        raise BareOverwriteError(oc)
 
-                        self.bare_handlers[oc] = action
-
-                # ABI Methods
-                case HandlerConfig(method_spec=Method()):
-                    # Create the ABIReturnSubroutine from the static attr
-                    # but override the implementation with the bound version
-                    abi_meth = ABIReturnSubroutine(static_attr)
+                    # Swap the implementation with the bound version
                     if handler_config.referenced_self:
-                        abi_meth.subroutine.implementation = bound_attr
-                    self.methods[name] = abi_meth
+                        if not (
+                            isinstance(action.action, SubroutineFnWrapper)
+                            or isinstance(action.action, ABIReturnSubroutine)
+                        ):
+                            raise TealInputError(
+                                f"Expected Subroutine or ABIReturnSubroutine, for {oc} got {action.action}"
+                            )
+                        action.action.subroutine.implementation = bound_attr
 
-                    self.hints[name] = handler_config.hints()
+                    self.bare_externals[oc] = action
 
-                # Internal subroutines
-                case HandlerConfig(subroutine=Subroutine()):
-                    if handler_config.referenced_self:
-                        setattr(self, name, handler_config.subroutine(bound_attr))
-                    else:
-                        setattr(
-                            self.__class__,
-                            name,
-                            handler_config.subroutine(static_attr),
-                        )
+            # ABI externals
+            elif handler_config.method_spec is not None:
+                # Create the ABIReturnSubroutine from the static attr
+                # but override the implementation with the bound version
+                abi_meth = ABIReturnSubroutine(static_attr)
+
+                if handler_config.referenced_self:
+                    abi_meth.subroutine.implementation = bound_attr
+
+                self.methods[name] = (abi_meth, handler_config.method_config)
+
+                if handler_config.is_create():
+                    if self.on_create is not None:
+                        raise TealInputError("Multiple create methods specified")
+                    self.on_create = static_attr
+
+                if handler_config.is_update():
+                    if self.on_update is not None:
+                        raise TealInputError("Multiple update methods specified")
+                    self.on_update = static_attr
+
+                if handler_config.is_delete():
+                    if self.on_delete is not None:
+                        raise TealInputError("Multiple delete methods specified")
+                    self.on_delete = static_attr
+
+                if handler_config.is_opt_in():
+                    if self.on_opt_in is not None:
+                        raise TealInputError("Multiple opt in methods specified")
+                    self.on_opt_in = static_attr
+
+                if handler_config.is_clear_state():
+                    if self.on_clear_state is not None:
+                        raise TealInputError("Multiple clear state methods specified")
+                    self.on_clear_state = static_attr
+
+                if handler_config.is_close_out():
+                    if self.on_close_out is not None:
+                        raise TealInputError("Multiple close out methods specified")
+                    self.on_close_out = static_attr
+
+                self.methods[name] = (abi_meth, handler_config.method_config)
+                self.hints[name] = handler_config.hints()
+
+            # Internal subroutines
+            elif handler_config.subroutine is not None:
+                print(name)
+                if handler_config.referenced_self:
+                    setattr(self, name, handler_config.subroutine(bound_attr))
+                else:
+                    setattr(
+                        self.__class__,
+                        name,
+                        handler_config.subroutine(static_attr),
+                    )
 
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        # Create router with name of class and bare handlers
+        # Create router with name of class and bare externals
         self.router = Router(
             name=self.__class__.__name__,
-            bare_calls=BareCallActions(**self.bare_handlers),
+            bare_calls=BareCallActions(**self.bare_externals),
             descr=self.__doc__,
         )
 
-        # Add method handlers
-        for method in self.methods.values():
+        # If there are no precompiles, we can build the programs
+        # with what we already have
+        if len(self.precompiles) == 0:
+            self.compile()
+
+    def compile(self):
+
+        # TODO: reset router?
+        # It will fail if compile is re-called but we shouldn't rely on that
+
+        # Add method externals
+        for _, method_tuple in self.methods.items():
+            method, method_config = method_tuple
             self.router.add_method_handler(
-                method_call=method, method_config=handler_config.method_config
+                method_call=method, method_config=method_config
             )
 
+        # Compile approval and clear programs
         (
             self.approval_program,
             self.clear_program,
@@ -168,9 +237,38 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
+        # Add the method argument descriptions if provided
+        for meth_idx, meth in enumerate(self.contract.methods):
+            if meth.name in self.hints:
+                hint = self.hints[meth.name]
+                if hint.param_annotations is None:
+                    continue
+
+                for arg_idx, arg in enumerate(meth.args):
+                    if arg.name not in hint.param_annotations:
+                        continue
+
+                    if hint.param_annotations[arg.name].descr is not None:
+                        self.contract.methods[meth_idx].args[
+                            arg_idx
+                        ].desc = hint.param_annotations[arg.name].descr
+
     def application_spec(self) -> dict[str, Any]:
+        """returns a dictionary, helpful to provide to callers with information about the application specification"""
+
+        if self.approval_program is None or self.clear_program is None:
+            raise Exception(
+                "approval or clear program are none, please build the programs first"
+            )
+
         return {
-            "hints": {k: v.dictify() for k, v in self.hints.items()},
+            "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
+            "source": {
+                "approval": base64.b64encode(self.approval_program.encode()).decode(
+                    "utf8"
+                ),
+                "clear": base64.b64encode(self.clear_program.encode()).decode("utf8"),
+            },
             "schema": {
                 "local": self.acct_state.dictify(),
                 "global": self.app_state.dictify(),
@@ -178,32 +276,26 @@ class Application:
             "contract": self.contract.dictify(),
         }
 
-    def initialize_app_state(self):
+    def initialize_application_state(self) -> Expr:
+        """
+        Initialize any application state variables declared
+
+        :return: The Expr to initialize the application state.
+        :rtype: pyteal.Expr
+        """
         return self.app_state.initialize()
 
-    def initialize_account_state(self, addr=Txn.sender()):
+    def initialize_account_state(self, addr=Txn.sender()) -> Expr:
+        """
+        Initialize any account state variables declared
+
+        :param addr: Optional, address of account to initialize state for.
+        :return: The Expr to initialize the account state.
+        :rtype: pyteal.Expr
+        """
+
         return self.acct_state.initialize(addr)
 
     @create
-    def create(self):
-        return Seq(self.initialize_app_state(), Approve())
-
-    @opt_in
-    def opt_in(self):
-        return self.initialize_account_state()
-
-    @update
-    def update(self):
-        return Reject()
-
-    @delete
-    def delete(self):
-        return Reject()
-
-    @close_out
-    def close_out(self):
-        return Reject()
-
-    @clear_state
-    def clear_state(self):
-        return Reject()
+    def create(self) -> Expr:
+        return Approve()

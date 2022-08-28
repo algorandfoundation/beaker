@@ -1,1 +1,2 @@
-from .application_client import ApplicationClient  # noqa
+from .application_client import ApplicationClient
+from .logic_error import LogicException

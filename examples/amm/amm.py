@@ -1,11 +1,35 @@
 from typing import Final
-from pyteal import *
+from pyteal import (
+    abi,
+    TealType,
+    Bytes,
+    Global,
+    Expr,
+    Int,
+    Seq,
+    Assert,
+    Txn,
+    And,
+    ScratchVar,
+    AssetHolding,
+    AssetParam,
+    WideRatio,
+    If,
+    Or,
+    InnerTxn,
+    InnerTxnBuilder,
+    TxnField,
+    Concat,
+    TxnType,
+    Sqrt,
+)
 
 from beaker import (
+    consts,
     ApplicationStateValue,
     Application,
     Authorize,
-    handler,
+    external,
     create,
     internal,
 )
@@ -70,25 +94,33 @@ class ConstantProductAMM(Application):
     # Call this only on create
     @create
     def create(self):
-        return self.initialize_app_state()
+        return self.initialize_application_state()
 
     # Only the account set in app_state.governor may call this method
-    @handler(authorize=Authorize.only(governor))
+    @external(authorize=Authorize.only(governor))
     def set_governor(self, new_governor: abi.Account):
         """sets the governor of the contract, may only be called by the current governor"""
         return self.governor.set(new_governor.address())
 
     # Only the account set in app_state.governor may call this method
-    @handler(authorize=Authorize.only(governor))
-    def bootstrap(self, a_asset: abi.Asset, b_asset: abi.Asset, *, output: abi.Uint64):
+    @external(authorize=Authorize.only(governor))
+    def bootstrap(
+        self,
+        seed: abi.PaymentTransaction,
+        a_asset: abi.Asset,
+        b_asset: abi.Asset,
+        *,
+        output: abi.Uint64,
+    ):
         """bootstraps the contract by opting into the assets and creating the pool token"""
-        well_formed_bootstrap = And(
-            Global.group_size() == Int(1),
-            a_asset.asset_id() < b_asset.asset_id(),
-        )
 
         return Seq(
-            Assert(well_formed_bootstrap),
+            Assert(
+                Global.group_size() == Int(2),
+                seed.get().receiver() == self.address,
+                seed.get().amount() >= consts.Algos(0.3),
+                a_asset.asset_id() < b_asset.asset_id(),
+            ),
             self.asset_a.set(a_asset.asset_id()),
             self.asset_b.set(b_asset.asset_id()),
             self.pool_token.set(
@@ -106,7 +138,7 @@ class ConstantProductAMM(Application):
     # AMM specific methods for mint/burn/swap
     ##############
 
-    @handler
+    @external
     def mint(
         self,
         a_xfer: abi.AssetTransferTransaction,
@@ -117,31 +149,31 @@ class ConstantProductAMM(Application):
     ):
         """mint pool tokens given some amount of asset A and asset B"""
 
-        well_formed_mint = And(
+        well_formed_mint = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
             pool_asset.asset_id() == self.pool_token,
-        )
+        ]
 
-        valid_asset_a_xfer = And(
+        valid_asset_a_xfer = [
             a_xfer.get().asset_receiver() == self.address,
             a_xfer.get().xfer_asset() == self.asset_a,
             a_xfer.get().asset_amount() > Int(0),
             a_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
-        valid_asset_b_xfer = And(
+        valid_asset_b_xfer = [
             b_xfer.get().asset_receiver() == self.address,
             b_xfer.get().xfer_asset() == self.asset_b,
             b_xfer.get().asset_amount() > Int(0),
             b_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         return Seq(
             # Check that the transaction is constructed correctly
-            Assert(well_formed_mint),
-            Assert(valid_asset_a_xfer),
-            Assert(valid_asset_b_xfer),
+            Assert(*well_formed_mint),
+            Assert(*valid_asset_a_xfer),
+            Assert(*valid_asset_b_xfer),
             # Check that we have these things
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
@@ -164,8 +196,8 @@ class ConstantProductAMM(Application):
                     # Normal mint
                     self.tokens_to_mint(
                         self.total_supply - pool_bal.value(),
-                        a_bal.value(),
-                        b_bal.value(),
+                        a_bal.value() - a_xfer.get().asset_amount(),
+                        b_bal.value() - b_xfer.get().asset_amount(),
                         a_xfer.get().asset_amount(),
                         b_xfer.get().asset_amount(),
                     ),
@@ -174,7 +206,7 @@ class ConstantProductAMM(Application):
             self.ratio.set(self.get_ratio()),
         )
 
-    @handler
+    @external
     def burn(
         self,
         pool_xfer: abi.AssetTransferTransaction,
@@ -184,22 +216,22 @@ class ConstantProductAMM(Application):
     ):
         """burn pool tokens to get back some amount of asset A and asset B"""
 
-        well_formed_burn = And(
+        well_formed_burn = [
             pool_asset.asset_id() == self.pool_token,
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
-        )
+        ]
 
-        valid_pool_xfer = And(
+        valid_pool_xfer = [
             pool_xfer.get().asset_receiver() == self.address,
             pool_xfer.get().asset_amount() > Int(0),
             pool_xfer.get().xfer_asset() == self.pool_token,
             pool_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         return Seq(
-            Assert(well_formed_burn),
-            Assert(valid_pool_xfer),
+            Assert(*well_formed_burn),
+            Assert(*valid_pool_xfer),
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
@@ -228,11 +260,12 @@ class ConstantProductAMM(Application):
                     pool_xfer.get().asset_amount(),
                 ),
             ),
-            # The ratio should be the same before and after
-            Assert(self.ratio == self.get_ratio()),
+            self.ratio.set(self.get_ratio())
+            # Should the ratio should be the same before and after?
+            # Assert(self.ratio == self.get_ratio()),
         )
 
-    @handler
+    @external
     def swap(
         self,
         swap_xfer: abi.AssetTransferTransaction,
@@ -240,19 +273,19 @@ class ConstantProductAMM(Application):
         b_asset: abi.Asset,
     ):
         """Swap some amount of either asset A or asset B for the other"""
-        well_formed_swap = And(
+        well_formed_swap = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
-        )
+        ]
 
-        valid_swap_xfer = And(
+        valid_swap_xfer = [
             Or(
                 swap_xfer.get().xfer_asset() == self.asset_a,
                 swap_xfer.get().xfer_asset() == self.asset_b,
             ),
             swap_xfer.get().asset_amount() > Int(0),
             swap_xfer.get().sender() == Txn.sender(),
-        )
+        ]
 
         out_id = If(
             swap_xfer.get().xfer_asset() == self.asset_a,
@@ -262,8 +295,8 @@ class ConstantProductAMM(Application):
         in_id = swap_xfer.get().xfer_asset()
 
         return Seq(
-            Assert(well_formed_swap),
-            Assert(valid_swap_xfer),
+            Assert(*well_formed_swap),
+            Assert(*valid_swap_xfer),
             in_sup := AssetHolding.balance(self.address, in_id),
             out_sup := AssetHolding.balance(self.address, out_id),
             Assert(And(in_sup.hasValue(), out_sup.hasValue())),
@@ -271,7 +304,9 @@ class ConstantProductAMM(Application):
                 Txn.sender(),
                 out_id,
                 self.tokens_to_swap(
-                    swap_xfer.get().asset_amount(), in_sup.value(), out_sup.value()
+                    swap_xfer.get().asset_amount(),
+                    in_sup.value() - swap_xfer.get().asset_amount(),
+                    out_sup.value(),
                 ),
             ),
             self.ratio.set(self.get_ratio()),
@@ -380,5 +415,8 @@ if __name__ == "__main__":
 
     amm = ConstantProductAMM()
     print(f"\nApproval program:\n{amm.approval_program}")
-    # print(f"\nClear State program:\n{amm.approval_program}")
-    # print(f"\nabi:\n{json.dumps(amm.contract.dictify(), indent=2)}")
+    print(f"\nClear State program:\n{amm.approval_program}")
+    print(f"\nabi:\n{json.dumps(amm.contract.dictify(), indent=2)}")
+
+    with open("amm.json", "w") as f:
+        f.write(json.dumps(amm.application_spec()))

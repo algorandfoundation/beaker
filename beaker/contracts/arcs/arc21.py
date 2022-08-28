@@ -1,8 +1,8 @@
 from typing import Final
 from pyteal import abi, Itob, TealType, Subroutine, Concat, Bytes
 from beaker.application import Application
-from beaker.application_schema import DynamicApplicationStateValue
-from beaker.decorators import handler
+from beaker.state import DynamicApplicationStateValue
+from beaker.decorators import external
 
 
 class ARC21(Application):
@@ -16,7 +16,7 @@ class ARC21(Application):
         stack_type=TealType.bytes, max_keys=64, key_gen=round_key
     )
 
-    @handler
+    @external
     def get(
         self,
         round: abi.Uint64,
@@ -24,9 +24,9 @@ class ARC21(Application):
         *,
         output: abi.DynamicArray[abi.Byte]
     ):
-        return output.decode(self.data_for_round(round.get()))
+        return output.decode(self.data_for_round[round.get()])
 
-    @handler
+    @external
     def mustGet(
         self,
         round: abi.Uint64,

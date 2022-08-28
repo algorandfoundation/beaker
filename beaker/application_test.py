@@ -1,9 +1,10 @@
 import pytest
-from typing import Final, cast
+from typing import Final, cast, Annotated
+from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
 
-from beaker.application_schema import (
+from beaker.state import (
     DynamicApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
@@ -18,15 +19,19 @@ from beaker.application import (
     get_method_spec,
 )
 from beaker.decorators import (
-    ResolvableArguments,
-    ResolvableTypes,
-    handler,
+    ParameterAnnotation,
+    DefaultArgument,
+    DefaultArgumentClass,
+    external,
+    get_handler_config,
     internal,
     create,
+    opt_in,
+    clear_state,
+    close_out,
     update,
     delete,
 )
-from beaker.model import Model
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -46,7 +51,7 @@ def test_empty_application():
         == 0
     ), "Expected no schema"
 
-    assert len(ea.bare_handlers.keys()) == len(
+    assert len(ea.bare_externals.keys()) == len(
         EXPECTED_BARE_HANDLERS
     ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
@@ -66,15 +71,15 @@ def test_teal_version():
     assert ea.approval_program.split("\n")[0] == "#pragma version 4"
 
 
-def test_single_handler():
-    class SingleHandler(Application):
-        @handler
+def test_single_external():
+    class Singleexternal(Application):
+        @external
         def handle():
             return pt.Assert(pt.Int(1))
 
-    sh = SingleHandler()
+    sh = Singleexternal()
 
-    assert len(sh.methods) == 1, "Expected a single handler"
+    assert len(sh.methods) == 1, "Expected a single external"
     assert sh.contract.get_method_by_name("handle") == get_method_spec(
         sh.handle
     ), "Expected contract method to match method spec"
@@ -83,8 +88,8 @@ def test_single_handler():
         sh.contract.get_method_by_name("made up")
 
 
-def test_bare_handler():
-    class BareHandler(Application):
+def test_bare():
+    class Bare(Application):
         @create
         def create():
             return pt.Approve()
@@ -97,23 +102,114 @@ def test_bare_handler():
         def delete():
             return pt.Approve()
 
-    bh = BareHandler()
-    assert len(bh.bare_handlers) == len(
-        EXPECTED_BARE_HANDLERS
-    ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
+    bh = Bare()
 
-    class FailBareHandler(Application):
+    assert (
+        len(bh.bare_externals) == 3
+    ), "Expected 3 bare externals: create,update,delete"
+
+    class FailBare(Application):
         @create
         def wrong_name():
             return pt.Approve()
 
     with pytest.raises(BareOverwriteError):
-        bh = FailBareHandler()
+        bh = FailBare()
+
+
+def test_mixed_bares():
+    class MixedBare(Application):
+        @create
+        def create(self):
+            return pt.Approve()
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    mb = MixedBare()
+    assert len(mb.bare_externals) == 1
+    assert len(mb.methods) == 1
+
+
+def test_bare_external():
+    class BareExternal(Application):
+        @create
+        def create(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @close_out
+        def close_out(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @clear_state
+        def clear_state(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @update
+        def update(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @delete
+        def delete(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    be = BareExternal()
+    assert len(be.bare_externals) == 0, "Should have no bare externals"
+    assert (
+        len(be.contract.methods) == 6
+    ), "should have create, optin, closeout, clearstate, update, delete"
+
+    hc = get_handler_config(BareExternal.create)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["no_op"] == pt.CallConfig.CREATE
+    del confs["no_op"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.opt_in)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["opt_in"] == pt.CallConfig.CALL
+    del confs["opt_in"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.close_out)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["close_out"] == pt.CallConfig.CALL
+    del confs["close_out"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.clear_state)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["clear_state"] == pt.CallConfig.CALL
+    del confs["clear_state"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.update)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["update_application"] == pt.CallConfig.CALL
+    del confs["update_application"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.delete)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["delete_application"] == pt.CallConfig.CALL
+    del confs["delete_application"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
 
 def test_subclass_application():
     class SuperClass(Application):
-        @handler
+        @external
         def handle():
             return pt.Assert(pt.Int(1))
 
@@ -127,7 +223,7 @@ def test_subclass_application():
     ), "Expected contract method to match method spec"
 
     class OverrideSubClass(SuperClass):
-        @handler
+        @external
         def handle():
             return pt.Assert(pt.Int(2))
 
@@ -204,7 +300,7 @@ def test_internal():
                 pt.Pop(self.subr_no_self()),
             )
 
-        @handler(method_config=pt.MethodConfig(no_op=pt.CallConfig.CALL))
+        @external(method_config=pt.MethodConfig(no_op=pt.CallConfig.CALL))
         def otherthing():
             return pt.Seq(
                 pt.Pop(Internal.internal_meth_no_self()),
@@ -264,14 +360,21 @@ def test_internal():
         assert actual == expected
 
 
-def test_resolvable_hint():
+def test_hints():
     class Hinty(Application):
-        @handler(read_only=True)
-        def get_asset_id(*, output: pt.abi.Uint64):
+        @external(read_only=True)
+        def get_asset_id(self, *, output: pt.abi.Uint64):
             return output.set(pt.Int(123))
 
-        @handler(resolvable=ResolvableArguments(aid=get_asset_id))
-        def hintymeth(aid: pt.abi.Asset):
+        @external
+        def hintymeth(
+            self,
+            aid: Annotated[
+                pt.abi.Asset,
+                ParameterAnnotation(descr="Testing asset id", default=get_asset_id),
+            ],
+            num: pt.abi.Uint64,
+        ):
             return pt.Assert(pt.Int(1))
 
     h = Hinty()
@@ -279,45 +382,154 @@ def test_resolvable_hint():
     assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
 
     hint = h.hints[h.hintymeth.__name__]
+
+    assert "aid" in hint.param_annotations, "Expected annotation available for param"
+    anno = hint.param_annotations["aid"]
+
+    assert anno.descr == "Testing asset id"
+
+    assert anno.default is not None
+    default = DefaultArgument(anno.default)
+    assert default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
-        hint.resolvable["aid"][ResolvableTypes.ABIMethod]
-        == get_method_spec(h.get_asset_id).dictify()
+        default.resolve_hint() == get_method_spec(h.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
+
+
+# def test_app_spec():
+#    class Specd(Application):
+#        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
+#        decl_acct_val = AccountStateValue(pt.TealType.uint64)
+#
+#        @external(read_only=True)
+#        def get_asset_id(self, *, output: pt.abi.Uint64):
+#            return output.set(pt.Int(123))
+#
+#        @external
+#        def annotated_meth(
+#            self,
+#            aid: Annotated[
+#                pt.abi.Asset,
+#                ParameterAnnotation(descr="Testing asset id", default=get_asset_id),
+#            ],
+#        ):
+#            return pt.Assert(pt.Int(1))
+#
+#        class Thing(pt.abi.NamedTuple):
+#            a: pt.abi.Field[pt.abi.Uint64]
+#            b: pt.abi.Field[pt.abi.Uint32]
+#
+#        @external
+#        def struct_meth(self, thing: Thing):
+#            return pt.Approve()
+#
+#    s = Specd()
+#
+#    actual_spec = s.application_spec()
+#    expected_spec = {
+#        "hints": {
+#            "get_asset_id": {"read_only": True},
+#            "annotated_meth": {
+#                "param_annotations": {
+#                    "aid": {
+#                        "descr": "Testing asset id",
+#                        "default": {
+#                            "abi-method": {
+#                                "name": "get_asset_id",
+#                                "args": [],
+#                                "returns": {"type": "uint64"},
+#                            }
+#                        },
+#                    }
+#                }
+#            },
+#            "struct_meth": {
+#                "structs": {"thing": {"name": "Thing", "elements": ["a", "b"]}}
+#            },
+#        },
+#        "schema": {
+#            "local": {
+#                "declared": {
+#                    "decl_acct_val": {
+#                        "type": "uint64",
+#                        "key": "decl_acct_val",
+#                        "descr": None,
+#                    }
+#                },
+#                "dynamic": {},
+#            },
+#            "global": {
+#                "declared": {
+#                    "decl_app_val": {
+#                        "type": "uint64",
+#                        "key": "decl_app_val",
+#                        "descr": None,
+#                    }
+#                },
+#                "dynamic": {},
+#            },
+#        },
+#        "contract": {
+#            "name": "Specd",
+#            "methods": [
+#                # {"name": "get_asset_id", "args": [], "returns": {"type": "uint64"}},
+#                # {
+#                #    "name": "annotated_meth",
+#                #    "args": [ {"type": "asset", "name": "aid", "desc": "Testing asset id"} ],
+#                #    "returns": {"type": "void"},
+#                # },
+#                # {
+#                #    "name": "struct_meth",
+#                #    "args": [{"type": "(uint64,uint32)", "name": "thing"}],
+#                #    "returns": {"type": "void"},
+#                # },
+#            ],
+#            "desc": None,
+#            "networks": {},
+#        },
+#    }
+#
+#    # TODO: come back and check methods, the sorting gets weird
+#    actual_spec["contract"]["methods"] = []
+#    del actual_spec["source"]
+#
+#    assert json.dumps(actual_spec, sort_keys=True) == json.dumps(
+#        expected_spec, sort_keys=True
+#    )
 
 
 EXPECTED_BARE_HANDLERS = [
     "create",
-    "update",
-    "delete",
-    "opt_in",
-    "clear_state",
-    "close_out",
 ]
 
 
-def test_model_args():
+def test_struct_args():
     from algosdk.abi import Method, Argument, Returns
 
-    class Modeled(Application):
-        class UserRecord(Model):
-            addr: pt.abi.Address
-            balance: pt.abi.Uint64
-            nickname: pt.abi.String
+    class Structed(Application):
+        class UserRecord(pt.abi.NamedTuple):
+            addr: pt.abi.Field[pt.abi.Address]
+            balance: pt.abi.Field[pt.abi.Uint64]
+            nickname: pt.abi.Field[pt.abi.String]
 
-        @handler
-        def modely(user_record: UserRecord):
+        @external
+        def structy(self, user_record: UserRecord):
             return pt.Assert(pt.Int(1))
 
-    m = Modeled()
+    m = Structed()
 
     arg = Argument("(address,uint64,string)", name="user_record")
     ret = Returns("void")
-    assert Method("modely", [arg], ret) == get_method_spec(m.modely)
+    assert Method("structy", [arg], ret) == get_method_spec(m.structy)
 
-    assert m.hints["modely"].models == {
+    assert m.hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
-            "elements": ["addr", "balance", "nickname"],
+            "elements": [
+                ("addr", "address"),
+                ("balance", "uint64"),
+                ("nickname", "string"),
+            ],
         }
     }
 
@@ -328,11 +540,11 @@ def test_instance_vars():
             self.v = pt.Bytes(v)
             super().__init__()
 
-        @handler
+        @external
         def use_it(self):
             return pt.Log(self.v)
 
-        @handler
+        @external
         def call_it(self):
             return self.use_it_internal()
 
@@ -362,7 +574,7 @@ def hashy(sig: str):
 
 
 def test_abi_method_details():
-    @handler
+    @external
     def meth():
         return pt.Assert(pt.Int(1))
 
