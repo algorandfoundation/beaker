@@ -1,1 +1,1 @@
-from .op_up import OpUp  # noqa
+from .op_up import OpUp

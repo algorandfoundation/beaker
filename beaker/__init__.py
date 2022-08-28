@@ -9,7 +9,6 @@ from .state import (
 )
 from .decorators import (
     Authorize,
-    ResolvableArguments,
     external,
     internal,
     bare_external,
@@ -21,6 +20,8 @@ from .decorators import (
     close_out,
     clear_state,
 )
+from .logic_signature import LogicSignature, TemplateVariable
+from .precompile import Precompile
 
 from . import client
 from . import sandbox

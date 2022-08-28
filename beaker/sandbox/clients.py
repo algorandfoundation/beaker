@@ -11,10 +11,12 @@ DEFAULT_INDEXER_TOKEN = "a" * 64
 def get_algod_client(
     address: str = DEFAULT_ALGOD_ADDRESS, token: str = DEFAULT_ALGOD_TOKEN
 ) -> AlgodClient:
+    """creates a new algod client using the default sandbox parameters"""
     return AlgodClient(token, address)
 
 
 def get_indexer_client(
     address: str = DEFAULT_INDEXER_ADDRESS, token: str = DEFAULT_INDEXER_TOKEN
 ) -> IndexerClient:
+    """creates a new indexer client using the default sandbox parameters"""
     return IndexerClient(token, address)

@@ -40,11 +40,12 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../structs.html">structs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
 </ul>
 
         </div>
@@ -87,21 +88,17 @@
     <span class="n">Global</span><span class="p">,</span>
     <span class="n">OnCompleteAction</span><span class="p">,</span>
     <span class="n">OptimizeOptions</span><span class="p">,</span>
-    <span class="n">Reject</span><span class="p">,</span>
     <span class="n">Router</span><span class="p">,</span>
     <span class="n">Bytes</span><span class="p">,</span>
+    <span class="n">Approve</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_handler_config</span><span class="p">,</span>
     <span class="n">MethodHints</span><span class="p">,</span>
     <span class="n">create</span><span class="p">,</span>
-    <span class="n">update</span><span class="p">,</span>
-    <span class="n">delete</span><span class="p">,</span>
-    <span class="n">opt_in</span><span class="p">,</span>
-    <span class="n">close_out</span><span class="p">,</span>
-    <span class="n">clear_state</span><span class="p">,</span>
 <span class="p">)</span>
+
 <span class="kn">from</span> <span class="nn">beaker.state</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AccountState</span><span class="p">,</span>
     <span class="n">ApplicationState</span><span class="p">,</span>
@@ -256,10 +253,25 @@
             <span class="n">optimize</span><span class="o">=</span><span class="n">OptimizeOptions</span><span class="p">(</span><span class="n">scratch_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
 
+        <span class="c1"># Add the method argument descriptions if provided</span>
+        <span class="k">for</span> <span class="n">meth_idx</span><span class="p">,</span> <span class="n">meth</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">meth</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
+                <span class="n">hint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">meth</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">for</span> <span class="n">arg_idx</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">meth</span><span class="o">.</span><span class="n">args</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span><span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">meth_idx</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="p">[</span>
+                            <span class="n">arg_idx</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="n">hint</span><span class="o">.</span><span class="n">param_annotations</span><span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">descr</span>
+
 <div class="viewcode-block" id="Application.application_spec"><a class="viewcode-back" href="../../application.html#beaker.application.Application.application_spec">[docs]</a>    <span class="k">def</span> <span class="nf">application_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;returns a dictionary, helpful to provide to callers with information about the application specification&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;hints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="s2">&quot;hints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">empty</span><span class="p">()},</span>
             <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span><span class="o">.</span><span class="n">dictify</span><span class="p">(),</span>
                 <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span><span class="o">.</span><span class="n">dictify</span><span class="p">(),</span>
@@ -268,7 +280,12 @@
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="Application.initialize_application_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_application_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_application_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Initialize any application state variables declared&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize any application state variables declared</span>
+
+<span class="sd">        :return: The Expr to initialize the application state.</span>
+<span class="sd">        :rtype: pyteal.Expr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Application.initialize_account_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_account_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_account_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
@@ -284,33 +301,7 @@
 
 <div class="viewcode-block" id="Application.create"><a class="viewcode-back" href="../../application.html#beaker.application.Application.create">[docs]</a>    <span class="nd">@create</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default create behavior, initializes application state&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.opt_in"><a class="viewcode-back" href="../../application.html#beaker.application.Application.opt_in">[docs]</a>    <span class="nd">@opt_in</span>
-    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default opt in behavior, initializes account state&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_account_state</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.update"><a class="viewcode-back" href="../../application.html#beaker.application.Application.update">[docs]</a>    <span class="nd">@update</span>
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default update behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.delete"><a class="viewcode-back" href="../../application.html#beaker.application.Application.delete">[docs]</a>    <span class="nd">@delete</span>
-    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default delete behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.close_out"><a class="viewcode-back" href="../../application.html#beaker.application.Application.close_out">[docs]</a>    <span class="nd">@close_out</span>
-    <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default close out behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Application.clear_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.clear_state">[docs]</a>    <span class="nd">@clear_state</span>
-    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;default clear state behavior, rejects&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span></div></div>
 </pre></div>
 
            </div>

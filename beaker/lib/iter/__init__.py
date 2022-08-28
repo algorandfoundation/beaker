@@ -1,1 +1,1 @@
-from .iter import accumulate, iterate  # noqa
+from .iter import iterate

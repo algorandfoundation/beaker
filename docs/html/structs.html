@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Application Client" href="client.html" />
+    <link rel="next" title="Contracts" href="contracts.html" />
     <link rel="prev" title="Decorators" href="decorators.html" /> 
 </head>
 
@@ -43,14 +43,16 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Structs</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
         </div>
@@ -86,9 +88,9 @@
 <dd><p>Struct provides a base class to inherit from when defining custom data structures</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.struct.Struct.set">
-<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/struct.html#Struct.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct.set" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pyteal.Expr</span></span></span><a class="reference internal" href="_modules/beaker/struct.html#Struct.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.struct.Struct.set" title="Permalink to this definition"></a></dt>
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ComputedValue</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span></dt>
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ComputedValue</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pyteal.Expr</span></span></span></dt>
 <dd><p>Set the elements of this Tuple to the input values.</p>
 <p>The behavior of this method depends on the input argument type:</p>
 <blockquote>
@@ -141,6 +143,10 @@
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="nd">@opt_in</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">place_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="n">order_number</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
@@ -166,21 +172,22 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="n">order_number</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_order</span><span class="o">.</span><span class="n">encode</span><span class="p">()),</span>
             <span class="c1"># Write new order to caller</span>
             <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">new_order</span><span class="o">.</span><span class="n">encode</span><span class="p">()),</span>
+        <span class="p">)</span>
 </pre></div>
 </div>
 <p>The application exposes the ABI methods using the tuple encoded version of the fields specified in the struct. Here it would be <code class="docutils literal notranslate"><span class="pre">(string,uint32)</span></code>.</p>
 <p>A method hint is available to the caller for encoding/decoding by field name.</p>
 <p>To pass a struct we can pass a python dict <code class="docutils literal notranslate"><span class="pre">dict</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">Structer</span><span class="o">.</span><span class="n">place_order</span><span class="p">,</span> <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
 
-    <span class="c1"># Passing in a dict as an argument that should take a tuple according to the type spec</span>
-    <span class="n">order_number</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">state_key</span> <span class="o">=</span> <span class="n">order_number</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
+    <span class="n">stored_order</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">get_account_state</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="n">state_key</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>And we can decode it from the tuple we get back</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-    <span class="c1"># Or we could</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">read_item</span><span class="p">,</span> <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">Structer</span><span class="o">.</span><span class="n">increase_quantity</span><span class="p">,</span> <span class="n">order_number</span><span class="o">=</span><span class="n">order_number</span><span class="p">)</span>
+    <span class="n">increased_decoded</span> <span class="o">=</span> <span class="n">Structer</span><span class="o">.</span><span class="n">Order</span><span class="p">()</span><span class="o">.</span><span class="n">client_decode</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">raw_value</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -191,7 +198,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="decorators.html" class="btn btn-neutral float-left" title="Decorators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="client.html" class="btn btn-neutral float-right" title="Application Client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="contracts.html" class="btn btn-neutral float-right" title="Contracts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
