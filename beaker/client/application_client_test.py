@@ -195,13 +195,18 @@ def test_compile():
     client = get_algod_client()
     ac = ApplicationClient(client, app)
 
-    approval_program, approval_map = ac.compile_approval(source_map=True)
+    # TODO add precompiles
+
+    approval_program, _, approval_map = ac.compile(
+        ac.app.approval_program, source_map=True
+    )
+    print(approval_map)
     assert len(approval_program) > 0, "Should have a valid approval program"
     assert approval_program[0] == version, "First byte should be the version we set"
     assert approval_map.version == 3, "Should have valid source map with version 3"
     assert len(approval_map.pc_to_line) > 0, "Should have valid mapping"
 
-    clear_program, clear_map = ac.compile_clear(source_map=True)
+    clear_program, _, clear_map = ac.compile(ac.app.clear_program, source_map=True)
     assert len(clear_program) > 0, "Should have a valid clear program"
     assert clear_program[0] == version, "First byte should be the version we set"
     assert clear_map.version == 3, "Should have valid source map with version 3"

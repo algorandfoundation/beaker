@@ -120,8 +120,7 @@ def rest(s, n):
     return Substring(s, n, Len(s))
 
 
-@Subroutine(TealType.bytes)
-def encode_uvarint(val, b):
+def encode_uvarint(val):
     """
     Returns the uvarint encoding of an integer
 
@@ -132,18 +131,23 @@ def encode_uvarint(val, b):
     the integer to be encoded and an empty bytestring
 
     """
-    buff = ScratchVar()
-    return Seq(
-        buff.store(b),
-        Concat(
-            buff.load(),
-            If(
-                val >= Int(128),
-                encode_uvarint(
-                    val >> Int(7),
-                    Extract(Itob((val & Int(255)) | Int(128)), Int(7), Int(1)),
+
+    @Subroutine(TealType.bytes)
+    def encode_uvarint_impl(val, b):
+        buff = ScratchVar()
+        return Seq(
+            buff.store(b),
+            Concat(
+                buff.load(),
+                If(
+                    val >= Int(128),
+                    encode_uvarint_impl(
+                        val >> Int(7),
+                        Extract(Itob((val & Int(255)) | Int(128)), Int(7), Int(1)),
+                    ),
+                    Extract(Itob(val & Int(255)), Int(7), Int(1)),
                 ),
-                Extract(Itob(val & Int(255)), Int(7), Int(1)),
             ),
-        ),
-    )
+        )
+
+    return encode_uvarint_impl(val, Bytes(""))

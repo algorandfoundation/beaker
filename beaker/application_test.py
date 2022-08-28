@@ -1,5 +1,6 @@
 import pytest
 from typing import Final, cast, Annotated
+from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
 
@@ -22,8 +23,12 @@ from beaker.decorators import (
     DefaultArgument,
     DefaultArgumentClass,
     external,
+    get_handler_config,
     internal,
     create,
+    opt_in,
+    clear_state,
+    close_out,
     update,
     delete,
 )
@@ -83,8 +88,8 @@ def test_single_external():
         sh.contract.get_method_by_name("made up")
 
 
-def test_bare_external():
-    class Bareexternal(Application):
+def test_bare():
+    class Bare(Application):
         @create
         def create():
             return pt.Approve()
@@ -97,19 +102,109 @@ def test_bare_external():
         def delete():
             return pt.Approve()
 
-    bh = Bareexternal()
+    bh = Bare()
 
     assert (
         len(bh.bare_externals) == 3
-    ), "Expected 4 bare externals: create,update,delete"
+    ), "Expected 3 bare externals: create,update,delete"
 
-    class FailBareexternal(Application):
+    class FailBare(Application):
         @create
         def wrong_name():
             return pt.Approve()
 
     with pytest.raises(BareOverwriteError):
-        bh = FailBareexternal()
+        bh = FailBare()
+
+
+def test_mixed_bares():
+    class MixedBare(Application):
+        @create
+        def create(self):
+            return pt.Approve()
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    mb = MixedBare()
+    assert len(mb.bare_externals) == 1
+    assert len(mb.methods) == 1
+
+
+def test_bare_external():
+    class BareExternal(Application):
+        @create
+        def create(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @close_out
+        def close_out(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @clear_state
+        def clear_state(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @update
+        def update(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @delete
+        def delete(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    be = BareExternal()
+    assert len(be.bare_externals) == 0, "Should have no bare externals"
+    assert (
+        len(be.contract.methods) == 6
+    ), "should have create, optin, closeout, clearstate, update, delete"
+
+    hc = get_handler_config(BareExternal.create)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["no_op"] == pt.CallConfig.CREATE
+    del confs["no_op"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.opt_in)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["opt_in"] == pt.CallConfig.CALL
+    del confs["opt_in"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.close_out)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["close_out"] == pt.CallConfig.CALL
+    del confs["close_out"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.clear_state)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["clear_state"] == pt.CallConfig.CALL
+    del confs["clear_state"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.update)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["update_application"] == pt.CallConfig.CALL
+    del confs["update_application"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.delete)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs["delete_application"] == pt.CallConfig.CALL
+    del confs["delete_application"]
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
 
 def test_subclass_application():
@@ -430,7 +525,11 @@ def test_struct_args():
     assert m.hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
-            "elements": [("addr", "address"), ("balance", "uint64"), ("nickname", "string")],
+            "elements": [
+                ("addr", "address"),
+                ("balance", "uint64"),
+                ("nickname", "string"),
+            ],
         }
     }
 
