@@ -424,8 +424,9 @@ def internal(return_type_or_handler: TealType | HandlerFunc):
         The wrapped subroutine
     """
 
-    fn: HandlerFunc
-    return_type: TealType
+    fn: Optional[HandlerFunc] = None
+    return_type: Optional[TealType] = None
+
     if type(return_type_or_handler) is TealType:
         return_type = return_type_or_handler
     else:
