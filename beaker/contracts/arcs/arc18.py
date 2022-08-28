@@ -32,6 +32,7 @@ from beaker import (
     create,
     update,
     delete,
+    opt_in,
 )
 
 
@@ -81,6 +82,10 @@ class ARC18(Application):
     @delete
     def delete(self):
         return Assert(Txn.sender() == self.administrator)
+
+    @opt_in
+    def opt_in(self):
+        return self.initialize_account_state()
 
     ###
     # Admin
