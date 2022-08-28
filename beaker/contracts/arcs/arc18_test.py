@@ -14,30 +14,40 @@ from beaker.client.logic_error import LogicException
 
 from .arc18 import ARC18
 
-accts = sandbox.get_accounts()
-algod_client: AlgodClient = sandbox.get_algod_client()
+
+@pytest.fixture(scope="session")
+def accts():
+    return sandbox.get_accounts()
 
 
 @pytest.fixture(scope="session")
-def creator_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk, signer = accts[0]
-    return (addr, sk, signer)
+def algod_client() -> AlgodClient:
+    return sandbox.get_algod_client()
 
 
 @pytest.fixture(scope="session")
-def buyer_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk, signer = accts[1]
-    return (addr, sk, signer)
+def creator_acct(
+    accts: list[sandbox.SandboxAccount],
+) -> tuple[str, str, AccountTransactionSigner]:
+    return (accts[0].address, accts[0].private_key, accts[0].signer)
 
 
 @pytest.fixture(scope="session")
-def royalty_acct() -> tuple[str, str, AccountTransactionSigner]:
-    addr, sk, signer = accts[2]
-    return (addr, sk, signer)
+def buyer_acct(
+    accts: list[sandbox.SandboxAccount],
+) -> tuple[str, str, AccountTransactionSigner]:
+    return (accts[1].address, accts[1].private_key, accts[1].signer)
 
 
 @pytest.fixture(scope="session")
-def payment_asset(creator_acct) -> int:
+def royalty_acct(
+    accts: list[sandbox.SandboxAccount],
+) -> tuple[str, str, AccountTransactionSigner]:
+    return (accts[2].address, accts[2].private_key, accts[2].signer)
+
+
+@pytest.fixture(scope="session")
+def payment_asset(creator_acct, algod_client: AlgodClient) -> int:
     addr, sk, _ = creator_acct
     sp = algod_client.suggested_params()
     txn = transaction.AssetCreateTxn(
@@ -55,7 +65,7 @@ def payment_asset(creator_acct) -> int:
 
 
 @pytest.fixture(scope="session")
-def app_client(creator_acct) -> client.ApplicationClient:
+def app_client(creator_acct, algod_client: AlgodClient) -> client.ApplicationClient:
     _, _, signer = creator_acct
     app = ARC18()
     app_client = client.ApplicationClient(algod_client, app, signer=signer)
@@ -66,7 +76,9 @@ def app_client(creator_acct) -> client.ApplicationClient:
 
 
 @pytest.fixture(scope="session")
-def royalty_asset(app_client: client.ApplicationClient, buyer_acct) -> int:
+def royalty_asset(
+    app_client: client.ApplicationClient, buyer_acct, algod_client: AlgodClient
+) -> int:
     sp = algod_client.suggested_params()
     atc = AtomicTransactionComposer()
     atc.add_transaction(
