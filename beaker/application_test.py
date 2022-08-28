@@ -117,6 +117,21 @@ def test_bare():
         bh = FailBare()
 
 
+def test_mixed_bares():
+    class MixedBare(Application):
+        @create
+        def create(self):
+            return pt.Approve()
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    mb = MixedBare()
+    assert len(mb.bare_externals) == 1
+    assert len(mb.methods) == 1
+
+
 def test_bare_external():
     class BareExternal(Application):
         @create
