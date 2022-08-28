@@ -73,7 +73,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for beaker.decorators</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">astuple</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">signature</span>
@@ -225,19 +225,20 @@
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">hints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MethodHints&quot;</span><span class="p">:</span>
-        <span class="n">mh</span> <span class="o">=</span> <span class="n">MethodHints</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">)</span>
+        <span class="n">mh</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;read_only&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">}</span>
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="p">):</span>
-            <span class="n">mh</span><span class="o">.</span><span class="n">param_annotations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span>
+            <span class="n">mh</span><span class="p">[</span><span class="s2">&quot;param_annotations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">mh</span><span class="o">.</span><span class="n">structs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">structs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">arg_name</span><span class="p">,</span> <span class="n">model_spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">annos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_spec</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-                <span class="n">mh</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">annos</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_spec</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+                <span class="n">structs</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">model_spec</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>  <span class="c1"># type: ignore[attr-defined]</span>
                     <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="p">[</span>
                         <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">algosdk_from_annotation</span><span class="p">(</span><span class="n">typ</span><span class="o">.</span><span class="n">__args__</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
@@ -245,7 +246,50 @@
                     <span class="p">],</span>
                 <span class="p">}</span>
 
-        <span class="k">return</span> <span class="n">mh</span>
+            <span class="n">mh</span><span class="p">[</span><span class="s2">&quot;structs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">structs</span>
+
+        <span class="k">return</span> <span class="n">MethodHints</span><span class="p">(</span><span class="o">**</span><span class="n">mh</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_create</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="nb">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">cc</span><span class="p">:</span> <span class="n">cc</span> <span class="o">==</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span> <span class="ow">or</span> <span class="n">cc</span> <span class="o">==</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">ALL</span><span class="p">,</span>
+                <span class="n">astuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="o">.</span><span class="n">update_application</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="o">.</span><span class="n">delete_application</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_opt_in</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="o">.</span><span class="n">opt_in</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_clear_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="o">.</span><span class="n">clear_state</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_close_out</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="o">.</span><span class="n">close_out</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerConfig</span><span class="p">:</span>
@@ -265,8 +309,8 @@
 
     <span class="c1">#: hint to indicate this method can be called through Dryrun</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1">#: hint to provide names for tuple argument indices</span>
-    <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+    <span class="c1">#: hint to provide names for tuple argument indices method_name=&gt;param_name=&gt;{name:str, elements:[str,str]}</span>
+    <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span>
     <span class="c1">#: annotations</span>
@@ -446,7 +490,7 @@
     <span class="k">return</span> <span class="n">fn</span>
 
 
-<div class="viewcode-block" id="internal"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.internal">[docs]</a><span class="k">def</span> <span class="nf">internal</span><span class="p">(</span><span class="n">return_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
+<div class="viewcode-block" id="internal"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.internal">[docs]</a><span class="k">def</span> <span class="nf">internal</span><span class="p">(</span><span class="n">return_type_or_handler</span><span class="p">:</span> <span class="n">TealType</span> <span class="o">|</span> <span class="n">HandlerFunc</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;creates a subroutine to be called by logic internally</span>
 
 <span class="sd">    Args:</span>
@@ -455,15 +499,33 @@
 <span class="sd">        The wrapped subroutine</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HandlerFunc</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">return_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TealType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">return_type_or_handler</span><span class="p">)</span> <span class="ow">is</span> <span class="n">TealType</span><span class="p">:</span>
+        <span class="n">return_type</span> <span class="o">=</span> <span class="n">return_type_or_handler</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">return_type_or_handler</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
-        <span class="n">hc</span><span class="o">.</span><span class="n">subroutine</span> <span class="o">=</span> <span class="n">Subroutine</span><span class="p">(</span><span class="n">return_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="n">hc</span><span class="o">.</span><span class="n">referenced_self</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">return_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">subroutine</span><span class="o">=</span><span class="n">Subroutine</span><span class="p">(</span><span class="n">return_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
 
-        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">hc</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+            <span class="c1"># Don&#39;t remove self for subroutine, it fails later on in pyteal</span>
+            <span class="c1"># during call to _validate  with invalid signature</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+                <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">referenced_self</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">_remove_self</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">method_spec</span><span class="o">=</span><span class="n">ABIReturnSubroutine</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">method_spec</span><span class="p">())</span>
+
         <span class="k">return</span> <span class="n">fn</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_impl</span></div>
 
@@ -484,7 +546,7 @@
 <span class="sd">        fn: The function being wrapped.</span>
 <span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">        method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.</span>
-<span class="sd">        read_only: Mark a method as callable with no fee (using Dryrun, place holder until arc22 is merged).</span>
+<span class="sd">        read_only: Mark a method as callable with no fee using dryrun or simulate</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with additional elements set in its  :code:`__handler_config__` attribute</span>
@@ -570,7 +632,20 @@
     <span class="k">return</span> <span class="n">_impl</span></div>
 
 
-<div class="viewcode-block" id="create"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.create">[docs]</a><span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="create"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.create">[docs]</a><span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">/</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0</span>
 
 <span class="sd">    Args:</span>
@@ -578,7 +653,32 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span></div>
+
+    <span class="n">mconfig</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;no_op&quot;</span><span class="p">:</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span><span class="p">}</span> <span class="k">if</span> <span class="n">method_config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">asdict</span><span class="p">(</span><span class="n">method_config</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">cc</span> <span class="o">==</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span> <span class="ow">or</span> <span class="n">cc</span> <span class="o">==</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">ALL</span> <span class="k">for</span> <span class="n">cc</span> <span class="ow">in</span> <span class="n">mconfig</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span>
+            <span class="s2">&quot;method_config for create may not have non create call configs&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="o">**</span><span class="n">mconfig</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span><span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="o">**</span><span class="n">mconfig</span><span class="p">),</span> <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span><span class="p">)(</span>
+                <span class="n">fn</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_impl</span>
+
+    <span class="k">return</span> <span class="n">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="delete"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.delete">[docs]</a><span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -592,9 +692,15 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
+                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">delete_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span>
+                <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span><span class="p">,</span>
+            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>
@@ -612,10 +718,19 @@
 <span class="sd">        The original method with changes made to its signature and attributes set in its `__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c1"># If fn has abi args, call external</span>
+    <span class="c1"># else bare</span>
+
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
+                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">update_application</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span>
+                <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span><span class="p">,</span>
+            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>
@@ -634,9 +749,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
+                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">opt_in</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span> <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span>
+            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>
@@ -655,9 +775,15 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
+                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span>
+                <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span><span class="p">,</span>
+            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>
@@ -676,9 +802,15 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
+                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">close_out</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span>
+                <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span><span class="p">,</span>
+            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>
@@ -697,9 +829,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
+                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">no_op</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span> <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span>
+            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>
