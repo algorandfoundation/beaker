@@ -1,6 +1,6 @@
 import pytest
 import pyteal as pt
-from beaker.decorators import internal, external
+from beaker.decorators import internal
 from beaker.logic_signature import LogicSignature, TemplateVariable
 
 

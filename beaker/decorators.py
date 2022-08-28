@@ -4,7 +4,6 @@ from functools import wraps
 from inspect import get_annotations, signature
 from typing import Optional, Callable, Final, cast, Any, TypeVar
 from algosdk.abi import Method
-from numpy import sign
 from pyteal import (
     abi,
     ABIReturnSubroutine,
@@ -431,6 +430,7 @@ def internal(return_type: TealType = None, fn: HandlerFunc = None):
             set_handler_config(fn, subroutine=Subroutine(return_type, name=fn.__name__))
 
             # Don't remove self for subroutine, it fails later on in pyteal
+            # during call to _validate  with invalid signature
             sig = signature(fn)
             if "self" in sig.parameters:
                 set_handler_config(fn, referenced_self=True)
