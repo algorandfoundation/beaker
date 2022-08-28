@@ -121,20 +121,24 @@ def test_abi_return_logic_signature():
             o = pt.abi.Uint64()
             return pt.Seq(
                 (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                self.abitester(s, output=o),
-                pt.Assert(o.get()),
+                self.abi_tester(s, output=o),
+                pt.Assert(self.internal_tester(o.get(), pt.Len(s.get()))),
                 pt.Int(1),
             )
 
-        @external
-        def abitester(self, s: pt.abi.String, *, output: pt.abi.Uint64):
+        @internal(None)
+        def abi_tester(self, s: pt.abi.String, *, output: pt.abi.Uint64):
             return output.set(pt.Len(s.get()))
+
+        @internal(pt.TealType.uint64)
+        def internal_tester(self, x: pt.Expr, y: pt.Expr) -> pt.Expr:
+            return x * y
 
     lsig = Lsig()
 
     assert len(lsig.template_variables) == 0
     assert len(lsig.methods) == 1
-    assert len(lsig.attrs.keys()) == 2
+    assert len(lsig.attrs.keys()) == 3
     assert len(lsig.program) > 0
 
     assert "evaluate" in lsig.attrs

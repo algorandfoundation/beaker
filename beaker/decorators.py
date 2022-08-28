@@ -4,6 +4,7 @@ from functools import wraps
 from inspect import get_annotations, signature
 from typing import Optional, Callable, Final, cast, Any, TypeVar
 from algosdk.abi import Method
+from numpy import sign
 from pyteal import (
     abi,
     ABIReturnSubroutine,
@@ -415,7 +416,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def internal(return_type: TealType):
+def internal(return_type: TealType = None, fn: HandlerFunc = None):
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -425,16 +426,25 @@ def internal(return_type: TealType):
     """
 
     def _impl(fn: HandlerFunc):
-        hc = get_handler_config(fn)
 
-        hc.subroutine = Subroutine(return_type, name=fn.__name__)
-        if "self" in signature(fn).parameters:
-            hc.referenced_self = True
+        if return_type is not None:
+            set_handler_config(fn, subroutine=Subroutine(return_type, name=fn.__name__))
 
-        set_handler_config(fn, **hc.__dict__)
+            # Don't remove self for subroutine, it fails later on in pyteal
+            sig = signature(fn)
+            if "self" in sig.parameters:
+                set_handler_config(fn, referenced_self=True)
+
+        else:
+            fn = _remove_self(fn)
+            set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
+
         return fn
 
-    return _impl
+    if fn is None:
+        return _impl
+
+    return _impl(fn)
 
 
 def external(

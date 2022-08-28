@@ -1,4 +1,5 @@
 from inspect import getattr_static
+from typing import cast
 from pyteal import (
     CompileOptions,
     TealInputError,
