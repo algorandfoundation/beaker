@@ -1,5 +1,6 @@
 import pytest
 from typing import Final, cast, Annotated
+from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
 
@@ -22,6 +23,7 @@ from beaker.decorators import (
     DefaultArgument,
     DefaultArgumentClass,
     external,
+    get_handler_config,
     internal,
     create,
     opt_in,
@@ -146,6 +148,48 @@ def test_bare_external():
     assert (
         len(be.contract.methods) == 6
     ), "should have create, optin, closeout, clearstate, update, delete"
+
+    hc = get_handler_config(BareExternal.create)
+    assert hc.method_config is not None 
+    confs = asdict(hc.method_config)
+    assert confs['no_op'] == pt.CallConfig.CREATE
+    del confs['no_op']
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.opt_in)
+    assert hc.method_config is not None 
+    confs = asdict(hc.method_config)
+    assert confs['opt_in'] == pt.CallConfig.CALL
+    del confs['opt_in']
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.close_out)
+    assert hc.method_config is not None 
+    confs = asdict(hc.method_config)
+    assert confs['close_out'] == pt.CallConfig.CALL
+    del confs['close_out']
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.clear_state)
+    assert hc.method_config is not None 
+    confs = asdict(hc.method_config)
+    assert confs['clear_state'] == pt.CallConfig.CALL
+    del confs['clear_state']
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.update)
+    assert hc.method_config is not None
+    confs = asdict(hc.method_config)
+    assert confs['update_application'] == pt.CallConfig.CALL
+    del confs['update_application']
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+    hc = get_handler_config(BareExternal.delete)
+    assert hc.method_config is not None 
+    confs = asdict(hc.method_config)
+    assert confs['delete_application'] == pt.CallConfig.CALL
+    del confs['delete_application']
+    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
 
 def test_subclass_application():
