@@ -35,7 +35,7 @@ class DiskHungry(Application):
 
     # Add account during opt in  by checking the sender against the address
     # we expect given the precompile && nonce
-    @external(method_config=MethodConfig(opt_in=CallConfig.CALL))
+    @opt_in
     def add_account(self, nonce: abi.DynamicBytes):
         return Seq(
             Assert(
