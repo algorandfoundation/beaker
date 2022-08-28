@@ -74,8 +74,9 @@ class Precompile:
 
         self.template_values: list[PrecompileTemplateValue] = []
 
-        # Replace the program text with 0 value
         lines = self.program.splitlines()
+        # Replace the teal program TMPL_* template variables with 
+        # the 0 value for the given type and save the list of TemplateValues 
         for idx, line in enumerate(lines):
             if TMPL_PREFIX in line:
                 op, name, _, _ = line.split(" ")
@@ -91,13 +92,16 @@ class Precompile:
         return self.program
 
     def set_compiled(self, binary: bytes, addr: str, map: SourceMap):
+        # Called by application_client to set the binary/addr/map for this precompile 
         self.binary = binary
         self.addr = addr
         self.map = map
 
         self.binary_bytes = Bytes(binary)
 
+        # Denote the pc for each template value
         for tv in self.template_values:
+            # +1 to acount for the pushbytes/pushint op
             tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
 
     def address(self) -> Expr:
@@ -116,9 +120,11 @@ class Precompile:
         assert len(self.template_values) > 0
         assert len(args) == len(self.template_values)
 
+        # Get a copy of the binary so we can work on it in place
         populated_binary = list(self.binary).copy()
+        # Any time we add bytes, we need to update the offset so the rest
+        # of the pc values can be updated to account for the difference 
         offset = 0
-
         for idx, tv in enumerate(self.template_values):
             arg: str | bytes | int = args[idx]
 
@@ -131,13 +137,19 @@ class Precompile:
 
                 assert type(arg) is bytes
 
+                # Bytes are encoded as uvarint(len(bytes)) + bytes
                 curr_val = py_encode_uvarint(len(arg)) + arg
             else:
                 if type(arg) is not int:
                     raise TealTypeError(type(arg), int)
+                # Ints are just the uvarint encoded number
                 curr_val = py_encode_uvarint(arg)
 
+            # update the working buffer to include the new value, replacing the current 0 value
             populated_binary[tv.pc + offset : tv.pc + offset + 1] = curr_val
+
+            # update the offset with the length(value) - 1 to account for the existing 0 value
+            # and help keep track of how to shift the pc later
             offset += len(curr_val) - 1
 
         return bytes(populated_binary)
@@ -146,6 +158,15 @@ class Precompile:
         return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
 
     def populate_template_expr(self, *args: Expr) -> Expr:
+        # Called by template_address to return a subroutine that 
+        # takes in some args according to the template we've 
+        # figured out in previous steps and writes them into the working
+        # buffer so we can hash it later and compare with an address.
+
+        # To understand how this works, first look at the pure python one above
+        # it should produce an identical output in terms of populated binary.
+        # This function just reproduces the same effects in pyteal
+
         assert self.binary_bytes is not None
         assert len(self.template_values)
         assert len(args) == len(self.template_values)
