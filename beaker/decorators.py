@@ -415,7 +415,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def internal(return_type: TealType = None, fn: HandlerFunc = None):
+def internal(return_type_or_handler: TealType | HandlerFunc):
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -423,6 +423,13 @@ def internal(return_type: TealType = None, fn: HandlerFunc = None):
     Returns:
         The wrapped subroutine
     """
+
+    fn: HandlerFunc
+    return_type: TealType
+    if type(return_type_or_handler) is TealType:
+        return_type = return_type_or_handler
+    else:
+        fn = cast(HandlerFunc, return_type_or_handler)
 
     def _impl(fn: HandlerFunc):
 
@@ -441,10 +448,10 @@ def internal(return_type: TealType = None, fn: HandlerFunc = None):
 
         return fn
 
-    if fn is None:
-        return _impl
+    if fn is not None:
+        return _impl(fn)
 
-    return _impl(fn)
+    return _impl
 
 
 def external(

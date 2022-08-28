@@ -68,8 +68,8 @@ def test_handler_logic_signature():
     assert "evaluate" in lsig.attrs
 
     # Should not fail
-    lsig.checked(pt.abi.String())
     lsig.evaluate()
+    lsig.checked(pt.abi.String())
 
     # Cant call it from static context
     with pytest.raises(TypeError):
@@ -139,18 +139,33 @@ def test_different_methods_logic_signature():
         def internal_scratch_tester(self, x: pt.ScratchVar, y: pt.Expr) -> pt.Expr:
             return x.load() * y
 
+        @internal
+        def no_self_abi_tester(x: pt.abi.Uint64, y: pt.abi.Uint64) -> pt.Expr:  # type: ignore
+            return x.get() * y.get()
+
+        @internal(pt.TealType.uint64)
+        def no_self_internal_tester(x: pt.Expr, y: pt.Expr) -> pt.Expr:  # type: ignore
+            return x * y
+
     lsig = Lsig()
 
     assert len(lsig.template_variables) == 0
-    assert len(lsig.methods) == 1
-    assert len(lsig.attrs.keys()) == 4
+    assert len(lsig.methods) == 2
+    assert len(lsig.attrs.keys()) == 6
     assert len(lsig.program) > 0
 
     assert "evaluate" in lsig.attrs
 
     # Should not fail
     lsig.evaluate()
+    lsig.abi_tester(pt.abi.String(), output=pt.abi.Uint64())
+    lsig.internal_tester(pt.Int(1), pt.Int(1))
+    lsig.internal_scratch_tester(pt.ScratchVar(), pt.Int(1))
+    Lsig.no_self_abi_tester(pt.abi.Uint64(), pt.abi.Uint64())
 
-    # Cant call it from static context
+    lsig.no_self_internal_tester(pt.Int(1), pt.Int(1))
+    Lsig.no_self_internal_tester(pt.Int(1), pt.Int(1))
+
+    # Cant call it from bound context
     with pytest.raises(TypeError):
-        Lsig.evaluate()
+        lsig.no_self_abi_tester(pt.abi.Uint64(), pt.abi.Uint64())
