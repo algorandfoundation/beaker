@@ -115,14 +115,15 @@ def test_templated_logic_signature():
         Lsig.evaluate()
 
 
-def test_abi_return_logic_signature():
+def test_different_methods_logic_signature():
     class Lsig(LogicSignature):
         def evaluate(self):
-            o = pt.abi.Uint64()
             return pt.Seq(
                 (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                self.abi_tester(s, output=o),
+                self.abi_tester(s, output=(o := pt.abi.Uint64())),
                 pt.Assert(self.internal_tester(o.get(), pt.Len(s.get()))),
+                (sv := pt.ScratchVar()).store(pt.Int(1)),
+                pt.Assert(self.internal_scratch_tester(sv, o.get())),
                 pt.Int(1),
             )
 
@@ -134,11 +135,15 @@ def test_abi_return_logic_signature():
         def internal_tester(self, x: pt.Expr, y: pt.Expr) -> pt.Expr:
             return x * y
 
+        @internal(pt.TealType.uint64)
+        def internal_scratch_tester(self, x: pt.ScratchVar, y: pt.Expr) -> pt.Expr:
+            return x.load() * y
+
     lsig = Lsig()
 
     assert len(lsig.template_variables) == 0
     assert len(lsig.methods) == 1
-    assert len(lsig.attrs.keys()) == 3
+    assert len(lsig.attrs.keys()) == 4
     assert len(lsig.program) > 0
 
     assert "evaluate" in lsig.attrs
