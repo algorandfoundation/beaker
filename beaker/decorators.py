@@ -181,31 +181,34 @@ class HandlerConfig:
         )
 
     def is_update(self) -> bool:
-        if self.method_config is None:
-            return False
-
-        return self.method_config.update_application != CallConfig.NEVER
+        return (
+            self.method_config is not None
+            and self.method_config.update_application != CallConfig.NEVER
+        )
 
     def is_delete(self) -> bool:
-        if self.method_config is None:
-            return False
-
-        return self.method_config.delete_application != CallConfig.NEVER
+        return (
+            self.method_config is not None
+            and self.method_config.delete_application != CallConfig.NEVER
+        )
 
     def is_opt_in(self) -> bool:
-        if self.method_config is None:
-            return False
-        return self.method_config.opt_in != CallConfig.NEVER
+        return (
+            self.method_config is not None
+            and self.method_config.opt_in != CallConfig.NEVER
+        )
 
     def is_clear_state(self) -> bool:
-        if self.method_config is None:
-            return False
-        return self.method_config.clear_state != CallConfig.NEVER
+        return (
+            self.method_config is not None
+            and self.method_config.clear_state != CallConfig.NEVER
+        )
 
     def is_close_out(self) -> bool:
-        if self.method_config is None:
-            return False
-        return self.method_config.close_out != CallConfig.NEVER
+        return (
+            self.method_config is not None
+            and self.method_config.close_out != CallConfig.NEVER
+        )
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
@@ -314,7 +317,10 @@ def _authorize(allowed: SubroutineFnWrapper):
     def _decorate(fn: HandlerFunc):
         @wraps(fn)
         def _impl(*args, **kwargs):
-            return Seq(Assert(allowed(Txn.sender()), comment="unauthorized"), fn(*args, **kwargs))
+            return Seq(
+                Assert(allowed(Txn.sender()), comment="unauthorized"),
+                fn(*args, **kwargs),
+            )
 
         return _impl
 
@@ -703,7 +709,7 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
             return bare_external(close_out=CallConfig.CALL)(fn)
         else:
             return external(
-                method_config=MethodConfig(clear_state=CallConfig.CALL),
+                method_config=MethodConfig(close_out=CallConfig.CALL),
                 authorize=authorize,
             )(fn)
 

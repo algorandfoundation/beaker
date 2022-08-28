@@ -25,6 +25,9 @@ from beaker.decorators import (
     external,
     internal,
     create,
+    opt_in,
+    clear_state,
+    close_out,
     update,
     delete,
 )
@@ -84,8 +87,8 @@ def test_single_external():
         sh.contract.get_method_by_name("made up")
 
 
-def test_bare_external():
-    class Bareexternal(Application):
+def test_bare():
+    class Bare(Application):
         @create
         def create():
             return pt.Approve()
@@ -98,19 +101,52 @@ def test_bare_external():
         def delete():
             return pt.Approve()
 
-    bh = Bareexternal()
+    bh = Bare()
 
     assert (
         len(bh.bare_externals) == 3
-    ), "Expected 4 bare externals: create,update,delete"
+    ), "Expected 3 bare externals: create,update,delete"
 
-    class FailBareexternal(Application):
+    class FailBare(Application):
         @create
         def wrong_name():
             return pt.Approve()
 
     with pytest.raises(BareOverwriteError):
-        bh = FailBareexternal()
+        bh = FailBare()
+
+
+def test_bare_external():
+    class BareExternal(Application):
+        @create
+        def create(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @close_out
+        def close_out(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @clear_state
+        def clear_state(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @update
+        def update(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @delete
+        def delete(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    be = BareExternal()
+    assert len(be.bare_externals) == 0, "Should have no bare externals"
+    assert (
+        len(be.contract.methods) == 6
+    ), "should have create, optin, closeout, clearstate, update, delete"
 
 
 def test_subclass_application():
