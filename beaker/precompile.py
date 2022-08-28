@@ -75,8 +75,8 @@ class Precompile:
         self.template_values: list[PrecompileTemplateValue] = []
 
         lines = self.program.splitlines()
-        # Replace the teal program TMPL_* template variables with 
-        # the 0 value for the given type and save the list of TemplateValues 
+        # Replace the teal program TMPL_* template variables with
+        # the 0 value for the given type and save the list of TemplateValues
         for idx, line in enumerate(lines):
             if TMPL_PREFIX in line:
                 op, name, _, _ = line.split(" ")
@@ -92,7 +92,7 @@ class Precompile:
         return self.program
 
     def set_compiled(self, binary: bytes, addr: str, map: SourceMap):
-        # Called by application_client to set the binary/addr/map for this precompile 
+        # Called by application_client to set the binary/addr/map for this precompile
         self.binary = binary
         self.addr = addr
         self.map = map
@@ -123,7 +123,7 @@ class Precompile:
         # Get a copy of the binary so we can work on it in place
         populated_binary = list(self.binary).copy()
         # Any time we add bytes, we need to update the offset so the rest
-        # of the pc values can be updated to account for the difference 
+        # of the pc values can be updated to account for the difference
         offset = 0
         for idx, tv in enumerate(self.template_values):
             arg: str | bytes | int = args[idx]
@@ -158,8 +158,8 @@ class Precompile:
         return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
 
     def populate_template_expr(self, *args: Expr) -> Expr:
-        # Called by template_address to return a subroutine that 
-        # takes in some args according to the template we've 
+        # Called by template_address to return a subroutine that
+        # takes in some args according to the template we've
         # figured out in previous steps and writes them into the working
         # buffer so we can hash it later and compare with an address.
 

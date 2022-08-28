@@ -1,4 +1,3 @@
-from typing import Literal
 from abc import ABC, abstractclassmethod
 from beaker import Application, external
 from pyteal import (
@@ -16,30 +15,33 @@ def move_offset(offset: ScratchVar, t: abi.BaseType) -> Expr:
     return offset.store(offset.load() + Int(t.type_spec().byte_length_static()))
 
 
-
 class ContractTransferVAA:
     def __init__(self):
-        # fmt: off
-        self.version        = abi.Uint8()    #: Version of VAA
-        self.index          = abi.Uint32()   #: Which guardian set to be validated against
-        self.siglen         = abi.Uint8()    #: How many signatures
-        self.timestamp      = abi.Uint32()   #: TS of message
-        self.nonce          = abi.Uint32()   #: Uniquifying
-        self.chain          = abi.Uint16()   #: The Id of the chain where the message originated
-        self.emitter        = abi.Address()  #: The address of the contract that emitted this message on the origin chain
-        self.sequence       = abi.Uint64()   #: Unique integer representing the index, used for dedupe/ordering
-        self.consistency    = abi.Uint8()    #
+        self.version = abi.Uint8()  #: Version of VAA
+        self.index = abi.Uint32()  #: Which guardian set to be validated against
+        self.siglen = abi.Uint8()  #: How many signatures
+        self.timestamp = abi.Uint32()  #: TS of message
+        self.nonce = abi.Uint32()  #: Uniquifying
+        self.chain = abi.Uint16()  #: The Id of the chain where the message originated
+        self.emitter = (
+            abi.Address()
+        )  #: The address of the contract that emitted this message on the origin chain
+        self.sequence = (
+            abi.Uint64()
+        )  #: Unique integer representing the index, used for dedupe/ordering
+        self.consistency = abi.Uint8()  #
 
-        self.type       = abi.Uint8()   #: Type of message
-        self.amount     = abi.Address() #: amount of transfer
-        self.contract   = abi.Address() #: asset transferred
+        self.type = abi.Uint8()  #: Type of message
+        self.amount = abi.Address()  #: amount of transfer
+        self.contract = abi.Address()  #: asset transferred
         self.from_chain = abi.Uint16()  #: Id of the chain the token originated
-        self.to_address = abi.Address() #: Receiver of the token transfer
-        self.to_chain   = abi.Uint16()  #: Id of the chain where the token transfer should be redeemed
-        self.fee        = abi.Address() #: Amount to pay relayer
+        self.to_address = abi.Address()  #: Receiver of the token transfer
+        self.to_chain = (
+            abi.Uint16()
+        )  #: Id of the chain where the token transfer should be redeemed
+        self.fee = abi.Address()  #: Amount to pay relayer
 
         self.payload = abi.DynamicBytes()  #: Arbitrary byte payload
-        # fmt: on
 
     def decode(self, vaa: Expr) -> Expr:
         return Seq(
@@ -86,10 +88,10 @@ class ContractTransferVAA:
 
 
 class WormholeTransfer(Application, ABC):
-    """ Wormhole Payload3 Message handler 
-    
-        A Message transfer from another chain to Algorand  using the Wormhole protocol 
-        will cause this contract to have it's `portal_transfer` method called. 
+    """Wormhole Payload3 Message handler
+
+    A Message transfer from another chain to Algorand  using the Wormhole protocol
+    will cause this contract to have it's `portal_transfer` method called.
 
 
     """
@@ -98,10 +100,10 @@ class WormholeTransfer(Application, ABC):
     def portal_transfer(
         self, vaa: abi.DynamicBytes, *, output: abi.DynamicBytes
     ) -> Expr:
-        """ 
-            portal_transfer accepts a VAA containing information about the transfer and the payload. 
+        """
+        portal_transfer accepts a VAA containing information about the transfer and the payload.
 
-            To allow a more flexible interface we publicize that we output generic bytes
+        To allow a more flexible interface we publicize that we output generic bytes
 
         """
 
@@ -113,8 +115,10 @@ class WormholeTransfer(Application, ABC):
     # Should be overridden with whatever app specific stuff
     # needs to be done on transfer
     @abstractclassmethod
-    def handle_transfer(self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> Expr:
-        return  Reject()
+    def handle_transfer(
+        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
+    ) -> Expr:
+        return Reject()
 
 
 if __name__ == "__main__":
