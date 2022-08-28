@@ -73,16 +73,21 @@ class Application:
             if not m.startswith("__")
         }
 
+        self.on_create = None
+        self.on_update = None
+        self.on_delete = None
+        self.on_opt_in = None
+        self.on_close_out = None
+        self.on_clear_state = None
+
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
-        self.methods: dict[str, ABIReturnSubroutine] = {}
+        self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
 
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
 
-        methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         for name, (bound_attr, static_attr) in self.attrs.items():
-
             # Check for state vals
             match bound_attr:
                 case AccountStateValue():
@@ -98,6 +103,7 @@ class Application:
                 case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
 
+            # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
                 continue
 
@@ -134,10 +140,41 @@ class Application:
                 # Create the ABIReturnSubroutine from the static attr
                 # but override the implementation with the bound version
                 abi_meth = ABIReturnSubroutine(static_attr)
+
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
-                methods[name] = (abi_meth, handler_config.method_config)
 
+                if handler_config.is_create():
+                    if self.on_create is not None:
+                        raise TealInputError("Multiple create methods specified")
+                    self.on_create = static_attr
+
+                if handler_config.is_update():
+                    if self.on_update is not None:
+                        raise TealInputError("Multiple update methods specified")
+                    self.on_update = static_attr
+
+                if handler_config.is_delete():
+                    if self.on_delete is not None:
+                        raise TealInputError("Multiple delete methods specified")
+                    self.on_delete = static_attr
+
+                if handler_config.is_opt_in():
+                    if self.on_opt_in is not None:
+                        raise TealInputError("Multiple opt in methods specified")
+                    self.on_opt_in = static_attr
+
+                if handler_config.is_clear_state():
+                    if self.on_clear_state is not None:
+                        raise TealInputError("Multiple clear state methods specified")
+                    self.on_clear_state = static_attr
+
+                if handler_config.is_close_out():
+                    if self.on_close_out is not None:
+                        raise TealInputError("Multiple close out methods specified")
+                    self.on_close_out = static_attr
+
+                self.methods[name] = (abi_meth, handler_config.method_config)
                 self.hints[name] = handler_config.hints()
 
             # Internal subroutines
@@ -162,13 +199,13 @@ class Application:
         )
 
         # Add method externals
-        for method_name, method_tuple in methods.items():
+        for method_name, method_tuple in self.methods.items():
             method, method_config = method_tuple
-            self.methods[method_name] = method
             self.router.add_method_handler(
                 method_call=method, method_config=method_config
             )
 
+        # Compile approval and clear programs
         (
             self.approval_program,
             self.clear_program,
@@ -189,6 +226,7 @@ class Application:
                 for arg_idx, arg in enumerate(meth.args):
                     if arg.name not in hint.param_annotations:
                         continue
+
                     if hint.param_annotations[arg.name].descr is not None:
                         self.contract.methods[meth_idx].args[
                             arg_idx

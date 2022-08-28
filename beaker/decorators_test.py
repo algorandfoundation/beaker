@@ -95,6 +95,8 @@ def test_handler_config():
 
 def test_authorize():
 
+    cmt = "unauthorized"
+
     auth_only = Authorize.only(pt.Global.creator_address())
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
@@ -107,9 +109,7 @@ def test_authorize():
     def creator_only():
         return pt.Approve()
 
-    expr = pt.Seq(
-        pt.Assert(auth_only(pt.Txn.sender()), comment="unauthorized"), pt.Approve()
-    )
+    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = creator_only().__teal__(options)
@@ -138,8 +138,7 @@ def test_authorize():
         return pt.Approve()
 
     expr = pt.Seq(
-        pt.Assert(auth_holds_token(pt.Txn.sender()), comment="unauthorized"),
-        pt.Approve(),
+        pt.Assert(auth_holds_token(pt.Txn.sender()), comment=cmt), pt.Approve()
     )
 
     expected = expr.__teal__(options)
@@ -166,9 +165,7 @@ def test_authorize():
     def opted_in_only():
         return pt.Approve()
 
-    expr = pt.Seq(
-        pt.Assert(auth_opted_in(pt.Txn.sender()), comment="unauthorized"), pt.Approve()
-    )
+    expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = opted_in_only().__teal__(options)
@@ -182,9 +179,7 @@ def test_authorize():
     def deleter():
         return pt.Approve()
 
-    expr = pt.Seq(
-        pt.Assert(auth_only(pt.Txn.sender()), comment="unauthorized"), pt.Approve()
-    )
+    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = deleter().__teal__(options)
@@ -225,7 +220,7 @@ def test_named_tuple():
         pass
 
     hc = get_handler_config(thing)
-    print(hc)
+    assert hc.structs["o"] is Order
 
 
 def test_bare():
