@@ -119,23 +119,39 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=transaction.ApplicationCreateTxn(
-                    sender=sender,
-                    sp=sp,
-                    on_complete=on_complete,
-                    approval_program=self.approval_binary,
-                    clear_program=self.clear_binary,
-                    global_schema=self.app.app_state.schema(),
-                    local_schema=self.app.acct_state.schema(),
-                    extra_pages=extra_pages,
-                    app_args=args,
-                    **kwargs,
-                ),
-                signer=signer,
+        if self.app.on_create is not None:
+            self.add_method_call(
+                atc,
+                self.app.on_create,
+                sender=sender,
+                sp=sp,
+                on_complete=on_complete,
+                approval_program=self.approval_binary,
+                clear_program=self.clear_binary,
+                global_schema=self.app.app_state.schema(),
+                local_schema=self.app.acct_state.schema(),
+                extra_pages=extra_pages,
+                app_args=args,
+                **kwargs,
             )
-        )
+        else:
+            atc.add_transaction(
+                TransactionWithSigner(
+                    txn=transaction.ApplicationCreateTxn(
+                        sender=sender,
+                        sp=sp,
+                        on_complete=on_complete,
+                        approval_program=self.approval_binary,
+                        clear_program=self.clear_binary,
+                        global_schema=self.app.app_state.schema(),
+                        local_schema=self.app.acct_state.schema(),
+                        extra_pages=extra_pages,
+                        app_args=args,
+                        **kwargs,
+                    ),
+                    signer=signer,
+                )
+            )
 
         try:
             create_result = atc.execute(self.client, 4)
@@ -173,20 +189,34 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=transaction.ApplicationUpdateTxn(
-                    sender=sender,
-                    sp=sp,
-                    index=self.app_id,
-                    approval_program=self.approval_binary,
-                    clear_program=self.clear_binary,
-                    app_args=args,
-                    **kwargs,
-                ),
-                signer=signer,
+        if self.app.on_update is not None:
+            self.add_method_call(
+                atc,
+                self.app.on_update,
+                on_complete=transaction.OnComplete.UpdateApplicationOC,
+                sender=sender,
+                sp=sp,
+                index=self.app_id,
+                approval_program=self.approval_binary,
+                clear_program=self.clear_binary,
+                app_args=args,
+                **kwargs,
             )
-        )
+        else:
+            atc.add_transaction(
+                TransactionWithSigner(
+                    txn=transaction.ApplicationUpdateTxn(
+                        sender=sender,
+                        sp=sp,
+                        index=self.app_id,
+                        approval_program=self.approval_binary,
+                        clear_program=self.clear_binary,
+                        app_args=args,
+                        **kwargs,
+                    ),
+                    signer=signer,
+                )
+            )
 
         try:
             update_result = atc.execute(self.client, 4)
@@ -213,18 +243,31 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=transaction.ApplicationOptInTxn(
-                    sender=sender,
-                    sp=sp,
-                    index=self.app_id,
-                    app_args=args,
-                    **kwargs,
-                ),
+        if self.app.on_opt_in is not None:
+            self.add_method_call(
+                atc,
+                self.app.on_opt_in,
+                on_complete=transaction.OnComplete.OptInOC,
+                sender=sender,
+                sp=sp,
+                index=self.app_id,
+                app_args=args,
                 signer=signer,
+                **kwargs,
             )
-        )
+        else:
+            atc.add_transaction(
+                TransactionWithSigner(
+                    txn=transaction.ApplicationOptInTxn(
+                        sender=sender,
+                        sp=sp,
+                        index=self.app_id,
+                        app_args=args,
+                        **kwargs,
+                    ),
+                    signer=signer,
+                )
+            )
 
         try:
             opt_in_result = atc.execute(self.client, 4)
@@ -251,18 +294,31 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=transaction.ApplicationCloseOutTxn(
-                    sender=sender,
-                    sp=sp,
-                    index=self.app_id,
-                    app_args=args,
-                    **kwargs,
-                ),
+        if self.app.on_close_out is not None:
+            self.add_method_call(
+                atc,
+                self.app.on_close_out,
+                on_complete=transaction.OnComplete.CloseOutOC,
+                sender=sender,
+                sp=sp,
+                index=self.app_id,
+                app_args=args,
                 signer=signer,
+                **kwargs,
             )
-        )
+        else:
+            atc.add_transaction(
+                TransactionWithSigner(
+                    txn=transaction.ApplicationCloseOutTxn(
+                        sender=sender,
+                        sp=sp,
+                        index=self.app_id,
+                        app_args=args,
+                        **kwargs,
+                    ),
+                    signer=signer,
+                )
+            )
 
         try:
             close_out_result = atc.execute(self.client, 4)
@@ -290,18 +346,31 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=transaction.ApplicationClearStateTxn(
-                    sender=sender,
-                    sp=sp,
-                    index=self.app_id,
-                    app_args=args,
-                    **kwargs,
-                ),
+        if self.app.on_clear_state is not None:
+            self.add_method_call(
+                atc,
+                self.app.on_clear_state,
+                on_complete=transaction.OnComplete.ClearStateOC,
+                sender=sender,
+                sp=sp,
+                index=self.app_id,
+                app_args=args,
                 signer=signer,
+                **kwargs,
             )
-        )
+        else:
+            atc.add_transaction(
+                TransactionWithSigner(
+                    txn=transaction.ApplicationClearStateTxn(
+                        sender=sender,
+                        sp=sp,
+                        index=self.app_id,
+                        app_args=args,
+                        **kwargs,
+                    ),
+                    signer=signer,
+                )
+            )
 
         clear_state_result = atc.execute(self.client, 4)
 
@@ -322,18 +391,30 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        atc.add_transaction(
-            TransactionWithSigner(
-                txn=transaction.ApplicationDeleteTxn(
-                    sender=sender,
-                    sp=sp,
-                    index=self.app_id,
-                    app_args=args,
-                    **kwargs,
-                ),
+        if self.app.on_delete:
+            self.add_method_call(
+                atc,
+                self.app.on_delete,
+                sender=sender,
+                sp=sp,
+                index=self.app_id,
+                app_args=args,
                 signer=signer,
+                **kwargs,
             )
-        )
+        else:
+            atc.add_transaction(
+                TransactionWithSigner(
+                    txn=transaction.ApplicationDeleteTxn(
+                        sender=sender,
+                        sp=sp,
+                        index=self.app_id,
+                        app_args=args,
+                        **kwargs,
+                    ),
+                    signer=signer,
+                )
+            )
 
         try:
             delete_result = atc.execute(self.client, 4)
