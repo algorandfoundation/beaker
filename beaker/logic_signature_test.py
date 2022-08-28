@@ -1,7 +1,7 @@
 import pytest
 import pyteal as pt
-from beaker.decorators import internal
-from beaker.logic_signature import LogicSignature
+from beaker.decorators import internal, external
+from beaker.logic_signature import LogicSignature, TemplateVariable
 
 
 def test_simple_logic_signature():
@@ -77,3 +77,71 @@ def test_handler_logic_signature():
 
     with pytest.raises(TypeError):
         Lsig.checked(pt.abi.String())
+
+
+def test_templated_logic_signature():
+    class Lsig(LogicSignature):
+        pubkey = TemplateVariable(pt.TealType.bytes)
+
+        def evaluate(self):
+            return pt.Seq(
+                pt.Assert(pt.Len(self.pubkey)),
+                pt.Int(1),
+            )
+
+    lsig = Lsig()
+
+    assert len(lsig.template_variables) == 1
+    assert len(lsig.methods) == 0
+    assert len(lsig.attrs.keys()) == 2
+    assert len(lsig.program) > 0
+
+    assert "evaluate" in lsig.attrs
+    assert "pubkey" in lsig.attrs
+
+    assert lsig.pubkey.get_name() == "TMPL_PUBKEY"
+
+    actual = lsig.pubkey.init_expr()
+    expected = pt.ScratchStore(pt.Int(1), pt.Tmpl.Bytes("TMPL_PUBKEY"))
+
+    with pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    # Should not fail
+    lsig.evaluate()
+
+    # Cant call it from static context
+    with pytest.raises(TypeError):
+        Lsig.evaluate()
+
+
+def test_abi_return_logic_signature():
+    class Lsig(LogicSignature):
+        def evaluate(self):
+            o = pt.abi.Uint64()
+            return pt.Seq(
+                (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
+                self.abitester(s, output=o),
+                pt.Assert(o.get()),
+                pt.Int(1),
+            )
+
+        @external
+        def abitester(self, s: pt.abi.String, *, output: pt.abi.Uint64):
+            return output.set(pt.Len(s.get()))
+
+    lsig = Lsig()
+
+    assert len(lsig.template_variables) == 0
+    assert len(lsig.methods) == 1
+    assert len(lsig.attrs.keys()) == 2
+    assert len(lsig.program) > 0
+
+    assert "evaluate" in lsig.attrs
+
+    # Should not fail
+    lsig.evaluate()
+
+    # Cant call it from static context
+    with pytest.raises(TypeError):
+        Lsig.evaluate()
