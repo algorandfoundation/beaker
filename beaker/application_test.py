@@ -117,6 +117,21 @@ def test_bare():
         bh = FailBare()
 
 
+def test_mixed_bares():
+    class MixedBare(Application):
+        @create
+        def create(self):
+            return pt.Approve()
+
+        @opt_in
+        def opt_in(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+    mb = MixedBare()
+    assert len(mb.bare_externals) == 1
+    assert len(mb.methods) == 1
+
+
 def test_bare_external():
     class BareExternal(Application):
         @create
@@ -150,45 +165,45 @@ def test_bare_external():
     ), "should have create, optin, closeout, clearstate, update, delete"
 
     hc = get_handler_config(BareExternal.create)
-    assert hc.method_config is not None 
+    assert hc.method_config is not None
     confs = asdict(hc.method_config)
-    assert confs['no_op'] == pt.CallConfig.CREATE
-    del confs['no_op']
+    assert confs["no_op"] == pt.CallConfig.CREATE
+    del confs["no_op"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
     hc = get_handler_config(BareExternal.opt_in)
-    assert hc.method_config is not None 
+    assert hc.method_config is not None
     confs = asdict(hc.method_config)
-    assert confs['opt_in'] == pt.CallConfig.CALL
-    del confs['opt_in']
+    assert confs["opt_in"] == pt.CallConfig.CALL
+    del confs["opt_in"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
     hc = get_handler_config(BareExternal.close_out)
-    assert hc.method_config is not None 
+    assert hc.method_config is not None
     confs = asdict(hc.method_config)
-    assert confs['close_out'] == pt.CallConfig.CALL
-    del confs['close_out']
+    assert confs["close_out"] == pt.CallConfig.CALL
+    del confs["close_out"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
     hc = get_handler_config(BareExternal.clear_state)
-    assert hc.method_config is not None 
+    assert hc.method_config is not None
     confs = asdict(hc.method_config)
-    assert confs['clear_state'] == pt.CallConfig.CALL
-    del confs['clear_state']
+    assert confs["clear_state"] == pt.CallConfig.CALL
+    del confs["clear_state"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
     hc = get_handler_config(BareExternal.update)
     assert hc.method_config is not None
     confs = asdict(hc.method_config)
-    assert confs['update_application'] == pt.CallConfig.CALL
-    del confs['update_application']
+    assert confs["update_application"] == pt.CallConfig.CALL
+    del confs["update_application"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
     hc = get_handler_config(BareExternal.delete)
-    assert hc.method_config is not None 
+    assert hc.method_config is not None
     confs = asdict(hc.method_config)
-    assert confs['delete_application'] == pt.CallConfig.CALL
-    del confs['delete_application']
+    assert confs["delete_application"] == pt.CallConfig.CALL
+    del confs["delete_application"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
 

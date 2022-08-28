@@ -38,3 +38,9 @@ FALSE: Final[Int] = Int(0)
 MAX_LOCAL_STATE = 16
 #: The max number of global state values that may be declared
 MAX_GLOBAL_STATE = 64
+
+#: The maximum number of args that may be included in an lsig
+LSIG_MAX_ARGS = 255
+
+#: The prefix used when hashing bytecode to produce a unique hash
+PROGRAM_DOMAIN_SEPARATOR = "Program"

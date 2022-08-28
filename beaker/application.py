@@ -7,7 +7,6 @@ from pyteal import (
     TealInputError,
     Txn,
     MAX_TEAL_VERSION,
-    MethodConfig,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
@@ -22,6 +21,7 @@ from pyteal import (
 from beaker.decorators import (
     get_handler_config,
     MethodHints,
+    MethodConfig,
     create,
 )
 
@@ -34,6 +34,7 @@ from beaker.state import (
     DynamicApplicationStateValue,
 )
 from beaker.errors import BareOverwriteError
+from beaker.precompile import Precompile
 
 
 def get_method_spec(fn) -> Method:
@@ -73,6 +74,10 @@ class Application:
             if not m.startswith("__")
         }
 
+        # Initialize these ahead of time, may not
+        # be set after init if len(precompiles)>0
+        self.approval_program = None
+        self.clear_program = None
         self.on_create = None
         self.on_update = None
         self.on_delete = None
@@ -83,6 +88,7 @@ class Application:
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
+        self.precompiles: dict[str, Precompile] = {}
 
         acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
         app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
@@ -102,6 +108,8 @@ class Application:
                     app_vals[name] = bound_attr
                 case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
+                case Precompile():
+                    self.precompiles[name] = bound_attr
 
             # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
@@ -144,6 +152,8 @@ class Application:
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 
+                self.methods[name] = (abi_meth, handler_config.method_config)
+
                 if handler_config.is_create():
                     if self.on_create is not None:
                         raise TealInputError("Multiple create methods specified")
@@ -179,6 +189,7 @@ class Application:
 
             # Internal subroutines
             elif handler_config.subroutine is not None:
+                print(name)
                 if handler_config.referenced_self:
                     setattr(self, name, handler_config.subroutine(bound_attr))
                 else:
@@ -198,8 +209,18 @@ class Application:
             descr=self.__doc__,
         )
 
+        # If there are no precompiles, we can build the programs
+        # with what we already have
+        if len(self.precompiles) == 0:
+            self.compile()
+
+    def compile(self):
+
+        # TODO: reset router?
+        # It will fail if compile is re-called but we shouldn't rely on that
+
         # Add method externals
-        for method_name, method_tuple in self.methods.items():
+        for _, method_tuple in self.methods.items():
             method, method_config = method_tuple
             self.router.add_method_handler(
                 method_call=method, method_config=method_config
@@ -234,6 +255,12 @@ class Application:
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
+
+        if self.approval_program is None or self.clear_program is None:
+            raise Exception(
+                "approval or clear program are none, please build the programs first"
+            )
+
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "source": {

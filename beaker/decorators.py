@@ -159,9 +159,10 @@ class HandlerConfig:
             mh["param_annotations"] = self.param_annotations
 
         if self.structs is not None:
-            structs: dict[str, str | list[tuple[str, str]]] = {}
+            structs: dict[str, dict[str, str | list[tuple[str, str]]]] = {}
             for arg_name, model_spec in self.structs.items():
-                annos = list(model_spec.__annotations__.items())
+                annos: list[tuple[str, Any]] = list(model_spec.__annotations__.items())
+
                 structs[arg_name] = {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": [
@@ -169,6 +170,7 @@ class HandlerConfig:
                         for name, typ in annos
                     ],
                 }
+
             mh["structs"] = structs
 
         return MethodHints(**mh)
@@ -232,8 +234,8 @@ class MethodHints:
 
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices
-    structs: Optional[dict[str, dict[str, str | list[str]]]] = field(
+    #: hint to provide names for tuple argument indices method_name=>param_name=>{name:str, elements:[str,str]}
+    structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
         kw_only=True, default=None
     )
     #: annotations
@@ -413,7 +415,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def internal(return_type: TealType):
+def internal(return_type_or_handler: TealType | HandlerFunc):
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -422,15 +424,33 @@ def internal(return_type: TealType):
         The wrapped subroutine
     """
 
+    fn: Optional[HandlerFunc] = None
+    return_type: Optional[TealType] = None
+
+    if type(return_type_or_handler) is TealType:
+        return_type = return_type_or_handler
+    else:
+        fn = cast(HandlerFunc, return_type_or_handler)
+
     def _impl(fn: HandlerFunc):
-        hc = get_handler_config(fn)
 
-        hc.subroutine = Subroutine(return_type, name=fn.__name__)
-        if "self" in signature(fn).parameters:
-            hc.referenced_self = True
+        if return_type is not None:
+            set_handler_config(fn, subroutine=Subroutine(return_type, name=fn.__name__))
 
-        set_handler_config(fn, **hc.__dict__)
+            # Don't remove self for subroutine, it fails later on in pyteal
+            # during call to _validate  with invalid signature
+            sig = signature(fn)
+            if "self" in sig.parameters:
+                set_handler_config(fn, referenced_self=True)
+
+        else:
+            fn = _remove_self(fn)
+            set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
+
         return fn
+
+    if fn is not None:
+        return _impl(fn)
 
     return _impl
 
