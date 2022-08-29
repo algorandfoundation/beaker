@@ -95,7 +95,9 @@
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">If</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">beaker.lib.storage</span> <span class="kn">import</span> <span class="n">LocalBlob</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">MAX_GLOBAL_STATE</span><span class="p">,</span> <span class="n">MAX_LOCAL_STATE</span>
+<span class="kn">from</span> <span class="nn">beaker.lib.storage.global_blob</span> <span class="kn">import</span> <span class="n">GlobalBlob</span>
 
 
 <span class="k">def</span> <span class="nf">get_default_for_type</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
@@ -418,6 +420,64 @@
         <span class="k">return</span> <span class="n">AccountStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">Expr</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span></div></div>
 
 
+<span class="k">class</span> <span class="nc">StateBlob</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_keys</span> <span class="o">=</span> <span class="n">num_keys</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="o">...</span>
+
+
+<span class="k">class</span> <span class="nc">AccountStateBlob</span><span class="p">(</span><span class="n">StateBlob</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blob</span> <span class="o">=</span> <span class="n">LocalBlob</span><span class="p">(</span><span class="n">max_keys</span><span class="o">=</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">_max_keys</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AccountStateBlob&quot;</span><span class="p">:</span>
+        <span class="n">asv</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">asv</span><span class="o">.</span><span class="n">acct</span> <span class="o">=</span> <span class="n">acct</span>
+        <span class="k">return</span> <span class="n">asv</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">zero</span><span class="p">(</span><span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">get_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">set_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">byte</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ApplicationStateBlob</span><span class="p">(</span><span class="n">StateBlob</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blob</span> <span class="o">=</span> <span class="n">GlobalBlob</span><span class="p">(</span><span class="n">max_keys</span><span class="o">=</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">_max_keys</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">buff</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">get_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">set_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">byte</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">check_not_static</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">StateValue</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">sv</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="n">sv</span><span class="si">}</span><span class="s2"> is static&quot;</span><span class="p">)</span>
@@ -437,12 +497,18 @@
 <span class="k">class</span> <span class="nc">State</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;holds all the declared and dynamic state values for this storage type&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateValue</span> <span class="o">|</span> <span class="n">DynamicStateValue</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateValue</span> <span class="o">|</span> <span class="n">DynamicStateValue</span> <span class="o">|</span> <span class="n">StateBlob</span><span class="p">]</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">StateValue</span><span class="p">)</span>
         <span class="p">}</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateBlob</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">StateBlob</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DynamicStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">DynamicStateValue</span><span class="p">)</span>
@@ -459,14 +525,22 @@
             <span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_byte_slices</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">]</span>
-        <span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">l</span><span class="o">.</span><span class="n">max_keys</span>
-                <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span>
-            <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_byte_slices</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">l</span>
+                    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">l</span><span class="o">.</span><span class="n">max_keys</span>
+                    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="nb">sum</span><span class="p">([</span><span class="n">b</span><span class="o">.</span><span class="n">num_keys</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">dictify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
@@ -490,16 +564,6 @@
             <span class="p">},</span>
         <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Generate expression from state values to initialize a default value&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-            <span class="o">*</span><span class="p">[</span>
-                <span class="n">v</span><span class="o">.</span><span class="n">set_default</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">static</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">static</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateSchema</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;gets the schema as num uints/bytes for app create transactions&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">StateSchema</span><span class="p">(</span>
@@ -510,18 +574,35 @@
 <div class="viewcode-block" id="ApplicationState"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationState">[docs]</a><span class="k">class</span> <span class="nc">ApplicationState</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span><span class="p">],</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span> <span class="o">|</span> <span class="n">ApplicationStateBlob</span><span class="p">,</span>
+        <span class="p">],</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">total</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_uints</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_byte_slices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_GLOBAL_STATE</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Too much application state, expected </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> &lt;= </span><span class="si">{</span><span class="n">MAX_GLOBAL_STATE</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="ApplicationState.initialize"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationState.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Generate expression from state values to initialize a default value&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">[</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">set_default</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">static</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">static</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="AccountState"><a class="viewcode-back" href="../../state.html#beaker.state.AccountState">[docs]</a><span class="k">class</span> <span class="nc">AccountState</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span> <span class="o">|</span> <span class="n">AccountStateBlob</span>
+        <span class="p">],</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">total</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_uints</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_byte_slices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_LOCAL_STATE</span><span class="p">:</span>
@@ -537,6 +618,7 @@
                 <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">static</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">static</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
             <span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
         <span class="p">)</span></div></div>
 </pre></div>
 

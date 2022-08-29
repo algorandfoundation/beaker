@@ -102,6 +102,8 @@
 
 <span class="kn">from</span> <span class="nn">beaker.state</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AccountState</span><span class="p">,</span>
+    <span class="n">AccountStateBlob</span><span class="p">,</span>
+    <span class="n">ApplicationStateBlob</span><span class="p">,</span>
     <span class="n">ApplicationState</span><span class="p">,</span>
     <span class="n">DynamicAccountStateValue</span><span class="p">,</span>
     <span class="n">AccountStateValue</span><span class="p">,</span>
@@ -153,6 +155,7 @@
         <span class="c1"># be set after init if len(precompiles)&gt;0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_delete</span> <span class="o">=</span> <span class="kc">None</span>
@@ -165,24 +168,36 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodConfig</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">precompiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Precompile</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="n">acct_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">app_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">acct_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span> <span class="o">|</span> <span class="n">AccountStateBlob</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">app_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span> <span class="o">|</span> <span class="n">ApplicationStateBlob</span><span class="p">,</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">bound_attr</span><span class="p">,</span> <span class="n">static_attr</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># Check for state vals</span>
             <span class="k">match</span> <span class="n">bound_attr</span><span class="p">:</span>
+
                 <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">():</span>
                     <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">DynamicAccountStateValue</span><span class="p">():</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
+                <span class="k">case</span> <span class="n">AccountStateBlob</span><span class="p">():</span>
+                    <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
+
+                <span class="k">case</span> <span class="n">ApplicationStateBlob</span><span class="p">():</span>
+                    <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
                     <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">DynamicApplicationStateValue</span><span class="p">():</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
+
                 <span class="k">case</span> <span class="n">Precompile</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">precompiles</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
 
