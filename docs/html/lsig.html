@@ -19,7 +19,9 @@
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Application Client" href="application_client.html" />
+    <link rel="prev" title="Application" href="application.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -38,9 +40,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
@@ -77,12 +80,45 @@
 <span id="logic-signatures"></span><h1>Logic Signatures<a class="headerlink" href="#module-beaker.logic_signature" title="Permalink to this heading"></a></h1>
 <p>This is the base class that all Beaker LogicSignatures should inherit from.</p>
 <p>This should _not_ be initialized directly.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.logic_signature.LogicSignature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.logic_signature.</span></span><span class="sig-name descname"><span class="pre">LogicSignature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignature" title="Permalink to this definition"></a></dt>
+<dd><p>LogicSignature allows the definition of a logic signature program.</p>
+<p>A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes</p>
+<p>The <cite>evauluate</cite> method is the entry point to the application and must be overridden in any subclass
+to call the necessary logic.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.logic_signature.LogicSignature.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignature.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignature.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>evaluate is the main entry point to the logic of the lsig.</p>
+<p>Override this method to handle arbitrary logic.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.logic_signature.TemplateVariable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.logic_signature.</span></span><span class="sig-name descname"><span class="pre">TemplateVariable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#TemplateVariable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.TemplateVariable" title="Permalink to this definition"></a></dt>
+<dd><p>A Template Variable to be used as an attribute on LogicSignatures that
+need some hardcoded well defined behavior.</p>
+<p>If no <code class="docutils literal notranslate"><span class="pre">name</span></code> is supplied, the attribute name it was assigned to is used.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.logic_signature.TemplateVariable.get_name">
+<span class="sig-name descname"><span class="pre">get_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></span><a class="reference internal" href="_modules/beaker/logic_signature.html#TemplateVariable.get_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.TemplateVariable.get_name" title="Permalink to this definition"></a></dt>
+<dd><p>returns the name of the template variable that should be present in the output TEAL</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="application.html" class="btn btn-neutral float-left" title="Application" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="application_client.html" class="btn btn-neutral float-right" title="Application Client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

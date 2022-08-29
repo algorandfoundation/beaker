@@ -73,8 +73,8 @@ class ApplicationClient:
         recompile = False
         for _, v in self.app.precompiles.items():
             if v.binary is None:
-                binary, addr, map = self.compile(v.teal(), True)
-                v.set_compiled(binary, addr, map)
+                binary, addr, map = self.compile(v.program, True)
+                v._set_compiled(binary, addr, map)
                 recompile = True
 
         if recompile:

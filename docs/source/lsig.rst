@@ -8,8 +8,7 @@ This is the base class that all Beaker LogicSignatures should inherit from.
 This should _not_ be initialized directly.
 
 .. autoclass:: LogicSignature
-    .. members::
-
+    :members:
 
 .. autoclass:: TemplateVariable
-    .. members::
+    :members:
