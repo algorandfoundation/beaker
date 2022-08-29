@@ -18,9 +18,9 @@ class OraclePayload:
 
     def decode_msg(self, payload: Expr):
         return Seq(
-            self.timestamp.set(JsonRef.as_uint64(Bytes("ts"), payload)),
-            self.price.set(JsonRef.as_uint64(Bytes("price"), payload)),
-            self.confidence.set(JsonRef.as_uint64(Bytes("confidence"), payload)),
+            self.timestamp.set(JsonRef.as_uint64(payload, Bytes("ts"))),
+            self.price.set(JsonRef.as_uint64(payload, Bytes("price"))),
+            self.confidence.set(JsonRef.as_uint64(payload, Bytes("confidence"))),
         )
 
     def encode(self) -> Expr:
@@ -46,6 +46,7 @@ class OracleDataCache(WormholeTransfer):
             output.set(Bytes("")),
         )
 
+    @external
     def lookup(self, ts: abi.Uint64, *, output: OracleData):
         return output.decode(self.prices[ts].get_must())
 
