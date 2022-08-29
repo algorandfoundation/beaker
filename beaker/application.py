@@ -27,6 +27,8 @@ from beaker.decorators import (
 
 from beaker.state import (
     AccountState,
+    AccountStateBlob,
+    ApplicationStateBlob,
     ApplicationState,
     DynamicAccountStateValue,
     AccountStateValue,
@@ -78,6 +80,7 @@ class Application:
         # be set after init if len(precompiles)>0
         self.approval_program = None
         self.clear_program = None
+
         self.on_create = None
         self.on_update = None
         self.on_delete = None
@@ -90,24 +93,36 @@ class Application:
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         self.precompiles: dict[str, Precompile] = {}
 
-        acct_vals: dict[str, AccountStateValue | DynamicAccountStateValue] = {}
-        app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
+        acct_vals: dict[
+            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+        ] = {}
+        app_vals: dict[
+            str,
+            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+        ] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
             # Check for state vals
             match bound_attr:
+
                 case AccountStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
                 case DynamicAccountStateValue():
                     acct_vals[name] = bound_attr
+                case AccountStateBlob():
+                    acct_vals[name] = bound_attr
+
+                case ApplicationStateBlob():
+                    app_vals[name] = bound_attr
                 case ApplicationStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
                 case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
+
                 case Precompile():
                     self.precompiles[name] = bound_attr
 

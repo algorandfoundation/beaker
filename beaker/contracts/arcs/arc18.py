@@ -59,8 +59,8 @@ class ARC18(Application):
 
     offers: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
         stack_type=TealType.bytes,
-        max_keys=16,
-        key_gen=Subroutine(TealType.bytes)(lambda asset_id: Itob(asset_id)),
+        max_keys=14,
+        key_gen=Subroutine(TealType.bytes)(lambda x: Itob(x)),
     )
 
     # A basis point is 1/100 of 1%

@@ -73,8 +73,8 @@ class ApplicationClient:
         recompile = False
         for _, v in self.app.precompiles.items():
             if v.binary is None:
-                binary, addr, map = self.compile(v.teal(), True)
-                v.set_compiled(binary, addr, map)
+                binary, addr, map = self.compile(v.program, True)
+                v._set_compiled(binary, addr, map)
                 recompile = True
 
         if recompile:
@@ -652,6 +652,12 @@ class ApplicationClient:
             rekey_to=rekey_to,
         )
 
+        return atc
+
+    def add_transaction(
+        self, atc: AtomicTransactionComposer, txn: transaction.Transaction
+    ) -> AtomicTransactionComposer:
+        atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
     def fund(self, amt: int) -> str:

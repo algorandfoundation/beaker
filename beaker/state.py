@@ -20,7 +20,9 @@ from pyteal import (
     Seq,
     If,
 )
+from beaker.lib.storage import LocalBlob
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
+from beaker.lib.storage.global_blob import GlobalBlob
 
 
 def get_default_for_type(stack_type, default):
@@ -343,6 +345,115 @@ class DynamicAccountStateValue(DynamicStateValue):
         return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
 
 
+class StateBlob(ABC):
+    def __init__(self, num_keys: int):
+        self.num_keys = num_keys
+
+    @abstractmethod
+    def initialize(self) -> Expr:
+        ...
+
+    @abstractmethod
+    def read(self, start: Expr, stop: Expr) -> Expr:
+        """
+        Reads some bytes from the buffer
+
+        Args:
+            start: An ``Expr`` that represents the start index to read from. Should evaluate to ``uint64``.
+            stop: An ``Expr`` that represents the stop index to read until. Should evaluate to ``uint64``.
+        Returns:
+            The bytes read from the blob from start to stop
+        """
+        ...
+
+    @abstractmethod
+    def write(self, start: Expr, buff: Expr) -> Expr:
+        """
+        Writes the buffer to the blob
+
+        Args:
+            start: An ``Expr`` that represents where to start writing. Should evaluate to ``uint64``.
+            buff: An ``Expr`` that represents the bytes to write. Should evaluate to ``bytes``.
+
+        """
+        ...
+
+    @abstractmethod
+    def read_byte(self, idx: Expr) -> Expr:
+        """
+        Reads a single byte from the given index
+
+        Args:
+            idx: An ``Expr`` that represents the index into the blob to read the byte from. Should evaluate to ``uint64``.
+
+        Returns:
+            A single byte as a ``uint64``
+
+        """
+        ...
+
+    @abstractmethod
+    def write_byte(self, idx: Expr, byte: Expr) -> Expr:
+        """
+        Writes a single byte to the given index
+
+        Args:
+            idx: An ``Expr`` that represents the index to write the byte to. Should evaluate to ``uint64``.
+            byte: An ``Expr`` That represents the index to write the byte to. Should evaluate to ``uint64``.
+
+        """
+        ...
+
+
+class AccountStateBlob(StateBlob):
+    def __init__(self, max_keys: int = None, keys: list[int] = None):
+        self.blob = LocalBlob(max_keys=max_keys, keys=keys)
+        self.acct: Expr = Txn.sender()
+
+        super().__init__(self.blob._max_keys)
+
+    def __getitem__(self, acct: Expr) -> "AccountStateBlob":
+        asv = copy(self)
+        asv.acct = acct
+        return asv
+
+    def initialize(self) -> Expr:
+        return self.blob.zero(acct=self.acct)
+
+    def write(self, start: Expr, buff: Expr) -> Expr:
+        return self.blob.write(start, buff, acct=self.acct)
+
+    def read(self, start: Expr, stop: Expr) -> Expr:
+        return self.blob.read(start, stop, acct=self.acct)
+
+    def read_byte(self, idx: Expr) -> Expr:
+        return self.blob.get_byte(idx, acct=self.acct)
+
+    def write_byte(self, idx: Expr, byte: Expr) -> Expr:
+        return self.blob.set_byte(idx, byte, acct=self.acct)
+
+
+class ApplicationStateBlob(StateBlob):
+    def __init__(self, max_keys: int = None, keys: list[int] = None):
+        self.blob = GlobalBlob(max_keys=max_keys, keys=keys)
+        super().__init__(self.blob._max_keys)
+
+    def initialize(self) -> Expr:
+        return self.blob.zero()
+
+    def write(self, start: Expr, buff: Expr) -> Expr:
+        return self.blob.write(start, buff)
+
+    def read(self, start: Expr, stop: Expr) -> Expr:
+        return self.blob.read(start, stop)
+
+    def read_byte(self, idx: Expr) -> Expr:
+        return self.blob.get_byte(idx)
+
+    def write_byte(self, idx: Expr, byte: Expr) -> Expr:
+        return self.blob.set_byte(idx, byte)
+
+
 def check_not_static(sv: StateValue):
     if sv.static:
         raise TealInputError(f"StateValue {sv} is static")
@@ -362,12 +473,18 @@ def check_match_type(sv: StateValue, val: Expr):
 class State:
     """holds all the declared and dynamic state values for this storage type"""
 
-    def __init__(self, fields: Mapping[str, StateValue | DynamicStateValue]):
+    def __init__(
+        self, fields: Mapping[str, StateValue | DynamicStateValue | StateBlob]
+    ):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
         }
-
         self.__dict__.update(self.declared_vals)
+
+        self.blob_vals: dict[str, StateBlob] = {
+            k: v for k, v in fields.items() if isinstance(v, StateBlob)
+        }
+        self.__dict__.update(self.blob_vals)
 
         self.dynamic_vals: dict[str, DynamicStateValue] = {
             k: v for k, v in fields.items() if isinstance(v, DynamicStateValue)
@@ -384,14 +501,22 @@ class State:
             ]
         )
 
-        self.num_byte_slices = len(
-            [l for l in self.declared_vals.values() if l.stack_type == TealType.bytes]
-        ) + sum(
-            [
-                l.max_keys
-                for l in self.dynamic_vals.values()
-                if l.stack_type == TealType.bytes
-            ]
+        self.num_byte_slices = (
+            len(
+                [
+                    l
+                    for l in self.declared_vals.values()
+                    if l.stack_type == TealType.bytes
+                ]
+            )
+            + sum(
+                [
+                    l.max_keys
+                    for l in self.dynamic_vals.values()
+                    if l.stack_type == TealType.bytes
+                ]
+            )
+            + sum([b.num_keys for b in self.blob_vals.values()])
         )
 
     def dictify(self) -> dict[str, dict[str, Any]]:
@@ -415,16 +540,6 @@ class State:
             },
         }
 
-    def initialize(self) -> Expr:
-        """Generate expression from state values to initialize a default value"""
-        return Seq(
-            *[
-                v.set_default()
-                for v in self.declared_vals.values()
-                if not v.static or (v.static and v.default is not None)
-            ]
-        )
-
     def schema(self) -> StateSchema:
         """gets the schema as num uints/bytes for app create transactions"""
         return StateSchema(
@@ -435,7 +550,10 @@ class State:
 class ApplicationState(State):
     def __init__(
         self,
-        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue],
+        fields: Mapping[
+            str,
+            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+        ],
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
@@ -443,10 +561,24 @@ class ApplicationState(State):
                 f"Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
             )
 
+    def initialize(self) -> Expr:
+        """Generate expression from state values to initialize a default value"""
+        return Seq(
+            *[
+                v.set_default()
+                for v in self.declared_vals.values()
+                if not v.static or (v.static and v.default is not None)
+            ]
+            + [v.initialize() for v in self.blob_vals.values()]
+        )
+
 
 class AccountState(State):
     def __init__(
-        self, fields: Mapping[str, AccountStateValue | DynamicAccountStateValue]
+        self,
+        fields: Mapping[
+            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+        ],
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
@@ -462,4 +594,5 @@ class AccountState(State):
                 for v in self.declared_vals.values()
                 if not v.static or (v.static and v.default is not None)
             ]
+            + [v.initialize() for v in self.blob_vals.values()]
         )

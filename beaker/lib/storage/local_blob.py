@@ -1,9 +1,7 @@
-from typing import Tuple
-
 from pyteal import (
+    Txn,
     App,
     Bytes,
-    BytesZero,
     Concat,
     Expr,
     Extract,
@@ -11,7 +9,6 @@ from pyteal import (
     GetByte,
     If,
     Int,
-    Itob,
     Len,
     Or,
     ScratchVar,
@@ -21,172 +18,203 @@ from pyteal import (
     Substring,
     TealType,
 )
-
-_max_keys = 16
-_page_size = 128 - 1  # need 1 byte for key
-_max_bytes = _max_keys * _page_size
-_max_bits = _max_bytes * 8
-
-max_keys = Int(_max_keys)
-page_size = Int(_page_size)
-max_bytes = Int(_max_bytes)
+from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
 
 
-def _key_and_offset(idx: Int) -> Tuple[Int, Int]:
-    return idx / page_size, idx % page_size
-
-
-@Subroutine(TealType.bytes)
-def intkey(i) -> Expr:
-    return Extract(Itob(i), Int(7), Int(1))
-
-
-# TODO: Add Keyspace range?
-class LocalBlob:
+class LocalBlob(Blob):
     """
     Blob is a class holding static methods to work with the local storage of an account as a binary large object
 
     The `zero` method must be called on an account on opt in and the schema of the local storage should be 16 bytes
     """
 
-    @staticmethod
-    @Subroutine(TealType.none)
-    def zero(acct) -> Expr:
+    def __init__(self, /, *, max_keys: int = None, keys: list[int] = None):
+        super().__init__(16, max_keys=max_keys, keys=keys)
+
+    def zero(self, acct: Expr = Txn.sender()) -> Expr:
         """
         initializes local state of an account to all zero bytes
 
         This allows us to be lazy later and _assume_ all the strings are the same size
 
         """
-        i = ScratchVar()
-        init = i.store(Int(0))
-        cond = i.load() < max_keys
-        iter = i.store(i.load() + Int(1))
-        return For(init, cond, iter).Do(
-            App.localPut(acct, intkey(i.load()), BytesZero(page_size))
-        )
 
-    @staticmethod
-    @Subroutine(TealType.uint64)
-    def get_byte(acct, idx):
+        @Subroutine(TealType.none)
+        def _impl(acct):
+            return Seq(
+                *[App.localPut(acct, Bytes(bk), EMPTY_PAGE) for bk in self.byte_keys]
+            )
+
+        return _impl(acct)
+
+    def get_byte(self, idx, acct: Expr = Txn.sender()):
         """
         Get a single byte from local storage of an account by index
         """
-        key, offset = _key_and_offset(idx)
-        return GetByte(App.localGet(acct, intkey(key)), offset)
 
-    @staticmethod
-    @Subroutine(TealType.none)
-    def set_byte(acct, idx, byte):
+        @Subroutine(TealType.uint64)
+        def _impl(acct, idx):
+            return GetByte(
+                App.localGet(acct, self._key(self._key_idx(idx))),
+                self._offset_for_idx(idx),
+            )
+
+        return _impl(acct, idx)
+
+    def set_byte(self, idx, byte, acct: Expr = Txn.sender()):
         """
         Set a single byte from local storage of an account by index
         """
-        key, offset = _key_and_offset(idx)
-        return App.localPut(
-            acct, intkey(key), SetByte(App.localGet(acct, intkey(key)), offset, byte)
-        )
 
-    @staticmethod
-    @Subroutine(TealType.bytes)
-    def read(acct, bstart, bend) -> Expr:
+        @Subroutine(TealType.none)
+        def _impl(acct, idx, byte):
+            return Seq(
+                (key := ScratchVar()).store(self._key(self._key_idx(idx))),
+                App.localPut(
+                    acct,
+                    key.load(),
+                    SetByte(
+                        App.localGet(acct, key.load()), self._offset_for_idx(idx), byte
+                    ),
+                ),
+            )
+
+        return _impl(acct, idx, byte)
+
+    def read(self, bstart, bend, acct: Expr = Txn.sender()) -> Expr:
         """
         read bytes between bstart and bend from local storage of an account by index
         """
 
-        start_key, start_offset = _key_and_offset(bstart)
-        stop_key, stop_offset = _key_and_offset(bend)
+        @Subroutine(TealType.bytes)
+        def _impl(acct, bstart, bend):
+            start_key_idx = self._key_idx(bstart)
+            start_offset = self._offset_for_idx(bstart)
 
-        key = ScratchVar()
-        buff = ScratchVar()
+            stop_key_idx = self._key_idx(bend)
+            stop_offset = self._offset_for_idx(bend)
 
-        start = ScratchVar()
-        stop = ScratchVar()
+            key_idx = ScratchVar()
+            buff = ScratchVar()
 
-        init = key.store(start_key)
-        cond = key.load() <= stop_key
-        incr = key.store(key.load() + Int(1))
+            start = ScratchVar()
+            stop = ScratchVar()
 
-        return Seq(
-            buff.store(Bytes("")),
-            For(init, cond, incr).Do(
-                Seq(
-                    start.store(If(key.load() == start_key, start_offset, Int(0))),
-                    stop.store(If(key.load() == stop_key, stop_offset, page_size)),
-                    buff.store(
-                        Concat(
-                            buff.load(),
-                            Substring(
-                                App.localGet(acct, intkey(key.load())),
-                                start.load(),
-                                stop.load(),
-                            ),
-                        )
-                    ),
-                )
-            ),
-            buff.load(),
-        )
+            init = key_idx.store(start_key_idx)
+            cond = key_idx.load() <= stop_key_idx
+            incr = key_idx.store(key_idx.load() + Int(1))
 
-    @staticmethod
-    @Subroutine(TealType.uint64)
-    def write(acct, bstart, buff) -> Expr:
+            return Seq(
+                buff.store(Bytes("")),
+                For(init, cond, incr).Do(
+                    Seq(
+                        start.store(
+                            If(key_idx.load() == start_key_idx, start_offset, Int(0))
+                        ),
+                        stop.store(
+                            If(
+                                key_idx.load() == stop_key_idx,
+                                stop_offset,
+                                BLOB_PAGE_SIZE,
+                            )
+                        ),
+                        buff.store(
+                            Concat(
+                                buff.load(),
+                                Substring(
+                                    App.localGet(acct, self._key(key_idx.load())),
+                                    start.load(),
+                                    stop.load(),
+                                ),
+                            )
+                        ),
+                    )
+                ),
+                buff.load(),
+            )
+
+        return _impl(acct, bstart, bend)
+
+    def write(self, bstart, buff, acct: Expr = Txn.sender()) -> Expr:
         """
         write bytes between bstart and len(buff) to local storage of an account
         """
 
-        start_key, start_offset = _key_and_offset(bstart)
-        stop_key, stop_offset = _key_and_offset(bstart + Len(buff))
+        @Subroutine(TealType.none)
+        def _impl(acct, bstart, buff):
 
-        key = ScratchVar()
-        start = ScratchVar()
-        stop = ScratchVar()
-        written = ScratchVar()
+            start_key_idx = self._key_idx(bstart)
+            start_offset = self._offset_for_idx(bstart)
 
-        init = key.store(start_key)
-        cond = key.load() <= stop_key
-        incr = key.store(key.load() + Int(1))
+            stop_key_idx = self._key_idx(bstart + Len(buff))
+            stop_offset = self._offset_for_idx(bstart + Len(buff))
 
-        delta = ScratchVar()
+            key_idx = ScratchVar()
+            start = ScratchVar()
+            stop = ScratchVar()
+            written = ScratchVar()
 
-        return Seq(
-            written.store(Int(0)),
-            For(init, cond, incr).Do(
-                Seq(
-                    start.store(If(key.load() == start_key, start_offset, Int(0))),
-                    stop.store(If(key.load() == stop_key, stop_offset, page_size)),
-                    App.localPut(
-                        acct,
-                        intkey(key.load()),
-                        If(
-                            Or(stop.load() != page_size, start.load() != Int(0))
-                        )  # Its a partial write
-                        .Then(
-                            Seq(
-                                delta.store(stop.load() - start.load()),
-                                Concat(
-                                    Substring(
-                                        App.localGet(acct, intkey(key.load())),
-                                        Int(0),
-                                        start.load(),
-                                    ),
-                                    Extract(buff, written.load(), delta.load()),
-                                    Substring(
-                                        App.localGet(acct, intkey(key.load())),
-                                        stop.load(),
-                                        page_size,
-                                    ),
-                                ),
-                            )
-                        )
-                        .Else(
-                            Seq(
-                                delta.store(page_size),
-                                Extract(buff, written.load(), page_size),
+            init = key_idx.store(start_key_idx)
+            cond = key_idx.load() <= stop_key_idx
+            incr = key_idx.store(key_idx.load() + Int(1))
+
+            delta = ScratchVar()
+
+            return Seq(
+                written.store(Int(0)),
+                For(init, cond, incr).Do(
+                    Seq(
+                        start.store(
+                            If(key_idx.load() == start_key_idx, start_offset, Int(0))
+                        ),
+                        stop.store(
+                            If(
+                                key_idx.load() == stop_key_idx,
+                                stop_offset,
+                                BLOB_PAGE_SIZE,
                             )
                         ),
-                    ),
-                    written.store(written.load() + delta.load()),
-                )
-            ),
-            written.load(),
-        )
+                        App.localPut(
+                            acct,
+                            self._key(key_idx.load()),
+                            If(
+                                Or(
+                                    stop.load() != BLOB_PAGE_SIZE,
+                                    start.load() != Int(0),
+                                )
+                            )  # Its a partial write
+                            .Then(
+                                Seq(
+                                    delta.store(stop.load() - start.load()),
+                                    Concat(
+                                        Substring(
+                                            App.localGet(
+                                                acct, self._key(key_idx.load())
+                                            ),
+                                            Int(0),
+                                            start.load(),
+                                        ),
+                                        Extract(buff, written.load(), delta.load()),
+                                        Substring(
+                                            App.localGet(
+                                                acct, self._key(key_idx.load())
+                                            ),
+                                            stop.load(),
+                                            BLOB_PAGE_SIZE,
+                                        ),
+                                    ),
+                                )
+                            )
+                            .Else(
+                                Seq(
+                                    delta.store(BLOB_PAGE_SIZE),
+                                    Extract(buff, written.load(), BLOB_PAGE_SIZE),
+                                )
+                            ),
+                        ),
+                        written.store(written.load() + delta.load()),
+                    )
+                ),
+            )
+
+        return _impl(acct, bstart, buff)

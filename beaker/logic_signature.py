@@ -21,9 +21,13 @@ class TemplateVariable(Expr):
     """
     A Template Variable to be used as an attribute on LogicSignatures that
     need some hardcoded well defined behavior.
+
+    If no ``name`` is supplied, the attribute name it was assigned to is used.
+
     """
 
     def __init__(self, stack_type: TealType, name: str = None):
+        """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
 
         self.stack_type = stack_type
@@ -31,6 +35,7 @@ class TemplateVariable(Expr):
         self.name = name
 
     def get_name(self) -> str:
+        """returns the name of the template variable that should be present in the output TEAL"""
         assert self.name is not None, TealInputError(
             "Name undefined in template variable"
         )
@@ -43,19 +48,31 @@ class TemplateVariable(Expr):
         return self.scratch.load().__teal__(options)
 
     def has_return(self):
+        """"""
         return False
 
     def type_of(self):
+        """"""
         return self.stack_type
 
-    def init_expr(self) -> Expr:
+    def _init_expr(self) -> Expr:
         if self.stack_type is TealType.bytes:
             return self.scratch.store(Tmpl.Bytes(self.get_name()))
         return self.scratch.store(Tmpl.Int(self.get_name()))
 
 
 class LogicSignature:
+    """
+    LogicSignature allows the definition of a logic signature program.
+
+    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
+
+    The `evauluate` method is the entry point to the application and must be overridden in any subclass
+    to call the necessary logic.
+    """
+
     def __init__(self, version: int = MAX_TEAL_VERSION):
+        """initialize the logic signature and identify relevant attributes"""
 
         self.teal_version = version
 
@@ -97,7 +114,7 @@ class LogicSignature:
                     )
 
         template_expressions: list[Expr] = [
-            tv.init_expr() for tv in self.template_variables
+            tv._init_expr() for tv in self.template_variables
         ]
 
         self.program = compileTeal(
@@ -108,4 +125,10 @@ class LogicSignature:
         )
 
     def evaluate(self):
+        """
+        evaluate is the main entry point to the logic of the lsig.
+
+        Override this method to handle arbitrary logic.
+
+        """
         return Reject()

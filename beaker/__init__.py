@@ -6,6 +6,7 @@ from .state import (
     DynamicAccountStateValue,
     ApplicationStateValue,
     AccountStateValue,
+    AccountStateBlob,
 )
 from .decorators import (
     Authorize,

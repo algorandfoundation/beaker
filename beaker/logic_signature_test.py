@@ -101,7 +101,7 @@ def test_templated_logic_signature():
 
     assert lsig.pubkey.get_name() == "TMPL_PUBKEY"
 
-    actual = lsig.pubkey.init_expr()
+    actual = lsig.pubkey._init_expr()
     expected = pt.ScratchStore(pt.Int(1), pt.Tmpl.Bytes("TMPL_PUBKEY"))
 
     with pt.TealComponent.Context.ignoreScratchSlotEquality():
