@@ -1,7 +1,7 @@
 from pyteal import (
+    Txn,
     App,
     Bytes,
-    BytesZero,
     Concat,
     Expr,
     Extract,
@@ -18,57 +18,20 @@ from pyteal import (
     Substring,
     TealType,
 )
+from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
 
 
-_page_size = 128 - 1  # 128 is max local storage bytes - 1 byte for key
-page_size = Int(_page_size)
-
-
-class LocalBlob:
+class LocalBlob(Blob):
     """
     Blob is a class holding static methods to work with the local storage of an account as a binary large object
 
     The `zero` method must be called on an account on opt in and the schema of the local storage should be 16 bytes
     """
 
-    def __init__(self, max_keys: int = None, keys: list[int] = None):
-        assert not (
-            max_keys is not None and keys is not None
-        ), "cant supply both max_keys and keys"
+    def __init__(self, /, *, max_keys: int = None, keys: list[int] = None):
+        super().__init__(16, max_keys=max_keys, keys=keys)
 
-        if keys is None or len(keys) == 0:
-            if max_keys is not None:
-                keys = [x for x in range(max_keys)]
-            else:
-                keys = [x for x in range(16)]
-
-        assert len(keys) <= 16
-        assert max(keys) <= 255
-        assert sorted(keys) == keys
-
-        self.byte_keys = [key.to_bytes(1, "big") for key in keys]
-        self.byte_key_str = Bytes("base16", b"".join(self.byte_keys).hex())
-
-        self.int_keys = [Int(key) for key in keys]
-        self.start_key = self.int_keys[0]
-
-        self._max_keys = len(keys)
-        self._max_bytes = self._max_keys * _page_size
-        self._max_bits = self._max_bytes * 8
-
-        self.max_keys = Int(self._max_keys)
-        self.max_bytes = Int(self._max_bytes)
-
-    def _key(self, i) -> Expr:
-        return Extract(self.byte_key_str, i, Int(1))
-
-    def _key_idx(self, idx: Int) -> Expr:
-        return idx / page_size
-
-    def _offset_for_idx(self, idx: Int) -> Expr:
-        return idx % page_size
-
-    def zero(self, acct) -> Expr:
+    def zero(self, acct: Expr = Txn.sender()) -> Expr:
         """
         initializes local state of an account to all zero bytes
 
@@ -79,14 +42,13 @@ class LocalBlob:
         @Subroutine(TealType.none)
         def _impl(acct):
             writes: list[Expr] = [
-                App.localPut(acct, Bytes(bk), BytesZero(page_size))
-                for bk in self.byte_keys
+                App.localPut(acct, Bytes(bk), EMPTY_PAGE) for bk in self.byte_keys
             ]
             return Seq(*writes)
 
         return _impl(acct)
 
-    def get_byte(self, acct, idx):
+    def get_byte(self, idx, acct: Expr = Txn.sender()):
         """
         Get a single byte from local storage of an account by index
         """
@@ -100,7 +62,7 @@ class LocalBlob:
 
         return _impl(acct, idx)
 
-    def set_byte(self, acct, idx, byte):
+    def set_byte(self, idx, byte, acct: Expr = Txn.sender()):
         """
         Set a single byte from local storage of an account by index
         """
@@ -120,7 +82,7 @@ class LocalBlob:
 
         return _impl(acct, idx, byte)
 
-    def read(self, acct, bstart, bend) -> Expr:
+    def read(self, bstart, bend, acct: Expr = Txn.sender()) -> Expr:
         """
         read bytes between bstart and bend from local storage of an account by index
         """
@@ -151,7 +113,11 @@ class LocalBlob:
                             If(key_idx.load() == start_key_idx, start_offset, Int(0))
                         ),
                         stop.store(
-                            If(key_idx.load() == stop_key_idx, stop_offset, page_size)
+                            If(
+                                key_idx.load() == stop_key_idx,
+                                stop_offset,
+                                BLOB_PAGE_SIZE,
+                            )
                         ),
                         buff.store(
                             Concat(
@@ -170,7 +136,7 @@ class LocalBlob:
 
         return _impl(acct, bstart, bend)
 
-    def write(self, acct, bstart, buff) -> Expr:
+    def write(self, bstart, buff, acct: Expr = Txn.sender()) -> Expr:
         """
         write bytes between bstart and len(buff) to local storage of an account
         """
@@ -203,13 +169,20 @@ class LocalBlob:
                             If(key_idx.load() == start_key_idx, start_offset, Int(0))
                         ),
                         stop.store(
-                            If(key_idx.load() == stop_key_idx, stop_offset, page_size)
+                            If(
+                                key_idx.load() == stop_key_idx,
+                                stop_offset,
+                                BLOB_PAGE_SIZE,
+                            )
                         ),
                         App.localPut(
                             acct,
                             self._key(key_idx.load()),
                             If(
-                                Or(stop.load() != page_size, start.load() != Int(0))
+                                Or(
+                                    stop.load() != BLOB_PAGE_SIZE,
+                                    start.load() != Int(0),
+                                )
                             )  # Its a partial write
                             .Then(
                                 Seq(
@@ -228,15 +201,15 @@ class LocalBlob:
                                                 acct, self._key(key_idx.load())
                                             ),
                                             stop.load(),
-                                            page_size,
+                                            BLOB_PAGE_SIZE,
                                         ),
                                     ),
                                 )
                             )
                             .Else(
                                 Seq(
-                                    delta.store(page_size),
-                                    Extract(buff, written.load(), page_size),
+                                    delta.store(BLOB_PAGE_SIZE),
+                                    Extract(buff, written.load(), BLOB_PAGE_SIZE),
                                 )
                             ),
                         ),

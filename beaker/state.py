@@ -366,19 +366,19 @@ class AccountStateBlob(StateBlob):
         return asv
 
     def initialize(self) -> Expr:
-        return self.blob.zero(self.acct)
+        return self.blob.zero(acct=self.acct)
 
     def write(self, start: Expr, buff: Expr) -> Expr:
-        return self.blob.write(self.acct, start, buff)
+        return self.blob.write(start, buff, acct=self.acct)
 
     def read(self, start: Expr, stop: Expr) -> Expr:
-        return self.blob.read(self.acct, start, stop)
+        return self.blob.read(start, stop, acct=self.acct)
 
     def read_byte(self, idx: Expr) -> Expr:
-        return self.blob.get_byte(self.acct, idx)
+        return self.blob.get_byte(idx, acct=self.acct)
 
     def write_byte(self, idx: Expr, byte: Expr) -> Expr:
-        return self.blob.set_byte(self.acct, idx, byte)
+        return self.blob.set_byte(idx, byte, acct=self.acct)
 
 
 def check_not_static(sv: StateValue):
