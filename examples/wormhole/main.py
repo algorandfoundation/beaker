@@ -1,10 +1,11 @@
 import json
+from algosdk.abi import ABIType
 from beaker import *
 
 if __name__ == "__main__":
-    from contract import OracleDataCache
+    from contract import OracleDataCache, OracleData
 else:
-    from .contract import OracleDataCache
+    from .contract import OracleDataCache, OracleData
 
 
 base_vaa = bytes.fromhex(
@@ -26,31 +27,32 @@ def demo():
         signer=sandbox.get_accounts().pop().signer,
     )
 
+    # Deploy the app on chain
     app_client.create()
 
+    # Make up some fake oracle data and send it to the contract
     base_ts = 1661802300
     base_price = 10000
     for x in range(10):
-        ts = base_ts + x * 60
-        price = base_price + x
-        confidence = 9999
-        submit_oracle_data(app_client, ts, price, confidence)
+        fake_oracle_data = {
+            "ts": base_ts + x * 60,
+            "price": base_price + x,
+            "confidence": 9999,
+        }
 
+        app_client.call(
+            OracleDataCache.portal_transfer,
+            vaa=base_vaa + json.dumps(fake_oracle_data).encode(),
+        )
+
+    # Get the codec to decode the stored value
+    oracle_data_codec = ABIType.from_string(str(OracleData().type_spec()))
+
+    # Get the current app state
     app_state = app_client.get_application_state(raw=True)
-    print(app_state)
-
-
-def submit_oracle_data(
-    ac: client.ApplicationClient, ts: int, price: int, confidence: int
-):
-
-    oracle_data = {"ts": ts, "price": price, "confidence": confidence}
-
-    payload = json.dumps(oracle_data).encode()
-
-    result = ac.call(OracleDataCache.portal_transfer, vaa=base_vaa + payload)
-    result_bytes: bytes = bytes(result.return_value)
-    print(result_bytes.decode("utf-8"))
+    for v in app_state.values():
+        ts, price, confidence = oracle_data_codec.decode(v)
+        print(f"ts: {ts}, price: {price}, confidence: {confidence}")
 
 
 if __name__ == "__main__":
