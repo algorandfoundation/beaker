@@ -1,4 +1,4 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from beaker import Application, external
 from pyteal import (
     Reject,
@@ -11,78 +11,80 @@ from pyteal import (
 )
 
 
-def move_offset(offset: ScratchVar, t: abi.BaseType) -> Expr:
-    return offset.store(offset.load() + Int(t.type_spec().byte_length_static()))
+def read_next(vaa: Expr, offset: ScratchVar, t: abi.BaseType, **kwargs) -> Expr:
+    return Seq(
+        t.decode(vaa, start_index=offset.load(), **kwargs),
+        offset.store(offset.load() + Int(t.type_spec().byte_length_static())),
+    )
 
 
 class ContractTransferVAA:
     def __init__(self):
-        self.version = abi.Uint8()  #: Version of VAA
-        self.index = abi.Uint32()  #: Which guardian set to be validated against
-        self.siglen = abi.Uint8()  #: How many signatures
-        self.timestamp = abi.Uint32()  #: TS of message
-        self.nonce = abi.Uint32()  #: Uniquifying
-        self.chain = abi.Uint16()  #: The Id of the chain where the message originated
-        self.emitter = (
-            abi.Address()
-        )  #: The address of the contract that emitted this message on the origin chain
-        self.sequence = (
-            abi.Uint64()
-        )  #: Unique integer representing the index, used for dedupe/ordering
-        self.consistency = abi.Uint8()  #
+        #: Version of VAA
+        self.version = abi.Uint8()
+        #: Which guardian set to be validated against
+        self.index = abi.Uint32()
+        #: How many signatures
+        self.siglen = abi.Uint8()
+        #: TS of message
+        self.timestamp = abi.Uint32()
+        #: Uniquifying
+        self.nonce = abi.Uint32()
+        #: The Id of the chain where the message originated
+        self.chain = abi.Uint16()
+        #: The address of the contract that emitted this message on the origin chain
+        self.emitter = abi.Address()
+        #: Unique integer representing the index, used for dedupe/ordering
+        self.sequence = abi.Uint64()
 
-        self.type = abi.Uint8()  #: Type of message
-        self.amount = abi.Address()  #: amount of transfer
-        self.contract = abi.Address()  #: asset transferred
-        self.from_chain = abi.Uint16()  #: Id of the chain the token originated
-        self.to_address = abi.Address()  #: Receiver of the token transfer
-        self.to_chain = (
-            abi.Uint16()
-        )  #: Id of the chain where the token transfer should be redeemed
-        self.fee = abi.Address()  #: Amount to pay relayer
+        self.consistency = abi.Uint8()  # ?
 
-        self.payload = abi.DynamicBytes()  #: Arbitrary byte payload
+        #: Type of message
+        self.type = abi.Uint8()
+        #: amount of transfer
+        self.amount = abi.Address()
+        #: asset transferred
+        self.contract = abi.Address()
+
+        #: Id of the chain the token originated
+        self.from_chain = abi.Uint16()
+        #: Receiver of the token transfer
+        self.to_address = abi.Address()
+        #: Id of the chain where the token transfer should be redeemed
+        self.to_chain = abi.Uint16()
+        #: Amount to pay relayer
+        self.fee = abi.Address()
+
+        #: Arbitrary byte payload
+        self.payload = abi.DynamicBytes()
 
     def decode(self, vaa: Expr) -> Expr:
         return Seq(
             (offset := ScratchVar()).store(Int(0)),
-            self.version.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.version),
-            self.index.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.index),
-            self.siglen.decode(vaa, start_index=offset.load()),
+            read_next(vaa, offset, self.version),
+            read_next(vaa, offset, self.index),
+            read_next(vaa, offset, self.siglen),
             # Increase offset to skip over sigs && digest
+            # since these should be checked by the wormhole core contract
             offset.store(
                 offset.load()
                 + Int(self.siglen.type_spec().byte_length_static())
                 + (self.siglen.get() * Int(66))
             ),
-            self.timestamp.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.timestamp),
-            self.nonce.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.nonce),
-            self.chain.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.chain),
-            self.emitter.decode(vaa, start_index=offset.load(), length=Int(32)),
-            move_offset(offset, self.emitter),
-            self.sequence.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.sequence),
-            self.consistency.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.consistency),
-            self.type.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.type),
-            self.amount.decode(vaa, start_index=offset.load(), length=Int(32)),
-            move_offset(offset, self.amount),
-            self.contract.decode(vaa, start_index=offset.load(), length=Int(32)),
-            move_offset(offset, self.contract),
-            self.from_chain.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.from_chain),
-            self.to_address.decode(vaa, start_index=offset.load(), length=Int(32)),
-            move_offset(offset, self.to_address),
-            self.to_chain.decode(vaa, start_index=offset.load()),
-            move_offset(offset, self.to_chain),
-            self.fee.decode(vaa, start_index=offset.load(), length=Int(32)),
-            move_offset(offset, self.fee),
+            read_next(vaa, offset, self.timestamp),
+            read_next(vaa, offset, self.nonce),
+            read_next(vaa, offset, self.chain),
+            read_next(vaa, offset, self.emitter, length=Int(32)),
+            read_next(vaa, offset, self.sequence),
+            read_next(vaa, offset, self.consistency),
+            read_next(vaa, offset, self.type),
+            read_next(vaa, offset, self.amount, length=Int(32)),
+            read_next(vaa, offset, self.contract, length=Int(32)),
+            read_next(vaa, offset, self.from_chain),
+            read_next(vaa, offset, self.to_address),
+            read_next(vaa, offset, self.to_chain),
+            read_next(vaa, offset, self.fee, length=Int(32)),
+            # Rest is payload
             self.payload.set(Suffix(vaa, offset.load())),
         )
 
@@ -114,7 +116,7 @@ class WormholeTransfer(Application, ABC):
 
     # Should be overridden with whatever app specific stuff
     # needs to be done on transfer
-    @abstractclassmethod
+    @abstractmethod
     def handle_transfer(
         self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
     ) -> Expr:
