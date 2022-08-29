@@ -654,6 +654,12 @@ class ApplicationClient:
 
         return atc
 
+    def add_transaction(
+        self, atc: AtomicTransactionComposer, txn: transaction.Transaction
+    ) -> AtomicTransactionComposer:
+        atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
+        return atc
+
     def fund(self, amt: int) -> str:
         """fund pays the app account the amount passed using the signer"""
         sender = self.get_sender()

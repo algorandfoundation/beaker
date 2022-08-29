@@ -162,7 +162,6 @@ class HandlerConfig:
             structs: dict[str, dict[str, str | list[tuple[str, str]]]] = {}
             for arg_name, model_spec in self.structs.items():
                 annos: list[tuple[str, Any]] = list(model_spec.__annotations__.items())
-
                 structs[arg_name] = {
                     "name": str(model_spec.__name__),  # type: ignore[attr-defined]
                     "elements": [

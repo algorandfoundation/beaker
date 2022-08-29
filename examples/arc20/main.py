@@ -1,6 +1,4 @@
 from algosdk.future.transaction import (
-    PaymentTxn,
-    wait_for_confirmation,
     AssetOptInTxn,
     OnComplete,
 )
@@ -82,6 +80,29 @@ def demo():
         )
     except Exception as e:
         print(app_client.wrap_approval_exception(e, 100))
+
+    acct2 = accts.pop()
+
+    client2 = app_client.prepare(signer=acct2.signer)
+    result = client2.call(
+        ARC20.asset_app_optin,
+        suggested_params=sp,
+        on_complete=OnComplete.OptInOC,
+        asset=smart_asa_id,
+        opt_in_txn=TransactionWithSigner(
+            txn=AssetOptInTxn(acct2.address, sp, smart_asa_id),
+            signer=acct2.signer,
+        ),
+    )
+
+    app_client.call(
+        ARC20.asset_transfer,
+        suggested_params=sp,
+        xfer_asset=smart_asa_id,
+        asset_amount=1,
+        asset_sender=app_addr,
+        asset_receiver=acct2.address,
+    )
 
 
 if __name__ == "__main__":
