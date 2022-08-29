@@ -11,10 +11,11 @@ from pyteal import (
 )
 
 
-def read_next(vaa: Expr, offset: ScratchVar, t: abi.BaseType, **kwargs) -> Expr:
+def read_next(vaa: Expr, offset: ScratchVar, t: abi.BaseType) -> Expr:
+    size = Int(t.type_spec().byte_length_static())
     return Seq(
-        t.decode(vaa, start_index=offset.load(), **kwargs),
-        offset.store(offset.load() + Int(t.type_spec().byte_length_static())),
+        t.decode(vaa, start_index=offset.load(), length=size),
+        offset.store(offset.load() + size),
     )
 
 
@@ -74,16 +75,16 @@ class ContractTransferVAA:
             read_next(vaa, offset, self.timestamp),
             read_next(vaa, offset, self.nonce),
             read_next(vaa, offset, self.chain),
-            read_next(vaa, offset, self.emitter, length=Int(32)),
+            read_next(vaa, offset, self.emitter),
             read_next(vaa, offset, self.sequence),
             read_next(vaa, offset, self.consistency),
             read_next(vaa, offset, self.type),
-            read_next(vaa, offset, self.amount, length=Int(32)),
-            read_next(vaa, offset, self.contract, length=Int(32)),
+            read_next(vaa, offset, self.amount),
+            read_next(vaa, offset, self.contract),
             read_next(vaa, offset, self.from_chain),
             read_next(vaa, offset, self.to_address),
             read_next(vaa, offset, self.to_chain),
-            read_next(vaa, offset, self.fee, length=Int(32)),
+            read_next(vaa, offset, self.fee),
             # Rest is payload
             self.payload.set(Suffix(vaa, offset.load())),
         )
@@ -121,11 +122,3 @@ class WormholeTransfer(Application, ABC):
         self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
     ) -> Expr:
         return Reject()
-
-
-if __name__ == "__main__":
-    import json
-
-    wht = WormholeTransfer()
-    print(wht.approval_program)
-    print(json.dumps(wht.contract.dictify()))
