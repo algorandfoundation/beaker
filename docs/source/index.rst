@@ -53,9 +53,11 @@ See full examples `here <https://github.com/algorand-devrel/beaker/tree/master/e
 
     usage
     application
+    lsig
     application_client
     sandbox
     state
+    precompile
     decorators
     contracts
     testing

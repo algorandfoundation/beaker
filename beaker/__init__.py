@@ -6,6 +6,7 @@ from .state import (
     DynamicAccountStateValue,
     ApplicationStateValue,
     AccountStateValue,
+    AccountStateBlob,
 )
 from .decorators import (
     Authorize,
@@ -20,6 +21,8 @@ from .decorators import (
     close_out,
     clear_state,
 )
+from .logic_signature import LogicSignature, TemplateVariable
+from .precompile import Precompile
 
 from . import client
 from . import sandbox
