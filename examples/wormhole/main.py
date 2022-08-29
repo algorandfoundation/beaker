@@ -30,6 +30,7 @@ def demo():
         signer=sandbox.get_accounts().pop().signer,
     )
 
+
     # Deploy the app on chain
     app_client.create()
 

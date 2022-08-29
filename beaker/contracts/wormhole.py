@@ -109,10 +109,14 @@ class WormholeTransfer(Application, ABC):
             self.handle_transfer(ctvaa, output=output),
         )
 
-    # Should be overridden with whatever app specific stuff
-    # needs to be done on transfer
     @abstractmethod
     def handle_transfer(
         self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
     ) -> Expr:
+        """
+
+        Should be overridden with whatever app specific stuff
+        needs to be done on transfer
+
+        """
         return Reject()
