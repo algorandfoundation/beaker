@@ -4,7 +4,8 @@ import beaker as bkr
 
 from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
-from beaker.lib.storage.global_blob import GlobalBlob, max_bytes
+from beaker.lib.storage.global_blob import GlobalBlob
+from beaker.lib.storage.blob import blob_page_size
 
 
 class GlobalBlobTest(UnitTestingApp):
@@ -32,7 +33,7 @@ def test_global_blob_write_read():
         def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
             return pt.Seq(
                 self.blob.zero(),
-                pt.Pop(self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8))),
+                self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
                 (s := pt.abi.String()).set(self.blob.read(pt.Int(32), pt.Int(40))),
                 output.decode(s.encode()),
             )
@@ -47,7 +48,7 @@ def test_global_blob_write_read_boundary():
         def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
             return pt.Seq(
                 self.blob.zero(),
-                pt.Pop(self.blob.write(pt.Int(0), pt.BytesZero(pt.Int(381)))),
+                self.blob.write(pt.Int(0), pt.BytesZero(pt.Int(381))),
                 (s := pt.abi.String()).set(self.blob.read(pt.Int(32), pt.Int(40))),
                 output.decode(s.encode()),
             )
@@ -62,8 +63,10 @@ def test_global_blob_write_read_past_end():
         def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
             return pt.Seq(
                 self.blob.zero(),
-                pt.Pop(self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8))),
-                (s := pt.abi.String()).set(self.blob.read(pt.Int(0), max_bytes)),
+                self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+                (s := pt.abi.String()).set(
+                    self.blob.read(pt.Int(0), pt.Int(blob_page_size * 64))
+                ),
                 output.decode(s.encode()),
             )
 
@@ -85,8 +88,9 @@ def test_global_blob_set_get():
                 output.set(self.blob.get_byte(pt.Int(32))),
             )
 
+    print(LB().blob.byte_key_str)
     expected = [num]
-    assert_output(LB(), [], expected, opups=1)
+    assert_output(LB(), [], expected)
 
 
 def test_global_blob_set_past_end():
@@ -97,7 +101,7 @@ def test_global_blob_set_past_end():
         def unit_test(self, *, output: pt.abi.Uint8):
             return pt.Seq(
                 self.blob.zero(),
-                self.blob.set_byte(max_bytes, pt.Int(num)),
+                self.blob.set_byte(pt.Int(blob_page_size * 64), pt.Int(num)),
                 output.set(self.blob.get_byte(pt.Int(32))),
             )
 

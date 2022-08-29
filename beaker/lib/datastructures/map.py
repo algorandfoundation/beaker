@@ -1,0 +1,2 @@
+class HashMap:
+    pass
