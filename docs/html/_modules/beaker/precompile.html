@@ -149,10 +149,11 @@
 
 
 <div class="viewcode-block" id="Precompile"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile">[docs]</a><span class="k">class</span> <span class="nc">Precompile</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; </span>
-<span class="sd">        Precompile allows a contract to signal that some LogicSignature should be </span>
-<span class="sd">        fully compiled prior to trying to construct the approval and clear programs.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Precompile allows a contract to signal that some LogicSignature should be</span>
+<span class="sd">    fully compiled prior to trying to construct the approval and clear programs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lsig</span><span class="p">:</span> <span class="n">LogicSignature</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lsig</span> <span class="o">=</span> <span class="n">lsig</span>
 
@@ -180,8 +181,8 @@
 
     <span class="k">def</span> <span class="nf">_set_compiled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">map</span><span class="p">:</span> <span class="n">SourceMap</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">            Called by application_client to set the binary/addr/map for </span>
-<span class="sd">            this precompile.</span>
+<span class="sd">        Called by application_client to set the binary/addr/map for</span>
+<span class="sd">        this precompile.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">binary</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span>
@@ -195,10 +196,10 @@
             <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Precompile.address"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.address">[docs]</a>    <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot; </span>
-<span class="sd">            address returns an expression for this Precompile. </span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        address returns an expression for this Precompile.</span>
 
-<span class="sd">            It will fail if any template_values are set. </span>
+<span class="sd">        It will fail if any template_values are set.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -210,22 +211,21 @@
 
 <div class="viewcode-block" id="Precompile.signer"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.signer">[docs]</a>    <span class="k">def</span> <span class="nf">signer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSigTransactionSigner</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">            signer returns a LogicSigTransactionSigner to be used with</span>
-<span class="sd">            an ApplicationClient or AtomicTransactionComposer.</span>
+<span class="sd">        signer returns a LogicSigTransactionSigner to be used with</span>
+<span class="sd">        an ApplicationClient or AtomicTransactionComposer.</span>
 
-<span class="sd">            It should only be used for non templated Precompiles.</span>
+<span class="sd">        It should only be used for non templated Precompiles.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">LogicSigTransactionSigner</span><span class="p">(</span><span class="n">LogicSigAccount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">binary</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Precompile.populate_template"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.populate_template">[docs]</a>    <span class="k">def</span> <span class="nf">populate_template</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">            populate_template returns the bytes resulting from patching the set of </span>
-<span class="sd">            arguments passed into the blank binary </span>
+<span class="sd">        populate_template returns the bytes resulting from patching the set of</span>
+<span class="sd">        arguments passed into the blank binary</span>
 
-<span class="sd">            The args passed should be of the same type and in the same order as the</span>
-<span class="sd">            template values declared.</span>
+<span class="sd">        The args passed should be of the same type and in the same order as the</span>
+<span class="sd">        template values declared.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">template_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
@@ -270,11 +270,11 @@
 
 <div class="viewcode-block" id="Precompile.populate_template_expr"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.populate_template_expr">[docs]</a>    <span class="k">def</span> <span class="nf">populate_template_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">            populate_template_expr returns the Expr that will patch a </span>
-<span class="sd">            blank binary given a set of arguments.</span>
-<span class="sd">            </span>
-<span class="sd">            It is called by ``template_address`` to return a Expr that</span>
-<span class="sd">            can be used to compare with a sender given some arguments.</span>
+<span class="sd">        populate_template_expr returns the Expr that will patch a</span>
+<span class="sd">        blank binary given a set of arguments.</span>
+
+<span class="sd">        It is called by ``template_address`` to return a Expr that</span>
+<span class="sd">        can be used to compare with a sender given some arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># To understand how this works, first look at the pure python one above</span>
@@ -327,8 +327,8 @@
 
 <div class="viewcode-block" id="Precompile.template_address"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.template_address">[docs]</a>    <span class="k">def</span> <span class="nf">template_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">            template_address returns an expression that will generate the expected</span>
-<span class="sd">            address given some set of values that should be included in the logic itself </span>
+<span class="sd">        template_address returns an expression that will generate the expected</span>
+<span class="sd">        address given some set of values that should be included in the logic itself</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Sha512_256</span><span class="p">(</span>
             <span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="n">PROGRAM_DOMAIN_SEPARATOR</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">populate_template_expr</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>

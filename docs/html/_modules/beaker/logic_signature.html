@@ -104,7 +104,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; initialize the TemplateVariable and the scratch var it is stored in &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;initialize the TemplateVariable and the scratch var it is stored in&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="n">stack_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span> <span class="s2">&quot;Must be bytes or uint&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">=</span> <span class="n">stack_type</span>
@@ -112,7 +112,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
 <div class="viewcode-block" id="TemplateVariable.get_name"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.TemplateVariable.get_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot; returns the name of the template variable that should be present in the output TEAL &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;returns the name of the template variable that should be present in the output TEAL&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">TealInputError</span><span class="p">(</span>
             <span class="s2">&quot;Name undefined in template variable&quot;</span>
         <span class="p">)</span>
@@ -140,16 +140,16 @@
 
 <div class="viewcode-block" id="LogicSignature"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.LogicSignature">[docs]</a><span class="k">class</span> <span class="nc">LogicSignature</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        LogicSignature allows the definition of a logic signature program.</span>
+<span class="sd">    LogicSignature allows the definition of a logic signature program.</span>
 
-<span class="sd">        A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes</span>
+<span class="sd">    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes</span>
 
-<span class="sd">        The `evauluate` method is the entry point to the application and must be overridden in any subclass </span>
-<span class="sd">        to call the necessary logic.</span>
+<span class="sd">    The `evauluate` method is the entry point to the application and must be overridden in any subclass</span>
+<span class="sd">    to call the necessary logic.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MAX_TEAL_VERSION</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; initialize the logic signature and identify relevant attributes &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;initialize the logic signature and identify relevant attributes&quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span> <span class="o">=</span> <span class="n">version</span>
 
@@ -202,10 +202,10 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="LogicSignature.evaluate"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.LogicSignature.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; </span>
-<span class="sd">            evaluate is the main entry point to the logic of the lsig. </span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        evaluate is the main entry point to the logic of the lsig.</span>
 
-<span class="sd">            Override this method to handle arbitrary logic.</span>
+<span class="sd">        Override this method to handle arbitrary logic.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Reject</span><span class="p">()</span></div></div>
