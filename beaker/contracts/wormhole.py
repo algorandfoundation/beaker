@@ -95,8 +95,6 @@ class WormholeTransfer(Application, ABC):
 
     A Message transfer from another chain to Algorand  using the Wormhole protocol
     will cause this contract to have it's `portal_transfer` method called.
-
-
     """
 
     @external
@@ -107,9 +105,7 @@ class WormholeTransfer(Application, ABC):
         portal_transfer accepts a VAA containing information about the transfer and the payload.
 
         To allow a more flexible interface we publicize that we output generic bytes
-
         """
-
         return Seq(
             (ctvaa := ContractTransferVAA()).decode(vaa.get()),
             self.handle_transfer(ctvaa, output=output),
