@@ -50,11 +50,13 @@
 <li class="toctree-l2"><a class="reference internal" href="#application-state">Application State</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#application-state-value">Application State Value</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dynamic-application-state-value">Dynamic Application State Value</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-state-blob">Application State Blob</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#account-state">Account State</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#accountstatevalue">AccountStateValue</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dynamicaccountstatevalue">DynamicAccountStateValue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#account-state-blob">Account State Blob</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#full-example">Full Example</a></li>
@@ -101,7 +103,7 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> class is produced automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code>, there is no need to create it directly.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.ApplicationState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ApplicationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateValue" title="beaker.state.ApplicationStateValue"><span class="pre">beaker.state.ApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.DynamicApplicationStateValue" title="beaker.state.DynamicApplicationStateValue"><span class="pre">beaker.state.DynamicApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">beaker.state.ApplicationStateBlob</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ApplicationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationState" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ApplicationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateValue" title="beaker.state.ApplicationStateValue"><span class="pre">beaker.state.ApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.DynamicApplicationStateValue" title="beaker.state.DynamicApplicationStateValue"><span class="pre">beaker.state.DynamicApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateBlob" title="beaker.state.ApplicationStateBlob"><span class="pre">beaker.state.ApplicationStateBlob</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ApplicationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationState" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.ApplicationState.dictify">
 <span class="sig-name descname"><span class="pre">dictify</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#beaker.state.ApplicationState.dictify" title="Permalink to this definition"></a></dt>
@@ -198,15 +200,82 @@
 </dd></dl>
 
 </section>
+<section id="application-state-blob">
+<span id="id4"></span><h3>Application State Blob<a class="headerlink" href="#application-state-blob" title="Permalink to this heading"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.state.ApplicationStateBlob">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ApplicationStateBlob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ApplicationStateBlob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationStateBlob" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.ApplicationStateBlob.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#ApplicationStateBlob.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationStateBlob.read" title="Permalink to this definition"></a></dt>
+<dd><p>Reads some bytes from the buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the start index to read from. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+<li><p><strong>stop</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the stop index to read until. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The bytes read from the blob from start to stop</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.ApplicationStateBlob.read_byte">
+<span class="sig-name descname"><span class="pre">read_byte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#ApplicationStateBlob.read_byte"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationStateBlob.read_byte" title="Permalink to this definition"></a></dt>
+<dd><p>Reads a single byte from the given index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idx</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the index into the blob to read the byte from. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A single byte as a <code class="docutils literal notranslate"><span class="pre">uint64</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.ApplicationStateBlob.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#ApplicationStateBlob.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationStateBlob.write" title="Permalink to this definition"></a></dt>
+<dd><p>Writes the buffer to the blob</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents where to start writing. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+<li><p><strong>buff</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the bytes to write. Should evaluate to <code class="docutils literal notranslate"><span class="pre">bytes</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.ApplicationStateBlob.write_byte">
+<span class="sig-name descname"><span class="pre">write_byte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byte</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#ApplicationStateBlob.write_byte"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationStateBlob.write_byte" title="Permalink to this definition"></a></dt>
+<dd><p>Writes a single byte to the given index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the index to write the byte to. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+<li><p><strong>byte</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> That represents the index to write the byte to. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 </section>
 <section id="account-state">
-<span id="id4"></span><h2>Account State<a class="headerlink" href="#account-state" title="Permalink to this heading"></a></h2>
+<span id="id5"></span><h2>Account State<a class="headerlink" href="#account-state" title="Permalink to this heading"></a></h2>
 <p>If your application requires storage of state at the Account level, declare the state values at the <code class="docutils literal notranslate"><span class="pre">class</span></code> level and the Application class will detect them on initialization.
 Algorand refers to Account state as <cite>Local State</cite></p>
 <p>The <code class="docutils literal notranslate"><span class="pre">AccountState</span></code> class is produced automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code>, there is no need to create it directly.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.AccountState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">AccountState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateValue" title="beaker.state.AccountStateValue"><span class="pre">beaker.state.AccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.DynamicAccountStateValue" title="beaker.state.DynamicAccountStateValue"><span class="pre">beaker.state.DynamicAccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">beaker.state.AccountStateBlob</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#AccountState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountState" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">AccountState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateValue" title="beaker.state.AccountStateValue"><span class="pre">beaker.state.AccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.DynamicAccountStateValue" title="beaker.state.DynamicAccountStateValue"><span class="pre">beaker.state.DynamicAccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateBlob" title="beaker.state.AccountStateBlob"><span class="pre">beaker.state.AccountStateBlob</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#AccountState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountState" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.AccountState.dictify">
 <span class="sig-name descname"><span class="pre">dictify</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#beaker.state.AccountState.dictify" title="Permalink to this definition"></a></dt>
@@ -286,6 +355,73 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 <dt class="sig sig-object py" id="beaker.state.DynamicAccountStateValue.__getitem__">
 <span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key_seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pyteal.Expr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pyteal.abi.BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#beaker.state.AccountStateValue" title="beaker.state.AccountStateValue"><span class="pre">AccountStateValue</span></a></span></span><a class="reference internal" href="_modules/beaker/state.html#DynamicAccountStateValue.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.DynamicAccountStateValue.__getitem__" title="Permalink to this definition"></a></dt>
 <dd><p>Access AccountState value given key_seed</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="account-state-blob">
+<span id="id6"></span><h3>Account State Blob<a class="headerlink" href="#account-state-blob" title="Permalink to this heading"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.state.AccountStateBlob">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">AccountStateBlob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#AccountStateBlob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountStateBlob" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.AccountStateBlob.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#AccountStateBlob.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountStateBlob.read" title="Permalink to this definition"></a></dt>
+<dd><p>Reads some bytes from the buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the start index to read from. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+<li><p><strong>stop</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the stop index to read until. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The bytes read from the blob from start to stop</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.AccountStateBlob.read_byte">
+<span class="sig-name descname"><span class="pre">read_byte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#AccountStateBlob.read_byte"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountStateBlob.read_byte" title="Permalink to this definition"></a></dt>
+<dd><p>Reads a single byte from the given index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idx</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the index into the blob to read the byte from. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A single byte as a <code class="docutils literal notranslate"><span class="pre">uint64</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.AccountStateBlob.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#AccountStateBlob.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountStateBlob.write" title="Permalink to this definition"></a></dt>
+<dd><p>Writes the buffer to the blob</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents where to start writing. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+<li><p><strong>buff</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the bytes to write. Should evaluate to <code class="docutils literal notranslate"><span class="pre">bytes</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.state.AccountStateBlob.write_byte">
+<span class="sig-name descname"><span class="pre">write_byte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byte</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#AccountStateBlob.write_byte"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountStateBlob.write_byte" title="Permalink to this definition"></a></dt>
+<dd><p>Writes a single byte to the given index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> that represents the index to write the byte to. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+<li><p><strong>byte</strong> – An <code class="docutils literal notranslate"><span class="pre">Expr</span></code> That represents the index to write the byte to. Should evaluate to <code class="docutils literal notranslate"><span class="pre">uint64</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

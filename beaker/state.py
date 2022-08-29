@@ -353,6 +353,58 @@ class StateBlob(ABC):
     def initialize(self) -> Expr:
         ...
 
+    @abstractmethod
+    def read(self, start: Expr, stop: Expr)->Expr:
+        """ 
+        Reads some bytes from the buffer 
+
+        Args:
+            start: An ``Expr`` that represents the start index to read from. Should evaluate to ``uint64``.
+            stop: An ``Expr`` that represents the stop index to read until. Should evaluate to ``uint64``.
+        Returns:
+            The bytes read from the blob from start to stop
+        """
+        ...
+
+    @abstractmethod
+    def write(self, start: Expr, buff: Expr)->Expr:
+        """ 
+        Writes the buffer to the blob  
+
+        Args:
+            start: An ``Expr`` that represents where to start writing. Should evaluate to ``uint64``.
+            buff: An ``Expr`` that represents the bytes to write. Should evaluate to ``bytes``.
+        
+        """
+        ...
+
+    @abstractmethod
+    def read_byte(self, idx: Expr)->Expr:
+        """ 
+        Reads a single byte from the given index 
+
+        Args:
+            idx: An ``Expr`` that represents the index into the blob to read the byte from. Should evaluate to ``uint64``.
+
+        Returns:
+            A single byte as a ``uint64``
+        
+        """
+        ...
+
+    @abstractmethod
+    def write_byte(self, idx: Expr, byte: Expr)->Expr:
+        """ 
+        Writes a single byte to the given index 
+
+        Args:
+            idx: An ``Expr`` that represents the index to write the byte to. Should evaluate to ``uint64``.
+            byte: An ``Expr`` That represents the index to write the byte to. Should evaluate to ``uint64``.
+
+        """
+        ...
+
+
 
 class AccountStateBlob(StateBlob):
     def __init__(self, max_keys: int = None, keys: list[int] = None):

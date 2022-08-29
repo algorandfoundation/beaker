@@ -40,9 +40,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lsig.html">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
@@ -428,8 +430,60 @@
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Reads some bytes from the buffer </span>
 
-<span class="k">class</span> <span class="nc">AccountStateBlob</span><span class="p">(</span><span class="n">StateBlob</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            start: An ``Expr`` that represents the start index to read from. Should evaluate to ``uint64``.</span>
+<span class="sd">            stop: An ``Expr`` that represents the stop index to read until. Should evaluate to ``uint64``.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The bytes read from the blob from start to stop</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Writes the buffer to the blob  </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start: An ``Expr`` that represents where to start writing. Should evaluate to ``uint64``.</span>
+<span class="sd">            buff: An ``Expr`` that represents the bytes to write. Should evaluate to ``bytes``.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Reads a single byte from the given index </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idx: An ``Expr`` that represents the index into the blob to read the byte from. Should evaluate to ``uint64``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A single byte as a ``uint64``</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Writes a single byte to the given index </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idx: An ``Expr`` that represents the index to write the byte to. Should evaluate to ``uint64``.</span>
+<span class="sd">            byte: An ``Expr`` That represents the index to write the byte to. Should evaluate to ``uint64``.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+
+
+<div class="viewcode-block" id="AccountStateBlob"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateBlob">[docs]</a><span class="k">class</span> <span class="nc">AccountStateBlob</span><span class="p">(</span><span class="n">StateBlob</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blob</span> <span class="o">=</span> <span class="n">LocalBlob</span><span class="p">(</span><span class="n">max_keys</span><span class="o">=</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span>
@@ -444,20 +498,20 @@
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">zero</span><span class="p">(</span><span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+<div class="viewcode-block" id="AccountStateBlob.write"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateBlob.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+<div class="viewcode-block" id="AccountStateBlob.read"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateBlob.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">get_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+<div class="viewcode-block" id="AccountStateBlob.read_byte"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateBlob.read_byte">[docs]</a>    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">get_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">set_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">byte</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span>
+<div class="viewcode-block" id="AccountStateBlob.write_byte"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateBlob.write_byte">[docs]</a>    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">set_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">byte</span><span class="p">,</span> <span class="n">acct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">)</span></div></div>
 
 
-<span class="k">class</span> <span class="nc">ApplicationStateBlob</span><span class="p">(</span><span class="n">StateBlob</span><span class="p">):</span>
+<div class="viewcode-block" id="ApplicationStateBlob"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateBlob">[docs]</a><span class="k">class</span> <span class="nc">ApplicationStateBlob</span><span class="p">(</span><span class="n">StateBlob</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blob</span> <span class="o">=</span> <span class="n">GlobalBlob</span><span class="p">(</span><span class="n">max_keys</span><span class="o">=</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">_max_keys</span><span class="p">)</span>
@@ -465,17 +519,17 @@
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">buff</span><span class="p">)</span>
+<div class="viewcode-block" id="ApplicationStateBlob.write"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateBlob.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">buff</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">buff</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+<div class="viewcode-block" id="ApplicationStateBlob.read"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateBlob.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">get_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+<div class="viewcode-block" id="ApplicationStateBlob.read_byte"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateBlob.read_byte">[docs]</a>    <span class="k">def</span> <span class="nf">read_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">get_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">set_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">byte</span><span class="p">)</span>
+<div class="viewcode-block" id="ApplicationStateBlob.write_byte"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateBlob.write_byte">[docs]</a>    <span class="k">def</span> <span class="nf">write_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">byte</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob</span><span class="o">.</span><span class="n">set_byte</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">byte</span><span class="p">)</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">check_not_static</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">StateValue</span><span class="p">):</span>

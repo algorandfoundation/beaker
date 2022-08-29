@@ -58,6 +58,15 @@ Dynamic Application State Value
     .. automethod:: __getitem__
 
 
+.. _application_state_blob:
+
+Application State Blob 
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ApplicationStateBlob
+    :members:
+
+
 
 
 .. _account_state:
@@ -104,6 +113,13 @@ DynamicAccountStateValue
 
     .. automethod:: __getitem__
 
+.. _account_state_blob:
+
+Account State Blob 
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: AccountStateBlob
+    :members:
 
 
 .. _state_example:
