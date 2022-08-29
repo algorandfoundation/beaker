@@ -46,7 +46,6 @@ class ContractTransferVAA:
         self.amount = abi.Address()
         #: asset transferred
         self.contract = abi.Address()
-
         #: Id of the chain the token originated
         self.from_chain = abi.Uint16()
         #: Receiver of the token transfer
@@ -55,6 +54,8 @@ class ContractTransferVAA:
         self.to_chain = abi.Uint16()
         #: Amount to pay relayer
         self.fee = abi.Address()
+        #: Address that sent the transfer
+        self.from_address = abi.Address()
 
         #: Arbitrary byte payload
         self.payload = abi.DynamicBytes()
@@ -69,7 +70,6 @@ class ContractTransferVAA:
             # since these should be checked by the wormhole core contract
             offset.store(
                 offset.load()
-                + Int(self.siglen.type_spec().byte_length_static())
                 + (self.siglen.get() * Int(66))
             ),
             read_next(vaa, offset, self.timestamp),
@@ -84,7 +84,8 @@ class ContractTransferVAA:
             read_next(vaa, offset, self.from_chain),
             read_next(vaa, offset, self.to_address),
             read_next(vaa, offset, self.to_chain),
-            read_next(vaa, offset, self.fee),
+            #read_next(vaa, offset, self.fee),
+            read_next(vaa, offset, self.from_address),
             # Rest is payload
             self.payload.set(Suffix(vaa, offset.load())),
         )

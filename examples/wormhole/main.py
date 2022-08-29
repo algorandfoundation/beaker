@@ -40,10 +40,10 @@ class OracleDataCache(WormholeTransfer):
     ) -> Expr:
         return Seq(
             # TODO: assert foreign sender?
-            (op := OraclePayload()).decode_msg(ctvaa.payload.get()),
-            self.prices[op.timestamp].set(op.encode()),
+            #(op := OraclePayload()).decode_msg(ctvaa.payload.get()),
+            #self.prices[op.timestamp].set(op.encode()),
             # don't return anything
-            output.set(Bytes("")),
+            output.set(ctvaa.payload.get()),
         )
 
     @external
@@ -52,8 +52,29 @@ class OracleDataCache(WormholeTransfer):
 
 
 def demo():
-    o = OracleDataCache()
-    print(o.application_spec())
+    app_client = client.ApplicationClient(
+        sandbox.get_algod_client(),
+        OracleDataCache(),
+        signer=sandbox.get_accounts().pop().signer,
+    )
+
+    print("deploying")
+    app_client.create()
+
+    print("calling")
+    vaa = bytes.fromhex(
+        "010000000001008049340af360a47103a962108cb57b9deebcc99e8e6ddeca1a1fb025413a62ac2cae4abd6b7e0ce7fc5a6bc99536387a3827cbbb0c710c81213a417cb59b89de01630d06ae0000000000088edf5b0e108c3a1a0a4b704cc89591f2ad8d50df24e991567e640ed720a94be20000000000000004000300000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000000000000000f6463fab1a45027a3c70781ae588e4e6661d21a7c19535a5d6b4f4c3164a13be1000f0b7ef3fcf3f8d9efc458695dc7bd7e534080ac7b48f2b881fd3063b1308f0648ff"
+    )
+
+    from vaa import parseVAA
+
+    parsed_vaa = parseVAA(vaa)
+
+    result = app_client.call(OracleDataCache.portal_transfer, vaa=vaa)
+    result_bytes: bytes = bytes(result.return_value)
+    print(parsed_vaa["Payload"])
+    #print(int.from_bytes(result_bytes, 'big'))
+    print(result_bytes.hex())
 
 
 if __name__ == "__main__":
