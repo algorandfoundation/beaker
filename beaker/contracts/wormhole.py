@@ -68,10 +68,7 @@ class ContractTransferVAA:
             read_next(vaa, offset, self.siglen),
             # Increase offset to skip over sigs && digest
             # since these should be checked by the wormhole core contract
-            offset.store(
-                offset.load()
-                + (self.siglen.get() * Int(66))
-            ),
+            offset.store(offset.load() + (self.siglen.get() * Int(66))),
             read_next(vaa, offset, self.timestamp),
             read_next(vaa, offset, self.nonce),
             read_next(vaa, offset, self.chain),
@@ -84,7 +81,7 @@ class ContractTransferVAA:
             read_next(vaa, offset, self.from_chain),
             read_next(vaa, offset, self.to_address),
             read_next(vaa, offset, self.to_chain),
-            #read_next(vaa, offset, self.fee),
+            # read_next(vaa, offset, self.fee),
             read_next(vaa, offset, self.from_address),
             # Rest is payload
             self.payload.set(Suffix(vaa, offset.load())),
