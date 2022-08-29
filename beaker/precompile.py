@@ -72,10 +72,11 @@ def py_encode_uvarint(integer: int) -> bytes:
 
 
 class Precompile:
-    """ 
-        Precompile allows a contract to signal that some LogicSignature should be 
-        fully compiled prior to trying to construct the approval and clear programs.
     """
+    Precompile allows a contract to signal that some LogicSignature should be
+    fully compiled prior to trying to construct the approval and clear programs.
+    """
+
     def __init__(self, lsig: LogicSignature):
         self.lsig = lsig
 
@@ -103,8 +104,8 @@ class Precompile:
 
     def _set_compiled(self, binary: bytes, addr: str, map: SourceMap):
         """
-            Called by application_client to set the binary/addr/map for 
-            this precompile.
+        Called by application_client to set the binary/addr/map for
+        this precompile.
         """
         self.binary = binary
         self.addr = addr
@@ -118,10 +119,10 @@ class Precompile:
             tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
 
     def address(self) -> Expr:
-        """ 
-            address returns an expression for this Precompile. 
+        """
+        address returns an expression for this Precompile.
 
-            It will fail if any template_values are set. 
+        It will fail if any template_values are set.
         """
 
         assert self.binary is not None
@@ -133,22 +134,21 @@ class Precompile:
 
     def signer(self) -> LogicSigTransactionSigner:
         """
-            signer returns a LogicSigTransactionSigner to be used with
-            an ApplicationClient or AtomicTransactionComposer.
+        signer returns a LogicSigTransactionSigner to be used with
+        an ApplicationClient or AtomicTransactionComposer.
 
-            It should only be used for non templated Precompiles.
+        It should only be used for non templated Precompiles.
         """
         return LogicSigTransactionSigner(LogicSigAccount(self.binary))
 
     def populate_template(self, *args) -> bytes:
         """
-            populate_template returns the bytes resulting from patching the set of 
-            arguments passed into the blank binary 
+        populate_template returns the bytes resulting from patching the set of
+        arguments passed into the blank binary
 
-            The args passed should be of the same type and in the same order as the
-            template values declared.
+        The args passed should be of the same type and in the same order as the
+        template values declared.
         """
-
 
         assert self.binary is not None
         assert len(self.template_values) > 0
@@ -193,11 +193,11 @@ class Precompile:
 
     def populate_template_expr(self, *args: Expr) -> Expr:
         """
-            populate_template_expr returns the Expr that will patch a 
-            blank binary given a set of arguments.
-            
-            It is called by ``template_address`` to return a Expr that
-            can be used to compare with a sender given some arguments.
+        populate_template_expr returns the Expr that will patch a
+        blank binary given a set of arguments.
+
+        It is called by ``template_address`` to return a Expr that
+        can be used to compare with a sender given some arguments.
         """
 
         # To understand how this works, first look at the pure python one above
@@ -250,8 +250,8 @@ class Precompile:
 
     def template_address(self, *args) -> Expr:
         """
-            template_address returns an expression that will generate the expected
-            address given some set of values that should be included in the logic itself 
+        template_address returns an expression that will generate the expected
+        address given some set of values that should be included in the logic itself
         """
         return Sha512_256(
             Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(*args))

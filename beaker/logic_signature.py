@@ -27,7 +27,7 @@ class TemplateVariable(Expr):
     """
 
     def __init__(self, stack_type: TealType, name: str = None):
-        """ initialize the TemplateVariable and the scratch var it is stored in """
+        """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
 
         self.stack_type = stack_type
@@ -35,7 +35,7 @@ class TemplateVariable(Expr):
         self.name = name
 
     def get_name(self) -> str:
-        """ returns the name of the template variable that should be present in the output TEAL """
+        """returns the name of the template variable that should be present in the output TEAL"""
         assert self.name is not None, TealInputError(
             "Name undefined in template variable"
         )
@@ -63,16 +63,16 @@ class TemplateVariable(Expr):
 
 class LogicSignature:
     """
-        LogicSignature allows the definition of a logic signature program.
+    LogicSignature allows the definition of a logic signature program.
 
-        A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
+    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
 
-        The `evauluate` method is the entry point to the application and must be overridden in any subclass 
-        to call the necessary logic.
+    The `evauluate` method is the entry point to the application and must be overridden in any subclass
+    to call the necessary logic.
     """
 
     def __init__(self, version: int = MAX_TEAL_VERSION):
-        """ initialize the logic signature and identify relevant attributes """
+        """initialize the logic signature and identify relevant attributes"""
 
         self.teal_version = version
 
@@ -125,10 +125,10 @@ class LogicSignature:
         )
 
     def evaluate(self):
-        """ 
-            evaluate is the main entry point to the logic of the lsig. 
+        """
+        evaluate is the main entry point to the logic of the lsig.
 
-            Override this method to handle arbitrary logic.
+        Override this method to handle arbitrary logic.
 
         """
         return Reject()
