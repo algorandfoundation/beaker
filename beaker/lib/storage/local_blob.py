@@ -41,10 +41,9 @@ class LocalBlob(Blob):
 
         @Subroutine(TealType.none)
         def _impl(acct):
-            writes: list[Expr] = [
-                App.localPut(acct, Bytes(bk), EMPTY_PAGE) for bk in self.byte_keys
-            ]
-            return Seq(*writes)
+            return Seq(
+                *[App.localPut(acct, Bytes(bk), EMPTY_PAGE) for bk in self.byte_keys]
+            )
 
         return _impl(acct)
 

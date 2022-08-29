@@ -22,6 +22,7 @@ from pyteal import (
 )
 from beaker.lib.storage import LocalBlob
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
+from beaker.lib.storage.global_blob import GlobalBlob
 
 
 def get_default_for_type(stack_type, default):
@@ -381,6 +382,27 @@ class AccountStateBlob(StateBlob):
         return self.blob.set_byte(idx, byte, acct=self.acct)
 
 
+class ApplicationStateBlob(StateBlob):
+    def __init__(self, max_keys: int = None, keys: list[int] = None):
+        self.blob = GlobalBlob(max_keys=max_keys, keys=keys)
+        super().__init__(self.blob._max_keys)
+
+    def initialize(self) -> Expr:
+        return self.blob.zero()
+
+    def write(self, start: Expr, buff: Expr) -> Expr:
+        return self.blob.write(start, buff)
+
+    def read(self, start: Expr, stop: Expr) -> Expr:
+        return self.blob.read(start, stop)
+
+    def read_byte(self, idx: Expr) -> Expr:
+        return self.blob.get_byte(idx)
+
+    def write_byte(self, idx: Expr, byte: Expr) -> Expr:
+        return self.blob.set_byte(idx, byte)
+
+
 def check_not_static(sv: StateValue):
     if sv.static:
         raise TealInputError(f"StateValue {sv} is static")
@@ -467,17 +489,6 @@ class State:
             },
         }
 
-    def initialize(self) -> Expr:
-        """Generate expression from state values to initialize a default value"""
-        return Seq(
-            *[
-                v.set_default()
-                for v in self.declared_vals.values()
-                if not v.static or (v.static and v.default is not None)
-            ]
-            + [v.initialize() for v in self.blob_vals.values()]
-        )
-
     def schema(self) -> StateSchema:
         """gets the schema as num uints/bytes for app create transactions"""
         return StateSchema(
@@ -488,13 +499,27 @@ class State:
 class ApplicationState(State):
     def __init__(
         self,
-        fields: Mapping[str, ApplicationStateValue | DynamicApplicationStateValue],
+        fields: Mapping[
+            str,
+            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+        ],
     ):
         super().__init__(fields)
         if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
             raise Exception(
                 f"Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
             )
+
+    def initialize(self) -> Expr:
+        """Generate expression from state values to initialize a default value"""
+        return Seq(
+            *[
+                v.set_default()
+                for v in self.declared_vals.values()
+                if not v.static or (v.static and v.default is not None)
+            ]
+            + [v.initialize() for v in self.blob_vals.values()]
+        )
 
 
 class AccountState(State):

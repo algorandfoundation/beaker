@@ -28,6 +28,7 @@ from beaker.decorators import (
 from beaker.state import (
     AccountState,
     AccountStateBlob,
+    ApplicationStateBlob,
     ApplicationState,
     DynamicAccountStateValue,
     AccountStateValue,
@@ -95,11 +96,15 @@ class Application:
         acct_vals: dict[
             str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
         ] = {}
-        app_vals: dict[str, ApplicationStateValue | DynamicApplicationStateValue] = {}
+        app_vals: dict[
+            str,
+            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+        ] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
             # Check for state vals
             match bound_attr:
+
                 case AccountStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
@@ -108,12 +113,16 @@ class Application:
                     acct_vals[name] = bound_attr
                 case AccountStateBlob():
                     acct_vals[name] = bound_attr
+
+                case ApplicationStateBlob():
+                    app_vals[name] = bound_attr
                 case ApplicationStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
                 case DynamicApplicationStateValue():
                     app_vals[name] = bound_attr
+
                 case Precompile():
                     self.precompiles[name] = bound_attr
 

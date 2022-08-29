@@ -11,7 +11,7 @@ from beaker import (
 )
 from pyteal import abi, TealType, Bytes, Int, Txn
 
-from beaker.state import AccountStateBlob
+from beaker.state import AccountStateBlob, ApplicationStateBlob
 
 
 class StateExample(Application):
@@ -29,8 +29,12 @@ class StateExample(Application):
         DynamicApplicationStateValue
     ] = DynamicApplicationStateValue(
         stack_type=TealType.uint64,
-        max_keys=63,
-        descr="A dynamic app state variable, with 63 possible keys",
+        max_keys=32,
+        descr="A dynamic app state variable, with 32 possible keys",
+    )
+
+    application_blob: Final[ApplicationStateBlob] = ApplicationStateBlob(
+        max_keys=16,
     )
 
     declared_account_value: Final[AccountStateValue] = AccountStateValue(
@@ -56,13 +60,25 @@ class StateExample(Application):
         return self.initialize_account_state()
 
     @external
-    def write_blob(self, v: abi.String):
+    def write_acct_blob(self, v: abi.String):
         return self.account_blob.write(Int(0), v.get())
 
     @external
-    def read_blob(self, *, output: abi.DynamicBytes):
+    def read_acct_blob(self, *, output: abi.DynamicBytes):
         return output.set(
             self.account_blob.read(Int(0), self.account_blob.blob.max_bytes - Int(1))
+        )
+
+    @external
+    def write_app_blob(self, v: abi.String):
+        return self.application_blob.write(Int(0), v.get())
+
+    @external
+    def read_app_blob(self, *, output: abi.DynamicBytes):
+        return output.set(
+            self.application_blob.read(
+                Int(0), self.application_blob.blob.max_bytes - Int(1)
+            )
         )
 
     @external

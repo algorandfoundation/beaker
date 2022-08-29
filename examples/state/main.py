@@ -16,6 +16,8 @@ def demo():
 
     client = get_algod_client()
 
+    app = StateExample()
+
     app_client = ApplicationClient(client, StateExample(), signer=acct.signer)
     app_id, app_address, transaction_id = app_client.create()
     print(
@@ -46,11 +48,20 @@ def demo():
     print(f"Set/get dynamic app state result: {result.return_value}")
 
     msg = "write this message please and make it readable"
-    app_client.call(StateExample.write_blob, v=msg)
-    result = app_client.call(StateExample.read_blob)
+
+    # Account state blob
+    app_client.call(StateExample.write_acct_blob, v=msg)
+    result = app_client.call(StateExample.read_acct_blob)
     got_msg = bytes(result.return_value[: len(msg)]).decode()
     assert msg == got_msg
-    print(got_msg)
+    print(f"wrote and read the message to account state {got_msg}")
+
+    # App state blob
+    app_client.call(StateExample.write_app_blob, v=msg)
+    # result = app_client.call(StateExample.read_app_blob)
+    # got_msg = bytes(result.return_value[: len(msg)]).decode()
+    # assert msg == got_msg
+    print(f"wrote and read the message to application state {got_msg}")
 
 
 if __name__ == "__main__":
