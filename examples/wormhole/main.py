@@ -3,9 +3,9 @@ from algosdk.abi import ABIType
 from beaker import *
 
 if __name__ == "__main__":
-    from contract import OracleDataCache, OracleData
+    from contract import OracleDataCache
 else:
-    from .contract import OracleDataCache, OracleData
+    from .contract import OracleDataCache
 
 
 base_vaa = bytes.fromhex(
@@ -18,6 +18,9 @@ base_vaa = bytes.fromhex(
     + "45027a3c70781ae588e4e6661d21a7c19535a5d6b4f4c3164a13be1000f0b7ef3"
     + "fcf3f8d9efc458695dc7bd7e534080ac7b48f2b881fd3063b1308f0648"
 )
+
+# Get the codec to decode the stored value
+oracle_data_codec = ABIType.from_string(str(OracleDataCache.OracleData().type_spec()))
 
 
 def demo():
@@ -34,7 +37,7 @@ def demo():
     base_ts = 1661802300
     base_price = 10000
     for x in range(10):
-        fake_oracle_data = {
+        fauxracle_data = {
             "ts": base_ts + x * 60,
             "price": base_price + x,
             "confidence": 9999,
@@ -42,11 +45,8 @@ def demo():
 
         app_client.call(
             OracleDataCache.portal_transfer,
-            vaa=base_vaa + json.dumps(fake_oracle_data).encode(),
+            vaa=base_vaa + json.dumps(fauxracle_data).encode(),
         )
-
-    # Get the codec to decode the stored value
-    oracle_data_codec = ABIType.from_string(str(OracleData().type_spec()))
 
     # Get the current app state
     app_state = app_client.get_application_state(raw=True)
