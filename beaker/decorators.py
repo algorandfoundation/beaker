@@ -59,40 +59,48 @@ class DefaultArgument:
         self.resolver = resolver
 
         match resolver:
+
+            # Expr types
             case AccountStateValue():
                 self.resolvable_class = DefaultArgumentClass.LocalState
             case ApplicationStateValue():
                 self.resolvable_class = DefaultArgumentClass.GlobalState
             case Bytes() | Int():
                 self.resolvable_class = DefaultArgumentClass.Constant
+
+            # Native types
             case int() | str() | bytes():
                 self.resolvable_class = DefaultArgumentClass.Constant
+
+            # FunctionType
             case _:
                 # Fall through, if its not got a valid handler config, raise error
                 hc = get_handler_config(cast(HandlerFunc, resolver))
                 if hc.method_spec is None or not hc.read_only:
-                    raise Exception(
-                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
-                    )
+                    raise TealTypeError(self.resolver, DefaultArgumentType)
+
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
 
     def resolve_hint(self):
         match self.resolver:
+            # Expr types
             case AccountStateValue() | ApplicationStateValue():
                 return self.resolver.str_key()
             case Bytes():
                 return self.resolver.byte_str.replace('"', "")
             case Int():
                 return self.resolver.value
+            # Native types
             case int() | bytes() | str():
                 return self.resolver
+
+            # FunctionType
             case _:
                 # Fall through, if its not got a valid handler config, raise error
                 hc = get_handler_config(cast(HandlerFunc, self.resolver))
                 if hc.method_spec is None or not hc.read_only:
-                    raise Exception(
-                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
-                    )
+                    raise TealTypeError(self.resolver, DefaultArgumentType)
+
                 return hc.method_spec.dictify()
 
 
