@@ -33,8 +33,6 @@ def demo():
     # Deploy the app on chain
     app_client.create()
 
-    print(len(app_client.approval_binary))
-
     # Make up some fake oracle data and send it to the contract
     base_ts = 1661802300
     base_price = 10000

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Literal
 
 from beaker import Application, external
 from pyteal import (
@@ -15,6 +16,9 @@ from pyteal import (
 def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
     size = t.type_spec().byte_length_static()
     return offset + size, t.decode(vaa, start_index=Int(offset), length=Int(size))
+
+
+Bytes32 = abi.StaticBytes[Literal[32]]
 
 
 class ContractTransferVAA:
@@ -41,9 +45,9 @@ class ContractTransferVAA:
         #: Type of message
         self.type = abi.Uint8()
         #: amount of transfer
-        self.amount = abi.Address()
+        self.amount = abi.make(Bytes32)
         #: asset transferred
-        self.contract = abi.Address()
+        self.contract = abi.make(Bytes32)
         #: Id of the chain the token originated
         self.from_chain = abi.Uint16()
         #: Receiver of the token transfer
@@ -51,7 +55,7 @@ class ContractTransferVAA:
         #: Id of the chain where the token transfer should be redeemed
         self.to_chain = abi.Uint16()
         #: Amount to pay relayer
-        self.fee = abi.Address()
+        self.fee = abi.make(Bytes32)
         #: Address that sent the transfer
         self.from_address = abi.Address()
 
