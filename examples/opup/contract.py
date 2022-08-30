@@ -14,12 +14,7 @@ class ExpensiveApp(OpUp):
         iters: abi.Uint64,
         opup_app: abi.Application = OpUp.opup_app_id,
         *,
-        output: Annotated[
-            abi.StaticArray[abi.Byte, Literal[32]],
-            ParameterAnnotation(
-                descr="The result of hashing the input a number of times"
-            ),
-        ],
+        output: abi.StaticBytes[Literal[32]],
     ):
         return Seq(
             Assert(opup_app.application_id() == self.opup_app_id),

@@ -65,9 +65,9 @@ class DefaultArgument:
                 self.resolvable_class = DefaultArgumentClass.LocalState
             case ApplicationStateValue():
                 self.resolvable_class = DefaultArgumentClass.GlobalState
-            case Bytes():
+            case Bytes() | Int():
                 self.resolvable_class = DefaultArgumentClass.Constant
-            case Int():
+            case int() | str() | bytes():
                 self.resolvable_class = DefaultArgumentClass.Constant
             case _:
                 # Fall through, if its not got a valid handler config, raise error
@@ -86,6 +86,8 @@ class DefaultArgument:
                 return self.resolver.byte_str.replace('"', "")
             case Int():
                 return self.resolver.value
+            case int() | bytes() | str():
+                return self.resolver
             case _:
                 # Fall through, if its not got a valid handler config, raise error
                 hc = get_handler_config(cast(HandlerFunc, self.resolver))
@@ -362,48 +364,26 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
     params = sig.parameters.copy()
     for k, v in params.items():
         type_anno = v.annotation
+
         match v.default:
-            case Expr() | FunctionType():
+            case Expr() | FunctionType() | int() | str() | bytes():
                 param_annotations[k] = ParameterAnnotation(
                     default=DefaultArgument(v.default)
                 )
                 params[k] = v.replace(default=Parameter.empty)
                 fn_annotations[k] = type_anno
             case _:
-                if hasattr(type_anno, "__origin__"):
-                    orig = type_anno.__origin__
-                    if hasattr(type_anno, "__metadata__"):
-                        param_annotations[k] = type_anno.__metadata__[0]
-                        params[k] = v.replace(annotation=orig)
-                        fn_annotations[k] = orig
+                print(k)
+                pass
 
-    if len(param_annotations.items()) > 0:
-        set_handler_config(fn, param_annotations=param_annotations)
-
-    # Fix function sig/annotations
-    newsig = sig.replace(parameters=list(params.values()))
-    fn.__signature__ = newsig  # type: ignore[attr-defined]
-    fn.__annotations__ = fn_annotations
-
-    return fn
-
-
-def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
-    sig = signature(fn)
-    fn_annotations = get_annotations(fn)
-
-    param_annotations: dict[str, ParameterAnnotation] = {}
-
-    params = sig.parameters.copy()
-    for k, v in params.items():
-        tv = v.annotation
-        if hasattr(tv, "__origin__"):
-            orig = tv.__origin__
-            if hasattr(tv, "__metadata__"):
-                param_annotations[k] = tv.__metadata__[0]
-
-                params[k] = v.replace(annotation=orig)
-                fn_annotations[k] = orig
+        # if hasattr(type_anno, "__origin__"):
+        #    print(type_anno)
+        #    orig = type_anno.__origin__
+        #    print(orig)
+        #    if hasattr(type_anno, "__metadata__"):
+        #        param_annotations[k] = type_anno.__metadata__[0]
+        #        params[k] = v.replace(annotation=orig)
+        #        fn_annotations[k] = orig
 
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)
@@ -495,7 +475,6 @@ def external(
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
         fn = _capture_defaults(fn)
-        # fn = _capture_annotations(fn)
         fn = _replace_structs(fn)
 
         if authorize is not None:
