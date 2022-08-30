@@ -350,19 +350,16 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
 
 def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
-    fn_annotations = get_annotations(fn)
     params = sig.parameters.copy()
 
     default_args: dict[str, DefaultArgument] = {}
 
     for k, v in params.items():
-        type_anno = v.annotation
 
         match v.default:
             case Expr() | int() | str() | bytes() | FunctionType():
                 default_args[k] = DefaultArgument(v.default)
                 params[k] = v.replace(default=Parameter.empty)
-                fn_annotations[k] = type_anno
 
     if len(default_args.items()) > 0:
         # Update handler config
@@ -371,7 +368,6 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
         # Fix function sig/annotations
         newsig = sig.replace(parameters=list(params.values()))
         fn.__signature__ = newsig  # type: ignore[attr-defined]
-        fn.__annotations__ = fn_annotations
 
     return fn
 
