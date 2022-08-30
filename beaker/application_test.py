@@ -19,7 +19,6 @@ from beaker.application import (
     get_method_spec,
 )
 from beaker.decorators import (
-    ParameterAnnotation,
     DefaultArgumentClass,
     external,
     get_handler_config,
@@ -373,13 +372,10 @@ def test_default_param_state():
 
     hint = h.hints[h.hintymeth.__name__]
 
-    assert "aid" in hint.param_annotations, "Expected annotation available for param"
-    anno: ParameterAnnotation = hint.param_annotations["aid"]
+    assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
-    assert anno.descr is None
+    default = hint.default_arguments["aid"]
 
-    assert anno.default is not None
-    default = anno.default
     assert default.resolvable_class == DefaultArgumentClass.GlobalState
     assert (
         default.resolve_hint() == Hinty.asset_id.str_key()
@@ -400,13 +396,10 @@ def test_default_param_const():
 
     hint = h.hints[h.hintymeth.__name__]
 
-    assert "aid" in hint.param_annotations, "Expected annotation available for param"
-    anno: ParameterAnnotation = hint.param_annotations["aid"]
+    assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
-    assert anno.descr is None
+    default = hint.default_arguments["aid"]
 
-    assert anno.default is not None
-    default = anno.default
     assert default.resolvable_class == DefaultArgumentClass.Constant
     assert (
         default.resolve_hint() == const_val
@@ -431,119 +424,104 @@ def test_default_read_only_method():
 
     hint = h.hints[h.hintymeth.__name__]
 
-    assert "aid" in hint.param_annotations, "Expected annotation available for param"
-    anno: ParameterAnnotation = hint.param_annotations["aid"]
+    assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
-    assert anno.descr is None
+    default = hint.default_arguments["aid"]
 
-    assert anno.default is not None
-    default = anno.default
     assert default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
         default.resolve_hint() == get_method_spec(Hinty.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
 
 
-# def test_app_spec():
-#    class Specd(Application):
-#        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
-#        decl_acct_val = AccountStateValue(pt.TealType.uint64)
-#
-#        @external(read_only=True)
-#        def get_asset_id(self, *, output: pt.abi.Uint64):
-#            return output.set(pt.Int(123))
-#
-#        @external
-#        def annotated_meth(
-#            self,
-#            aid: Annotated[
-#                pt.abi.Asset,
-#                ParameterAnnotation(descr="Testing asset id", default=get_asset_id),
-#            ],
-#        ):
-#            return pt.Assert(pt.Int(1))
-#
-#        class Thing(pt.abi.NamedTuple):
-#            a: pt.abi.Field[pt.abi.Uint64]
-#            b: pt.abi.Field[pt.abi.Uint32]
-#
-#        @external
-#        def struct_meth(self, thing: Thing):
-#            return pt.Approve()
-#
-#    s = Specd()
-#
-#    actual_spec = s.application_spec()
-#    expected_spec = {
-#        "hints": {
-#            "get_asset_id": {"read_only": True},
-#            "annotated_meth": {
-#                "param_annotations": {
-#                    "aid": {
-#                        "descr": "Testing asset id",
-#                        "default": {
-#                            "abi-method": {
-#                                "name": "get_asset_id",
-#                                "args": [],
-#                                "returns": {"type": "uint64"},
-#                            }
-#                        },
-#                    }
-#                }
-#            },
-#            "struct_meth": {
-#                "structs": {"thing": {"name": "Thing", "elements": ["a", "b"]}}
-#            },
-#        },
-#        "schema": {
-#            "local": {
-#                "declared": {
-#                    "decl_acct_val": {
-#                        "type": "uint64",
-#                        "key": "decl_acct_val",
-#                        "descr": None,
-#                    }
-#                },
-#                "dynamic": {},
-#            },
-#            "global": {
-#                "declared": {
-#                    "decl_app_val": {
-#                        "type": "uint64",
-#                        "key": "decl_app_val",
-#                        "descr": None,
-#                    }
-#                },
-#                "dynamic": {},
-#            },
-#        },
-#        "contract": {
-#            "name": "Specd",
-#            "methods": [
-#                # {"name": "get_asset_id", "args": [], "returns": {"type": "uint64"}},
-#                # {
-#                #    "name": "annotated_meth",
-#                #    "args": [ {"type": "asset", "name": "aid", "desc": "Testing asset id"} ],
-#                #    "returns": {"type": "void"},
-#                # },
-#                # {
-#                #    "name": "struct_meth",
-#                #    "args": [{"type": "(uint64,uint32)", "name": "thing"}],
-#                #    "returns": {"type": "void"},
-#                # },
-#            ],
-#            "desc": None,
-#            "networks": {},
-#        },
-#    }
-#
-#    # TODO: come back and check methods, the sorting gets weird
-#    actual_spec["contract"]["methods"] = []
-#    del actual_spec["source"]
-#
-#    assert json.dumps(actual_spec, sort_keys=True) == json.dumps(
-#        expected_spec, sort_keys=True
-#    )
+def test_app_spec():
+    class Specd(Application):
+        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
+        decl_acct_val = AccountStateValue(pt.TealType.uint64)
+
+        @external(read_only=True)
+        def get_asset_id(self, *, output: pt.abi.Uint64):
+            return output.set(pt.Int(123))
+
+        @external
+        def annotated_meth(self, aid: pt.abi.Asset = get_asset_id):
+            return pt.Assert(pt.Int(1))
+
+        class Thing(pt.abi.NamedTuple):
+            a: pt.abi.Field[pt.abi.Uint64]
+            b: pt.abi.Field[pt.abi.Uint32]
+
+        @external
+        def struct_meth(self, thing: Thing):
+            return pt.Approve()
+
+    s = Specd()
+
+    actual_spec = s.application_spec()
+
+    get_asset_id_hints = {"read_only": True}
+    annotated_meth_hints = {
+        "default_arguments": {
+            "aid": {
+                "source": "abi-method",
+                "data": {
+                    "name": "get_asset_id",
+                    "args": [],
+                    "returns": {"type": "uint64"},
+                },
+            },
+        }
+    }
+    struct_meth_hints = {
+        "structs": {
+            "thing": {"name": "Thing", "elements": [("a", "uint64"), ("b", "uint32")]}
+        }
+    }
+
+    expected_hints = {
+        "get_asset_id": get_asset_id_hints,
+        "annotated_meth": annotated_meth_hints,
+        "struct_meth": struct_meth_hints,
+    }
+
+    expected_schema = {
+        "local": {
+            "declared": {
+                "decl_acct_val": {
+                    "type": "uint64",
+                    "key": "decl_acct_val",
+                    "descr": "",
+                }
+            },
+            "dynamic": {},
+        },
+        "global": {
+            "declared": {
+                "decl_app_val": {
+                    "type": "uint64",
+                    "key": "decl_app_val",
+                    "descr": "",
+                }
+            },
+            "dynamic": {},
+        },
+    }
+
+    def dict_match(a: dict, e: dict) -> bool:
+        for k, v in a.items():
+            if type(v) is dict:
+                if not dict_match(v, e[k]):
+                    print(f"comparing {k} {v} {e[k]}")
+                    return False
+            else:
+                if v != e[k]:
+                    print(f"comparing {k}")
+                    return False
+
+        return True
+
+    assert dict_match(actual_spec["hints"], expected_hints)
+    assert dict_match(actual_spec["schema"], expected_schema)
 
 
 EXPECTED_BARE_HANDLERS = [

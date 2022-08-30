@@ -103,23 +103,8 @@ class DefaultArgument:
 
                 return hc.method_spec.dictify()
 
-
-@dataclass
-class ParameterAnnotation:
-    descr: Optional[str] = field(kw_only=True, default=None)
-    default: Optional[DefaultArgument] = field(kw_only=True, default=None)
-
     def dictify(self) -> dict[str, Any]:
-        ret: dict[str, Any] = {}
-        if self.descr is not None:
-            ret["descr"] = self.descr
-
-        if self.default is not None:
-            ret["default"] = {
-                str(self.default.resolvable_class): self.default.resolve_hint()
-            }
-
-        return ret
+        return {"source": self.resolvable_class.value, "data": self.resolve_hint()}
 
 
 @dataclass
@@ -133,7 +118,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, abi.NamedTuple]] = field(kw_only=True, default=None)
 
-    param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
+    default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None
     )
 
@@ -144,10 +129,10 @@ class HandlerConfig:
         mh: dict[str, Any] = {"read_only": self.read_only}
 
         if (
-            self.param_annotations is not None
-            and len(self.param_annotations.keys()) > 0
+            self.default_arguments is not None
+            and len(self.default_arguments.keys()) > 0
         ):
-            mh["param_annotations"] = self.param_annotations
+            mh["default_arguments"] = self.default_arguments
 
         if self.structs is not None:
             structs: dict[str, dict[str, str | list[tuple[str, str]]]] = {}
@@ -228,15 +213,15 @@ class MethodHints:
     structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
         kw_only=True, default=None
     )
-    #: annotations
-    param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
+    #: defaults
+    default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None
     )
 
     def empty(self) -> bool:
         return (
             self.structs is None
-            and self.param_annotations is None
+            and self.default_arguments is None
             and not self.read_only
         )
 
@@ -244,9 +229,9 @@ class MethodHints:
         d: dict[str, Any] = {}
         if self.read_only:
             d["read_only"] = True
-        if self.param_annotations is not None:
-            d["param_annotations"] = {
-                k: v.dictify() for k, v in self.param_annotations.items()
+        if self.default_arguments is not None:
+            d["default_arguments"] = {
+                k: v.dictify() for k, v in self.default_arguments.items()
             }
         if self.structs is not None:
             d["structs"] = self.structs
@@ -366,21 +351,19 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
 def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     fn_annotations = get_annotations(fn)
-    param_annotations: dict[str, ParameterAnnotation] = {}
+    default_args: dict[str, DefaultArgument] = {}
     params = sig.parameters.copy()
     for k, v in params.items():
         type_anno = v.annotation
 
         match v.default:
             case Expr() | int() | str() | bytes() | FunctionType():
-                param_annotations[k] = ParameterAnnotation(
-                    default=DefaultArgument(v.default)
-                )
+                default_args[k] = DefaultArgument(v.default)
                 params[k] = v.replace(default=Parameter.empty)
                 fn_annotations[k] = type_anno
 
-    if len(param_annotations.items()) > 0:
-        set_handler_config(fn, param_annotations=param_annotations)
+    if len(default_args.items()) > 0:
+        set_handler_config(fn, default_arguments=default_args)
 
     # Fix function sig/annotations
     newsig = sig.replace(parameters=list(params.values()))

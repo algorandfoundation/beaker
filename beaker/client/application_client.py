@@ -623,11 +623,11 @@ class ApplicationClient:
                 args.append(argument)
 
             elif (
-                hints.param_annotations is not None and name in hints.param_annotations
+                hints.default_arguments is not None and name in hints.default_arguments
             ):
-                annos = hints.param_annotations[name]
-                if annos.default is not None:
-                    args.append(self.resolve(annos.default))
+                default_arg = hints.default_arguments[name]
+                if default_arg is not None:
+                    args.append(self.resolve(default_arg))
             else:
                 raise Exception(f"Unspecified argument: {name}")
 
