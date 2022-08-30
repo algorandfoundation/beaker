@@ -124,7 +124,7 @@ Inheritance
 What about extending our Application with some other functionality?
 
 .. literalinclude:: ../../examples/opup/contract.py
-    :lines: 7-42
+    :lines: 4-29
 
 Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 
@@ -138,38 +138,12 @@ Parameter Annotations
 
 .. currentmodule:: beaker.decorators
 .. autoclass:: ParameterAnnotation
+    :members:
 
 
 A caller of our application should be provided with all the information they might need in order to make a successful application call.
 
 One example of this of information is of course the parameter name and type. These bits of information are already provided by the normal method definition. 
-
- 
-.. _parameter_description:
-
-Parameter Description
-^^^^^^^^^^^^^^^^^^^^^^
-
-Another example that is harder to provide is the description of the parameter. The plain english explanation of what the parameter _should_ be can be quite helpful in determining what to pass the method. To set a description on a parameter you can use the python ``typing.Annotated`` generic class and pass it an instance of ``ParameterAnnotation``.
-
-.. code-block:: python
-
-    from typing import Annotated
-
-    #...
-
-    @external
-    def unhelpful_method_name(self, num: Annotated[
-        abi.Uint64, 
-        ParameterAnnotation(
-            descr="The magic number, which should be prime, else fail"
-        )
-    ]):
-        return is_prime(num.get())
-
-
-Here we've annotated the ``num`` parameter with a description that should help the caller figure out what should be passed. This description is added to the appropriate method args description field in the json spec.
-
 
 .. _parameter_default:
 
@@ -184,9 +158,9 @@ This allows the caller to know this pseudo-magic number ahead of time and makes 
 
 Options for default arguments are:
 
-- A constant, `Bytes | Int`
+- A constant, `bytes | int | str`
 - State Values, `ApplicationStateValue | AccountStateValue`
-- A read-only ABI method  
+- A read-only ABI method 
 
 The result is that we can call the method, omitting the `opup_app` argument:
 

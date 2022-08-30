@@ -40,9 +40,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lsig.html">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
@@ -76,8 +78,9 @@
 <span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">astuple</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">signature</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">get_annotations</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">Parameter</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Final</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
 <span class="kn">from</span> <span class="nn">algosdk.abi</span> <span class="kn">import</span> <span class="n">Method</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">abi</span><span class="p">,</span>
@@ -99,7 +102,6 @@
     <span class="n">TealType</span><span class="p">,</span>
     <span class="n">TealTypeError</span><span class="p">,</span>
     <span class="n">Bytes</span><span class="p">,</span>
-    <span class="n">TxnField</span><span class="p">,</span>
     <span class="n">Txn</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -114,9 +116,7 @@
 <span class="n">ABIType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;ABIType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span>
 
 
-<span class="n">DefaultArgumentType</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">HandlerFunc</span> <span class="o">|</span> <span class="n">Bytes</span> <span class="o">|</span> <span class="n">Int</span>
-<span class="p">)</span>
+<span class="n">DefaultArgumentType</span> <span class="o">=</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">FunctionType</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span>
 
 
 <span class="k">class</span> <span class="nc">DefaultArgumentClass</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
@@ -140,9 +140,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">LocalState</span>
             <span class="k">case</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">GlobalState</span>
-            <span class="k">case</span> <span class="n">Bytes</span><span class="p">():</span>
+            <span class="k">case</span> <span class="n">Bytes</span><span class="p">()</span> <span class="o">|</span> <span class="n">Int</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">Constant</span>
-            <span class="k">case</span> <span class="n">Int</span><span class="p">():</span>
+            <span class="k">case</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">Constant</span>
             <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
                 <span class="c1"># Fall through, if its not got a valid handler config, raise error</span>
@@ -161,6 +161,8 @@
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">byte_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="k">case</span> <span class="n">Int</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">case</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span>
             <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
                 <span class="c1"># Fall through, if its not got a valid handler config, raise error</span>
                 <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">))</span>
@@ -171,28 +173,10 @@
                 <span class="k">return</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span>
 
 
-<span class="k">class</span> <span class="nc">TransactionMatcher</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">CheckExpr</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span>
-
-    <span class="k">def</span> <span class="nf">get_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]:</span>
-        <span class="n">checks</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">field_val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">field_getter</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">makeTxnExpr</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="k">match</span> <span class="n">field_val</span><span class="p">:</span>
-                <span class="k">case</span> <span class="n">Expr</span><span class="p">():</span>
-                    <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_getter</span> <span class="o">==</span> <span class="n">field_val</span><span class="p">)</span>
-                <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
-                    <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_val</span><span class="p">(</span><span class="n">field_getter</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="n">checks</span>
-
-
 <div class="viewcode-block" id="ParameterAnnotation"><a class="viewcode-back" href="../../usage.html#beaker.decorators.ParameterAnnotation">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">ParameterAnnotation</span><span class="p">:</span>
     <span class="n">descr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DefaultArgumentType</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DefaultArgument</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">dictify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">ret</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -200,8 +184,9 @@
             <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;descr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">descr</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">def_arg</span> <span class="o">=</span> <span class="n">DefaultArgument</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
-            <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">def_arg</span><span class="o">.</span><span class="n">resolvable_class</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">def_arg</span><span class="o">.</span><span class="n">resolve_hint</span><span class="p">()}</span>
+            <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">resolvable_class</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">resolve_hint</span><span class="p">()</span>
+            <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">ret</span></div>
 
@@ -447,22 +432,33 @@
     <span class="k">return</span> <span class="n">fn</span>
 
 
-<span class="k">def</span> <span class="nf">_capture_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_capture_defaults</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
     <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
     <span class="n">fn_annotations</span> <span class="o">=</span> <span class="n">get_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-
     <span class="n">param_annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-
     <span class="n">params</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">tv</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">annotation</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tv</span><span class="p">,</span> <span class="s2">&quot;__origin__&quot;</span><span class="p">):</span>
-            <span class="n">orig</span> <span class="o">=</span> <span class="n">tv</span><span class="o">.</span><span class="n">__origin__</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tv</span><span class="p">,</span> <span class="s2">&quot;__metadata__&quot;</span><span class="p">):</span>
-                <span class="n">param_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">tv</span><span class="o">.</span><span class="n">__metadata__</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">type_anno</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">annotation</span>
 
-                <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">annotation</span><span class="o">=</span><span class="n">orig</span><span class="p">)</span>
-                <span class="n">fn_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">orig</span>
+        <span class="k">match</span> <span class="n">v</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Expr</span><span class="p">()</span> <span class="o">|</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">()</span> <span class="o">|</span> <span class="n">FunctionType</span><span class="p">():</span>
+                <span class="n">param_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParameterAnnotation</span><span class="p">(</span>
+                    <span class="n">default</span><span class="o">=</span><span class="n">DefaultArgument</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span>
+                <span class="n">fn_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_anno</span>
+            <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># if hasattr(type_anno, &quot;__origin__&quot;):</span>
+        <span class="c1">#    print(type_anno)</span>
+        <span class="c1">#    orig = type_anno.__origin__</span>
+        <span class="c1">#    print(orig)</span>
+        <span class="c1">#    if hasattr(type_anno, &quot;__metadata__&quot;):</span>
+        <span class="c1">#        param_annotations[k] = type_anno.__metadata__[0]</span>
+        <span class="c1">#        params[k] = v.replace(annotation=orig)</span>
+        <span class="c1">#        fn_annotations[k] = orig</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">param_annotations</span><span class="o">=</span><span class="n">param_annotations</span><span class="p">)</span>
@@ -553,7 +549,7 @@
 
     <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">_remove_self</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="n">fn</span> <span class="o">=</span> <span class="n">_capture_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">_capture_defaults</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">_replace_structs</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

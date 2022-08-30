@@ -40,9 +40,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lsig.html">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
@@ -279,7 +281,6 @@
 
             <span class="c1"># Internal subroutines</span>
             <span class="k">elif</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">subroutine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">referenced_self</span><span class="p">:</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">subroutine</span><span class="p">(</span><span class="n">bound_attr</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>

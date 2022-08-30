@@ -1,6 +1,6 @@
-from typing import Literal, Annotated
+from typing import Literal
 from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
-from beaker.decorators import ParameterAnnotation, external
+from beaker.decorators import external
 from beaker.contracts import OpUp
 
 
