@@ -1,10 +1,12 @@
 from dataclasses import asdict, dataclass, field, replace, astuple
 from enum import Enum
 from functools import wraps
-from inspect import get_annotations, signature
+from inspect import get_annotations, signature, Parameter
 from typing import Optional, Callable, Final, cast, Any, TypeVar
+from types import FunctionType
 from algosdk.abi import Method
 from pyteal import (
+    SubroutineDefinition,
     abi,
     ABIReturnSubroutine,
     And,
@@ -59,6 +61,7 @@ class DefaultArgument:
         resolver: DefaultArgumentType,
     ):
         self.resolver = resolver
+        self.resolvable_class: DefaultArgument = None
 
         match resolver:
             case AccountStateValue():
@@ -96,28 +99,10 @@ class DefaultArgument:
                 return hc.method_spec.dictify()
 
 
-class TransactionMatcher:
-    def __init__(self, fields: dict[TxnField, Expr | CheckExpr]):
-        self.fields = fields
-
-    def get_checks(self, t: abi.Transaction) -> list[Expr]:
-        checks = []
-
-        for f, field_val in self.fields.items():
-            field_getter = t.get().makeTxnExpr(f)
-            match field_val:
-                case Expr():
-                    checks.append(field_getter == field_val)
-                case _:
-                    checks.append(field_val(field_getter))
-
-        return checks
-
-
 @dataclass
 class ParameterAnnotation:
     descr: Optional[str] = field(kw_only=True, default=None)
-    default: Optional[DefaultArgumentType] = field(kw_only=True, default=None)
+    default: Optional[DefaultArgument] = field(kw_only=True, default=None)
 
     def dictify(self) -> dict[str, Any]:
         ret: dict[str, Any] = {}
@@ -125,8 +110,9 @@ class ParameterAnnotation:
             ret["descr"] = self.descr
 
         if self.default is not None:
-            def_arg = DefaultArgument(self.default)
-            ret["default"] = {def_arg.resolvable_class.value: def_arg.resolve_hint()}
+            ret["default"] = {
+                str(self.default.resolvable_class): self.default.resolve_hint()
+            }
 
         return ret
 
@@ -372,6 +358,39 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
+def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
+    sig = signature(fn)
+    fn_annotations = get_annotations(fn)
+    param_annotations: dict[str, ParameterAnnotation] = {}
+    params = sig.parameters.copy()
+    for k, v in params.items():
+        type_anno = v.annotation
+        match v.default:
+            case Expr() | FunctionType():
+                param_annotations[k] = ParameterAnnotation(
+                    default=DefaultArgument(v.default)
+                )
+                params[k] = v.replace(default=Parameter.empty)
+                fn_annotations[k] = type_anno
+            case _:
+                if hasattr(type_anno, "__origin__"):
+                    orig = type_anno.__origin__
+                    if hasattr(type_anno, "__metadata__"):
+                        param_annotations[k] = type_anno.__metadata__[0]
+                        params[k] = v.replace(annotation=orig)
+                        fn_annotations[k] = orig
+
+    if len(param_annotations.items()) > 0:
+        set_handler_config(fn, param_annotations=param_annotations)
+
+    # Fix function sig/annotations
+    newsig = sig.replace(parameters=list(params.values()))
+    fn.__signature__ = newsig  # type: ignore[attr-defined]
+    fn.__annotations__ = fn_annotations
+
+    return fn
+
+
 def _capture_annotations(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     fn_annotations = get_annotations(fn)
@@ -478,7 +497,8 @@ def external(
 
     def _impl(fn: HandlerFunc):
         fn = _remove_self(fn)
-        fn = _capture_annotations(fn)
+        fn = _capture_defaults(fn)
+        # fn = _capture_annotations(fn)
         fn = _replace_structs(fn)
 
         if authorize is not None:

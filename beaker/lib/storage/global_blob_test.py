@@ -88,7 +88,6 @@ def test_global_blob_set_get():
                 output.set(self.blob.get_byte(pt.Int(32))),
             )
 
-    print(LB().blob.byte_key_str)
     expected = [num]
     assert_output(LB(), [], expected)
 

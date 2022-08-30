@@ -152,14 +152,12 @@ def test_exponential():
 #   num = 17
 #   expr = Log(Itob(log2(Int(num))))
 #   output = [logged_int(int(pymath.log2(num)))]
-#   print(pymath.log2(num))
 #   assert_output(expr, output, pad_budget=15)
 
 # def test_log10():
 #    num = 123123123
 #    expr = Log(Itob(scaled_log10(Int(num))))
 #    output = [logged_int(int(pymath.log10(num)))]
-#    print(pymath.log10(num))
 #    assert_output(expr, output)
 
 # def test_negative_power():

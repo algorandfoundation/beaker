@@ -204,7 +204,6 @@ class Application:
 
             # Internal subroutines
             elif handler_config.subroutine is not None:
-                print(name)
                 if handler_config.referenced_self:
                     setattr(self, name, handler_config.subroutine(bound_attr))
                 else:
