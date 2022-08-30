@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from beaker import Application, external
 from pyteal import (
     Reject,
@@ -11,12 +12,11 @@ from pyteal import (
 )
 
 
-def read_next(vaa: Expr, offset: ScratchVar, t: abi.BaseType) -> Expr:
-    size = Int(t.type_spec().byte_length_static())
-    return Seq(
-        t.decode(vaa, start_index=offset.load(), length=size),
-        offset.store(offset.load() + size),
-    )
+def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
+    size = t.type_spec().byte_length_static()
+    e = t.decode(vaa, start_index=Int(offset), length=Int(size))
+    offset += size
+    return offset, e
 
 
 class ContractTransferVAA:
@@ -61,31 +61,58 @@ class ContractTransferVAA:
         self.payload = abi.DynamicBytes()
 
     def decode(self, vaa: Expr) -> Expr:
-        return Seq(
-            (offset := ScratchVar()).store(Int(0)),
-            read_next(vaa, offset, self.version),
-            read_next(vaa, offset, self.index),
-            read_next(vaa, offset, self.siglen),
-            # Increase offset to skip over sigs && digest
-            # since these should be checked by the wormhole core contract
-            offset.store(offset.load() + (self.siglen.get() * Int(66))),
-            read_next(vaa, offset, self.timestamp),
-            read_next(vaa, offset, self.nonce),
-            read_next(vaa, offset, self.chain),
-            read_next(vaa, offset, self.emitter),
-            read_next(vaa, offset, self.sequence),
-            read_next(vaa, offset, self.consistency),
-            read_next(vaa, offset, self.type),
-            read_next(vaa, offset, self.amount),
-            read_next(vaa, offset, self.contract),
-            read_next(vaa, offset, self.from_chain),
-            read_next(vaa, offset, self.to_address),
-            read_next(vaa, offset, self.to_chain),
-            # read_next(vaa, offset, self.fee),
-            read_next(vaa, offset, self.from_address),
-            # Rest is payload
-            self.payload.set(Suffix(vaa, offset.load())),
+        offset = 0
+        ops: list[Expr] = []
+
+        offset, e = read_next(vaa, offset, self.version)
+        ops.append(e)
+
+        offset, e = read_next(vaa, offset, self.index)
+        ops.append(e)
+
+        offset, e = read_next(vaa, offset, self.siglen)
+        ops.append(e)
+
+        # Increase offset to skip over sigs && digest
+        # since these should be checked by the wormhole core contract
+        ops.append(
+            (digest_vaa := ScratchVar()).store(
+                Suffix(vaa, Int(offset) + (self.siglen.get() * Int(66)))
+            )
         )
+
+        # Reset the offset now that we have const length elements
+        offset = 0
+        offset, e = read_next(digest_vaa.load(), offset, self.timestamp)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.nonce)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.chain)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.emitter)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.sequence)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.consistency)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.type)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.amount)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.contract)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.from_chain)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.to_address)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.to_chain)
+        ops.append(e)
+        offset, e = read_next(digest_vaa.load(), offset, self.from_address)
+        ops.append(e)
+        # Rest is payload
+        ops.append(self.payload.set(Suffix(digest_vaa.load(), Int(offset))))
+
+        return Seq(*ops)
 
 
 class WormholeTransfer(Application, ABC):
