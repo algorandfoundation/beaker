@@ -10,24 +10,11 @@ class ExpensiveApp(OpUp):
     @external
     def hash_it(
         self,
-        input: Annotated[abi.String, ParameterAnnotation(descr="The input to hash")],
-        iters: Annotated[
-            abi.Uint64, ParameterAnnotation(descr="The number of times to iterate")
-        ],
-        opup_app: Annotated[
-            abi.Application,
-            ParameterAnnotation(
-                descr="The app id to use for opup reququests",
-                default=OpUp.opup_app_id,
-            ),
-        ],
+        input: abi.String,
+        iters: abi.Uint64,
+        opup_app: abi.Application = OpUp.opup_app_id,
         *,
-        output: Annotated[
-            abi.StaticArray[abi.Byte, Literal[32]],
-            ParameterAnnotation(
-                descr="The result of hashing the input a number of times"
-            ),
-        ],
+        output: abi.StaticBytes[Literal[32]],
     ):
         return Seq(
             Assert(opup_app.application_id() == self.opup_app_id),

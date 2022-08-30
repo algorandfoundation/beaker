@@ -1,5 +1,5 @@
 import pytest
-from typing import Final, cast, Annotated
+from typing import Final, cast
 from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
@@ -20,7 +20,6 @@ from beaker.application import (
 )
 from beaker.decorators import (
     ParameterAnnotation,
-    DefaultArgument,
     DefaultArgumentClass,
     external,
     get_handler_config,
@@ -360,22 +359,13 @@ def test_internal():
         assert actual == expected
 
 
-def test_hints():
+def test_default_param_state():
     class Hinty(Application):
-        @external(read_only=True)
-        def get_asset_id(self, *, output: pt.abi.Uint64):
-            return output.set(pt.Int(123))
+        asset_id = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(123))
 
         @external
-        def hintymeth(
-            self,
-            aid: Annotated[
-                pt.abi.Asset,
-                ParameterAnnotation(descr="Testing asset id", default=get_asset_id),
-            ],
-            num: pt.abi.Uint64,
-        ):
-            return pt.Assert(pt.Int(1))
+        def hintymeth(self, num: pt.abi.Uint64, aid: pt.abi.Asset = asset_id):
+            return pt.Assert(aid.asset_id() == self.asset_id)
 
     h = Hinty()
 
@@ -384,15 +374,73 @@ def test_hints():
     hint = h.hints[h.hintymeth.__name__]
 
     assert "aid" in hint.param_annotations, "Expected annotation available for param"
-    anno = hint.param_annotations["aid"]
+    anno: ParameterAnnotation = hint.param_annotations["aid"]
 
-    assert anno.descr == "Testing asset id"
+    assert anno.descr is None
 
     assert anno.default is not None
-    default = DefaultArgument(anno.default)
+    default = anno.default
+    assert default.resolvable_class == DefaultArgumentClass.GlobalState
+    assert (
+        default.resolve_hint() == Hinty.asset_id.str_key()
+    ), "Expected the hint to match the method spec"
+
+
+def test_default_param_const():
+    const_val = 123
+
+    class Hinty(Application):
+        @external
+        def hintymeth(self, num: pt.abi.Uint64, aid: pt.abi.Asset = const_val):
+            return pt.Assert(aid.asset_id() == pt.Int(const_val))
+
+    h = Hinty()
+
+    assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
+
+    hint = h.hints[h.hintymeth.__name__]
+
+    assert "aid" in hint.param_annotations, "Expected annotation available for param"
+    anno: ParameterAnnotation = hint.param_annotations["aid"]
+
+    assert anno.descr is None
+
+    assert anno.default is not None
+    default = anno.default
+    assert default.resolvable_class == DefaultArgumentClass.Constant
+    assert (
+        default.resolve_hint() == const_val
+    ), "Expected the hint to match the method spec"
+
+
+def test_default_read_only_method():
+    const_val = 123
+
+    class Hinty(Application):
+        @external(read_only=True)
+        def get_asset_id(self, *, output: pt.abi.Uint64):
+            return output.set(pt.Int(const_val))
+
+        @external
+        def hintymeth(self, num: pt.abi.Uint64, aid: pt.abi.Asset = get_asset_id):
+            return pt.Assert(aid.asset_id() == pt.Int(const_val))
+
+    h = Hinty()
+
+    assert h.hintymeth.__name__ in h.hints, "Expected a hint available for the method"
+
+    hint = h.hints[h.hintymeth.__name__]
+
+    assert "aid" in hint.param_annotations, "Expected annotation available for param"
+    anno: ParameterAnnotation = hint.param_annotations["aid"]
+
+    assert anno.descr is None
+
+    assert anno.default is not None
+    default = anno.default
     assert default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
-        default.resolve_hint() == get_method_spec(h.get_asset_id).dictify()
+        default.resolve_hint() == get_method_spec(Hinty.get_asset_id).dictify()
     ), "Expected the hint to match the method spec"
 
 
