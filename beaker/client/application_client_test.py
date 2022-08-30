@@ -200,7 +200,7 @@ def test_compile():
     approval_program, _, approval_map = ac.compile(
         ac.app.approval_program, source_map=True
     )
-    print(approval_map)
+
     assert len(approval_program) > 0, "Should have a valid approval program"
     assert approval_program[0] == version, "First byte should be the version we set"
     assert approval_map.version == 3, "Should have valid source map with version 3"
