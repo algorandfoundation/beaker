@@ -376,7 +376,7 @@ def test_default_param_state():
     assert "aid" in hint.param_annotations, "Expected annotation available for param"
     anno: ParameterAnnotation = hint.param_annotations["aid"]
 
-    assert anno.descr == None
+    assert anno.descr is None
 
     assert anno.default is not None
     default = anno.default
@@ -391,7 +391,7 @@ def test_default_param_const():
 
     class Hinty(Application):
         @external
-        def hintymeth(self, num: pt.abi.Uint64, aid: pt.abi.Asset = pt.Int(const_val)):
+        def hintymeth(self, num: pt.abi.Uint64, aid: pt.abi.Asset = const_val):
             return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
     h = Hinty()
@@ -403,7 +403,7 @@ def test_default_param_const():
     assert "aid" in hint.param_annotations, "Expected annotation available for param"
     anno: ParameterAnnotation = hint.param_annotations["aid"]
 
-    assert anno.descr == None
+    assert anno.descr is None
 
     assert anno.default is not None
     default = anno.default
@@ -434,7 +434,7 @@ def test_default_read_only_method():
     assert "aid" in hint.param_annotations, "Expected annotation available for param"
     anno: ParameterAnnotation = hint.param_annotations["aid"]
 
-    assert anno.descr == None
+    assert anno.descr is None
 
     assert anno.default is not None
     default = anno.default

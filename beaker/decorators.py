@@ -6,7 +6,6 @@ from typing import Optional, Callable, Final, cast, Any, TypeVar
 from types import FunctionType
 from algosdk.abi import Method
 from pyteal import (
-    SubroutineDefinition,
     abi,
     ABIReturnSubroutine,
     And,
@@ -26,7 +25,6 @@ from pyteal import (
     TealType,
     TealTypeError,
     Bytes,
-    TxnField,
     Txn,
 )
 
@@ -61,7 +59,6 @@ class DefaultArgument:
         resolver: DefaultArgumentType,
     ):
         self.resolver = resolver
-        self.resolvable_class: DefaultArgument = None
 
         match resolver:
             case AccountStateValue():
