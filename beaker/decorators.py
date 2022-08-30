@@ -370,18 +370,6 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
                 )
                 params[k] = v.replace(default=Parameter.empty)
                 fn_annotations[k] = type_anno
-            case _:
-                print(k)
-                pass
-
-        # if hasattr(type_anno, "__origin__"):
-        #    print(type_anno)
-        #    orig = type_anno.__origin__
-        #    print(orig)
-        #    if hasattr(type_anno, "__metadata__"):
-        #        param_annotations[k] = type_anno.__metadata__[0]
-        #        params[k] = v.replace(annotation=orig)
-        #        fn_annotations[k] = orig
 
     if len(param_annotations.items()) > 0:
         set_handler_config(fn, param_annotations=param_annotations)
