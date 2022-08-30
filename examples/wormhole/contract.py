@@ -1,7 +1,11 @@
 from typing import Final
 from pyteal import *
 from beaker import *
-from beaker.contracts.wormhole import ContractTransferVAA, WormholeTransfer
+
+if __name__ == "__main__":
+    from wormhole import ContractTransferVAA, WormholeTransfer
+else:
+    from .wormhole import ContractTransferVAA, WormholeTransfer
 
 
 class OracleDataCache(WormholeTransfer):
