@@ -39,9 +39,7 @@ CheckExpr = Callable[..., Expr]
 ABIType = TypeVar("ABIType", bound=abi.BaseType)
 
 
-DefaultArgumentType = (
-    AccountStateValue | ApplicationStateValue | Expr | HandlerFunc | Bytes | Int
-)
+DefaultArgumentType = Expr | FunctionType | int | bytes | str
 
 
 class DefaultArgumentClass(str, Enum):
@@ -366,7 +364,7 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
         type_anno = v.annotation
 
         match v.default:
-            case Expr() | FunctionType() | int() | str() | bytes():
+            case Expr() | int() | str() | bytes() | FunctionType():
                 param_annotations[k] = ParameterAnnotation(
                     default=DefaultArgument(v.default)
                 )
