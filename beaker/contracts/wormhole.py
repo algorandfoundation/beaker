@@ -14,9 +14,7 @@ from pyteal import (
 
 def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
     size = t.type_spec().byte_length_static()
-    e = t.decode(vaa, start_index=Int(offset), length=Int(size))
-    offset += size
-    return offset, e
+    return offset + size, t.decode(vaa, start_index=Int(offset), length=Int(size))
 
 
 class ContractTransferVAA:
