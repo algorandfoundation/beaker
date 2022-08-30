@@ -130,42 +130,31 @@ Here we subclassed the ``OpUp`` contract which provides functionality to create 
 
 We inherit the methods and class variables that ``OpUp`` defined, allowing us to encapsulate and compose behavior.
 
-
-.. _parameter_annotations:
-
-Parameter Annotations
----------------------
-
-.. currentmodule:: beaker.decorators
-.. autoclass:: ParameterAnnotation
-    :members:
-
-
-A caller of our application should be provided with all the information they might need in order to make a successful application call.
-
-One example of this of information is of course the parameter name and type. These bits of information are already provided by the normal method definition. 
+Also note that the ``opup_app`` argument specifies a default value. This is a bit of magic that serves only to produce a hint for the caller in the resulting Application Spec.
 
 .. _parameter_default:
 
 Parameter Default Value
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-In the ``OpUp`` example the argument ``opup_app`` should be the id of the application that we use to increase our budget via inner app calls.  This value should not change frequently, if at all, but is still required to be passed by the caller so we may _use_ it in our logic. 
+In the ``OpUp`` example above, the argument ``opup_app`` should be the id of the application that we use to increase our budget via inner app calls.  
+This value should not change frequently, if at all, but is still required to be passed by the caller so we may **use** it in our logic, namely to execute an application call against it. 
 
-Using the ``default`` field of the ``ParameterAnnotation``, we can specify a default value for the parameter.  
-
-This allows the caller to know this pseudo-magic number ahead of time and makes calling your application easier.  The information is communicated through the full ApplicationSpec as a hint the caller can use to figure out what the value should be.
+By specifying the default value of the argument in the method signature, we can communicate to the caller, through the hints of the Application Spec, what the value **should** be. 
 
 Options for default arguments are:
 
-- A constant, `bytes | int | str`
-- State Values, `ApplicationStateValue | AccountStateValue`
-- A read-only ABI method 
+- A constant: one of ``bytes | int | str | Bytes | Int``
+- State Values: one of ``ApplicationStateValue | AccountStateValue``
+- A read-only ABI method: a method defined to produce some more complex value than a state value or constant would be able to produce.
 
-The result is that we can call the method, omitting the `opup_app` argument:
+
+The result of specifying the default value here is that we can call the method, omitting the `opup_app` argument:
 
 .. code-block:: python
 
     result = app_client.call(app.hash_it, input="hashme", iters=10)
 
-When invoked, the `ApplicationClient` consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.
+When invoked, the ``ApplicationClient`` consults the method definition to check that all the expected arguments are passed. 
+If it finds that an argument is not passed, it will check the hints for a default argument for the method that may be used directly (constant) or resolved (need to look it up on chain or call method). 
+Upon finding a resolvable it will look up the state value, call the method. The resulting value is passed in for argument to the application call.

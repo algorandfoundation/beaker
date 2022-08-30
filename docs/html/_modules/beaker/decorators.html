@@ -173,7 +173,7 @@
                 <span class="k">return</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="ParameterAnnotation"><a class="viewcode-back" href="../../usage.html#beaker.decorators.ParameterAnnotation">[docs]</a><span class="nd">@dataclass</span>
+<span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">ParameterAnnotation</span><span class="p">:</span>
     <span class="n">descr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DefaultArgument</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -188,7 +188,7 @@
                 <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">resolvable_class</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">resolve_hint</span><span class="p">()</span>
             <span class="p">}</span>
 
-        <span class="k">return</span> <span class="n">ret</span></div>
+        <span class="k">return</span> <span class="n">ret</span>
 
 
 <span class="nd">@dataclass</span>
