@@ -355,7 +355,6 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
     default_args: dict[str, DefaultArgument] = {}
 
     for k, v in params.items():
-
         match v.default:
             case Expr() | int() | str() | bytes() | FunctionType():
                 default_args[k] = DefaultArgument(v.default)
