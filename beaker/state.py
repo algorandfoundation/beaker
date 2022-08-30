@@ -572,6 +572,13 @@ class ApplicationState(State):
             + [v.initialize() for v in self.blob_vals.values()]
         )
 
+    def validate_application_state_schema(self) -> Expr:
+        """Asserts expected application state schema upon creation."""
+        return Assert(
+            Txn.global_num_uints() == Int(self.schema().num_uints),
+            Txn.global_num_byte_slices() == Int(self.schema().num_byte_slices),
+        )
+
 
 class AccountState(State):
     def __init__(
@@ -595,4 +602,11 @@ class AccountState(State):
                 if not v.static or (v.static and v.default is not None)
             ]
             + [v.initialize() for v in self.blob_vals.values()]
+        )
+
+    def validate_account_state_schema(self) -> Expr:
+        """Asserts expected account state schema upon creation."""
+        return Assert(
+            Txn.local_num_uints() == Int(self.schema().num_uints),
+            Txn.local_num_byte_slices() == Int(self.schema().num_byte_slices),
         )
