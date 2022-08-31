@@ -72,7 +72,7 @@ class Application:
         # Is there a better way to get all the attrs declared in subclasses?
         self.attrs = {
             m: (getattr(self, m), getattr_static(self, m))
-            for m in list(set(dir(self.__class__)) - set(dir(super())))
+            for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
             if not m.startswith("__")
         }
 
@@ -102,6 +102,7 @@ class Application:
         ] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
+            print(name)
             # Check for state vals
             match bound_attr:
 
