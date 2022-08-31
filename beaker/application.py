@@ -102,7 +102,6 @@ class Application:
         ] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
-            print(name)
             # Check for state vals
             match bound_attr:
 
