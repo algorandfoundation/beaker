@@ -59,59 +59,52 @@ class DefaultArgument:
         self.resolver = resolver
 
         match resolver:
+
+            # Expr types
             case AccountStateValue():
                 self.resolvable_class = DefaultArgumentClass.LocalState
             case ApplicationStateValue():
                 self.resolvable_class = DefaultArgumentClass.GlobalState
             case Bytes() | Int():
                 self.resolvable_class = DefaultArgumentClass.Constant
+
+            # Native types
             case int() | str() | bytes():
                 self.resolvable_class = DefaultArgumentClass.Constant
+
+            # FunctionType
             case _:
                 # Fall through, if its not got a valid handler config, raise error
                 hc = get_handler_config(cast(HandlerFunc, resolver))
                 if hc.method_spec is None or not hc.read_only:
-                    raise Exception(
-                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
-                    )
+                    raise TealTypeError(self.resolver, DefaultArgumentType)
+
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
 
     def resolve_hint(self):
         match self.resolver:
+            # Expr types
             case AccountStateValue() | ApplicationStateValue():
                 return self.resolver.str_key()
             case Bytes():
                 return self.resolver.byte_str.replace('"', "")
             case Int():
                 return self.resolver.value
+            # Native types
             case int() | bytes() | str():
                 return self.resolver
+
+            # FunctionType
             case _:
                 # Fall through, if its not got a valid handler config, raise error
                 hc = get_handler_config(cast(HandlerFunc, self.resolver))
                 if hc.method_spec is None or not hc.read_only:
-                    raise Exception(
-                        "Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method"
-                    )
+                    raise TealTypeError(self.resolver, DefaultArgumentType)
+
                 return hc.method_spec.dictify()
 
-
-@dataclass
-class ParameterAnnotation:
-    descr: Optional[str] = field(kw_only=True, default=None)
-    default: Optional[DefaultArgument] = field(kw_only=True, default=None)
-
     def dictify(self) -> dict[str, Any]:
-        ret: dict[str, Any] = {}
-        if self.descr is not None:
-            ret["descr"] = self.descr
-
-        if self.default is not None:
-            ret["default"] = {
-                str(self.default.resolvable_class): self.default.resolve_hint()
-            }
-
-        return ret
+        return {"source": self.resolvable_class.value, "data": self.resolve_hint()}
 
 
 @dataclass
@@ -125,7 +118,7 @@ class HandlerConfig:
     referenced_self: bool = field(kw_only=True, default=False)
     structs: Optional[dict[str, abi.NamedTuple]] = field(kw_only=True, default=None)
 
-    param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
+    default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None
     )
 
@@ -136,10 +129,10 @@ class HandlerConfig:
         mh: dict[str, Any] = {"read_only": self.read_only}
 
         if (
-            self.param_annotations is not None
-            and len(self.param_annotations.keys()) > 0
+            self.default_arguments is not None
+            and len(self.default_arguments.keys()) > 0
         ):
-            mh["param_annotations"] = self.param_annotations
+            mh["default_arguments"] = self.default_arguments
 
         if self.structs is not None:
             structs: dict[str, dict[str, str | list[tuple[str, str]]]] = {}
@@ -220,15 +213,15 @@ class MethodHints:
     structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
         kw_only=True, default=None
     )
-    #: annotations
-    param_annotations: Optional[dict[str, ParameterAnnotation]] = field(
+    #: defaults
+    default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None
     )
 
     def empty(self) -> bool:
         return (
             self.structs is None
-            and self.param_annotations is None
+            and self.default_arguments is None
             and not self.read_only
         )
 
@@ -236,9 +229,9 @@ class MethodHints:
         d: dict[str, Any] = {}
         if self.read_only:
             d["read_only"] = True
-        if self.param_annotations is not None:
-            d["param_annotations"] = {
-                k: v.dictify() for k, v in self.param_annotations.items()
+        if self.default_arguments is not None:
+            d["default_arguments"] = {
+                k: v.dictify() for k, v in self.default_arguments.items()
             }
         if self.structs is not None:
             d["structs"] = self.structs
@@ -357,39 +350,23 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
 
 def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
-    fn_annotations = get_annotations(fn)
-    param_annotations: dict[str, ParameterAnnotation] = {}
     params = sig.parameters.copy()
-    for k, v in params.items():
-        type_anno = v.annotation
 
+    default_args: dict[str, DefaultArgument] = {}
+
+    for k, v in params.items():
         match v.default:
             case Expr() | int() | str() | bytes() | FunctionType():
-                param_annotations[k] = ParameterAnnotation(
-                    default=DefaultArgument(v.default)
-                )
+                default_args[k] = DefaultArgument(v.default)
                 params[k] = v.replace(default=Parameter.empty)
-                fn_annotations[k] = type_anno
-            case _:
-                print(k)
-                pass
 
-        # if hasattr(type_anno, "__origin__"):
-        #    print(type_anno)
-        #    orig = type_anno.__origin__
-        #    print(orig)
-        #    if hasattr(type_anno, "__metadata__"):
-        #        param_annotations[k] = type_anno.__metadata__[0]
-        #        params[k] = v.replace(annotation=orig)
-        #        fn_annotations[k] = orig
+    if len(default_args.items()) > 0:
+        # Update handler config
+        set_handler_config(fn, default_arguments=default_args)
 
-    if len(param_annotations.items()) > 0:
-        set_handler_config(fn, param_annotations=param_annotations)
-
-    # Fix function sig/annotations
-    newsig = sig.replace(parameters=list(params.values()))
-    fn.__signature__ = newsig  # type: ignore[attr-defined]
-    fn.__annotations__ = fn_annotations
+        # Fix function sig/annotations
+        newsig = sig.replace(parameters=list(params.values()))
+        fn.__signature__ = newsig  # type: ignore[attr-defined]
 
     return fn
 

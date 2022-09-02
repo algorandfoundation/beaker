@@ -23,7 +23,7 @@ class KeySig(LogicSignature):
 # to get an extra 2k of storage for each account
 class DiskHungry(Application):
     # Reserve all 16 keys for the blob in local state
-    data = AccountStateBlob(max_keys=16)
+    data = AccountStateBlob(keys=16)
 
     # Signal to beaker that this should be compiled
     # prior to compiling the main application

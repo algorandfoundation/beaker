@@ -1,3 +1,4 @@
+from typing import Optional
 from pyteal import (
     App,
     Bytes,
@@ -23,8 +24,8 @@ from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
 
 
 class GlobalBlob(Blob):
-    def __init__(self, /, *, max_keys: int = None, keys: list[int] = None):
-        super().__init__(64, max_keys=max_keys, keys=keys)
+    def __init__(self, /, *, keys: Optional[int | list[int]] = None):
+        super().__init__(64, keys=keys)
 
     def zero(self) -> Expr:
         """

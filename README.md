@@ -76,7 +76,7 @@ Or from github directly (no promises on stability):
 
 Requires a local [sandbox](https://github.com/algorand/sandbox).
 
-*NOTE:* Currently requires a sandbox running with the `source` config (or any config that contains [this commit](https://github.com/algorand/go-algorand/pull/4198))
+*NOTE:* Currently requires a sandbox running with the `beta` config (or any config that contains [this commit](https://github.com/algorand/go-algorand/pull/4198))
 
 ```sh
 $ git clone git@github.com:algorand/sandbox.git

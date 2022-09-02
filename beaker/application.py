@@ -72,7 +72,7 @@ class Application:
         # Is there a better way to get all the attrs declared in subclasses?
         self.attrs = {
             m: (getattr(self, m), getattr_static(self, m))
-            for m in list(set(dir(self.__class__)) - set(dir(super())))
+            for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
             if not m.startswith("__")
         }
 
@@ -250,22 +250,6 @@ class Application:
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
-
-        # Add the method argument descriptions if provided
-        for meth_idx, meth in enumerate(self.contract.methods):
-            if meth.name in self.hints:
-                hint = self.hints[meth.name]
-                if hint.param_annotations is None:
-                    continue
-
-                for arg_idx, arg in enumerate(meth.args):
-                    if arg.name not in hint.param_annotations:
-                        continue
-
-                    if hint.param_annotations[arg.name].descr is not None:
-                        self.contract.methods[meth_idx].args[
-                            arg_idx
-                        ].desc = hint.param_annotations[arg.name].descr
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
