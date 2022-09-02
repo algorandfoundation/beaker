@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import Mapping, cast, Any
+from typing import Mapping, cast, Any, Optional
 from algosdk.future.transaction import StateSchema
 from pyteal import (
     abi,
@@ -406,8 +406,8 @@ class StateBlob(ABC):
 
 
 class AccountStateBlob(StateBlob):
-    def __init__(self, max_keys: int = None, keys: list[int] = None):
-        self.blob = LocalBlob(max_keys=max_keys, keys=keys)
+    def __init__(self, keys: Optional[int | list[int]] = None):
+        self.blob = LocalBlob(keys=keys)
         self.acct: Expr = Txn.sender()
 
         super().__init__(self.blob._max_keys)
@@ -434,8 +434,8 @@ class AccountStateBlob(StateBlob):
 
 
 class ApplicationStateBlob(StateBlob):
-    def __init__(self, max_keys: int = None, keys: list[int] = None):
-        self.blob = GlobalBlob(max_keys=max_keys, keys=keys)
+    def __init__(self, keys: Optional[int | list[int]] = None):
+        self.blob = GlobalBlob(keys=keys)
         super().__init__(self.blob._max_keys)
 
     def initialize(self) -> Expr:
