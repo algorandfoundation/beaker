@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from pyteal import BytesZero, Int, Expr, Extract, Bytes
+from typing import Optional
+from pyteal import BytesZero, Int, Expr, Extract, Bytes, TealTypeError
 
 blob_page_size = 128 - 1  # need 1 byte for key
 BLOB_PAGE_SIZE = Int(blob_page_size)
@@ -12,29 +13,29 @@ class Blob(ABC):
 
     """
 
-    def __init__(
-        self, key_limit: int, /, *, max_keys: int = None, keys: list[int] = None
-    ):
-        assert not (
-            max_keys is not None and keys is not None
-        ), "cant supply both max_keys and keys"
+    def __init__(self, key_limit: int, /, *, keys: Optional[int | list[int]] = None):
+
+        _keys: list[int] = []
 
         if keys is None:
-            if max_keys is not None:
-                keys = [x for x in range(max_keys)]
-            else:
-                keys = [x for x in range(key_limit)]
+            _keys = [x for x in range(key_limit)]
+        elif type(keys) is int:
+            _keys = [x for x in range(keys)]
+        elif type(keys) is list:
+            _keys = keys
+        else:
+            raise TealTypeError(type(keys), int | list[int])
 
-        assert max(keys) <= 255, "larger than 1 byte key supplied"
-        assert sorted(keys) == keys, "keys provided are not sorted"
+        assert max(_keys) <= 255, "larger than 1 byte key supplied"
+        assert sorted(_keys) == _keys, "keys provided are not sorted"
 
-        self.byte_keys = [key.to_bytes(1, "big") for key in keys]
+        self.byte_keys = [key.to_bytes(1, "big") for key in _keys]
         self.byte_key_str = Bytes("base16", b"".join(self.byte_keys).hex())
 
-        self.int_keys = [Int(key) for key in keys]
+        self.int_keys = [Int(key) for key in _keys]
         self.start_key = self.int_keys[0]
 
-        self._max_keys = len(keys)
+        self._max_keys = len(_keys)
         self._max_bytes = self._max_keys * blob_page_size
         self._max_bits = self._max_bytes * 8
 

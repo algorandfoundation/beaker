@@ -34,7 +34,7 @@ class StateExample(Application):
     )
 
     application_blob: Final[ApplicationStateBlob] = ApplicationStateBlob(
-        max_keys=16,
+        keys=16,
     )
 
     declared_account_value: Final[AccountStateValue] = AccountStateValue(
@@ -49,7 +49,7 @@ class StateExample(Application):
         descr="A dynamic state value, allowing 8 keys to be reserved, in this case byte type",
     )
 
-    account_blob: Final[AccountStateBlob] = AccountStateBlob(max_keys=3)
+    account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
 
     @create
     def create(self):

@@ -1,3 +1,4 @@
+from typing import Optional
 from pyteal import (
     Txn,
     App,
@@ -28,8 +29,8 @@ class LocalBlob(Blob):
     The `zero` method must be called on an account on opt in and the schema of the local storage should be 16 bytes
     """
 
-    def __init__(self, /, *, max_keys: int = None, keys: list[int] = None):
-        super().__init__(16, max_keys=max_keys, keys=keys)
+    def __init__(self, /, *, keys: Optional[int | list[int]] = None):
+        super().__init__(16, keys=keys)
 
     def zero(self, acct: Expr = Txn.sender()) -> Expr:
         """
