@@ -136,59 +136,52 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span> <span class="o">=</span> <span class="n">resolver</span>
 
         <span class="k">match</span> <span class="n">resolver</span><span class="p">:</span>
+
+            <span class="c1"># Expr types</span>
             <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">LocalState</span>
             <span class="k">case</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">GlobalState</span>
             <span class="k">case</span> <span class="n">Bytes</span><span class="p">()</span> <span class="o">|</span> <span class="n">Int</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">Constant</span>
+
+            <span class="c1"># Native types</span>
             <span class="k">case</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">Constant</span>
+
+            <span class="c1"># FunctionType</span>
             <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
                 <span class="c1"># Fall through, if its not got a valid handler config, raise error</span>
                 <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="n">resolver</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hc</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                        <span class="s2">&quot;Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method&quot;</span>
-                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">,</span> <span class="n">DefaultArgumentType</span><span class="p">)</span>
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span> <span class="o">=</span> <span class="n">DefaultArgumentClass</span><span class="o">.</span><span class="n">ABIMethod</span>
 
     <span class="k">def</span> <span class="nf">resolve_hint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">:</span>
+            <span class="c1"># Expr types</span>
             <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">()</span> <span class="o">|</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">str_key</span><span class="p">()</span>
             <span class="k">case</span> <span class="n">Bytes</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">byte_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="k">case</span> <span class="n">Int</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">value</span>
+            <span class="c1"># Native types</span>
             <span class="k">case</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span>
+
+            <span class="c1"># FunctionType</span>
             <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
                 <span class="c1"># Fall through, if its not got a valid handler config, raise error</span>
                 <span class="n">hc</span> <span class="o">=</span> <span class="n">get_handler_config</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">HandlerFunc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hc</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                        <span class="s2">&quot;Expected str, int, ApplicationStateValue, AccountStateValue or read only ABI method&quot;</span>
-                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="p">,</span> <span class="n">DefaultArgumentType</span><span class="p">)</span>
+
                 <span class="k">return</span> <span class="n">hc</span><span class="o">.</span><span class="n">method_spec</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span>
 
-
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ParameterAnnotation</span><span class="p">:</span>
-    <span class="n">descr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DefaultArgument</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">dictify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="n">ret</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;descr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">descr</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ret</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">resolvable_class</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">resolve_hint</span><span class="p">()</span>
-            <span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">ret</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolvable_class</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_hint</span><span class="p">()}</span>
 
 
 <span class="nd">@dataclass</span>
@@ -202,7 +195,7 @@
     <span class="n">referenced_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">param_annotations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+    <span class="n">default_arguments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DefaultArgument</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span>
 
@@ -213,10 +206,10 @@
         <span class="n">mh</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;read_only&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">}</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default_arguments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_arguments</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="p">):</span>
-            <span class="n">mh</span><span class="p">[</span><span class="s2">&quot;param_annotations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span>
+            <span class="n">mh</span><span class="p">[</span><span class="s2">&quot;default_arguments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_arguments</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">structs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -297,15 +290,15 @@
     <span class="n">structs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span>
-    <span class="c1">#: annotations</span>
-    <span class="n">param_annotations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+    <span class="c1">#: defaults</span>
+    <span class="n">default_arguments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DefaultArgument</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_arguments</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span>
         <span class="p">)</span>
 
@@ -313,9 +306,9 @@
         <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
             <span class="n">d</span><span class="p">[</span><span class="s2">&quot;read_only&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;param_annotations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_arguments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;default_arguments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dictify</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_arguments</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">d</span><span class="p">[</span><span class="s2">&quot;structs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structs</span>
@@ -434,39 +427,23 @@
 
 <span class="k">def</span> <span class="nf">_capture_defaults</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
     <span class="n">sig</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-    <span class="n">fn_annotations</span> <span class="o">=</span> <span class="n">get_annotations</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-    <span class="n">param_annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">type_anno</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">annotation</span>
 
+    <span class="n">default_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DefaultArgument</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">match</span> <span class="n">v</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
             <span class="k">case</span> <span class="n">Expr</span><span class="p">()</span> <span class="o">|</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">()</span> <span class="o">|</span> <span class="n">FunctionType</span><span class="p">():</span>
-                <span class="n">param_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParameterAnnotation</span><span class="p">(</span>
-                    <span class="n">default</span><span class="o">=</span><span class="n">DefaultArgument</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">default_args</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">DefaultArgument</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
                 <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span>
-                <span class="n">fn_annotations</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_anno</span>
-            <span class="k">case</span> <span class="k">_</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-                <span class="k">pass</span>
 
-        <span class="c1"># if hasattr(type_anno, &quot;__origin__&quot;):</span>
-        <span class="c1">#    print(type_anno)</span>
-        <span class="c1">#    orig = type_anno.__origin__</span>
-        <span class="c1">#    print(orig)</span>
-        <span class="c1">#    if hasattr(type_anno, &quot;__metadata__&quot;):</span>
-        <span class="c1">#        param_annotations[k] = type_anno.__metadata__[0]</span>
-        <span class="c1">#        params[k] = v.replace(annotation=orig)</span>
-        <span class="c1">#        fn_annotations[k] = orig</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">default_args</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Update handler config</span>
+        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">default_arguments</span><span class="o">=</span><span class="n">default_args</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">param_annotations</span><span class="o">=</span><span class="n">param_annotations</span><span class="p">)</span>
-
-    <span class="c1"># Fix function sig/annotations</span>
-    <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
-    <span class="n">fn</span><span class="o">.</span><span class="vm">__annotations__</span> <span class="o">=</span> <span class="n">fn_annotations</span>
+        <span class="c1"># Fix function sig/annotations</span>
+        <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
 
     <span class="k">return</span> <span class="n">fn</span>
 
