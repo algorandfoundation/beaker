@@ -453,6 +453,7 @@ class ApplicationClient:
         accounts: list[str] = None,
         foreign_apps: list[int] = None,
         foreign_assets: list[int] = None,
+        boxes: list[tuple[int, bytes]] = None,
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
@@ -484,6 +485,7 @@ class ApplicationClient:
             note=note,
             lease=lease,
             rekey_to=rekey_to,
+            boxes=boxes,
             **kwargs,
         )
 
@@ -584,6 +586,7 @@ class ApplicationClient:
         accounts: list[str] = None,
         foreign_apps: list[int] = None,
         foreign_assets: list[int] = None,
+        boxes: list[tuple[int, bytes]] = None,
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
@@ -647,6 +650,7 @@ class ApplicationClient:
             accounts=accounts,
             foreign_apps=foreign_apps,
             foreign_assets=foreign_assets,
+            boxes=boxes,
             note=note,
             lease=lease,
             rekey_to=rekey_to,
