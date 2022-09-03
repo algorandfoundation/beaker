@@ -1,41 +1,8 @@
 import base64
+from typing import Literal
 import algosdk
 from pyteal import *
 from beaker import *
-
-
-# Box Consensus params
-
-# BoxFlatMinBalance = 0.002500
-# BoxByteMinBalance = 0.000400
-
-# MaxBoxSize = 4 * 8096
-# MaxAppBoxReferences = 8
-# BytesPerBoxReference = 1024
-
-# Max box bytes accessible in 1 app call: 8k
-# Max box bytes accessible in 16 app calls: 128k
-
-# name = Bytes("name")
-# val = Bytes("val")
-# size = Int(1)
-# start = Int(1)
-#
-# BoxCreate(name, size) # Create a new box of size
-# BoxDelete(name) # Delete box
-#
-# BoxExtract(name, start, size) # Get `size` bytes from box starting from `start`
-# BoxReplace(name, start, val) # Overwrite whatever is in the box from start to len(val)
-# BoxPut(name, val) # Write all contents of `val` to box starting from 0
-#
-# BoxGet(name) # Get the full contents of this box (will panic >4k)
-# BoxLen(name) # Get the size of this box
-#
-
-# Use a box per member to denote membership parameters
-class MembershipRecord(abi.NamedTuple):
-    role: abi.Field[abi.Uint8]
-    voted: abi.Field[abi.Bool]
 
 
 class MapElement:
@@ -73,7 +40,7 @@ class Mapping:
         self.key_type = key_type
         self.value_type = value_type
 
-    def __getitem__(self, idx: abi.BaseType | Expr):
+    def __getitem__(self, idx: abi.BaseType | Expr) -> MapElement:
         match idx:
             case abi.BaseType():
                 return MapElement(idx.encode(), self.value_type)
@@ -83,9 +50,62 @@ class Mapping:
                 return MapElement(idx, self.value_type)
 
 
+class ListElement:
+    def __init__(self, name, size, idx):
+        self.name = name
+        self.size = size
+        self.idx = idx
+
+    def store_into(self, val: abi.BaseType) -> Expr:
+        return val.decode(self.get())
+
+    def get(self) -> Expr:
+        return BoxExtract(self.name, self.size * self.idx, self.size)
+
+    def set(self, val: abi.BaseType) -> Expr:
+        return BoxReplace(self.name, self.size * self.idx, val.encode())
+
+
+class Listing:
+    def __init__(self, name: Bytes, value_type: type[abi.BaseType], elements: int):
+        ts = abi.type_spec_from_annotation(value_type)
+        assert not ts.is_dynamic()
+
+        assert ts.byte_length_static() * elements < 32e3
+
+        self.name = name
+
+        self.value_type = ts
+
+        self._element_size = ts.byte_length_static()
+        self.element_size = Int(self._element_size)
+
+        self._elements = elements
+        self.elements = Int(self._elements)
+
+    def create(self) -> Expr:
+        return BoxCreate(self.name, self.element_size * self.elements)
+
+    def __getitem__(self, idx: Int) -> ListElement:
+        return ListElement(self.name, self.element_size, idx)
+
+
+# Use a box per member to denote membership parameters
+class MembershipRecord(abi.NamedTuple):
+    role: abi.Field[abi.Uint8]
+    voted: abi.Field[abi.Bool]
+
+
+class Votable(abi.NamedTuple):
+    title: abi.Field[abi.StaticBytes[Literal[32]]]
+    yes_votes: abi.Field[abi.Uint8]
+    no_votes: abi.Field[abi.Uint8]
+
+
 class Boxen(Application):
 
     membership = Mapping(abi.Address, MembershipRecord)
+    votables = Listing(Bytes("votables"), Votable, 3)
 
     @external
     def add_member(self):
@@ -103,6 +123,10 @@ class Boxen(Application):
     @external
     def remove_member(self, member: abi.Address):
         return Pop(self.membership[member].delete())
+
+    @external
+    def add_votable(self, votable: Votable):
+        return self.votables[Int(0)].set(votable)
 
 
 def print_boxes(app_client: client.ApplicationClient):
