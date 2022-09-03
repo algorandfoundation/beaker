@@ -1,4 +1,4 @@
-The DAO of Boxes
+The TAO of Boxes
 ----------------
 
 If a `map` is required a box per key should be used
