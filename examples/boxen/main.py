@@ -47,7 +47,7 @@ class MapElement:
         self.key = key
         self.value_type = value_type
 
-    def store_into(self, val: abi.BaseType)->Expr:
+    def store_into(self, val: abi.BaseType) -> Expr:
         # Assert same type, compile time check
         return val.decode(self.get())
 
@@ -132,7 +132,11 @@ if __name__ == "__main__":
     )
     print_boxes(app_client)
 
-    result = app_client.call(Boxen.get_membership_record, member=acct.address, boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]])
+    result = app_client.call(
+        Boxen.get_membership_record,
+        member=acct.address,
+        boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]],
+    )
     print(result.return_value)
 
     app_client.call(
@@ -141,4 +145,3 @@ if __name__ == "__main__":
         member=acct.address,
     )
     print_boxes(app_client)
-
