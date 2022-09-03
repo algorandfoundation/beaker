@@ -39,16 +39,23 @@ class MembershipRecord(abi.NamedTuple):
 
 
 class MapElement:
-    def __init__(self, key: Expr):
+    def __init__(self, key: Expr, value_type: type[abi.BaseType]):
         assert key.type_of() == TealType.bytes, TealTypeError(
             key.type_of(), TealType.bytes
         )
+
         self.key = key
+        self.value_type = value_type
+
+    def store_into(self, val: abi.BaseType)->Expr:
+        # Assert same type, compile time check
+        return val.decode(self.get())
 
     def get(self) -> Expr:
         return Seq(maybe := BoxGet(self.key), Assert(maybe.hasValue()), maybe.value())
 
     def set(self, val: abi.BaseType | Expr) -> Expr:
+        # TODO: does BoxPut work if it needs to be resized later?
         match val:
             case abi.BaseType():
                 return BoxPut(self.key, val.encode())
@@ -69,11 +76,11 @@ class Mapping:
     def __getitem__(self, idx: abi.BaseType | Expr):
         match idx:
             case abi.BaseType():
-                return MapElement(idx.encode())
+                return MapElement(idx.encode(), self.value_type)
             case Expr():
                 if idx.type_of() != TealType.bytes:
                     raise TealTypeError(idx.type_of(), TealType.bytes)
-                return MapElement(idx)
+                return MapElement(idx, self.value_type)
 
 
 class Boxen(Application):
@@ -89,12 +96,9 @@ class Boxen(Application):
             self.membership[Txn.sender()].set(mr),
         )
 
-    @external(read_only=True)
-    def has_voted(self, member: abi.Address, *, output: abi.Bool):
-        return Seq(
-            (mr := MembershipRecord()).decode(self.membership[member].get()),
-            output.set(mr.voted),
-        )
+    @external
+    def get_membership_record(self, member: abi.Address, *, output: MembershipRecord):
+        return self.membership[member].store_into(output)
 
     @external
     def remove_member(self, member: abi.Address):
@@ -127,9 +131,14 @@ if __name__ == "__main__":
         boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]],
     )
     print_boxes(app_client)
+
+    result = app_client.call(Boxen.get_membership_record, member=acct.address, boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]])
+    print(result.return_value)
+
     app_client.call(
         Boxen.remove_member,
         boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]],
         member=acct.address,
     )
     print_boxes(app_client)
+
