@@ -100,15 +100,17 @@ class Boxen(Application):
     def remove_member(self, member: abi.Address):
         return Pop(self.membership[member].delete())
 
+
 def print_boxes(app_client: client.ApplicationClient):
     record_codec = algosdk.abi.ABIType.from_string(str(MembershipRecord().type_spec()))
     boxes = app_client.client.application_boxes(app_client.app_id)
     print(f"{len(boxes['boxes'])} boxes found")
-    for box in boxes['boxes']:
-        name = base64.b64decode(box['name'])
+    for box in boxes["boxes"]:
+        name = base64.b64decode(box["name"])
         contents = app_client.client.application_box_by_name(app_client.app_id, name)
-        membership_record = record_codec.decode(base64.b64decode(contents['value']))
+        membership_record = record_codec.decode(base64.b64decode(contents["value"]))
         print(f"\t{algosdk.encoding.encode_address(name)} => {membership_record} ")
+
 
 if __name__ == "__main__":
     accts = sandbox.get_accounts()
@@ -120,7 +122,14 @@ if __name__ == "__main__":
     app_client.create()
     app_client.fund(100 * consts.algo)
 
-    app_client.call(Boxen.add_member, boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]])
+    app_client.call(
+        Boxen.add_member,
+        boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]],
+    )
     print_boxes(app_client)
-    app_client.call(Boxen.remove_member, boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]], member=acct.address)
+    app_client.call(
+        Boxen.remove_member,
+        boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]],
+        member=acct.address,
+    )
     print_boxes(app_client)
