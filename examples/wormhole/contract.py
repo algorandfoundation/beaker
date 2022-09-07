@@ -58,3 +58,6 @@ class OracleDataCache(WormholeTransfer):
     @external
     def lookup(self, ts: abi.Uint64, *, output: OracleData):
         return output.decode(self.prices[ts].get_must())
+
+if __name__=="__main__":
+    OracleDataCache().dump()

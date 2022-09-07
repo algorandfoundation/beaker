@@ -297,3 +297,19 @@ class Application:
     @create
     def create(self) -> Expr:
         return Approve()
+
+    def dump(self, directory: str = '.'):
+        import json
+        import os.path
+
+        with open(os.path.join(directory, 'approval.teal'), "w") as f:
+            f.write(self.approval_program)
+
+        with open(os.path.join(directory, 'clear.teal'), "w") as f:
+            f.write(self.clear_program)
+
+        with open(os.path.join(directory, 'contract.json'), "w") as f:
+            f.write(json.dumps(self.contract.dictify()))
+
+        with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
+            f.write(json.dumps(self.contract.dictify()))

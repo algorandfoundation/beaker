@@ -128,8 +128,13 @@ class WormholeTransfer(Application, ABC):
     def portal_transfer(
         self, vaa: abi.DynamicBytes, *, output: abi.DynamicBytes
     ) -> Expr:
-        """
-        portal_transfer accepts a VAA containing information about the transfer and the payload.
+        """ portal_transfer accepts a VAA containing information about the transfer and the payload.
+
+        Args:
+            vaa: VAA encoded dynamic byte array
+
+        Returns:
+            Undefined byte array 
 
         To allow a more flexible interface we publicize that we output generic bytes
         """
@@ -142,10 +147,13 @@ class WormholeTransfer(Application, ABC):
     def handle_transfer(
         self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
     ) -> Expr:
-        """
-
-        Should be overridden with whatever app specific stuff
+        """handle transfer should be overridden with app specific logic 
         needs to be done on transfer
 
+        Args:
+            ctvaa: The decoded ContractTransferVAA
+
+        Returns:
+            app specific byte array
         """
         return Reject()
