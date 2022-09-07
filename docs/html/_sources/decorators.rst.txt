@@ -59,7 +59,7 @@ But we can define our own
 
     from beaker.consts import Algos
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def is_whale(acct: Expr):
         # Only allow accounts with 1mm algos
         return Balance(acct)>Algos(1_000_000)

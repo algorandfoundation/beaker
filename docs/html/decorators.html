@@ -161,7 +161,7 @@
 <p>But we can define our own</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">Algos</span>
 
-<span class="nd">@internal</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+<span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">is_whale</span><span class="p">(</span><span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
     <span class="c1"># Only allow accounts with 1mm algos</span>
     <span class="k">return</span> <span class="n">Balance</span><span class="p">(</span><span class="n">acct</span><span class="p">)</span><span class="o">&gt;</span><span class="n">Algos</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">)</span>
