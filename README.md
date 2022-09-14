@@ -74,9 +74,7 @@ Or from github directly (no promises on stability):
 
 # Dev Environment 
 
-Requires a local [sandbox](https://github.com/algorand/sandbox).
-
-*NOTE:* Currently requires a sandbox running with the `beta` config (or any config that contains [this commit](https://github.com/algorand/go-algorand/pull/4198))
+Requires a local [sandbox](https://github.com/algorand/sandbox) with latest stable tag minimum.
 
 ```sh
 $ git clone git@github.com:algorand/sandbox.git
