@@ -200,6 +200,9 @@ class ApplicationStateValue(StateValue):
 
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
+    def exists(self) -> Expr:
+        return Seq(val := self.get_maybe(), val.hasValue())
+
     def delete(self) -> Expr:
         check_not_static(self)
 
@@ -304,6 +307,9 @@ class AccountStateValue(StateValue):
             v.value(),
             val,
         )
+
+    def exists(self) -> Expr:
+        return Seq(val := self.get_maybe(), val.hasValue())
 
     def delete(self) -> Expr:
         if self.key is None:
