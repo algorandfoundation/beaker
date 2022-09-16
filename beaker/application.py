@@ -318,4 +318,4 @@ class Application:
             f.write(json.dumps(self.contract.dictify()))
 
         with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
-            f.write(json.dumps(self.contract.dictify()))
+            f.write(json.dumps(self.application_spec()))
