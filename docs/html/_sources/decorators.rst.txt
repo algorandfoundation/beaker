@@ -59,7 +59,7 @@ But we can define our own
 
     from beaker.consts import Algos
 
-    @internal(TealType.uint64)
+    @Subroutine(TealType.uint64)
     def is_whale(acct: Expr):
         # Only allow accounts with 1mm algos
         return Balance(acct)>Algos(1_000_000)
@@ -119,19 +119,16 @@ We don't want to expose these methods to the ABI but we do want to allow them to
 
 
 
-.. _bare_externals:
+.. _oncomplete_externals:
 
-Bare externals
+OnComplete Externals 
 ---------------
 
-The ARC4 spec allows applications to define externals for ``bare`` methods, that is methods with no application arguments. 
+If a method expects the ``ApplicationCallTransaction`` to have an  ``OnComplete`` other than ``NoOp``, one of the other ``OnComplete`` decorators may be used instead of ``external`` with a method config set.
 
-Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
 
-Single Bare externals
-^^^^^^^^^^^^^^^^^^^^^^
-
-If a single OnComplete should be handled by a given method, use one of the pre-defined helpers.
+OnComplete Decorators 
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autodecorator:: create
 .. autodecorator:: delete 
@@ -139,7 +136,12 @@ If a single OnComplete should be handled by a given method, use one of the pre-d
 .. autodecorator:: opt_in 
 .. autodecorator:: close_out 
 .. autodecorator:: clear_state 
-    
+
+The ARC4 spec allows applications to define externals for ``bare`` methods, that is methods with no application arguments. 
+
+Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
+
+The same handlers described above will also work for ``bare`` method calls but multiple ``OnComplete`` values can be handled with the ``bare_external`` decorator.
 
 
 Multiple Bare externals
@@ -148,4 +150,3 @@ Multiple Bare externals
 If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
 
 .. autodecorator:: bare_external
-
