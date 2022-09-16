@@ -303,12 +303,18 @@ class Application:
         import os.path
 
         with open(os.path.join(directory, "approval.teal"), "w") as f:
+            if self.approval_program is None:
+                raise Exception("Approval program empty")
             f.write(self.approval_program)
 
         with open(os.path.join(directory, "clear.teal"), "w") as f:
+            if self.clear_program is None:
+                raise Exception("Clear program empty")
             f.write(self.clear_program)
 
         with open(os.path.join(directory, "contract.json"), "w") as f:
+            if self.contract is None:
+                raise Exception("Contract empty")
             f.write(json.dumps(self.contract.dictify()))
 
         with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
