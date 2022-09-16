@@ -541,7 +541,7 @@ def create(
     authorize: SubroutineFnWrapper = None,
     method_config: Optional[MethodConfig] = None,
 ):
-    """set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call and ApplicationId == 0
 
     Args:
         fn: The method to be wrapped.
@@ -577,7 +577,7 @@ def create(
 
 
 def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`DeleteApplication` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`DeleteApplication` call
 
     Args:
         fn: The method to be wrapped.
@@ -604,7 +604,7 @@ def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`UpdateApplication` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`UpdateApplication` call
 
     Args:
         fn: The method to be wrapped.
@@ -634,7 +634,7 @@ def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`OptIn` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`OptIn` call
 
     Args:
         fn: The method to be wrapped.
@@ -660,7 +660,7 @@ def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`ClearState` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
@@ -687,7 +687,7 @@ def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = N
 
 
 def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`CloseOut` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`CloseOut` call
 
     Args:
         fn: The method to be wrapped.
@@ -714,7 +714,7 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
 
 
 def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`NoOp` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call
 
     Args:
         fn: The method to be wrapped.

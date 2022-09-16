@@ -88,7 +88,7 @@ Above, we used the decorator ``@external`` to mark a method as being exposed in 
 
 The ``@external`` decorator can take parameters to change how it may be called or what accounts may call it, see examples :ref:`here <external>`.
 
-Other decorators include :ref:`@internal <internal_methods>` which marks the method as being callable only from inside the application or with one of the :ref:`bare <bare_externals>` OnComplete handlers (e.g. ``create``, ``opt_in``, etc...)
+Other decorators include :ref:`@internal <internal_methods>` which marks the method as being callable only from inside the application or with one of the :ref:`OnComplete <oncomplete_externals>` handlers (e.g. ``create``, ``opt_in``, etc...)
 
 
 .. _manage_state:
