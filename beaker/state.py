@@ -129,6 +129,10 @@ class StateValue(Expr):
         """gets the value stored at the key. if none is stored, return the value passed"""
 
     @abstractmethod
+    def exists(self) -> Expr:
+        """checks if the value is set (to whatever value. Returns Int(1) if value is set, Int(0) otherwise."""
+
+    @abstractmethod
     def delete(self) -> Expr:
         """deletes the key from state, if the value is static it will be a compile time error"""
 
