@@ -124,8 +124,7 @@ def do_lv_test(key, stack_type, default, val):
 
     actual = lv.exists().__teal__(options)
     expected = pt.Seq(
-        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)),
-        v.hasValue()
+        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)), v.hasValue()
     ).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -212,8 +211,7 @@ def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
 
     actual = lv.exists().__teal__(options)
     expected = pt.Seq(
-        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)),
-        v.hasValue()
+        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)), v.hasValue()
     ).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -339,10 +337,9 @@ def do_gv_test(key, stack_type, default, val, static):
         assert actual == expected
 
     actual = lv.exists().__teal__(options)
-    expected = pt.Seq(
-        (v := pt.App.globalGetEx(pt.Int(0), key)),
-        v.hasValue()
-    ).__teal__(options)
+    expected = pt.Seq((v := pt.App.globalGetEx(pt.Int(0), key)), v.hasValue()).__teal__(
+        options
+    )
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
@@ -466,10 +463,9 @@ def do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
     actual = lv.exists().__teal__(options)
-    expected = pt.Seq(
-        (v := pt.App.globalGetEx(pt.Int(0), key)),
-        v.hasValue()
-    ).__teal__(options)
+    expected = pt.Seq((v := pt.App.globalGetEx(pt.Int(0), key)), v.hasValue()).__teal__(
+        options
+    )
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
