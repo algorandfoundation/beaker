@@ -247,9 +247,16 @@ class DynamicApplicationStateValue(DynamicStateValue):
 
 
 class AccountStateValue(StateValue):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.acct = Txn.sender()
+    def __init__(
+        self,
+        stack_type: TealType,
+        key: Expr = None,
+        default: Expr = None,
+        static: bool = False,
+        descr: str = None,
+    ):
+        super().__init__(stack_type, key, default, static, descr)
+        self.acct: Expr = Txn.sender()
 
     def __str__(self) -> str:
         return f"AccountStateValue {self.acct} {self.key}"
