@@ -22,7 +22,6 @@ class Boxen(Application):
 
     measures = Listing(Bytes("votables"), Votable, 3)
 
-
     @create
     def create(self):
         # Initialize our voting measures
@@ -48,6 +47,7 @@ class Boxen(Application):
     @external
     def add_votable(self, idx: abi.Uint8, votable: Votable):
         return self.measures[idx.get()].set(votable)
+
 
 if __name__ == "__main__":
 
