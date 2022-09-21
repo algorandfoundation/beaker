@@ -73,9 +73,6 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 3000, asset_b),
             signer=signer,
         ),
-        pool_asset=pool_token,
-        a_asset=asset_a,
-        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -93,9 +90,6 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 1000, asset_b),
             signer=signer,
         ),
-        pool_asset=pool_token,
-        a_asset=asset_a,
-        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -109,8 +103,6 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
             signer=signer,
         ),
-        a_asset=asset_a,
-        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -124,8 +116,6 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
             signer=signer,
         ),
-        a_asset=asset_a,
-        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -139,9 +129,6 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),
             signer=signer,
         ),
-        pool_asset=pool_token,
-        a_asset=asset_a,
-        b_asset=asset_b,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 

@@ -284,7 +284,7 @@ class Authorize:
         return _impl
 
 
-def _authorize(allowed: SubroutineFnWrapper):
+def _authorize(allowed: SubroutineFnWrapper) -> Callable[..., HandlerFunc]:
     args = allowed.subroutine.expected_arg_types
 
     if len(args) != 1 or args[0] is not Expr:
@@ -295,9 +295,9 @@ def _authorize(allowed: SubroutineFnWrapper):
     if allowed.type_of() != TealType.uint64:
         raise TealTypeError(allowed.type_of(), TealType.uint64)
 
-    def _decorate(fn: HandlerFunc):
+    def _decorate(fn: HandlerFunc) -> HandlerFunc:
         @wraps(fn)
-        def _impl(*args, **kwargs):
+        def _impl(*args, **kwargs) -> Expr:
             return Seq(
                 Assert(allowed(Txn.sender()), comment="unauthorized"),
                 fn(*args, **kwargs),
@@ -308,13 +308,13 @@ def _authorize(allowed: SubroutineFnWrapper):
     return _decorate
 
 
-def _readonly(fn: HandlerFunc):
+def _readonly(fn: HandlerFunc) -> HandlerFunc:
     set_handler_config(fn, read_only=True)
     return fn
 
 
-def _on_complete(mc: MethodConfig):
-    def _impl(fn: HandlerFunc):
+def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         set_handler_config(fn, method_config=mc)
         return fn
 
@@ -541,7 +541,7 @@ def create(
     authorize: SubroutineFnWrapper = None,
     method_config: Optional[MethodConfig] = None,
 ):
-    """set method to be handled by a bare :code:`NoOp` call and ApplicationId == 0
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call and ApplicationId == 0
 
     Args:
         fn: The method to be wrapped.
@@ -577,7 +577,7 @@ def create(
 
 
 def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`DeleteApplication` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`DeleteApplication` call
 
     Args:
         fn: The method to be wrapped.
@@ -604,7 +604,7 @@ def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`UpdateApplication` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`UpdateApplication` call
 
     Args:
         fn: The method to be wrapped.
@@ -634,7 +634,7 @@ def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`OptIn` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`OptIn` call
 
     Args:
         fn: The method to be wrapped.
@@ -660,7 +660,7 @@ def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`ClearState` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
@@ -687,7 +687,7 @@ def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = N
 
 
 def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`CloseOut` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`CloseOut` call
 
     Args:
         fn: The method to be wrapped.
@@ -714,7 +714,7 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
 
 
 def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by a bare :code:`NoOp` call
+    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call
 
     Args:
         fn: The method to be wrapped.

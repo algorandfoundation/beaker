@@ -45,8 +45,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#tutorial">Tutorial</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#decorators">Decorators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#state-management">State Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#inheritance">Inheritance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#parameter-annotations">Parameter Annotations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#inheritance">Inheritance</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#parameter-default-value">Parameter Default Value</a></li>
 </ul>
 </li>
@@ -205,7 +204,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 <span id="use-decorators"></span><h2>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading"></a></h2>
 <p>Above, we used the decorator <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> to mark a method as being exposed in the ABI and available to be called from off-chain.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> decorator can take parameters to change how it may be called or what accounts may call it, see examples <a class="reference internal" href="decorators.html#external"><span class="std std-ref">here</span></a>.</p>
-<p>Other decorators include <a class="reference internal" href="decorators.html#internal-methods"><span class="std std-ref">&#64;internal</span></a> which marks the method as being callable only from inside the application or with one of the <a class="reference internal" href="decorators.html#bare-externals"><span class="std std-ref">bare</span></a> OnComplete handlers (e.g. <code class="docutils literal notranslate"><span class="pre">create</span></code>, <code class="docutils literal notranslate"><span class="pre">opt_in</span></code>, etc…)</p>
+<p>Other decorators include <a class="reference internal" href="decorators.html#internal-methods"><span class="std std-ref">&#64;internal</span></a> which marks the method as being callable only from inside the application or with one of the <a class="reference internal" href="decorators.html#oncomplete-externals"><span class="std std-ref">OnComplete</span></a> handlers (e.g. <code class="docutils literal notranslate"><span class="pre">create</span></code>, <code class="docutils literal notranslate"><span class="pre">opt_in</span></code>, etc…)</p>
 </section>
 <section id="state-management">
 <span id="manage-state"></span><h2>State Management<a class="headerlink" href="#state-management" title="Permalink to this heading"></a></h2>
@@ -285,32 +284,25 @@ The constructor may also be passed an app_id directly if one is already deployed
 </div>
 <p>Here we subclassed the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.</p>
 <p>We inherit the methods and class variables that <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> defined, allowing us to encapsulate and compose behavior.</p>
-</section>
-<section id="parameter-annotations">
-<span id="id3"></span><h2>Parameter Annotations<a class="headerlink" href="#parameter-annotations" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="beaker.decorators.ParameterAnnotation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.decorators.</span></span><span class="sig-name descname"><span class="pre">ParameterAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">beaker.decorators.DefaultArgument</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/decorators.html#ParameterAnnotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.ParameterAnnotation" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<p>A caller of our application should be provided with all the information they might need in order to make a successful application call.</p>
-<p>One example of this of information is of course the parameter name and type. These bits of information are already provided by the normal method definition.</p>
+<p>Also note that the <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> argument specifies a default value. This is a bit of magic that serves only to produce a hint for the caller in the resulting Application Spec.</p>
 <section id="parameter-default-value">
 <span id="parameter-default"></span><h3>Parameter Default Value<a class="headerlink" href="#parameter-default-value" title="Permalink to this heading"></a></h3>
-<p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example the argument <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> should be the id of the application that we use to increase our budget via inner app calls.  This value should not change frequently, if at all, but is still required to be passed by the caller so we may _use_ it in our logic.</p>
-<p>Using the <code class="docutils literal notranslate"><span class="pre">default</span></code> field of the <code class="docutils literal notranslate"><span class="pre">ParameterAnnotation</span></code>, we can specify a default value for the parameter.</p>
-<p>This allows the caller to know this pseudo-magic number ahead of time and makes calling your application easier.  The information is communicated through the full ApplicationSpec as a hint the caller can use to figure out what the value should be.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example above, the argument <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> should be the id of the application that we use to increase our budget via inner app calls.
+This value should not change frequently, if at all, but is still required to be passed by the caller so we may <strong>use</strong> it in our logic, namely to execute an application call against it.</p>
+<p>By specifying the default value of the argument in the method signature, we can communicate to the caller, through the hints of the Application Spec, what the value <strong>should</strong> be.</p>
 <p>Options for default arguments are:</p>
 <ul class="simple">
-<li><p>A constant, <cite>bytes | int | str</cite></p></li>
-<li><p>State Values, <cite>ApplicationStateValue | AccountStateValue</cite></p></li>
-<li><p>A read-only ABI method</p></li>
+<li><p>A constant: one of <code class="docutils literal notranslate"><span class="pre">bytes</span> <span class="pre">|</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">Bytes</span> <span class="pre">|</span> <span class="pre">Int</span></code></p></li>
+<li><p>State Values: one of <code class="docutils literal notranslate"><span class="pre">ApplicationStateValue</span> <span class="pre">|</span> <span class="pre">AccountStateValue</span></code></p></li>
+<li><p>A read-only ABI method: a method defined to produce some more complex value than a state value or constant would be able to produce.</p></li>
 </ul>
-<p>The result is that we can call the method, omitting the <cite>opup_app</cite> argument:</p>
+<p>The result of specifying the default value here is that we can call the method, omitting the <cite>opup_app</cite> argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">hash_it</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;hashme&quot;</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>When invoked, the <cite>ApplicationClient</cite> consults the method definition to check that all the expected arguments are passed. If it finds one missing, it will check for hints for the method that may be resolvable. Upon finding a resolvable it will look up the state value, call the method, or return the constant value. The resolved value is passed in for argument.</p>
+<p>When invoked, the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> consults the method definition to check that all the expected arguments are passed.
+If it finds that an argument is not passed, it will check the hints for a default argument for the method that may be used directly (constant) or resolved (need to look it up on chain or call method).
+Upon finding a resolvable it will look up the state value, call the method. The resulting value is passed in for argument to the application call.</p>
 </section>
 </section>
 </section>

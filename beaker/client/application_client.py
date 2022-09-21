@@ -716,14 +716,12 @@ class ApplicationClient:
             return to_resolve.resolve_hint()
         elif to_resolve.resolvable_class == DefaultArgumentClass.GlobalState:
             key = to_resolve.resolve_hint()
-            app_state = self.get_application_state()
-            return app_state[key]
+            app_state = self.get_application_state(raw=True)
+            return app_state[key.encode()]
         elif to_resolve.resolvable_class == DefaultArgumentClass.LocalState:
             key = to_resolve.resolve_hint()
-            acct_state = self.get_account_state(
-                self.get_sender(),
-            )
-            return acct_state[key]
+            acct_state = self.get_account_state(self.get_sender(), raw=True)
+            return acct_state[key.encode()]
         elif to_resolve.resolvable_class == DefaultArgumentClass.ABIMethod:
             method = abi.Method.undictify(to_resolve.resolve_hint())
             result = self.call(method)

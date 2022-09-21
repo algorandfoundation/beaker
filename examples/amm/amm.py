@@ -143,9 +143,9 @@ class ConstantProductAMM(Application):
         self,
         a_xfer: abi.AssetTransferTransaction,
         b_xfer: abi.AssetTransferTransaction,
-        pool_asset: abi.Asset,
-        a_asset: abi.Asset,
-        b_asset: abi.Asset,
+        pool_asset: abi.Asset = pool_token,
+        a_asset: abi.Asset = asset_a,
+        b_asset: abi.Asset = asset_b,
     ):
         """mint pool tokens given some amount of asset A and asset B"""
 
@@ -210,9 +210,9 @@ class ConstantProductAMM(Application):
     def burn(
         self,
         pool_xfer: abi.AssetTransferTransaction,
-        pool_asset: abi.Asset,
-        a_asset: abi.Asset,
-        b_asset: abi.Asset,
+        pool_asset: abi.Asset = pool_token,
+        a_asset: abi.Asset = asset_a,
+        b_asset: abi.Asset = asset_b,
     ):
         """burn pool tokens to get back some amount of asset A and asset B"""
 
@@ -269,8 +269,8 @@ class ConstantProductAMM(Application):
     def swap(
         self,
         swap_xfer: abi.AssetTransferTransaction,
-        a_asset: abi.Asset,
-        b_asset: abi.Asset,
+        a_asset: abi.Asset = asset_a,
+        b_asset: abi.Asset = asset_b,
     ):
         """Swap some amount of either asset A or asset B for the other"""
         well_formed_swap = [
