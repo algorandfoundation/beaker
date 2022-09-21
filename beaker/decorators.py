@@ -284,7 +284,7 @@ class Authorize:
         return _impl
 
 
-def _authorize(allowed: SubroutineFnWrapper):
+def _authorize(allowed: SubroutineFnWrapper) -> Callable[..., HandlerFunc]:
     args = allowed.subroutine.expected_arg_types
 
     if len(args) != 1 or args[0] is not Expr:
@@ -295,9 +295,9 @@ def _authorize(allowed: SubroutineFnWrapper):
     if allowed.type_of() != TealType.uint64:
         raise TealTypeError(allowed.type_of(), TealType.uint64)
 
-    def _decorate(fn: HandlerFunc):
+    def _decorate(fn: HandlerFunc) -> HandlerFunc:
         @wraps(fn)
-        def _impl(*args, **kwargs):
+        def _impl(*args, **kwargs) -> Expr:
             return Seq(
                 Assert(allowed(Txn.sender()), comment="unauthorized"),
                 fn(*args, **kwargs),
@@ -308,13 +308,13 @@ def _authorize(allowed: SubroutineFnWrapper):
     return _decorate
 
 
-def _readonly(fn: HandlerFunc):
+def _readonly(fn: HandlerFunc) -> HandlerFunc:
     set_handler_config(fn, read_only=True)
     return fn
 
 
-def _on_complete(mc: MethodConfig):
-    def _impl(fn: HandlerFunc):
+def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         set_handler_config(fn, method_config=mc)
         return fn
 
