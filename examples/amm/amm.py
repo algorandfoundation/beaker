@@ -411,12 +411,4 @@ class ConstantProductAMM(Application):
 
 
 if __name__ == "__main__":
-    import json
-
-    amm = ConstantProductAMM()
-    print(f"\nApproval program:\n{amm.approval_program}")
-    print(f"\nClear State program:\n{amm.approval_program}")
-    print(f"\nabi:\n{json.dumps(amm.contract.dictify(), indent=2)}")
-
-    with open("amm.json", "w") as f:
-        f.write(json.dumps(amm.application_spec()))
+    ConstantProductAMM().dump("artifacts")
