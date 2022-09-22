@@ -53,6 +53,7 @@ class StateExample(Application):
         stack_type=TealType.bytes,
         descr="A tuple stored for each account that opts in",
         codec=AccountTuple,
+        key=Bytes('settings')
     )
 
     dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
@@ -129,14 +130,14 @@ class StateExample(Application):
         return output.set(self.declared_account_int[Txn.sender()])
 
     @external
-    def set_dynamic_account_state_tuple(self, is_cool: abi.Bool, points: abi.Uint64):
+    def set_declared_account_state_tuple(self, is_cool: abi.Bool, points: abi.Uint64):
         return Seq(
             (t := AccountTuple()).set(is_cool, points),
             self.declared_account_tuple[Txn.sender()].set(t.encode()),
         )
 
     @external(read_only=True)
-    def get_dynamic_account_state_tuple(self, *, output: AccountTuple):
+    def get_declared_account_state_tuple(self, *, output: AccountTuple):
         return output.decode(self.declared_account_tuple[Txn.sender()])
 
     @external

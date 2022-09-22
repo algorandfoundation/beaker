@@ -32,11 +32,12 @@ def demo():
     print(f"Set/get acct state result: {result.return_value}")
 
     app_client.call(
-        StateExample.set_dynamic_account_state_tuple, is_cool=True, points=100
+        StateExample.set_declared_account_state_tuple, is_cool=True, points=100
     )
-    result = app_client.call(StateExample.get_dynamic_account_state_tuple)
+    result = app_client.call(StateExample.get_declared_account_state_tuple)
     print(f"Set/get dynamic acct state result: {result.return_value}")
-    print(app_client.get_account_state())
+    acct_state = app_client.get_account_state()
+    print(f"Got state decoded from acct state directly: {acct_state['settings']}")
 
     try:
         app_client.call(StateExample.set_app_state_val, v="Expect fail")

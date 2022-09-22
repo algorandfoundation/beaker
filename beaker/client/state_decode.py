@@ -31,7 +31,7 @@ def decode_state(
         match sv["value"]["type"]:
             case 1:
                 raw_val = b64decode(sv["value"]["bytes"])
-                if key in codecs:
+                if key in codecs and not raw:
                     val = codecs[key].decode(raw_val)
                 else:
                     val = raw_val if raw else str_or_hex(raw_val)
