@@ -9,9 +9,14 @@ from beaker import (
     opt_in,
     external,
 )
-from pyteal import abi, TealType, Bytes, Int, Txn
+from pyteal import abi, TealType, Bytes, Int, Txn, Global, Seq
 
 from beaker.state import AccountStateBlob, ApplicationStateBlob
+
+
+class AccountTuple(abi.NamedTuple):
+    is_cool: abi.Field[abi.Bool]
+    points: abi.Field[abi.Uint64]
 
 
 class StateExample(Application):
@@ -23,6 +28,7 @@ class StateExample(Application):
         ),
         descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
         static=True,
+        codec=abi.String,
     )
 
     dynamic_app_value: Final[
@@ -37,10 +43,16 @@ class StateExample(Application):
         keys=16,
     )
 
-    declared_account_value: Final[AccountStateValue] = AccountStateValue(
+    declared_account_int: Final[AccountStateValue] = AccountStateValue(
         stack_type=TealType.uint64,
         default=Int(1),
         descr="An int stored for each account that opts in",
+    )
+
+    declared_account_tuple: Final[AccountStateValue] = AccountStateValue(
+        stack_type=TealType.bytes,
+        descr="A tuple stored for each account that opts in",
+        codec=AccountTuple,
     )
 
     dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
@@ -102,29 +114,39 @@ class StateExample(Application):
         return output.set(self.dynamic_app_value[k])
 
     @external
-    def set_account_state_val(self, v: abi.Uint64):
+    def set_account_state_int(self, v: abi.Uint64):
         # Accessing with `[Txn.sender()]` is redundant but
         # more clear what is happening
-        return self.declared_account_value[Txn.sender()].set(v.get())
+        return self.declared_account_int[Txn.sender()].set(v.get())
 
     @external
-    def incr_account_state_val(self, v: abi.Uint64):
+    def incr_account_state_int(self, v: abi.Uint64):
         # Omitting [Txn.sender()] just for demo purposes
-        return self.declared_account_value.increment(v.get())
+        return self.declared_account_int.increment(v.get())
 
     @external(read_only=True)
-    def get_account_state_val(self, *, output: abi.Uint64):
-        return output.set(self.declared_account_value[Txn.sender()])
+    def get_account_state_int(self, *, output: abi.Uint64):
+        return output.set(self.declared_account_int[Txn.sender()])
+
+    @external
+    def set_dynamic_account_state_tuple(self, is_cool: abi.Bool, points: abi.Uint64):
+        return Seq(
+            (t := AccountTuple()).set(is_cool, points),
+            self.declared_account_tuple[Txn.sender()].set(t.encode()),
+        )
+
+    @external(read_only=True)
+    def get_dynamic_account_state_tuple(self, *, output: AccountTuple):
+        return output.decode(self.declared_account_tuple[Txn.sender()])
 
     @external
     def set_dynamic_account_state_val(self, k: abi.Uint8, v: abi.String):
         return self.dynamic_account_value[k][Txn.sender()].set(v.get())
 
     @external(read_only=True)
-    def get_dynamic_account_state_val(self, k: abi.Uint8, *, output: abi.String):
+    def get_dynamic_account_state_val(self, k: abi.Uint8, *, output: abi.Address):
         return output.set(self.dynamic_account_value[k][Txn.sender()])
 
 
 if __name__ == "__main__":
-    se = StateExample()
-    print(se.approval_program)
+    StateExample().dump("artifacts")

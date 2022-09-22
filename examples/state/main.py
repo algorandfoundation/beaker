@@ -13,10 +13,9 @@ def demo():
     accts = get_accounts()
 
     acct = accts.pop()
+    acct2 = accts.pop()
 
     client = get_algod_client()
-
-    app = StateExample()
 
     app_client = ApplicationClient(client, StateExample(), signer=acct.signer)
     app_id, app_address, transaction_id = app_client.create()
@@ -27,14 +26,17 @@ def demo():
     app_client.opt_in()
     print("Opted in")
 
-    app_client.call(StateExample.set_account_state_val, v=123)
-    app_client.call(StateExample.incr_account_state_val, v=1)
-    result = app_client.call(StateExample.get_account_state_val)
+    app_client.call(StateExample.set_account_state_int, v=123)
+    app_client.call(StateExample.incr_account_state_int, v=1)
+    result = app_client.call(StateExample.get_account_state_int)
     print(f"Set/get acct state result: {result.return_value}")
 
-    app_client.call(StateExample.set_dynamic_account_state_val, k=123, v="stuff")
-    result = app_client.call(StateExample.get_dynamic_account_state_val, k=123)
+    app_client.call(
+        StateExample.set_dynamic_account_state_tuple, is_cool=True, points=100
+    )
+    result = app_client.call(StateExample.get_dynamic_account_state_tuple)
     print(f"Set/get dynamic acct state result: {result.return_value}")
+    print(app_client.get_account_state())
 
     try:
         app_client.call(StateExample.set_app_state_val, v="Expect fail")

@@ -19,6 +19,7 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
+from algosdk.abi import ABIType
 from algosdk.constants import APP_PAGE_MAX_SIZE
 
 from beaker.application import Application, get_method_spec
@@ -43,7 +44,10 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
     ):
         self.client = client
+
         self.app = app
+        self.app_spec = app.application_spec()
+
         self.app_id = app_id
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
@@ -682,7 +686,12 @@ class ApplicationClient:
         app_state = self.client.application_info(self.app_id)
         if "params" not in app_state or "global-state" not in app_state["params"]:
             return {}
-        return decode_state(app_state["params"]["global-state"], raw=raw)
+        codecs = {
+            k: ABIType.from_string(v["codec"])
+            for k, v in self.app_spec["schema"]["global"]["declared"].items()
+            if v["codec"] != ""
+        }
+        return decode_state(app_state["params"]["global-state"], raw=raw, codecs=codecs)
 
     def get_account_state(
         self, account: str = None, raw: bool = False
@@ -700,7 +709,17 @@ class ApplicationClient:
         ):
             return {}
 
-        return decode_state(acct_state["app-local-state"]["key-value"], raw=raw)
+        # schema and 'codec' in schema[key] and schema[key]['codec'] != ''
+        # sdkabi.ABIType.from_string(schema[key]['codec']).decode(raw_val)
+
+        codecs = {
+            k: ABIType.from_string(v["codec"])
+            for k, v in self.app_spec["schema"]["local"]["declared"].items()
+            if v["codec"] != ""
+        }
+        return decode_state(
+            acct_state["app-local-state"]["key-value"], raw=raw, codecs=codecs
+        )
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""

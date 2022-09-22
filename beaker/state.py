@@ -52,12 +52,14 @@ class StateValue(Expr):
         default: Expr = None,
         static: bool = False,
         descr: str = None,
+        codec: type[abi.BaseType] = None,
     ):
         super().__init__()
 
         self.stack_type = stack_type
         self.static = static
         self.descr = descr
+        self.codec = codec
 
         if key is not None and key.type_of() != TealType.bytes:
             raise TealTypeError(key.type_of(), TealType.bytes)
@@ -254,8 +256,9 @@ class AccountStateValue(StateValue):
         default: Expr = None,
         static: bool = False,
         descr: str = None,
+        codec: type[abi.BaseType] = None,
     ):
-        super().__init__(stack_type, key, default, static, descr)
+        super().__init__(stack_type, key, default, static, descr, codec)
         self.acct: Expr = Txn.sender()
 
     def __str__(self) -> str:
@@ -544,6 +547,9 @@ class State:
                     "type": stack_type_to_string(v.stack_type),
                     "key": v.str_key(),
                     "descr": v.descr if v.descr is not None else "",
+                    "codec": str(abi.type_spec_from_annotation(v.codec))
+                    if v.codec is not None
+                    else "",
                 }
                 for k, v in self.declared_vals.items()
             },
