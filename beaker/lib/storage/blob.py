@@ -9,7 +9,7 @@ EMPTY_PAGE = BytesZero(BLOB_PAGE_SIZE)
 
 class Blob(ABC):
     """
-    Blob is a class holding static methods to work with the global storage of an application as a binary large object
+    Blob is a class holding static methods to work with the global or local storage of an application as a Binary Large OBject
 
     """
 

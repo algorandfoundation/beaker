@@ -2,30 +2,15 @@ from typing import Literal
 from pyteal import *
 from beaker import *
 
-from beaker.lib.storage import Mapping, Listing
+from beaker.lib.storage import Mapping
 
 # Use a box per member to denote membership parameters
 class MembershipRecord(abi.NamedTuple):
     role: abi.Field[abi.Uint8]
     voted: abi.Field[abi.Bool]
 
-
-class Votable(abi.NamedTuple):
-    title: abi.Field[abi.StaticBytes[Literal[32]]]
-    yes_votes: abi.Field[abi.Uint8]
-    no_votes: abi.Field[abi.Uint8]
-
-
 class Boxen(Application):
-
     membership = Mapping(abi.Address, MembershipRecord)
-
-    measures = Listing(Bytes("votables"), Votable, 3)
-
-    @create
-    def create(self):
-        # Initialize our voting measures
-        return Pop(self.measures.create())
 
     @external
     def add_member(self):
@@ -44,11 +29,6 @@ class Boxen(Application):
     def remove_member(self, member: abi.Address):
         return Pop(self.membership[member].delete())
 
-    @external
-    def add_votable(self, idx: abi.Uint8, votable: Votable):
-        return self.measures[idx.get()].set(votable)
-
 
 if __name__ == "__main__":
-
     Boxen().dump("./artifacts")

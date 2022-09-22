@@ -26,6 +26,8 @@ def demo():
     app_client.create()
     app_client.fund(100 * consts.algo)
 
+    print_boxes(app_client)
+
     app_client.call(
         Boxen.add_member,
         boxes=[[app_client.app_id, algosdk.encoding.decode_address(acct.address)]],
