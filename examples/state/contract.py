@@ -53,7 +53,7 @@ class StateExample(Application):
         stack_type=TealType.bytes,
         descr="A tuple stored for each account that opts in",
         codec=AccountTuple,
-        key=Bytes('settings')
+        key=Bytes("settings"),
     )
 
     dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(

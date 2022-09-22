@@ -687,7 +687,7 @@ class ApplicationClient:
         if "params" not in app_state or "global-state" not in app_state["params"]:
             return {}
         codecs = {
-            v['key']: ABIType.from_string(v["codec"])
+            v["key"]: ABIType.from_string(v["codec"])
             for v in self.app_spec["schema"]["global"]["declared"].values()
             if v["codec"] != ""
         }
@@ -713,7 +713,7 @@ class ApplicationClient:
         # sdkabi.ABIType.from_string(schema[key]['codec']).decode(raw_val)
 
         codecs = {
-            v['key']: ABIType.from_string(v["codec"])
+            v["key"]: ABIType.from_string(v["codec"])
             for v in self.app_spec["schema"]["local"]["declared"].values()
             if v["codec"] != ""
         }

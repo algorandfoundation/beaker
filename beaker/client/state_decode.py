@@ -1,5 +1,5 @@
 from algosdk import abi as sdkabi
-from typing import Any
+from typing import Any, Optional
 from base64 import b64decode
 
 
@@ -16,7 +16,7 @@ def str_or_hex(v: bytes) -> str:
 def decode_state(
     state: list[dict[str, Any]],
     raw=False,
-    codecs: dict[str, sdkabi.ABIType] = None,
+    codecs: Optional[dict[str | bytes, sdkabi.ABIType]] = None,
 ) -> dict[str | bytes, bytes | str | int]:
 
     decoded_state: dict[str | bytes, bytes | str | int] = {}
@@ -31,7 +31,7 @@ def decode_state(
         match sv["value"]["type"]:
             case 1:
                 raw_val = b64decode(sv["value"]["bytes"])
-                if key in codecs and not raw:
+                if not raw and codecs and key in codecs:
                     val = codecs[key].decode(raw_val)
                 else:
                     val = raw_val if raw else str_or_hex(raw_val)
