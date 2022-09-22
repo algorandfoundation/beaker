@@ -28,7 +28,6 @@ class StateExample(Application):
         ),
         descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
         static=True,
-        codec=abi.String,
     )
 
     dynamic_app_value: Final[
@@ -51,9 +50,9 @@ class StateExample(Application):
 
     declared_account_tuple: Final[AccountStateValue] = AccountStateValue(
         stack_type=TealType.bytes,
+        key=Bytes("settings"),
         descr="A tuple stored for each account that opts in",
         codec=AccountTuple,
-        key=Bytes("settings"),
     )
 
     dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
