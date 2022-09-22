@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 
 setup(
-    name="beaker-pyteal",
+    name="beaker",
     version="0.1.14-alpha",
     python_requires=">=3.10",
     packages=find_packages(),
