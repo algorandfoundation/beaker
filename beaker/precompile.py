@@ -21,20 +21,7 @@ from algosdk.source_map import SourceMap
 from algosdk.future.transaction import LogicSigAccount
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR
-from beaker.logic_signature import LogicSignature
 from beaker.lib.strings import encode_uvarint
-
-
-@dataclass
-class PrecompileTemplateValue:
-    #: The name of the template variable
-    name: str = field(kw_only=True)
-    #: Whether or not this variable is bytes (if false, its uint64)
-    is_bytes: bool = field(kw_only=True)
-    #: The line number in the source TEAL this variable is present
-    line: int = field(kw_only=True)
-    #: The pc of the variable in the assembled bytecode
-    pc: int = 0
 
 
 #: The prefix for template variables that should be substituted
@@ -51,24 +38,16 @@ ZERO_BYTES = '""'
 ZERO_INT = "0"
 
 
-def py_encode_uvarint(integer: int) -> bytes:
-    """Encodes an integer as an uvarint.
-    :param integer: the integer to encode
-    :return: bytes containing the integer encoded as an uvarint
-    """
-
-    def to_byte(integer: int) -> int:
-        return integer & 0b1111_1111
-
-    buffer: bytearray = bytearray()
-
-    while integer >= 0b1000_0000:
-        buffer.append(to_byte(integer) | 0b1000_0000)
-        integer >>= 7
-
-    buffer.append(to_byte(integer))
-
-    return bytes(buffer)
+@dataclass
+class PrecompileTemplateValue:
+    #: The name of the template variable
+    name: str = field(kw_only=True)
+    #: Whether or not this variable is bytes (if false, its uint64)
+    is_bytes: bool = field(kw_only=True)
+    #: The line number in the source TEAL this variable is present
+    line: int = field(kw_only=True)
+    #: The pc of the variable in the assembled bytecode
+    pc: int = 0
 
 
 class Precompile:
@@ -77,13 +56,15 @@ class Precompile:
     fully compiled prior to trying to construct the approval and clear programs.
     """
 
-    def __init__(self, lsig: LogicSignature):
-        self.lsig = lsig
+    def __init__(self, teal_src: str | None):
 
-        self.program = lsig.program
+        if teal_src is None:
+            raise TealInputError("teal_src cannot be None")
+
+        self.program = teal_src
 
         self.binary: Optional[bytes] = None
-        self.addr: Optional[str] = None
+        self.program_hash: Optional[str] = None
         self.map: Optional[SourceMap] = None
 
         self.template_values: list[PrecompileTemplateValue] = []
@@ -102,13 +83,13 @@ class Precompile:
 
         self.program = "\n".join(lines)
 
-    def _set_compiled(self, binary: bytes, addr: str, map: SourceMap):
+    def _set_compiled(self, binary: bytes, program_hash: str, map: SourceMap):
         """
         Called by application_client to set the binary/addr/map for
         this precompile.
         """
         self.binary = binary
-        self.addr = addr
+        self.program_hash = program_hash
         self.map = map
 
         self.binary_bytes = Bytes(binary)
@@ -118,7 +99,7 @@ class Precompile:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
 
-    def address(self) -> Expr:
+    def hash(self) -> Expr:
         """
         address returns an expression for this Precompile.
 
@@ -127,10 +108,10 @@ class Precompile:
 
         assert self.binary is not None
         assert len(self.template_values) == 0
-        if self.addr is None:
-            raise TealInputError("No address defined for precompile lsig")
+        if self.program_hash is None:
+            raise TealInputError("No address defined for precompile")
 
-        return Addr(self.addr)
+        return Addr(self.program_hash)
 
     def signer(self) -> LogicSigTransactionSigner:
         """
@@ -189,6 +170,7 @@ class Precompile:
         return bytes(populated_binary)
 
     def template_signer(self, *args) -> LogicSigTransactionSigner:
+        # TODO: assert its being called with an lsig
         return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
 
     def populate_template_expr(self, *args: Expr) -> Expr:
@@ -243,16 +225,36 @@ class Precompile:
         ]
 
         @Subroutine(TealType.bytes)
-        def populate_template_lsig():
+        def populate_template_program():
             return Seq(*populate_program)
 
-        return populate_template_lsig()
+        return populate_template_program()
 
-    def template_address(self, *args) -> Expr:
+    def template_hash(self, *args) -> Expr:
         """
-        template_address returns an expression that will generate the expected
-        address given some set of values that should be included in the logic itself
+        returns an expression that will generate the expected
+        hash given some set of values that should be included in the logic itself
         """
         return Sha512_256(
             Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(*args))
         )
+
+
+def py_encode_uvarint(integer: int) -> bytes:
+    """Encodes an integer as an uvarint.
+    :param integer: the integer to encode
+    :return: bytes containing the integer encoded as an uvarint
+    """
+
+    def to_byte(integer: int) -> int:
+        return integer & 0b1111_1111
+
+    buffer: bytearray = bytearray()
+
+    while integer >= 0b1000_0000:
+        buffer.append(to_byte(integer) | 0b1000_0000)
+        integer >>= 7
+
+    buffer.append(to_byte(integer))
+
+    return bytes(buffer)
