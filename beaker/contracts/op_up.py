@@ -26,6 +26,8 @@ from beaker.decorators import internal, external, Authorize
 
 
 class TargetApp(Application):
+    """Simple app that allows the creator to call `opup` in order to increase its opcode budget"""
+
     @external(authorize=Authorize.only(Global.creator_address()))
     def opup(self):
         return Approve()
@@ -34,6 +36,7 @@ class TargetApp(Application):
 class OpUp(Application):
     """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget."""
 
+    #: The app to be created to receiver opup requests
     target_app: Final[TargetApp] = TargetApp()
     target_app_approval: Final[Precompile] = Precompile(target_app.approval_program)
     target_app_clear: Final[Precompile] = Precompile(target_app.clear_program)
@@ -87,6 +90,7 @@ class OpUp(Application):
 
     # No decorator, inline it
     def __call_opup(self):
+        """internal method to just return the method call to our target app"""
         return InnerTxnBuilder.ExecuteMethodCall(
             app_id=self.opup_app_id,
             method_signature=get_method_signature(self.target_app.opup),
