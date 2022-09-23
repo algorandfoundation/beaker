@@ -300,7 +300,10 @@ class Application:
 
     def dump(self, directory: str = "."):
         import json
-        import os.path
+        import os
+
+        if not os.path.exists(directory):
+            os.mkdir(directory)
 
         with open(os.path.join(directory, "approval.teal"), "w") as f:
             if self.approval_program is None:
