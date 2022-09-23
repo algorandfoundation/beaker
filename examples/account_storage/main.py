@@ -27,7 +27,7 @@ class DiskHungry(Application):
 
     # Signal to beaker that this should be compiled
     # prior to compiling the main application
-    tmpl_acct = Precompile(KeySig(version=6))
+    tmpl_acct = Precompile(KeySig(version=6).program)
 
     # Add account during opt in  by checking the sender against the address
     # we expect given the precompile && nonce
@@ -36,7 +36,7 @@ class DiskHungry(Application):
         return Seq(
             Assert(
                 # Make sure the opt-in'er is our lsig
-                Txn.sender() == self.tmpl_acct.template_address(nonce.get()),
+                Txn.sender() == self.tmpl_acct.template_hash(nonce.get()),
                 # and that its being rekeyed to us
                 Txn.rekey_to() == self.address,
             ),
