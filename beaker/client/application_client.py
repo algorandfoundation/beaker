@@ -70,22 +70,21 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-        recompile = False
+
         for _, v in self.app.precompiles.items():
             if v.binary is None:
                 binary, addr, map = self.compile(v.program, True)
                 v._set_compiled(binary, addr, map)
-                recompile = True
 
-        if recompile:
+        if self.app.approval_program is None or self.app.clear_program is None:
             self.app.compile()
 
-        if self.approval_binary is None or recompile:
+        if self.approval_binary is None:
             approval, _, approval_map = self.compile(self.app.approval_program, True)
             self.approval_binary = approval
             self.approval_src_map = approval_map
 
-        if self.clear_binary is None or recompile:
+        if self.clear_binary is None:
             clear, _, clear_map = self.compile(self.app.clear_program, True)
             self.clear_binary = clear
             self.clear_src_map = clear_map
