@@ -80,17 +80,17 @@
   <section id="precompile">
 <h1>Precompile<a class="headerlink" href="#precompile" title="Permalink to this heading"></a></h1>
 <p>A Precompile as an attribute on a Beaker Application allows the contract to
-have some LogicSignature be included in the source of the applications programs.</p>
+have some program be included in the source of the applications programs.</p>
 <p>An example of where it might be used is in offloading some compute into a LogicSignature
 which has a max budget of 20k ops compared with 700 ops in a single Application call.</p>
 <span class="target" id="module-beaker.precompile"></span><dl class="py class">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">Precompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lsig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="lsig.html#beaker.logic_signature.LogicSignature" title="beaker.logic_signature.LogicSignature"><span class="pre">LogicSignature</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">Precompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teal_src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile" title="Permalink to this definition"></a></dt>
 <dd><p>Precompile allows a contract to signal that some LogicSignature should be
 fully compiled prior to trying to construct the approval and clear programs.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.precompile.Precompile.address">
-<span class="sig-name descname"><span class="pre">address</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.address" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.precompile.Precompile.hash">
+<span class="sig-name descname"><span class="pre">hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.hash" title="Permalink to this definition"></a></dt>
 <dd><p>address returns an expression for this Precompile.</p>
 <p>It will fail if any template_values are set.</p>
 </dd></dl>
@@ -122,10 +122,10 @@ an ApplicationClient or AtomicTransactionComposer.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.precompile.Precompile.template_address">
-<span class="sig-name descname"><span class="pre">template_address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.template_address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.template_address" title="Permalink to this definition"></a></dt>
-<dd><p>template_address returns an expression that will generate the expected
-address given some set of values that should be included in the logic itself</p>
+<dt class="sig sig-object py" id="beaker.precompile.Precompile.template_hash">
+<span class="sig-name descname"><span class="pre">template_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.template_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.template_hash" title="Permalink to this definition"></a></dt>
+<dd><p>returns an expression that will generate the expected
+hash given some set of values that should be included in the logic itself</p>
 </dd></dl>
 
 </dd></dl>
