@@ -70,22 +70,21 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-        recompile = False
+
         for _, v in self.app.precompiles.items():
             if v.binary is None:
                 binary, addr, map = self.compile(v.program, True)
                 v._set_compiled(binary, addr, map)
-                recompile = True
 
-        if recompile:
+        if self.app.approval_program is None or self.app.clear_program is None:
             self.app.compile()
 
-        if self.approval_binary is None or recompile:
+        if self.approval_binary is None:
             approval, _, approval_map = self.compile(self.app.approval_program, True)
             self.approval_binary = approval
             self.approval_src_map = approval_map
 
-        if self.clear_binary is None or recompile:
+        if self.clear_binary is None:
             clear, _, clear_map = self.compile(self.app.clear_program, True)
             self.clear_binary = clear
             self.clear_src_map = clear_map
@@ -124,7 +123,7 @@ class ApplicationClient:
                 atc,
                 self.app.on_create,
                 sender=sender,
-                sp=sp,
+                suggested_params=sp,
                 on_complete=on_complete,
                 approval_program=self.approval_binary,
                 clear_program=self.clear_binary,
@@ -195,7 +194,7 @@ class ApplicationClient:
                 self.app.on_update,
                 on_complete=transaction.OnComplete.UpdateApplicationOC,
                 sender=sender,
-                sp=sp,
+                suggested_params=sp,
                 index=self.app_id,
                 approval_program=self.approval_binary,
                 clear_program=self.clear_binary,
@@ -249,7 +248,7 @@ class ApplicationClient:
                 self.app.on_opt_in,
                 on_complete=transaction.OnComplete.OptInOC,
                 sender=sender,
-                sp=sp,
+                suggested_params=sp,
                 index=self.app_id,
                 app_args=args,
                 signer=signer,
@@ -300,7 +299,7 @@ class ApplicationClient:
                 self.app.on_close_out,
                 on_complete=transaction.OnComplete.CloseOutOC,
                 sender=sender,
-                sp=sp,
+                suggested_params=sp,
                 index=self.app_id,
                 app_args=args,
                 signer=signer,
@@ -352,7 +351,7 @@ class ApplicationClient:
                 self.app.on_clear_state,
                 on_complete=transaction.OnComplete.ClearStateOC,
                 sender=sender,
-                sp=sp,
+                suggested_params=sp,
                 index=self.app_id,
                 app_args=args,
                 signer=signer,

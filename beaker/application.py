@@ -216,22 +216,17 @@ class Application:
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        # Create router with name of class and bare externals
-        self.router = Router(
-            name=self.__class__.__name__,
-            bare_calls=BareCallActions(**self.bare_externals),
-            descr=self.__doc__,
-        )
-
         # If there are no precompiles, we can build the programs
         # with what we already have
         if len(self.precompiles) == 0:
             self.compile()
 
     def compile(self):
-
-        # TODO: reset router?
-        # It will fail if compile is re-called but we shouldn't rely on that
+        self.router = Router(
+            name=self.__class__.__name__,
+            bare_calls=BareCallActions(**self.bare_externals),
+            descr=self.__doc__,
+        )
 
         # Add method externals
         for _, method_tuple in self.methods.items():
@@ -300,7 +295,10 @@ class Application:
 
     def dump(self, directory: str = "."):
         import json
-        import os.path
+        import os
+
+        if not os.path.exists(directory):
+            os.mkdir(directory)
 
         with open(os.path.join(directory, "approval.teal"), "w") as f:
             if self.approval_program is None:
