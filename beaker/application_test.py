@@ -103,15 +103,9 @@ def test_method_override():
     assert mo.methods["handle_algo"]
     assert mo.methods["handle_asa"]
 
-    # FIXME: This will fail because, for some reason, this utility function does not
-    #  allow multiple methods to have the same name (even though they have unique signatures/selectors).
-    #  This is allowed by ABI standard and is therefore most likely a bug in algosdk.
-    #  Ideally, we'd have a function called get_methods_by_name -> Set[Method].
-    #  Leaving an arbitrary error here to remember to get back to this.
-    # assert mo.contract.get_method_by_name("handle") == get_method_spec(
-    #     mo.handle_algo
-    # )
-    raise ValueError()
+    overlapping_methods = [method for method in mo.contract.methods if method.name == "handle"]
+    assert get_method_spec(mo.handle_algo) in overlapping_methods
+    assert get_method_spec(mo.handle_asa) in overlapping_methods
 
 
 def test_bare():
