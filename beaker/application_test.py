@@ -3,6 +3,7 @@ from typing import Final, cast
 from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
+from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
 from beaker.state import (
     DynamicApplicationStateValue,
@@ -84,6 +85,33 @@ def test_single_external():
 
     with pytest.raises(Exception):
         sh.contract.get_method_by_name("made up")
+
+
+def test_method_override():
+    class MethodOverride(Application):
+        @external(name="handle")
+        def handle_algo(self, txn: PaymentTransaction):
+            return pt.Approve()
+
+        @external(name="handle")
+        def handle_asa(self, txn: AssetTransferTransaction):
+            return pt.Approve()
+
+    mo = MethodOverride()
+
+    assert len(mo.methods) == 2, "Expected two externals"
+    assert mo.methods["handle_algo"]
+    assert mo.methods["handle_asa"]
+
+    # FIXME: This will fail because, for some reason, this utility function does not
+    #  allow multiple methods to have the same name (even though they have unique signatures/selectors).
+    #  This is allowed by ABI standard and is therefore most likely a bug in algosdk.
+    #  Ideally, we'd have a function called get_methods_by_name -> Set[Method].
+    #  Leaving an arbitrary error here to remember to get back to this.
+    # assert mo.contract.get_method_by_name("handle") == get_method_spec(
+    #     mo.handle_algo
+    # )
+    raise ValueError()
 
 
 def test_bare():
