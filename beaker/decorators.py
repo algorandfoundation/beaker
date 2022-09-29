@@ -402,7 +402,7 @@ def internal(return_type_or_handler: TealType | HandlerFunc):
     else:
         fn = cast(HandlerFunc, return_type_or_handler)
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
 
         if return_type is not None:
             set_handler_config(fn, subroutine=Subroutine(return_type, name=fn.__name__))

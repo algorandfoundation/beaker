@@ -34,7 +34,7 @@ from beaker import (
     internal,
 )
 
-# WARNING: THIS IS NOT PROODUCTION LEVEL CODE
+# WARNING: THIS IS NOT PRODUCTION LEVEL CODE
 # Seriously, there are _definitely_ bugs in the math
 
 
@@ -119,6 +119,7 @@ class ConstantProductAMM(Application):
                 Global.group_size() == Int(2),
                 seed.get().receiver() == self.address,
                 seed.get().amount() >= consts.Algos(0.3),
+                # why this has to be ordered?
                 a_asset.asset_id() < b_asset.asset_id(),
             ),
             self.asset_a.set(a_asset.asset_id()),
@@ -144,11 +145,14 @@ class ConstantProductAMM(Application):
         a_xfer: abi.AssetTransferTransaction,
         b_xfer: abi.AssetTransferTransaction,
         pool_asset: abi.Asset = pool_token,
+        # why there is a `asset_a` and `self.asset_a` here... very error-prone I guess
         a_asset: abi.Asset = asset_a,
         b_asset: abi.Asset = asset_b,
     ):
         """mint pool tokens given some amount of asset A and asset B"""
 
+        # I don't understand the redundant check of asset_a == self.asset_a
+        # seems checkable from `a_xfer`, right?
         well_formed_mint = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
@@ -333,6 +337,8 @@ class ConstantProductAMM(Application):
 
     @internal(TealType.uint64)
     def tokens_to_mint_initial(self, a_amount, b_amount):
+        # `a_amount` * `b_amount` overflow checking? Probably use bsqrt tho...
+        # - `self.scale` underflow checking?
         return Sqrt(a_amount * b_amount) - self.scale
 
     @internal(TealType.uint64)
@@ -341,6 +347,8 @@ class ConstantProductAMM(Application):
 
     @internal(TealType.uint64)
     def tokens_to_swap(self, in_amount, in_supply, out_supply):
+        # should we check `self.scale` > `self.fee`?
+        # `self.scale` is also final, then factor should be 995?
         factor = self.scale - self.fee
         return WideRatio(
             [in_amount, factor, out_supply],
@@ -352,7 +360,7 @@ class ConstantProductAMM(Application):
     ##############
 
     @internal(TealType.none)
-    def do_axfer(self, rx, aid, amt):
+    def do_axfer(self, rx: Expr, aid: Expr, amt: Expr) -> Expr:
         return InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.AssetTransfer,
@@ -363,7 +371,7 @@ class ConstantProductAMM(Application):
         )
 
     @internal(TealType.none)
-    def do_opt_in(self, aid):
+    def do_opt_in(self, aid: Expr) -> Expr:
         return self.do_axfer(self.address, aid, Int(0))
 
     @internal(TealType.uint64)
@@ -400,9 +408,12 @@ class ConstantProductAMM(Application):
                 self.asset_b,
             ),
             Assert(And(bal_a.hasValue(), bal_b.hasValue())),
+            # Question: what is ratio and how it influences amm behavior
             WideRatio([bal_a.value(), self.scale], [bal_b.value()]),
         )
 
 
 if __name__ == "__main__":
+    # seems no pin version of pyteal, for pyteal is subject to breaking change, so is beaker
+    # mypy config in this project is somewhat weird, need to spend some time here get it right
     ConstantProductAMM().dump("artifacts")
