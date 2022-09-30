@@ -2,7 +2,7 @@
 
 setup-development:
 	pip install -e .
-	pip install -r requirements.txt
+	pip install -r requirements.txt --upgrade
 
 setup-wheel:
 	pip install wheel
@@ -22,7 +22,7 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-MYPY = beaker 
+MYPY = beaker
 mypy:
 	mypy --show-error-codes $(MYPY)
 
@@ -32,13 +32,13 @@ lint: black flake8 mypy
 # ---- Tests ---- #
 
 tests:
-	pytest beaker 
+	pytest beaker
 
 lint-and-test: lint tests
 
 # ---- Integration Tests (algod required) ---- #
 
-all-tests: lint-and-test 
+all-tests: lint-and-test
 
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`
