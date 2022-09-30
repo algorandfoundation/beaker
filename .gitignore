@@ -5,7 +5,8 @@ __pycache__/
 .coverage
 docs/build/
 dist/*
-.mypy-cache/*
+.mypy-cache/
+.idea/
 
 # Pyenv
 .python-version
