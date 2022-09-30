@@ -114,6 +114,8 @@ class ConstantProductAMM(Application):
     ):
         """bootstraps the contract by opting into the assets and creating the pool token"""
 
+        # How can you block people from calling this app before the initialization (bootstrap)?
+
         return Seq(
             Assert(
                 Global.group_size() == Int(2),
