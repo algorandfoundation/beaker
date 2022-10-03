@@ -147,14 +147,11 @@ class ConstantProductAMM(Application):
         a_xfer: abi.AssetTransferTransaction,
         b_xfer: abi.AssetTransferTransaction,
         pool_asset: abi.Asset = pool_token,
-        # why there is a `asset_a` and `self.asset_a` here... very error-prone I guess
         a_asset: abi.Asset = asset_a,
         b_asset: abi.Asset = asset_b,
     ):
         """mint pool tokens given some amount of asset A and asset B"""
 
-        # I don't understand the redundant check of asset_a == self.asset_a
-        # seems checkable from `a_xfer`, right?
         well_formed_mint = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
