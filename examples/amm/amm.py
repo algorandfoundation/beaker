@@ -353,17 +353,13 @@ class ConstantProductAMM(Application):
 
     @internal(TealType.none)
     def do_axfer(self, rx, aid, amt):
-        return Seq(
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.SetFields(
-                {
-                    TxnField.type_enum: TxnType.AssetTransfer,
-                    TxnField.xfer_asset: aid,
-                    TxnField.asset_amount: amt,
-                    TxnField.asset_receiver: rx,
-                }
-            ),
-            InnerTxnBuilder.Submit(),
+        return InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.AssetTransfer,
+                TxnField.xfer_asset: aid,
+                TxnField.asset_amount: amt,
+                TxnField.asset_receiver: rx,
+            }
         )
 
     @internal(TealType.none)
@@ -376,8 +372,7 @@ class ConstantProductAMM(Application):
             una := AssetParam.unitName(a),
             unb := AssetParam.unitName(b),
             Assert(And(una.hasValue(), unb.hasValue())),
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.SetFields(
+            InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.AssetConfig,
                     TxnField.config_asset_name: Concat(
@@ -390,7 +385,6 @@ class ConstantProductAMM(Application):
                     TxnField.config_asset_reserve: self.address,
                 }
             ),
-            InnerTxnBuilder.Submit(),
             InnerTxn.created_asset_id(),
         )
 
