@@ -1,0 +1,868 @@
+#pragma version 7
+intcblock 0 1 1000 4 10000000000
+bytecblock 0x61 0x62 0x70 0x72 0x67
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l12
+txna ApplicationArgs 0
+pushbytes 0x6b59d965 // "bootstrap(pay,asset,asset)uint64"
+==
+bnz main_l11
+txna ApplicationArgs 0
+pushbytes 0x1436c2ac // "burn(axfer,asset,asset,asset)void"
+==
+bnz main_l10
+txna ApplicationArgs 0
+pushbytes 0x5cbf1e2d // "mint(axfer,axfer,asset,asset,asset)void"
+==
+bnz main_l9
+txna ApplicationArgs 0
+pushbytes 0x08a956f7 // "set_governor(account)void"
+==
+bnz main_l8
+txna ApplicationArgs 0
+pushbytes 0x4a88e055 // "swap(axfer,asset,asset)void"
+==
+bnz main_l7
+err
+main_l7:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+store 23
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+store 24
+txn GroupIndex
+intc_1 // 1
+-
+store 22
+load 22
+gtxns TypeEnum
+intc_3 // axfer
+==
+assert
+load 22
+load 23
+load 24
+callsub swap_11
+intc_1 // 1
+return
+main_l8:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+callsub setgovernor_10
+intc_1 // 1
+return
+main_l9:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+store 19
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+store 20
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+store 21
+txn GroupIndex
+pushint 2 // 2
+-
+store 17
+load 17
+gtxns TypeEnum
+intc_3 // axfer
+==
+assert
+txn GroupIndex
+intc_1 // 1
+-
+store 18
+load 18
+gtxns TypeEnum
+intc_3 // axfer
+==
+assert
+load 17
+load 18
+load 19
+load 20
+load 21
+callsub mint_9
+intc_1 // 1
+return
+main_l10:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+store 14
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+store 15
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+store 16
+txn GroupIndex
+intc_1 // 1
+-
+store 13
+load 13
+gtxns TypeEnum
+intc_3 // axfer
+==
+assert
+load 13
+load 14
+load 15
+load 16
+callsub burn_4
+intc_1 // 1
+return
+main_l11:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+store 1
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+store 2
+txn GroupIndex
+intc_1 // 1
+-
+store 0
+load 0
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+load 0
+load 1
+load 2
+callsub bootstrap_3
+store 3
+pushbytes 0x151f7c75 // 0x151f7c75
+load 3
+itob
+concat
+log
+intc_1 // 1
+return
+main_l12:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l14
+err
+main_l14:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+bytec 4 // "g"
+global CreatorAddress
+app_global_put
+bytec_3 // "r"
+intc_0 // 0
+app_global_put
+retsub
+
+// auth_only
+authonly_1:
+bytec 4 // "g"
+app_global_get
+==
+retsub
+
+// auth_only
+authonly_2:
+bytec 4 // "g"
+app_global_get
+==
+retsub
+
+// bootstrap
+bootstrap_3:
+store 6
+store 5
+store 4
+txn Sender
+callsub authonly_2
+// unauthorized
+assert
+global GroupSize
+pushint 2 // 2
+==
+assert
+load 4
+gtxns Receiver
+global CurrentApplicationAddress
+==
+assert
+load 4
+gtxns Amount
+pushint 300000 // 300000
+>=
+assert
+load 5
+txnas Assets
+load 6
+txnas Assets
+<
+assert
+intc_0 // 0
+bytec_0 // "a"
+app_global_get_ex
+store 8
+store 7
+load 8
+!
+assert
+bytec_0 // "a"
+load 5
+txnas Assets
+app_global_put
+intc_0 // 0
+bytec_1 // "b"
+app_global_get_ex
+store 10
+store 9
+load 10
+!
+assert
+bytec_1 // "b"
+load 6
+txnas Assets
+app_global_put
+intc_0 // 0
+bytec_2 // "p"
+app_global_get_ex
+store 12
+store 11
+load 12
+!
+assert
+bytec_2 // "p"
+bytec_0 // "a"
+app_global_get
+bytec_1 // "b"
+app_global_get
+callsub docreatepooltoken_6
+app_global_put
+bytec_0 // "a"
+app_global_get
+callsub dooptin_7
+bytec_1 // "b"
+app_global_get
+callsub dooptin_7
+bytec_2 // "p"
+app_global_get
+retsub
+
+// burn
+burn_4:
+store 37
+store 36
+store 35
+store 34
+load 35
+txnas Assets
+bytec_2 // "p"
+app_global_get
+==
+assert
+load 36
+txnas Assets
+bytec_0 // "a"
+app_global_get
+==
+assert
+load 37
+txnas Assets
+bytec_1 // "b"
+app_global_get
+==
+assert
+load 34
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+assert
+load 34
+gtxns AssetAmount
+intc_0 // 0
+>
+assert
+load 34
+gtxns XferAsset
+bytec_2 // "p"
+app_global_get
+==
+assert
+load 34
+gtxns Sender
+txn Sender
+==
+assert
+global CurrentApplicationAddress
+load 35
+asset_holding_get AssetBalance
+store 39
+store 38
+global CurrentApplicationAddress
+load 36
+asset_holding_get AssetBalance
+store 41
+store 40
+global CurrentApplicationAddress
+load 37
+asset_holding_get AssetBalance
+store 43
+store 42
+load 39
+load 41
+&&
+load 43
+&&
+assert
+intc 4 // 10000000000
+load 38
+load 34
+gtxns AssetAmount
+-
+-
+store 44
+txn Sender
+bytec_0 // "a"
+app_global_get
+load 44
+load 40
+load 34
+gtxns AssetAmount
+callsub tokenstoburn_12
+callsub doaxfer_5
+txn Sender
+bytec_1 // "b"
+app_global_get
+load 44
+load 42
+load 34
+gtxns AssetAmount
+callsub tokenstoburn_12
+callsub doaxfer_5
+bytec_3 // "r"
+callsub getratio_8
+app_global_put
+bytec_3 // "r"
+app_global_get
+callsub getratio_8
+==
+assert
+retsub
+
+// do_axfer
+doaxfer_5:
+store 33
+store 32
+store 31
+itxn_begin
+intc_3 // axfer
+itxn_field TypeEnum
+load 32
+itxn_field XferAsset
+load 33
+itxn_field AssetAmount
+load 31
+itxn_field AssetReceiver
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// do_create_pool_token
+docreatepooltoken_6:
+store 25
+asset_params_get AssetUnitName
+store 27
+store 26
+load 25
+asset_params_get AssetUnitName
+store 29
+store 28
+load 27
+load 29
+&&
+assert
+itxn_begin
+pushint 3 // acfg
+itxn_field TypeEnum
+pushbytes 0x4450542d // "DPT-"
+load 26
+concat
+pushbytes 0x2d // "-"
+concat
+load 28
+concat
+itxn_field ConfigAssetName
+pushbytes 0x647074 // "dpt"
+itxn_field ConfigAssetUnitName
+intc 4 // 10000000000
+itxn_field ConfigAssetTotal
+pushint 3 // 3
+itxn_field ConfigAssetDecimals
+global CurrentApplicationAddress
+itxn_field ConfigAssetManager
+global CurrentApplicationAddress
+itxn_field ConfigAssetReserve
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+itxn CreatedAssetID
+retsub
+
+// do_opt_in
+dooptin_7:
+store 30
+global CurrentApplicationAddress
+load 30
+intc_0 // 0
+callsub doaxfer_5
+retsub
+
+// get_ratio
+getratio_8:
+global CurrentApplicationAddress
+bytec_0 // "a"
+app_global_get
+asset_holding_get AssetBalance
+store 46
+store 45
+global CurrentApplicationAddress
+bytec_1 // "b"
+app_global_get
+asset_holding_get AssetBalance
+store 48
+store 47
+load 46
+load 48
+&&
+assert
+load 45
+intc_2 // 1000
+mulw
+intc_0 // 0
+load 47
+divmodw
+pop
+pop
+swap
+!
+assert
+retsub
+
+// mint
+mint_9:
+store 56
+store 55
+store 54
+store 53
+store 52
+load 55
+txnas Assets
+bytec_0 // "a"
+app_global_get
+==
+assert
+load 56
+txnas Assets
+bytec_1 // "b"
+app_global_get
+==
+assert
+load 54
+txnas Assets
+bytec_2 // "p"
+app_global_get
+==
+assert
+load 52
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+assert
+load 52
+gtxns XferAsset
+bytec_0 // "a"
+app_global_get
+==
+assert
+load 52
+gtxns AssetAmount
+intc_0 // 0
+>
+assert
+load 52
+gtxns Sender
+txn Sender
+==
+assert
+load 53
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+assert
+load 53
+gtxns XferAsset
+bytec_1 // "b"
+app_global_get
+==
+assert
+load 53
+gtxns AssetAmount
+intc_0 // 0
+>
+assert
+load 53
+gtxns Sender
+txn Sender
+==
+assert
+global CurrentApplicationAddress
+load 54
+asset_holding_get AssetBalance
+store 58
+store 57
+global CurrentApplicationAddress
+load 55
+asset_holding_get AssetBalance
+store 60
+store 59
+global CurrentApplicationAddress
+load 56
+asset_holding_get AssetBalance
+store 62
+store 61
+load 58
+load 60
+&&
+load 62
+&&
+assert
+txn Sender
+bytec_2 // "p"
+app_global_get
+load 59
+load 52
+gtxns AssetAmount
+==
+load 61
+load 53
+gtxns AssetAmount
+==
+&&
+bnz mint_9_l2
+intc 4 // 10000000000
+load 57
+-
+load 59
+load 52
+gtxns AssetAmount
+-
+load 61
+load 53
+gtxns AssetAmount
+-
+load 52
+gtxns AssetAmount
+load 53
+gtxns AssetAmount
+callsub tokenstomint_13
+b mint_9_l3
+mint_9_l2:
+load 52
+gtxns AssetAmount
+load 53
+gtxns AssetAmount
+callsub tokenstomintinitial_14
+mint_9_l3:
+callsub doaxfer_5
+bytec_3 // "r"
+callsub getratio_8
+app_global_put
+retsub
+
+// set_governor
+setgovernor_10:
+store 70
+txn Sender
+callsub authonly_1
+// unauthorized
+assert
+bytec 4 // "g"
+load 70
+txnas Accounts
+app_global_put
+retsub
+
+// swap
+swap_11:
+store 73
+store 72
+store 71
+load 72
+txnas Assets
+bytec_0 // "a"
+app_global_get
+==
+assert
+load 73
+txnas Assets
+bytec_1 // "b"
+app_global_get
+==
+assert
+load 71
+gtxns XferAsset
+bytec_0 // "a"
+app_global_get
+==
+load 71
+gtxns XferAsset
+bytec_1 // "b"
+app_global_get
+==
+||
+assert
+load 71
+gtxns AssetAmount
+intc_0 // 0
+>
+assert
+load 71
+gtxns Sender
+txn Sender
+==
+assert
+global CurrentApplicationAddress
+load 71
+gtxns XferAsset
+asset_holding_get AssetBalance
+store 75
+store 74
+global CurrentApplicationAddress
+load 71
+gtxns XferAsset
+bytec_0 // "a"
+app_global_get
+==
+bnz swap_11_l5
+bytec_0 // "a"
+app_global_get
+swap_11_l2:
+asset_holding_get AssetBalance
+store 77
+store 76
+load 75
+load 77
+&&
+assert
+txn Sender
+load 71
+gtxns XferAsset
+bytec_0 // "a"
+app_global_get
+==
+bnz swap_11_l4
+bytec_0 // "a"
+app_global_get
+b swap_11_l6
+swap_11_l4:
+bytec_1 // "b"
+app_global_get
+b swap_11_l6
+swap_11_l5:
+bytec_1 // "b"
+app_global_get
+b swap_11_l2
+swap_11_l6:
+load 71
+gtxns AssetAmount
+load 74
+load 71
+gtxns AssetAmount
+-
+load 76
+callsub tokenstoswap_15
+callsub doaxfer_5
+bytec_3 // "r"
+callsub getratio_8
+app_global_put
+retsub
+
+// tokens_to_burn
+tokenstoburn_12:
+store 51
+store 50
+store 49
+load 50
+load 51
+mulw
+intc_0 // 0
+load 49
+divmodw
+pop
+pop
+swap
+!
+assert
+retsub
+
+// tokens_to_mint
+tokenstomint_13:
+store 67
+store 66
+store 65
+store 64
+store 63
+load 66
+intc_2 // 1000
+mulw
+intc_0 // 0
+load 64
+divmodw
+pop
+pop
+swap
+!
+assert
+store 68
+load 67
+intc_2 // 1000
+mulw
+intc_0 // 0
+load 65
+divmodw
+pop
+pop
+swap
+!
+assert
+store 69
+load 68
+load 69
+<
+bnz tokenstomint_13_l2
+load 69
+b tokenstomint_13_l3
+tokenstomint_13_l2:
+load 68
+tokenstomint_13_l3:
+load 63
+mulw
+intc_0 // 0
+intc_2 // 1000
+divmodw
+pop
+pop
+swap
+!
+assert
+retsub
+
+// tokens_to_mint_initial
+tokenstomintinitial_14:
+*
+sqrt
+intc_2 // 1000
+-
+retsub
+
+// tokens_to_swap
+tokenstoswap_15:
+store 80
+store 79
+store 78
+load 78
+intc_2 // 1000
+pushint 5 // 5
+-
+mulw
+load 80
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+intc_0 // 0
+load 79
+intc_2 // 1000
+*
+load 78
+intc_2 // 1000
+pushint 5 // 5
+-
+*
++
+divmodw
+pop
+pop
+swap
+!
+assert
+retsub
