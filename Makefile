@@ -22,7 +22,7 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-MYPY = beaker
+MYPY = beaker examples/amm
 mypy:
 	mypy --show-error-codes $(MYPY)
 

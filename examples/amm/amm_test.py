@@ -14,6 +14,8 @@ from beaker.client.logic_error import LogicException
 
 from .amm import ConstantProductAMM
 
+from typing import cast
+
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()
 
@@ -135,6 +137,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
+    assert addr
     _opt_in_to_token(addr, signer, pool_asset)
 
     balance_accts = [app_addr, addr]
@@ -182,6 +185,7 @@ def test_mint(creator_app_client: ApplicationClient):
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
+    assert addr
     balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
 
     ratio_before = _get_ratio_from_state(creator_app_client)
@@ -292,6 +296,7 @@ def test_burn(creator_app_client: ApplicationClient):
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
+    assert addr
     balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
 
     burn_amt = balances_before[addr][pool_asset] // 10
@@ -345,6 +350,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
+    assert addr
     balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
 
     swap_amt = balances_before[addr][a_asset] // 10
@@ -415,9 +421,9 @@ def _get_tokens_from_state(
 ) -> tuple[int, int, int]:
     app_state = creator_app_client.get_application_state()
     return (
-        app_state[ConstantProductAMM.pool_token.str_key()],
-        app_state[ConstantProductAMM.asset_a.str_key()],
-        app_state[ConstantProductAMM.asset_b.str_key()],
+        int(app_state[ConstantProductAMM.pool_token.str_key()]),
+        int(app_state[ConstantProductAMM.asset_a.str_key()]),
+        int(app_state[ConstantProductAMM.asset_b.str_key()]),
     )
 
 
