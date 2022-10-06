@@ -87,6 +87,11 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
 
 def minimum_fee_for_txn_count(sp: transaction.SuggestedParams, txn_count: int) -> transaction.SuggestedParams:
+    """
+    Configures transaction fee _without_ considering network congestion.
+
+    Since the function does not account for network congestion, do _not_ use the function as-is in a production use-case.
+    """
     s = copy.deepcopy(sp)
     s.flat_fee = True
     s.fee = transaction.constants.min_txn_fee * txn_count
@@ -95,12 +100,23 @@ def minimum_fee_for_txn_count(sp: transaction.SuggestedParams, txn_count: int) -
 def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     """
     Verifies the app's algo balance is not unexpectedly drained during app interaction (e.g. paying inner transaction fees).
+
+    Due to the presence of rewards, the assertion tolerates actual > expected for small positive differences.
     """
     xs = testing.get_balances(c.client, [c.app_addr])
     assert c.app_addr in xs
     assert 0 in xs[c.app_addr]
     actual_algos = xs[c.app_addr][0]
-    assert actual_algos == expected_algos
+
+    # Before accounting for rewards, confirm algos were not drained.
+    assert actual_algos >= expected_algos
+
+    # Account for rewards.
+    micro_algos_tolerance = 10
+    assert actual_algos - expected_algos <= micro_algos_tolerance
+
+
+
 
 app_algo_balance: typing.Final = int(1e7)
 
