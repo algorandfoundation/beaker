@@ -154,9 +154,9 @@ class ConstantProductAMM(Application):
         self,
         a_xfer: abi.AssetTransferTransaction,
         b_xfer: abi.AssetTransferTransaction,
-        pool_asset: abi.Asset = pool_token,
-        a_asset: abi.Asset = asset_a,
-        b_asset: abi.Asset = asset_b,
+        pool_asset: abi.Asset = pool_token, # type: ignore[assignment]
+        a_asset: abi.Asset = asset_a, # type: ignore[assignment]
+        b_asset: abi.Asset = asset_b, # type: ignore[assignment]
     ):
         """mint pool tokens given some amount of asset A and asset B.
 
@@ -232,9 +232,9 @@ class ConstantProductAMM(Application):
     def burn(
         self,
         pool_xfer: abi.AssetTransferTransaction,
-        pool_asset: abi.Asset = pool_token,
-        a_asset: abi.Asset = asset_a,
-        b_asset: abi.Asset = asset_b,
+        pool_asset: abi.Asset = pool_token, # type: ignore[assignment]
+        a_asset: abi.Asset = asset_a, # type: ignore[assignment]
+        b_asset: abi.Asset = asset_b, # type: ignore[assignment]
     ):
         """burn pool tokens to get back some amount of asset A and asset B
 
@@ -297,8 +297,8 @@ class ConstantProductAMM(Application):
     def swap(
         self,
         swap_xfer: abi.AssetTransferTransaction,
-        a_asset: abi.Asset = asset_a,
-        b_asset: abi.Asset = asset_b,
+        a_asset: abi.Asset = asset_a, # type: ignore[assignment]
+        b_asset: abi.Asset = asset_b, # type: ignore[assignment]
     ):
         """Swap some amount of either asset A or asset B for the other
 
