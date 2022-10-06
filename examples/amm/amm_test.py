@@ -83,6 +83,10 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     ), "The governor should be my address"
     assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
 
+def suggested_params(c: client.ApplicationClient) -> transaction.SuggestedParams:
+    sp = c.client.suggested_params()
+    sp.fee = 1000 # Cover inner-transactions
+    return sp
 
 def test_app_bootstrap(
     creator_app_client: client.ApplicationClient, assets: tuple[int, int]
@@ -90,7 +94,7 @@ def test_app_bootstrap(
     asset_a, asset_b = assets
 
     # Bootstrap to create pool token and set global state
-    sp = creator_app_client.client.suggested_params()
+    sp = suggested_params(creator_app_client)
     ptxn = TransactionWithSigner(
         txn=transaction.PaymentTxn(
             creator_app_client.get_sender(), sp, creator_app_client.app_addr, int(1e7)
@@ -98,7 +102,7 @@ def test_app_bootstrap(
         signer=creator_app_client.get_signer(),
     )
     result = creator_app_client.call(
-        ConstantProductAMM.bootstrap, seed=ptxn, a_asset=asset_a, b_asset=asset_b
+        ConstantProductAMM.bootstrap, suggested_params=sp, seed=ptxn, a_asset=asset_a, b_asset=asset_b
     )
     pool_token = result.return_value
     assert pool_token > 0, "We should have created a pool token with asset id>0"
@@ -139,7 +143,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
     a_amount = 10000
     b_amount = 3000
 
-    sp = algod_client.suggested_params()
+    sp = suggested_params(creator_app_client)
     creator_app_client.call(
         ConstantProductAMM.mint,
         a_xfer=TransactionWithSigner(
@@ -185,7 +189,7 @@ def test_mint(creator_app_client: ApplicationClient):
     a_amount = 40000
     b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
 
-    sp = algod_client.suggested_params()
+    sp = suggested_params(creator_app_client)
     creator_app_client.call(
         ConstantProductAMM.mint,
         a_xfer=TransactionWithSigner(
@@ -240,7 +244,7 @@ def test_bad_mint(creator_app_client: ApplicationClient):
     a_amount = 40000
     b_amount = 1000
 
-    sp = algod_client.suggested_params()
+    sp = suggested_params(creator_app_client)
 
     try:
         creator_app_client.call(
@@ -292,7 +296,7 @@ def test_burn(creator_app_client: ApplicationClient):
 
     burn_amt = balances_before[addr][pool_asset] // 10
 
-    sp = algod_client.suggested_params()
+    sp = suggested_params(creator_app_client)
 
     creator_app_client.call(
         ConstantProductAMM.burn,
@@ -345,7 +349,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     swap_amt = balances_before[addr][a_asset] // 10
 
-    sp = algod_client.suggested_params()
+    sp = suggested_params(creator_app_client)
     creator_app_client.call(
         ConstantProductAMM.swap,
         swap_xfer=TransactionWithSigner(
