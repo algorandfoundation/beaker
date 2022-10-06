@@ -34,8 +34,7 @@ from beaker import (
     internal,
 )
 
-# WARNING: THIS IS NOT PROODUCTION LEVEL CODE
-# Seriously, there are _definitely_ bugs in the math
+# WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
 
 class ConstantProductAMM(Application):
@@ -112,7 +111,19 @@ class ConstantProductAMM(Application):
         *,
         output: abi.Uint64,
     ):
-        """bootstraps the contract by opting into the assets and creating the pool token"""
+        """bootstraps the contract by opting into the assets and creating the pool token.
+
+        Note this method will fail if it is attempted more than once on the same contract since the assets and pool token
+        application state values are marked as static and cannot be overridden.
+
+        Args:
+            seed: Initial Payment transaction to the app account so it can opt in to assets and create pool token.
+            a_asset: One of the two assets this pool should allow swapping between.
+            b_asset: The other of the two assets this pool should allow swapping between.
+
+        Returns:
+            The asset id of the pool token created.
+        """
 
         return Seq(
             Assert(
@@ -147,7 +158,18 @@ class ConstantProductAMM(Application):
         a_asset: abi.Asset = asset_a,
         b_asset: abi.Asset = asset_b,
     ):
-        """mint pool tokens given some amount of asset A and asset B"""
+        """mint pool tokens given some amount of asset A and asset B.
+
+        Given some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with
+        the pools current balance and circulating supply of pool tokens.
+
+        Args:
+            a_xfer: Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens.
+            b_xfer: Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens.
+            pool_asset: The asset ID of the pool token so that we may distribute it.
+            a_asset: The asset ID of the Asset A so that we may inspect our balance.
+            b_asset: The asset ID of the Asset B so that we may inspect our balance.
+        """
 
         well_formed_mint = [
             a_asset.asset_id() == self.asset_a,
@@ -214,7 +236,14 @@ class ConstantProductAMM(Application):
         a_asset: abi.Asset = asset_a,
         b_asset: abi.Asset = asset_b,
     ):
-        """burn pool tokens to get back some amount of asset A and asset B"""
+        """burn pool tokens to get back some amount of asset A and asset B
+
+        Args:
+            pool_xfer: Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem
+            pool_asset: Asset ID of the pool token so we may inspect balance.
+            a_asset: Asset ID of Asset A so we may inspect balance and distribute it
+            b_asset: Asset ID of Asset B so we may inspect balance and distribute it
+        """
 
         well_formed_burn = [
             pool_asset.asset_id() == self.pool_token,
@@ -260,9 +289,8 @@ class ConstantProductAMM(Application):
                     pool_xfer.get().asset_amount(),
                 ),
             ),
-            self.ratio.set(self.get_ratio())
-            # Should the ratio should be the same before and after?
-            # Assert(self.ratio == self.get_ratio()),
+            self.ratio.set(self.get_ratio()),
+            Assert(self.ratio == self.get_ratio()),
         )
 
     @external
@@ -272,7 +300,13 @@ class ConstantProductAMM(Application):
         a_asset: abi.Asset = asset_a,
         b_asset: abi.Asset = asset_b,
     ):
-        """Swap some amount of either asset A or asset B for the other"""
+        """Swap some amount of either asset A or asset B for the other
+
+        Args:
+            swap_xfer: Asset Transfer Transaction of either Asset A or Asset B
+            a_asset: Asset ID of asset A so we may inspect balance and possibly transfer it
+            b_asset: Asset ID of asset B so we may inspect balance and possibly transfer it
+        """
         well_formed_swap = [
             a_asset.asset_id() == self.asset_a,
             b_asset.asset_id() == self.asset_b,
@@ -316,8 +350,22 @@ class ConstantProductAMM(Application):
     # Mathy methods
     ##############
 
+    # Notes:
+    #   1) During arithmetic operations, depending on the inputs, these methods may overflow
+    #   the max uint64 value. This will cause the program to immediately terminate.
+    #
+    #   Care should be taken to fully understand the limitations of these functions and if
+    #   required should be swapped out for the appropriate byte math operations.
+    #
+    #   2) When doing division, any remainder is truncated from the result.
+    #
+    #   Care should be taken  to ensure that _when_ the truncation happens,
+    #   it does so in favor of the contract. This is a subtle security issue that,
+    #   if mishandled, could cause the balance of the contract to be drained.
+
     @internal(TealType.uint64)
     def tokens_to_mint(self, issued, a_supply, b_supply, a_amount, b_amount):
+
         return Seq(
             (a_rat := ScratchVar()).store(
                 WideRatio([a_amount, self.scale], [a_supply])
@@ -359,6 +407,7 @@ class ConstantProductAMM(Application):
                 TxnField.xfer_asset: aid,
                 TxnField.asset_amount: amt,
                 TxnField.asset_receiver: rx,
+                TxnField.fee: Int(0),
             }
         )
 
@@ -383,6 +432,7 @@ class ConstantProductAMM(Application):
                     TxnField.config_asset_decimals: Int(3),
                     TxnField.config_asset_manager: self.address,
                     TxnField.config_asset_reserve: self.address,
+                    TxnField.fee: Int(0),
                 }
             ),
             InnerTxn.created_asset_id(),
