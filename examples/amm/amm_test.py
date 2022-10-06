@@ -1,4 +1,7 @@
+import copy
+
 import pytest
+import typing
 
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
@@ -83,6 +86,39 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     ), "The governor should be my address"
     assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
 
+def minimum_fee_for_txn_count(sp: transaction.SuggestedParams, txn_count: int) -> transaction.SuggestedParams:
+    """
+    Configures transaction fee _without_ considering network congestion.
+
+    Since the function does not account for network congestion, do _not_ use the function as-is in a production use-case.
+    """
+    s = copy.deepcopy(sp)
+    s.flat_fee = True
+    s.fee = transaction.constants.min_txn_fee * txn_count
+    return s
+
+def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
+    """
+    Verifies the app's algo balance is not unexpectedly drained during app interaction (e.g. paying inner transaction fees).
+
+    Due to the presence of rewards, the assertion tolerates actual > expected for small positive differences.
+    """
+    xs = testing.get_balances(c.client, [c.app_addr])
+    assert c.app_addr in xs
+    assert 0 in xs[c.app_addr]
+    actual_algos = xs[c.app_addr][0]
+
+    # Before accounting for rewards, confirm algos were not drained.
+    assert actual_algos >= expected_algos
+
+    # Account for rewards.
+    micro_algos_tolerance = 10
+    assert actual_algos - expected_algos <= micro_algos_tolerance
+
+
+
+
+app_algo_balance: typing.Final = int(1e7)
 
 def test_app_bootstrap(
     creator_app_client: client.ApplicationClient, assets: tuple[int, int]
@@ -93,13 +129,16 @@ def test_app_bootstrap(
     sp = creator_app_client.client.suggested_params()
     ptxn = TransactionWithSigner(
         txn=transaction.PaymentTxn(
-            creator_app_client.get_sender(), sp, creator_app_client.app_addr, int(1e7)
+            creator_app_client.get_sender(), sp, creator_app_client.app_addr, app_algo_balance
         ),
         signer=creator_app_client.get_signer(),
     )
     result = creator_app_client.call(
-        ConstantProductAMM.bootstrap, seed=ptxn, a_asset=asset_a, b_asset=asset_b
+        ConstantProductAMM.bootstrap, suggested_params=minimum_fee_for_txn_count(sp, 4), seed=ptxn, a_asset=asset_a, b_asset=asset_b
     )
+
+    assert_app_algo_balance(creator_app_client, app_algo_balance)
+
     pool_token = result.return_value
     assert pool_token > 0, "We should have created a pool token with asset id>0"
 
@@ -139,9 +178,10 @@ def test_app_fund(creator_app_client: ApplicationClient):
     a_amount = 10000
     b_amount = 3000
 
-    sp = algod_client.suggested_params()
+    sp = creator_app_client.client.suggested_params()
     creator_app_client.call(
         ConstantProductAMM.mint,
+        suggested_params=minimum_fee_for_txn_count(sp, 2),
         a_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, a_amount, a_asset),
             signer=signer,
@@ -160,6 +200,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
 
     assert balance_deltas[app_addr][a_asset] == a_amount
     assert balance_deltas[app_addr][b_asset] == b_amount
+    assert_app_algo_balance(creator_app_client, app_algo_balance)
 
     expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - ConstantProductAMM._scale)
     assert balance_deltas[addr][pool_asset] == expected_pool_tokens
@@ -185,9 +226,10 @@ def test_mint(creator_app_client: ApplicationClient):
     a_amount = 40000
     b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
 
-    sp = algod_client.suggested_params()
+    sp = creator_app_client.client.suggested_params()
     creator_app_client.call(
         ConstantProductAMM.mint,
+        suggested_params=minimum_fee_for_txn_count(sp, 2),
         a_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, a_amount, a_asset),
             signer=signer,
@@ -207,6 +249,8 @@ def test_mint(creator_app_client: ApplicationClient):
     # App got the right amount
     assert balance_deltas[app_addr][a_asset] == a_amount
     assert balance_deltas[app_addr][b_asset] == b_amount
+    ##
+    assert_app_algo_balance(creator_app_client, app_algo_balance)
 
     # We minted the correct amount of pool tokens
     issued = TOTAL_POOL_TOKENS - balances_before[app_addr][pool_asset]
@@ -240,7 +284,7 @@ def test_bad_mint(creator_app_client: ApplicationClient):
     a_amount = 40000
     b_amount = 1000
 
-    sp = algod_client.suggested_params()
+    sp = creator_app_client.client.suggested_params()
 
     try:
         creator_app_client.call(
@@ -292,10 +336,11 @@ def test_burn(creator_app_client: ApplicationClient):
 
     burn_amt = balances_before[addr][pool_asset] // 10
 
-    sp = algod_client.suggested_params()
+    sp = creator_app_client.client.suggested_params()
 
     creator_app_client.call(
         ConstantProductAMM.burn,
+        suggested_params=minimum_fee_for_txn_count(sp, 3),
         pool_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, burn_amt, pool_asset),
             signer=signer,
@@ -321,6 +366,8 @@ def test_burn(creator_app_client: ApplicationClient):
     expected_b_tokens = _get_tokens_to_burn(b_supply, burn_amt, issued)
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
 
+    assert_app_algo_balance(creator_app_client, app_algo_balance)
+
     ratio_after = _get_ratio_from_state(creator_app_client)
 
     # Ratio should be identical?
@@ -345,9 +392,10 @@ def test_swap(creator_app_client: ApplicationClient):
 
     swap_amt = balances_before[addr][a_asset] // 10
 
-    sp = algod_client.suggested_params()
+    sp = creator_app_client.client.suggested_params()
     creator_app_client.call(
         ConstantProductAMM.swap,
+        suggested_params=minimum_fee_for_txn_count(sp, 2),
         swap_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, swap_amt, a_asset),
             signer=signer,
@@ -370,6 +418,8 @@ def test_swap(creator_app_client: ApplicationClient):
         swap_amt, a_supply, b_supply, ConstantProductAMM._scale, ConstantProductAMM._fee
     )
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
+
+    assert_app_algo_balance(creator_app_client, app_algo_balance)
 
     ratio_after = _get_ratio_from_state(creator_app_client)
     expected_ratio = _expect_ratio(
