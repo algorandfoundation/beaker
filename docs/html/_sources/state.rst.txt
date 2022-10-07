@@ -7,6 +7,14 @@ Applications that need to maintain state can declare the state they need as part
 
 See the `developer docs <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract>`_ for details.
 
+.. warning::
+    The ``static`` option on state values is enforced only when using the methods provided by the objects described here. It is still possible to overwrite or delete the values using the accessors provided by PyTeal or TEAL directly.
+
+.. warning::
+    When using the ``ApplicationStateBlob`` or ``AccountStateBlob``, the keys used to store data are 1 byte in the range [0-255]. Care must be taken to prevent any other state values from overwriting those keys.
+    For example if ``DynamicAccountStateValue`` tries to write to key ``0x00`` and a blob is already using that key, bad things will happen.
+
+
 :ref:`Full Example <state_example>`
 
 .. _application_state:
@@ -16,36 +24,18 @@ Application State
 
 Application State holds the stateful values for the Application. Algorand refers to this state as ``Global State``. 
 
-
 The ``ApplicationState`` class is produced automatically by the ``Application``, there is no need to create it directly.
 
 .. autoclass:: ApplicationState
-
-    .. automethod:: dictify
-    .. automethod:: initialize
-    .. automethod:: schema 
+    :members:
 
 .. _application_state_value:
 
 Application State Value
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-
 .. autoclass:: ApplicationStateValue
-
-    .. automethod:: set 
-    .. automethod:: increment
-    .. automethod:: decrement
-
-    .. automethod:: get
-    .. automethod:: get_maybe
-    .. automethod:: get_must
-    .. automethod:: get_else
-
-    .. automethod:: delete
-
-    .. automethod:: is_default 
-
+    :members:
 
 
 .. _dynamic_application_state_value:
@@ -54,8 +44,7 @@ Dynamic Application State Value
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: DynamicApplicationStateValue
-
-    .. automethod:: __getitem__
+    :members:
 
 
 .. _application_state_blob:
@@ -65,8 +54,6 @@ Application State Blob
 
 .. autoclass:: ApplicationStateBlob
     :members:
-
-
 
 
 .. _account_state:
@@ -80,10 +67,7 @@ Algorand refers to Account state as `Local State`
 The ``AccountState`` class is produced automatically by the ``Application``, there is no need to create it directly.
 
 .. autoclass:: AccountState
-
-    .. automethod:: dictify
-    .. automethod:: initialize
-    .. automethod:: schema
+    :members:
 
 .. _account_state_value:
 
@@ -91,32 +75,22 @@ AccountStateValue
 ^^^^^^^^^^^^^^^^^
 
 .. autoclass:: AccountStateValue
+    :members:
 
-    .. automethod:: set 
 
-    .. automethod:: get
-    .. automethod:: get_maybe
-    .. automethod:: get_must
-    .. automethod:: get_else
-
-    .. automethod:: delete
-
-    .. automethod:: is_default 
-
+.. _dynamic_account_state_value:
 
 DynamicAccountStateValue
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. _dynamic_account_state_value:
-
 .. autoclass:: DynamicAccountStateValue
+    :members:
 
-    .. automethod:: __getitem__
 
 .. _account_state_blob:
 
 Account State Blob 
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: AccountStateBlob
     :members:

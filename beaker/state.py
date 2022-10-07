@@ -45,6 +45,15 @@ def stack_type_to_string(st: TealType):
 
 
 class StateValue(Expr):
+    """Base Class for state values
+
+    Attributes:
+        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
+        key: key to use to store the the value, default is name of class variable
+        default: Default value for the state value
+        static: Boolean flag to denote that this state value can only be set once and not deleted.
+        descr: Description of the state value to provide some information to clients 
+    """
     def __init__(
         self,
         stack_type: TealType,
@@ -53,15 +62,6 @@ class StateValue(Expr):
         static: bool = False,
         descr: str = None,
     ):
-        """Initialize the StateValue
-
-        Args:
-            stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
-            key: key to use to store the the value, default is name of class variable
-            default: Default value for the state value
-            static: Boolean flag to denote that this state value can only be set once and not deleted.
-            descr: Description of the state value to provide some information to clients 
-        """
         super().__init__()
 
         self.stack_type = stack_type
@@ -147,6 +147,15 @@ class StateValue(Expr):
 
 
 class DynamicStateValue(ABC):
+    """Base Class for DynamicStateValues
+
+    Attributes:
+        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
+        max_keys (int): Maximum number of keys to reserve for this dynamic state value 
+        key_gen (subroutine): A subroutine returning TealType.bytes, used to create a key where some data is stored. 
+        descr (str): Description of the state value to provide some information to clients 
+
+    """
     def __init__(
         self,
         stack_type: TealType,
@@ -154,14 +163,6 @@ class DynamicStateValue(ABC):
         key_gen: SubroutineFnWrapper = None,
         descr: str = None,
     ):
-        """Initialize the DynamicStateValue
-
-        Args:
-            stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
-            max_keys: Maximum number of keys to reserve for this dynamic state value 
-            key_gen: A subroutine returning TealType.bytes, used to create a key where some data is stored. 
-            descr: Description of the state value to provide some information to clients 
-        """
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
@@ -177,6 +178,15 @@ class DynamicStateValue(ABC):
 
 
 class ApplicationStateValue(StateValue):
+    """Allows storage of global state values for an application
+
+    Attributes:
+        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
+        key: key to use to store the the value, default is name of class variable
+        default: Default value for the state value
+        static: Boolean flag to denote that this state value can only be set once and not deleted.
+        descr: Description of the state value to provide some information to clients 
+    """
     def __str__(self) -> str:
         return f"ApplicationStateValue {self.key}"
 
@@ -234,6 +244,16 @@ class ApplicationStateValue(StateValue):
 
 
 class DynamicApplicationStateValue(DynamicStateValue):
+    """Dynamically keyed Application State
+
+    Attributes:
+        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
+        max_keys (int): Maximum number of keys to reserve for this dynamic state value 
+        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored. 
+        descr (str): Description of the state value to provide some information to clients 
+    """
+
+
     def __init__(
         self,
         stack_type: TealType,
@@ -264,6 +284,15 @@ class DynamicApplicationStateValue(DynamicStateValue):
 
 
 class AccountStateValue(StateValue):
+    """Allows storage of global state values for an account opted into an application 
+
+    Attributes:
+        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
+        key: key to use to store the the value, default is name of class variable
+        default: Default value for the state value
+        static: Boolean flag to denote that this state value can only be set once and not deleted.
+        descr: Description of the state value to provide some information to clients 
+    """
     def __init__(
         self,
         stack_type: TealType,
@@ -354,6 +383,14 @@ class AccountStateValue(StateValue):
 
 
 class DynamicAccountStateValue(DynamicStateValue):
+    """Dynamically keyed Account State
+
+    Attributes:
+        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
+        max_keys (int): Maximum number of keys to reserve for this dynamic state value 
+        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored. 
+        descr (str): Description of the state value to provide some information to clients 
+    """
     def __init__(
         self,
         stack_type: TealType,
