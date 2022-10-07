@@ -45,7 +45,6 @@ class C2CSub(bkr.Application):
 
 
 class C2CMain(bkr.Application):
-
     """Main application that handles creation of the sub app and asset and calls it"""
 
     # Init sub app object
