@@ -16,6 +16,8 @@ from beaker.application import get_method_signature
 
 
 class C2CSub(bkr.Application):
+    """Sub application who's only purpose is to opt into then close out of an asset"""
+
     @bkr.external
     def opt_in_to_asset(self, asset: abi.Asset):
         return InnerTxnBuilder.Execute(
@@ -44,7 +46,11 @@ class C2CSub(bkr.Application):
 
 class C2CMain(bkr.Application):
 
+    """Main application that handles creation of the sub app and asset and calls it"""
+
+    # Init sub app object
     sub_app = C2CSub()
+    # Specify precompiles of approval/clear program so we have the binary before we deploy
     sub_app_approval: bkr.Precompile = bkr.Precompile(sub_app.approval_program)
     sub_app_clear: bkr.Precompile = bkr.Precompile(sub_app.clear_program)
 
@@ -58,6 +64,7 @@ class C2CMain(bkr.Application):
                     TxnField.clear_state_program: self.sub_app_clear.binary_bytes,
                 }
             ),
+            # return the app id of the newly created app
             output.set(InnerTxn.created_application_id()),
         )
 
@@ -72,12 +79,13 @@ class C2CMain(bkr.Application):
                     TxnField.config_asset_manager: self.address,
                 }
             ),
-            # Get the asset id
+            # return the newly created asset id
             InnerTxn.created_asset_id(),
         )
 
     @bkr.internal(TealType.none)
     def trigger_opt_in_and_xfer(self, app_id, app_addr, asset_id):
+        # Call the sub app to make it opt in and xfer it some tokens
         return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.MethodCall(
@@ -145,6 +153,7 @@ def demo():
     print(f"Created main app: {main_app_id}")
     app_client_main.fund(1 * bkr.consts.algo)
 
+    # Call the main app to create the sub app
     result = app_client_main.call(C2CMain.create_sub)
     sub_app_id = result.return_value
     print(f"Created sub app: {sub_app_id}")
