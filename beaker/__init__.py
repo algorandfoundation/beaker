@@ -7,6 +7,7 @@ from .state import (
     ApplicationStateValue,
     AccountStateValue,
     AccountStateBlob,
+    ApplicationStateBlob,
 )
 from .decorators import (
     Authorize,

@@ -659,17 +659,19 @@ class ApplicationClient:
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
-    def fund(self, amt: int) -> str:
-        """fund pays the app account the amount passed using the signer"""
+    def fund(self, amt: int, addr: str = None) -> str:
+        """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
         sender = self.get_sender()
         signer = self.get_signer()
 
         sp = self.client.suggested_params()
 
+        rcv = self.app_addr if addr is None else addr
+
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
-                txn=transaction.PaymentTxn(sender, sp, self.app_addr, amt),
+                txn=transaction.PaymentTxn(sender, sp, rcv, amt),
                 signer=signer,
             )
         )

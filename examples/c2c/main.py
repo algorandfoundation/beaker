@@ -16,6 +16,8 @@ from beaker.application import get_method_signature
 
 
 class C2CSub(bkr.Application):
+    """Sub application who's only purpose is to opt into then close out of an asset"""
+
     @bkr.external
     def opt_in_to_asset(self, asset: abi.Asset):
         return InnerTxnBuilder.Execute(
@@ -43,6 +45,28 @@ class C2CSub(bkr.Application):
 
 
 class C2CMain(bkr.Application):
+    """Main application that handles creation of the sub app and asset and calls it"""
+
+    # Init sub app object
+    sub_app = C2CSub()
+    # Specify precompiles of approval/clear program so we have the binary before we deploy
+    sub_app_approval: bkr.Precompile = bkr.Precompile(sub_app.approval_program)
+    sub_app_clear: bkr.Precompile = bkr.Precompile(sub_app.clear_program)
+
+    @bkr.external
+    def create_sub(self, *, output: abi.Uint64):
+        return Seq(
+            InnerTxnBuilder.Execute(
+                {
+                    TxnField.type_enum: TxnType.ApplicationCall,
+                    TxnField.approval_program: self.sub_app_approval.binary_bytes,
+                    TxnField.clear_state_program: self.sub_app_clear.binary_bytes,
+                }
+            ),
+            # return the app id of the newly created app
+            output.set(InnerTxn.created_application_id()),
+        )
+
     @bkr.internal(TealType.uint64)
     def create_asset(self, name):
         return Seq(
@@ -54,12 +78,13 @@ class C2CMain(bkr.Application):
                     TxnField.config_asset_manager: self.address,
                 }
             ),
-            # Get the asset id
+            # return the newly created asset id
             InnerTxn.created_asset_id(),
         )
 
     @bkr.internal(TealType.none)
     def trigger_opt_in_and_xfer(self, app_id, app_addr, asset_id):
+        # Call the sub app to make it opt in and xfer it some tokens
         return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.MethodCall(
@@ -119,18 +144,18 @@ def demo():
     accts = bkr.sandbox.get_accounts()
     acct = accts.pop()
 
-    # Create sub app
-    app_client_sub = bkr.client.ApplicationClient(
-        bkr.sandbox.get_algod_client(), C2CSub(), signer=acct.signer
-    )
-    app_client_sub.create()
-
     # Create main app and fund it
     app_client_main = bkr.client.ApplicationClient(
         bkr.sandbox.get_algod_client(), C2CMain(), signer=acct.signer
     )
-    app_client_main.create()
+    main_app_id, _, _ = app_client_main.create()
+    print(f"Created main app: {main_app_id}")
     app_client_main.fund(1 * bkr.consts.algo)
+
+    # Call the main app to create the sub app
+    result = app_client_main.call(C2CMain.create_sub)
+    sub_app_id = result.return_value
+    print(f"Created sub app: {sub_app_id}")
 
     # Call main app method to:
     #   create the asset
@@ -143,16 +168,10 @@ def demo():
     result = app_client_main.call(
         C2CMain.create_asset_and_send,
         name="dope asset",
-        sub_app=app_client_sub.app_id,
+        sub_app=sub_app_id,
         suggested_params=sp,
     )
     print(f"Created asset id: {result.return_value}")
-
-    print(
-        bkr.testing.get_balances(
-            app_client_sub.client, [app_client_sub.app_addr, app_client_main.app_addr]
-        )
-    )
 
 
 if __name__ == "__main__":
