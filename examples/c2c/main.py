@@ -1,6 +1,4 @@
 from pyteal import (
-    MethodConfig,
-    OnComplete,
     abi,
     TealType,
     TxnType,
@@ -12,12 +10,9 @@ from pyteal import (
     Int,
     InnerTxn,
     ScratchVar,
-    Approve,
-    CallConfig,
 )
 import beaker as bkr
 from beaker.application import get_method_signature
-from beaker.precompile import Precompile
 
 algod_client = bkr.sandbox.get_algod_client()
 
