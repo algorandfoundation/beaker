@@ -361,7 +361,7 @@
         <span class="k">return</span> <span class="n">_impl</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">_authorize</span><span class="p">(</span><span class="n">allowed</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_authorize</span><span class="p">(</span><span class="n">allowed</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">HandlerFunc</span><span class="p">]:</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">allowed</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">expected_arg_types</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Expr</span><span class="p">:</span>
@@ -372,9 +372,9 @@
     <span class="k">if</span> <span class="n">allowed</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">allowed</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_decorate</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_decorate</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
                 <span class="n">Assert</span><span class="p">(</span><span class="n">allowed</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()),</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;unauthorized&quot;</span><span class="p">),</span>
                 <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
@@ -385,13 +385,13 @@
     <span class="k">return</span> <span class="n">_decorate</span>
 
 
-<span class="k">def</span> <span class="nf">_readonly</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_readonly</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
     <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fn</span>
 
 
-<span class="k">def</span> <span class="nf">_on_complete</span><span class="p">(</span><span class="n">mc</span><span class="p">:</span> <span class="n">MethodConfig</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_on_complete</span><span class="p">(</span><span class="n">mc</span><span class="p">:</span> <span class="n">MethodConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">HandlerFunc</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
         <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">method_config</span><span class="o">=</span><span class="n">mc</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">fn</span>
 

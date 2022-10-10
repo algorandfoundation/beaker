@@ -70,14 +70,12 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-
         for _, v in self.app.precompiles.items():
             if v.binary is None:
-                binary, addr, map = self.compile(v.program, True)
-                v._set_compiled(binary, addr, map)
+                v.compile(self.client)
 
         if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.compile()
+            self.app.generate_teal()
 
         if self.approval_binary is None:
             approval, _, approval_map = self.compile(self.app.approval_program, True)
@@ -663,17 +661,19 @@ class ApplicationClient:
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
-    def fund(self, amt: int) -> str:
-        """fund pays the app account the amount passed using the signer"""
+    def fund(self, amt: int, addr: str = None) -> str:
+        """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
         sender = self.get_sender()
         signer = self.get_signer()
 
         sp = self.client.suggested_params()
 
+        rcv = self.app_addr if addr is None else addr
+
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
-                txn=transaction.PaymentTxn(sender, sp, self.app_addr, amt),
+                txn=transaction.PaymentTxn(sender, sp, rcv, amt),
                 signer=signer,
             )
         )

@@ -122,7 +122,7 @@ We don't want to expose these methods to the ABI but we do want to allow them to
 .. _oncomplete_externals:
 
 OnComplete Externals 
----------------
+---------------------
 
 If a method expects the ``ApplicationCallTransaction`` to have an  ``OnComplete`` other than ``NoOp``, one of the other ``OnComplete`` decorators may be used instead of ``external`` with a method config set.
 

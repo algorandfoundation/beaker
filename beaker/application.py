@@ -216,12 +216,12 @@ class Application:
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        # If there are no precompiles, we can build the programs
-        # with what we already have
+        # If there are no precompiles, we can generate the teal
+        # for the programs with what we already have
         if len(self.precompiles) == 0:
-            self.compile()
+            self.generate_teal()
 
-    def compile(self):
+    def generate_teal(self):
         self.router = Router(
             name=self.__class__.__name__,
             bare_calls=BareCallActions(**self.bare_externals),
