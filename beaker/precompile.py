@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from base64 import b64decode
 from typing import Optional
 from pyteal import (
     Seq,
@@ -18,8 +19,10 @@ from pyteal import (
     Sha512_256,
 )
 from algosdk.source_map import SourceMap
+from algosdk.v2client.algod import AlgodClient
 from algosdk.future.transaction import LogicSigAccount
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
+
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR
 from beaker.lib.strings import encode_uvarint
 
@@ -56,7 +59,7 @@ class Precompile:
     fully compiled prior to trying to construct the approval and clear programs.
     """
 
-    def __init__(self, teal_src: str | None):
+    def __init__(self, teal_src: str | None, algod_client: AlgodClient = None):
 
         if teal_src is None:
             raise TealInputError("teal_src cannot be None")
@@ -83,6 +86,10 @@ class Precompile:
 
         self.program = "\n".join(lines)
 
+        if algod_client is not None:
+            self.compile(algod_client=algod_client)
+
+
     def _set_compiled(self, binary: bytes, program_hash: str, map: SourceMap):
         """
         Called by application_client to set the binary/addr/map for
@@ -98,6 +105,11 @@ class Precompile:
         for tv in self.template_values:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
+
+    def compile(self, algod_client: AlgodClient):
+        result = algod_client.compile(self.program, source_map=True)
+        src_map = SourceMap(result["sourcemap"])
+        self._set_compiled(b64decode(result["result"]), result["hash"], src_map)
 
     def hash(self) -> Expr:
         """
@@ -240,6 +252,8 @@ class Precompile:
         )
 
 
+
+
 def py_encode_uvarint(integer: int) -> bytes:
     """Encodes an integer as an uvarint.
     :param integer: the integer to encode
@@ -258,3 +272,4 @@ def py_encode_uvarint(integer: int) -> bytes:
     buffer.append(to_byte(integer))
 
     return bytes(buffer)
+

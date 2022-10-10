@@ -70,14 +70,12 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-
         for _, v in self.app.precompiles.items():
             if v.binary is None:
-                binary, addr, map = self.compile(v.program, True)
-                v._set_compiled(binary, addr, map)
+                v.compile(self.client)
 
         if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.compile()
+            self.app.generate_teal()
 
         if self.approval_binary is None:
             approval, _, approval_map = self.compile(self.app.approval_program, True)
