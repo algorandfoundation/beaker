@@ -89,7 +89,6 @@ class Precompile:
         if algod_client is not None:
             self.compile(algod_client=algod_client)
 
-
     def _set_compiled(self, binary: bytes, program_hash: str, map: SourceMap):
         """
         Called by application_client to set the binary/addr/map for
@@ -252,8 +251,6 @@ class Precompile:
         )
 
 
-
-
 def py_encode_uvarint(integer: int) -> bytes:
     """Encodes an integer as an uvarint.
     :param integer: the integer to encode
@@ -272,4 +269,3 @@ def py_encode_uvarint(integer: int) -> bytes:
     buffer.append(to_byte(integer))
 
     return bytes(buffer)
-

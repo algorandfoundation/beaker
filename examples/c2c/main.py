@@ -51,13 +51,14 @@ class C2CSub(bkr.Application):
         )
 
 
-
 class C2CMain(bkr.Application):
     """Main application that handles creation of the sub app and asset and calls it"""
 
     # Specify precompiles of approval/clear program so we have the binary before we deploy
     sub_app = C2CSub()
-    sub_app_approval = bkr.Precompile(sub_app.approval_program, algod_client=algod_client)
+    sub_app_approval = bkr.Precompile(
+        sub_app.approval_program, algod_client=algod_client
+    )
     sub_app_clear = bkr.Precompile(sub_app.clear_program, algod_client=algod_client)
 
     @bkr.external
@@ -174,7 +175,6 @@ def demo():
     except Exception as e:
         print(e)
         return
-
 
     # Call main app method to:
     #   create the asset
