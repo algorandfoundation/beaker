@@ -73,29 +73,50 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
+        app_with_compiled_children = self.build_app(self.app)
 
-        for _, v in self.app.precompiles.items():
-            if v.binary is None:
-                binary, addr, map = self.compile(v.program, True)
-                v._set_compiled(binary, addr, map)
+        approval, _, approval_map = self.compile(
+            app_with_compiled_children.approval_program, True
+        )
+        self.approval_binary = approval
+        self.approval_src_map = approval_map
 
-        if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.compile()
+        clear, _, clear_map = self.compile(
+            app_with_compiled_children.clear_program, True
+        )
+        self.clear_binary = clear
+        self.clear_src_map = clear_map
 
-        if self.approval_binary is None:
-            approval, _, approval_map = self.compile(self.app.approval_program, True)
-            self.approval_binary = approval
-            self.approval_src_map = approval_map
+    def build_app(self, smart_contract: Application = None):
+        for _, v in smart_contract.precompiles.items():
+            if v.app:
+                self.build_app(v.app)
+            v.set_template_values()
+            if v.app:
+                if v.approval_binary is None:
+                    approval_binary, approval_addr, approval_map = self.compile(
+                        v.approval_program, True
+                    )
+                    v.set_compiled_approval(
+                        approval_binary, approval_addr, approval_map
+                    )
+                if v.clear_binary is None:
+                    clear_binary, clear_addr, clear_map = self.compile(
+                        v.clear_program, True
+                    )
+                    v.set_compiled_clear(clear_binary, clear_addr, clear_map)
+            else:
+                if v.lsig_binary is None:
+                    binary, addr, map = self.compile(v.lsig_program, True)
+                    v.set_compiled_lsig(binary, addr, map)
 
-            self.approval_asserts = _gather_asserts(
-                self.app.approval_program, approval_map
-            )
+        if (
+            smart_contract.approval_program is None
+            or smart_contract.clear_program is None
+        ):
+            smart_contract.compile()
 
-        if self.clear_binary is None:
-            clear, _, clear_map = self.compile(self.app.clear_program, True)
-            self.clear_binary = clear
-            self.clear_src_map = clear_map
-            self.clear_asserts = _gather_asserts(self.app.clear_program, clear_map)
+        return smart_contract
 
     def create(
         self,

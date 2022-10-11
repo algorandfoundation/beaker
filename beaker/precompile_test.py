@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import pytest
 import pyteal as pt
 from beaker.application import Application
@@ -10,13 +11,47 @@ from beaker.logic_signature import LogicSignature, TemplateVariable
 from beaker.precompile import Precompile, py_encode_uvarint
 
 
+def test_precompile_inputs():
+    class App(Application):
+        class InnerApp(Application):
+            pass
+
+        class Lsig(LogicSignature):
+            def evaluate(self):
+                return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
+
+        try:
+            pc = Precompile(app=InnerApp(), lsig=Lsig(version=6))
+            assert False
+        except pt.TealInputError:
+            assert True
+
+        try:
+            pc = Precompile()
+            assert False
+        except pt.TealInputError:
+            assert True
+
+        try:
+            pc = Precompile(app=InnerApp())
+            assert True
+        except pt.TealInputError:
+            assert False
+
+        try:
+            pc = Precompile(lsig=Lsig())
+            assert True
+        except pt.TealInputError:
+            assert False
+
+
 def test_precompile():
     class App(Application):
         class Lsig(LogicSignature):
             def evaluate(self):
                 return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
-        pc = Precompile(Lsig(version=6).program)
+        pc = Precompile(lsig=Lsig(version=6))
 
         @external
         def check_it(self):
@@ -27,13 +62,13 @@ def test_precompile():
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.program_hash is None
+    assert app.pc.lsig_program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.program_hash is not None
+    assert app.pc.lsig_program_hash is not None
 
 
 TMPL_BYTE_VALS = [
@@ -53,7 +88,7 @@ def test_templated_bytes(tmpl_val: str):
             return pt.Seq(pt.Assert(pt.Len(self.tv)), pt.Int(1))
 
     class App(Application):
-        pc = Precompile(Lsig(version=6).program)
+        pc = Precompile(lsig=Lsig(version=6))
 
         @external
         def check_it(self):
@@ -66,13 +101,13 @@ def test_templated_bytes(tmpl_val: str):
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.program_hash is None
+    assert app.pc.lsig_program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.program_hash is not None
+    assert app.pc.lsig_program_hash is not None
 
     populated_teal = app.pc.populate_template(tmpl_val)
 
@@ -80,7 +115,7 @@ def test_templated_bytes(tmpl_val: str):
     if type(tmpl_val) is str:
         vlen = len(tmpl_val.encode("utf-8"))
 
-    assert len(populated_teal) == len(app.pc.binary) + vlen + (
+    assert len(populated_teal) == len(app.pc.lsig_binary) + vlen + (
         len(py_encode_uvarint(vlen)) - 1
     )
 
@@ -97,7 +132,7 @@ def test_templated_ints(tmpl_val: int):
             return pt.Seq(pt.Assert(self.tv), pt.Int(1))
 
     class App(Application):
-        pc = Precompile(Lsig(version=6).program)
+        pc = Precompile(lsig=Lsig(version=6))
 
         @external
         def check_it(self):
@@ -108,16 +143,16 @@ def test_templated_ints(tmpl_val: int):
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.program_hash is None
+    assert app.pc.lsig_program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.program_hash is not None
+    assert app.pc.lsig_program_hash is not None
 
     populated_teal = app.pc.populate_template(tmpl_val)
 
-    assert len(populated_teal) == len(app.pc.binary) + (
+    assert len(populated_teal) == len(app.pc.lsig_binary) + (
         len(py_encode_uvarint(tmpl_val)) - 1
     )

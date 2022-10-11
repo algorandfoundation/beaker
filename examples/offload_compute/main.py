@@ -22,7 +22,7 @@ class EthChecker(Application):
     # When passed to Precompile, it flags the init of the Application
     # to prevent building approval/clear programs until the precompile is
     # compiled so we have access to compiled information (its address for instance)
-    verifier: Final[Precompile] = Precompile(EthEcdsaVerify(version=6).program)
+    verifier: Final[Precompile] = Precompile(lsig=EthEcdsaVerify(version=6))
 
     @external
     def check_eth_sig(

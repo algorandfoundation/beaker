@@ -50,8 +50,7 @@ class C2CMain(bkr.Application):
     # Init sub app object
     sub_app = C2CSub()
     # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app_approval: bkr.Precompile = bkr.Precompile(sub_app.approval_program)
-    sub_app_clear: bkr.Precompile = bkr.Precompile(sub_app.clear_program)
+    sub_app: bkr.Precompile = bkr.Precompile(app=sub_app)
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
@@ -59,8 +58,8 @@ class C2CMain(bkr.Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.sub_app_approval.binary_bytes,
-                    TxnField.clear_state_program: self.sub_app_clear.binary_bytes,
+                    TxnField.approval_program: self.sub_app.approval_binary_bytes,
+                    TxnField.clear_state_program: self.sub_app.clear_binary_bytes,
                 }
             ),
             # return the app id of the newly created app
