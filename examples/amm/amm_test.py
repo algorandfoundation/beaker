@@ -86,7 +86,10 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     ), "The governor should be my address"
     assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
 
-def minimum_fee_for_txn_count(sp: transaction.SuggestedParams, txn_count: int) -> transaction.SuggestedParams:
+
+def minimum_fee_for_txn_count(
+    sp: transaction.SuggestedParams, txn_count: int
+) -> transaction.SuggestedParams:
     """
     Configures transaction fee _without_ considering network congestion.
 
@@ -96,6 +99,7 @@ def minimum_fee_for_txn_count(sp: transaction.SuggestedParams, txn_count: int) -
     s.flat_fee = True
     s.fee = transaction.constants.min_txn_fee * txn_count
     return s
+
 
 def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     """
@@ -116,9 +120,8 @@ def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     assert actual_algos - expected_algos <= micro_algos_tolerance
 
 
-
-
 app_algo_balance: typing.Final = int(1e7)
+
 
 def test_app_bootstrap(
     creator_app_client: client.ApplicationClient, assets: tuple[int, int]
@@ -129,12 +132,19 @@ def test_app_bootstrap(
     sp = creator_app_client.client.suggested_params()
     ptxn = TransactionWithSigner(
         txn=transaction.PaymentTxn(
-            creator_app_client.get_sender(), sp, creator_app_client.app_addr, app_algo_balance
+            creator_app_client.get_sender(),
+            sp,
+            creator_app_client.app_addr,
+            app_algo_balance,
         ),
         signer=creator_app_client.get_signer(),
     )
     result = creator_app_client.call(
-        ConstantProductAMM.bootstrap, suggested_params=minimum_fee_for_txn_count(sp, 4), seed=ptxn, a_asset=asset_a, b_asset=asset_b
+        ConstantProductAMM.bootstrap,
+        suggested_params=minimum_fee_for_txn_count(sp, 4),
+        seed=ptxn,
+        a_asset=asset_a,
+        b_asset=asset_b,
     )
 
     assert_app_algo_balance(creator_app_client, app_algo_balance)
