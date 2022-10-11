@@ -201,10 +201,7 @@ class ConstantProductAMM(Application):
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
             Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
-            # mint tokens
-            self.do_axfer(
-                Txn.sender(),
-                self.pool_token,
+            (to_mint := ScratchVar()).store(
                 If(
                     And(
                         a_bal.value() == a_xfer.get().asset_amount(),
@@ -223,8 +220,11 @@ class ConstantProductAMM(Application):
                         a_xfer.get().asset_amount(),
                         b_xfer.get().asset_amount(),
                     ),
-                ),
+                )
             ),
+            Assert(to_mint.load() > Int(0)),
+            # mint tokens
+            self.do_axfer(Txn.sender(), self.pool_token, to_mint.load()),
             self.ratio.set(self.get_ratio()),
         )
 
@@ -269,25 +269,31 @@ class ConstantProductAMM(Application):
             (issued := ScratchVar()).store(
                 self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
             ),
-            # Send back commensurate amt of a
-            self.do_axfer(
-                Txn.sender(),
-                self.asset_a,
+            (a_amt := ScratchVar()).store(
                 self.tokens_to_burn(
                     issued.load(),
                     a_bal.value(),
                     pool_xfer.get().asset_amount(),
-                ),
+                )
+            ),
+            (b_amt := ScratchVar()).store(
+                self.tokens_to_burn(
+                    issued.load(),
+                    b_bal.value(),
+                    pool_xfer.get().asset_amount(),
+                )
+            ),
+            # Send back commensurate amt of a
+            self.do_axfer(
+                Txn.sender(),
+                self.asset_a,
+                a_amt.load(),
             ),
             # Send back commensurate amt of b
             self.do_axfer(
                 Txn.sender(),
                 self.asset_b,
-                self.tokens_to_burn(
-                    issued.load(),
-                    b_bal.value(),
-                    pool_xfer.get().asset_amount(),
-                ),
+                b_amt.load(),
             ),
             self.ratio.set(self.get_ratio()),
             Assert(self.ratio == self.get_ratio()),
@@ -334,14 +340,18 @@ class ConstantProductAMM(Application):
             in_sup := AssetHolding.balance(self.address, in_id),
             out_sup := AssetHolding.balance(self.address, out_id),
             Assert(And(in_sup.hasValue(), out_sup.hasValue())),
-            self.do_axfer(
-                Txn.sender(),
-                out_id,
+            (to_swap := ScratchVar()).store(
                 self.tokens_to_swap(
                     swap_xfer.get().asset_amount(),
                     in_sup.value() - swap_xfer.get().asset_amount(),
                     out_sup.value(),
-                ),
+                )
+            ),
+            Assert(to_swap.load() > Int(0)),
+            self.do_axfer(
+                Txn.sender(),
+                out_id,
+                to_swap.load(),
             ),
             self.ratio.set(self.get_ratio()),
         )

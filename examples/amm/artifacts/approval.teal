@@ -1,4 +1,4 @@
-#pragma version 7
+#pragma version 8
 intcblock 0 1 1000 4 10000000000
 bytecblock 0x61 0x62 0x70 0x72 0x67
 txn NumAppArgs
@@ -385,23 +385,27 @@ gtxns AssetAmount
 -
 -
 store 44
-txn Sender
-bytec_0 // "a"
-app_global_get
 load 44
 load 40
 load 34
 gtxns AssetAmount
 callsub tokenstoburn_12
-callsub doaxfer_5
-txn Sender
-bytec_1 // "b"
-app_global_get
+store 45
 load 44
 load 42
 load 34
 gtxns AssetAmount
 callsub tokenstoburn_12
+store 46
+txn Sender
+bytec_0 // "a"
+app_global_get
+load 45
+callsub doaxfer_5
+txn Sender
+bytec_1 // "b"
+app_global_get
+load 46
 callsub doaxfer_5
 bytec_3 // "r"
 callsub getratio_8
@@ -488,23 +492,23 @@ global CurrentApplicationAddress
 bytec_0 // "a"
 app_global_get
 asset_holding_get AssetBalance
-store 46
-store 45
+store 48
+store 47
 global CurrentApplicationAddress
 bytec_1 // "b"
 app_global_get
 asset_holding_get AssetBalance
-store 48
-store 47
-load 46
+store 50
+store 49
 load 48
+load 50
 &&
 assert
-load 45
+load 47
 intc_2 // 1000
 mulw
 intc_0 // 0
-load 47
+load 49
 divmodw
 pop
 pop
@@ -515,129 +519,135 @@ retsub
 
 // mint
 mint_9:
+store 58
+store 57
 store 56
 store 55
 store 54
-store 53
-store 52
-load 55
+load 57
 txnas Assets
 bytec_0 // "a"
+app_global_get
+==
+assert
+load 58
+txnas Assets
+bytec_1 // "b"
 app_global_get
 ==
 assert
 load 56
 txnas Assets
-bytec_1 // "b"
-app_global_get
-==
-assert
-load 54
-txnas Assets
 bytec_2 // "p"
 app_global_get
 ==
 assert
-load 52
+load 54
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 assert
-load 52
+load 54
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
 assert
-load 52
+load 54
 gtxns AssetAmount
 intc_0 // 0
 >
 assert
-load 52
+load 54
 gtxns Sender
 txn Sender
 ==
 assert
-load 53
+load 55
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 assert
-load 53
+load 55
 gtxns XferAsset
 bytec_1 // "b"
 app_global_get
 ==
 assert
-load 53
+load 55
 gtxns AssetAmount
 intc_0 // 0
 >
 assert
-load 53
+load 55
 gtxns Sender
 txn Sender
 ==
 assert
 global CurrentApplicationAddress
-load 54
-asset_holding_get AssetBalance
-store 58
-store 57
-global CurrentApplicationAddress
-load 55
+load 56
 asset_holding_get AssetBalance
 store 60
 store 59
 global CurrentApplicationAddress
-load 56
+load 57
 asset_holding_get AssetBalance
 store 62
 store 61
+global CurrentApplicationAddress
 load 58
+asset_holding_get AssetBalance
+store 64
+store 63
 load 60
-&&
 load 62
 &&
+load 64
+&&
 assert
-txn Sender
-bytec_2 // "p"
-app_global_get
-load 59
-load 52
+load 61
+load 54
 gtxns AssetAmount
 ==
-load 61
-load 53
+load 63
+load 55
 gtxns AssetAmount
 ==
 &&
 bnz mint_9_l2
 intc 4 // 10000000000
-load 57
--
 load 59
-load 52
-gtxns AssetAmount
 -
 load 61
-load 53
+load 54
 gtxns AssetAmount
 -
-load 52
+load 63
+load 55
 gtxns AssetAmount
-load 53
+-
+load 54
+gtxns AssetAmount
+load 55
 gtxns AssetAmount
 callsub tokenstomint_13
 b mint_9_l3
 mint_9_l2:
-load 52
+load 54
 gtxns AssetAmount
-load 53
+load 55
 gtxns AssetAmount
 callsub tokenstomintinitial_14
 mint_9_l3:
+store 65
+load 65
+intc_0 // 0
+>
+assert
+txn Sender
+bytec_2 // "p"
+app_global_get
+load 65
 callsub doaxfer_5
 bytec_3 // "r"
 callsub getratio_8
@@ -646,64 +656,64 @@ retsub
 
 // set_governor
 setgovernor_10:
-store 70
+store 73
 txn Sender
 callsub authonly_1
 // unauthorized
 assert
 bytec 4 // "g"
-load 70
+load 73
 txnas Accounts
 app_global_put
 retsub
 
 // swap
 swap_11:
-store 73
-store 72
-store 71
-load 72
+store 76
+store 75
+store 74
+load 75
 txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
 assert
-load 73
+load 76
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
 assert
-load 71
+load 74
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
-load 71
+load 74
 gtxns XferAsset
 bytec_1 // "b"
 app_global_get
 ==
 ||
 assert
-load 71
+load 74
 gtxns AssetAmount
 intc_0 // 0
 >
 assert
-load 71
+load 74
 gtxns Sender
 txn Sender
 ==
 assert
 global CurrentApplicationAddress
-load 71
+load 74
 gtxns XferAsset
 asset_holding_get AssetBalance
-store 75
-store 74
+store 78
+store 77
 global CurrentApplicationAddress
-load 71
+load 74
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
@@ -713,14 +723,27 @@ bytec_0 // "a"
 app_global_get
 swap_11_l2:
 asset_holding_get AssetBalance
-store 77
-store 76
-load 75
-load 77
+store 80
+store 79
+load 78
+load 80
 &&
 assert
+load 74
+gtxns AssetAmount
+load 77
+load 74
+gtxns AssetAmount
+-
+load 79
+callsub tokenstoswap_15
+store 81
+load 81
+intc_0 // 0
+>
+assert
 txn Sender
-load 71
+load 74
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
@@ -738,14 +761,7 @@ bytec_1 // "b"
 app_global_get
 b swap_11_l2
 swap_11_l6:
-load 71
-gtxns AssetAmount
-load 74
-load 71
-gtxns AssetAmount
--
-load 76
-callsub tokenstoswap_15
+load 81
 callsub doaxfer_5
 bytec_3 // "r"
 callsub getratio_8
@@ -754,14 +770,14 @@ retsub
 
 // tokens_to_burn
 tokenstoburn_12:
+store 53
+store 52
 store 51
-store 50
-store 49
-load 50
-load 51
+load 52
+load 53
 mulw
 intc_0 // 0
-load 49
+load 51
 divmodw
 pop
 pop
@@ -772,45 +788,45 @@ retsub
 
 // tokens_to_mint
 tokenstomint_13:
+store 70
+store 69
+store 68
 store 67
 store 66
-store 65
-store 64
-store 63
-load 66
-intc_2 // 1000
-mulw
-intc_0 // 0
-load 64
-divmodw
-pop
-pop
-swap
-!
-assert
-store 68
-load 67
-intc_2 // 1000
-mulw
-intc_0 // 0
-load 65
-divmodw
-pop
-pop
-swap
-!
-assert
-store 69
-load 68
 load 69
+intc_2 // 1000
+mulw
+intc_0 // 0
+load 67
+divmodw
+pop
+pop
+swap
+!
+assert
+store 71
+load 70
+intc_2 // 1000
+mulw
+intc_0 // 0
+load 68
+divmodw
+pop
+pop
+swap
+!
+assert
+store 72
+load 71
+load 72
 <
 bnz tokenstomint_13_l2
-load 69
+load 72
 b tokenstomint_13_l3
 tokenstomint_13_l2:
-load 68
+load 71
 tokenstomint_13_l3:
-load 63
+load 66
 mulw
 intc_0 // 0
 intc_2 // 1000
@@ -832,15 +848,15 @@ retsub
 
 // tokens_to_swap
 tokenstoswap_15:
-store 80
-store 79
-store 78
-load 78
+store 84
+store 83
+store 82
+load 82
 intc_2 // 1000
 pushint 5 // 5
 -
 mulw
-load 80
+load 84
 uncover 2
 dig 1
 *
@@ -850,10 +866,10 @@ cover 2
 +
 swap
 intc_0 // 0
-load 79
+load 83
 intc_2 // 1000
 *
-load 78
+load 82
 intc_2 // 1000
 pushint 5 // 5
 -
