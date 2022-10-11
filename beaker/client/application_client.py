@@ -394,6 +394,7 @@ class ApplicationClient:
             self.add_method_call(
                 atc,
                 self.app.on_delete,
+                on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
                 sp=sp,
                 index=self.app_id,
