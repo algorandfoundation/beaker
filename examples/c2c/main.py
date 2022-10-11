@@ -138,6 +138,15 @@ class C2CMain(bkr.Application):
             output.set(asset_id.load()),
         )
 
+    @bkr.external
+    def delete_asset(self, asset: abi.Asset):
+        return InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.AssetConfig,
+                TxnField.config_asset: asset.asset_id(),
+            }
+        )
+
 
 def demo():
 
@@ -171,7 +180,14 @@ def demo():
         sub_app=sub_app_id,
         suggested_params=sp,
     )
+    created_asset = result.return_value
     print(f"Created asset id: {result.return_value}")
+
+    result = app_client_main.call(
+        C2CMain.delete_asset,
+        asset=created_asset,
+    )
+    print(f"Deleted asset in tx: {result.tx_id}")
 
 
 if __name__ == "__main__":
