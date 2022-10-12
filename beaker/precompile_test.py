@@ -1,4 +1,3 @@
-from distutils.command.build import build
 import pytest
 import pyteal as pt
 from beaker.application import Application
@@ -8,41 +7,10 @@ from beaker.sandbox import get_accounts, get_algod_client
 
 from beaker.logic_signature import LogicSignature, TemplateVariable
 
-from beaker.precompile import Precompile, py_encode_uvarint
-
-
-def test_precompile_inputs():
-    class App(Application):
-        class InnerApp(Application):
-            pass
-
-        class Lsig(LogicSignature):
-            def evaluate(self):
-                return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
-
-        try:
-            pc = Precompile(app=InnerApp(), lsig=Lsig(version=6))
-            assert False
-        except pt.TealInputError:
-            assert True
-
-        try:
-            pc = Precompile()
-            assert False
-        except pt.TealInputError:
-            assert True
-
-        try:
-            pc = Precompile(app=InnerApp())
-            assert True
-        except pt.TealInputError:
-            assert False
-
-        try:
-            pc = Precompile(lsig=Lsig())
-            assert True
-        except pt.TealInputError:
-            assert False
+from beaker.precompile import (
+    LSigPrecompile,
+    py_encode_uvarint,
+)
 
 
 def test_precompile():
@@ -51,7 +19,7 @@ def test_precompile():
             def evaluate(self):
                 return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
-        pc = Precompile(lsig=Lsig(version=6))
+        pc = LSigPrecompile(Lsig(version=6))
 
         @external
         def check_it(self):
@@ -88,7 +56,7 @@ def test_templated_bytes(tmpl_val: str):
             return pt.Seq(pt.Assert(pt.Len(self.tv)), pt.Int(1))
 
     class App(Application):
-        pc = Precompile(lsig=Lsig(version=6))
+        pc = LSigPrecompile(Lsig(version=6))
 
         @external
         def check_it(self):
@@ -132,7 +100,7 @@ def test_templated_ints(tmpl_val: int):
             return pt.Seq(pt.Assert(self.tv), pt.Int(1))
 
     class App(Application):
-        pc = Precompile(lsig=Lsig(version=6))
+        pc = LSigPrecompile(Lsig(version=6))
 
         @external
         def check_it(self):

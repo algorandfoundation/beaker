@@ -19,7 +19,7 @@ from pyteal import (
 )
 
 from beaker.application import Application, get_method_signature
-from beaker.precompile import Precompile
+from beaker.precompile import AppPrecompile
 from beaker.state import ApplicationStateValue
 from beaker.consts import Algos
 from beaker.decorators import internal, external, Authorize
@@ -38,8 +38,8 @@ class OpUp(Application):
 
     #: The app to be created to receiver opup requests
     target_app: Final[TargetApp] = TargetApp()
-    target_app_approval: Final[Precompile] = Precompile(app=target_app)
-    target_app_clear: Final[Precompile] = Precompile(app=target_app)
+    target_app_approval: Final[AppPrecompile] = AppPrecompile(target_app)
+    target_app_clear: Final[AppPrecompile] = AppPrecompile(target_app)
 
     #: The minimum balance required for this class
     min_balance: Final[Expr] = Algos(0.1)

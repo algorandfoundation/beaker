@@ -10,6 +10,7 @@ from pyteal import (
     TxnType,
 )
 from beaker import *
+from beaker.precompile import AppPrecompile
 
 
 class Child(Application):
@@ -33,7 +34,7 @@ class Child(Application):
 
 
 class Parent(Application):
-    child: Precompile = Precompile(app=Child())
+    child: AppPrecompile = AppPrecompile(app=Child())
 
     @external
     def create_child(self, *, output: abi.Uint64):
@@ -51,7 +52,7 @@ class Parent(Application):
 
 
 class Grandparent(Application):
-    parent: Precompile = Precompile(app=Parent())
+    parent: AppPrecompile = AppPrecompile(app=Parent())
 
     @external
     def create_parent(self, *, output: abi.Uint64):
@@ -110,7 +111,7 @@ def demo():
 
     app_client_child.fund(1 * consts.algo)
 
-    # Call the child app to create the child app
+    # Call the child app to increment counter
     result = app_client_child.call(Child.increment_counter)
     counter_value = result.return_value
     print(f"Counter value: {counter_value}")

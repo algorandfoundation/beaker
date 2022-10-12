@@ -31,6 +31,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
+from beaker.precompile import AppPrecompile, LSigPrecompile, Precompile
 
 
 class ApplicationClient:
@@ -73,50 +74,53 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-        app_with_compiled_children = self.build_app(self.app)
+        """Wraps the Application in an AppPrecompile before handing off to
+        _build_program for recursive compiling. The result is then used
+        to assign the approval and clear state program binaries and src maps."""
+        app_precompile = AppPrecompile(self.app)
+        compiled_app = self._build_program(app_precompile)
 
-        approval, _, approval_map = self.compile(
-            app_with_compiled_children.approval_program, True
-        )
-        self.approval_binary = approval
-        self.approval_src_map = approval_map
+        self.approval_binary = compiled_app.approval_binary
+        self.approval_src_map = compiled_app.approval_map
 
-        clear, _, clear_map = self.compile(
-            app_with_compiled_children.clear_program, True
-        )
-        self.clear_binary = clear
-        self.clear_src_map = clear_map
+        self.clear_binary = compiled_app.clear_binary
+        self.clear_src_map = compiled_app.clear_map
 
-    def build_app(self, smart_contract: Application = None):
-        for _, v in smart_contract.precompiles.items():
-            if v.app:
-                self.build_app(v.app)
-            v.set_template_values()
-            if v.app:
-                if v.approval_binary is None:
-                    approval_binary, approval_addr, approval_map = self.compile(
-                        v.approval_program, True
-                    )
-                    v.set_compiled_approval(
-                        approval_binary, approval_addr, approval_map
-                    )
-                if v.clear_binary is None:
-                    clear_binary, clear_addr, clear_map = self.compile(
-                        v.clear_program, True
-                    )
-                    v.set_compiled_clear(clear_binary, clear_addr, clear_map)
-            else:
-                if v.lsig_binary is None:
-                    binary, addr, map = self.compile(v.lsig_program, True)
-                    v.set_compiled_lsig(binary, addr, map)
+    def _build_program(self, precompile: Precompile):
+        """Recursively traverse through precompiles in a depth-first
+        manner to then compile bottom-up."""
+        for _, v in precompile.smart_contract.precompiles.items():
+            self._build_program(v)
 
+        # compile the current app/lsig (starting with bottom-most child)
+        precompile.smart_contract.compile()
+        precompile.set_template_values()
+
+        # set compiled values
         if (
-            smart_contract.approval_program is None
-            or smart_contract.clear_program is None
+            isinstance(precompile, AppPrecompile)
+            and precompile.approval_program
+            and precompile.clear_program
         ):
-            smart_contract.compile()
+            approval_binary, approval_addr, approval_map = self.compile(
+                precompile.approval_program, True
+            )
+            clear_binary, clear_addr, clear_map = self.compile(
+                precompile.clear_program, True
+            )
+            precompile.set_compiled(
+                approval_binary,
+                approval_addr,
+                approval_map,
+                clear_binary,
+                clear_addr,
+                clear_map,
+            )
+        elif isinstance(precompile, LSigPrecompile) and precompile.lsig_program:
+            binary, addr, map = self.compile(precompile.lsig_program, True)
+            precompile.set_compiled(binary, addr, map)
 
-        return smart_contract
+        return precompile
 
     def create(
         self,

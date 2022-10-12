@@ -13,6 +13,7 @@ from pyteal import (
 )
 import beaker as bkr
 from beaker.application import get_method_signature
+from beaker.precompile import AppPrecompile
 
 
 class C2CSub(bkr.Application):
@@ -50,7 +51,7 @@ class C2CMain(bkr.Application):
     # Init sub app object
     sub_app = C2CSub()
     # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app: bkr.Precompile = bkr.Precompile(app=sub_app)
+    sub_app: AppPrecompile = AppPrecompile(sub_app)
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):

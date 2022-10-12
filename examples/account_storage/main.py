@@ -5,6 +5,7 @@ import algosdk.future.transaction as txns
 from algosdk.atomic_transaction_composer import *
 from pyteal import *
 from beaker import *
+from beaker.precompile import LSigPrecompile
 
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
@@ -27,7 +28,7 @@ class DiskHungry(Application):
 
     # Signal to beaker that this should be compiled
     # prior to compiling the main application
-    tmpl_acct = Precompile(lsig=KeySig(version=6))
+    tmpl_acct = LSigPrecompile(KeySig(version=6))
 
     # Add account during opt in  by checking the sender against the address
     # we expect given the precompile && nonce
