@@ -72,34 +72,6 @@ class Precompile(ABC):
     def set_template_values(self):
         pass
 
-    def _set_template_values(self, program: str):
-        lines = program.splitlines()
-        template_values: list[PrecompileTemplateValue] = []
-        # Replace the teal program TMPL_* template variables with
-        # the 0 value for the given type and save the list of TemplateValues
-        for idx, line in enumerate(lines):
-            if TMPL_PREFIX in line:
-                op, name, _, _ = line.split(" ")
-                tv = PrecompileTemplateValue(
-                    name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
-                )
-                lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
-                template_values.append(tv)
-
-        program = "\n".join(lines)
-
-        return program, template_values
-
-    def _update_template_pc(
-        self, template_values: list[PrecompileTemplateValue], map: SourceMap
-    ):
-        # Denote the pc for each template value
-        for tv in template_values:
-            # +1 to acount for the pushbytes/pushint op
-            tv.pc = map.get_pcs_for_line(tv.line)[0] + 1
-
-        return template_values
-
 
 class AppPrecompile(Precompile):
     """
@@ -129,18 +101,15 @@ class AppPrecompile(Precompile):
         self.approval_template_values: list[PrecompileTemplateValue] = []
         self.clear_template_values: list[PrecompileTemplateValue] = []
 
-        if len(self.smart_contract.precompiles) == 0:
-            self.set_template_values()
-
     def set_template_values(self):
         (
             self.approval_program,
             self.approval_template_values,
-        ) = self._set_template_values(self.smart_contract.approval_program)
+        ) = get_template_values(self.smart_contract.approval_program)
         (
             self.clear_program,
             self.clear_template_values,
-        ) = self._set_template_values(self.smart_contract.clear_program)
+        ) = get_template_values(self.smart_contract.clear_program)
 
     def set_compiled(
         self,
@@ -157,7 +126,7 @@ class AppPrecompile(Precompile):
 
         self.approval_binary_bytes = Bytes(approval_binary)
 
-        self.approval_template_values = self._update_template_pc(
+        self.approval_template_values = update_template_pc(
             self.approval_template_values, self.approval_map
         )
 
@@ -167,7 +136,7 @@ class AppPrecompile(Precompile):
 
         self.clear_binary_bytes = Bytes(clear_binary)
 
-        self.clear_template_values = self._update_template_pc(
+        self.clear_template_values = update_template_pc(
             self.clear_template_values, self.clear_map
         )
 
@@ -194,11 +163,8 @@ class LSigPrecompile(Precompile):
 
         self.lsig_template_values: list[PrecompileTemplateValue] = []
 
-        if len(self.smart_contract.precompiles) == 0:
-            self.set_template_values()
-
     def set_template_values(self):
-        self.lsig_program, self.lsig_template_values = self._set_template_values(
+        self.lsig_program, self.lsig_template_values = get_template_values(
             self.smart_contract.program
         )
 
@@ -213,7 +179,7 @@ class LSigPrecompile(Precompile):
 
         self.lsig_binary_bytes = Bytes(binary)
 
-        self.lsig_template_values = self._update_template_pc(
+        self.lsig_template_values = update_template_pc(
             self.lsig_template_values, self.lsig_map
         )
 
@@ -378,3 +344,31 @@ def py_encode_uvarint(integer: int) -> bytes:
     buffer.append(to_byte(integer))
 
     return bytes(buffer)
+
+
+def get_template_values(program: str) -> tuple[str, list[PrecompileTemplateValue]]:
+    lines = program.splitlines()
+    template_values: list[PrecompileTemplateValue] = []
+    # Replace the teal program TMPL_* template variables with
+    # the 0 value for the given type and save the list of TemplateValues
+    for idx, line in enumerate(lines):
+        if TMPL_PREFIX in line:
+            op, name, _, _ = line.split(" ")
+            tv = PrecompileTemplateValue(
+                name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
+            )
+            lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
+            template_values.append(tv)
+
+    program = "\n".join(lines)
+
+    return program, template_values
+
+
+def update_template_pc(template_values: list[PrecompileTemplateValue], map: SourceMap):
+    # Denote the pc for each template value
+    for tv in template_values:
+        # +1 to acount for the pushbytes/pushint op
+        tv.pc = map.get_pcs_for_line(tv.line)[0] + 1
+
+    return template_values
