@@ -131,7 +131,36 @@ def test_app_boostrap_assert(
     sp = creator_app_client.client.suggested_params()
     asset_a, asset_b = assets
 
+    atc = AtomicTransactionComposer()
+    atc.add_transaction(TransactionWithSigner(
+        txn = transaction.PaymentTxn(
+            creator_app_client.get_sender(),
+            sp,
+            creator_app_client.get_sender(),
+            0,
+        ),
+        signer=creator_app_client.get_signer()
+    ))
+
+
     BOOTSTRAP_ASSERTIONS = [
+        (
+            "Group size is 2",
+            {
+                'seed':TransactionWithSigner(
+                    txn=transaction.PaymentTxn(
+                        creator_app_client.get_sender(),
+                        sp,
+                        creator_app_client.app_addr, # Failing reason
+                        app_algo_balance,
+                    ),
+                    signer=creator_app_client.get_signer(),
+                ),
+                'a_asset':asset_a,
+                'b_asset':asset_b,
+                'atc':atc
+            }
+        ),
         (
             "Seed txn to app acct",
             {

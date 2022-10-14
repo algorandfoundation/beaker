@@ -456,6 +456,7 @@ class ApplicationClient:
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
+        atc: AtomicTransactionComposer = None,
         **kwargs,
     ) -> ABIResult:
 
@@ -466,8 +467,11 @@ class ApplicationClient:
 
         hints = self.method_hints(method.name)
 
+        if atc is None:
+            atc = AtomicTransactionComposer()
+
         atc = self.add_method_call(
-            AtomicTransactionComposer(),
+            atc,
             method,
             sender,
             signer,
