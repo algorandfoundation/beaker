@@ -133,8 +133,6 @@ def test_app_boostrap_assert(
     sp = creator_app_client.client.suggested_params()
     asset_a, asset_b = assets
 
-    atc = AtomicTransactionComposer()
-
     BOOTSTRAP_ASSERTIONS = [
         (
             ConstantProductAMMErrors.GroupSizeNot2,
