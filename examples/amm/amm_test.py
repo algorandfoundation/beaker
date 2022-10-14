@@ -11,7 +11,7 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
-from beaker import client, sandbox, testing
+from beaker import client, sandbox, testing, consts
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
@@ -115,12 +115,81 @@ def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     # Before accounting for rewards, confirm algos were not drained.
     assert actual_algos >= expected_algos
 
-    # Account for rewards.
-    micro_algos_tolerance = 10
+    # Account for rewards. 0 in devmode
+    micro_algos_tolerance = 0
     assert actual_algos - expected_algos <= micro_algos_tolerance
 
 
-app_algo_balance: typing.Final = int(1e7)
+app_algo_balance: typing.Final = consts.algo * 10
+
+
+def test_app_boostrap_assert(
+    creator_app_client: client.ApplicationClient, assets: tuple[int, int]
+):
+    """verify the assert in boostrap """
+
+    sp = creator_app_client.client.suggested_params()
+    asset_a, asset_b = assets
+
+    BOOTSTRAP_ASSERTIONS = [
+        (
+            "Seed txn to app acct",
+            {
+                'seed':TransactionWithSigner(
+                    txn=transaction.PaymentTxn(
+                        creator_app_client.get_sender(),
+                        sp,
+                        creator_app_client.get_sender(), # Failing reason
+                        app_algo_balance,
+                    ),
+                    signer=creator_app_client.get_signer(),
+                ),
+                'a_asset':asset_a,
+                'b_asset':asset_b,
+            }
+        ),
+        (
+            "Seed txn > 0.3A",
+            {
+                'seed':TransactionWithSigner(
+                    txn=transaction.PaymentTxn(
+                        creator_app_client.get_sender(),
+                        sp,
+                        creator_app_client.app_addr,
+                        int(consts.algo * 0.29), # Failing reason 
+                    ),
+                    signer=creator_app_client.get_signer(),
+                ),
+                'a_asset':asset_a,
+                'b_asset':asset_b,
+            }
+        ),
+        (
+            "Asset A id > Asset B id",
+            {
+                'seed':TransactionWithSigner(
+                    txn=transaction.PaymentTxn(
+                        creator_app_client.get_sender(),
+                        sp,
+                        creator_app_client.get_sender(),
+                        app_algo_balance,
+                    ),
+                    signer=creator_app_client.get_signer(),
+                ),
+                'a_asset':asset_b, # failing reason
+                'b_asset':asset_a, # failing reason
+            }
+        )
+    ]
+
+
+    for _, kwargs in BOOTSTRAP_ASSERTIONS:
+        with pytest.raises(LogicException):
+            creator_app_client.call(
+                ConstantProductAMM.bootstrap,
+                suggested_params=minimum_fee_for_txn_count(sp, 4),
+                **kwargs
+            )
 
 
 def test_app_bootstrap(
