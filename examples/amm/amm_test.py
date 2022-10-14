@@ -116,7 +116,7 @@ def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     assert actual_algos >= expected_algos
 
     # Account for rewards. 0 in devmode
-    micro_algos_tolerance = 0
+    micro_algos_tolerance = 10
     assert actual_algos - expected_algos <= micro_algos_tolerance
 
 
