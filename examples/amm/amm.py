@@ -37,6 +37,23 @@ from beaker import (
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
 
+def commented_assert(conditions: list[tuple[Expr, str]]) -> list[Expr]:
+    return [Assert(cond, comment=cmt) for cond, cmt in conditions]
+
+
+class ConstantProductAMMErrors:
+    GroupSizeNot2 = "group size not 2"
+    ReceiverNotAppAddr = "receiver not app address"
+    AmountLessThanMinimum = "amount minimum not met"
+    AssetIdsIncorrect = "asset a or asset b incorrect"
+    AssetAIncorrect = "asset a incorrect"
+    AssetBIncorrect = "asset b incorrect"
+    AssetPoolIncorrect = "asset pool incorrect"
+    SenderInvalid = "invalid sender"
+    MissingBalances = "missing required balances"
+    SendAmountTooLow = "outgoing amount too low"
+
+
 class ConstantProductAMM(Application):
 
     # Declare Application state, marking `Final` here so the python class var doesn't get changed
@@ -125,13 +142,24 @@ class ConstantProductAMM(Application):
             The asset id of the pool token created.
         """
 
-        return Seq(
-            Assert(
-                Global.group_size() == Int(2),
+        well_formed_bootstrap = [
+            (Global.group_size() == Int(2), ConstantProductAMMErrors.GroupSizeNot2),
+            (
                 seed.get().receiver() == self.address,
-                seed.get().amount() >= consts.Algos(0.3),
-                a_asset.asset_id() < b_asset.asset_id(),
+                ConstantProductAMMErrors.ReceiverNotAppAddr,
             ),
+            (
+                seed.get().amount() >= consts.Algos(0.3),
+                ConstantProductAMMErrors.AmountLessThanMinimum,
+            ),
+            (
+                a_asset.asset_id() < b_asset.asset_id(),
+                ConstantProductAMMErrors.AssetIdsIncorrect,
+            ),
+        ]
+
+        return Seq(
+            *commented_assert(well_formed_bootstrap),
             self.asset_a.set(a_asset.asset_id()),
             self.asset_b.set(b_asset.asset_id()),
             self.pool_token.set(
@@ -172,35 +200,73 @@ class ConstantProductAMM(Application):
         """
 
         well_formed_mint = [
-            a_asset.asset_id() == self.asset_a,
-            b_asset.asset_id() == self.asset_b,
-            pool_asset.asset_id() == self.pool_token,
+            (
+                a_asset.asset_id() == self.asset_a,
+                ConstantProductAMMErrors.AssetAIncorrect,
+            ),
+            (
+                b_asset.asset_id() == self.asset_b,
+                ConstantProductAMMErrors.AssetBIncorrect,
+            ),
+            (
+                pool_asset.asset_id() == self.pool_token,
+                ConstantProductAMMErrors.AssetPoolIncorrect,
+            ),
         ]
 
         valid_asset_a_xfer = [
-            a_xfer.get().asset_receiver() == self.address,
-            a_xfer.get().xfer_asset() == self.asset_a,
-            a_xfer.get().asset_amount() > Int(0),
-            a_xfer.get().sender() == Txn.sender(),
+            (
+                a_xfer.get().asset_receiver() == self.address,
+                ConstantProductAMMErrors.ReceiverNotAppAddr,
+            ),
+            (
+                a_xfer.get().xfer_asset() == self.asset_a,
+                ConstantProductAMMErrors.AssetAIncorrect,
+            ),
+            (
+                a_xfer.get().asset_amount() > Int(0),
+                ConstantProductAMMErrors.AmountLessThanMinimum,
+            ),
+            (
+                a_xfer.get().sender() == Txn.sender(),
+                ConstantProductAMMErrors.SenderInvalid,
+            ),
         ]
 
         valid_asset_b_xfer = [
-            b_xfer.get().asset_receiver() == self.address,
-            b_xfer.get().xfer_asset() == self.asset_b,
-            b_xfer.get().asset_amount() > Int(0),
-            b_xfer.get().sender() == Txn.sender(),
+            (
+                b_xfer.get().asset_receiver() == self.address,
+                ConstantProductAMMErrors.ReceiverNotAppAddr,
+            ),
+            (
+                b_xfer.get().xfer_asset() == self.asset_b,
+                ConstantProductAMMErrors.AssetBIncorrect,
+            ),
+            (
+                b_xfer.get().asset_amount() > Int(0),
+                ConstantProductAMMErrors.AmountLessThanMinimum,
+            ),
+            (
+                b_xfer.get().sender() == Txn.sender(),
+                ConstantProductAMMErrors.SenderInvalid,
+            ),
         ]
 
         return Seq(
             # Check that the transaction is constructed correctly
-            Assert(*well_formed_mint),
-            Assert(*valid_asset_a_xfer),
-            Assert(*valid_asset_b_xfer),
+            *commented_assert(
+                well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer
+            ),
             # Check that we have these things
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
-            Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
+            Assert(
+                pool_bal.hasValue(),
+                a_bal.hasValue(),
+                b_bal.hasValue(),
+                comment=ConstantProductAMMErrors.MissingBalances,
+            ),
             (to_mint := ScratchVar()).store(
                 If(
                     And(
@@ -222,10 +288,13 @@ class ConstantProductAMM(Application):
                     ),
                 )
             ),
-            Assert(to_mint.load() > Int(0)),
+            Assert(
+                to_mint.load() > Int(0),
+                comment=ConstantProductAMMErrors.SendAmountTooLow,
+            ),
             # mint tokens
             self.do_axfer(Txn.sender(), self.pool_token, to_mint.load()),
-            self.ratio.set(self.get_ratio()),
+            self.ratio.set(self.compute_ratio()),
         )
 
     @external
@@ -246,25 +315,50 @@ class ConstantProductAMM(Application):
         """
 
         well_formed_burn = [
-            pool_asset.asset_id() == self.pool_token,
-            a_asset.asset_id() == self.asset_a,
-            b_asset.asset_id() == self.asset_b,
+            (
+                pool_asset.asset_id() == self.pool_token,
+                ConstantProductAMMErrors.AssetPoolIncorrect,
+            ),
+            (
+                a_asset.asset_id() == self.asset_a,
+                ConstantProductAMMErrors.AssetAIncorrect,
+            ),
+            (
+                b_asset.asset_id() == self.asset_b,
+                ConstantProductAMMErrors.AssetBIncorrect,
+            ),
         ]
 
         valid_pool_xfer = [
-            pool_xfer.get().asset_receiver() == self.address,
-            pool_xfer.get().asset_amount() > Int(0),
-            pool_xfer.get().xfer_asset() == self.pool_token,
-            pool_xfer.get().sender() == Txn.sender(),
+            (
+                pool_xfer.get().asset_receiver() == self.address,
+                ConstantProductAMMErrors.ReceiverNotAppAddr,
+            ),
+            (
+                pool_xfer.get().asset_amount() > Int(0),
+                ConstantProductAMMErrors.AmountLessThanMinimum,
+            ),
+            (
+                pool_xfer.get().xfer_asset() == self.pool_token,
+                ConstantProductAMMErrors.AssetPoolIncorrect,
+            ),
+            (
+                pool_xfer.get().sender() == Txn.sender(),
+                ConstantProductAMMErrors.SenderInvalid,
+            ),
         ]
 
         return Seq(
-            Assert(*well_formed_burn),
-            Assert(*valid_pool_xfer),
+            *commented_assert(well_formed_burn + valid_pool_xfer),
             pool_bal := pool_asset.holding(self.address).balance(),
             a_bal := a_asset.holding(self.address).balance(),
             b_bal := b_asset.holding(self.address).balance(),
-            Assert(And(pool_bal.hasValue(), a_bal.hasValue(), b_bal.hasValue())),
+            Assert(
+                pool_bal.hasValue(),
+                a_bal.hasValue(),
+                b_bal.hasValue(),
+                comment=ConstantProductAMMErrors.MissingBalances,
+            ),
             # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
             (issued := ScratchVar()).store(
                 self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
@@ -295,8 +389,7 @@ class ConstantProductAMM(Application):
                 self.asset_b,
                 b_amt.load(),
             ),
-            self.ratio.set(self.get_ratio()),
-            Assert(self.ratio == self.get_ratio()),
+            self.ratio.set(self.compute_ratio()),
         )
 
     @external
@@ -314,17 +407,32 @@ class ConstantProductAMM(Application):
             b_asset: Asset ID of asset B so we may inspect balance and possibly transfer it
         """
         well_formed_swap = [
-            a_asset.asset_id() == self.asset_a,
-            b_asset.asset_id() == self.asset_b,
+            (
+                a_asset.asset_id() == self.asset_a,
+                ConstantProductAMMErrors.AssetAIncorrect,
+            ),
+            (
+                b_asset.asset_id() == self.asset_b,
+                ConstantProductAMMErrors.AssetBIncorrect,
+            ),
         ]
 
         valid_swap_xfer = [
-            Or(
-                swap_xfer.get().xfer_asset() == self.asset_a,
-                swap_xfer.get().xfer_asset() == self.asset_b,
+            (
+                Or(
+                    swap_xfer.get().xfer_asset() == self.asset_a,
+                    swap_xfer.get().xfer_asset() == self.asset_b,
+                ),
+                ConstantProductAMMErrors.AssetIdsIncorrect,
             ),
-            swap_xfer.get().asset_amount() > Int(0),
-            swap_xfer.get().sender() == Txn.sender(),
+            (
+                swap_xfer.get().asset_amount() > Int(0),
+                ConstantProductAMMErrors.AmountLessThanMinimum,
+            ),
+            (
+                swap_xfer.get().sender() == Txn.sender(),
+                ConstantProductAMMErrors.SenderInvalid,
+            ),
         ]
 
         out_id = If(
@@ -335,11 +443,14 @@ class ConstantProductAMM(Application):
         in_id = swap_xfer.get().xfer_asset()
 
         return Seq(
-            Assert(*well_formed_swap),
-            Assert(*valid_swap_xfer),
+            *commented_assert(well_formed_swap + valid_swap_xfer),
             in_sup := AssetHolding.balance(self.address, in_id),
             out_sup := AssetHolding.balance(self.address, out_id),
-            Assert(And(in_sup.hasValue(), out_sup.hasValue())),
+            Assert(
+                in_sup.hasValue(),
+                out_sup.hasValue(),
+                comment=ConstantProductAMMErrors.MissingBalances,
+            ),
             (to_swap := ScratchVar()).store(
                 self.tokens_to_swap(
                     swap_xfer.get().asset_amount(),
@@ -347,13 +458,16 @@ class ConstantProductAMM(Application):
                     out_sup.value(),
                 )
             ),
-            Assert(to_swap.load() > Int(0)),
+            Assert(
+                to_swap.load() > Int(0),
+                comment=ConstantProductAMMErrors.SendAmountTooLow,
+            ),
             self.do_axfer(
                 Txn.sender(),
                 out_id,
                 to_swap.load(),
             ),
-            self.ratio.set(self.get_ratio()),
+            self.ratio.set(self.compute_ratio()),
         )
 
     ##############
@@ -375,7 +489,6 @@ class ConstantProductAMM(Application):
 
     @internal(TealType.uint64)
     def tokens_to_mint(self, issued, a_supply, b_supply, a_amount, b_amount):
-
         return Seq(
             (a_rat := ScratchVar()).store(
                 WideRatio([a_amount, self.scale], [a_supply])
@@ -430,7 +543,11 @@ class ConstantProductAMM(Application):
         return Seq(
             una := AssetParam.unitName(a),
             unb := AssetParam.unitName(b),
-            Assert(And(una.hasValue(), unb.hasValue())),
+            Assert(
+                una.hasValue(),
+                unb.hasValue(),
+                comment=ConstantProductAMMErrors.MissingBalances,
+            ),
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.AssetConfig,
@@ -449,7 +566,7 @@ class ConstantProductAMM(Application):
         )
 
     @internal(TealType.uint64)
-    def get_ratio(self):
+    def compute_ratio(self):
         return Seq(
             bal_a := AssetHolding.balance(
                 self.address,
@@ -459,7 +576,11 @@ class ConstantProductAMM(Application):
                 self.address,
                 self.asset_b,
             ),
-            Assert(And(bal_a.hasValue(), bal_b.hasValue())),
+            Assert(
+                bal_a.hasValue(),
+                bal_b.hasValue(),
+                comment=ConstantProductAMMErrors.MissingBalances,
+            ),
             WideRatio([bal_a.value(), self.scale], [bal_b.value()]),
         )
 

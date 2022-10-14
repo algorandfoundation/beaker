@@ -15,7 +15,7 @@ from beaker import client, sandbox, testing, consts
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
-from .amm import ConstantProductAMM
+from .amm import ConstantProductAMM, ConstantProductAMMErrors
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()
@@ -128,6 +128,8 @@ def test_app_boostrap_assert(
 ):
     """verify the assert in boostrap"""
 
+    print(creator_app_client.approval_asserts)
+
     sp = creator_app_client.client.suggested_params()
     asset_a, asset_b = assets
 
@@ -146,7 +148,7 @@ def test_app_boostrap_assert(
 
     BOOTSTRAP_ASSERTIONS = [
         (
-            "Group size is 2",
+            ConstantProductAMMErrors.GroupSizeNot2,
             {
                 "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
@@ -163,7 +165,7 @@ def test_app_boostrap_assert(
             },
         ),
         (
-            "Seed txn to app acct",
+            ConstantProductAMMErrors.ReceiverNotAppAddr,
             {
                 "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
@@ -179,7 +181,7 @@ def test_app_boostrap_assert(
             },
         ),
         (
-            "Seed txn > 0.3A",
+            ConstantProductAMMErrors.AmountLessThanMinimum,
             {
                 "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
@@ -195,7 +197,7 @@ def test_app_boostrap_assert(
             },
         ),
         (
-            "Asset A id > Asset B id",
+            ConstantProductAMMErrors.AssetIdsIncorrect,
             {
                 "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
@@ -504,6 +506,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     swap_amt = balances_before[addr][a_asset] // 10
 
+    ratio_before = _get_ratio_from_state(creator_app_client)
     sp = creator_app_client.client.suggested_params()
     creator_app_client.call(
         ConstantProductAMM.swap,
@@ -537,6 +540,7 @@ def test_swap(creator_app_client: ApplicationClient):
     expected_ratio = _expect_ratio(
         balances_after[app_addr][a_asset], balances_after[app_addr][b_asset]
     )
+    print(ratio_before, ratio_after)
     assert ratio_after == expected_ratio
 
 
