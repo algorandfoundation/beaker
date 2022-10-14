@@ -134,17 +134,6 @@ def test_app_boostrap_assert(
     asset_a, asset_b = assets
 
     atc = AtomicTransactionComposer()
-    atc.add_transaction(
-        TransactionWithSigner(
-            txn=transaction.PaymentTxn(
-                creator_app_client.get_sender(),
-                sp,
-                creator_app_client.get_sender(),
-                0,
-            ),
-            signer=creator_app_client.get_signer(),
-        )
-    )
 
     BOOTSTRAP_ASSERTIONS = [
         (
@@ -161,7 +150,17 @@ def test_app_boostrap_assert(
                 ),
                 "a_asset": asset_a,
                 "b_asset": asset_b,
-                "atc": atc,  # Failing reason (>2 txns)
+                "atc": AtomicTransactionComposer().add_transaction(
+                    TransactionWithSigner(
+                        txn=transaction.PaymentTxn(
+                            creator_app_client.get_sender(),
+                            sp,
+                            creator_app_client.get_sender(),
+                            0,
+                        ),
+                        signer=creator_app_client.get_signer(),
+                    )
+                ),  # Failing reason (>2 txns)
             },
         ),
         (
@@ -506,7 +505,6 @@ def test_swap(creator_app_client: ApplicationClient):
 
     swap_amt = balances_before[addr][a_asset] // 10
 
-    ratio_before = _get_ratio_from_state(creator_app_client)
     sp = creator_app_client.client.suggested_params()
     creator_app_client.call(
         ConstantProductAMM.swap,
@@ -540,7 +538,6 @@ def test_swap(creator_app_client: ApplicationClient):
     expected_ratio = _expect_ratio(
         balances_after[app_addr][a_asset], balances_after[app_addr][b_asset]
     )
-    print(ratio_before, ratio_after)
     assert ratio_after == expected_ratio
 
 
