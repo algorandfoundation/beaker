@@ -126,77 +126,78 @@ app_algo_balance: typing.Final = consts.algo * 10
 def test_app_boostrap_assert(
     creator_app_client: client.ApplicationClient, assets: tuple[int, int]
 ):
-    """verify the assert in boostrap """
+    """verify the assert in boostrap"""
 
     sp = creator_app_client.client.suggested_params()
     asset_a, asset_b = assets
 
     atc = AtomicTransactionComposer()
-    atc.add_transaction(TransactionWithSigner(
-        txn = transaction.PaymentTxn(
-            creator_app_client.get_sender(),
-            sp,
-            creator_app_client.get_sender(),
-            0,
-        ),
-        signer=creator_app_client.get_signer()
-    ))
-
+    atc.add_transaction(
+        TransactionWithSigner(
+            txn=transaction.PaymentTxn(
+                creator_app_client.get_sender(),
+                sp,
+                creator_app_client.get_sender(),
+                0,
+            ),
+            signer=creator_app_client.get_signer(),
+        )
+    )
 
     BOOTSTRAP_ASSERTIONS = [
         (
             "Group size is 2",
             {
-                'seed':TransactionWithSigner(
+                "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
                         creator_app_client.get_sender(),
                         sp,
-                        creator_app_client.app_addr, # Failing reason
+                        creator_app_client.app_addr,  # Failing reason
                         app_algo_balance,
                     ),
                     signer=creator_app_client.get_signer(),
                 ),
-                'a_asset':asset_a,
-                'b_asset':asset_b,
-                'atc':atc
-            }
+                "a_asset": asset_a,
+                "b_asset": asset_b,
+                "atc": atc,
+            },
         ),
         (
             "Seed txn to app acct",
             {
-                'seed':TransactionWithSigner(
+                "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
                         creator_app_client.get_sender(),
                         sp,
-                        creator_app_client.get_sender(), # Failing reason
+                        creator_app_client.get_sender(),  # Failing reason
                         app_algo_balance,
                     ),
                     signer=creator_app_client.get_signer(),
                 ),
-                'a_asset':asset_a,
-                'b_asset':asset_b,
-            }
+                "a_asset": asset_a,
+                "b_asset": asset_b,
+            },
         ),
         (
             "Seed txn > 0.3A",
             {
-                'seed':TransactionWithSigner(
+                "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
                         creator_app_client.get_sender(),
                         sp,
                         creator_app_client.app_addr,
-                        int(consts.algo * 0.29), # Failing reason 
+                        int(consts.algo * 0.29),  # Failing reason
                     ),
                     signer=creator_app_client.get_signer(),
                 ),
-                'a_asset':asset_a,
-                'b_asset':asset_b,
-            }
+                "a_asset": asset_a,
+                "b_asset": asset_b,
+            },
         ),
         (
             "Asset A id > Asset B id",
             {
-                'seed':TransactionWithSigner(
+                "seed": TransactionWithSigner(
                     txn=transaction.PaymentTxn(
                         creator_app_client.get_sender(),
                         sp,
@@ -205,12 +206,11 @@ def test_app_boostrap_assert(
                     ),
                     signer=creator_app_client.get_signer(),
                 ),
-                'a_asset':asset_b, # failing reason
-                'b_asset':asset_a, # failing reason
-            }
-        )
+                "a_asset": asset_b,  # failing reason
+                "b_asset": asset_a,  # failing reason
+            },
+        ),
     ]
-
 
     for _, kwargs in BOOTSTRAP_ASSERTIONS:
         with pytest.raises(LogicException):
