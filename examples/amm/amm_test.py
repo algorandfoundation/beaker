@@ -152,14 +152,14 @@ def test_app_boostrap_assert(
                     txn=transaction.PaymentTxn(
                         creator_app_client.get_sender(),
                         sp,
-                        creator_app_client.app_addr,  # Failing reason
+                        creator_app_client.app_addr,
                         app_algo_balance,
                     ),
                     signer=creator_app_client.get_signer(),
                 ),
                 "a_asset": asset_a,
                 "b_asset": asset_b,
-                "atc": atc,
+                "atc": atc,  # Failing reason (>2 txns)
             },
         ),
         (
