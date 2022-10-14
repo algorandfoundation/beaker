@@ -203,7 +203,7 @@ def test_app_boostrap_assert(
                     txn=transaction.PaymentTxn(
                         creator_app_client.get_sender(),
                         sp,
-                        creator_app_client.get_sender(),
+                        creator_app_client.app_addr,
                         app_algo_balance,
                     ),
                     signer=creator_app_client.get_signer(),
@@ -214,8 +214,8 @@ def test_app_boostrap_assert(
         ),
     ]
 
-    for _, kwargs in BOOTSTRAP_ASSERTIONS:
-        with pytest.raises(LogicException):
+    for msg, kwargs in BOOTSTRAP_ASSERTIONS:
+        with pytest.raises(LogicException, match=msg):
             creator_app_client.call(
                 ConstantProductAMM.bootstrap,
                 suggested_params=minimum_fee_for_txn_count(sp, 4),

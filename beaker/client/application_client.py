@@ -52,14 +52,13 @@ def gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAsserti
 
         # take the first one, assert should be alone on the line
         pc = src_map.get_pcs_for_line(idx)[0]
-        msg = f"UNKNOWN ASSERTION on line {idx}"
 
-        # TODO: this will fail for multiline comments
+        # TODO: this will be wrong for multiline comments
         line_before = program_lines[idx - 1]
-        if line_before.startswith("//"):
-            msg = line_before.strip("// ")
+        if not line_before.startswith("//"):
+            continue
 
-        asserts[pc] = ProgramAssertion(idx, msg)
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
 
     return asserts
 
