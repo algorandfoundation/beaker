@@ -67,10 +67,10 @@ class OpUp(Application):
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
                     TxnField.approval_program: Bytes(
-                        self.target_app_approval.approval_binary
+                        self.target_app_approval.approval_precompile.binary
                     ),
                     TxnField.clear_state_program: Bytes(
-                        self.target_app_clear.clear_binary
+                        self.target_app_clear.clear_precompile.binary
                     ),
                     TxnField.fee: Int(0),
                 }

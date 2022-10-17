@@ -59,8 +59,8 @@ class C2CMain(bkr.Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.sub_app.approval_binary_bytes,
-                    TxnField.clear_state_program: self.sub_app.clear_binary_bytes,
+                    TxnField.approval_program: self.sub_app.approval_precompile.binary_bytes,
+                    TxnField.clear_state_program: self.sub_app.clear_precompile.binary_bytes,
                 }
             ),
             # return the app id of the newly created app

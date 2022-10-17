@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from pyteal import (
     Seq,
     Bytes,
@@ -55,154 +54,96 @@ class PrecompileTemplateValue:
     pc: int = 0
 
 
-class Precompile(ABC):
+class Precompile:
     """
     Precompile allows a smart contract to signal that some child contract should be
     fully compiled prior to constructing its own program. This is the parent class of
     AppPrecompile and LSigPrecompile and should not be instantiated directly.
     """
 
-    smart_contract: "Application | LogicSignature"
+    program: str = ""
 
-    @abstractmethod
-    def compile_to_teal(self) -> None:
-        pass
+    binary: Optional[bytes] = None
+    program_hash: Optional[str] = None
+    map: Optional[SourceMap] = None
 
-    @abstractmethod
-    def compile_to_binary(
-        self, client_compile_func: Callable[[str, bool], tuple[bytes, str, SourceMap]]
-    ) -> None:
-        pass
+    binary_bytes: Bytes = Bytes("")
+
+    template_values: list[PrecompileTemplateValue] = []
+
+    def set_template_values(self, program: str):
+        lines = program.splitlines()
+
+        template_values: list[PrecompileTemplateValue] = []
+        # Replace the teal program TMPL_* template variables with
+        # the 0 value for the given type and save the list of TemplateValues
+        for idx, line in enumerate(lines):
+            if TMPL_PREFIX in line:
+                op, name, _, _ = line.split(" ")
+                tv = PrecompileTemplateValue(
+                    name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
+                )
+                lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
+                template_values.append(tv)
+
+        program = "\n".join(lines)
+
+        self.program = program
+        self.template_values = template_values
+
+    def set_compiled(self, binary: bytes, hash: str, map: SourceMap):
+        self.binary = binary
+        self.program_hash = hash
+        self.map = map
+
+        self.binary_bytes = Bytes(binary)
+
+        for tv in self.template_values:
+            # +1 to acount for the pushbytes/pushint op
+            tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
 
 
-class AppPrecompile(Precompile):
+class AppPrecompile:
     """
     AppPrecompile allows a smart contract to signal that some child Application
     should be fully compiled prior to constructing its own program.
     """
 
     def __init__(self, app: "Application"):
-        super().__init__()
-
         if app is None:
             raise TealInputError("app cannot be None.")
 
-        self.smart_contract: "Application" = app
-
-        self.approval_program = ""
-        self.clear_program = ""
-
-        self.approval_binary: Optional[bytes] = None
-        self.approval_program_hash: Optional[str] = None
-        self.approval_map: Optional[SourceMap] = None
-
-        self.approval_binary_bytes: Bytes = Bytes("")
-
-        self.clear_binary: Optional[bytes] = None
-        self.clear_program_hash: Optional[str] = None
-        self.clear_map: Optional[SourceMap] = None
-
-        self.clear_binary_bytes: Bytes = Bytes("")
-
-        self.approval_template_values: list[PrecompileTemplateValue] = []
-        self.clear_template_values: list[PrecompileTemplateValue] = []
+        self.app: "Application" = app
+        self.approval_precompile: Precompile = Precompile()
+        self.clear_precompile: Precompile = Precompile()
 
     def compile_to_teal(self) -> None:
-        self.smart_contract.compile()
-        if self.smart_contract.approval_program:
-            (
-                self.approval_program,
-                self.approval_template_values,
-            ) = get_template_values(self.smart_contract.approval_program)
-        if self.smart_contract.clear_program:
-            (
-                self.clear_program,
-                self.clear_template_values,
-            ) = get_template_values(self.smart_contract.clear_program)
+        if self.app.approval_program is None or self.app.clear_program is None:
+            self.app.compile()
 
-    def compile_to_binary(
-        self, client_compile_func: Callable[[str, bool], tuple[bytes, str, SourceMap]]
-    ):
-        if self.approval_program:
-            approval_binary, approval_addr, approval_map = client_compile_func(
-                self.approval_program, True
-            )
-
-            self.approval_binary = approval_binary
-            self.approval_program_hash = approval_addr
-            self.approval_map = approval_map
-
-            self.approval_binary_bytes = Bytes(approval_binary)
-
-            self.approval_template_values = update_template_pc(
-                self.approval_template_values, self.approval_map
-            )
-
-        if self.clear_program:
-            clear_binary, clear_addr, clear_map = client_compile_func(
-                self.clear_program, True
-            )
-
-            self.clear_binary = clear_binary
-            self.clear_program_hash = clear_addr
-            self.clear_map = clear_map
-
-            self.clear_binary_bytes = Bytes(clear_binary)
-
-            self.clear_template_values = update_template_pc(
-                self.clear_template_values, self.clear_map
-            )
+        if self.app.approval_program:
+            self.approval_precompile.set_template_values(self.app.approval_program)
+        if self.app.clear_program:
+            self.clear_precompile.set_template_values(self.app.approval_program)
 
 
-class LSigPrecompile(Precompile):
+class LSigPrecompile:
     """
     LSigPrecompile allows a smart contract to signal that some child Logic Signature
     should be fully compiled prior to constructing its own program.
     """
 
     def __init__(self, lsig: "LogicSignature"):
-        super().__init__()
-
         if lsig is None:
             raise TealInputError("lsig cannot be None.")
 
-        self.smart_contract: "LogicSignature" = lsig
-
-        self.lsig_program = ""
-
-        self.lsig_binary: Optional[bytes] = None
-        self.lsig_program_hash: Optional[str] = None
-        self.lsig_map: Optional[SourceMap] = None
-
-        self.lsig_binary_bytes: Bytes = Bytes("")
-
-        self.lsig_template_values: list[PrecompileTemplateValue] = []
+        self.lsig: "LogicSignature" = lsig
+        self.precompile: Precompile = Precompile()
 
     def compile_to_teal(self) -> None:
-        self.smart_contract.compile()
-        if self.smart_contract.program:
-            self.lsig_program, self.lsig_template_values = get_template_values(
-                self.smart_contract.program
-            )
-
-    def compile_to_binary(
-        self, client_compile_func: Callable[[str, bool], tuple[bytes, str, SourceMap]]
-    ):
-        """
-        Called by application_client to set the binary/addr/map for
-        this precompile.
-        """
-        if self.lsig_program:
-            binary, addr, map = client_compile_func(self.lsig_program, True)
-            self.lsig_binary = binary
-            self.lsig_program_hash = addr
-            self.lsig_map = map
-
-            self.lsig_binary_bytes = Bytes(binary)
-
-            self.lsig_template_values = update_template_pc(
-                self.lsig_template_values, self.lsig_map
-            )
+        self.lsig.compile()
+        if self.lsig.program:
+            self.precompile.set_template_values(self.lsig.program)
 
     def hash(self) -> Expr:
         """
@@ -211,12 +152,12 @@ class LSigPrecompile(Precompile):
         It will fail if any template_values are set.
         """
 
-        assert self.lsig_binary is not None
-        assert len(self.lsig_template_values) == 0
-        if self.lsig_program_hash is None:
+        assert self.precompile.binary is not None
+        assert len(self.precompile.template_values) == 0
+        if self.precompile.program_hash is None:
             raise TealInputError("No address defined for precompile")
 
-        return Addr(self.lsig_program_hash)
+        return Addr(self.precompile.program_hash)
 
     def signer(self) -> LogicSigTransactionSigner:
         """
@@ -225,7 +166,7 @@ class LSigPrecompile(Precompile):
 
         It should only be used for non templated Precompiles.
         """
-        return LogicSigTransactionSigner(LogicSigAccount(self.lsig_binary))
+        return LogicSigTransactionSigner(LogicSigAccount(self.precompile.binary))
 
     def populate_template(self, *args) -> bytes:
         """
@@ -236,16 +177,16 @@ class LSigPrecompile(Precompile):
         template values declared.
         """
 
-        assert self.lsig_binary is not None
-        assert len(self.lsig_template_values) > 0
-        assert len(args) == len(self.lsig_template_values)
+        assert self.precompile.binary is not None
+        assert len(self.precompile.template_values) > 0
+        assert len(args) == len(self.precompile.template_values)
 
         # Get a copy of the binary so we can work on it in place
-        populated_binary = list(self.lsig_binary).copy()
+        populated_binary = list(self.precompile.binary).copy()
         # Any time we add bytes, we need to update the offset so the rest
         # of the pc values can be updated to account for the difference
         offset = 0
-        for idx, tv in enumerate(self.lsig_template_values):
+        for idx, tv in enumerate(self.precompile.template_values):
             arg: str | bytes | int = args[idx]
 
             if tv.is_bytes:
@@ -291,9 +232,9 @@ class LSigPrecompile(Precompile):
         # it should produce an identical output in terms of populated binary.
         # This function just reproduces the same effects in pyteal
 
-        assert self.lsig_binary_bytes is not None
-        assert len(self.lsig_template_values)
-        assert len(args) == len(self.lsig_template_values)
+        assert self.precompile.binary_bytes is not None
+        assert len(self.precompile.template_values)
+        assert len(args) == len(self.precompile.template_values)
 
         populate_program: list[Expr] = [
             (last_pos := ScratchVar(TealType.uint64)).store(Int(0)),
@@ -302,7 +243,7 @@ class LSigPrecompile(Precompile):
             (buff := ScratchVar(TealType.bytes)).store(Bytes("")),
         ]
 
-        for idx, tv in enumerate(self.lsig_template_values):
+        for idx, tv in enumerate(self.precompile.template_values):
             # Add expressions to encode the values and insert them into the working buffer
             populate_program += [
                 curr_val.store(Concat(encode_uvarint(Len(args[idx])), args[idx]))
@@ -312,7 +253,7 @@ class LSigPrecompile(Precompile):
                     Concat(
                         buff.load(),
                         Substring(
-                            self.lsig_binary_bytes,
+                            self.precompile.binary_bytes,
                             last_pos.load(),
                             Int(tv.pc),
                         ),
@@ -326,7 +267,9 @@ class LSigPrecompile(Precompile):
         # append the bytes from the last template variable to the end
         populate_program += [
             buff.store(
-                Concat(buff.load(), Suffix(self.lsig_binary_bytes, last_pos.load()))
+                Concat(
+                    buff.load(), Suffix(self.precompile.binary_bytes, last_pos.load())
+                )
             ),
             buff.load(),
         ]
@@ -365,31 +308,3 @@ def py_encode_uvarint(integer: int) -> bytes:
     buffer.append(to_byte(integer))
 
     return bytes(buffer)
-
-
-def get_template_values(program: str) -> tuple[str, list[PrecompileTemplateValue]]:
-    lines = program.splitlines()
-    template_values: list[PrecompileTemplateValue] = []
-    # Replace the teal program TMPL_* template variables with
-    # the 0 value for the given type and save the list of TemplateValues
-    for idx, line in enumerate(lines):
-        if TMPL_PREFIX in line:
-            op, name, _, _ = line.split(" ")
-            tv = PrecompileTemplateValue(
-                name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
-            )
-            lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
-            template_values.append(tv)
-
-    program = "\n".join(lines)
-
-    return program, template_values
-
-
-def update_template_pc(template_values: list[PrecompileTemplateValue], map: SourceMap):
-    # Denote the pc for each template value
-    for tv in template_values:
-        # +1 to acount for the pushbytes/pushint op
-        tv.pc = map.get_pcs_for_line(tv.line)[0] + 1
-
-    return template_values

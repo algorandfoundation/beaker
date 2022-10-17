@@ -15,7 +15,7 @@ from pyteal import (
     ScratchVar,
 )
 from beaker.decorators import get_handler_config
-from beaker.precompile import Precompile
+from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
 class TemplateVariable(Expr):
@@ -86,7 +86,8 @@ class LogicSignature:
         self.methods: dict[str, SubroutineDefinition] = {}
 
         self.template_variables: list[TemplateVariable] = []
-        self.precompiles: dict[str, Precompile] = {}  # dummy for now
+        self.app_precompiles: dict[str, AppPrecompile] = {}  # dummy for now
+        self.lsig_precompiles: dict[str, LSigPrecompile] = {}  # dummy for now
 
         for name, (bound_attr, static_attr) in self.attrs.items():
 

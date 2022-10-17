@@ -42,8 +42,8 @@ class Parent(Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.child.approval_binary_bytes,
-                    TxnField.clear_state_program: self.child.clear_binary_bytes,
+                    TxnField.approval_program: self.child.approval_precompile.binary_bytes,
+                    TxnField.clear_state_program: self.child.clear_precompile.binary_bytes,
                     TxnField.global_num_uints: Int(1),
                 }
             ),
@@ -61,8 +61,8 @@ class Grandparent(Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.parent.approval_binary_bytes,
-                    TxnField.clear_state_program: self.parent.clear_binary_bytes,
+                    TxnField.approval_program: self.parent.approval_precompile.binary_bytes,
+                    TxnField.clear_state_program: self.parent.clear_precompile.binary_bytes,
                 }
             ),
             output.set(InnerTxn.created_application_id()),

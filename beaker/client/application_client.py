@@ -31,7 +31,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
-from beaker.precompile import AppPrecompile, Precompile
+from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
 class ApplicationClient:
@@ -73,29 +73,68 @@ class ApplicationClient:
             src_map = SourceMap(result["sourcemap"])
         return (b64decode(result["result"]), result["hash"], src_map)
 
-    def build(self):
-        """Wraps the Application in an AppPrecompile before handing off to
+    def build(self) -> None:
+        """
+        Wraps the Application in an AppPrecompile before handing off to
         _build_program for recursive compiling. The result is then used
-        to assign the approval and clear state program binaries and src maps."""
+        to assign the approval and clear state program binaries and src maps.
+        """
         app_precompile = AppPrecompile(self.app)
-        compiled_app: AppPrecompile = self._build_program(app_precompile)
+        compiled_app = self._build_app(app_precompile)
 
-        self.approval_binary = compiled_app.approval_binary
-        self.approval_src_map = compiled_app.approval_map
+        self.approval_binary = compiled_app.approval_precompile.binary
+        self.approval_src_map = compiled_app.approval_precompile.map
 
-        self.clear_binary = compiled_app.clear_binary
-        self.clear_src_map = compiled_app.clear_map
+        self.clear_binary = compiled_app.clear_precompile.binary
+        self.clear_src_map = compiled_app.clear_precompile.map
 
-    def _build_program(self, precompile: Precompile):
-        """Recursively traverse through precompiles in a depth-first
-        manner to then compile bottom-up."""
-        for _, v in precompile.smart_contract.precompiles.items():
-            self._build_program(v)
+    def _build_app(self, app_precompile: AppPrecompile) -> AppPrecompile:
+        """
+        Recursively traverse through precompiles within an Application
+        in a depth-first manner to then compile bottom-up.
+        """
+        for _, v_a in app_precompile.app.app_precompiles.items():
+            self._build_app(v_a)
+        for _, v_l in app_precompile.app.lsig_precompiles.items():
+            self._build_lsig(v_l)
 
-        precompile.compile_to_teal()
-        precompile.compile_to_binary(self.compile)
+        app_precompile.compile_to_teal()
 
-        return precompile
+        if app_precompile.approval_precompile.binary is None:
+            approval_binary, approval_addr, approval_map = self.compile(
+                app_precompile.approval_precompile.program, True
+            )
+            app_precompile.approval_precompile.set_compiled(
+                approval_binary, approval_addr, approval_map
+            )
+
+        if app_precompile.clear_precompile.binary is None:
+            clear_binary, clear_addr, clear_map = self.compile(
+                app_precompile.clear_precompile.program, True
+            )
+            app_precompile.clear_precompile.set_compiled(
+                clear_binary, clear_addr, clear_map
+            )
+
+        return app_precompile
+
+    def _build_lsig(self, lsig_precompile: LSigPrecompile) -> LSigPrecompile:
+        """
+        Recursively traverse through precompiles within a LogicSignature
+        in a depth-first manner to then compile bottom-up.
+        """
+        for _, v_a in lsig_precompile.lsig.app_precompiles.items():
+            self._build_app(v_a)
+        for _, v_l in lsig_precompile.lsig.lsig_precompiles.items():
+            self._build_lsig(v_l)
+
+        lsig_precompile.compile_to_teal()
+
+        if lsig_precompile.precompile.binary is None:
+            binary, addr, map = self.compile(lsig_precompile.precompile.program, True)
+            lsig_precompile.precompile.set_compiled(binary, addr, map)
+
+        return lsig_precompile
 
     def create(
         self,

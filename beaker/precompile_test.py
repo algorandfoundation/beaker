@@ -30,13 +30,13 @@ def test_precompile():
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.lsig_program_hash is None
+    assert app.pc.precompile.program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.lsig_program_hash is not None
+    assert app.pc.precompile.program_hash is not None
 
 
 TMPL_BYTE_VALS = [
@@ -69,13 +69,13 @@ def test_templated_bytes(tmpl_val: str):
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.lsig_program_hash is None
+    assert app.pc.precompile.program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.lsig_program_hash is not None
+    assert app.pc.precompile.program_hash is not None
 
     populated_teal = app.pc.populate_template(tmpl_val)
 
@@ -83,7 +83,7 @@ def test_templated_bytes(tmpl_val: str):
     if type(tmpl_val) is str:
         vlen = len(tmpl_val.encode("utf-8"))
 
-    assert len(populated_teal) == len(app.pc.lsig_binary) + vlen + (
+    assert len(populated_teal) == len(app.pc.precompile.binary) + vlen + (
         len(py_encode_uvarint(vlen)) - 1
     )
 
@@ -111,16 +111,16 @@ def test_templated_ints(tmpl_val: int):
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.lsig_program_hash is None
+    assert app.pc.precompile.program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.lsig_program_hash is not None
+    assert app.pc.precompile.program_hash is not None
 
     populated_teal = app.pc.populate_template(tmpl_val)
 
-    assert len(populated_teal) == len(app.pc.lsig_binary) + (
+    assert len(populated_teal) == len(app.pc.precompile.binary) + (
         len(py_encode_uvarint(tmpl_val)) - 1
     )
