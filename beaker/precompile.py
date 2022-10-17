@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, TYPE_CHECKING
+from typing import Callable, Optional, TYPE_CHECKING
 from pyteal import (
     Seq,
     Bytes,
@@ -62,14 +62,16 @@ class Precompile(ABC):
     AppPrecompile and LSigPrecompile and should not be instantiated directly.
     """
 
-    @abstractmethod
-    def __init__(self):
-        super().__init__()
-
-        self.smart_contract: "Application | LogicSignature" = None
+    smart_contract: "Application | LogicSignature"
 
     @abstractmethod
-    def set_template_values(self):
+    def compile_to_teal(self) -> None:
+        pass
+
+    @abstractmethod
+    def compile_to_binary(
+        self, client_compile_func: Callable[[str, bool], tuple[bytes, str, SourceMap]]
+    ) -> None:
         pass
 
 
@@ -85,60 +87,71 @@ class AppPrecompile(Precompile):
         if app is None:
             raise TealInputError("app cannot be None.")
 
-        self.smart_contract = app
+        self.smart_contract: "Application" = app
 
-        self.approval_program = None
-        self.clear_program = None
+        self.approval_program = ""
+        self.clear_program = ""
 
         self.approval_binary: Optional[bytes] = None
         self.approval_program_hash: Optional[str] = None
         self.approval_map: Optional[SourceMap] = None
 
+        self.approval_binary_bytes: Bytes = Bytes("")
+
         self.clear_binary: Optional[bytes] = None
         self.clear_program_hash: Optional[str] = None
         self.clear_map: Optional[SourceMap] = None
 
+        self.clear_binary_bytes: Bytes = Bytes("")
+
         self.approval_template_values: list[PrecompileTemplateValue] = []
         self.clear_template_values: list[PrecompileTemplateValue] = []
 
-    def set_template_values(self):
-        (
-            self.approval_program,
-            self.approval_template_values,
-        ) = get_template_values(self.smart_contract.approval_program)
-        (
-            self.clear_program,
-            self.clear_template_values,
-        ) = get_template_values(self.smart_contract.clear_program)
+    def compile_to_teal(self) -> None:
+        self.smart_contract.compile()
+        if self.smart_contract.approval_program:
+            (
+                self.approval_program,
+                self.approval_template_values,
+            ) = get_template_values(self.smart_contract.approval_program)
+        if self.smart_contract.clear_program:
+            (
+                self.clear_program,
+                self.clear_template_values,
+            ) = get_template_values(self.smart_contract.clear_program)
 
-    def set_compiled(
-        self,
-        approval_binary: bytes,
-        approval_program_hash: str,
-        approval_map: SourceMap,
-        clear_binary: bytes,
-        clear_program_hash: str,
-        clear_map: SourceMap,
+    def compile_to_binary(
+        self, client_compile_func: Callable[[str, bool], tuple[bytes, str, SourceMap]]
     ):
-        self.approval_binary = approval_binary
-        self.approval_program_hash = approval_program_hash
-        self.approval_map = approval_map
+        if self.approval_program:
+            approval_binary, approval_addr, approval_map = client_compile_func(
+                self.approval_program, True
+            )
 
-        self.approval_binary_bytes = Bytes(approval_binary)
+            self.approval_binary = approval_binary
+            self.approval_program_hash = approval_addr
+            self.approval_map = approval_map
 
-        self.approval_template_values = update_template_pc(
-            self.approval_template_values, self.approval_map
-        )
+            self.approval_binary_bytes = Bytes(approval_binary)
 
-        self.clear_binary = clear_binary
-        self.clear_program_hash = clear_program_hash
-        self.clear_map = clear_map
+            self.approval_template_values = update_template_pc(
+                self.approval_template_values, self.approval_map
+            )
 
-        self.clear_binary_bytes = Bytes(clear_binary)
+        if self.clear_program:
+            clear_binary, clear_addr, clear_map = client_compile_func(
+                self.clear_program, True
+            )
 
-        self.clear_template_values = update_template_pc(
-            self.clear_template_values, self.clear_map
-        )
+            self.clear_binary = clear_binary
+            self.clear_program_hash = clear_addr
+            self.clear_map = clear_map
+
+            self.clear_binary_bytes = Bytes(clear_binary)
+
+            self.clear_template_values = update_template_pc(
+                self.clear_template_values, self.clear_map
+            )
 
 
 class LSigPrecompile(Precompile):
@@ -153,35 +166,43 @@ class LSigPrecompile(Precompile):
         if lsig is None:
             raise TealInputError("lsig cannot be None.")
 
-        self.smart_contract = lsig
+        self.smart_contract: "LogicSignature" = lsig
 
-        self.lsig_program = None
+        self.lsig_program = ""
 
         self.lsig_binary: Optional[bytes] = None
         self.lsig_program_hash: Optional[str] = None
         self.lsig_map: Optional[SourceMap] = None
 
+        self.lsig_binary_bytes: Bytes = Bytes("")
+
         self.lsig_template_values: list[PrecompileTemplateValue] = []
 
-    def set_template_values(self):
-        self.lsig_program, self.lsig_template_values = get_template_values(
-            self.smart_contract.program
-        )
+    def compile_to_teal(self) -> None:
+        self.smart_contract.compile()
+        if self.smart_contract.program:
+            self.lsig_program, self.lsig_template_values = get_template_values(
+                self.smart_contract.program
+            )
 
-    def set_compiled(self, binary: bytes, program_hash: str, map: SourceMap):
+    def compile_to_binary(
+        self, client_compile_func: Callable[[str, bool], tuple[bytes, str, SourceMap]]
+    ):
         """
         Called by application_client to set the binary/addr/map for
         this precompile.
         """
-        self.lsig_binary = binary
-        self.lsig_program_hash = program_hash
-        self.lsig_map = map
+        if self.lsig_program:
+            binary, addr, map = client_compile_func(self.lsig_program, True)
+            self.lsig_binary = binary
+            self.lsig_program_hash = addr
+            self.lsig_map = map
 
-        self.lsig_binary_bytes = Bytes(binary)
+            self.lsig_binary_bytes = Bytes(binary)
 
-        self.lsig_template_values = update_template_pc(
-            self.lsig_template_values, self.lsig_map
-        )
+            self.lsig_template_values = update_template_pc(
+                self.lsig_template_values, self.lsig_map
+            )
 
     def hash(self) -> Expr:
         """

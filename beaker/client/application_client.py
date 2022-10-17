@@ -31,7 +31,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
-from beaker.precompile import AppPrecompile, LSigPrecompile, Precompile
+from beaker.precompile import AppPrecompile, Precompile
 
 
 class ApplicationClient:
@@ -78,7 +78,7 @@ class ApplicationClient:
         _build_program for recursive compiling. The result is then used
         to assign the approval and clear state program binaries and src maps."""
         app_precompile = AppPrecompile(self.app)
-        compiled_app = self._build_program(app_precompile)
+        compiled_app: AppPrecompile = self._build_program(app_precompile)
 
         self.approval_binary = compiled_app.approval_binary
         self.approval_src_map = compiled_app.approval_map
@@ -92,33 +92,8 @@ class ApplicationClient:
         for _, v in precompile.smart_contract.precompiles.items():
             self._build_program(v)
 
-        # compile the current app/lsig (starting with bottom-most child)
-        precompile.smart_contract.compile()
-        precompile.set_template_values()
-
-        # set compiled values
-        if (
-            isinstance(precompile, AppPrecompile)
-            and precompile.approval_program
-            and precompile.clear_program
-        ):
-            approval_binary, approval_addr, approval_map = self.compile(
-                precompile.approval_program, True
-            )
-            clear_binary, clear_addr, clear_map = self.compile(
-                precompile.clear_program, True
-            )
-            precompile.set_compiled(
-                approval_binary,
-                approval_addr,
-                approval_map,
-                clear_binary,
-                clear_addr,
-                clear_map,
-            )
-        elif isinstance(precompile, LSigPrecompile) and precompile.lsig_program:
-            binary, addr, map = self.compile(precompile.lsig_program, True)
-            precompile.set_compiled(binary, addr, map)
+        precompile.compile_to_teal()
+        precompile.compile_to_binary(self.compile)
 
         return precompile
 
