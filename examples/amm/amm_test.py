@@ -259,6 +259,7 @@ def build_swap_transaction(
     }
 
 
+
 def test_app_bootstrap(
     creator_app_client: client.ApplicationClient, assets: tuple[int, int]
 ):

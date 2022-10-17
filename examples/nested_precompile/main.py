@@ -34,7 +34,7 @@ class Child(Application):
 
 
 class Parent(Application):
-    child: AppPrecompile = AppPrecompile(app=Child())
+    child: AppPrecompile = AppPrecompile(Child())
 
     @external
     def create_child(self, *, output: abi.Uint64):
@@ -42,8 +42,8 @@ class Parent(Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.child.approval_precompile.binary_bytes,
-                    TxnField.clear_state_program: self.child.clear_precompile.binary_bytes,
+                    TxnField.approval_program: self.child.approval.binary,
+                    TxnField.clear_state_program: self.child.clear.binary,
                     TxnField.global_num_uints: Int(1),
                 }
             ),
@@ -52,7 +52,8 @@ class Parent(Application):
 
 
 class Grandparent(Application):
-    parent: AppPrecompile = AppPrecompile(app=Parent())
+
+    parent: AppPrecompile = AppPrecompile(Parent())
 
     @external
     def create_parent(self, *, output: abi.Uint64):
@@ -61,8 +62,8 @@ class Grandparent(Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.parent.approval_precompile.binary_bytes,
-                    TxnField.clear_state_program: self.parent.clear_precompile.binary_bytes,
+                    TxnField.approval_program: self.parent.approval.binary,
+                    TxnField.clear_state_program: self.parent.clear.binary,
                 }
             ),
             output.set(InnerTxn.created_application_id()),

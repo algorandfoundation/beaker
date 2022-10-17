@@ -91,8 +91,7 @@ class Application:
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
-        self.app_precompiles: dict[str, AppPrecompile] = {}
-        self.lsig_precompiles: dict[str, LSigPrecompile] = {}
+        self.precompiles: dict[str, AppPrecompile | LSigPrecompile] = {}
 
         acct_vals: dict[
             str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
@@ -126,10 +125,8 @@ class Application:
                 case ReservedApplicationStateValue():
                     app_vals[name] = bound_attr
 
-                case AppPrecompile():
-                    self.app_precompiles[name] = bound_attr
-                case LSigPrecompile():
-                    self.lsig_precompiles[name] = bound_attr
+                case LSigPrecompile() | AppPrecompile():
+                    self.precompiles[name] = bound_attr
 
             # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
@@ -223,7 +220,7 @@ class Application:
 
         # If there are no precompiles, we can build the programs
         # with what we already have
-        if len(self.app_precompiles) == 0 and len(self.lsig_precompiles) == 0:
+        if len(self.precompiles) == 0:
             self.compile()
 
     def compile(self):

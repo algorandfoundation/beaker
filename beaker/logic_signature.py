@@ -86,8 +86,9 @@ class LogicSignature:
         self.methods: dict[str, SubroutineDefinition] = {}
 
         self.template_variables: list[TemplateVariable] = []
-        self.app_precompiles: dict[str, AppPrecompile] = {}  # dummy for now
-        self.lsig_precompiles: dict[str, LSigPrecompile] = {}  # dummy for now
+        self.precompiles: dict[
+            str, LSigPrecompile | AppPrecompile
+        ] = {}  # dummy for now
 
         for name, (bound_attr, static_attr) in self.attrs.items():
 

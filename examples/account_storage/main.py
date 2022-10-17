@@ -37,7 +37,7 @@ class DiskHungry(Application):
         return Seq(
             Assert(
                 # Make sure the opt-in'er is our lsig
-                Txn.sender() == self.tmpl_acct.template_hash(nonce.get()),
+                Txn.sender() == self.tmpl_acct.logic.template_hash(nonce.get()),
                 # and that its being rekeyed to us
                 Txn.rekey_to() == self.address,
             ),

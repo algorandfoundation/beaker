@@ -2,7 +2,7 @@ from base64 import b64decode
 import copy
 from dataclasses import dataclass
 from math import ceil
-from typing import Any, cast
+from typing import Any, cast, Optional
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -21,6 +21,7 @@ from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 from algosdk.constants import APP_PAGE_MAX_SIZE
+from pyteal import TealInputError
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import (
@@ -31,7 +32,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
-from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker.precompile import LSigPrecompile, AppPrecompile
 
 
 class ApplicationClient:
@@ -54,13 +55,11 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval_binary = None
-        self.approval_src_map = None
-        self.approval_asserts = None
+        self.approval_binary: Optional[bytes] = None
+        self.approval_src_map: Optional[SourceMap] = None
 
-        self.clear_binary = None
-        self.clear_src_map = None
-        self.clear_asserts = None
+        self.clear_binary: Optional[bytes] = None
+        self.clear_src_map: Optional[SourceMap] = None
 
         self.suggested_params = suggested_params
 
@@ -80,41 +79,37 @@ class ApplicationClient:
         to assign the approval and clear state program binaries and src maps.
         """
         app_precompile = AppPrecompile(self.app)
+
         compiled_app = self._build_app(app_precompile)
 
-        self.approval_binary = compiled_app.approval_precompile.binary
-        self.approval_src_map = compiled_app.approval_precompile.map
+        self.approval_binary = compiled_app.approval._binary
+        self.approval_src_map = compiled_app.approval._map
 
-        self.clear_binary = compiled_app.clear_precompile.binary
-        self.clear_src_map = compiled_app.clear_precompile.map
+        self.clear_binary = compiled_app.clear._binary
+        self.clear_src_map = compiled_app.clear._map
 
     def _build_app(self, app_precompile: AppPrecompile) -> AppPrecompile:
         """
         Recursively traverse through precompiles within an Application
         in a depth-first manner to then compile bottom-up.
         """
-        for _, v_a in app_precompile.app.app_precompiles.items():
-            self._build_app(v_a)
-        for _, v_l in app_precompile.app.lsig_precompiles.items():
-            self._build_lsig(v_l)
+
+        for _, p in app_precompile.app.precompiles.items():
+            match p:
+                case LSigPrecompile():
+                    self._build_lsig(p)
+                case AppPrecompile():
+                    self._build_app(p)
+                case _:
+                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
 
         app_precompile.compile_to_teal()
 
-        if app_precompile.approval_precompile.binary is None:
-            approval_binary, approval_addr, approval_map = self.compile(
-                app_precompile.approval_precompile.program, True
-            )
-            app_precompile.approval_precompile.set_compiled(
-                approval_binary, approval_addr, approval_map
-            )
+        if app_precompile.approval._binary is None:
+            app_precompile.approval.compile(self.client)
 
-        if app_precompile.clear_precompile.binary is None:
-            clear_binary, clear_addr, clear_map = self.compile(
-                app_precompile.clear_precompile.program, True
-            )
-            app_precompile.clear_precompile.set_compiled(
-                clear_binary, clear_addr, clear_map
-            )
+        if app_precompile.clear._binary is None:
+            app_precompile.clear.compile(self.client)
 
         return app_precompile
 
@@ -123,16 +118,19 @@ class ApplicationClient:
         Recursively traverse through precompiles within a LogicSignature
         in a depth-first manner to then compile bottom-up.
         """
-        for _, v_a in lsig_precompile.lsig.app_precompiles.items():
-            self._build_app(v_a)
-        for _, v_l in lsig_precompile.lsig.lsig_precompiles.items():
-            self._build_lsig(v_l)
+        for _, p in lsig_precompile.lsig.precompiles.items():
+            match p:
+                case LSigPrecompile():
+                    self._build_lsig(p)
+                case AppPrecompile():
+                    self._build_app(p)
+                case _:
+                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
 
         lsig_precompile.compile_to_teal()
 
-        if lsig_precompile.precompile.binary is None:
-            binary, addr, map = self.compile(lsig_precompile.precompile.program, True)
-            lsig_precompile.precompile.set_compiled(binary, addr, map)
+        if lsig_precompile.logic._binary is None:
+            lsig_precompile.logic.compile(self.client)
 
         return lsig_precompile
 
@@ -796,10 +794,10 @@ class ApplicationClient:
         return self.client.suggested_params()
 
     def wrap_approval_exception(self, e: Exception) -> Exception:
-        if self.approval_src_map is None:
-            if self.app.approval_program is None:
-                return e
+        if self.app.approval_program is None:
+            return e
 
+        if self.approval_src_map is None:
             _, _, map = self.compile(self.app.approval_program, True)
             self.approval_src_map = map
 

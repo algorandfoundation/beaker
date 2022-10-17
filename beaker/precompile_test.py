@@ -23,20 +23,20 @@ def test_precompile():
 
         @external
         def check_it(self):
-            return pt.Assert(pt.Txn.sender() == self.pc.hash())
+            return pt.Assert(pt.Txn.sender() == self.pc.logic.hash())
 
     app = App()
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.precompile.program_hash is None
+    assert app.pc.logic._program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.precompile.program_hash is not None
+    assert app.pc.logic._program_hash is not None
 
 
 TMPL_BYTE_VALS = [
@@ -61,7 +61,7 @@ def test_templated_bytes(tmpl_val: str):
         @external
         def check_it(self):
             return pt.Assert(
-                pt.Txn.sender() == self.pc.template_hash(pt.Bytes(tmpl_val))
+                pt.Txn.sender() == self.pc.logic.template_hash(pt.Bytes(tmpl_val))
             )
 
     app = App()
@@ -69,21 +69,21 @@ def test_templated_bytes(tmpl_val: str):
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.precompile.program_hash is None
+    assert app.pc.logic._program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.precompile.program_hash is not None
+    assert app.pc.logic._program_hash is not None
 
-    populated_teal = app.pc.populate_template(tmpl_val)
+    populated_teal = app.pc.logic.populate_template(tmpl_val)
 
     vlen = len(tmpl_val)
     if type(tmpl_val) is str:
         vlen = len(tmpl_val.encode("utf-8"))
 
-    assert len(populated_teal) == len(app.pc.precompile.binary) + vlen + (
+    assert len(populated_teal) == len(app.pc.logic._binary) + vlen + (
         len(py_encode_uvarint(vlen)) - 1
     )
 
@@ -104,23 +104,25 @@ def test_templated_ints(tmpl_val: int):
 
         @external
         def check_it(self):
-            return pt.Assert(pt.Txn.sender() == self.pc.template_hash(pt.Int(tmpl_val)))
+            return pt.Assert(
+                pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(tmpl_val))
+            )
 
     app = App()
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.precompile.program_hash is None
+    assert app.pc.logic._program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.precompile.program_hash is not None
+    assert app.pc.logic._program_hash is not None
 
-    populated_teal = app.pc.populate_template(tmpl_val)
+    populated_teal = app.pc.logic.populate_template(tmpl_val)
 
-    assert len(populated_teal) == len(app.pc.precompile.binary) + (
+    assert len(populated_teal) == len(app.pc.logic._binary) + (
         len(py_encode_uvarint(tmpl_val)) - 1
     )

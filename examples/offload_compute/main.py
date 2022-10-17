@@ -33,7 +33,7 @@ class EthChecker(Application):
             # The precompiled lsig should have its address and binary available
             # here so we can use it to make sure we've been called
             # with the correct lsig
-            Assert(Txn.sender() == self.verifier.hash()),
+            Assert(Txn.sender() == self.verifier.logic.hash()),
             output.set("lsig validated"),
         )
 

@@ -38,8 +38,7 @@ class OpUp(Application):
 
     #: The app to be created to receiver opup requests
     target_app: Final[TargetApp] = TargetApp()
-    target_app_approval: Final[AppPrecompile] = AppPrecompile(target_app)
-    target_app_clear: Final[AppPrecompile] = AppPrecompile(target_app)
+    precompile: AppPrecompile = AppPrecompile(target_app)
 
     #: The minimum balance required for this class
     min_balance: Final[Expr] = Algos(0.1)
@@ -66,12 +65,8 @@ class OpUp(Application):
             InnerTxnBuilder.SetFields(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: Bytes(
-                        self.target_app_approval.approval_precompile.binary
-                    ),
-                    TxnField.clear_state_program: Bytes(
-                        self.target_app_clear.clear_precompile.binary
-                    ),
+                    TxnField.approval_program: self.precompile.approval.binary,
+                    TxnField.clear_state_program: self.precompile.clear.binary,
                     TxnField.fee: Int(0),
                 }
             ),
