@@ -1,7 +1,10 @@
 from typing import Literal
 from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
 from beaker.decorators import external
-from op_up import OpUp
+if __name__ == "__main__":
+    from op_up import OpUp
+else:
+    from .op_up import OpUp
 
 
 class ExpensiveApp(OpUp):
