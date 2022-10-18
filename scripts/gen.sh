@@ -23,5 +23,5 @@ pushd "$PWD" && \
 if [[ "$MODE" == "check" && -n "$(git status --porcelain)" ]]; then
   git status --porcelain
   echo "Local changes exist - was \`make gen\` run?";
-	exit 1;
+  exit 1;
 fi
