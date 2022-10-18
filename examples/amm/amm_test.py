@@ -1,4 +1,5 @@
 import copy
+from pyteal import Expr
 
 import pytest
 import typing
@@ -12,7 +13,7 @@ from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
 from beaker import client, sandbox, testing, consts
-from beaker.client.application_client import ApplicationClient
+from beaker.client.application_client import ApplicationClient, ProgramAssertion
 from beaker.client.logic_error import LogicException
 
 from .amm import ConstantProductAMM, ConstantProductAMMErrors
@@ -450,7 +451,7 @@ def test_swap(creator_app_client: ApplicationClient):
     creator_app_client.call(
         ConstantProductAMM.swap,
         **build_swap_transaction(
-            creator_app_client, [a_asset, b_asset], pool_asset, swap_amt
+            creator_app_client, (a_asset, b_asset), pool_asset, swap_amt
         ),
     )
 
@@ -491,10 +492,10 @@ def test_app_asserts(
         creator_app_client.signer,
     )
 
-    assertion_triggers: list[tuple[str, typing.Callable, dict[str, typing.Any]]] = []
+    assertion_triggers: list[tuple[str, typing.Any, dict[str, typing.Any]]] = []
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
-    assets = [a_asset, b_asset]
+    assets = (a_asset, b_asset)
 
     # Bootstrap assertions
 
@@ -668,7 +669,7 @@ def test_app_asserts(
 
     # TODO: rest of them
 
-    all_asserts = creator_app_client.approval_asserts
+    all_asserts: dict[str, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore
     for msg, method, kwargs in assertion_triggers:
         print(f"Testing {msg}")
         with pytest.raises(LogicException, match=msg):
@@ -676,7 +677,7 @@ def test_app_asserts(
                 creator_app_client.call(method, **kwargs)
             except LogicException as e:
                 if e.pc in all_asserts:
-                    del all_asserts[e.pc]
+                    del all_asserts[e.pc]  # type: ignore
                 raise e
 
     print(f"Unhandled asserts ({len(all_asserts)}): {all_asserts}")
