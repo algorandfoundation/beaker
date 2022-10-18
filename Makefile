@@ -34,7 +34,7 @@ lint: black flake8 mypy
 tests:
 	pytest beaker examples/amm
 
-lint-and-test: lint tests
+lint-and-test: lint tests gen
 
 # ---- Integration Tests (algod required) ---- #
 
