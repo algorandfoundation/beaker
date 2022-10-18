@@ -1,5 +1,5 @@
+from enum import Enum
 from abc import ABC, abstractmethod
-from typing import Optional
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
@@ -12,7 +12,6 @@ class Network(Enum):
 
 
 class APIProvider(ABC):
-
     def __init__(self, network: Network):
         self.network = network
 
@@ -71,15 +70,15 @@ class AlgoNode(APIProvider):
 
 class AlgoExplorer(APIProvider):
     algod_hosts = {
-        Network.MainNet: "https://node.algoexplorerapi.io/",
-        Network.TestNet: "https://node.testnet.algoexplorerapi.io/",
-        Network.BetaNet: "https://node.betanet.algoexplorerapi.io/",
+        Network.MainNet: "https://node.algoexplorerapi.io",
+        Network.TestNet: "https://node.testnet.algoexplorerapi.io",
+        Network.BetaNet: "https://node.betanet.algoexplorerapi.io",
     }
 
     indexer_hosts = {
-        Network.MainNet: "https://algoindexer.algoexplorerapi.io/",
-        Network.TestNet: "https://algoindexer.testnet.algoexplorerapi.io/",
-        Network.BetaNet: "https://algoindexer.betanet.algoexplorerapi.io/",
+        Network.MainNet: "https://algoindexer.algoexplorerapi.io",
+        Network.TestNet: "https://algoindexer.testnet.algoexplorerapi.io",
+        Network.BetaNet: "https://algoindexer.betanet.algoexplorerapi.io",
     }
 
     def algod(self, token: str = "") -> AlgodClient:
