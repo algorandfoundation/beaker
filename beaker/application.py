@@ -313,7 +313,7 @@ class Application:
         with open(os.path.join(directory, "contract.json"), "w") as f:
             if self.contract is None:
                 raise Exception("Contract empty")
-            f.write(json.dumps(self.contract.dictify()))
+            f.write(json.dumps(self.contract.dictify(), indent=4))
 
         with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
-            f.write(json.dumps(self.application_spec()))
+            f.write(json.dumps(self.application_spec(), indent=4))
