@@ -37,6 +37,7 @@ def test_algoexplorer():
 
 def test_purestake():
     return
+
     api_key = "TODO"
     for network in Network:
         if network == Network.SandNet:

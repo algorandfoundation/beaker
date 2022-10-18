@@ -6,6 +6,7 @@ from algosdk.v2client.indexer import IndexerClient
 
 class Network(Enum):
     """Provides consistent way to reference the most common network options"""
+
     MainNet = "MainNet"
     TestNet = "TestNet"
     BetaNet = "BetaNet"
@@ -14,6 +15,7 @@ class Network(Enum):
 
 class APIProvider(ABC):
     """abstract class to provide interface for API providers"""
+
     def __init__(self, network: Network):
         self.network = network
 
