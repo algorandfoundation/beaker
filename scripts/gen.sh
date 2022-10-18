@@ -17,6 +17,7 @@ done
 
 pushd "$PWD" && \
   cd examples/amm && \
+  rm -rf artifacts/ && \
   python amm.py && \
   popd
 
