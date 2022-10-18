@@ -315,5 +315,5 @@ class Application:
                 raise Exception("Contract empty")
             f.write(json.dumps(self.contract.dictify(), indent=4))
 
-        with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
+        with open(os.path.join(directory, f"application.json"), "w") as f:
             f.write(json.dumps(self.application_spec(), indent=4))
