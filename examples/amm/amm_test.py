@@ -128,8 +128,6 @@ def test_app_boostrap_assert(
 ):
     """verify the assert in boostrap"""
 
-    print(creator_app_client.approval_asserts)
-
     sp = creator_app_client.client.suggested_params()
     asset_a, asset_b = assets
 
