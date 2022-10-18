@@ -669,7 +669,7 @@ def test_app_asserts(
 
     # TODO: rest of them
 
-    all_asserts: dict[str, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore
+    all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
     for msg, method, kwargs in assertion_triggers:
         print(f"Testing {msg}")
         with pytest.raises(LogicException, match=msg):
@@ -677,7 +677,7 @@ def test_app_asserts(
                 creator_app_client.call(method, **kwargs)
             except LogicException as e:
                 if e.pc in all_asserts:
-                    del all_asserts[e.pc]  # type: ignore
+                    del all_asserts[e.pc]
                 raise e
 
     print(f"Unhandled asserts ({len(all_asserts)}): {all_asserts}")
