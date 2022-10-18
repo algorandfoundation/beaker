@@ -4,7 +4,7 @@ from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
 
-class Network(str, Enum):
+class Network(Enum):
     MainNet = "MainNet"
     TestNet = "TestNet"
     BetaNet = "BetaNet"
@@ -12,6 +12,7 @@ class Network(str, Enum):
 
 
 class APIProvider(ABC):
+
     def __init__(self, network: Network):
         self.network = network
 
@@ -31,6 +32,8 @@ class Sandbox(APIProvider):
     default_algod_port: int = 4001
     default_indexer_port: int = 8980
     default_token: str = "a" * 64
+
+    # purposely doesnt check which network because it may be set up to use mainnet/testnet
 
     def algod(self, token: str = default_token) -> AlgodClient:
         address = f"{self.default_host}:{self.default_algod_port}"
@@ -88,6 +91,7 @@ class AlgoExplorer(APIProvider):
     def indexer(self, token: str = "") -> IndexerClient:
         if self.network not in self.indexer_hosts:
             raise Exception(f"Unrecognized network: {self.network}")
+
         return IndexerClient(token, self.indexer_hosts[self.network])
 
 
