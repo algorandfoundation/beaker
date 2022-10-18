@@ -51,6 +51,11 @@ local-gh-simulate:
 	act
 
 # ---- Extras ---- #
-
 coverage:
 	pytest --cov-report html --cov=pyteal
+
+gen:
+	sh scripts/gen.sh
+
+gen-check:
+	sh scripts/gen.sh -c
