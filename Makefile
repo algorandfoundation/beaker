@@ -55,7 +55,7 @@ coverage:
 	pytest --cov-report html --cov=pyteal
 
 gen:
-	sh scripts/gen.sh
+	./scripts/gen.sh
 
 gen-check:
-	sh scripts/gen.sh -c
+	./scripts/gen.sh -c
