@@ -58,7 +58,6 @@
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -249,13 +248,17 @@ The constructor may also be passed an app_id directly if one is already deployed
 <p class="admonition-title">Note</p>
 <p>The base <code class="docutils literal notranslate"><span class="pre">Application</span></code> class has several externals pre-defined, including <code class="docutils literal notranslate"><span class="pre">create</span></code> which performs <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> initialization for us, setting the keys to default values.</p>
 </div>
-<p>You may also define state values for applications, called <a class="reference internal" href="state.html#account-state"><span class="std std-ref">AccountState</span></a> (or Local storage) and even allow for dynamic state keys.</p>
+<p>You may also define state values for applications, called <a class="reference internal" href="state.html#account-state"><span class="std std-ref">AccountState</span></a> (or Local storage) and even allow for reserved state keys.</p>
 <p>For more example usage see the example <a class="reference internal" href="state.html#state-example"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="inheritance">
 <span id="id2"></span><h2>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this heading"></a></h2>
 <p>What about extending our Application with some other functionality?</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.contracts</span> <span class="kn">import</span> <span class="n">OpUp</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">op_up</span> <span class="kn">import</span> <span class="n">OpUp</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.op_up</span> <span class="kn">import</span> <span class="n">OpUp</span>
 
 
 <span class="k">class</span> <span class="nc">ExpensiveApp</span><span class="p">(</span><span class="n">OpUp</span><span class="p">):</span>
@@ -277,10 +280,6 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="n">For</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">i</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
                 <span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">iters</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
-                <span class="n">i</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Sha256</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()))),</span>
-            <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()),</span>
-        <span class="p">)</span>
 </pre></div>
 </div>
 <p>Here we subclassed the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.</p>
