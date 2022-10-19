@@ -181,7 +181,7 @@ def demo():
         suggested_params=sp,
     )
     created_asset = result.return_value
-    print(f"Created asset id: {result.return_value}")
+    print(f"Created asset id: {created_asset}")
 
     result = app_client_main.call(
         C2CMain.delete_asset,
