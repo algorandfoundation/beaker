@@ -14,9 +14,10 @@ do
   esac
 done
 
+# source ../.venv/bin/activate \
 
 pushd "$PWD" && \
-  cd examples/amm && \  # source ../.venv/bin/activate \
+  cd examples/amm && \
   rm -rf artifacts/ && \
   python amm.py && \
   popd
