@@ -50,7 +50,7 @@ The python method must return an ``Expr`` of some kind, invoked when the externa
 Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 32-44
+    :lines: 32-46
 
 
 Thats it! 

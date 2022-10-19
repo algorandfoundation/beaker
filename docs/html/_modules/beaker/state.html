@@ -129,8 +129,9 @@
 <span class="sd">        key: key to use to store the the value, default is name of class variable</span>
 <span class="sd">        default: Default value for the state value</span>
 <span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
-<span class="sd">        descr: Description of the state value to provide some information to clients </span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -228,11 +229,12 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
-<span class="sd">        max_keys (int): Maximum number of keys to reserve for this dynamic state value </span>
-<span class="sd">        key_gen (subroutine): A subroutine returning TealType.bytes, used to create a key where some data is stored. </span>
-<span class="sd">        descr (str): Description of the state value to provide some information to clients </span>
+<span class="sd">        max_keys (int): Maximum number of keys to reserve for this dynamic state value</span>
+<span class="sd">        key_gen (subroutine): A subroutine returning TealType.bytes, used to create a key where some data is stored.</span>
+<span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -262,8 +264,9 @@
 <span class="sd">        key: key to use to store the the value, default is name of class variable</span>
 <span class="sd">        default: Default value for the state value</span>
 <span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
-<span class="sd">        descr: Description of the state value to provide some information to clients </span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
 
@@ -325,11 +328,10 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
-<span class="sd">        max_keys (int): Maximum number of keys to reserve for this dynamic state value </span>
-<span class="sd">        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored. </span>
-<span class="sd">        descr (str): Description of the state value to provide some information to clients </span>
+<span class="sd">        max_keys (int): Maximum number of keys to reserve for this dynamic state value</span>
+<span class="sd">        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.</span>
+<span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -361,15 +363,16 @@
 
 
 <div class="viewcode-block" id="AccountStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">AccountStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Allows storage of global state values for an account opted into an application </span>
+    <span class="sd">&quot;&quot;&quot;Allows storage of global state values for an account opted into an application</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
 <span class="sd">        key: key to use to store the the value, default is name of class variable</span>
 <span class="sd">        default: Default value for the state value</span>
 <span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
-<span class="sd">        descr: Description of the state value to provide some information to clients </span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -464,10 +467,11 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
-<span class="sd">        max_keys (int): Maximum number of keys to reserve for this dynamic state value </span>
-<span class="sd">        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored. </span>
-<span class="sd">        descr (str): Description of the state value to provide some information to clients </span>
+<span class="sd">        max_keys (int): Maximum number of keys to reserve for this dynamic state value</span>
+<span class="sd">        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.</span>
+<span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>

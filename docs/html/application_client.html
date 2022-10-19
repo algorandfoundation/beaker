@@ -83,6 +83,10 @@
   <section id="application-client">
 <h1>Application Client<a class="headerlink" href="#application-client" title="Permalink to this heading"></a></h1>
 <p id="id1">The <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> provides a convenient way to interact with our <code class="docutils literal notranslate"><span class="pre">Application</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> takes an <code class="docutils literal notranslate"><span class="pre">AlgodClient</span></code> as its first argument, the most common API providers are available in <code class="docutils literal notranslate"><span class="pre">beaker.client.api_providers</span></code></p>
+</div>
 <p><a class="reference internal" href="#app-client-example"><span class="std std-ref">Full Example</span></a></p>
 <p>The main point of interaction with our application is done using <code class="docutils literal notranslate"><span class="pre">call</span></code>.</p>
 <p>If there are multiple signers or you want to re-use some suggested parameters, the <code class="docutils literal notranslate"><span class="pre">prepare</span></code> method may be called with the different arguments and a copy of the client is returned with the updated parameters.</p>
