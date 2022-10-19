@@ -1,6 +1,6 @@
 #pragma version 7
 intcblock 0 1 1000 4 10000000000
-bytecblock 0x61 0x62 0x70 0x72 0x67
+bytecblock 0x61 0x62 0x70 0x67 0x72
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -212,24 +212,24 @@ return
 
 // create
 create_0:
-bytec 4 // "g"
+bytec_3 // "g"
 global CreatorAddress
 app_global_put
-bytec_3 // "r"
+bytec 4 // "r"
 intc_0 // 0
 app_global_put
 retsub
 
 // auth_only
 authonly_1:
-bytec 4 // "g"
+bytec_3 // "g"
 app_global_get
 ==
 retsub
 
 // auth_only
 authonly_2:
-bytec 4 // "g"
+bytec_3 // "g"
 app_global_get
 ==
 retsub
@@ -246,22 +246,26 @@ assert
 global GroupSize
 pushint 2 // 2
 ==
+// group size not 2
 assert
 load 4
 gtxns Receiver
 global CurrentApplicationAddress
 ==
+// receiver not app address
 assert
 load 4
 gtxns Amount
 pushint 300000 // 300000
 >=
+// amount minimum not met
 assert
 load 5
 txnas Assets
 load 6
 txnas Assets
 <
+// asset a or asset b incorrect
 assert
 intc_0 // 0
 bytec_0 // "a"
@@ -300,14 +304,14 @@ bytec_0 // "a"
 app_global_get
 bytec_1 // "b"
 app_global_get
-callsub docreatepooltoken_6
+callsub docreatepooltoken_7
 app_global_put
 bytec_0 // "a"
 app_global_get
-callsub dooptin_7
+callsub dooptin_8
 bytec_1 // "b"
 app_global_get
-callsub dooptin_7
+callsub dooptin_8
 bytec_2 // "p"
 app_global_get
 retsub
@@ -323,39 +327,46 @@ txnas Assets
 bytec_2 // "p"
 app_global_get
 ==
+// asset pool incorrect
 assert
 load 36
 txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
+// asset a incorrect
 assert
 load 37
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
+// asset b incorrect
 assert
 load 34
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
+// receiver not app address
 assert
 load 34
 gtxns AssetAmount
 intc_0 // 0
 >
+// amount minimum not met
 assert
 load 34
 gtxns XferAsset
 bytec_2 // "p"
 app_global_get
 ==
+// asset pool incorrect
 assert
 load 34
 gtxns Sender
 txn Sender
 ==
+// invalid sender
 assert
 global CurrentApplicationAddress
 load 35
@@ -373,10 +384,13 @@ asset_holding_get AssetBalance
 store 43
 store 42
 load 39
+// missing required balances
+assert
 load 41
-&&
+// missing required balances
+assert
 load 43
-&&
+// missing required balances
 assert
 intc 4 // 10000000000
 load 38
@@ -401,24 +415,52 @@ txn Sender
 bytec_0 // "a"
 app_global_get
 load 45
-callsub doaxfer_5
+callsub doaxfer_6
 txn Sender
 bytec_1 // "b"
 app_global_get
 load 46
-callsub doaxfer_5
-bytec_3 // "r"
-callsub getratio_8
+callsub doaxfer_6
+bytec 4 // "r"
+callsub computeratio_5
 app_global_put
-bytec_3 // "r"
+retsub
+
+// compute_ratio
+computeratio_5:
+global CurrentApplicationAddress
+bytec_0 // "a"
 app_global_get
-callsub getratio_8
-==
+asset_holding_get AssetBalance
+store 48
+store 47
+global CurrentApplicationAddress
+bytec_1 // "b"
+app_global_get
+asset_holding_get AssetBalance
+store 50
+store 49
+load 48
+// missing required balances
+assert
+load 50
+// missing required balances
+assert
+load 47
+intc_2 // 1000
+mulw
+intc_0 // 0
+load 49
+divmodw
+pop
+pop
+swap
+!
 assert
 retsub
 
 // do_axfer
-doaxfer_5:
+doaxfer_6:
 store 33
 store 32
 store 31
@@ -437,7 +479,7 @@ itxn_submit
 retsub
 
 // do_create_pool_token
-docreatepooltoken_6:
+docreatepooltoken_7:
 store 25
 asset_params_get AssetUnitName
 store 27
@@ -447,8 +489,10 @@ asset_params_get AssetUnitName
 store 29
 store 28
 load 27
+// missing required balances
+assert
 load 29
-&&
+// missing required balances
 assert
 itxn_begin
 pushint 3 // acfg
@@ -478,43 +522,12 @@ itxn CreatedAssetID
 retsub
 
 // do_opt_in
-dooptin_7:
+dooptin_8:
 store 30
 global CurrentApplicationAddress
 load 30
 intc_0 // 0
-callsub doaxfer_5
-retsub
-
-// get_ratio
-getratio_8:
-global CurrentApplicationAddress
-bytec_0 // "a"
-app_global_get
-asset_holding_get AssetBalance
-store 48
-store 47
-global CurrentApplicationAddress
-bytec_1 // "b"
-app_global_get
-asset_holding_get AssetBalance
-store 50
-store 49
-load 48
-load 50
-&&
-assert
-load 47
-intc_2 // 1000
-mulw
-intc_0 // 0
-load 49
-divmodw
-pop
-pop
-swap
-!
-assert
+callsub doaxfer_6
 retsub
 
 // mint
@@ -529,60 +542,71 @@ txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
+// asset a incorrect
 assert
 load 58
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
+// asset b incorrect
 assert
 load 56
 txnas Assets
 bytec_2 // "p"
 app_global_get
 ==
+// asset pool incorrect
 assert
 load 54
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
+// receiver not app address
 assert
 load 54
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
+// asset a incorrect
 assert
 load 54
 gtxns AssetAmount
 intc_0 // 0
 >
+// amount minimum not met
 assert
 load 54
 gtxns Sender
 txn Sender
 ==
+// invalid sender
 assert
 load 55
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
+// receiver not app address
 assert
 load 55
 gtxns XferAsset
 bytec_1 // "b"
 app_global_get
 ==
+// asset b incorrect
 assert
 load 55
 gtxns AssetAmount
 intc_0 // 0
 >
+// amount minimum not met
 assert
 load 55
 gtxns Sender
 txn Sender
 ==
+// invalid sender
 assert
 global CurrentApplicationAddress
 load 56
@@ -600,10 +624,13 @@ asset_holding_get AssetBalance
 store 64
 store 63
 load 60
+// missing required balances
+assert
 load 62
-&&
+// missing required balances
+assert
 load 64
-&&
+// missing required balances
 assert
 load 61
 load 54
@@ -643,14 +670,15 @@ store 65
 load 65
 intc_0 // 0
 >
+// outgoing amount too low
 assert
 txn Sender
 bytec_2 // "p"
 app_global_get
 load 65
-callsub doaxfer_5
-bytec_3 // "r"
-callsub getratio_8
+callsub doaxfer_6
+bytec 4 // "r"
+callsub computeratio_5
 app_global_put
 retsub
 
@@ -661,7 +689,7 @@ txn Sender
 callsub authonly_1
 // unauthorized
 assert
-bytec 4 // "g"
+bytec_3 // "g"
 load 73
 txnas Accounts
 app_global_put
@@ -677,12 +705,14 @@ txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
+// asset a incorrect
 assert
 load 76
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
+// asset b incorrect
 assert
 load 74
 gtxns XferAsset
@@ -695,16 +725,19 @@ bytec_1 // "b"
 app_global_get
 ==
 ||
+// asset a or asset b incorrect
 assert
 load 74
 gtxns AssetAmount
 intc_0 // 0
 >
+// amount minimum not met
 assert
 load 74
 gtxns Sender
 txn Sender
 ==
+// invalid sender
 assert
 global CurrentApplicationAddress
 load 74
@@ -726,8 +759,10 @@ asset_holding_get AssetBalance
 store 80
 store 79
 load 78
+// missing required balances
+assert
 load 80
-&&
+// missing required balances
 assert
 load 74
 gtxns AssetAmount
@@ -741,6 +776,7 @@ store 81
 load 81
 intc_0 // 0
 >
+// outgoing amount too low
 assert
 txn Sender
 load 74
@@ -762,9 +798,9 @@ app_global_get
 b swap_11_l2
 swap_11_l6:
 load 81
-callsub doaxfer_5
-bytec_3 // "r"
-callsub getratio_8
+callsub doaxfer_6
+bytec 4 // "r"
+callsub computeratio_5
 app_global_put
 retsub
 

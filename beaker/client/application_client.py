@@ -1,5 +1,6 @@
 from base64 import b64decode
 import copy
+from dataclasses import dataclass
 from math import ceil
 from typing import Any, cast
 
@@ -54,9 +55,11 @@ class ApplicationClient:
 
         self.approval_binary = None
         self.approval_src_map = None
+        self.approval_asserts = None
 
         self.clear_binary = None
         self.clear_src_map = None
+        self.clear_asserts = None
 
         self.suggested_params = suggested_params
 
@@ -84,10 +87,15 @@ class ApplicationClient:
             self.approval_binary = approval
             self.approval_src_map = approval_map
 
+            self.approval_asserts = _gather_asserts(
+                self.app.approval_program, approval_map
+            )
+
         if self.clear_binary is None:
             clear, _, clear_map = self.compile(self.app.clear_program, True)
             self.clear_binary = clear
             self.clear_src_map = clear_map
+            self.clear_asserts = _gather_asserts(self.app.clear_program, clear_map)
 
     def create(
         self,
@@ -456,6 +464,7 @@ class ApplicationClient:
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
+        atc: AtomicTransactionComposer = None,
         **kwargs,
     ) -> ABIResult:
 
@@ -466,8 +475,11 @@ class ApplicationClient:
 
         hints = self.method_hints(method.name)
 
+        if atc is None:
+            atc = AtomicTransactionComposer()
+
         atc = self.add_method_call(
-            AtomicTransactionComposer(),
+            atc,
             method,
             sender,
             signer,
@@ -781,3 +793,32 @@ class ApplicationClient:
                 return signer.lsig.address()
 
         raise Exception("No sender provided")
+
+
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first bit
+        line = line.split(" ").pop()
+        if line != "assert":
+            continue
+
+        # take the first one, assert should be alone on the line
+        pc = src_map.get_pcs_for_line(idx)[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+
+    return asserts
