@@ -17,6 +17,9 @@ Beaker
 Installation
 ------------
 
+.. note::
+    Beaker requires python 3.10 or higher
+
 You may install from Pip
 
 .. code-block:: console
