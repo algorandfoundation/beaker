@@ -111,7 +111,7 @@ We've added an :ref:`ApplicationStateValue <application_state_value>` attribute 
 .. note:: 
     The base ``Application`` class has several externals pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
-You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for dynamic state keys.
+You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for reserved state keys.
 
 For more example usage see the example :ref:`here <state_example>`.
 
