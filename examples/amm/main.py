@@ -3,6 +3,7 @@ from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
+from beaker import consts
 
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
@@ -40,8 +41,14 @@ def demo():
     ptxn = TransactionWithSigner(
         txn=transaction.PaymentTxn(addr, sp, app_addr, int(1e7)), signer=signer
     )
+    sp.flat_fee = True
+    sp.fee = consts.milli_algo * 4
     result = app_client.call(
-        ConstantProductAMM.bootstrap, seed=ptxn, a_asset=asset_a, b_asset=asset_b
+        ConstantProductAMM.bootstrap,
+        seed=ptxn,
+        a_asset=asset_a,
+        b_asset=asset_b,
+        suggested_params=sp,
     )
     pool_token = result.return_value
     print(f"Created pool token with id: {pool_token}")
@@ -59,6 +66,11 @@ def demo():
     atc.execute(client, 2)
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
+    # Cover any fees incurred by inner transactions, maybe overpaying but thats ok
+    sp = client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = consts.milli_algo * 3
+
     ###
     # Fund Pool with initial liquidity
     ###
@@ -73,6 +85,7 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 3000, asset_b),
             signer=signer,
         ),
+        suggested_params=sp,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -90,6 +103,7 @@ def demo():
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 1000, asset_b),
             signer=signer,
         ),
+        suggested_params=sp,
     )
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
@@ -172,7 +186,9 @@ def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
     state = app_client.get_application_state()
     state_key = ConstantProductAMM.ratio.str_key()
     if state_key in state:
-        print(f"\tCurrent ratio a/b == {state[state_key] / ConstantProductAMM._scale}")
+        print(
+            f"\tCurrent ratio a/b == {int(state[state_key]) / ConstantProductAMM._scale}"
+        )
     else:
         print("\tNo ratio a/b")
 

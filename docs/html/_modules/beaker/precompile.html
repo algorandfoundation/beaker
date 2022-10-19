@@ -98,20 +98,7 @@
 <span class="kn">from</span> <span class="nn">algosdk.future.transaction</span> <span class="kn">import</span> <span class="n">LogicSigAccount</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">LogicSigTransactionSigner</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">PROGRAM_DOMAIN_SEPARATOR</span>
-<span class="kn">from</span> <span class="nn">beaker.logic_signature</span> <span class="kn">import</span> <span class="n">LogicSignature</span>
 <span class="kn">from</span> <span class="nn">beaker.lib.strings</span> <span class="kn">import</span> <span class="n">encode_uvarint</span>
-
-
-<div class="viewcode-block" id="PrecompileTemplateValue"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.PrecompileTemplateValue">[docs]</a><span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">PrecompileTemplateValue</span><span class="p">:</span>
-    <span class="c1">#: The name of the template variable</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#: Whether or not this variable is bytes (if false, its uint64)</span>
-    <span class="n">is_bytes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#: The line number in the source TEAL this variable is present</span>
-    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1">#: The pc of the variable in the assembled bytecode</span>
-    <span class="n">pc</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
 
 
 <span class="c1">#: The prefix for template variables that should be substituted</span>
@@ -128,24 +115,16 @@
 <span class="n">ZERO_INT</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">py_encode_uvarint</span><span class="p">(</span><span class="n">integer</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Encodes an integer as an uvarint.</span>
-<span class="sd">    :param integer: the integer to encode</span>
-<span class="sd">    :return: bytes containing the integer encoded as an uvarint</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">to_byte</span><span class="p">(</span><span class="n">integer</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">integer</span> <span class="o">&amp;</span> <span class="mb">0b1111_1111</span>
-
-    <span class="n">buffer</span><span class="p">:</span> <span class="nb">bytearray</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
-
-    <span class="k">while</span> <span class="n">integer</span> <span class="o">&gt;=</span> <span class="mb">0b1000_0000</span><span class="p">:</span>
-        <span class="n">buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_byte</span><span class="p">(</span><span class="n">integer</span><span class="p">)</span> <span class="o">|</span> <span class="mb">0b1000_0000</span><span class="p">)</span>
-        <span class="n">integer</span> <span class="o">&gt;&gt;=</span> <span class="mi">7</span>
-
-    <span class="n">buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_byte</span><span class="p">(</span><span class="n">integer</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+<div class="viewcode-block" id="PrecompileTemplateValue"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.PrecompileTemplateValue">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">PrecompileTemplateValue</span><span class="p">:</span>
+    <span class="c1">#: The name of the template variable</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#: Whether or not this variable is bytes (if false, its uint64)</span>
+    <span class="n">is_bytes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#: The line number in the source TEAL this variable is present</span>
+    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#: The pc of the variable in the assembled bytecode</span>
+    <span class="n">pc</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
 
 
 <div class="viewcode-block" id="Precompile"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile">[docs]</a><span class="k">class</span> <span class="nc">Precompile</span><span class="p">:</span>
@@ -154,13 +133,15 @@
 <span class="sd">    fully compiled prior to trying to construct the approval and clear programs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lsig</span><span class="p">:</span> <span class="n">LogicSignature</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lsig</span> <span class="o">=</span> <span class="n">lsig</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">teal_src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">=</span> <span class="n">lsig</span><span class="o">.</span><span class="n">program</span>
+        <span class="k">if</span> <span class="n">teal_src</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;teal_src cannot be None&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">=</span> <span class="n">teal_src</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">binary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">program_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceMap</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">template_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PrecompileTemplateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -179,13 +160,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_set_compiled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">map</span><span class="p">:</span> <span class="n">SourceMap</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_set_compiled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">program_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">map</span><span class="p">:</span> <span class="n">SourceMap</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Called by application_client to set the binary/addr/map for</span>
 <span class="sd">        this precompile.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">binary</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">program_hash</span> <span class="o">=</span> <span class="n">program_hash</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="nb">map</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">binary_bytes</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
@@ -195,7 +176,7 @@
             <span class="c1"># +1 to acount for the pushbytes/pushint op</span>
             <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Precompile.address"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.address">[docs]</a>    <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<div class="viewcode-block" id="Precompile.hash"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.hash">[docs]</a>    <span class="k">def</span> <span class="nf">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        address returns an expression for this Precompile.</span>
 
@@ -204,10 +185,10 @@
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">template_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">addr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;No address defined for precompile lsig&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">program_hash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;No address defined for precompile&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">Addr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">Addr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">program_hash</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Precompile.signer"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.signer">[docs]</a>    <span class="k">def</span> <span class="nf">signer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSigTransactionSigner</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -266,6 +247,7 @@
         <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">populated_binary</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">template_signer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSigTransactionSigner</span><span class="p">:</span>
+        <span class="c1"># TODO: assert its being called with an lsig</span>
         <span class="k">return</span> <span class="n">LogicSigTransactionSigner</span><span class="p">(</span><span class="n">LogicSigAccount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">populate_template</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)))</span>
 
 <div class="viewcode-block" id="Precompile.populate_template_expr"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.populate_template_expr">[docs]</a>    <span class="k">def</span> <span class="nf">populate_template_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
@@ -320,19 +302,39 @@
         <span class="p">]</span>
 
         <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">populate_template_lsig</span><span class="p">():</span>
+        <span class="k">def</span> <span class="nf">populate_template_program</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="o">*</span><span class="n">populate_program</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">populate_template_lsig</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="n">populate_template_program</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Precompile.template_address"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.template_address">[docs]</a>    <span class="k">def</span> <span class="nf">template_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<div class="viewcode-block" id="Precompile.template_hash"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.template_hash">[docs]</a>    <span class="k">def</span> <span class="nf">template_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        template_address returns an expression that will generate the expected</span>
-<span class="sd">        address given some set of values that should be included in the logic itself</span>
+<span class="sd">        returns an expression that will generate the expected</span>
+<span class="sd">        hash given some set of values that should be included in the logic itself</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Sha512_256</span><span class="p">(</span>
             <span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="n">PROGRAM_DOMAIN_SEPARATOR</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">populate_template_expr</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>
         <span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">py_encode_uvarint</span><span class="p">(</span><span class="n">integer</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Encodes an integer as an uvarint.</span>
+<span class="sd">    :param integer: the integer to encode</span>
+<span class="sd">    :return: bytes containing the integer encoded as an uvarint</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">to_byte</span><span class="p">(</span><span class="n">integer</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">integer</span> <span class="o">&amp;</span> <span class="mb">0b1111_1111</span>
+
+    <span class="n">buffer</span><span class="p">:</span> <span class="nb">bytearray</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="n">integer</span> <span class="o">&gt;=</span> <span class="mb">0b1000_0000</span><span class="p">:</span>
+        <span class="n">buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_byte</span><span class="p">(</span><span class="n">integer</span><span class="p">)</span> <span class="o">|</span> <span class="mb">0b1000_0000</span><span class="p">)</span>
+        <span class="n">integer</span> <span class="o">&gt;&gt;=</span> <span class="mi">7</span>
+
+    <span class="n">buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_byte</span><span class="p">(</span><span class="n">integer</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
 </pre></div>
 
            </div>

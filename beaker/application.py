@@ -216,22 +216,17 @@ class Application:
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        # Create router with name of class and bare externals
-        self.router = Router(
-            name=self.__class__.__name__,
-            bare_calls=BareCallActions(**self.bare_externals),
-            descr=self.__doc__,
-        )
-
         # If there are no precompiles, we can build the programs
         # with what we already have
         if len(self.precompiles) == 0:
             self.compile()
 
     def compile(self):
-
-        # TODO: reset router?
-        # It will fail if compile is re-called but we shouldn't rely on that
+        self.router = Router(
+            name=self.__class__.__name__,
+            bare_calls=BareCallActions(**self.bare_externals),
+            descr=self.__doc__,
+        )
 
         # Add method externals
         for _, method_tuple in self.methods.items():
@@ -318,7 +313,7 @@ class Application:
         with open(os.path.join(directory, "contract.json"), "w") as f:
             if self.contract is None:
                 raise Exception("Contract empty")
-            f.write(json.dumps(self.contract.dictify()))
+            f.write(json.dumps(self.contract.dictify(), indent=4))
 
-        with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
-            f.write(json.dumps(self.application_spec()))
+        with open(os.path.join(directory, "application.json"), "w") as f:
+            f.write(json.dumps(self.application_spec(), indent=4))

@@ -74,22 +74,21 @@ class ApplicationClient:
         return (b64decode(result["result"]), result["hash"], src_map)
 
     def build(self):
-        recompile = False
+
         for _, v in self.app.precompiles.items():
             if v.binary is None:
                 binary, addr, map = self.compile(v.program, True)
                 v._set_compiled(binary, addr, map)
-                recompile = True
 
-        if recompile:
+        if self.app.approval_program is None or self.app.clear_program is None:
             self.app.compile()
 
-        if self.approval_binary is None or recompile:
+        if self.approval_binary is None:
             approval, _, approval_map = self.compile(self.app.approval_program, True)
             self.approval_binary = approval
             self.approval_src_map = approval_map
 
-        if self.clear_binary is None or recompile:
+        if self.clear_binary is None:
             clear, _, clear_map = self.compile(self.app.clear_program, True)
             self.clear_binary = clear
             self.clear_src_map = clear_map
@@ -399,6 +398,7 @@ class ApplicationClient:
             self.add_method_call(
                 atc,
                 self.app.on_delete,
+                on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
                 sp=sp,
                 index=self.app_id,
@@ -664,17 +664,19 @@ class ApplicationClient:
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
-    def fund(self, amt: int) -> str:
-        """fund pays the app account the amount passed using the signer"""
+    def fund(self, amt: int, addr: str = None) -> str:
+        """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
         sender = self.get_sender()
         signer = self.get_signer()
 
         sp = self.client.suggested_params()
 
+        rcv = self.app_addr if addr is None else addr
+
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
-                txn=transaction.PaymentTxn(sender, sp, self.app_addr, amt),
+                txn=transaction.PaymentTxn(sender, sp, rcv, amt),
                 signer=signer,
             )
         )

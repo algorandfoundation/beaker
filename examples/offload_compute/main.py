@@ -22,7 +22,7 @@ class EthChecker(Application):
     # When passed to Precompile, it flags the init of the Application
     # to prevent building approval/clear programs until the precompile is
     # compiled so we have access to compiled information (its address for instance)
-    verifier: Final[Precompile] = Precompile(EthEcdsaVerify(version=6))
+    verifier: Final[Precompile] = Precompile(EthEcdsaVerify(version=6).program)
 
     @external
     def check_eth_sig(
@@ -32,7 +32,7 @@ class EthChecker(Application):
             # The precompiled lsig should have its address and binary available
             # here so we can use it to make sure we've been called
             # with the correct lsig
-            Assert(Txn.sender() == self.verifier.address()),
+            Assert(Txn.sender() == self.verifier.hash()),
             output.set("lsig validated"),
         )
 
