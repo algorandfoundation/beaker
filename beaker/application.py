@@ -30,10 +30,10 @@ from beaker.state import (
     AccountStateBlob,
     ApplicationStateBlob,
     ApplicationState,
-    DynamicAccountStateValue,
+    ReservedAccountStateValue,
     AccountStateValue,
     ApplicationStateValue,
-    DynamicApplicationStateValue,
+    ReservedApplicationStateValue,
 )
 from beaker.errors import BareOverwriteError
 from beaker.precompile import Precompile
@@ -94,11 +94,13 @@ class Application:
         self.precompiles: dict[str, Precompile] = {}
 
         acct_vals: dict[
-            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+            str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
         ] = {}
         app_vals: dict[
             str,
-            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+            ApplicationStateValue
+            | ReservedApplicationStateValue
+            | ApplicationStateBlob,
         ] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
@@ -109,7 +111,7 @@ class Application:
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
-                case DynamicAccountStateValue():
+                case ReservedAccountStateValue():
                     acct_vals[name] = bound_attr
                 case AccountStateBlob():
                     acct_vals[name] = bound_attr
@@ -120,7 +122,7 @@ class Application:
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
-                case DynamicApplicationStateValue():
+                case ReservedApplicationStateValue():
                     app_vals[name] = bound_attr
 
                 case Precompile():

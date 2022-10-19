@@ -2,9 +2,9 @@ from typing import Final
 from beaker import (
     Application,
     ApplicationStateValue,
-    DynamicApplicationStateValue,
+    ReservedApplicationStateValue,
     AccountStateValue,
-    DynamicAccountStateValue,
+    ReservedAccountStateValue,
     create,
     opt_in,
     external,
@@ -26,8 +26,8 @@ class StateExample(Application):
     )
 
     dynamic_app_value: Final[
-        DynamicApplicationStateValue
-    ] = DynamicApplicationStateValue(
+        ReservedApplicationStateValue
+    ] = ReservedApplicationStateValue(
         stack_type=TealType.uint64,
         max_keys=32,
         descr="A dynamic app state variable, with 32 possible keys",
@@ -43,7 +43,7 @@ class StateExample(Application):
         descr="An int stored for each account that opts in",
     )
 
-    dynamic_account_value: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+    dynamic_account_value: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
         descr="A dynamic state value, allowing 8 keys to be reserved, in this case byte type",

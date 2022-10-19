@@ -14,6 +14,7 @@ do
   esac
 done
 
+# source ../.venv/bin/activate \
 
 pushd "$PWD" && \
   cd examples/amm && \

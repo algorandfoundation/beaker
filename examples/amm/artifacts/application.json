@@ -52,7 +52,7 @@
     "schema": {
         "local": {
             "declared": {},
-            "dynamic": {}
+            "reserved": {}
         },
         "global": {
             "declared": {
@@ -82,7 +82,7 @@
                     "descr": "The ratio between assets (A/B)*Scale"
                 }
             },
-            "dynamic": {}
+            "reserved": {}
         }
     },
     "contract": {
