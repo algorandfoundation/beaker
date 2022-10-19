@@ -59,27 +59,32 @@
                 "asset_a": {
                     "type": "uint64",
                     "key": "a",
-                    "descr": "The asset id of asset A"
+                    "descr": "The asset id of asset A",
+                    "codec": ""
                 },
                 "asset_b": {
                     "type": "uint64",
                     "key": "b",
-                    "descr": "The asset id of asset B"
+                    "descr": "The asset id of asset B",
+                    "codec": ""
                 },
                 "governor": {
                     "type": "bytes",
                     "key": "g",
-                    "descr": "The current governor of this contract, allowed to do admin type actions"
+                    "descr": "The current governor of this contract, allowed to do admin type actions",
+                    "codec": ""
                 },
                 "pool_token": {
                     "type": "uint64",
                     "key": "p",
-                    "descr": "The asset id of the Pool Token, used to track share of pool the holder may recover"
+                    "descr": "The asset id of the Pool Token, used to track share of pool the holder may recover",
+                    "codec": ""
                 },
                 "ratio": {
                     "type": "uint64",
                     "key": "r",
-                    "descr": "The ratio between assets (A/B)*Scale"
+                    "descr": "The ratio between assets (A/B)*Scale",
+                    "codec": ""
                 }
             },
             "dynamic": {}
