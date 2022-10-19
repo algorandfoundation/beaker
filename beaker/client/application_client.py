@@ -33,35 +33,6 @@ from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
 
 
-@dataclass
-class ProgramAssertion:
-    line: int
-    message: str
-
-
-def gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
-    asserts: dict[int, ProgramAssertion] = {}
-
-    program_lines = program.split("\n")
-    for idx, line in enumerate(program_lines):
-        # Take only the first bit
-        line = line.split(" ").pop()
-        if line != "assert":
-            continue
-
-        # take the first one, assert should be alone on the line
-        pc = src_map.get_pcs_for_line(idx)[0]
-
-        # TODO: this will be wrong for multiline comments
-        line_before = program_lines[idx - 1]
-        if not line_before.startswith("//"):
-            continue
-
-        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
-
-    return asserts
-
-
 class ApplicationClient:
     def __init__(
         self,
@@ -116,7 +87,7 @@ class ApplicationClient:
             self.approval_binary = approval
             self.approval_src_map = approval_map
 
-            self.approval_asserts = gather_asserts(
+            self.approval_asserts = _gather_asserts(
                 self.app.approval_program, approval_map
             )
 
@@ -124,7 +95,7 @@ class ApplicationClient:
             clear, _, clear_map = self.compile(self.app.clear_program, True)
             self.clear_binary = clear
             self.clear_src_map = clear_map
-            self.clear_asserts = gather_asserts(self.app.clear_program, clear_map)
+            self.clear_asserts = _gather_asserts(self.app.clear_program, clear_map)
 
     def create(
         self,
@@ -822,3 +793,32 @@ class ApplicationClient:
                 return signer.lsig.address()
 
         raise Exception("No sender provided")
+
+
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first bit
+        line = line.split(" ").pop()
+        if line != "assert":
+            continue
+
+        # take the first one, assert should be alone on the line
+        pc = src_map.get_pcs_for_line(idx)[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+
+    return asserts
