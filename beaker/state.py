@@ -147,12 +147,12 @@ class StateValue(Expr):
         """deletes the key from state, if the value is static it will be a compile time error"""
 
 
-class DynamicStateValue(ABC):
-    """Base Class for DynamicStateValues
+class ReservedStateValue(ABC):
+    """Base Class for ReservedStateValues
 
     Attributes:
         stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
-        max_keys (int): Maximum number of keys to reserve for this dynamic state value
+        max_keys (int): Maximum number of keys to reserve for this reserved state value
         key_gen (subroutine): A subroutine returning TealType.bytes, used to create a key where some data is stored.
         descr (str): Description of the state value to provide some information to clients
 
@@ -246,12 +246,12 @@ class ApplicationStateValue(StateValue):
         return App.globalDel(self.key)
 
 
-class DynamicApplicationStateValue(DynamicStateValue):
-    """Dynamically keyed Application State
+class ReservedApplicationStateValue(ReservedStateValue):
+    """Reservedally keyed Application State
 
     Attributes:
         stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
-        max_keys (int): Maximum number of keys to reserve for this dynamic state value
+        max_keys (int): Maximum number of keys to reserve for this reserved state value
         key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.
         descr (str): Description of the state value to provide some information to clients
     """
@@ -385,12 +385,12 @@ class AccountStateValue(StateValue):
         return asv
 
 
-class DynamicAccountStateValue(DynamicStateValue):
-    """Dynamically keyed Account State
+class ReservedAccountStateValue(ReservedStateValue):
+    """Reservedally keyed Account State
 
     Attributes:
         stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
-        max_keys (int): Maximum number of keys to reserve for this dynamic state value
+        max_keys (int): Maximum number of keys to reserve for this reserved state value
         key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.
         descr (str): Description of the state value to provide some information to clients
     """
@@ -546,10 +546,10 @@ def check_match_type(sv: StateValue, val: Expr):
 
 
 class State:
-    """holds all the declared and dynamic state values for this storage type"""
+    """holds all the declared and reserved state values for this storage type"""
 
     def __init__(
-        self, fields: Mapping[str, StateValue | DynamicStateValue | StateBlob]
+        self, fields: Mapping[str, StateValue | ReservedStateValue | StateBlob]
     ):
         self.declared_vals: dict[str, StateValue] = {
             k: v for k, v in fields.items() if isinstance(v, StateValue)
@@ -561,17 +561,17 @@ class State:
         }
         self.__dict__.update(self.blob_vals)
 
-        self.dynamic_vals: dict[str, DynamicStateValue] = {
-            k: v for k, v in fields.items() if isinstance(v, DynamicStateValue)
+        self.reserved_vals: dict[str, ReservedStateValue] = {
+            k: v for k, v in fields.items() if isinstance(v, ReservedStateValue)
         }
-        self.__dict__.update(self.dynamic_vals)
+        self.__dict__.update(self.reserved_vals)
 
         self.num_uints = len(
             [l for l in self.declared_vals.values() if l.stack_type == TealType.uint64]
         ) + sum(
             [
                 l.max_keys
-                for l in self.dynamic_vals.values()
+                for l in self.reserved_vals.values()
                 if l.stack_type == TealType.uint64
             ]
         )
@@ -587,7 +587,7 @@ class State:
             + sum(
                 [
                     l.max_keys
-                    for l in self.dynamic_vals.values()
+                    for l in self.reserved_vals.values()
                     if l.stack_type == TealType.bytes
                 ]
             )
@@ -605,13 +605,13 @@ class State:
                 }
                 for k, v in self.declared_vals.items()
             },
-            "dynamic": {
+            "reserved": {
                 k: {
                     "type": stack_type_to_string(v.stack_type),
                     "max_keys": v.max_keys,
                     "descr": v.descr if v.descr is not None else "",
                 }
-                for k, v in self.dynamic_vals.items()
+                for k, v in self.reserved_vals.items()
             },
         }
 
@@ -627,7 +627,9 @@ class ApplicationState(State):
         self,
         fields: Mapping[
             str,
-            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+            ApplicationStateValue
+            | ReservedApplicationStateValue
+            | ApplicationStateBlob,
         ],
     ):
         super().__init__(fields)
@@ -652,7 +654,7 @@ class AccountState(State):
     def __init__(
         self,
         fields: Mapping[
-            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+            str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
         ],
     ):
         super().__init__(fields)

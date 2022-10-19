@@ -3,8 +3,8 @@ import pyteal as pt
 from beaker.state import (
     ApplicationState,
     AccountState,
-    DynamicAccountStateValue,
-    DynamicApplicationStateValue,
+    ReservedAccountStateValue,
+    ReservedApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
     get_default_for_type,
@@ -28,7 +28,7 @@ ACCOUNT_VAL_TESTS = [
 ]
 
 
-DYNAMIC_ACCOUNT_VALUE_TESTS = [
+RESERVED_ACCOUNT_VALUE_TESTS = [
     # stack type, max keys, key gen, key_seed, val, expected error
     (pt.TealType.uint64, 1, None, pt.Bytes("abc"), pt.Int(1), None),
     (pt.TealType.bytes, 1, None, pt.Bytes("abc"), pt.Bytes("abc"), None),
@@ -141,18 +141,18 @@ def do_lv_test(key, stack_type, default, val):
 
 
 @pytest.mark.parametrize(
-    "stack_type, max_keys, key_gen, key_seed, val, error", DYNAMIC_ACCOUNT_VALUE_TESTS
+    "stack_type, max_keys, key_gen, key_seed, val, error", RESERVED_ACCOUNT_VALUE_TESTS
 )
-def test_dynamic_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
     if error is not None:
         with pytest.raises(error):
-            do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val)
+            do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val)
     else:
-        do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val)
+        do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val)
 
 
-def do_dynamic_lv_test(stack_type, max_keys, key_gen, key_seed, val):
-    dlv = DynamicAccountStateValue(
+def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
+    dlv = ReservedAccountStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 
@@ -349,7 +349,7 @@ def do_gv_test(key, stack_type, default, val, static):
         assert actual == expected
 
 
-DYNAMIC_APPLICATION_VALUE_TESTS = [
+RESERVED_APPLICATION_VALUE_TESTS = [
     # stack type, max keys, key gen, key_seed, val, expected error
     (pt.TealType.uint64, 1, None, pt.Bytes("abc"), pt.Int(1), None),
     (pt.TealType.bytes, 1, None, pt.Bytes("abc"), pt.Bytes("abc"), None),
@@ -381,18 +381,18 @@ DYNAMIC_APPLICATION_VALUE_TESTS = [
 
 @pytest.mark.parametrize(
     "stack_type, max_keys, key_gen, key_seed, val, error",
-    DYNAMIC_APPLICATION_VALUE_TESTS,
+    RESERVED_APPLICATION_VALUE_TESTS,
 )
-def test_dynamic_global_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, error):
     if error is not None:
         with pytest.raises(error):
-            do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val)
+            do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val)
     else:
-        do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val)
+        do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val)
 
 
-def do_dynamic_gv_test(stack_type, max_keys, key_gen, key_seed, val):
-    dlv = DynamicApplicationStateValue(
+def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
+    dlv = ReservedApplicationStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 
@@ -495,7 +495,7 @@ def test_application_state():
     assert astate.num_byte_slices == 1
     assert astate.num_uints == 1
 
-    statevals["c"] = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=64)
+    statevals["c"] = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
     with pytest.raises(Exception):
         ApplicationState(statevals)
 
@@ -510,6 +510,6 @@ def test_account_state():
     assert astate.num_byte_slices == 1
     assert astate.num_uints == 1
 
-    statevals["c"] = DynamicAccountStateValue(pt.TealType.uint64, max_keys=16)
+    statevals["c"] = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
     with pytest.raises(Exception):
         AccountState(statevals)

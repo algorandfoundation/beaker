@@ -5,7 +5,7 @@ from pyteal import abi, TealType, Int, Seq
 
 from beaker import (
     Application,
-    DynamicAccountStateValue,
+    ReservedAccountStateValue,
     opt_in,
     external,
     sandbox,
@@ -20,7 +20,7 @@ class Structer(Application):
         item: abi.Field[abi.String]
         quantity: abi.Field[abi.Uint16]
 
-    orders: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+    orders: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
     )
