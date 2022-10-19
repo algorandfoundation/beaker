@@ -16,7 +16,7 @@ done
 
 
 pushd "$PWD" && \
-  cd examples/amm && \
+  cd examples/amm && \  # source ../.venv/bin/activate \
   rm -rf artifacts/ && \
   python amm.py && \
   popd
