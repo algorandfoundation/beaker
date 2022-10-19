@@ -1,1 +1,131 @@
-{"name": "ConstantProductAMM", "methods": [{"name": "bootstrap", "args": [{"type": "pay", "name": "seed", "desc": "Initial Payment transaction to the app account so it can opt in to assets and create pool token."}, {"type": "asset", "name": "a_asset", "desc": "One of the two assets this pool should allow swapping between."}, {"type": "asset", "name": "b_asset", "desc": "The other of the two assets this pool should allow swapping between."}], "returns": {"type": "uint64", "desc": "The asset id of the pool token created."}, "desc": "bootstraps the contract by opting into the assets and creating the pool token.\nNote this method will fail if it is attempted more than once on the same contract since the assets and pool token application state values are marked as static and cannot be overridden."}, {"name": "burn", "args": [{"type": "axfer", "name": "pool_xfer", "desc": "Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem"}, {"type": "asset", "name": "pool_asset", "desc": "Asset ID of the pool token so we may inspect balance."}, {"type": "asset", "name": "a_asset", "desc": "Asset ID of Asset A so we may inspect balance and distribute it"}, {"type": "asset", "name": "b_asset", "desc": "Asset ID of Asset B so we may inspect balance and distribute it"}], "returns": {"type": "void"}, "desc": "burn pool tokens to get back some amount of asset A and asset B"}, {"name": "mint", "args": [{"type": "axfer", "name": "a_xfer", "desc": "Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens."}, {"type": "axfer", "name": "b_xfer", "desc": "Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens."}, {"type": "asset", "name": "pool_asset", "desc": "The asset ID of the pool token so that we may distribute it."}, {"type": "asset", "name": "a_asset", "desc": "The asset ID of the Asset A so that we may inspect our balance."}, {"type": "asset", "name": "b_asset", "desc": "The asset ID of the Asset B so that we may inspect our balance."}], "returns": {"type": "void"}, "desc": "mint pool tokens given some amount of asset A and asset B.\nGiven some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with the pools current balance and circulating supply of pool tokens."}, {"name": "set_governor", "args": [{"type": "account", "name": "new_governor"}], "returns": {"type": "void"}, "desc": "sets the governor of the contract, may only be called by the current governor"}, {"name": "swap", "args": [{"type": "axfer", "name": "swap_xfer", "desc": "Asset Transfer Transaction of either Asset A or Asset B"}, {"type": "asset", "name": "a_asset", "desc": "Asset ID of asset A so we may inspect balance and possibly transfer it"}, {"type": "asset", "name": "b_asset", "desc": "Asset ID of asset B so we may inspect balance and possibly transfer it"}], "returns": {"type": "void"}, "desc": "Swap some amount of either asset A or asset B for the other"}], "networks": {}}
+{
+    "name": "ConstantProductAMM",
+    "methods": [
+        {
+            "name": "bootstrap",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "seed",
+                    "desc": "Initial Payment transaction to the app account so it can opt in to assets and create pool token."
+                },
+                {
+                    "type": "asset",
+                    "name": "a_asset",
+                    "desc": "One of the two assets this pool should allow swapping between."
+                },
+                {
+                    "type": "asset",
+                    "name": "b_asset",
+                    "desc": "The other of the two assets this pool should allow swapping between."
+                }
+            ],
+            "returns": {
+                "type": "uint64",
+                "desc": "The asset id of the pool token created."
+            },
+            "desc": "bootstraps the contract by opting into the assets and creating the pool token.\nNote this method will fail if it is attempted more than once on the same contract since the assets and pool token application state values are marked as static and cannot be overridden."
+        },
+        {
+            "name": "burn",
+            "args": [
+                {
+                    "type": "axfer",
+                    "name": "pool_xfer",
+                    "desc": "Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem"
+                },
+                {
+                    "type": "asset",
+                    "name": "pool_asset",
+                    "desc": "Asset ID of the pool token so we may inspect balance."
+                },
+                {
+                    "type": "asset",
+                    "name": "a_asset",
+                    "desc": "Asset ID of Asset A so we may inspect balance and distribute it"
+                },
+                {
+                    "type": "asset",
+                    "name": "b_asset",
+                    "desc": "Asset ID of Asset B so we may inspect balance and distribute it"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "burn pool tokens to get back some amount of asset A and asset B"
+        },
+        {
+            "name": "mint",
+            "args": [
+                {
+                    "type": "axfer",
+                    "name": "a_xfer",
+                    "desc": "Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens."
+                },
+                {
+                    "type": "axfer",
+                    "name": "b_xfer",
+                    "desc": "Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens."
+                },
+                {
+                    "type": "asset",
+                    "name": "pool_asset",
+                    "desc": "The asset ID of the pool token so that we may distribute it."
+                },
+                {
+                    "type": "asset",
+                    "name": "a_asset",
+                    "desc": "The asset ID of the Asset A so that we may inspect our balance."
+                },
+                {
+                    "type": "asset",
+                    "name": "b_asset",
+                    "desc": "The asset ID of the Asset B so that we may inspect our balance."
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "mint pool tokens given some amount of asset A and asset B.\nGiven some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with the pools current balance and circulating supply of pool tokens."
+        },
+        {
+            "name": "set_governor",
+            "args": [
+                {
+                    "type": "account",
+                    "name": "new_governor"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "sets the governor of the contract, may only be called by the current governor"
+        },
+        {
+            "name": "swap",
+            "args": [
+                {
+                    "type": "axfer",
+                    "name": "swap_xfer",
+                    "desc": "Asset Transfer Transaction of either Asset A or Asset B"
+                },
+                {
+                    "type": "asset",
+                    "name": "a_asset",
+                    "desc": "Asset ID of asset A so we may inspect balance and possibly transfer it"
+                },
+                {
+                    "type": "asset",
+                    "name": "b_asset",
+                    "desc": "Asset ID of asset B so we may inspect balance and possibly transfer it"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Swap some amount of either asset A or asset B for the other"
+        }
+    ],
+    "networks": {}
+}

@@ -23,6 +23,9 @@ jobs:
       - name: lint
         run: make lint
 
+      - name: gen-check
+        run: make gen-check
+
       - name: Clone Algorand Sandbox
         run: cd .. && git clone https://github.com/algorand/sandbox.git
 
