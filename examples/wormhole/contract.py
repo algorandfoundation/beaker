@@ -20,7 +20,7 @@ class OracleDataCache(WormholeTransfer):
         price: abi.Field[abi.Uint64]
         confidence: abi.Field[abi.Uint64]
 
-    prices: Final[DynamicApplicationStateValue] = DynamicApplicationStateValue(
+    prices: Final[ReservedApplicationStateValue] = ReservedApplicationStateValue(
         stack_type=TealType.bytes, max_keys=64
     )
 

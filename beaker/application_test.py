@@ -493,7 +493,7 @@ def test_app_spec():
                     "descr": "",
                 }
             },
-            "dynamic": {},
+            "reserved": {},
         },
         "global": {
             "declared": {
@@ -503,7 +503,7 @@ def test_app_spec():
                     "descr": "",
                 }
             },
-            "dynamic": {},
+            "reserved": {},
         },
     }
 
