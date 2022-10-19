@@ -9,7 +9,7 @@ from beaker.lib.storage.blob import blob_page_size
 
 
 class LocalBlobTest(UnitTestingApp):
-    lb = bkr.DynamicAccountStateValue(pt.TealType.bytes, max_keys=16)
+    lb = bkr.ReservedAccountStateValue(pt.TealType.bytes, max_keys=16)
     blob = LocalBlob(keys=[x for x in range(10) if x % 2 == 0])
 
 
