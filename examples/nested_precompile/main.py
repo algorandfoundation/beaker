@@ -1,73 +1,5 @@
-from typing import Final
-from pyteal import (
-    abi,
-    InnerTxn,
-    InnerTxnBuilder,
-    Int,
-    Seq,
-    TealType,
-    TxnField,
-    TxnType,
-)
 from beaker import *
-from beaker.precompile import AppPrecompile
-
-
-class Child(Application):
-    counter: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.uint64,
-        default=Int(0),
-    )
-
-    @create
-    def create(self):
-        return Seq(
-            self.initialize_application_state(),
-        )
-
-    @external
-    def increment_counter(self, *, output: abi.Uint64):
-        return Seq(
-            self.counter.increment(),
-            output.set(self.counter.get()),
-        )
-
-
-class Parent(Application):
-    child: AppPrecompile = AppPrecompile(Child())
-
-    @external
-    def create_child(self, *, output: abi.Uint64):
-        return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.child.approval.binary,
-                    TxnField.clear_state_program: self.child.clear.binary,
-                    TxnField.global_num_uints: Int(1),
-                }
-            ),
-            output.set(InnerTxn.created_application_id()),
-        )
-
-
-class Grandparent(Application):
-
-    parent: AppPrecompile = AppPrecompile(Parent())
-
-    @external
-    def create_parent(self, *, output: abi.Uint64):
-        """Create a new parent app."""
-        return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.parent.approval.binary,
-                    TxnField.clear_state_program: self.parent.clear.binary,
-                }
-            ),
-            output.set(InnerTxn.created_application_id()),
-        )
+from .nested_application import *
 
 
 def demo():
@@ -82,7 +14,7 @@ def demo():
     print(f"Created grandparent app: {grandparent_app_id}")
     app_client_grandparent.fund(1 * consts.algo)
 
-    # Call the main app to create the sub app
+    # Call the grandparent app to create the parent app
     result = app_client_grandparent.call(Grandparent.create_parent)
     parent_app_id = result.return_value
     print(f"Created parent app: {parent_app_id}")
@@ -97,25 +29,45 @@ def demo():
 
     app_client_parent.fund(1 * consts.algo)
 
-    # Call the parent app to create the child app
-    result = app_client_parent.call(Parent.create_child)
+    # Call the parent app to create the child_1 app
+    result = app_client_parent.call(Parent.create_child_1)
     child_app_id = result.return_value
-    print(f"Created child app: {child_app_id}")
+    print(f"Created child_1 app: {child_app_id}")
 
-    # Create child app client
+    # Create child_1 app client
     app_client_child = client.ApplicationClient(
         sandbox.get_algod_client(),
-        Child(),
+        Child1(),
         signer=acct.signer,
         app_id=child_app_id,
     )
 
     app_client_child.fund(1 * consts.algo)
 
-    # Call the child app to increment counter
-    result = app_client_child.call(Child.increment_counter)
+    # Call the child_1 app to increment counter
+    result = app_client_child.call(Child1.increment_counter)
     counter_value = result.return_value
     print(f"Counter value: {counter_value}")
+
+    # Call the parent app to create the child_2 app
+    result = app_client_parent.call(Parent.create_child_2)
+    child_app_id = result.return_value
+    print(f"Created child_2 app: {child_app_id}")
+
+    # Create child_2 app client
+    app_client_child = client.ApplicationClient(
+        sandbox.get_algod_client(),
+        Child2(),
+        signer=acct.signer,
+        app_id=child_app_id,
+    )
+
+    app_client_child.fund(1 * consts.algo)
+
+    # Call the child_2 app to check lsig addr
+    result = app_client_child.call(Child2.get_lsig_addr)
+    addr_value = result.return_value
+    print(f"LSig address value: {addr_value}")
 
 
 if __name__ == "__main__":

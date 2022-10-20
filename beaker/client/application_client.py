@@ -75,7 +75,7 @@ class ApplicationClient:
     def build(self) -> None:
         """
         Wraps the Application in an AppPrecompile before handing off to
-        _build_program for recursive compiling. The result is then used
+        _build_app for recursive compiling. The result is then used
         to assign the approval and clear state program binaries and src maps.
         """
         app_precompile = AppPrecompile(self.app)

@@ -58,9 +58,8 @@ class PrecompileTemplateValue:
 
 class Precompile:
     """
-    Precompile allows a smart contract to signal that some child contract should be
-    fully compiled prior to constructing its own program. This is the parent class of
-    AppPrecompile and LSigPrecompile and should not be instantiated directly.
+    Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
+    and LSigPrecompile for Applications and Logic Signature programs, respectively.
     """
 
     _program: str = ""
