@@ -13,6 +13,7 @@ from pyteal import (
 )
 import beaker as bkr
 from beaker.application import get_method_signature
+from beaker.precompile import AppPrecompile
 
 
 class C2CSub(bkr.Application):
@@ -50,8 +51,7 @@ class C2CMain(bkr.Application):
     # Init sub app object
     sub_app = C2CSub()
     # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app_approval: bkr.Precompile = bkr.Precompile(sub_app.approval_program)
-    sub_app_clear: bkr.Precompile = bkr.Precompile(sub_app.clear_program)
+    sub_app: AppPrecompile = AppPrecompile(sub_app)
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
@@ -59,8 +59,8 @@ class C2CMain(bkr.Application):
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.sub_app_approval.binary_bytes,
-                    TxnField.clear_state_program: self.sub_app_clear.binary_bytes,
+                    TxnField.approval_program: self.sub_app.approval.binary,
+                    TxnField.clear_state_program: self.sub_app.clear.binary,
                 }
             ),
             # return the app id of the newly created app

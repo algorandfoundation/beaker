@@ -36,7 +36,7 @@ from beaker.state import (
     ReservedApplicationStateValue,
 )
 from beaker.errors import BareOverwriteError
-from beaker.precompile import Precompile
+from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
 def get_method_spec(fn) -> Method:
@@ -91,7 +91,7 @@ class Application:
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
-        self.precompiles: dict[str, Precompile] = {}
+        self.precompiles: dict[str, AppPrecompile | LSigPrecompile] = {}
 
         acct_vals: dict[
             str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
@@ -125,7 +125,7 @@ class Application:
                 case ReservedApplicationStateValue():
                     app_vals[name] = bound_attr
 
-                case Precompile():
+                case LSigPrecompile() | AppPrecompile():
                     self.precompiles[name] = bound_attr
 
             # Already dealt with these, move on

@@ -12,6 +12,7 @@ from algosdk.atomic_transaction_composer import (
 from typing import Literal
 from pyteal import *
 from beaker import *
+from beaker.precompile import LSigPrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
 
@@ -32,7 +33,7 @@ class App(Application):
                 Int(1),
             )
 
-    sig_checker = Precompile(SigChecker().program)
+    sig_checker = LSigPrecompile(SigChecker())
 
     @external
     def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
