@@ -57,9 +57,11 @@ class ApplicationClient:
 
         self.approval_binary: Optional[bytes] = None
         self.approval_src_map: Optional[SourceMap] = None
+        self.approval_asserts: dict[int, ProgramAssertion] = {}
 
         self.clear_binary: Optional[bytes] = None
         self.clear_src_map: Optional[SourceMap] = None
+        self.clear_asserts: dict[int, ProgramAssertion] = {}
 
         self.suggested_params = suggested_params
 
@@ -87,6 +89,14 @@ class ApplicationClient:
 
         self.clear_binary = compiled_app.clear._binary
         self.clear_src_map = compiled_app.clear._map
+
+        if self.app.approval_program and self.app.clear_program:
+            self.approval_asserts = _gather_asserts(
+                self.app.approval_program, self.approval_src_map
+            )
+            self.clear_asserts = _gather_asserts(
+                self.app.clear_program, self.clear_src_map
+            )
 
     def _build_app(self, app_precompile: AppPrecompile) -> AppPrecompile:
         """
