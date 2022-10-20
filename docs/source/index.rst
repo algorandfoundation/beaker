@@ -17,6 +17,9 @@ Beaker
 Installation
 ------------
 
+.. note::
+    Beaker requires python 3.10 or higher
+
 You may install from Pip
 
 .. code-block:: console
@@ -59,7 +62,6 @@ See full examples `here <https://github.com/algorand-devrel/beaker/tree/master/e
     state
     precompile
     decorators
-    contracts
     testing
 
 

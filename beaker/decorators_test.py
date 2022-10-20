@@ -278,15 +278,15 @@ def test_resolvable():
     from .state import (
         AccountStateValue,
         ApplicationStateValue,
-        DynamicAccountStateValue,
-        DynamicApplicationStateValue,
+        ReservedAccountStateValue,
+        ReservedApplicationStateValue,
     )
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = DefaultArgument(x)
     assert r.resolvable_class == "local-state"
 
-    x = DynamicAccountStateValue(pt.TealType.uint64, max_keys=1)
+    x = ReservedAccountStateValue(pt.TealType.uint64, max_keys=1)
     r = DefaultArgument(x[pt.Bytes("x")])
     assert r.resolvable_class == "local-state"
 
@@ -294,7 +294,7 @@ def test_resolvable():
     r = DefaultArgument(x)
     assert r.resolvable_class == "global-state"
 
-    x = DynamicApplicationStateValue(pt.TealType.uint64, max_keys=1)
+    x = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=1)
     r = DefaultArgument(x[pt.Bytes("x")])
     assert r.resolvable_class == "global-state"
 

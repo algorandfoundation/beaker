@@ -2,11 +2,12 @@ from .application import Application, get_method_spec
 from .state import (
     AccountState,
     ApplicationState,
-    DynamicApplicationStateValue,
-    DynamicAccountStateValue,
+    ReservedApplicationStateValue,
+    ReservedAccountStateValue,
     ApplicationStateValue,
     AccountStateValue,
     AccountStateBlob,
+    ApplicationStateBlob,
 )
 from .decorators import (
     Authorize,

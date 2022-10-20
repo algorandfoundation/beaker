@@ -12,8 +12,10 @@ from algosdk.atomic_transaction_composer import (
     MultisigTransactionSigner,
     LogicSigTransactionSigner,
 )
+from beaker.precompile import AppPrecompile, LSigPrecompile
+from pyteal import Bytes
 
-from ..decorators import (
+from beaker.decorators import (
     Authorize,
     DefaultArgument,
     create,
@@ -29,6 +31,7 @@ from beaker.application import Application, get_method_selector
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
+from examples.nested_precompile.nested_application import Grandparent
 
 
 class App(Application):
@@ -565,3 +568,71 @@ def test_resolve(sb_accts: SandboxAccounts):
     assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
     assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == b"test"
     assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"
+
+
+def test_build(sb_accts: SandboxAccounts):
+    app = Grandparent()
+
+    addr, pk, signer = sb_accts[0]
+
+    client = get_algod_client()
+    ac = ApplicationClient(client, app, signer=signer)
+    ac.build()
+
+    assert ac.approval_binary is not None
+    assert ac.approval_src_map is not None
+    assert ac.clear_binary is not None
+    assert ac.clear_src_map is not None
+
+
+def test_build_app_and_build_lsig(sb_accts: SandboxAccounts):
+    app = Grandparent()
+    app_precompile = AppPrecompile(app)
+
+    addr, pk, signer = sb_accts[0]
+
+    client = get_algod_client()
+    ac = ApplicationClient(client, app, signer=signer)
+
+    ac._build_app(app_precompile)
+
+    _check_app_precompiles(app_precompile)
+
+
+def _check_app_precompiles(app_precompile: AppPrecompile):
+    for _, p in app_precompile.app.precompiles.items():
+        match p:
+            case LSigPrecompile():
+                _check_lsig_precompiles(p)
+            case AppPrecompile():
+                _check_app_precompiles(p)
+
+    assert app_precompile.approval._program != ""
+    assert app_precompile.approval._binary is not None
+    assert app_precompile.approval.binary != Bytes("")
+    assert app_precompile.approval._map is not None
+    assert app_precompile.approval._program_hash is not None
+    assert app_precompile.approval._template_values == []
+
+    assert app_precompile.clear._program != ""
+    assert app_precompile.clear._binary is not None
+    assert app_precompile.clear.binary != Bytes("")
+    assert app_precompile.clear._map is not None
+    assert app_precompile.clear._program_hash is not None
+    assert app_precompile.clear._template_values == []
+
+
+def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
+    for _, p in lsig_precompile.lsig.precompiles.items():
+        match p:
+            case LSigPrecompile():
+                _check_lsig_precompiles(p)
+            case AppPrecompile():
+                _check_app_precompiles(p)
+
+    assert lsig_precompile.logic._program != ""
+    assert lsig_precompile.logic._binary is not None
+    assert lsig_precompile.logic.binary != Bytes("")
+    assert lsig_precompile.logic._map is not None
+    assert lsig_precompile.logic._program_hash is not None
+    assert lsig_precompile.logic._template_values == []

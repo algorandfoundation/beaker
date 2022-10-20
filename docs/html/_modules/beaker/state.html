@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
 </ul>
 
@@ -122,6 +121,16 @@
 
 
 <span class="k">class</span> <span class="nc">StateValue</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base Class for state values</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        key: key to use to store the the value, default is name of class variable</span>
+<span class="sd">        default: Default value for the state value</span>
+<span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -206,11 +215,25 @@
         <span class="sd">&quot;&quot;&quot;gets the value stored at the key. if none is stored, return the value passed&quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;checks if the value is set (to whatever value. Returns Int(1) if value is set, Int(0) otherwise.&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;deletes the key from state, if the value is static it will be a compile time error&quot;&quot;&quot;</span>
 
 
-<span class="k">class</span> <span class="nc">DynamicStateValue</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ReservedStateValue</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base Class for ReservedStateValues</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        max_keys (int): Maximum number of keys to reserve for this reserved state value</span>
+<span class="sd">        key_gen (subroutine): A subroutine returning TealType.bytes, used to create a key where some data is stored.</span>
+<span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -233,6 +256,16 @@
 
 
 <div class="viewcode-block" id="ApplicationStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ApplicationStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Allows storage of global state values for an application</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        key: key to use to store the the value, default is name of class variable</span>
+<span class="sd">        default: Default value for the state value</span>
+<span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
 
@@ -277,6 +310,9 @@
 
         <span class="k">return</span> <span class="n">If</span><span class="p">((</span><span class="n">v</span> <span class="o">:=</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">))</span><span class="o">.</span><span class="n">hasValue</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="n">val</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="ApplicationStateValue.exists"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
+
 <div class="viewcode-block" id="ApplicationStateValue.delete"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
@@ -286,7 +322,16 @@
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalDel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="DynamicApplicationStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.DynamicApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">DynamicApplicationStateValue</span><span class="p">(</span><span class="n">DynamicStateValue</span><span class="p">):</span>
+<div class="viewcode-block" id="ReservedApplicationStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.ReservedApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedApplicationStateValue</span><span class="p">(</span><span class="n">ReservedStateValue</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reservedally keyed Application State</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        max_keys (int): Maximum number of keys to reserve for this reserved state value</span>
+<span class="sd">        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.</span>
+<span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -299,7 +344,7 @@
         <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">max_keys</span> <span class="o">&gt;</span> <span class="n">MAX_GLOBAL_STATE</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;max keys expected to be between 0 and </span><span class="si">{</span><span class="n">MAX_GLOBAL_STATE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DynamicApplicationStateValue.__getitem__"><a class="viewcode-back" href="../../state.html#beaker.state.DynamicApplicationStateValue.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApplicationStateValue</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApplicationStateValue</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Method to access the state value with the key seed provided&quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">key_seed</span>
 
@@ -313,13 +358,30 @@
 
         <span class="k">return</span> <span class="n">ApplicationStateValue</span><span class="p">(</span>
             <span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">descr</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AccountStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">AccountStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span>
+    <span class="sd">&quot;&quot;&quot;Allows storage of global state values for an account opted into an application</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        key: key to use to store the the value, default is name of class variable</span>
+<span class="sd">        default: Default value for the state value</span>
+<span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">static</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">static</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -382,6 +444,9 @@
             <span class="n">val</span><span class="p">,</span>
         <span class="p">)</span></div>
 
+<div class="viewcode-block" id="AccountStateValue.exists"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
+
 <div class="viewcode-block" id="AccountStateValue.delete"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
@@ -396,7 +461,16 @@
         <span class="k">return</span> <span class="n">asv</span></div>
 
 
-<div class="viewcode-block" id="DynamicAccountStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.DynamicAccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">DynamicAccountStateValue</span><span class="p">(</span><span class="n">DynamicStateValue</span><span class="p">):</span>
+<div class="viewcode-block" id="ReservedAccountStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.ReservedAccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedAccountStateValue</span><span class="p">(</span><span class="n">ReservedStateValue</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reservedally keyed Account State</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        max_keys (int): Maximum number of keys to reserve for this reserved state value</span>
+<span class="sd">        key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.</span>
+<span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
@@ -409,7 +483,7 @@
         <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">max_keys</span> <span class="o">&gt;</span> <span class="n">MAX_LOCAL_STATE</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;max keys expected to be between 0 and </span><span class="si">{</span><span class="n">MAX_LOCAL_STATE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DynamicAccountStateValue.__getitem__"><a class="viewcode-back" href="../../state.html#beaker.state.DynamicAccountStateValue.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccountStateValue</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccountStateValue</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Access AccountState value given key_seed&quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">key_seed</span>
 
@@ -419,7 +493,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_generator</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">AccountStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">Expr</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span></div></div>
+        <span class="k">return</span> <span class="n">AccountStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">Expr</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span></div>
 
 
 <span class="k">class</span> <span class="nc">StateBlob</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -548,10 +622,10 @@
 
 
 <span class="k">class</span> <span class="nc">State</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;holds all the declared and dynamic state values for this storage type&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;holds all the declared and reserved state values for this storage type&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateValue</span> <span class="o">|</span> <span class="n">DynamicStateValue</span> <span class="o">|</span> <span class="n">StateBlob</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateValue</span> <span class="o">|</span> <span class="n">ReservedStateValue</span> <span class="o">|</span> <span class="n">StateBlob</span><span class="p">]</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">StateValue</span><span class="p">)</span>
@@ -563,17 +637,17 @@
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DynamicStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">DynamicStateValue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reserved_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReservedStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">ReservedStateValue</span><span class="p">)</span>
         <span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reserved_vals</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">num_uints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
             <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">]</span>
         <span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="n">l</span><span class="o">.</span><span class="n">max_keys</span>
-                <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span>
             <span class="p">]</span>
         <span class="p">)</span>
@@ -589,7 +663,7 @@
             <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
                 <span class="p">[</span>
                     <span class="n">l</span><span class="o">.</span><span class="n">max_keys</span>
-                    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
                     <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span>
                 <span class="p">]</span>
             <span class="p">)</span>
@@ -607,13 +681,13 @@
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">declared_vals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">},</span>
-            <span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;reserved&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="n">k</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
                     <span class="s2">&quot;max_keys&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">max_keys</span><span class="p">,</span>
                     <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
                 <span class="p">}</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_vals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_vals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">},</span>
         <span class="p">}</span>
 
@@ -629,7 +703,9 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span>
             <span class="nb">str</span><span class="p">,</span>
-            <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span> <span class="o">|</span> <span class="n">ApplicationStateBlob</span><span class="p">,</span>
+            <span class="n">ApplicationStateValue</span>
+            <span class="o">|</span> <span class="n">ReservedApplicationStateValue</span>
+            <span class="o">|</span> <span class="n">ApplicationStateBlob</span><span class="p">,</span>
         <span class="p">],</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
@@ -654,7 +730,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span>
-            <span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span> <span class="o">|</span> <span class="n">AccountStateBlob</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">ReservedAccountStateValue</span> <span class="o">|</span> <span class="n">AccountStateBlob</span>
         <span class="p">],</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>

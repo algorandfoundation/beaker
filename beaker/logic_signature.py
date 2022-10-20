@@ -15,6 +15,7 @@ from pyteal import (
     ScratchVar,
 )
 from beaker.decorators import get_handler_config
+from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
 class TemplateVariable(Expr):
@@ -67,7 +68,7 @@ class LogicSignature:
 
     A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
 
-    The `evauluate` method is the entry point to the application and must be overridden in any subclass
+    The `evaluate` method is the entry point to the application and must be overridden in any subclass
     to call the necessary logic.
     """
 
@@ -76,15 +77,25 @@ class LogicSignature:
 
         self.teal_version = version
 
-        self.attrs = {
+        # Get initial list of all attrs declared
+        initial_attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
             if not m.startswith("__")
         }
 
+        # Make sure we preserve the ordering of declaration
+        ordering = [
+            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
+        ]
+        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
+
         self.methods: dict[str, SubroutineDefinition] = {}
 
         self.template_variables: list[TemplateVariable] = []
+        self.precompiles: dict[
+            str, LSigPrecompile | AppPrecompile
+        ] = {}  # dummy for now
 
         for name, (bound_attr, static_attr) in self.attrs.items():
 
@@ -113,6 +124,9 @@ class LogicSignature:
                         handler_config.subroutine(static_attr),
                     )
 
+        self.compile()  # will have to be deferred if lsig contains precompiles
+
+    def compile(self):
         template_expressions: list[Expr] = [
             tv._init_expr() for tv in self.template_variables
         ]

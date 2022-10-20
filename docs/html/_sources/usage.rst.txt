@@ -8,7 +8,6 @@ Tutorial
 
 .. note::
     This tutorial assumes you've already installed the `sandbox <https://github.com/algorand/sandbox>`_ and have it running. 
-    Currently Beaker requires sandbox running with ``source`` config (or any config with `this <https://github.com/algorand/go-algorand/pull/4198>`_ commit).
 
 
 Lets write a simple calculator app.  `Full source here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
@@ -51,7 +50,7 @@ The python method must return an ``Expr`` of some kind, invoked when the externa
 Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 32-44
+    :lines: 32-46
 
 
 Thats it! 
@@ -112,7 +111,7 @@ We've added an :ref:`ApplicationStateValue <application_state_value>` attribute 
 .. note:: 
     The base ``Application`` class has several externals pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
-You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for dynamic state keys.
+You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for reserved state keys.
 
 For more example usage see the example :ref:`here <state_example>`.
 

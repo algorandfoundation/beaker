@@ -63,6 +63,8 @@ print(result.return_value)  # "Hello, Beaker"
 
 ## Install
 
+    Beaker currently requires Python >= 3.10
+
 You can install from pip:
 
 `pip install beaker-pyteal`

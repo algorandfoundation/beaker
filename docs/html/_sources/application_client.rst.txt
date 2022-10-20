@@ -8,6 +8,9 @@ Application Client
 
 The ``ApplicationClient`` provides a convenient way to interact with our ``Application``.
 
+.. note::
+    The ``ApplicationClient`` takes an ``AlgodClient`` as its first argument, the most common API providers are available in ``beaker.client.api_providers``
+
 :ref:`Full Example <app_client_example>`
 
 The main point of interaction with our application is done using ``call``.  

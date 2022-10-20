@@ -9,6 +9,7 @@ from pyteal import (
     abi,
     ABIReturnSubroutine,
     And,
+    Global,
     App,
     Assert,
     AssetHolding,
@@ -271,7 +272,7 @@ class Authorize:
         return _impl
 
     @staticmethod
-    def opted_in(app_id: Expr):
+    def opted_in(app_id: Expr = Global.current_application_id()):
         """require that the sender of the app call has already opted-in to a given app id"""
 
         if app_id.type_of() != TealType.uint64:

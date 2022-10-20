@@ -30,13 +30,13 @@ from beaker.state import (
     AccountStateBlob,
     ApplicationStateBlob,
     ApplicationState,
-    DynamicAccountStateValue,
+    ReservedAccountStateValue,
     AccountStateValue,
     ApplicationStateValue,
-    DynamicApplicationStateValue,
+    ReservedApplicationStateValue,
 )
 from beaker.errors import BareOverwriteError
-from beaker.precompile import Precompile
+from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
 def get_method_spec(fn) -> Method:
@@ -69,12 +69,18 @@ class Application:
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
 
-        # Is there a better way to get all the attrs declared in subclasses?
-        self.attrs = {
+        # Get initial list of all attrs declared
+        initial_attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
             if not m.startswith("__")
         }
+
+        # Make sure we preserve the ordering of declaration
+        ordering = [
+            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
+        ]
+        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
 
         # Initialize these ahead of time, may not
         # be set after init if len(precompiles)>0
@@ -91,14 +97,16 @@ class Application:
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
-        self.precompiles: dict[str, Precompile] = {}
+        self.precompiles: dict[str, AppPrecompile | LSigPrecompile] = {}
 
         acct_vals: dict[
-            str, AccountStateValue | DynamicAccountStateValue | AccountStateBlob
+            str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
         ] = {}
         app_vals: dict[
             str,
-            ApplicationStateValue | DynamicApplicationStateValue | ApplicationStateBlob,
+            ApplicationStateValue
+            | ReservedApplicationStateValue
+            | ApplicationStateBlob,
         ] = {}
 
         for name, (bound_attr, static_attr) in self.attrs.items():
@@ -109,7 +117,7 @@ class Application:
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
-                case DynamicAccountStateValue():
+                case ReservedAccountStateValue():
                     acct_vals[name] = bound_attr
                 case AccountStateBlob():
                     acct_vals[name] = bound_attr
@@ -120,10 +128,10 @@ class Application:
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
-                case DynamicApplicationStateValue():
+                case ReservedApplicationStateValue():
                     app_vals[name] = bound_attr
 
-                case Precompile():
+                case LSigPrecompile() | AppPrecompile():
                     self.precompiles[name] = bound_attr
 
             # Already dealt with these, move on
@@ -313,7 +321,7 @@ class Application:
         with open(os.path.join(directory, "contract.json"), "w") as f:
             if self.contract is None:
                 raise Exception("Contract empty")
-            f.write(json.dumps(self.contract.dictify()))
+            f.write(json.dumps(self.contract.dictify(), indent=4))
 
-        with open(os.path.join(directory, f"{self.__class__.__name__}.json"), "w") as f:
-            f.write(json.dumps(self.application_spec()))
+        with open(os.path.join(directory, "application.json"), "w") as f:
+            f.write(json.dumps(self.application_spec(), indent=4))

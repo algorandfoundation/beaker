@@ -1,7 +1,8 @@
 from base64 import b64decode
 import copy
+from dataclasses import dataclass
 from math import ceil
-from typing import Any, cast
+from typing import Any, cast, Optional
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -20,6 +21,7 @@ from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 from algosdk.constants import APP_PAGE_MAX_SIZE
+from pyteal import TealInputError
 
 from beaker.application import Application, get_method_spec
 from beaker.decorators import (
@@ -30,6 +32,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
+from beaker.precompile import LSigPrecompile, AppPrecompile
 
 
 class ApplicationClient:
@@ -52,11 +55,13 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval_binary = None
-        self.approval_src_map = None
+        self.approval_binary: Optional[bytes] = None
+        self.approval_src_map: Optional[SourceMap] = None
+        self.approval_asserts: dict[int, ProgramAssertion] = {}
 
-        self.clear_binary = None
-        self.clear_src_map = None
+        self.clear_binary: Optional[bytes] = None
+        self.clear_src_map: Optional[SourceMap] = None
+        self.clear_asserts: dict[int, ProgramAssertion] = {}
 
         self.suggested_params = suggested_params
 
@@ -69,25 +74,75 @@ class ApplicationClient:
             src_map = SourceMap(result["sourcemap"])
         return (b64decode(result["result"]), result["hash"], src_map)
 
-    def build(self):
+    def build(self) -> None:
+        """
+        Wraps the Application in an AppPrecompile before handing off to
+        _build_app for recursive compiling. The result is then used
+        to assign the approval and clear state program binaries and src maps.
+        """
+        app_precompile = AppPrecompile(self.app)
 
-        for _, v in self.app.precompiles.items():
-            if v.binary is None:
-                binary, addr, map = self.compile(v.program, True)
-                v._set_compiled(binary, addr, map)
+        compiled_app = self._build_app(app_precompile)
 
-        if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.compile()
+        self.approval_binary = compiled_app.approval._binary
+        self.approval_src_map = compiled_app.approval._map
 
-        if self.approval_binary is None:
-            approval, _, approval_map = self.compile(self.app.approval_program, True)
-            self.approval_binary = approval
-            self.approval_src_map = approval_map
+        self.clear_binary = compiled_app.clear._binary
+        self.clear_src_map = compiled_app.clear._map
 
-        if self.clear_binary is None:
-            clear, _, clear_map = self.compile(self.app.clear_program, True)
-            self.clear_binary = clear
-            self.clear_src_map = clear_map
+        if self.app.approval_program and self.app.clear_program:
+            self.approval_asserts = _gather_asserts(
+                self.app.approval_program, self.approval_src_map
+            )
+            self.clear_asserts = _gather_asserts(
+                self.app.clear_program, self.clear_src_map
+            )
+
+    def _build_app(self, app_precompile: AppPrecompile) -> AppPrecompile:
+        """
+        Recursively traverse through precompiles within an Application
+        in a depth-first manner to then compile bottom-up.
+        """
+
+        for _, p in app_precompile.app.precompiles.items():
+            match p:
+                case LSigPrecompile():
+                    self._build_lsig(p)
+                case AppPrecompile():
+                    self._build_app(p)
+                case _:
+                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
+
+        app_precompile.compile_to_teal()
+
+        if app_precompile.approval._binary is None:
+            app_precompile.approval.compile(self.client)
+
+        if app_precompile.clear._binary is None:
+            app_precompile.clear.compile(self.client)
+
+        return app_precompile
+
+    def _build_lsig(self, lsig_precompile: LSigPrecompile) -> LSigPrecompile:
+        """
+        Recursively traverse through precompiles within a LogicSignature
+        in a depth-first manner to then compile bottom-up.
+        """
+        for _, p in lsig_precompile.lsig.precompiles.items():
+            match p:
+                case LSigPrecompile():
+                    self._build_lsig(p)
+                case AppPrecompile():
+                    self._build_app(p)
+                case _:
+                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
+
+        lsig_precompile.compile_to_teal()
+
+        if lsig_precompile.logic._binary is None:
+            lsig_precompile.logic.compile(self.client)
+
+        return lsig_precompile
 
     def create(
         self,
@@ -394,6 +449,7 @@ class ApplicationClient:
             self.add_method_call(
                 atc,
                 self.app.on_delete,
+                on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
                 sp=sp,
                 index=self.app_id,
@@ -455,6 +511,7 @@ class ApplicationClient:
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
+        atc: AtomicTransactionComposer = None,
         **kwargs,
     ) -> ABIResult:
 
@@ -465,8 +522,11 @@ class ApplicationClient:
 
         hints = self.method_hints(method.name)
 
+        if atc is None:
+            atc = AtomicTransactionComposer()
+
         atc = self.add_method_call(
-            AtomicTransactionComposer(),
+            atc,
             method,
             sender,
             signer,
@@ -659,17 +719,19 @@ class ApplicationClient:
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
-    def fund(self, amt: int) -> str:
-        """fund pays the app account the amount passed using the signer"""
+    def fund(self, amt: int, addr: str = None) -> str:
+        """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
         sender = self.get_sender()
         signer = self.get_signer()
 
         sp = self.client.suggested_params()
 
+        rcv = self.app_addr if addr is None else addr
+
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
-                txn=transaction.PaymentTxn(sender, sp, self.app_addr, amt),
+                txn=transaction.PaymentTxn(sender, sp, rcv, amt),
                 signer=signer,
             )
         )
@@ -742,10 +804,10 @@ class ApplicationClient:
         return self.client.suggested_params()
 
     def wrap_approval_exception(self, e: Exception) -> Exception:
-        if self.approval_src_map is None:
-            if self.app.approval_program is None:
-                return e
+        if self.app.approval_program is None:
+            return e
 
+        if self.approval_src_map is None:
             _, _, map = self.compile(self.app.approval_program, True)
             self.approval_src_map = map
 
@@ -778,3 +840,32 @@ class ApplicationClient:
                 return signer.lsig.address()
 
         raise Exception("No sender provided")
+
+
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first bit
+        line = line.split(" ").pop()
+        if line != "assert":
+            continue
+
+        # take the first one, assert should be alone on the line
+        pc = src_map.get_pcs_for_line(idx)[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+
+    return asserts

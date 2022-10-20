@@ -8,6 +8,7 @@ from algosdk.future.transaction import *
 
 from pyteal import *
 from beaker import *
+from beaker.precompile import LSigPrecompile
 
 if __name__ == "__main__":
     from lsig import EthEcdsaVerify, HashValue, Signature
@@ -22,7 +23,7 @@ class EthChecker(Application):
     # When passed to Precompile, it flags the init of the Application
     # to prevent building approval/clear programs until the precompile is
     # compiled so we have access to compiled information (its address for instance)
-    verifier: Final[Precompile] = Precompile(EthEcdsaVerify(version=6).program)
+    verifier: Final[LSigPrecompile] = LSigPrecompile(EthEcdsaVerify(version=6))
 
     @external
     def check_eth_sig(
@@ -32,7 +33,7 @@ class EthChecker(Application):
             # The precompiled lsig should have its address and binary available
             # here so we can use it to make sure we've been called
             # with the correct lsig
-            Assert(Txn.sender() == self.verifier.hash()),
+            Assert(Txn.sender() == self.verifier.logic.hash()),
             output.set("lsig validated"),
         )
 

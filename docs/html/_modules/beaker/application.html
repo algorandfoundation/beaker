@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
 </ul>
 
@@ -107,10 +106,10 @@
     <span class="n">AccountStateBlob</span><span class="p">,</span>
     <span class="n">ApplicationStateBlob</span><span class="p">,</span>
     <span class="n">ApplicationState</span><span class="p">,</span>
-    <span class="n">DynamicAccountStateValue</span><span class="p">,</span>
+    <span class="n">ReservedAccountStateValue</span><span class="p">,</span>
     <span class="n">AccountStateValue</span><span class="p">,</span>
     <span class="n">ApplicationStateValue</span><span class="p">,</span>
-    <span class="n">DynamicApplicationStateValue</span><span class="p">,</span>
+    <span class="n">ReservedApplicationStateValue</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.errors</span> <span class="kn">import</span> <span class="n">BareOverwriteError</span>
 <span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">Precompile</span>
@@ -171,11 +170,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">precompiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Precompile</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">acct_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
-            <span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">DynamicAccountStateValue</span> <span class="o">|</span> <span class="n">AccountStateBlob</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="n">AccountStateValue</span> <span class="o">|</span> <span class="n">ReservedAccountStateValue</span> <span class="o">|</span> <span class="n">AccountStateBlob</span>
         <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">app_vals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
             <span class="nb">str</span><span class="p">,</span>
-            <span class="n">ApplicationStateValue</span> <span class="o">|</span> <span class="n">DynamicApplicationStateValue</span> <span class="o">|</span> <span class="n">ApplicationStateBlob</span><span class="p">,</span>
+            <span class="n">ApplicationStateValue</span>
+            <span class="o">|</span> <span class="n">ReservedApplicationStateValue</span>
+            <span class="o">|</span> <span class="n">ApplicationStateBlob</span><span class="p">,</span>
         <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">bound_attr</span><span class="p">,</span> <span class="n">static_attr</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -186,7 +187,7 @@
                     <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
-                <span class="k">case</span> <span class="n">DynamicAccountStateValue</span><span class="p">():</span>
+                <span class="k">case</span> <span class="n">ReservedAccountStateValue</span><span class="p">():</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">AccountStateBlob</span><span class="p">():</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
@@ -197,7 +198,7 @@
                     <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
-                <span class="k">case</span> <span class="n">DynamicApplicationStateValue</span><span class="p">():</span>
+                <span class="k">case</span> <span class="n">ReservedApplicationStateValue</span><span class="p">():</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
 
                 <span class="k">case</span> <span class="n">Precompile</span><span class="p">():</span>
@@ -293,22 +294,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span> <span class="o">=</span> <span class="n">AccountState</span><span class="p">(</span><span class="n">acct_vals</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span> <span class="o">=</span> <span class="n">ApplicationState</span><span class="p">(</span><span class="n">app_vals</span><span class="p">)</span>
 
-        <span class="c1"># Create router with name of class and bare externals</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">router</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-            <span class="n">bare_calls</span><span class="o">=</span><span class="n">BareCallActions</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">),</span>
-            <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="c1"># If there are no precompiles, we can build the programs</span>
         <span class="c1"># with what we already have</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">precompiles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-
-        <span class="c1"># TODO: reset router?</span>
-        <span class="c1"># It will fail if compile is re-called but we shouldn&#39;t rely on that</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">router</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">bare_calls</span><span class="o">=</span><span class="n">BareCallActions</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">),</span>
+            <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Add method externals</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">method_tuple</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -373,7 +369,32 @@
 
 <div class="viewcode-block" id="Application.create"><a class="viewcode-back" href="../../application.html#beaker.application.Application.create">[docs]</a>    <span class="nd">@create</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;approval.teal&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Approval program empty&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;clear.teal&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Clear program empty&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;contract.json&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Contract empty&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">dictify</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;application.json&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">application_spec</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span></div>
 </pre></div>
 
            </div>
