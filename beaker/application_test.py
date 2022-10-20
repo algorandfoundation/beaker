@@ -103,7 +103,9 @@ def test_method_override():
     assert mo.methods["handle_algo"]
     assert mo.methods["handle_asa"]
 
-    overlapping_methods = [method for method in mo.contract.methods if method.name == "handle"]
+    overlapping_methods = [
+        method for method in mo.contract.methods if method.name == "handle"
+    ]
     assert len(overlapping_methods) == 2
     assert get_method_spec(mo.handle_algo) in overlapping_methods
     assert get_method_spec(mo.handle_asa) in overlapping_methods

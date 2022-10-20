@@ -170,7 +170,9 @@ class Application:
             elif handler_config.method_spec is not None:
                 # Create the ABIReturnSubroutine from the static attr
                 # but override the implementation with the bound version
-                abi_meth = ABIReturnSubroutine(static_attr, overriding_name=handler_config.method_spec.name)
+                abi_meth = ABIReturnSubroutine(
+                    static_attr, overriding_name=handler_config.method_spec.name
+                )
 
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
@@ -240,7 +242,9 @@ class Application:
         for _, method_tuple in self.methods.items():
             method, method_config = method_tuple
             self.router.add_method_handler(
-                method_call=method, method_config=method_config, overriding_name=method.name()
+                method_call=method,
+                method_config=method_config,
+                overriding_name=method.name(),
             )
 
         # Compile approval and clear programs

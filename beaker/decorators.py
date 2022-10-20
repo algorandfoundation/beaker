@@ -470,7 +470,9 @@ def external(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn, overriding_name=name).method_spec())
+        set_handler_config(
+            fn, method_spec=ABIReturnSubroutine(fn, overriding_name=name).method_spec()
+        )
 
         return fn
 
