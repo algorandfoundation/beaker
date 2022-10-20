@@ -174,3 +174,20 @@ def test_different_methods_logic_signature():
     # Cant call it from bound context
     with pytest.raises(TypeError):
         lsig.no_self_abi_tester(pt.abi.Uint64(), pt.abi.Uint64())
+
+
+def test_lsig_template_ordering():
+    class Lsig(LogicSignature):
+        f = TemplateVariable(pt.TealType.uint64)
+        a = TemplateVariable(pt.TealType.uint64)
+        b = TemplateVariable(pt.TealType.uint64)
+        c = TemplateVariable(pt.TealType.uint64)
+
+        def evaluate(self):
+            return pt.Approve()
+
+    expected = ["f", "a", "b", "c"]
+
+    l = Lsig()
+    for idx, tv in enumerate(l.template_variables):
+        assert tv.name == expected[idx]

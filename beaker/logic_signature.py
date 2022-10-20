@@ -77,11 +77,18 @@ class LogicSignature:
 
         self.teal_version = version
 
-        self.attrs = {
+        # Get initial list of all attrs delacared
+        initial_attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
             if not m.startswith("__")
         }
+
+        # Make sure we preserve the ordering of declaration
+        ordering = [
+            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
+        ]
+        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
 
         self.methods: dict[str, SubroutineDefinition] = {}
 

@@ -36,7 +36,9 @@ def demo():
     acct = sandbox.get_accounts().pop()
 
     # Create an Application client containing both an algod client and app
-    app_client = ApplicationClient(client=algod_client, app=Calculator(), signer=acct.signer)
+    app_client = ApplicationClient(
+        client=algod_client, app=Calculator(), signer=acct.signer
+    )
 
     # Create the application on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
