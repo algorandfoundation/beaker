@@ -463,8 +463,6 @@ def external(
         fn = _capture_defaults(fn)
         fn = _replace_structs(fn)
 
-        if name is not None:
-            fn = _replace_name(name)(fn)
         if authorize is not None:
             fn = _authorize(authorize)(fn)
         if method_config is not None:
@@ -472,7 +470,7 @@ def external(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
+        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn, overriding_name=name).method_spec())
 
         return fn
 
