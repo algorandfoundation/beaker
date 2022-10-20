@@ -88,6 +88,7 @@
 </div>
 <p><a class="reference internal" href="#app-client-example"><span class="std std-ref">Full Example</span></a></p>
 <p>The main point of interaction with our application is done using <code class="docutils literal notranslate"><span class="pre">call</span></code>.</p>
+<p>If there is an application already deployed, the <code class="docutils literal notranslate"><span class="pre">app_id</span></code> can be passed during initialization. If no <code class="docutils literal notranslate"><span class="pre">app_id</span></code> is passed, it’s set to 0 so any app calls will be interpreted by the network as an intention to create the application. Once the <code class="docutils literal notranslate"><span class="pre">create</span></code> method is called the app id is set internally to the newly deployed application id and follow up calls will use that id.</p>
 <p>If there are multiple signers or you want to re-use some suggested parameters, the <code class="docutils literal notranslate"><span class="pre">prepare</span></code> method may be called with the different arguments and a copy of the client is returned with the updated parameters.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.client.ApplicationClient">

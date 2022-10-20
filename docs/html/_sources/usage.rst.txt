@@ -32,6 +32,9 @@ Instantiate it and take a look at some of the resulting fields.
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
+.. note::
+    The ``Application.dump`` method can be used to write the ``approval.teal``, ``clear.teal``, ``contract.json``, and ``application.json`` to the local file system.
+
 Lets add some methods to be handled by an incoming `ApplicationCallTransaction <https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction>`_.  
 We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine>`_ method with with the :ref:`external <external>` decorator. 
 

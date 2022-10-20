@@ -84,9 +84,9 @@ have some program be included in the source of the applications programs.</p>
 which has a max budget of 20k ops compared with 700 ops in a single Application call.</p>
 <span class="target" id="module-beaker.precompile"></span><dl class="py class">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">Precompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teal_src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile" title="Permalink to this definition"></a></dt>
-<dd><p>Precompile allows a contract to signal that some LogicSignature should be
-fully compiled prior to trying to construct the approval and clear programs.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">Precompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile" title="Permalink to this definition"></a></dt>
+<dd><p>Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
+and LSigPrecompile for Applications and Logic Signature programs, respectively.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile.hash">
 <span class="sig-name descname"><span class="pre">hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.hash" title="Permalink to this definition"></a></dt>
@@ -110,14 +110,6 @@ template values declared.</p>
 blank binary given a set of arguments.</p>
 <p>It is called by <code class="docutils literal notranslate"><span class="pre">template_address</span></code> to return a Expr that
 can be used to compare with a sender given some arguments.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="beaker.precompile.Precompile.signer">
-<span class="sig-name descname"><span class="pre">signer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LogicSigTransactionSigner</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.signer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.signer" title="Permalink to this definition"></a></dt>
-<dd><p>signer returns a LogicSigTransactionSigner to be used with
-an ApplicationClient or AtomicTransactionComposer.</p>
-<p>It should only be used for non templated Precompiles.</p>
 </dd></dl>
 
 <dl class="py method">
