@@ -2,6 +2,19 @@
     "name": "ConstantProductAMM",
     "methods": [
         {
+            "name": "set_governor",
+            "args": [
+                {
+                    "type": "account",
+                    "name": "new_governor"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "sets the governor of the contract, may only be called by the current governor"
+        },
+        {
             "name": "bootstrap",
             "args": [
                 {
@@ -25,35 +38,6 @@
                 "desc": "The asset id of the pool token created."
             },
             "desc": "bootstraps the contract by opting into the assets and creating the pool token.\nNote this method will fail if it is attempted more than once on the same contract since the assets and pool token application state values are marked as static and cannot be overridden."
-        },
-        {
-            "name": "burn",
-            "args": [
-                {
-                    "type": "axfer",
-                    "name": "pool_xfer",
-                    "desc": "Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem"
-                },
-                {
-                    "type": "asset",
-                    "name": "pool_asset",
-                    "desc": "Asset ID of the pool token so we may inspect balance."
-                },
-                {
-                    "type": "asset",
-                    "name": "a_asset",
-                    "desc": "Asset ID of Asset A so we may inspect balance and distribute it"
-                },
-                {
-                    "type": "asset",
-                    "name": "b_asset",
-                    "desc": "Asset ID of Asset B so we may inspect balance and distribute it"
-                }
-            ],
-            "returns": {
-                "type": "void"
-            },
-            "desc": "burn pool tokens to get back some amount of asset A and asset B"
         },
         {
             "name": "mint",
@@ -90,17 +74,33 @@
             "desc": "mint pool tokens given some amount of asset A and asset B.\nGiven some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with the pools current balance and circulating supply of pool tokens."
         },
         {
-            "name": "set_governor",
+            "name": "burn",
             "args": [
                 {
-                    "type": "account",
-                    "name": "new_governor"
+                    "type": "axfer",
+                    "name": "pool_xfer",
+                    "desc": "Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem"
+                },
+                {
+                    "type": "asset",
+                    "name": "pool_asset",
+                    "desc": "Asset ID of the pool token so we may inspect balance."
+                },
+                {
+                    "type": "asset",
+                    "name": "a_asset",
+                    "desc": "Asset ID of Asset A so we may inspect balance and distribute it"
+                },
+                {
+                    "type": "asset",
+                    "name": "b_asset",
+                    "desc": "Asset ID of Asset B so we may inspect balance and distribute it"
                 }
             ],
             "returns": {
                 "type": "void"
             },
-            "desc": "sets the governor of the contract, may only be called by the current governor"
+            "desc": "burn pool tokens to get back some amount of asset A and asset B"
         },
         {
             "name": "swap",
