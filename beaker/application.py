@@ -69,12 +69,18 @@ class Application:
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
 
-        # Is there a better way to get all the attrs declared in subclasses?
-        self.attrs = {
+        # Get initial list of all attrs declared
+        initial_attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
             if not m.startswith("__")
         }
+
+        # Make sure we preserve the ordering of declaration
+        ordering = [
+            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
+        ]
+        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
 
         # Initialize these ahead of time, may not
         # be set after init if len(precompiles)>0

@@ -77,7 +77,7 @@ class LogicSignature:
 
         self.teal_version = version
 
-        # Get initial list of all attrs delacared
+        # Get initial list of all attrs declared
         initial_attrs = {
             m: (getattr(self, m), getattr_static(self, m))
             for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
