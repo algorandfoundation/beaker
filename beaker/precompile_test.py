@@ -13,7 +13,7 @@ from beaker.precompile import (
 )
 
 
-def test_precompile():
+def test_precompile_basic():
     class App(Application):
         class Lsig(LogicSignature):
             def evaluate(self):
