@@ -251,14 +251,8 @@ class AppPrecompile:
         self.clear = Precompile(clear)
 
     def compile(self, client: AlgodClient):
-        for _, p in self.app.precompiles.items():
-            match p:
-                case LSigPrecompile():
-                    p.compile(client)
-                case AppPrecompile():
-                    p.compile(client)
-                case _:
-                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
+        for p in self.app.precompiles.values():
+            p.compile(client)
 
         self.generate_teal()
 
@@ -287,14 +281,8 @@ class LSigPrecompile:
         self.logic = Precompile(self.lsig.compile())
 
     def compile(self, client: AlgodClient):
-        for _, p in self.lsig.precompiles.items():
-            match p:
-                case LSigPrecompile():
-                    p.compile(client)
-                case AppPrecompile():
-                    p.compile(client)
-                case _:
-                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
+        for p in self.lsig.precompiles.values():
+            p.compile(client)
 
         self.generate_teal()
 
