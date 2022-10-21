@@ -92,7 +92,7 @@ class Precompile:
         self._template_values = template_values
 
     def assemble(self, client: AlgodClient):
-        """ Fully compile the program source to binary and generate a source map for matching pc to line number """
+        """Fully compile the program source to binary and generate a source map for matching pc to line number"""
         result = client.compile(self._program, source_map=True)
         self._binary = base64.b64decode(result["result"])
         self._program_hash = result["hash"]
@@ -238,24 +238,24 @@ class AppPrecompile:
     """
 
     def __init__(self, app: "Application"):
-        #: The App to be used and compiled before it's parent  
+        #: The App to be used and compiled before it's parent
         self.app: "Application" = app
-        #: The App's approval program as a Precompile 
+        #: The App's approval program as a Precompile
         self.approval: Precompile = Precompile("")
         #: The App's clear program as a Precompile
         self.clear: Precompile = Precompile("")
 
     def compile(self, client: AlgodClient):
-        """ fully compile this lsig precompile by recursively compiling children depth first 
+        """fully compile this lsig precompile by recursively compiling children depth first
 
-            Note:
-                Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        Note:
+            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
         """
         for p in self.app.precompiles.values():
             p.compile(client)
 
         # at this point, we should have all the dependant logic built
-        # so we can compile the app teal  
+        # so we can compile the app teal
         approval, clear = self.app.compile()
         self.approval = Precompile(approval)
         self.clear = Precompile(clear)
@@ -274,31 +274,31 @@ class LSigPrecompile:
     """
 
     def __init__(self, lsig: "LogicSignature"):
-        #: the LogicSignature to be used and compiled before it's parent 
+        #: the LogicSignature to be used and compiled before it's parent
         self.lsig: "LogicSignature" = lsig
 
         #: The LogicSignature's logic as a Precompile
         self.logic: Precompile = Precompile("")
 
     def compile(self, client: AlgodClient):
-        """ 
-            fully compile this lsig precompile by recursively compiling children depth first 
-        
-            Note:
-                Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
+        fully compile this lsig precompile by recursively compiling children depth first
+
+        Note:
+            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
         """
         for p in self.lsig.precompiles.values():
             p.compile(client)
 
         # at this point, we should have all the dependant logic built
-        # so we can compile the lsig teal  
+        # so we can compile the lsig teal
         self.logic = Precompile(self.lsig.compile())
 
         if self.logic._binary is None:
             self.logic.assemble(client)
 
     def template_signer(self, *args) -> LogicSigTransactionSigner:
-        """Get the Signer object for a populated version of the template contract """
+        """Get the Signer object for a populated version of the template contract"""
         return LogicSigTransactionSigner(
             LogicSigAccount(self.logic.populate_template(*args))
         )
