@@ -238,16 +238,19 @@ class AppPrecompile:
     """
 
     def __init__(self, app: "Application"):
-        if app is None:
-            raise TealInputError("app cannot be None.")
-
+        #: The App to be used and compiled before it's parent  
         self.app: "Application" = app
-
+        #: The App's approval program as a Precompile 
         self.approval: Precompile = Precompile("")
+        #: The App's clear program as a Precompile
         self.clear: Precompile = Precompile("")
 
     def compile(self, client: AlgodClient):
-        """ fully compile this lsig precompile by recursively compiling children depth first """
+        """ fully compile this lsig precompile by recursively compiling children depth first 
+
+            Note:
+                Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
         for p in self.app.precompiles.values():
             p.compile(client)
 
@@ -271,15 +274,19 @@ class LSigPrecompile:
     """
 
     def __init__(self, lsig: "LogicSignature"):
-        if lsig is None:
-            raise TealInputError("lsig cannot be None.")
-
+        #: the LogicSignature to be used and compiled before it's parent 
         self.lsig: "LogicSignature" = lsig
 
+        #: The LogicSignature's logic as a Precompile
         self.logic: Precompile = Precompile("")
 
     def compile(self, client: AlgodClient):
-        """ fully compile this lsig precompile by recursively compiling children depth first """
+        """ 
+            fully compile this lsig precompile by recursively compiling children depth first 
+        
+            Note:
+                Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
         for p in self.lsig.precompiles.values():
             p.compile(client)
 
