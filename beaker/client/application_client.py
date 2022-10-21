@@ -75,8 +75,8 @@ class ApplicationClient:
 
     def build(self) -> None:
         """
-        Wraps the Application in an AppPrecompile before handing off to
-        _build_app for recursive compiling. The result is then used
+        Wraps the Application in an AppPrecompile before calling `compile` on the Precompile which
+        recursively compiles all the dependencies (depth first). The result is then used
         to assign the approval and clear state program binaries and src maps.
         """
         if self.approval_binary is not None and self.clear_binary is not None:
