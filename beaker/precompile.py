@@ -91,7 +91,8 @@ class Precompile:
         self._program = program
         self._template_values = template_values
 
-    def compile(self, client: AlgodClient):
+    def assemble(self, client: AlgodClient):
+        """ Fully compile the program source to binary and generate a source map for matching pc to line number """
         result = client.compile(self._program, source_map=True)
         self._binary = base64.b64decode(result["result"])
         self._program_hash = result["hash"]
@@ -245,22 +246,22 @@ class AppPrecompile:
         self.approval: Precompile = Precompile("")
         self.clear: Precompile = Precompile("")
 
-    def generate_teal(self):
+    def compile(self, client: AlgodClient):
+        """ fully compile this lsig precompile by recursively compiling children depth first """
+        for p in self.app.precompiles.values():
+            p.compile(client)
+
+        # at this point, we should have all the dependant logic built
+        # so we can compile the app teal  
         approval, clear = self.app.compile()
         self.approval = Precompile(approval)
         self.clear = Precompile(clear)
 
-    def compile(self, client: AlgodClient):
-        for p in self.app.precompiles.values():
-            p.compile(client)
-
-        self.generate_teal()
-
         if self.approval._binary is None:
-            self.approval.compile(client)
+            self.approval.assemble(client)
 
         if self.clear._binary is None:
-            self.clear.compile(client)
+            self.clear.assemble(client)
 
 
 class LSigPrecompile:
@@ -277,19 +278,20 @@ class LSigPrecompile:
 
         self.logic: Precompile = Precompile("")
 
-    def generate_teal(self):
-        self.logic = Precompile(self.lsig.compile())
-
     def compile(self, client: AlgodClient):
+        """ fully compile this lsig precompile by recursively compiling children depth first """
         for p in self.lsig.precompiles.values():
             p.compile(client)
 
-        self.generate_teal()
+        # at this point, we should have all the dependant logic built
+        # so we can compile the lsig teal  
+        self.logic = Precompile(self.lsig.compile())
 
         if self.logic._binary is None:
-            self.logic.compile(client)
+            self.logic.assemble(client)
 
     def template_signer(self, *args) -> LogicSigTransactionSigner:
+        """Get the Signer object for a populated version of the template contract """
         return LogicSigTransactionSigner(
             LogicSigAccount(self.logic.populate_template(*args))
         )
