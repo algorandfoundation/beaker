@@ -95,6 +95,7 @@ class Precompile:
         result = client.compile(self._program, source_map=True)
         self._binary = base64.b64decode(result["result"])
         self._program_hash = result["hash"]
+
         self._map = SourceMap(result["sourcemap"])
 
         self.binary = Bytes(self._binary)
@@ -241,18 +242,31 @@ class AppPrecompile:
 
         self.app: "Application" = app
 
-        # Placeholders
         self.approval: Precompile = Precompile("")
         self.clear: Precompile = Precompile("")
 
-    def compile_to_teal(self) -> None:
-        if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.compile()
+    def generate_teal(self):
+        approval, clear = self.app.compile()
+        self.approval = Precompile(approval)
+        self.clear = Precompile(clear)
 
-        if self.app.approval_program:
-            self.approval = Precompile(self.app.approval_program)
-        if self.app.clear_program:
-            self.clear = Precompile(self.app.clear_program)
+    def compile(self, client: AlgodClient):
+        for _, p in self.app.precompiles.items():
+            match p:
+                case LSigPrecompile():
+                    p.compile(client)
+                case AppPrecompile():
+                    p.compile(client)
+                case _:
+                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
+
+        self.generate_teal()
+
+        if self.approval._binary is None:
+            self.approval.compile(client)
+
+        if self.clear._binary is None:
+            self.clear.compile(client)
 
 
 class LSigPrecompile:
@@ -267,13 +281,25 @@ class LSigPrecompile:
 
         self.lsig: "LogicSignature" = lsig
 
-        # Placeholder
         self.logic: Precompile = Precompile("")
 
-    def compile_to_teal(self) -> None:
-        self.lsig.compile()
-        if self.lsig.program:
-            self.logic = Precompile(self.lsig.program)
+    def generate_teal(self):
+        self.logic = Precompile(self.lsig.compile())
+
+    def compile(self, client: AlgodClient):
+        for _, p in self.lsig.precompiles.items():
+            match p:
+                case LSigPrecompile():
+                    p.compile(client)
+                case AppPrecompile():
+                    p.compile(client)
+                case _:
+                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
+
+        self.generate_teal()
+
+        if self.logic._binary is None:
+            self.logic.compile(client)
 
     def template_signer(self, *args) -> LogicSigTransactionSigner:
         return LogicSigTransactionSigner(

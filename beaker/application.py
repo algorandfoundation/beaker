@@ -84,8 +84,8 @@ class Application:
 
         # Initialize these ahead of time, may not
         # be set after init if len(precompiles)>0
-        self.approval_program = None
-        self.clear_program = None
+        self.approval_program: Optional[str] = None
+        self.clear_program: Optional[str] = None
 
         self.on_create = None
         self.on_update = None
@@ -229,7 +229,10 @@ class Application:
         if len(self.precompiles) == 0:
             self.compile()
 
-    def compile(self):
+    def compile(self) -> tuple[str, str]:
+        if self.approval_program is not None and self.clear_program is not None:
+            return self.approval_program, self.clear_program
+
         self.router = Router(
             name=self.__class__.__name__,
             bare_calls=BareCallActions(**self.bare_externals),
@@ -253,6 +256,8 @@ class Application:
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
+
+        return (self.approval_program, self.clear_program)
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""

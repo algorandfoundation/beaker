@@ -1,4 +1,5 @@
 from inspect import getattr_static
+from typing import Optional
 from pyteal import (
     CompileOptions,
     TealInputError,
@@ -76,6 +77,7 @@ class LogicSignature:
         """initialize the logic signature and identify relevant attributes"""
 
         self.teal_version = version
+        self.program: Optional[str] = None
 
         # Get initial list of all attrs declared
         initial_attrs = {
@@ -126,7 +128,10 @@ class LogicSignature:
 
         self.compile()  # will have to be deferred if lsig contains precompiles
 
-    def compile(self):
+    def compile(self) -> str:
+        if self.program is not None:
+            return self.program
+
         template_expressions: list[Expr] = [
             tv._init_expr() for tv in self.template_variables
         ]
@@ -137,6 +142,8 @@ class LogicSignature:
             version=self.teal_version,
             assembleConstants=True,
         )
+
+        return self.program
 
     def evaluate(self):
         """
