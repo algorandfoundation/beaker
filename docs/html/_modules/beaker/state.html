@@ -256,7 +256,7 @@
 
 
 <div class="viewcode-block" id="ApplicationStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ApplicationStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Allows storage of global state values for an application</span>
+    <span class="sd">&quot;&quot;&quot;Allows storage of state values for an application (global state)</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
@@ -323,7 +323,9 @@
 
 
 <div class="viewcode-block" id="ReservedApplicationStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.ReservedApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedApplicationStateValue</span><span class="p">(</span><span class="n">ReservedStateValue</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Reservedally keyed Application State</span>
+    <span class="sd">&quot;&quot;&quot;Reserved Application State (global state)</span>
+
+<span class="sd">    Used when there should be a number of reserved state fields but the keys are uncertain at build time.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>
@@ -362,7 +364,7 @@
 
 
 <div class="viewcode-block" id="AccountStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">AccountStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Allows storage of global state values for an account opted into an application</span>
+    <span class="sd">&quot;&quot;&quot;Allows storage of keyed values for an account opted into an application (local state)</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
@@ -462,7 +464,9 @@
 
 
 <div class="viewcode-block" id="ReservedAccountStateValue"><a class="viewcode-back" href="../../state.html#beaker.state.ReservedAccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedAccountStateValue</span><span class="p">(</span><span class="n">ReservedStateValue</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Reservedally keyed Account State</span>
+    <span class="sd">&quot;&quot;&quot;Reserved Account State (local state)</span>
+
+<span class="sd">    Used when there should be a number of reserved state fields but the keys are uncertain at build time.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)</span>

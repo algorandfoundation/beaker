@@ -168,7 +168,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_template_values</span> <span class="o">=</span> <span class="n">template_values</span>
 
 <div class="viewcode-block" id="Precompile.assemble"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.assemble">[docs]</a>    <span class="k">def</span> <span class="nf">assemble</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">AlgodClient</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Fully compile the program source to binary and generate a source map for matching pc to line number &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Fully compile the program source to binary and generate a source map for matching pc to line number&quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_program</span><span class="p">,</span> <span class="n">source_map</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_binary</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_program_hash</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;hash&quot;</span><span class="p">]</span>
@@ -314,24 +314,24 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="s2">&quot;Application&quot;</span><span class="p">):</span>
-        <span class="c1">#: The App to be used and compiled before it&#39;s parent  </span>
+        <span class="c1">#: The App to be used and compiled before it&#39;s parent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">:</span> <span class="s2">&quot;Application&quot;</span> <span class="o">=</span> <span class="n">app</span>
-        <span class="c1">#: The App&#39;s approval program as a Precompile </span>
+        <span class="c1">#: The App&#39;s approval program as a Precompile</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approval</span><span class="p">:</span> <span class="n">Precompile</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="c1">#: The App&#39;s clear program as a Precompile</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">:</span> <span class="n">Precompile</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AppPrecompile.compile"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.AppPrecompile.compile">[docs]</a>    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">AlgodClient</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; fully compile this lsig precompile by recursively compiling children depth first </span>
+        <span class="sd">&quot;&quot;&quot;fully compile this lsig precompile by recursively compiling children depth first</span>
 
-<span class="sd">            Note:</span>
-<span class="sd">                Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields</span>
+<span class="sd">        Note:</span>
+<span class="sd">            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">precompiles</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">p</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 
         <span class="c1"># at this point, we should have all the dependant logic built</span>
-        <span class="c1"># so we can compile the app teal  </span>
+        <span class="c1"># so we can compile the app teal</span>
         <span class="n">approval</span><span class="p">,</span> <span class="n">clear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approval</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="n">approval</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="n">clear</span><span class="p">)</span>
@@ -350,31 +350,31 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lsig</span><span class="p">:</span> <span class="s2">&quot;LogicSignature&quot;</span><span class="p">):</span>
-        <span class="c1">#: the LogicSignature to be used and compiled before it&#39;s parent </span>
+        <span class="c1">#: the LogicSignature to be used and compiled before it&#39;s parent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lsig</span><span class="p">:</span> <span class="s2">&quot;LogicSignature&quot;</span> <span class="o">=</span> <span class="n">lsig</span>
 
         <span class="c1">#: The LogicSignature&#39;s logic as a Precompile</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="p">:</span> <span class="n">Precompile</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LSigPrecompile.compile"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.LSigPrecompile.compile">[docs]</a>    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">AlgodClient</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; </span>
-<span class="sd">            fully compile this lsig precompile by recursively compiling children depth first </span>
-<span class="sd">        </span>
-<span class="sd">            Note:</span>
-<span class="sd">                Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        fully compile this lsig precompile by recursively compiling children depth first</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lsig</span><span class="o">.</span><span class="n">precompiles</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">p</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 
         <span class="c1"># at this point, we should have all the dependant logic built</span>
-        <span class="c1"># so we can compile the lsig teal  </span>
+        <span class="c1"># so we can compile the lsig teal</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logic</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lsig</span><span class="o">.</span><span class="n">compile</span><span class="p">())</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">client</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="LSigPrecompile.template_signer"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.LSigPrecompile.template_signer">[docs]</a>    <span class="k">def</span> <span class="nf">template_signer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSigTransactionSigner</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Get the Signer object for a populated version of the template contract &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Get the Signer object for a populated version of the template contract&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">LogicSigTransactionSigner</span><span class="p">(</span>
             <span class="n">LogicSigAccount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">populate_template</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>
         <span class="p">)</span></div>
