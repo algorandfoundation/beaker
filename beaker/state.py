@@ -180,7 +180,7 @@ class ReservedStateValue(ABC):
 
 
 class ApplicationStateValue(StateValue):
-    """Allows storage of global state values for an application
+    """Allows storage of state values for an application (global state)
 
     Attributes:
         stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
@@ -247,7 +247,9 @@ class ApplicationStateValue(StateValue):
 
 
 class ReservedApplicationStateValue(ReservedStateValue):
-    """Reservedally keyed Application State
+    """Reserved Application State (global state)
+
+    Used when there should be a number of reserved state fields but the keys are uncertain at build time.
 
     Attributes:
         stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
@@ -286,7 +288,7 @@ class ReservedApplicationStateValue(ReservedStateValue):
 
 
 class AccountStateValue(StateValue):
-    """Allows storage of global state values for an account opted into an application
+    """Allows storage of keyed values for an account opted into an application (local state)
 
     Attributes:
         stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
@@ -386,7 +388,9 @@ class AccountStateValue(StateValue):
 
 
 class ReservedAccountStateValue(ReservedStateValue):
-    """Reservedally keyed Account State
+    """Reserved Account State (local state)
+
+    Used when there should be a number of reserved state fields but the keys are uncertain at build time.
 
     Attributes:
         stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
