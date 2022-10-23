@@ -256,7 +256,7 @@ class AppPrecompile:
 
         # at this point, we should have all the dependant logic built
         # so we can compile the app teal
-        approval, clear = self.app.compile()
+        approval, clear = self.app.compile(client)
         self.approval = Precompile(approval)
         self.clear = Precompile(clear)
 
@@ -292,7 +292,7 @@ class LSigPrecompile:
 
         # at this point, we should have all the dependant logic built
         # so we can compile the lsig teal
-        self.logic = Precompile(self.lsig.compile())
+        self.logic = Precompile(self.lsig.compile(client))
 
         if self.logic._binary is None:
             self.logic.assemble(client)

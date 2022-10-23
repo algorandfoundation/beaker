@@ -1,6 +1,7 @@
 import base64
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
+from algosdk.v2client.algod import AlgodClient
 from algosdk.abi import Method
 from pyteal import (
     SubroutineFnWrapper,
@@ -229,9 +230,14 @@ class Application:
         if len(self.precompiles) == 0:
             self.compile()
 
-    def compile(self) -> tuple[str, str]:
+    def compile(self, client: Optional[AlgodClient] = None) -> tuple[str, str]:
         if self.approval_program is not None and self.clear_program is not None:
             return self.approval_program, self.clear_program
+
+        if len(self.precompiles) > 0:
+            # make sure all the precompiles are available
+            for precompile in self.precompiles.values():
+                precompile.compile(client)
 
         self.router = Router(
             name=self.__class__.__name__,
@@ -306,7 +312,15 @@ class Application:
     def create(self) -> Expr:
         return Approve()
 
-    def dump(self, directory: str = "."):
+    def dump(self, directory: str = ".", client: Optional[AlgodClient] = None):
+        if self.approval_program is None:
+            if client is not None:
+                self.compile(client)
+            else:
+                raise Exception(
+                    "Approval program empty, if you have precompiles, pass an Algod client to build the precompiles"
+                )
+
         import json
         import os
 
