@@ -1,6 +1,7 @@
 import base64
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
+from algosdk.v2client.algod import AlgodClient
 from algosdk.abi import Method
 from pyteal import (
     SubroutineFnWrapper,
@@ -306,7 +307,16 @@ class Application:
     def create(self) -> Expr:
         return Approve()
 
-    def dump(self, directory: str = "."):
+    def dump(self, directory: str = ".", client: Optional[AlgodClient] = None):
+        if self.approval_program is None:
+            if client is not None:
+                ac = AppPrecompile(self)
+                ac.compile(client)
+            else:
+                raise Exception(
+                    "Approval program empty, if you have precompiles, pass an Algod client to build the precompiles"
+                )
+
         import json
         import os
 

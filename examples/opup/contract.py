@@ -1,5 +1,6 @@
 from typing import Literal
 from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
+from beaker import sandbox
 from beaker.decorators import external
 
 if __name__ == "__main__":
@@ -31,3 +32,7 @@ class ExpensiveApp(OpUp):
             ).Do(current.store(Sha256(current.load()))),
             output.decode(current.load()),
         )
+
+
+if __name__ == "__main__":
+    ExpensiveApp().dump(client=sandbox.get_algod_client())
