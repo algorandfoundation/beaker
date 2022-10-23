@@ -332,7 +332,7 @@
 
         <span class="c1"># at this point, we should have all the dependant logic built</span>
         <span class="c1"># so we can compile the app teal</span>
-        <span class="n">approval</span><span class="p">,</span> <span class="n">clear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+        <span class="n">approval</span><span class="p">,</span> <span class="n">clear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approval</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="n">approval</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="n">clear</span><span class="p">)</span>
 
@@ -368,7 +368,7 @@
 
         <span class="c1"># at this point, we should have all the dependant logic built</span>
         <span class="c1"># so we can compile the lsig teal</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logic</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lsig</span><span class="o">.</span><span class="n">compile</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logic</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lsig</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">client</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">client</span><span class="p">)</span></div>

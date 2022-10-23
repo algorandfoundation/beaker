@@ -254,7 +254,8 @@ The constructor may also be passed an app_id directly if one is already deployed
 <section id="inheritance">
 <span id="id2"></span><h2>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this heading"></a></h2>
 <p>What about extending our Application with some other functionality?</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">external</span>
+
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">op_up</span> <span class="kn">import</span> <span class="n">OpUp</span>
 <span class="k">else</span><span class="p">:</span>
@@ -279,7 +280,6 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="p">(</span><span class="n">current</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">()),</span>
             <span class="n">For</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">i</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
-                <span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">iters</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
 </pre></div>
 </div>
 <p>Here we subclassed the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.</p>
