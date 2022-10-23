@@ -1,5 +1,6 @@
 from inspect import getattr_static
 from typing import Optional
+from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     CompileOptions,
     TealInputError,
@@ -128,7 +129,7 @@ class LogicSignature:
 
         self.compile()  # will have to be deferred if lsig contains precompiles
 
-    def compile(self) -> str:
+    def compile(self, client: Optional[AlgodClient] = None) -> str:
         if self.program is not None:
             return self.program
 

@@ -35,4 +35,5 @@ class ExpensiveApp(OpUp):
 
 
 if __name__ == "__main__":
-    ExpensiveApp().dump(client=sandbox.get_algod_client())
+    a, c = ExpensiveApp().compile(sandbox.get_algod_client())
+    print(a, c)
