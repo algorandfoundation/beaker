@@ -322,14 +322,6 @@ def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
     return _impl
 
 
-def _replace_name(name: str) -> Callable[..., HandlerFunc]:
-    def _impl(fn: HandlerFunc) -> HandlerFunc:
-        fn.__name__ = name
-        return fn
-
-    return _impl
-
-
 def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
