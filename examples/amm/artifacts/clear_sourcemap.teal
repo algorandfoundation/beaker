@@ -1,4 +1,4 @@
-// GENERATED TEAL    //    PYTEAL PATH            PYTEAL HYBRID UNPARSED
-#pragma version 7    //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+// GENERATED TEAL    //    PYTEAL PATH               LINE    PYTEAL HYBRID UNPARSED
+#pragma version 7    //    examples/amm/amm_test.py  98      ConstantProductAMM()
 pushint 0 // 0       //
 return               //

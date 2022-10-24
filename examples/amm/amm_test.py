@@ -753,13 +753,13 @@ def test_sourcemap(creator_app_client: client.ApplicationClient):
     with open(ARTIFACTS / "approval_sourcemap.teal", "w") as f:
         # TODO: should default to the following and hence avoid the params
         annotated = pt_approval_sourcemap.annotated_teal(
-            unparse_hybrid=True, concise=True
+            unparse_hybrid=True, concise=False
         )
         f.write(annotated)
 
     with open(ARTIFACTS / "clear_sourcemap.teal", "w") as f:
         # TODO: should default to the following and hence avoid the params
         annotated = pt_clear_source_map.annotated_teal(
-            unparse_hybrid=True, concise=True
+            unparse_hybrid=True, concise=False
         )
         f.write(annotated)

@@ -1,34 +1,34 @@
-// GENERATED TEAL                                                  //    PYTEAL PATH            PYTEAL HYBRID UNPARSED
-#pragma version 7                                                  //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+// GENERATED TEAL                                                  //    PYTEAL PATH               LINE    PYTEAL HYBRID UNPARSED
+#pragma version 7                                                  //    examples/amm/amm_test.py  98      ConstantProductAMM()
 intcblock 0 1 1000 4 10000000000                                   //
 bytecblock 0x61 0x62 0x70 0x67 0x72                                //
-txn NumAppArgs                                                     //                           Router(name=self.__class__.__name__, bare_calls=BareCallActions(**self.bare_externals), descr=self.__doc__)
+txn NumAppArgs                                                     //
 intc_0 // 0                                                        //
 ==                                                                 //
-bnz main_l12                                                       //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txna ApplicationArgs 0                                             //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+bnz main_l12                                                       //
+txna ApplicationArgs 0                                             //
 pushbytes 0x08a956f7 // "set_governor(account)void"                //
 ==                                                                 //
-bnz main_l11                                                       //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txna ApplicationArgs 0                                             //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+bnz main_l11                                                       //
+txna ApplicationArgs 0                                             //
 pushbytes 0x6b59d965 // "bootstrap(pay,asset,asset)uint64"         //
 ==                                                                 //
-bnz main_l10                                                       //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txna ApplicationArgs 0                                             //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+bnz main_l10                                                       //
+txna ApplicationArgs 0                                             //
 pushbytes 0x5cbf1e2d // "mint(axfer,axfer,asset,asset,asset)void"  //
 ==                                                                 //
-bnz main_l9                                                        //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txna ApplicationArgs 0                                             //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+bnz main_l9                                                        //
+txna ApplicationArgs 0                                             //
 pushbytes 0x1436c2ac // "burn(axfer,asset,asset,asset)void"        //
 ==                                                                 //
-bnz main_l8                                                        //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txna ApplicationArgs 0                                             //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+bnz main_l8                                                        //
+txna ApplicationArgs 0                                             //
 pushbytes 0x4a88e055 // "swap(axfer,asset,asset)void"              //
 ==                                                                 //
-bnz main_l7                                                        //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bnz main_l7                                                        //
 err                                                                //
 main_l7:                                                           //
-txn OnCompletion                                                   //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+txn OnCompletion                                                   //
 intc_0 // NoOp                                                     //
 ==                                                                 //
 txn ApplicationID                                                  //
@@ -53,14 +53,14 @@ gtxns TypeEnum                                                     //
 intc_3 // axfer                                                    //
 ==                                                                 //
 assert                                                             //
-load 22                                                            //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 22                                                            //
 load 23                                                            //
 load 24                                                            //
-callsub swap_7                                                     //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+callsub swap_7                                                     //
 intc_1 // 1                                                        //
 return                                                             //
-main_l8:                                                           //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txn OnCompletion                                                   //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+main_l8:                                                           //
+txn OnCompletion                                                   //
 intc_0 // NoOp                                                     //
 ==                                                                 //
 txn ApplicationID                                                  //
@@ -89,15 +89,15 @@ gtxns TypeEnum                                                     //
 intc_3 // axfer                                                    //
 ==                                                                 //
 assert                                                             //
-load 18                                                            //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 18                                                            //
 load 19                                                            //
 load 20                                                            //
 load 21                                                            //
-callsub burn_6                                                     //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+callsub burn_6                                                     //
 intc_1 // 1                                                        //
 return                                                             //
-main_l9:                                                           //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txn OnCompletion                                                   //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+main_l9:                                                           //
+txn OnCompletion                                                   //
 intc_0 // NoOp                                                     //
 ==                                                                 //
 txn ApplicationID                                                  //
@@ -135,16 +135,16 @@ gtxns TypeEnum                                                     //
 intc_3 // axfer                                                    //
 ==                                                                 //
 assert                                                             //
-load 13                                                            //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 13                                                            //
 load 14                                                            //
 load 15                                                            //
 load 16                                                            //
 load 17                                                            //
-callsub mint_5                                                     //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+callsub mint_5                                                     //
 intc_1 // 1                                                        //
 return                                                             //
-main_l10:                                                          //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txn OnCompletion                                                   //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+main_l10:                                                          //
+txn OnCompletion                                                   //
 intc_0 // NoOp                                                     //
 ==                                                                 //
 txn ApplicationID                                                  //
@@ -169,20 +169,20 @@ gtxns TypeEnum                                                     //
 intc_1 // pay                                                      //
 ==                                                                 //
 assert                                                             //
-load 0                                                             //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 0                                                             //
 load 1                                                             //
 load 2                                                             //
-callsub bootstrap_4                                                //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+callsub bootstrap_4                                                //
 store 3                                                            //
-pushbytes 0x151f7c75 // 0x151f7c75                                 //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+pushbytes 0x151f7c75 // 0x151f7c75                                 //
 load 3                                                             //
 itob                                                               //
 concat                                                             //
 log                                                                //
-intc_1 // 1                                                        //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+intc_1 // 1                                                        //
 return                                                             //
-main_l11:                                                          //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txn OnCompletion                                                   //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+main_l11:                                                          //
+txn OnCompletion                                                   //
 intc_0 // NoOp                                                     //
 ==                                                                 //
 txn ApplicationID                                                  //
@@ -196,139 +196,139 @@ getbyte                                                            //
 callsub setgovernor_3                                              //
 intc_1 // 1                                                        //
 return                                                             //
-main_l12:                                                          //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txn OnCompletion                                                   //                           Router(name=self.__class__.__name__, bare_calls=BareCallActions(**self.bare_externals), descr=self.__doc__)
+main_l12:                                                          //
+txn OnCompletion                                                   //
 intc_0 // NoOp                                                     //
 ==                                                                 //
-bnz main_l14                                                       //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-err                                                                //                           Router(name=self.__class__.__name__, bare_calls=BareCallActions(**self.bare_externals), descr=self.__doc__)
-main_l14:                                                          //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-txn ApplicationID                                                  //                           Router(name=self.__class__.__name__, bare_calls=BareCallActions(**self.bare_externals), descr=self.__doc__)
+bnz main_l14                                                       //
+err                                                                //
+main_l14:                                                          //
+txn ApplicationID                                                  //
 intc_0 // 0                                                        //
 ==                                                                 //
 assert                                                             //
 callsub create_0                                                   //
 intc_1 // 1                                                        //
 return                                                             //
-                                                                   //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+                                                                   //
 // create
 create_0:
-bytec_3 // "g"                                                     //    examples/amm/amm.py    Bytes('g')
-global CreatorAddress                                              //                           Global.creator_address()
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-bytec 4 // "r"                                                     //    examples/amm/amm.py    Bytes('r')
-intc_0 // 0                                                        //    beaker/state.py        Int(0)
-app_global_put                                                     //                           App.globalPut(self.key, val)
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_3 // "g"                                                     //    examples/amm/amm.py       66      Bytes('g')
+global CreatorAddress                                              //                              67      Global.creator_address()
+app_global_put                                                     //                              116     self.initialize_application_state()
+bytec 4 // "r"                                                     //                              90      Bytes('r')
+intc_0 // 0                                                        //                              116     self.initialize_application_state()
+app_global_put                                                     //
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // auth_only
 authonly_1:
-bytec_3 // "g"                                                     //    examples/amm/amm.py    Bytes('g')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    beaker/decorators.py   sender == addr
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_3 // "g"                                                     //    examples/amm/amm.py       66      Bytes('g')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       120     def set_governor(self, new_governor: abi.Account):
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // auth_only
 authonly_2:
-bytec_3 // "g"                                                     //    examples/amm/amm.py    Bytes('g')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    beaker/decorators.py   sender == addr
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_3 // "g"                                                     //    examples/amm/amm.py       66      Bytes('g')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       126     def bootstrap(
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // set_governor
 setgovernor_3:
 store 25                                                           //
-txn Sender                                                         //    beaker/decorators.py   Txn.sender()
-callsub authonly_1                                                 //                           allowed(Txn.sender())
-// unauthorized                                                    //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    beaker/decorators.py   Assert(allowed(Txn.sender()), comment='unauthorized')
-bytec_3 // "g"                                                     //    examples/amm/amm.py    Bytes('g')
-load 25                                                            //                           new_governor.address()
+txn Sender                                                         //
+callsub authonly_1                                                 //
+// unauthorized                                                    //
+assert                                                             //
+bytec_3 // "g"                                                     //    examples/amm/amm.py       66      Bytes('g')
+load 25                                                            //                              122     new_governor.address()
 txnas Accounts                                                     //
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+app_global_put                                                     //                                      self.governor.set(new_governor.address())
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // bootstrap
 bootstrap_4:
-store 6                                                            //                           self.router.add_method_handler(method_call=method, method_config=method_config)
+store 6                                                            //
 store 5                                                            //
 store 4                                                            //
-txn Sender                                                         //    beaker/decorators.py   Txn.sender()
-callsub authonly_2                                                 //                           allowed(Txn.sender())
-// unauthorized                                                    //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    beaker/decorators.py   Assert(allowed(Txn.sender()), comment='unauthorized')
-global GroupSize                                                   //    examples/amm/amm.py    Global.group_size()
-pushint 2 // 2                                                     //                           Int(2)
-==                                                                 //                           Global.group_size() == Int(2)
-// group size not 2                                                //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 4                                                             //                           seed.get()
-gtxns Receiver                                                     //                           seed.get().receiver()
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-==                                                                 //    examples/amm/amm.py    seed.get().receiver() == self.address
-// receiver not app address                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 4                                                             //                           seed.get()
-gtxns Amount                                                       //                           seed.get().amount()
-pushint 300000 // 300000                                           //    beaker/consts.py       Int(int(v * algo))
->=                                                                 //    examples/amm/amm.py    seed.get().amount() >= consts.Algos(0.3)
-// amount minimum not met                                          //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 5                                                             //                           a_asset.asset_id()
+txn Sender                                                         //
+callsub authonly_2                                                 //
+// unauthorized                                                    //
+assert                                                             //
+global GroupSize                                                   //    examples/amm/amm.py       149     Global.group_size()
+pushint 2 // 2                                                     //                                      Int(2)
+==                                                                 //                                      Global.group_size() == Int(2)
+// group size not 2                                                //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 4                                                             //                              151     seed.get()
+gtxns Receiver                                                     //                                      seed.get().receiver()
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+==                                                                 //                              151     seed.get().receiver() == self.address
+// receiver not app address                                        //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 4                                                             //                              155     seed.get()
+gtxns Amount                                                       //                                      seed.get().amount()
+pushint 300000 // 300000                                           //                                      consts.Algos(0.3)
+>=                                                                 //                                      seed.get().amount() >= consts.Algos(0.3)
+// amount minimum not met                                          //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 5                                                             //                              159     a_asset.asset_id()
 txnas Assets                                                       //
-load 6                                                             //                           b_asset.asset_id()
+load 6                                                             //                                      b_asset.asset_id()
 txnas Assets                                                       //
-<                                                                  //                           a_asset.asset_id() < b_asset.asset_id()
-// asset a or asset b incorrect                                    //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-intc_0 // 0                                                        //    beaker/state.py        Int(0)
-bytec_0 // "a"                                                     //    examples/amm/amm.py    Bytes('a')
-app_global_get_ex                                                  //    beaker/state.py        App.globalGetEx(Int(0), self.key)
-store 8                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+<                                                                  //                                      a_asset.asset_id() < b_asset.asset_id()
+// asset a or asset b incorrect                                    //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+intc_0 // 0                                                        //                              166     self.asset_a.set(a_asset.asset_id())
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get_ex                                                  //                              166     self.asset_a.set(a_asset.asset_id())
+store 8                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 7                                                            //
-load 8                                                             //    beaker/state.py        v.hasValue()
-!                                                                  //                           Not(v.hasValue())
-assert                                                             //                           Assert(Not(v.hasValue()))
-bytec_0 // "a"                                                     //    examples/amm/amm.py    Bytes('a')
-load 5                                                             //                           a_asset.asset_id()
+load 8                                                             //    examples/amm/amm.py       166     self.asset_a.set(a_asset.asset_id())
+!                                                                  //
+assert                                                             //
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+load 5                                                             //                              166     a_asset.asset_id()
 txnas Assets                                                       //
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-intc_0 // 0                                                        //                           Int(0)
-bytec_1 // "b"                                                     //    examples/amm/amm.py    Bytes('b')
-app_global_get_ex                                                  //    beaker/state.py        App.globalGetEx(Int(0), self.key)
-store 10                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+app_global_put                                                     //                                      self.asset_a.set(a_asset.asset_id())
+intc_0 // 0                                                        //                              167     self.asset_b.set(b_asset.asset_id())
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get_ex                                                  //                              167     self.asset_b.set(b_asset.asset_id())
+store 10                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 9                                                            //
-load 10                                                            //    beaker/state.py        v.hasValue()
-!                                                                  //                           Not(v.hasValue())
-assert                                                             //                           Assert(Not(v.hasValue()))
-bytec_1 // "b"                                                     //    examples/amm/amm.py    Bytes('b')
-load 6                                                             //                           b_asset.asset_id()
+load 10                                                            //    examples/amm/amm.py       167     self.asset_b.set(b_asset.asset_id())
+!                                                                  //
+assert                                                             //
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+load 6                                                             //                              167     b_asset.asset_id()
 txnas Assets                                                       //
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-intc_0 // 0                                                        //                           Int(0)
-bytec_2 // "p"                                                     //    examples/amm/amm.py    Bytes('p')
-app_global_get_ex                                                  //    beaker/state.py        App.globalGetEx(Int(0), self.key)
-store 12                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+app_global_put                                                     //                                      self.asset_b.set(b_asset.asset_id())
+intc_0 // 0                                                        //                              168     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+app_global_get_ex                                                  //                              168     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
+store 12                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 11                                                           //
-load 12                                                            //    beaker/state.py        v.hasValue()
-!                                                                  //                           Not(v.hasValue())
-assert                                                             //                           Assert(Not(v.hasValue()))
-bytec_2 // "p"                                                     //    examples/amm/amm.py    Bytes('p')
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-bytec_1 // "b"                                                     //    examples/amm/amm.py    Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-callsub docreatepooltoken_14                                       //    examples/amm/amm.py    self.do_create_pool_token(self.asset_a, self.asset_b)
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-bytec_0 // "a"                                                     //    examples/amm/amm.py    Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-callsub dooptin_13                                                 //    examples/amm/amm.py    self.do_opt_in(self.asset_a)
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-callsub dooptin_13                                                 //    examples/amm/amm.py    self.do_opt_in(self.asset_b)
-bytec_2 // "p"                                                     //                           Bytes('p')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 12                                                            //    examples/amm/amm.py       168     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
+!                                                                  //
+assert                                                             //
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+bytec_1 // "b"                                                     //    examples/amm/amm.py       78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+callsub docreatepooltoken_14                                       //    examples/amm/amm.py       169     self.do_create_pool_token(self.asset_a, self.asset_b)
+app_global_put                                                     //                              168     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+callsub dooptin_13                                                 //    examples/amm/amm.py       174     self.do_opt_in(self.asset_a)
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+callsub dooptin_13                                                 //    examples/amm/amm.py       175     self.do_opt_in(self.asset_b)
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+retsub                                                             //
                                                                    //
 // mint
 mint_5:
@@ -337,150 +337,150 @@ store 38                                                           //
 store 37                                                           //
 store 36                                                           //
 store 35                                                           //
-load 38                                                            //    examples/amm/amm.py    a_asset.asset_id()
+load 38                                                            //    examples/amm/amm.py       207     a_asset.asset_id()
 txnas Assets                                                       //
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    a_asset.asset_id() == self.asset_a
-// asset a incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 39                                                            //                           b_asset.asset_id()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       207     a_asset.asset_id() == self.asset_a
+// asset a incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 39                                                            //                              211     b_asset.asset_id()
 txnas Assets                                                       //
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    b_asset.asset_id() == self.asset_b
-// asset b incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 37                                                            //                           pool_asset.asset_id()
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       211     b_asset.asset_id() == self.asset_b
+// asset b incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 37                                                            //                              215     pool_asset.asset_id()
 txnas Assets                                                       //
-bytec_2 // "p"                                                     //                           Bytes('p')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    pool_asset.asset_id() == self.pool_token
-// asset pool incorrect                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 35                                                            //                           a_xfer.get()
-gtxns AssetReceiver                                                //                           a_xfer.get().asset_receiver()
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-==                                                                 //    examples/amm/amm.py    a_xfer.get().asset_receiver() == self.address
-// receiver not app address                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 35                                                            //                           a_xfer.get()
-gtxns XferAsset                                                    //                           a_xfer.get().xfer_asset()
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    a_xfer.get().xfer_asset() == self.asset_a
-// asset a incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 35                                                            //                           a_xfer.get()
-gtxns AssetAmount                                                  //                           a_xfer.get().asset_amount()
-intc_0 // 0                                                        //                           Int(0)
->                                                                  //                           a_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 35                                                            //                           a_xfer.get()
-gtxns Sender                                                       //                           a_xfer.get().sender()
-txn Sender                                                         //                           Txn.sender()
-==                                                                 //                           a_xfer.get().sender() == Txn.sender()
-// invalid sender                                                  //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 36                                                            //                           b_xfer.get()
-gtxns AssetReceiver                                                //                           b_xfer.get().asset_receiver()
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-==                                                                 //    examples/amm/amm.py    b_xfer.get().asset_receiver() == self.address
-// receiver not app address                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 36                                                            //                           b_xfer.get()
-gtxns XferAsset                                                    //                           b_xfer.get().xfer_asset()
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    b_xfer.get().xfer_asset() == self.asset_b
-// asset b incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 36                                                            //                           b_xfer.get()
-gtxns AssetAmount                                                  //                           b_xfer.get().asset_amount()
-intc_0 // 0                                                        //                           Int(0)
->                                                                  //                           b_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 36                                                            //                           b_xfer.get()
-gtxns Sender                                                       //                           b_xfer.get().sender()
-txn Sender                                                         //                           Txn.sender()
-==                                                                 //                           b_xfer.get().sender() == Txn.sender()
-// invalid sender                                                  //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-load 37                                                            //    examples/amm/amm.py    pool_asset.holding(self.address)
-asset_holding_get AssetBalance                                     //                           pool_asset.holding(self.address).balance()
-store 41                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       215     pool_asset.asset_id() == self.pool_token
+// asset pool incorrect                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 35                                                            //                              222     a_xfer.get()
+gtxns AssetReceiver                                                //                                      a_xfer.get().asset_receiver()
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+==                                                                 //                              222     a_xfer.get().asset_receiver() == self.address
+// receiver not app address                                        //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 35                                                            //                              226     a_xfer.get()
+gtxns XferAsset                                                    //                                      a_xfer.get().xfer_asset()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       226     a_xfer.get().xfer_asset() == self.asset_a
+// asset a incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 35                                                            //                              230     a_xfer.get()
+gtxns AssetAmount                                                  //                                      a_xfer.get().asset_amount()
+intc_0 // 0                                                        //                                      Int(0)
+>                                                                  //                                      a_xfer.get().asset_amount() > Int(0)
+// amount minimum not met                                          //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 35                                                            //                              234     a_xfer.get()
+gtxns Sender                                                       //                                      a_xfer.get().sender()
+txn Sender                                                         //                                      Txn.sender()
+==                                                                 //                                      a_xfer.get().sender() == Txn.sender()
+// invalid sender                                                  //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 36                                                            //                              241     b_xfer.get()
+gtxns AssetReceiver                                                //                                      b_xfer.get().asset_receiver()
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+==                                                                 //                              241     b_xfer.get().asset_receiver() == self.address
+// receiver not app address                                        //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 36                                                            //                              245     b_xfer.get()
+gtxns XferAsset                                                    //                                      b_xfer.get().xfer_asset()
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       245     b_xfer.get().xfer_asset() == self.asset_b
+// asset b incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 36                                                            //                              249     b_xfer.get()
+gtxns AssetAmount                                                  //                                      b_xfer.get().asset_amount()
+intc_0 // 0                                                        //                                      Int(0)
+>                                                                  //                                      b_xfer.get().asset_amount() > Int(0)
+// amount minimum not met                                          //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 36                                                            //                              253     b_xfer.get()
+gtxns Sender                                                       //                                      b_xfer.get().sender()
+txn Sender                                                         //                                      Txn.sender()
+==                                                                 //                                      b_xfer.get().sender() == Txn.sender()
+// invalid sender                                                  //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+load 37                                                            //                              264     pool_asset.holding(self.address)
+asset_holding_get AssetBalance                                     //                                      pool_asset.holding(self.address).balance()
+store 41                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 40                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-load 38                                                            //    examples/amm/amm.py    a_asset.holding(self.address)
-asset_holding_get AssetBalance                                     //                           a_asset.holding(self.address).balance()
-store 43                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+load 38                                                            //                              265     a_asset.holding(self.address)
+asset_holding_get AssetBalance                                     //                                      a_asset.holding(self.address).balance()
+store 43                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 42                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-load 39                                                            //    examples/amm/amm.py    b_asset.holding(self.address)
-asset_holding_get AssetBalance                                     //                           b_asset.holding(self.address).balance()
-store 45                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+load 39                                                            //                              266     b_asset.holding(self.address)
+asset_holding_get AssetBalance                                     //                                      b_asset.holding(self.address).balance()
+store 45                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 44                                                           //
-load 41                                                            //    examples/amm/amm.py    pool_bal.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 41                                                            //    examples/amm/amm.py       268     pool_bal.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 43                                                            //    examples/amm/amm.py    a_bal.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 43                                                            //    examples/amm/amm.py       269     a_bal.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 45                                                            //    examples/amm/amm.py    b_bal.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 45                                                            //    examples/amm/amm.py       270     b_bal.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 42                                                            //    examples/amm/amm.py    a_bal.value()
-load 35                                                            //                           a_xfer.get()
-gtxns AssetAmount                                                  //                           a_xfer.get().asset_amount()
-==                                                                 //                           a_bal.value() == a_xfer.get().asset_amount()
-load 44                                                            //                           b_bal.value()
-load 36                                                            //                           b_xfer.get()
-gtxns AssetAmount                                                  //                           b_xfer.get().asset_amount()
-==                                                                 //                           b_bal.value() == b_xfer.get().asset_amount()
-&&                                                                 //                           And(a_bal.value() == a_xfer.get().asset_amount(), b_bal.value() == b_xfer.get().asset_amount())
-bnz mint_5_l2                                                      //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-intc 4 // 10000000000                                              //    examples/amm/amm.py    Int(_total_supply)
-load 40                                                            //                           pool_bal.value()
--                                                                  //                           self.total_supply - pool_bal.value()
-load 42                                                            //                           a_bal.value()
-load 35                                                            //                           a_xfer.get()
-gtxns AssetAmount                                                  //                           a_xfer.get().asset_amount()
--                                                                  //                           a_bal.value() - a_xfer.get().asset_amount()
-load 44                                                            //                           b_bal.value()
-load 36                                                            //                           b_xfer.get()
-gtxns AssetAmount                                                  //                           b_xfer.get().asset_amount()
--                                                                  //                           b_bal.value() - b_xfer.get().asset_amount()
-load 35                                                            //                           a_xfer.get()
-gtxns AssetAmount                                                  //                           a_xfer.get().asset_amount()
-load 36                                                            //                           b_xfer.get()
-gtxns AssetAmount                                                  //                           b_xfer.get().asset_amount()
-callsub tokenstomint_8                                             //                           self.tokens_to_mint(self.total_supply - pool_bal.value(), a_bal.value() - a_xfer.get().asset_amount(), b_bal.value() - b_xfer.get().asset_amount(), a_xfer.get().asset_amount(), b_xfer.get().asset_amount())
-b mint_5_l3                                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 42                                                            //    examples/amm/amm.py       276     a_bal.value()
+load 35                                                            //                                      a_xfer.get()
+gtxns AssetAmount                                                  //                                      a_xfer.get().asset_amount()
+==                                                                 //                                      a_bal.value() == a_xfer.get().asset_amount()
+load 44                                                            //                              277     b_bal.value()
+load 36                                                            //                                      b_xfer.get()
+gtxns AssetAmount                                                  //                                      b_xfer.get().asset_amount()
+==                                                                 //                                      b_bal.value() == b_xfer.get().asset_amount()
+&&                                                                 //                              275     And(a_bal.value() == a_xfer.get().asset_amount(), b_bal.value() == b_xfer.get().asset_amount())
+bnz mint_5_l2                                                      //    examples/amm/amm_test.py  98      ConstantProductAMM()
+intc 4 // 10000000000                                              //    examples/amm/amm.py       100     Int(_total_supply)
+load 40                                                            //                              286     pool_bal.value()
+-                                                                  //                                      self.total_supply - pool_bal.value()
+load 42                                                            //                              287     a_bal.value()
+load 35                                                            //                                      a_xfer.get()
+gtxns AssetAmount                                                  //                                      a_xfer.get().asset_amount()
+-                                                                  //                                      a_bal.value() - a_xfer.get().asset_amount()
+load 44                                                            //                              288     b_bal.value()
+load 36                                                            //                                      b_xfer.get()
+gtxns AssetAmount                                                  //                                      b_xfer.get().asset_amount()
+-                                                                  //                                      b_bal.value() - b_xfer.get().asset_amount()
+load 35                                                            //                              289     a_xfer.get()
+gtxns AssetAmount                                                  //                                      a_xfer.get().asset_amount()
+load 36                                                            //                              290     b_xfer.get()
+gtxns AssetAmount                                                  //                                      b_xfer.get().asset_amount()
+callsub tokenstomint_8                                             //                              285     self.tokens_to_mint(self.total_supply - pool_bal.value(), a_bal.value() - a_xfer.get().asset_amount(), b_bal.value() - b_xfer.get().asset_amount(), a_xfer.get().asset_amount(), b_xfer.get().asset_amount())
+b mint_5_l3                                                        //    examples/amm/amm_test.py  98      ConstantProductAMM()
 mint_5_l2:                                                         //
-load 35                                                            //    examples/amm/amm.py    a_xfer.get()
-gtxns AssetAmount                                                  //                           a_xfer.get().asset_amount()
-load 36                                                            //                           b_xfer.get()
-gtxns AssetAmount                                                  //                           b_xfer.get().asset_amount()
-callsub tokenstomintinitial_9                                      //                           self.tokens_to_mint_initial(a_xfer.get().asset_amount(), b_xfer.get().asset_amount())
-mint_5_l3:                                                         //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-store 46                                                           //    examples/amm/amm.py    (to_mint := ScratchVar()).store(If(And(a_bal.value() == a_xfer.get().asset_amount(), b_bal.value() == b_xfer.get().asset_amount()), self.tokens_to_mint_initial(a_xfer.get().asset_amount(), b_xfer.get().asset_amount()), self.tokens_to_mint(self.total_supply - pool_bal.value(), a_bal.value() - a_xfer.get().asset_amount(), b_bal.value() - b_xfer.get().asset_amount(), a_xfer.get().asset_amount(), b_xfer.get().asset_amount())))
-load 46                                                            //                           to_mint.load()
-intc_0 // 0                                                        //                           Int(0)
->                                                                  //                           to_mint.load() > Int(0)
-// outgoing amount too low                                         //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(to_mint.load() > Int(0), comment=ConstantProductAMMErrors.SendAmountTooLow)
-txn Sender                                                         //                           Txn.sender()
-bytec_2 // "p"                                                     //                           Bytes('p')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-load 46                                                            //    examples/amm/amm.py    to_mint.load()
-callsub doaxfer_12                                                 //                           self.do_axfer(Txn.sender(), self.pool_token, to_mint.load())
-bytec 4 // "r"                                                     //                           Bytes('r')
-callsub computeratio_15                                            //                           self.compute_ratio()
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 35                                                            //    examples/amm/amm.py       282     a_xfer.get()
+gtxns AssetAmount                                                  //                                      a_xfer.get().asset_amount()
+load 36                                                            //                                      b_xfer.get()
+gtxns AssetAmount                                                  //                                      b_xfer.get().asset_amount()
+callsub tokenstomintinitial_9                                      //                              281     self.tokens_to_mint_initial(a_xfer.get().asset_amount(), b_xfer.get().asset_amount())
+mint_5_l3:                                                         //    examples/amm/amm_test.py  98      ConstantProductAMM()
+store 46                                                           //    examples/amm/amm.py       273     (to_mint := ScratchVar()).store(If(And(a_bal.value() == a_xfer.get().asset_amount(), b_bal.value() == b_xfer.get().asset_amount()), self.tokens_to_mint_initial(a_xfer.get().asset_amount(), b_xfer.get().asset_amount()), self.tokens_to_mint(self.total_supply - pool_bal.value(), a_bal.value() - a_xfer.get().asset_amount(), b_bal.value() - b_xfer.get().asset_amount(), a_xfer.get().asset_amount(), b_xfer.get().asset_amount())))
+load 46                                                            //                              295     to_mint.load()
+intc_0 // 0                                                        //                                      Int(0)
+>                                                                  //                                      to_mint.load() > Int(0)
+// outgoing amount too low                                         //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       294     Assert(to_mint.load() > Int(0), comment=ConstantProductAMMErrors.SendAmountTooLow)
+txn Sender                                                         //                              299     Txn.sender()
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+load 46                                                            //    examples/amm/amm.py       299     to_mint.load()
+callsub doaxfer_12                                                 //                                      self.do_axfer(Txn.sender(), self.pool_token, to_mint.load())
+bytec 4 // "r"                                                     //                              90      Bytes('r')
+callsub computeratio_15                                            //                              300     self.compute_ratio()
+app_global_put                                                     //                                      self.ratio.set(self.compute_ratio())
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // burn
 burn_6:
@@ -488,218 +488,218 @@ store 61                                                           //
 store 60                                                           //
 store 59                                                           //
 store 58                                                           //
-load 59                                                            //    examples/amm/amm.py    pool_asset.asset_id()
+load 59                                                            //    examples/amm/amm.py       322     pool_asset.asset_id()
 txnas Assets                                                       //
-bytec_2 // "p"                                                     //                           Bytes('p')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    pool_asset.asset_id() == self.pool_token
-// asset pool incorrect                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 60                                                            //                           a_asset.asset_id()
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       322     pool_asset.asset_id() == self.pool_token
+// asset pool incorrect                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 60                                                            //                              326     a_asset.asset_id()
 txnas Assets                                                       //
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    a_asset.asset_id() == self.asset_a
-// asset a incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 61                                                            //                           b_asset.asset_id()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       326     a_asset.asset_id() == self.asset_a
+// asset a incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 61                                                            //                              330     b_asset.asset_id()
 txnas Assets                                                       //
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    b_asset.asset_id() == self.asset_b
-// asset b incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 58                                                            //                           pool_xfer.get()
-gtxns AssetReceiver                                                //                           pool_xfer.get().asset_receiver()
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-==                                                                 //    examples/amm/amm.py    pool_xfer.get().asset_receiver() == self.address
-// receiver not app address                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 58                                                            //                           pool_xfer.get()
-gtxns AssetAmount                                                  //                           pool_xfer.get().asset_amount()
-intc_0 // 0                                                        //                           Int(0)
->                                                                  //                           pool_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 58                                                            //                           pool_xfer.get()
-gtxns XferAsset                                                    //                           pool_xfer.get().xfer_asset()
-bytec_2 // "p"                                                     //                           Bytes('p')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    pool_xfer.get().xfer_asset() == self.pool_token
-// asset pool incorrect                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 58                                                            //                           pool_xfer.get()
-gtxns Sender                                                       //                           pool_xfer.get().sender()
-txn Sender                                                         //                           Txn.sender()
-==                                                                 //                           pool_xfer.get().sender() == Txn.sender()
-// invalid sender                                                  //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-load 59                                                            //    examples/amm/amm.py    pool_asset.holding(self.address)
-asset_holding_get AssetBalance                                     //                           pool_asset.holding(self.address).balance()
-store 63                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       330     b_asset.asset_id() == self.asset_b
+// asset b incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 58                                                            //                              337     pool_xfer.get()
+gtxns AssetReceiver                                                //                                      pool_xfer.get().asset_receiver()
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+==                                                                 //                              337     pool_xfer.get().asset_receiver() == self.address
+// receiver not app address                                        //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 58                                                            //                              341     pool_xfer.get()
+gtxns AssetAmount                                                  //                                      pool_xfer.get().asset_amount()
+intc_0 // 0                                                        //                                      Int(0)
+>                                                                  //                                      pool_xfer.get().asset_amount() > Int(0)
+// amount minimum not met                                          //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 58                                                            //                              345     pool_xfer.get()
+gtxns XferAsset                                                    //                                      pool_xfer.get().xfer_asset()
+bytec_2 // "p"                                                     //                              84      Bytes('p')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       345     pool_xfer.get().xfer_asset() == self.pool_token
+// asset pool incorrect                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 58                                                            //                              349     pool_xfer.get()
+gtxns Sender                                                       //                                      pool_xfer.get().sender()
+txn Sender                                                         //                                      Txn.sender()
+==                                                                 //                                      pool_xfer.get().sender() == Txn.sender()
+// invalid sender                                                  //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+load 59                                                            //                              356     pool_asset.holding(self.address)
+asset_holding_get AssetBalance                                     //                                      pool_asset.holding(self.address).balance()
+store 63                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 62                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-load 60                                                            //    examples/amm/amm.py    a_asset.holding(self.address)
-asset_holding_get AssetBalance                                     //                           a_asset.holding(self.address).balance()
-store 65                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+load 60                                                            //                              357     a_asset.holding(self.address)
+asset_holding_get AssetBalance                                     //                                      a_asset.holding(self.address).balance()
+store 65                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 64                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-load 61                                                            //    examples/amm/amm.py    b_asset.holding(self.address)
-asset_holding_get AssetBalance                                     //                           b_asset.holding(self.address).balance()
-store 67                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+load 61                                                            //                              358     b_asset.holding(self.address)
+asset_holding_get AssetBalance                                     //                                      b_asset.holding(self.address).balance()
+store 67                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 66                                                           //
-load 63                                                            //    examples/amm/amm.py    pool_bal.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 63                                                            //    examples/amm/amm.py       360     pool_bal.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 65                                                            //    examples/amm/amm.py    a_bal.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 65                                                            //    examples/amm/amm.py       361     a_bal.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 67                                                            //    examples/amm/amm.py    b_bal.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 67                                                            //    examples/amm/amm.py       362     b_bal.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-intc 4 // 10000000000                                              //    examples/amm/amm.py    Int(_total_supply)
-load 62                                                            //                           pool_bal.value()
-load 58                                                            //                           pool_xfer.get()
-gtxns AssetAmount                                                  //                           pool_xfer.get().asset_amount()
--                                                                  //                           pool_bal.value() - pool_xfer.get().asset_amount()
--                                                                  //                           self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
-store 68                                                           //                           (issued := ScratchVar()).store(self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount()))
-load 68                                                            //                           issued.load()
-load 64                                                            //                           a_bal.value()
-load 58                                                            //                           pool_xfer.get()
-gtxns AssetAmount                                                  //                           pool_xfer.get().asset_amount()
-callsub tokenstoburn_10                                            //                           self.tokens_to_burn(issued.load(), a_bal.value(), pool_xfer.get().asset_amount())
-store 69                                                           //                           (a_amt := ScratchVar()).store(self.tokens_to_burn(issued.load(), a_bal.value(), pool_xfer.get().asset_amount()))
-load 68                                                            //                           issued.load()
-load 66                                                            //                           b_bal.value()
-load 58                                                            //                           pool_xfer.get()
-gtxns AssetAmount                                                  //                           pool_xfer.get().asset_amount()
-callsub tokenstoburn_10                                            //                           self.tokens_to_burn(issued.load(), b_bal.value(), pool_xfer.get().asset_amount())
-store 70                                                           //                           (b_amt := ScratchVar()).store(self.tokens_to_burn(issued.load(), b_bal.value(), pool_xfer.get().asset_amount()))
-txn Sender                                                         //                           Txn.sender()
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-load 69                                                            //    examples/amm/amm.py    a_amt.load()
-callsub doaxfer_12                                                 //                           self.do_axfer(Txn.sender(), self.asset_a, a_amt.load())
-txn Sender                                                         //                           Txn.sender()
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-load 70                                                            //    examples/amm/amm.py    b_amt.load()
-callsub doaxfer_12                                                 //                           self.do_axfer(Txn.sender(), self.asset_b, b_amt.load())
-bytec 4 // "r"                                                     //                           Bytes('r')
-callsub computeratio_15                                            //                           self.compute_ratio()
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+intc 4 // 10000000000                                              //    examples/amm/amm.py       100     Int(_total_supply)
+load 62                                                            //                              367     pool_bal.value()
+load 58                                                            //                                      pool_xfer.get()
+gtxns AssetAmount                                                  //                                      pool_xfer.get().asset_amount()
+-                                                                  //                                      pool_bal.value() - pool_xfer.get().asset_amount()
+-                                                                  //                                      self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
+store 68                                                           //                              366     (issued := ScratchVar()).store(self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount()))
+load 68                                                            //                              371     issued.load()
+load 64                                                            //                              372     a_bal.value()
+load 58                                                            //                              373     pool_xfer.get()
+gtxns AssetAmount                                                  //                                      pool_xfer.get().asset_amount()
+callsub tokenstoburn_10                                            //                              370     self.tokens_to_burn(issued.load(), a_bal.value(), pool_xfer.get().asset_amount())
+store 69                                                           //                              369     (a_amt := ScratchVar()).store(self.tokens_to_burn(issued.load(), a_bal.value(), pool_xfer.get().asset_amount()))
+load 68                                                            //                              378     issued.load()
+load 66                                                            //                              379     b_bal.value()
+load 58                                                            //                              380     pool_xfer.get()
+gtxns AssetAmount                                                  //                                      pool_xfer.get().asset_amount()
+callsub tokenstoburn_10                                            //                              377     self.tokens_to_burn(issued.load(), b_bal.value(), pool_xfer.get().asset_amount())
+store 70                                                           //                              376     (b_amt := ScratchVar()).store(self.tokens_to_burn(issued.load(), b_bal.value(), pool_xfer.get().asset_amount()))
+txn Sender                                                         //                              385     Txn.sender()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+load 69                                                            //    examples/amm/amm.py       387     a_amt.load()
+callsub doaxfer_12                                                 //                              384     self.do_axfer(Txn.sender(), self.asset_a, a_amt.load())
+txn Sender                                                         //                              391     Txn.sender()
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+load 70                                                            //    examples/amm/amm.py       393     b_amt.load()
+callsub doaxfer_12                                                 //                              390     self.do_axfer(Txn.sender(), self.asset_b, b_amt.load())
+bytec 4 // "r"                                                     //                              90      Bytes('r')
+callsub computeratio_15                                            //                              395     self.compute_ratio()
+app_global_put                                                     //                                      self.ratio.set(self.compute_ratio())
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // swap
 swap_7:
 store 76                                                           //
 store 75                                                           //
 store 74                                                           //
-load 75                                                            //    examples/amm/amm.py    a_asset.asset_id()
+load 75                                                            //    examples/amm/amm.py       414     a_asset.asset_id()
 txnas Assets                                                       //
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    a_asset.asset_id() == self.asset_a
-// asset a incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 76                                                            //                           b_asset.asset_id()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       414     a_asset.asset_id() == self.asset_a
+// asset a incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 76                                                            //                              418     b_asset.asset_id()
 txnas Assets                                                       //
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    b_asset.asset_id() == self.asset_b
-// asset b incorrect                                               //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 74                                                            //                           swap_xfer.get()
-gtxns XferAsset                                                    //                           swap_xfer.get().xfer_asset()
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    swap_xfer.get().xfer_asset() == self.asset_a
-load 74                                                            //                           swap_xfer.get()
-gtxns XferAsset                                                    //                           swap_xfer.get().xfer_asset()
-bytec_1 // "b"                                                     //                           Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    swap_xfer.get().xfer_asset() == self.asset_b
-||                                                                 //                           Or(swap_xfer.get().xfer_asset() == self.asset_a, swap_xfer.get().xfer_asset() == self.asset_b)
-// asset a or asset b incorrect                                    //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 74                                                            //                           swap_xfer.get()
-gtxns AssetAmount                                                  //                           swap_xfer.get().asset_amount()
-intc_0 // 0                                                        //                           Int(0)
->                                                                  //                           swap_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-load 74                                                            //                           swap_xfer.get()
-gtxns Sender                                                       //                           swap_xfer.get().sender()
-txn Sender                                                         //                           Txn.sender()
-==                                                                 //                           swap_xfer.get().sender() == Txn.sender()
-// invalid sender                                                  //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(cond, comment=cmt)
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-load 74                                                            //    examples/amm/amm.py    swap_xfer.get()
-gtxns XferAsset                                                    //                           swap_xfer.get().xfer_asset()
-asset_holding_get AssetBalance                                     //                           AssetHolding.balance(self.address, in_id)
-store 78                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       418     b_asset.asset_id() == self.asset_b
+// asset b incorrect                                               //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 74                                                            //                              426     swap_xfer.get()
+gtxns XferAsset                                                    //                                      swap_xfer.get().xfer_asset()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       426     swap_xfer.get().xfer_asset() == self.asset_a
+load 74                                                            //                              427     swap_xfer.get()
+gtxns XferAsset                                                    //                                      swap_xfer.get().xfer_asset()
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       427     swap_xfer.get().xfer_asset() == self.asset_b
+||                                                                 //                              425     Or(swap_xfer.get().xfer_asset() == self.asset_a, swap_xfer.get().xfer_asset() == self.asset_b)
+// asset a or asset b incorrect                                    //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 74                                                            //                              432     swap_xfer.get()
+gtxns AssetAmount                                                  //                                      swap_xfer.get().asset_amount()
+intc_0 // 0                                                        //                                      Int(0)
+>                                                                  //                                      swap_xfer.get().asset_amount() > Int(0)
+// amount minimum not met                                          //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+load 74                                                            //                              436     swap_xfer.get()
+gtxns Sender                                                       //                                      swap_xfer.get().sender()
+txn Sender                                                         //                                      Txn.sender()
+==                                                                 //                                      swap_xfer.get().sender() == Txn.sender()
+// invalid sender                                                  //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       44      Assert(cond, comment=cmt)
+global CurrentApplicationAddress                                   //                              28      from beaker import (
+load 74                                                            //                              446     swap_xfer.get()
+gtxns XferAsset                                                    //                                      swap_xfer.get().xfer_asset()
+asset_holding_get AssetBalance                                     //                              450     AssetHolding.balance(self.address, in_id)
+store 78                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 77                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-load 74                                                            //    examples/amm/amm.py    swap_xfer.get()
-gtxns XferAsset                                                    //                           swap_xfer.get().xfer_asset()
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    swap_xfer.get().xfer_asset() == self.asset_a
-bnz swap_7_l5                                                      //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-bytec_0 // "a"                                                     //    examples/amm/amm.py    Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-swap_7_l2:                                                         //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-asset_holding_get AssetBalance                                     //    examples/amm/amm.py    AssetHolding.balance(self.address, out_id)
-store 80                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+load 74                                                            //                              442     swap_xfer.get()
+gtxns XferAsset                                                    //                                      swap_xfer.get().xfer_asset()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       442     swap_xfer.get().xfer_asset() == self.asset_a
+bnz swap_7_l5                                                      //    examples/amm/amm_test.py  98      ConstantProductAMM()
+bytec_0 // "a"                                                     //    examples/amm/amm.py       72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+swap_7_l2:                                                         //
+asset_holding_get AssetBalance                                     //    examples/amm/amm.py       451     AssetHolding.balance(self.address, out_id)
+store 80                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 79                                                           //
-load 78                                                            //    examples/amm/amm.py    in_sup.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 78                                                            //    examples/amm/amm.py       453     in_sup.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 80                                                            //    examples/amm/amm.py    out_sup.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 80                                                            //    examples/amm/amm.py       454     out_sup.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 74                                                            //    examples/amm/amm.py    swap_xfer.get()
-gtxns AssetAmount                                                  //                           swap_xfer.get().asset_amount()
-load 77                                                            //                           in_sup.value()
-load 74                                                            //                           swap_xfer.get()
-gtxns AssetAmount                                                  //                           swap_xfer.get().asset_amount()
--                                                                  //                           in_sup.value() - swap_xfer.get().asset_amount()
-load 79                                                            //                           out_sup.value()
-callsub tokenstoswap_11                                            //                           self.tokens_to_swap(swap_xfer.get().asset_amount(), in_sup.value() - swap_xfer.get().asset_amount(), out_sup.value())
-store 81                                                           //                           (to_swap := ScratchVar()).store(self.tokens_to_swap(swap_xfer.get().asset_amount(), in_sup.value() - swap_xfer.get().asset_amount(), out_sup.value()))
-load 81                                                            //                           to_swap.load()
-intc_0 // 0                                                        //                           Int(0)
->                                                                  //                           to_swap.load() > Int(0)
-// outgoing amount too low                                         //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-assert                                                             //    examples/amm/amm.py    Assert(to_swap.load() > Int(0), comment=ConstantProductAMMErrors.SendAmountTooLow)
-txn Sender                                                         //                           Txn.sender()
-load 74                                                            //                           swap_xfer.get()
-gtxns XferAsset                                                    //                           swap_xfer.get().xfer_asset()
-bytec_0 // "a"                                                     //                           Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-==                                                                 //    examples/amm/amm.py    swap_xfer.get().xfer_asset() == self.asset_a
-bnz swap_7_l4                                                      //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-bytec_0 // "a"                                                     //    examples/amm/amm.py    Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-b swap_7_l6                                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 74                                                            //    examples/amm/amm.py       459     swap_xfer.get()
+gtxns AssetAmount                                                  //                                      swap_xfer.get().asset_amount()
+load 77                                                            //                              460     in_sup.value()
+load 74                                                            //                                      swap_xfer.get()
+gtxns AssetAmount                                                  //                                      swap_xfer.get().asset_amount()
+-                                                                  //                                      in_sup.value() - swap_xfer.get().asset_amount()
+load 79                                                            //                              461     out_sup.value()
+callsub tokenstoswap_11                                            //                              458     self.tokens_to_swap(swap_xfer.get().asset_amount(), in_sup.value() - swap_xfer.get().asset_amount(), out_sup.value())
+store 81                                                           //                              457     (to_swap := ScratchVar()).store(self.tokens_to_swap(swap_xfer.get().asset_amount(), in_sup.value() - swap_xfer.get().asset_amount(), out_sup.value()))
+load 81                                                            //                              465     to_swap.load()
+intc_0 // 0                                                        //                                      Int(0)
+>                                                                  //                                      to_swap.load() > Int(0)
+// outgoing amount too low                                         //    examples/amm/amm_test.py  98      ConstantProductAMM()
+assert                                                             //    examples/amm/amm.py       464     Assert(to_swap.load() > Int(0), comment=ConstantProductAMMErrors.SendAmountTooLow)
+txn Sender                                                         //                              469     Txn.sender()
+load 74                                                            //                              442     swap_xfer.get()
+gtxns XferAsset                                                    //                                      swap_xfer.get().xfer_asset()
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+==                                                                 //    examples/amm/amm.py       442     swap_xfer.get().xfer_asset() == self.asset_a
+bnz swap_7_l4                                                      //    examples/amm/amm_test.py  98      ConstantProductAMM()
+bytec_0 // "a"                                                     //    examples/amm/amm.py       72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+b swap_7_l6                                                        //
 swap_7_l4:                                                         //
-bytec_1 // "b"                                                     //    examples/amm/amm.py    Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-b swap_7_l6                                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_1 // "b"                                                     //    examples/amm/amm.py       78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+b swap_7_l6                                                        //
 swap_7_l5:                                                         //
-bytec_1 // "b"                                                     //    examples/amm/amm.py    Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-b swap_7_l2                                                        //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+bytec_1 // "b"                                                     //    examples/amm/amm.py       78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+b swap_7_l2                                                        //
 swap_7_l6:                                                         //
-load 81                                                            //    examples/amm/amm.py    to_swap.load()
-callsub doaxfer_12                                                 //                           self.do_axfer(Txn.sender(), out_id, to_swap.load())
-bytec 4 // "r"                                                     //                           Bytes('r')
-callsub computeratio_15                                            //                           self.compute_ratio()
-app_global_put                                                     //    beaker/state.py        App.globalPut(self.key, val)
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 81                                                            //    examples/amm/amm.py       471     to_swap.load()
+callsub doaxfer_12                                                 //                              468     self.do_axfer(Txn.sender(), out_id, to_swap.load())
+bytec 4 // "r"                                                     //                              90      Bytes('r')
+callsub computeratio_15                                            //                              473     self.compute_ratio()
+app_global_put                                                     //                                      self.ratio.set(self.compute_ratio())
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // tokens_to_mint
 tokenstomint_8:
@@ -709,57 +709,57 @@ store 49                                                           //
 store 48                                                           //
 store 47                                                           //
 load 50                                                            //
-intc_2 // 1000                                                     //    examples/amm/amm.py    Int(_scale)
-mulw                                                               //                           WideRatio([a_amount, self.scale], [a_supply])
+intc_2 // 1000                                                     //    examples/amm/amm.py       104     Int(_scale)
+mulw                                                               //                              497     WideRatio([a_amount, self.scale], [a_supply])
 intc_0 // 0                                                        //
-load 48                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-divmodw                                                            //    examples/amm/amm.py    WideRatio([a_amount, self.scale], [a_supply])
+load 48                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+divmodw                                                            //    examples/amm/amm.py       497     WideRatio([a_amount, self.scale], [a_supply])
 pop                                                                //
 pop                                                                //
 swap                                                               //
 !                                                                  //
 assert                                                             //
-store 52                                                           //                           (a_rat := ScratchVar()).store(WideRatio([a_amount, self.scale], [a_supply]))
-load 51                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-intc_2 // 1000                                                     //    examples/amm/amm.py    Int(_scale)
-mulw                                                               //                           WideRatio([b_amount, self.scale], [b_supply])
+store 52                                                           //                              496     (a_rat := ScratchVar()).store(WideRatio([a_amount, self.scale], [a_supply]))
+load 51                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+intc_2 // 1000                                                     //    examples/amm/amm.py       104     Int(_scale)
+mulw                                                               //                              500     WideRatio([b_amount, self.scale], [b_supply])
 intc_0 // 0                                                        //
-load 49                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-divmodw                                                            //    examples/amm/amm.py    WideRatio([b_amount, self.scale], [b_supply])
+load 49                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+divmodw                                                            //    examples/amm/amm.py       500     WideRatio([b_amount, self.scale], [b_supply])
 pop                                                                //
 pop                                                                //
 swap                                                               //
 !                                                                  //
 assert                                                             //
-store 53                                                           //                           (b_rat := ScratchVar()).store(WideRatio([b_amount, self.scale], [b_supply]))
-load 52                                                            //                           a_rat.load()
-load 53                                                            //                           b_rat.load()
-<                                                                  //                           a_rat.load() < b_rat.load()
-bnz tokenstomint_8_l2                                              //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-load 53                                                            //    examples/amm/amm.py    b_rat.load()
-b tokenstomint_8_l3                                                //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+store 53                                                           //                              499     (b_rat := ScratchVar()).store(WideRatio([b_amount, self.scale], [b_supply]))
+load 52                                                            //                              503     a_rat.load()
+load 53                                                            //                                      b_rat.load()
+<                                                                  //                                      a_rat.load() < b_rat.load()
+bnz tokenstomint_8_l2                                              //    examples/amm/amm_test.py  98      ConstantProductAMM()
+load 53                                                            //    examples/amm/amm.py       503     b_rat.load()
+b tokenstomint_8_l3                                                //    examples/amm/amm_test.py  98      ConstantProductAMM()
 tokenstomint_8_l2:                                                 //
-load 52                                                            //    examples/amm/amm.py    a_rat.load()
-tokenstomint_8_l3:                                                 //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 52                                                            //    examples/amm/amm.py       503     a_rat.load()
+tokenstomint_8_l3:                                                 //    examples/amm/amm_test.py  98      ConstantProductAMM()
 load 47                                                            //
-mulw                                                               //    examples/amm/amm.py    WideRatio([If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued], [self.scale])
+mulw                                                               //    examples/amm/amm.py       502     WideRatio([If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued], [self.scale])
 intc_0 // 0                                                        //
-intc_2 // 1000                                                     //                           Int(_scale)
-divmodw                                                            //                           WideRatio([If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued], [self.scale])
+intc_2 // 1000                                                     //                              104     Int(_scale)
+divmodw                                                            //                              502     WideRatio([If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued], [self.scale])
 pop                                                                //
 pop                                                                //
 swap                                                               //
 !                                                                  //
 assert                                                             //
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // tokens_to_mint_initial
 tokenstomintinitial_9:
-*                                                                  //    examples/amm/amm.py    a_amount * b_amount
-sqrt                                                               //                           Sqrt(a_amount * b_amount)
-intc_2 // 1000                                                     //                           Int(_scale)
--                                                                  //                           Sqrt(a_amount * b_amount) - self.scale
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+*                                                                  //    examples/amm/amm.py       510     a_amount * b_amount
+sqrt                                                               //                                      Sqrt(a_amount * b_amount)
+intc_2 // 1000                                                     //                              104     Int(_scale)
+-                                                                  //                              510     Sqrt(a_amount * b_amount) - self.scale
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // tokens_to_burn
 tokenstoburn_10:
@@ -768,16 +768,16 @@ store 72                                                           //
 store 71                                                           //
 load 72                                                            //
 load 73                                                            //
-mulw                                                               //    examples/amm/amm.py    WideRatio([supply, amount], [issued])
+mulw                                                               //    examples/amm/amm.py       514     WideRatio([supply, amount], [issued])
 intc_0 // 0                                                        //
-load 71                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-divmodw                                                            //    examples/amm/amm.py    WideRatio([supply, amount], [issued])
+load 71                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+divmodw                                                            //    examples/amm/amm.py       514     WideRatio([supply, amount], [issued])
 pop                                                                //
 pop                                                                //
 swap                                                               //
 !                                                                  //
 assert                                                             //
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // tokens_to_swap
 tokenstoswap_11:
@@ -785,12 +785,12 @@ store 84                                                           //
 store 83                                                           //
 store 82                                                           //
 load 82                                                            //
-intc_2 // 1000                                                     //    examples/amm/amm.py    Int(_scale)
-pushint 5 // 5                                                     //                           Int(_fee)
--                                                                  //                           self.scale - self.fee
-mulw                                                               //                           WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
-load 84                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-uncover 2                                                          //    examples/amm/amm.py    WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
+intc_2 // 1000                                                     //    examples/amm/amm.py       104     Int(_scale)
+pushint 5 // 5                                                     //                              107     Int(_fee)
+-                                                                  //                              518     self.scale - self.fee
+mulw                                                               //                              519     WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
+load 84                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+uncover 2                                                          //    examples/amm/amm.py       519     WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
 dig 1                                                              //
 *                                                                  //
 cover 2                                                            //
@@ -799,123 +799,123 @@ cover 2                                                            //
 +                                                                  //
 swap                                                               //
 intc_0 // 0                                                        //
-load 83                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-intc_2 // 1000                                                     //    examples/amm/amm.py    Int(_scale)
-*                                                                  //                           in_supply * self.scale
-load 82                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-intc_2 // 1000                                                     //    examples/amm/amm.py    Int(_scale)
-pushint 5 // 5                                                     //                           Int(_fee)
--                                                                  //                           self.scale - self.fee
-*                                                                  //                           in_amount * factor
-+                                                                  //                           in_supply * self.scale + in_amount * factor
-divmodw                                                            //                           WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
+load 83                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+intc_2 // 1000                                                     //    examples/amm/amm.py       104     Int(_scale)
+*                                                                  //                              521     in_supply * self.scale
+load 82                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+intc_2 // 1000                                                     //    examples/amm/amm.py       104     Int(_scale)
+pushint 5 // 5                                                     //                              107     Int(_fee)
+-                                                                  //                              518     self.scale - self.fee
+*                                                                  //                              521     in_amount * factor
++                                                                  //                                      in_supply * self.scale + in_amount * factor
+divmodw                                                            //                              519     WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
 pop                                                                //
 pop                                                                //
 swap                                                               //
 !                                                                  //
 assert                                                             //
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // do_axfer
 doaxfer_12:
 store 29                                                           //
 store 28                                                           //
 store 27                                                           //
-itxn_begin                                                         //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
+itxn_begin                                                         //    examples/amm/amm.py       530     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
 intc_3 // axfer                                                    //
 itxn_field TypeEnum                                                //
-load 28                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-itxn_field XferAsset                                               //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
-load 29                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-itxn_field AssetAmount                                             //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
-load 27                                                            //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-itxn_field AssetReceiver                                           //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
-intc_0 // 0                                                        //                           Int(0)
-itxn_field Fee                                                     //                           InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
+load 28                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+itxn_field XferAsset                                               //    examples/amm/amm.py       530     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
+load 29                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+itxn_field AssetAmount                                             //    examples/amm/amm.py       530     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
+load 27                                                            //    examples/amm/amm_test.py  98      ConstantProductAMM()
+itxn_field AssetReceiver                                           //    examples/amm/amm.py       530     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
+intc_0 // 0                                                        //                              536     Int(0)
+itxn_field Fee                                                     //                              530     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
 itxn_submit                                                        //
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // do_opt_in
 dooptin_13:
 store 26                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-load 26                                                            //                           self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
-intc_0 // 0                                                        //    examples/amm/amm.py    Int(0)
-callsub doaxfer_12                                                 //                           self.do_axfer(self.address, aid, Int(0))
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //
+load 26                                                            //
+intc_0 // 0                                                        //    examples/amm/amm.py       542     Int(0)
+callsub doaxfer_12                                                 //                                      self.do_axfer(self.address, aid, Int(0))
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // do_create_pool_token
 docreatepooltoken_14:
 store 30                                                           //
-asset_params_get AssetUnitName                                     //    examples/amm/amm.py    AssetParam.unitName(a)
-store 32                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+asset_params_get AssetUnitName                                     //    examples/amm/amm.py       547     AssetParam.unitName(a)
+store 32                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 31                                                           //
 load 30                                                            //
-asset_params_get AssetUnitName                                     //    examples/amm/amm.py    AssetParam.unitName(b)
-store 34                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+asset_params_get AssetUnitName                                     //    examples/amm/amm.py       548     AssetParam.unitName(b)
+store 34                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 33                                                           //
-load 32                                                            //    examples/amm/amm.py    una.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 32                                                            //    examples/amm/amm.py       550     una.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 34                                                            //    examples/amm/amm.py    unb.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 34                                                            //    examples/amm/amm.py       551     unb.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-itxn_begin                                                         //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
+itxn_begin                                                         //    examples/amm/amm.py       554     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
 pushint 3 // acfg                                                  //
 itxn_field TypeEnum                                                //
-pushbytes 0x4450542d // "DPT-"                                     //                           Bytes('DPT-')
-load 31                                                            //                           una.value()
-concat                                                             //                           Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value())
-pushbytes 0x2d // "-"                                              //                           Bytes('-')
-concat                                                             //                           Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value())
-load 33                                                            //                           unb.value()
-concat                                                             //                           Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value())
-itxn_field ConfigAssetName                                         //                           InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
-pushbytes 0x647074 // "dpt"                                        //                           Bytes('dpt')
-itxn_field ConfigAssetUnitName                                     //                           InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
-intc 4 // 10000000000                                              //                           Int(_total_supply)
-itxn_field ConfigAssetTotal                                        //                           InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
-pushint 3 // 3                                                     //                           Int(3)
-itxn_field ConfigAssetDecimals                                     //                           InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-itxn_field ConfigAssetManager                                      //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
-global CurrentApplicationAddress                                   //    beaker/application.py  Global.current_application_address()
-itxn_field ConfigAssetReserve                                      //    examples/amm/amm.py    InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
-intc_0 // 0                                                        //                           Int(0)
-itxn_field Fee                                                     //                           InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
+pushbytes 0x4450542d // "DPT-"                                     //                              558     Bytes('DPT-')
+load 31                                                            //                                      una.value()
+concat                                                             //                              557     Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value())
+pushbytes 0x2d // "-"                                              //                              558     Bytes('-')
+concat                                                             //                              557     Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value())
+load 33                                                            //                              558     unb.value()
+concat                                                             //                              557     Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value())
+itxn_field ConfigAssetName                                         //                              554     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
+pushbytes 0x647074 // "dpt"                                        //                              560     Bytes('dpt')
+itxn_field ConfigAssetUnitName                                     //                              554     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
+intc 4 // 10000000000                                              //                              100     Int(_total_supply)
+itxn_field ConfigAssetTotal                                        //                              554     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
+pushint 3 // 3                                                     //                              562     Int(3)
+itxn_field ConfigAssetDecimals                                     //                              554     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
+global CurrentApplicationAddress                                   //
+itxn_field ConfigAssetManager                                      //
+global CurrentApplicationAddress                                   //
+itxn_field ConfigAssetReserve                                      //
+intc_0 // 0                                                        //                              565     Int(0)
+itxn_field Fee                                                     //                              554     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
 itxn_submit                                                        //
-itxn CreatedAssetID                                                //                           InnerTxn.created_asset_id()
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+itxn CreatedAssetID                                                //                              568     InnerTxn.created_asset_id()
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
                                                                    //
 // compute_ratio
 computeratio_15:
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-bytec_0 // "a"                                                     //    examples/amm/amm.py    Bytes('a')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-asset_holding_get AssetBalance                                     //    examples/amm/amm.py    AssetHolding.balance(self.address, self.asset_a)
-store 55                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+bytec_0 // "a"                                                     //                              72      Bytes('a')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+asset_holding_get AssetBalance                                     //    examples/amm/amm.py       574     AssetHolding.balance(self.address, self.asset_a)
+store 55                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 54                                                           //
-global CurrentApplicationAddress                                   //                           Global.current_application_address()
-bytec_1 // "b"                                                     //    examples/amm/amm.py    Bytes('b')
-app_global_get                                                     //    beaker/state.py        App.globalGet(self.key)
-asset_holding_get AssetBalance                                     //    examples/amm/amm.py    AssetHolding.balance(self.address, self.asset_b)
-store 57                                                           //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+global CurrentApplicationAddress                                   //    examples/amm/amm.py       28      from beaker import (
+bytec_1 // "b"                                                     //                              78      Bytes('b')
+app_global_get                                                     //    examples/amm/amm_test.py  98      ConstantProductAMM()
+asset_holding_get AssetBalance                                     //    examples/amm/amm.py       578     AssetHolding.balance(self.address, self.asset_b)
+store 57                                                           //    examples/amm/amm_test.py  98      ConstantProductAMM()
 store 56                                                           //
-load 55                                                            //    examples/amm/amm.py    bal_a.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 55                                                            //    examples/amm/amm.py       583     bal_a.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 57                                                            //    examples/amm/amm.py    bal_b.hasValue()
-// missing required balances                                       //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+load 57                                                            //    examples/amm/amm.py       584     bal_b.hasValue()
+// missing required balances                                       //    examples/amm/amm_test.py  98      ConstantProductAMM()
 assert                                                             //
-load 54                                                            //    examples/amm/amm.py    bal_a.value()
-intc_2 // 1000                                                     //                           Int(_scale)
-mulw                                                               //                           WideRatio([bal_a.value(), self.scale], [bal_b.value()])
+load 54                                                            //    examples/amm/amm.py       587     bal_a.value()
+intc_2 // 1000                                                     //                              104     Int(_scale)
+mulw                                                               //                              587     WideRatio([bal_a.value(), self.scale], [bal_b.value()])
 intc_0 // 0                                                        //
-load 56                                                            //                           bal_b.value()
-divmodw                                                            //                           WideRatio([bal_a.value(), self.scale], [bal_b.value()])
+load 56                                                            //                                      bal_b.value()
+divmodw                                                            //                                      WideRatio([bal_a.value(), self.scale], [bal_b.value()])
 pop                                                                //
 pop                                                                //
 swap                                                               //
 !                                                                  //
 assert                                                             //
-retsub                                                             //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+retsub                                                             //    examples/amm/amm_test.py  98      ConstantProductAMM()
