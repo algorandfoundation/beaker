@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name="beaker",
-    version="0.3.4",
+    version="0.3.5",
     python_requires=">=3.10",
     packages=find_packages(),
     license="MIT",
