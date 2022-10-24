@@ -99,6 +99,8 @@ class Precompile:
 
         self._map = SourceMap(result["sourcemap"])
 
+        self._asserts = _gather_asserts(self._program, self._map)
+
         self.binary = Bytes(self._binary)
         for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
@@ -311,6 +313,34 @@ class LSigPrecompile:
         It should only be used for non templated Precompiles.
         """
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
+
+
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first chunk before spaces
+        line = line.split(" ").pop()
+        if line != "assert":
+            continue
+
+        pc = src_map.get_pcs_for_line(idx)[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+
+    return asserts
 
 
 def py_encode_uvarint(integer: int) -> bytes:
