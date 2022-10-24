@@ -430,6 +430,7 @@ def external(
     fn: HandlerFunc = None,
     /,
     *,
+    name: str = None,
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
@@ -440,6 +441,7 @@ def external(
 
     Args:
         fn: The function being wrapped.
+        name: Name of ABI method. If not set, name of the python method will be used. Useful for method overriding.
         authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
         method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.
         read_only: Mark a method as callable with no fee using dryrun or simulate
@@ -460,7 +462,9 @@ def external(
         if read_only:
             fn = _readonly(fn)
 
-        set_handler_config(fn, method_spec=ABIReturnSubroutine(fn).method_spec())
+        set_handler_config(
+            fn, method_spec=ABIReturnSubroutine(fn, overriding_name=name).method_spec()
+        )
 
         return fn
 
