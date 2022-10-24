@@ -1,5 +1,4 @@
 import copy
-from pyteal import Expr
 
 import pytest
 import typing
@@ -8,11 +7,12 @@ from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
     AccountTransactionSigner,
+    abi,
 )
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
-from beaker import client, sandbox, testing, consts
+from beaker import client, sandbox, testing, consts, decorators
 from beaker.client.application_client import ApplicationClient, ProgramAssertion
 from beaker.client.logic_error import LogicException
 
@@ -482,6 +482,11 @@ def test_app_asserts(
     creator_app_client: client.ApplicationClient,
     user_acct: tuple[str, str, AccountTransactionSigner],
 ):
+    def cases(
+        m: abi.Method | decorators.HandlerFunc,
+        xs: list[tuple[str, dict[str, typing.Any]]],
+    ):
+        return [(a, m, txn) for a, txn in xs]
 
     fake_addr, fake_pk, fake_signer = user_acct
     fake_client = creator_app_client.prepare(signer=fake_signer, sender=fake_addr)
@@ -492,185 +497,192 @@ def test_app_asserts(
         creator_app_client.signer,
     )
 
-    assertion_triggers: list[tuple[str, typing.Any, dict[str, typing.Any]]] = []
-
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
     assets = (a_asset, b_asset)
 
-    # Bootstrap assertions
-
     sp = creator_app_client.client.suggested_params()
-    wrong_group_size_args = build_boostrap_transaction(creator_app_client, assets)
-    wrong_group_size_args["atc"] = AtomicTransactionComposer().add_transaction(
-        TransactionWithSigner(
-            txn=transaction.PaymentTxn(addr, sp, addr, 0),
-            signer=signer,
+
+    def add_txn(
+        d: dict[str, AtomicTransactionComposer], key: str
+    ) -> dict[str, AtomicTransactionComposer]:
+        d[key] = AtomicTransactionComposer().add_transaction(
+            TransactionWithSigner(
+                txn=transaction.PaymentTxn(addr, sp, addr, 0),
+                signer=signer,
+            )
         )
-    )
+        return d
 
-    wrong_receiver_txn = build_boostrap_transaction(creator_app_client, assets)
-    wrong_receiver_txn["seed"].txn.receiver = addr
+    def wrong_receiver(
+        d: dict[str, TransactionWithSigner], key: str
+    ) -> dict[str, TransactionWithSigner]:
+        d[key].txn.receiver = addr
+        return d
 
-    wrong_seed_amount_txn = build_boostrap_transaction(creator_app_client, assets)
-    wrong_seed_amount_txn["seed"].txn.amt = int(consts.algo * 0.29)
+    def override_pay_amount(
+        d: dict[str, TransactionWithSigner], key: str, amt: int
+    ) -> dict[str, TransactionWithSigner]:
+        d[key].txn.amt = amt
+        return d
 
-    wrong_asset_ids = build_boostrap_transaction(creator_app_client, assets)
-    wrong_asset_ids["a_asset"], wrong_asset_ids["b_asset"] = (
-        wrong_asset_ids["b_asset"],
-        wrong_asset_ids["a_asset"],
-    )
+    def override_axfer_amount(
+        d: dict[str, TransactionWithSigner], key: str, amt: int
+    ) -> dict[str, TransactionWithSigner]:
+        d[key].txn.amount = amt
+        return d
 
-    assertion_triggers += [
-        (
-            ConstantProductAMMErrors.GroupSizeNot2,
+    def override_axfer_asset(
+        d: dict[str, TransactionWithSigner], key: str, override: int
+    ) -> dict[str, TransactionWithSigner]:
+        d[key].txn.index = override
+        return d
+
+    def override_sender(
+        d: dict[str, TransactionWithSigner], key: str, override: str
+    ) -> dict[str, TransactionWithSigner]:
+        print(f"{d}")
+        print(f"{d[key].txn.__dict__=}")
+        d[key].txn.sender = override
+        return d
+
+    def bootstrap_cases():
+        def bootstrap(
+            app_client: client.ApplicationClient = creator_app_client,
+            assets: tuple[int, int] = assets,
+        ):
+            return build_boostrap_transaction(app_client, assets)
+
+        return cases(
             ConstantProductAMM.bootstrap,
-            wrong_group_size_args,
-        ),
-        (
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ConstantProductAMM.bootstrap,
-            wrong_receiver_txn,
-        ),
-        (
-            ConstantProductAMMErrors.AmountLessThanMinimum,
-            ConstantProductAMM.bootstrap,
-            wrong_seed_amount_txn,
-        ),
-        (
-            ConstantProductAMMErrors.AssetIdsIncorrect,
-            ConstantProductAMM.bootstrap,
-            wrong_asset_ids,
-        ),
-    ]
+            [
+                (ConstantProductAMMErrors.GroupSizeNot2, add_txn(bootstrap(), "atc")),
+                (
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
+                    wrong_receiver(bootstrap(), "seed"),
+                ),
+                (
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
+                    override_pay_amount(bootstrap(), "seed", int(consts.algo * 0.29)),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetIdsIncorrect,
+                    bootstrap(assets=(b_asset, b_asset)),
+                ),
+            ],
+        )
 
-    ####
-    # Mint assertions
-    ###
+    def mint_cases():
+        a_amt = 100000
+        b_amt = a_amt // 10
 
-    a_amt = 100000
-    b_amt = a_amt // 10
+        def mint(
+            app_client: client.ApplicationClient = creator_app_client,
+            assets: tuple[int, int] = assets,
+            pool_asset: int = pool_asset,
+            a_amount: int = a_amt,
+            b_amount: int = b_amt,
+        ):
+            return build_mint_transaction(
+                app_client, assets, pool_asset, a_amount, b_amount
+            )
 
-    mint_wrong_asset_a_in_reference = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_a_in_reference["a_asset"] = pool_asset
-
-    mint_wrong_asset_b_in_reference = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_b_in_reference["b_asset"] = pool_asset
-
-    mint_wrong_asset_pool_in_reference = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_pool_in_reference["pool_asset"] = a_asset
-
-    assertion_triggers += [
-        (
-            ConstantProductAMMErrors.AssetAIncorrect,
+        well_formed_mint = cases(
             ConstantProductAMM.mint,
-            mint_wrong_asset_a_in_reference,
-        ),
-        (
-            ConstantProductAMMErrors.AssetBIncorrect,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_b_in_reference,
-        ),
-        (
-            ConstantProductAMMErrors.AssetPoolIncorrect,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_pool_in_reference,
-        ),
-    ]
+            [
+                (
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                    mint(assets=(b_asset, b_asset)),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                    mint(assets=(a_asset, a_asset)),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetPoolIncorrect,
+                    mint(pool_asset=a_asset),
+                ),
+            ],
+        )
 
-    mint_wrong_asset_a_receiver = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_a_receiver["a_xfer"].txn.receiver = addr
+        def valid_asset_xfer(key: str):
+            if key not in ["a_xfer", "b_xfer"]:
+                raise Exception(f"Unexpected {key=}")
 
-    mint_wrong_asset_a_id = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_a_id["a_xfer"].txn.index = b_asset
+            return [
+                (
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
+                    wrong_receiver(mint(), key),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetAIncorrect
+                    if key == "a_xfer"
+                    else ConstantProductAMMErrors.AssetBIncorrect,
+                    override_axfer_asset(
+                        mint(), key, b_asset if key == "a_xfer" else a_asset
+                    ),
+                ),
+                (
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
+                    override_axfer_amount(mint(), key, 0),
+                ),
+                (
+                    ConstantProductAMMErrors.SenderInvalid,
+                    mint(app_client=fake_client),
+                ),  # Needs to be specialized
+            ]
 
-    mint_wrong_asset_a_amount = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_a_amount["a_xfer"].txn.amount = 0
+        valid_asset_a_xfer = cases(ConstantProductAMM.mint, valid_asset_xfer("a_xfer"))
 
-    mint_wrong_asset_a_sender = build_mint_transaction(
-        fake_client, assets, pool_asset, a_amt, b_amt
-    )
+        valid_asset_b_xfer = cases(ConstantProductAMM.mint, valid_asset_xfer("b_xfer"))
 
-    assertion_triggers += [
-        (
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_a_receiver,
-        ),
-        (
-            ConstantProductAMMErrors.AssetAIncorrect,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_a_id,
-        ),
-        (
-            ConstantProductAMMErrors.AmountLessThanMinimum,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_a_amount,
-        ),
-        (
-            ConstantProductAMMErrors.SenderInvalid,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_a_sender,
-        ),
-    ]
+        return well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer
 
-    mint_wrong_asset_b_receiver = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_b_receiver["b_xfer"].txn.receiver = addr
+    def burn_cases():
+        def burn(
+            app_client: client.ApplicationClient = creator_app_client,
+            assets: tuple[int, int] = assets,
+            pool_asset: int = pool_asset,
+            burn_amt: int = 1,
+        ):
+            return build_burn_transaction(app_client, assets, pool_asset, burn_amt)
 
-    mint_wrong_asset_b_id = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_b_id["b_xfer"].txn.index = a_asset
+        well_formed_burn = cases(
+            ConstantProductAMM.burn,
+            [
+                (ConstantProductAMMErrors.AssetPoolIncorrect, burn(pool_asset=a_asset)),
+                (
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                    burn(assets=(b_asset, b_asset)),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                    burn(assets=(a_asset, a_asset)),
+                ),
+            ],
+        )
 
-    mint_wrong_asset_b_amount = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
-    )
-    mint_wrong_asset_b_amount["b_xfer"].txn.amount = 0
+        valid_pool_xfer = cases(
+            ConstantProductAMM.burn,
+            [
+                (
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
+                    wrong_receiver(burn(), "pool_xfer"),
+                ),
+                (ConstantProductAMMErrors.AmountLessThanMinimum, burn(burn_amt=0)),
+                (
+                    ConstantProductAMMErrors.AssetPoolIncorrect,
+                    override_axfer_asset(burn(), "pool_xfer", a_asset),
+                ),
+                # (ConstantProductAMMErrors.SenderInvalid, burn(app_client=fake_client)), # Not working
+            ],
+        )
 
-    mint_wrong_asset_b_sender = build_mint_transaction(
-        fake_client, assets, pool_asset, a_amt, b_amt
-    )
-
-    assertion_triggers += [
-        (
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_b_receiver,
-        ),
-        (
-            ConstantProductAMMErrors.AssetBIncorrect,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_b_id,
-        ),
-        (
-            ConstantProductAMMErrors.AmountLessThanMinimum,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_b_amount,
-        ),
-        (
-            ConstantProductAMMErrors.SenderInvalid,
-            ConstantProductAMM.mint,
-            mint_wrong_asset_b_sender,
-        ),
-    ]
+        return well_formed_burn + valid_pool_xfer
 
     # TODO: rest of them
 
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
-    for msg, method, kwargs in assertion_triggers:
+    for msg, method, kwargs in bootstrap_cases() + mint_cases() + burn_cases():
         print(f"Testing {msg}")
         with pytest.raises(LogicException, match=msg):
             try:
