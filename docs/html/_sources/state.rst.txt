@@ -81,7 +81,7 @@ AccountStateValue
 .. _reserved_account_state_value:
 
 ReservedAccountStateValue
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: ReservedAccountStateValue
     :members:

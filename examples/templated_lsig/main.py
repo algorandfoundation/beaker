@@ -38,7 +38,7 @@ class App(Application):
     @external
     def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
         return Assert(
-            Txn.sender() == self.sig_checker.template_hash(signer_address.get())
+            Txn.sender() == self.sig_checker.logic.template_hash(signer_address.get())
         )
 
 

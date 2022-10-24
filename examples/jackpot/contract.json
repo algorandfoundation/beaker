@@ -1,1 +1,0 @@
-{"name": "Jackpot", "methods": [{"name": "opt_in", "args": [{"type": "pay", "name": "deposit"}], "returns": {"type": "void"}}, {"name": "payout", "args": [{"type": "account", "name": "winner"}], "returns": {"type": "void"}}], "networks": {}}
