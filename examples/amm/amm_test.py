@@ -1,4 +1,6 @@
 import copy
+from pathlib import Path
+
 from pyteal import Expr
 
 import pytest
@@ -23,6 +25,8 @@ algod_client: AlgodClient = sandbox.get_algod_client()
 
 TOTAL_POOL_TOKENS = 10000000000
 TOTAL_ASSET_TOKENS = 10000000000
+
+ARTIFACTS = Path.cwd() / "examples" / "amm" / "artifacts"
 
 
 @pytest.fixture(scope="session")
@@ -736,3 +740,26 @@ def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
         )
     )
     atc.execute(algod_client, 2)
+
+
+def test_sourcemap(creator_app_client: client.ApplicationClient):
+    creator_app_client.build()
+    pt_approval_sourcemap = creator_app_client.app.pyteal_approval_sourcemap
+    pt_clear_source_map = creator_app_client.app.pyteal_clear_sourcemap
+
+    assert pt_approval_sourcemap
+    assert pt_clear_source_map
+
+    with open(ARTIFACTS / "approval_sourcemap.teal", "w") as f:
+        # TODO: should default to the following and hence avoid the params
+        annotated = pt_approval_sourcemap.annotated_teal(
+            unparse_hybrid=True, concise=True
+        )
+        f.write(annotated)
+
+    with open(ARTIFACTS / "clear_sourcemap.teal", "w") as f:
+        # TODO: should default to the following and hence avoid the params
+        annotated = pt_clear_source_map.annotated_teal(
+            unparse_hybrid=True, concise=True
+        )
+        f.write(annotated)

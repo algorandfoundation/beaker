@@ -13,6 +13,7 @@ from pyteal import (
     Int,
     Concat,
     Len,
+    PyTealSourceMap,
     Substring,
     Suffix,
     Subroutine,
@@ -245,14 +246,20 @@ class AppPrecompile:
         self.approval: Precompile = Precompile("")
         self.clear: Precompile = Precompile("")
 
+        self.pyteal_approval_sourcemap: PyTealSourceMap | None
+        self.pyteal_clear_sourcemap: PyTealSourceMap | None
+
     def compile_to_teal(self) -> None:
         if self.app.approval_program is None or self.app.clear_program is None:
             self.app.compile()
 
         if self.app.approval_program:
             self.approval = Precompile(self.app.approval_program)
+            self.pyteal_approval_sourcemap = self.app.pyteal_approval_sourcemap
+
         if self.app.clear_program:
             self.clear = Precompile(self.app.clear_program)
+            self.pyteal_clear_sourcemap = self.app.pyteal_clear_sourcemap
 
 
 class LSigPrecompile:

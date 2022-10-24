@@ -87,6 +87,9 @@ class Application:
         self.approval_program = None
         self.clear_program = None
 
+        self.pyteal_approval_sourcemap = None
+        self.pyteal_clear_sourcemap = None
+
         self.on_create = None
         self.on_update = None
         self.on_delete = None
@@ -243,16 +246,35 @@ class Application:
                 method_call=method, method_config=method_config
             )
 
-        # Compile approval and clear programs
-        (
-            self.approval_program,
-            self.clear_program,
-            self.contract,
-        ) = self.router.compile_program(
+        rbundle = self.router.compile_program_with_sourcemaps(
             version=self.teal_version,
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
         )
+
+        (
+            self.approval_program,
+            self.clear_program,
+            self.contract,
+            self.pyteal_approval_sourcemap,
+            self.pyteal_clear_sourcemap,
+        ) = (
+            rbundle.approval_teal,
+            rbundle.clear_teal,
+            rbundle.abi_contract,
+            rbundle.approval_sourcemap,
+            rbundle.clear_sourcemap,
+        )
+        # # Compile approval and clear programs
+        # (
+        #     self.approval_program,
+        #     self.clear_program,
+        #     self.contract,
+        # ) = self.router.compile_program(
+        #     version=self.teal_version,
+        #     assemble_constants=True,
+        #     optimize=OptimizeOptions(scratch_slots=True),
+        # )
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""

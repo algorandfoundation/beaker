@@ -1,0 +1,4 @@
+// GENERATED TEAL    //    PYTEAL PATH            PYTEAL HYBRID UNPARSED
+#pragma version 7    //    beaker/application.py  self.router.compile_program_with_sourcemaps(version=self.teal_version, assemble_constants=True, optimize=OptimizeOptions(scratch_slots=True))
+pushint 0 // 0       //
+return               //
