@@ -319,6 +319,10 @@ class Application:
 
     @create
     def create(self) -> Expr:
+        """create is the only handler defined by default and only approves the transaction.
+
+        Override this method to define custom behavior.
+        """
         return Approve()
 
     def dump(self, directory: str = ".", client: Optional[AlgodClient] = None):
