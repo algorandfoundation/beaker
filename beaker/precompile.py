@@ -91,11 +91,15 @@ class Precompile:
         self._program = program
         self._template_values = template_values
 
-    def compile(self, client: AlgodClient):
+    def assemble(self, client: AlgodClient):
+        """Fully compile the program source to binary and generate a source map for matching pc to line number"""
         result = client.compile(self._program, source_map=True)
         self._binary = base64.b64decode(result["result"])
         self._program_hash = result["hash"]
+
         self._map = SourceMap(result["sourcemap"])
+
+        self._asserts = _gather_asserts(self._program, self._map)
 
         self.binary = Bytes(self._binary)
         for tv in self._template_values:
@@ -236,23 +240,33 @@ class AppPrecompile:
     """
 
     def __init__(self, app: "Application"):
-        if app is None:
-            raise TealInputError("app cannot be None.")
-
+        #: The App to be used and compiled before it's parent
         self.app: "Application" = app
-
-        # Placeholders
+        #: The App's approval program as a Precompile
         self.approval: Precompile = Precompile("")
+        #: The App's clear program as a Precompile
         self.clear: Precompile = Precompile("")
 
-    def compile_to_teal(self) -> None:
-        if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.compile()
+    def compile(self, client: AlgodClient):
+        """fully compile this lsig precompile by recursively compiling children depth first
 
-        if self.app.approval_program:
-            self.approval = Precompile(self.app.approval_program)
-        if self.app.clear_program:
-            self.clear = Precompile(self.app.clear_program)
+        Note:
+            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
+        for p in self.app.precompiles.values():
+            p.compile(client)
+
+        # at this point, we should have all the dependant logic built
+        # so we can compile the app teal
+        approval, clear = self.app.compile(client)
+        self.approval = Precompile(approval)
+        self.clear = Precompile(clear)
+
+        if self.approval._binary is None:
+            self.approval.assemble(client)
+
+        if self.clear._binary is None:
+            self.clear.assemble(client)
 
 
 class LSigPrecompile:
@@ -262,20 +276,31 @@ class LSigPrecompile:
     """
 
     def __init__(self, lsig: "LogicSignature"):
-        if lsig is None:
-            raise TealInputError("lsig cannot be None.")
-
+        #: the LogicSignature to be used and compiled before it's parent
         self.lsig: "LogicSignature" = lsig
 
-        # Placeholder
+        #: The LogicSignature's logic as a Precompile
         self.logic: Precompile = Precompile("")
 
-    def compile_to_teal(self) -> None:
-        self.lsig.compile()
-        if self.lsig.program:
-            self.logic = Precompile(self.lsig.program)
+    def compile(self, client: AlgodClient):
+        """
+        fully compile this lsig precompile by recursively compiling children depth first
+
+        Note:
+            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
+        for p in self.lsig.precompiles.values():
+            p.compile(client)
+
+        # at this point, we should have all the dependant logic built
+        # so we can compile the lsig teal
+        self.logic = Precompile(self.lsig.compile(client))
+
+        if self.logic._binary is None:
+            self.logic.assemble(client)
 
     def template_signer(self, *args) -> LogicSigTransactionSigner:
+        """Get the Signer object for a populated version of the template contract"""
         return LogicSigTransactionSigner(
             LogicSigAccount(self.logic.populate_template(*args))
         )
@@ -288,6 +313,34 @@ class LSigPrecompile:
         It should only be used for non templated Precompiles.
         """
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
+
+
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first chunk before spaces
+        line = line.split(" ").pop()
+        if line != "assert":
+            continue
+
+        pc = src_map.get_pcs_for_line(idx)[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+
+    return asserts
 
 
 def py_encode_uvarint(integer: int) -> bytes:
