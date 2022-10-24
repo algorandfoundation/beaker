@@ -293,10 +293,12 @@
     <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">ClientExample</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_application_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-
-    <span class="c1">## Create a new client that just sets the app id we wish to interact with </span>
+    <span class="c1">## Create a new client that just sets the app id we wish to interact with</span>
     <span class="n">app_client3</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">ClientExample</span><span class="p">(),</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="n">app_client1</span><span class="o">.</span><span class="n">app_id</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span>
+        <span class="n">app</span><span class="o">=</span><span class="n">ClientExample</span><span class="p">(),</span>
+        <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
+        <span class="n">app_id</span><span class="o">=</span><span class="n">app_client1</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>

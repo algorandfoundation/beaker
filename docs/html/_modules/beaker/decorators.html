@@ -506,6 +506,7 @@
     <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">/</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -516,6 +517,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The function being wrapped.</span>
+<span class="sd">        name: Name of ABI method. If not set, name of the python method will be used. Useful for method overriding.</span>
 <span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output&gt;0.</span>
 <span class="sd">        method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.</span>
 <span class="sd">        read_only: Mark a method as callable with no fee using dryrun or simulate</span>
@@ -536,7 +538,9 @@
         <span class="k">if</span> <span class="n">read_only</span><span class="p">:</span>
             <span class="n">fn</span> <span class="o">=</span> <span class="n">_readonly</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
-        <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">method_spec</span><span class="o">=</span><span class="n">ABIReturnSubroutine</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">method_spec</span><span class="p">())</span>
+        <span class="n">set_handler_config</span><span class="p">(</span>
+            <span class="n">fn</span><span class="p">,</span> <span class="n">method_spec</span><span class="o">=</span><span class="n">ABIReturnSubroutine</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">overriding_name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">method_spec</span><span class="p">()</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">fn</span>
 
