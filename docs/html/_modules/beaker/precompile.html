@@ -175,6 +175,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_map</span> <span class="o">=</span> <span class="n">SourceMap</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;sourcemap&quot;</span><span class="p">])</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_asserts</span> <span class="o">=</span> <span class="n">_gather_asserts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_template_values</span><span class="p">:</span>
             <span class="c1"># +1 to acount for the pushbytes/pushint op</span>
@@ -387,6 +389,34 @@
 <span class="sd">        It should only be used for non templated Precompiles.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">LogicSigTransactionSigner</span><span class="p">(</span><span class="n">LogicSigAccount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">_binary</span><span class="p">))</span></div></div>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ProgramAssertion</span><span class="p">:</span>
+    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">def</span> <span class="nf">_gather_asserts</span><span class="p">(</span><span class="n">program</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">src_map</span><span class="p">:</span> <span class="n">SourceMap</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ProgramAssertion</span><span class="p">]:</span>
+    <span class="n">asserts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ProgramAssertion</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">program_lines</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">program_lines</span><span class="p">):</span>
+        <span class="c1"># Take only the first chunk before spaces</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">&quot;assert&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">pc</span> <span class="o">=</span> <span class="n">src_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">idx</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># TODO: this will be wrong for multiline comments</span>
+        <span class="n">line_before</span> <span class="o">=</span> <span class="n">program_lines</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line_before</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;//&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">asserts</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span> <span class="o">=</span> <span class="n">ProgramAssertion</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">line_before</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;// &quot;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">asserts</span>
 
 
 <span class="k">def</span> <span class="nf">py_encode_uvarint</span><span class="p">(</span><span class="n">integer</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
