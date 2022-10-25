@@ -811,7 +811,12 @@ class ApplicationClient:
             _, _, map = self.compile(self.app.approval_program, True)
             self.approval_src_map = map
 
-        return LogicException(e, self.app.approval_program, self.approval_src_map)
+        return LogicException(
+            e,
+            self.app.approval_program,
+            self.approval_src_map,
+            self.app.pyteal_approval_sourcemap,
+        )
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
         if signer is not None:

@@ -2,6 +2,8 @@ import re
 from copy import copy
 from algosdk.source_map import SourceMap
 
+from pyteal import PyTealSourceMap
+
 LOGIC_ERROR = "TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: (.*). Details: pc=([0-9]+), opcodes=.*"
 
 
@@ -23,6 +25,7 @@ class LogicException(Exception):
         logic_error: Exception,
         program: str,
         map: SourceMap,
+        pyteal_map: PyTealSourceMap | None,
     ):
         self.logic_error = logic_error
         self.logic_error_str = str(logic_error)
@@ -34,8 +37,15 @@ class LogicException(Exception):
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
         self.line_no = self.map.get_line_for_pc(self.pc)
 
+        self.pyteal_map = pyteal_map
+
     def __str__(self):
-        return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"
+        r = self.pyteal_map.get_r3sourcemap()[self.line_no, 0]
+        return (
+            f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}."
+            f"\nMapped back to PyTeal expression '{r.source_extract}' @ {r.source}::L{r.source_line+1} (COL{r.source_column+1}, COL{r.source_column_end})"
+            f"\nSurrounding lines:\n\n\t{self.trace()}"
+        )
 
     def trace(self, lines: int = 5) -> str:
         program_lines = copy(self.lines)

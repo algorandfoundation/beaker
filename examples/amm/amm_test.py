@@ -100,15 +100,22 @@ def creator_app_client(creator_acct) -> client.ApplicationClient:
     return app_client
 
 
-def test_app_create(creator_app_client: client.ApplicationClient):
+@pytest.fixture(scope="session")
+def CREATED_app_client(creator_app_client) -> client.ApplicationClient:
     creator_app_client.create()
-    app_state = creator_app_client.get_application_state()
-    sender = creator_app_client.get_sender()
+    return creator_app_client
 
-    assert (
-        app_state[ConstantProductAMM.governor.str_key()] == decode_address(sender).hex()
-    ), "The governor should be my address"
-    assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
+
+@pytest.fixture(scope="session")
+def BOOTSTRAPPED_app_client(
+    CREATED_app_client: client.ApplicationClient, assets: tuple[int, int]
+) -> client.ApplicationClient:
+    # Bootstrap to create pool token and set global state
+    CREATED_app_client.call(
+        ConstantProductAMM.bootstrap,
+        **build_boostrap_transaction(CREATED_app_client, assets),
+    )
+    return CREATED_app_client
 
 
 def minimum_fee_for_txn_count(
@@ -263,26 +270,39 @@ def build_swap_transaction(
     }
 
 
+def test_app_create(CREATED_app_client: client.ApplicationClient):
+    app_state = CREATED_app_client.get_application_state()
+    sender = CREATED_app_client.get_sender()
+
+    assert (
+        app_state[ConstantProductAMM.governor.str_key()] == decode_address(sender).hex()
+    ), "The governor should be my address"
+    assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
+
+
 def test_app_bootstrap(
-    creator_app_client: client.ApplicationClient, assets: tuple[int, int]
+    BOOTSTRAPPED_app_client: client.ApplicationClient, assets: tuple[int, int]
 ):
 
-    app_addr = creator_app_client.app_addr
+    app_addr = BOOTSTRAPPED_app_client.app_addr
     asset_a, asset_b = assets
 
     # Bootstrap to create pool token and set global state
-    result = creator_app_client.call(
-        ConstantProductAMM.bootstrap,
-        **build_boostrap_transaction(creator_app_client, assets),
-    )
+    # result = BOOTSTRAPPED_app_client.call(
+    #     ConstantProductAMM.bootstrap,
+    #     **build_boostrap_transaction(BOOTSTRAPPED_app_client, assets),
+    # )
+    # pool_token = result.return_value
 
-    assert_app_algo_balance(creator_app_client, app_algo_balance)
+    assert_app_algo_balance(BOOTSTRAPPED_app_client, app_algo_balance)
 
-    pool_token = result.return_value
+    app_state = BOOTSTRAPPED_app_client.get_application_state()
+    pool_token = app_state[ConstantProductAMM.pool_token.str_key()]
+
     assert pool_token > 0, "We should have created a pool token with asset id>0"
 
     # Check pool token params
-    token_info = creator_app_client.client.asset_info(pool_token)
+    token_info = BOOTSTRAPPED_app_client.client.asset_info(pool_token)
     assert token_info["params"]["name"] == "DPT-A-B"
     assert token_info["params"]["total"] == TOTAL_POOL_TOKENS
     assert token_info["params"]["reserve"] == app_addr
@@ -290,86 +310,91 @@ def test_app_bootstrap(
     assert token_info["params"]["creator"] == app_addr
 
     # Make sure we're opted in
-    ai = creator_app_client.get_application_account_info()
+    ai = BOOTSTRAPPED_app_client.get_application_account_info()
     assert len(ai["assets"]) == 3, "Should have 3 assets, A/B/Pool"
 
     # Make sure our state is updated
-    app_state = creator_app_client.get_application_state()
-    assert app_state[ConstantProductAMM.pool_token.str_key()] == pool_token
     assert app_state[ConstantProductAMM.asset_a.str_key()] == asset_a
     assert app_state[ConstantProductAMM.asset_b.str_key()] == asset_b
 
 
-def test_app_fund(creator_app_client: ApplicationClient):
+@pytest.fixture(scope="session")
+def FUNDED_app_client(
+    BOOTSTRAPPED_app_client: ApplicationClient,
+) -> client.ApplicationClient:
     app_addr, addr, signer = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-        creator_app_client.signer,
+        BOOTSTRAPPED_app_client.app_addr,
+        BOOTSTRAPPED_app_client.sender,
+        BOOTSTRAPPED_app_client.signer,
     )
 
-    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+    pool_asset, a_asset, b_asset = _get_tokens_from_state(BOOTSTRAPPED_app_client)
 
     assert addr
     _opt_in_to_token(addr, signer, pool_asset)
 
     balance_accts = [app_addr, addr]
-    balances_before = testing.get_balances(creator_app_client.client, balance_accts)
+    balances_before = testing.get_balances(
+        BOOTSTRAPPED_app_client.client, balance_accts
+    )
 
     a_amount = 10000
     b_amount = 3000
 
-    creator_app_client.call(
+    BOOTSTRAPPED_app_client.call(
         ConstantProductAMM.mint,
         **build_mint_transaction(
-            creator_app_client, (a_asset, b_asset), pool_asset, a_amount, b_amount
+            BOOTSTRAPPED_app_client, (a_asset, b_asset), pool_asset, a_amount, b_amount
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, balance_accts)
+    balances_after = testing.get_balances(BOOTSTRAPPED_app_client.client, balance_accts)
     balance_deltas = testing.get_deltas(balances_before, balances_after)
 
     assert balance_deltas[app_addr][a_asset] == a_amount
     assert balance_deltas[app_addr][b_asset] == b_amount
-    assert_app_algo_balance(creator_app_client, app_algo_balance)
+    assert_app_algo_balance(BOOTSTRAPPED_app_client, app_algo_balance)
 
     expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - ConstantProductAMM._scale)
     assert balance_deltas[addr][pool_asset] == expected_pool_tokens
 
-    ratio = _get_ratio_from_state(creator_app_client)
+    ratio = _get_ratio_from_state(BOOTSTRAPPED_app_client)
     expected_ratio = int((a_amount * ConstantProductAMM._scale) / b_amount)
     assert ratio == expected_ratio
 
+    return BOOTSTRAPPED_app_client
 
-def test_mint(creator_app_client: ApplicationClient):
+
+def test_mint(FUNDED_app_client: ApplicationClient):
     app_addr, addr = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
+        FUNDED_app_client.app_addr,
+        FUNDED_app_client.sender,
     )
 
-    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+    pool_asset, a_asset, b_asset = _get_tokens_from_state(FUNDED_app_client)
 
     assert addr
-    balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_before = testing.get_balances(FUNDED_app_client.client, [app_addr, addr])
 
-    ratio_before = _get_ratio_from_state(creator_app_client)
+    ratio_before = _get_ratio_from_state(FUNDED_app_client)
 
     a_amount = 40000
     b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
 
-    creator_app_client.call(
+    FUNDED_app_client.call(
         ConstantProductAMM.mint,
         **build_mint_transaction(
-            creator_app_client, (a_asset, b_asset), pool_asset, a_amount, b_amount
+            FUNDED_app_client, (a_asset, b_asset), pool_asset, a_amount, b_amount
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_after = testing.get_balances(FUNDED_app_client.client, [app_addr, addr])
     balance_deltas = testing.get_deltas(balances_before, balances_after)
 
     # App got the right amount
     assert balance_deltas[app_addr][a_asset] == a_amount
     assert balance_deltas[app_addr][b_asset] == b_amount
-    assert_app_algo_balance(creator_app_client, app_algo_balance)
+    assert_app_algo_balance(FUNDED_app_client, app_algo_balance)
 
     # We minted the correct amount of pool tokens
     issued = TOTAL_POOL_TOKENS - balances_before[app_addr][pool_asset]
@@ -384,34 +409,34 @@ def test_mint(creator_app_client: ApplicationClient):
     assert balance_deltas[addr][pool_asset] == int(expected_pool_tokens)
 
     # We updated the ratio accordingly
-    actual_ratio = _get_ratio_from_state(creator_app_client)
+    actual_ratio = _get_ratio_from_state(FUNDED_app_client)
     expected_ratio = _expect_ratio(
         balances_after[app_addr][a_asset], balances_after[app_addr][b_asset]
     )
     assert actual_ratio == expected_ratio
 
 
-def test_burn(creator_app_client: ApplicationClient):
+def test_burn(FUNDED_app_client: ApplicationClient):
     app_addr, addr = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
+        FUNDED_app_client.app_addr,
+        FUNDED_app_client.sender,
     )
 
-    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+    pool_asset, a_asset, b_asset = _get_tokens_from_state(FUNDED_app_client)
 
     assert addr
-    balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_before = testing.get_balances(FUNDED_app_client.client, [app_addr, addr])
 
     burn_amt = balances_before[addr][pool_asset] // 10
 
-    creator_app_client.call(
+    FUNDED_app_client.call(
         ConstantProductAMM.burn,
         **build_burn_transaction(
-            creator_app_client, (a_asset, b_asset), pool_asset, burn_amt
+            FUNDED_app_client, (a_asset, b_asset), pool_asset, burn_amt
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_after = testing.get_balances(FUNDED_app_client.client, [app_addr, addr])
     balances_delta = testing.get_deltas(balances_before, balances_after)
 
     assert balances_delta[app_addr][pool_asset] == burn_amt
@@ -427,9 +452,9 @@ def test_burn(creator_app_client: ApplicationClient):
     expected_b_tokens = _get_tokens_to_burn(b_supply, burn_amt, issued)
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
 
-    assert_app_algo_balance(creator_app_client, app_algo_balance)
+    assert_app_algo_balance(FUNDED_app_client, app_algo_balance)
 
-    ratio_after = _get_ratio_from_state(creator_app_client)
+    ratio_after = _get_ratio_from_state(FUNDED_app_client)
 
     # Ratio should be identical?
     # assert ratio_before == ratio_after
@@ -440,26 +465,26 @@ def test_burn(creator_app_client: ApplicationClient):
     assert ratio_after == expected_ratio
 
 
-def test_swap(creator_app_client: ApplicationClient):
+def test_swap(FUNDED_app_client: ApplicationClient):
     app_addr, addr = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
+        FUNDED_app_client.app_addr,
+        FUNDED_app_client.sender,
     )
 
-    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+    pool_asset, a_asset, b_asset = _get_tokens_from_state(FUNDED_app_client)
 
     assert addr
-    balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_before = testing.get_balances(FUNDED_app_client.client, [app_addr, addr])
 
     swap_amt = balances_before[addr][a_asset] // 10
-    creator_app_client.call(
+    FUNDED_app_client.call(
         ConstantProductAMM.swap,
         **build_swap_transaction(
-            creator_app_client, (a_asset, b_asset), pool_asset, swap_amt
+            FUNDED_app_client, (a_asset, b_asset), pool_asset, swap_amt
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_after = testing.get_balances(FUNDED_app_client.client, [app_addr, addr])
     balances_delta = testing.get_deltas(balances_before, balances_after)
 
     assert balances_delta[app_addr][a_asset] == swap_amt
@@ -473,9 +498,9 @@ def test_swap(creator_app_client: ApplicationClient):
     )
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
 
-    assert_app_algo_balance(creator_app_client, app_algo_balance)
+    assert_app_algo_balance(FUNDED_app_client, app_algo_balance)
 
-    ratio_after = _get_ratio_from_state(creator_app_client)
+    ratio_after = _get_ratio_from_state(FUNDED_app_client)
     expected_ratio = _expect_ratio(
         balances_after[app_addr][a_asset], balances_after[app_addr][b_asset]
     )
@@ -483,28 +508,28 @@ def test_swap(creator_app_client: ApplicationClient):
 
 
 def test_app_asserts(
-    creator_app_client: client.ApplicationClient,
+    BOOTSTRAPPED_app_client: client.ApplicationClient,
     user_acct: tuple[str, str, AccountTransactionSigner],
 ):
 
     fake_addr, fake_pk, fake_signer = user_acct
-    fake_client = creator_app_client.prepare(signer=fake_signer, sender=fake_addr)
+    fake_client = BOOTSTRAPPED_app_client.prepare(signer=fake_signer, sender=fake_addr)
 
     app_addr, addr, signer = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-        creator_app_client.signer,
+        BOOTSTRAPPED_app_client.app_addr,
+        BOOTSTRAPPED_app_client.sender,
+        BOOTSTRAPPED_app_client.signer,
     )
 
-    assertion_triggers: list[tuple[str, typing.Any, dict[str, typing.Any]]] = []
+    assertion_triggers: list[tuple[str, str, typing.Any, dict[str, typing.Any]]] = []
 
-    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+    pool_asset, a_asset, b_asset = _get_tokens_from_state(BOOTSTRAPPED_app_client)
     assets = (a_asset, b_asset)
 
     # Bootstrap assertions
 
-    sp = creator_app_client.client.suggested_params()
-    wrong_group_size_args = build_boostrap_transaction(creator_app_client, assets)
+    sp = BOOTSTRAPPED_app_client.client.suggested_params()
+    wrong_group_size_args = build_boostrap_transaction(BOOTSTRAPPED_app_client, assets)
     wrong_group_size_args["atc"] = AtomicTransactionComposer().add_transaction(
         TransactionWithSigner(
             txn=transaction.PaymentTxn(addr, sp, addr, 0),
@@ -512,13 +537,13 @@ def test_app_asserts(
         )
     )
 
-    wrong_receiver_txn = build_boostrap_transaction(creator_app_client, assets)
+    wrong_receiver_txn = build_boostrap_transaction(BOOTSTRAPPED_app_client, assets)
     wrong_receiver_txn["seed"].txn.receiver = addr
 
-    wrong_seed_amount_txn = build_boostrap_transaction(creator_app_client, assets)
+    wrong_seed_amount_txn = build_boostrap_transaction(BOOTSTRAPPED_app_client, assets)
     wrong_seed_amount_txn["seed"].txn.amt = int(consts.algo * 0.29)
 
-    wrong_asset_ids = build_boostrap_transaction(creator_app_client, assets)
+    wrong_asset_ids = build_boostrap_transaction(BOOTSTRAPPED_app_client, assets)
     wrong_asset_ids["a_asset"], wrong_asset_ids["b_asset"] = (
         wrong_asset_ids["b_asset"],
         wrong_asset_ids["a_asset"],
@@ -527,21 +552,25 @@ def test_app_asserts(
     assertion_triggers += [
         (
             ConstantProductAMMErrors.GroupSizeNot2,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.bootstrap,
             wrong_group_size_args,
         ),
         (
             ConstantProductAMMErrors.ReceiverNotAppAddr,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.bootstrap,
             wrong_receiver_txn,
         ),
         (
             ConstantProductAMMErrors.AmountLessThanMinimum,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.bootstrap,
             wrong_seed_amount_txn,
         ),
         (
             ConstantProductAMMErrors.AssetIdsIncorrect,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.bootstrap,
             wrong_asset_ids,
         ),
@@ -555,50 +584,53 @@ def test_app_asserts(
     b_amt = a_amt // 10
 
     mint_wrong_asset_a_in_reference = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_a_in_reference["a_asset"] = pool_asset
 
     mint_wrong_asset_b_in_reference = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_b_in_reference["b_asset"] = pool_asset
 
     mint_wrong_asset_pool_in_reference = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_pool_in_reference["pool_asset"] = a_asset
 
     assertion_triggers += [
         (
             ConstantProductAMMErrors.AssetAIncorrect,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_a_in_reference,
         ),
         (
             ConstantProductAMMErrors.AssetBIncorrect,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_b_in_reference,
         ),
         (
             ConstantProductAMMErrors.AssetPoolIncorrect,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_pool_in_reference,
         ),
     ]
 
     mint_wrong_asset_a_receiver = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_a_receiver["a_xfer"].txn.receiver = addr
 
     mint_wrong_asset_a_id = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_a_id["a_xfer"].txn.index = b_asset
 
     mint_wrong_asset_a_amount = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_a_amount["a_xfer"].txn.amount = 0
 
@@ -609,38 +641,42 @@ def test_app_asserts(
     assertion_triggers += [
         (
             ConstantProductAMMErrors.ReceiverNotAppAddr,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_a_receiver,
         ),
         (
             ConstantProductAMMErrors.AssetAIncorrect,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_a_id,
         ),
         (
             ConstantProductAMMErrors.AmountLessThanMinimum,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_a_amount,
         ),
         (
             ConstantProductAMMErrors.SenderInvalid,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_a_sender,
         ),
     ]
 
     mint_wrong_asset_b_receiver = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_b_receiver["b_xfer"].txn.receiver = addr
 
     mint_wrong_asset_b_id = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_b_id["b_xfer"].txn.index = a_asset
 
     mint_wrong_asset_b_amount = build_mint_transaction(
-        creator_app_client, assets, pool_asset, a_amt, b_amt
+        BOOTSTRAPPED_app_client, assets, pool_asset, a_amt, b_amt
     )
     mint_wrong_asset_b_amount["b_xfer"].txn.amount = 0
 
@@ -651,21 +687,25 @@ def test_app_asserts(
     assertion_triggers += [
         (
             ConstantProductAMMErrors.ReceiverNotAppAddr,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_b_receiver,
         ),
         (
             ConstantProductAMMErrors.AssetBIncorrect,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_b_id,
         ),
         (
             ConstantProductAMMErrors.AmountLessThanMinimum,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_b_amount,
         ),
         (
             ConstantProductAMMErrors.SenderInvalid,
+            "Assert(cond, comment=cmt)",
             ConstantProductAMM.mint,
             mint_wrong_asset_b_sender,
         ),
@@ -673,13 +713,14 @@ def test_app_asserts(
 
     # TODO: rest of them
 
-    all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
-    for msg, method, kwargs in assertion_triggers:
+    all_asserts: dict[int, ProgramAssertion] = BOOTSTRAPPED_app_client.approval_asserts  # type: ignore[assignment]
+    for msg, pyteal_reversed, method, kwargs in assertion_triggers:
         print(f"Testing {msg}")
         with pytest.raises(LogicException, match=msg):
             try:
-                creator_app_client.call(method, **kwargs)
+                BOOTSTRAPPED_app_client.call(method, **kwargs)
             except LogicException as e:
+                assert pyteal_reversed in str(e)
                 if e.pc in all_asserts:
                     del all_asserts[e.pc]
                 raise e
@@ -742,10 +783,10 @@ def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
     atc.execute(algod_client, 2)
 
 
-def test_sourcemap(creator_app_client: client.ApplicationClient):
-    creator_app_client.build()
-    pt_approval_sourcemap = creator_app_client.app.pyteal_approval_sourcemap
-    pt_clear_source_map = creator_app_client.app.pyteal_clear_sourcemap
+def test_sourcemap(CREATED_app_client: client.ApplicationClient):
+    CREATED_app_client.build()
+    pt_approval_sourcemap = CREATED_app_client.app.pyteal_approval_sourcemap
+    pt_clear_source_map = CREATED_app_client.app.pyteal_clear_sourcemap
 
     assert pt_approval_sourcemap
     assert pt_clear_source_map
