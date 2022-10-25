@@ -1,6 +1,5 @@
 from base64 import b64decode
 import copy
-from math import ceil
 from typing import Any, cast, Optional
 
 from algosdk.account import address_from_private_key
@@ -19,9 +18,9 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
-from algosdk.constants import APP_PAGE_MAX_SIZE
 
 from beaker.application import Application, get_method_spec
+from beaker.consts import num_extra_program_pages
 from beaker.decorators import (
     HandlerFunc,
     MethodHints,
@@ -108,12 +107,8 @@ class ApplicationClient:
         assert self.clear_binary is not None and self.approval_binary is not None
 
         if extra_pages is None:
-            extra_pages = ceil(
-                (
-                    (len(self.approval_binary) + len(self.clear_binary))
-                    - APP_PAGE_MAX_SIZE
-                )
-                / APP_PAGE_MAX_SIZE
+            extra_pages = num_extra_program_pages(
+                self.approval_binary, self.clear_binary
             )
 
         sp = self.get_suggested_params(suggested_params)

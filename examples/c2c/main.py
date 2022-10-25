@@ -71,26 +71,8 @@ class C2CMain(bkr.Application):
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
         return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.sub_app.approval.binary,
-                    TxnField.clear_state_program: self.sub_app.clear.binary,
-                    TxnField.local_num_byte_slices: Int(
-                        self.sub_app.app.acct_state.num_byte_slices
-                    ),
-                    TxnField.local_num_uints: Int(
-                        self.sub_app.app.acct_state.num_uints
-                    ),
-                    TxnField.global_num_byte_slices: Int(
-                        self.sub_app.app.app_state.num_byte_slices
-                    ),
-                    TxnField.global_num_uints: Int(
-                        self.sub_app.app.app_state.num_uints
-                    ),
-                }
-            ),
-            # set the return value to the app id of the newly created app
+            InnerTxnBuilder.Execute(self.sub_app.get_create_config()),
+            # return the app id of the newly created app
             output.set(InnerTxn.created_application_id()),
             # Try to read the global state
             sv := C2CSub.asv.get_external(output.get()),
@@ -161,20 +143,20 @@ class C2CMain(bkr.Application):
 
     @bkr.external
     def create_asset_and_send(
-        self, name: abi.String, sub_app: abi.Application, *, output: abi.Uint64
+        self, name: abi.String, sub_app_ref: abi.Application, *, output: abi.Uint64
     ):
         return Seq(
             Assert(Len(name.get())),
             # Create the asset
             (asset_id := ScratchVar()).store(self.create_asset(name.get())),
             # Get the sub app addr
-            (sub_app_addr := sub_app.params().address()),
+            (sub_app_addr := sub_app_ref.params().address()),
             # Ask sub app to opt in, and send asset in the same group
             self.trigger_opt_in_and_xfer(
-                sub_app.application_id(), sub_app_addr.value(), asset_id.load()
+                sub_app_ref.application_id(), sub_app_addr.value(), asset_id.load()
             ),
             # Get the asset back
-            self.trigger_return(sub_app.application_id(), asset_id.load()),
+            self.trigger_return(sub_app_ref.application_id(), asset_id.load()),
             # Return the asset id
             output.set(asset_id.load()),
         )
@@ -219,7 +201,7 @@ def demo():
     result = app_client_main.call(
         C2CMain.create_asset_and_send,
         name="dope asset",
-        sub_app=sub_app_id,
+        sub_app_ref=sub_app_id,
         suggested_params=sp,
     )
     created_asset = result.return_value
