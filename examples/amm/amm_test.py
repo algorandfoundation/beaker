@@ -242,8 +242,8 @@ def build_burn_transaction(
 def build_swap_transaction(
     app_client: ApplicationClient,
     assets: tuple[int, int],
-    pool_asset: int,
     swap_amt: int,
+    swap_a: bool = True,
 ):
     app_addr, addr, signer = (
         app_client.app_addr,
@@ -253,13 +253,15 @@ def build_swap_transaction(
 
     sp = app_client.get_suggested_params()
     a_asset, b_asset = assets
+
+    swap_asset = a_asset if swap_a else b_asset
+
     return {
         "suggested_params": minimum_fee_for_txn_count(sp, 2),
         "swap_xfer": TransactionWithSigner(
-            txn=transaction.AssetTransferTxn(addr, sp, app_addr, swap_amt, a_asset),
+            txn=transaction.AssetTransferTxn(addr, sp, app_addr, swap_amt, swap_asset),
             signer=signer,
         ),
-        "pool_asset": pool_asset,
         "a_asset": a_asset,
         "b_asset": b_asset,
     }
@@ -456,9 +458,7 @@ def test_swap(creator_app_client: ApplicationClient):
     swap_amt = balances_before[addr][a_asset] // 10
     creator_app_client.call(
         ConstantProductAMM.swap,
-        **build_swap_transaction(
-            creator_app_client, (a_asset, b_asset), pool_asset, swap_amt
-        ),
+        **build_swap_transaction(creator_app_client, (a_asset, b_asset), swap_amt),
     )
 
     balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
@@ -639,6 +639,10 @@ def test_app_asserts(
                     ConstantProductAMMErrors.AmountLessThanMinimum,
                     override_axfer_amount(mint(), key, 0),
                 ),
+                (
+                    ConstantProductAMMErrors.SendAmountTooLow,
+                    override_axfer_amount(mint(), key, 1),
+                ),
             ]
 
         valid_asset_a_xfer = cases(ConstantProductAMM.mint, valid_asset_xfer("a_xfer"))
@@ -692,13 +696,53 @@ def test_app_asserts(
 
         return well_formed_burn + valid_pool_xfer
 
+    def swap_cases():
+        def swap(
+            app_client: client.ApplicationClient = creator_app_client,
+            assets: tuple[int, int] = assets,
+            swap_amt: int = 1,
+            swap_a: bool = True,
+        ):
+            return build_swap_transaction(app_client, assets, swap_amt, swap_a)
+
+        well_formed_swap = cases(
+            ConstantProductAMM.swap,
+            [
+                (
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                    swap(assets=(b_asset, b_asset)),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                    swap(assets=(a_asset, a_asset)),
+                ),
+            ],
+        )
+
+        valid_swap_xfer = cases(
+            ConstantProductAMM.swap,
+            [
+                (ConstantProductAMMErrors.AmountLessThanMinimum, swap(swap_amt=0)),
+                (
+                    ConstantProductAMMErrors.SendAmountTooLow,
+                    swap(swap_amt=1, swap_a=True),
+                ),
+            ],
+        ) + cases(
+            ConstantProductAMM.swap,
+            [(ConstantProductAMMErrors.SenderInvalid, swap())],
+            fake_client,
+        )
+
+        return well_formed_swap + valid_swap_xfer
+
     # TODO: rest of them
 
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
 
     print(f"Total asserts ({len(all_asserts)})")
     for msg, method, kwargs, app_client in (
-        bootstrap_cases() + mint_cases() + burn_cases()
+        bootstrap_cases() + mint_cases() + burn_cases() + swap_cases()
     ):
         print(f"Testing {msg}")
         with pytest.raises(LogicException, match=msg):
