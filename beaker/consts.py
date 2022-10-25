@@ -1,6 +1,9 @@
 from typing import Final, Callable
 from pyteal import Int, Expr
 
+from math import ceil
+from algosdk.constants import APP_PAGE_MAX_SIZE
+
 #: number of microalgos in 1 Algo
 algo: Final[int] = int(1e6)
 #: number of microalgos in 1 MilliAlgo
@@ -44,3 +47,7 @@ LSIG_MAX_ARGS = 255
 
 #: The prefix used when hashing bytecode to produce a unique hash
 PROGRAM_DOMAIN_SEPARATOR = "Program"
+
+
+def num_extra_program_pages(approval: bytes, clear: bytes) -> int:
+    return ceil(((len(approval) + len(clear)) - APP_PAGE_MAX_SIZE) / APP_PAGE_MAX_SIZE)
