@@ -76,7 +76,6 @@
   <h1>Source code for beaker.client.application_client</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">algosdk.account</span> <span class="kn">import</span> <span class="n">address_from_private_key</span>
@@ -95,9 +94,9 @@
 <span class="kn">from</span> <span class="nn">algosdk.logic</span> <span class="kn">import</span> <span class="n">get_application_address</span>
 <span class="kn">from</span> <span class="nn">algosdk.source_map</span> <span class="kn">import</span> <span class="n">SourceMap</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
-<span class="kn">from</span> <span class="nn">algosdk.constants</span> <span class="kn">import</span> <span class="n">APP_PAGE_MAX_SIZE</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">get_method_spec</span>
+<span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">num_extra_program_pages</span>
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">HandlerFunc</span><span class="p">,</span>
     <span class="n">MethodHints</span><span class="p">,</span>
@@ -184,12 +183,8 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">extra_pages</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">extra_pages</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span><span class="p">))</span>
-                    <span class="o">-</span> <span class="n">APP_PAGE_MAX_SIZE</span>
-                <span class="p">)</span>
-                <span class="o">/</span> <span class="n">APP_PAGE_MAX_SIZE</span>
+            <span class="n">extra_pages</span> <span class="o">=</span> <span class="n">num_extra_program_pages</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span>
             <span class="p">)</span>
 
         <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_suggested_params</span><span class="p">(</span><span class="n">suggested_params</span><span class="p">)</span>
