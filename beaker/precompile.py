@@ -271,6 +271,7 @@ class AppPrecompile:
             self.clear.assemble(client)
 
     def get_create_config(self) -> dict[TxnField, Expr]:
+        """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
         assert self.approval._binary is not None
         assert self.clear._binary is not None
 
