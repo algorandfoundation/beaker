@@ -8,6 +8,8 @@ from .state import (
     AccountStateValue,
     AccountStateBlob,
     ApplicationStateBlob,
+    prefix_key_gen,
+    identity_key_gen,
 )
 from .decorators import (
     Authorize,
