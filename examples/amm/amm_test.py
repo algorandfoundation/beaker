@@ -143,6 +143,12 @@ def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
 app_algo_balance: typing.Final = consts.algo * 10
 
 
+def build_set_governor_transaction(new_governor: str) -> dict[str, typing.Any]:
+    return {
+        "new_governor": new_governor,
+    }
+
+
 def build_boostrap_transaction(
     app_client: client.ApplicationClient, assets: tuple[int, int]
 ) -> dict[str, typing.Any]:
@@ -571,6 +577,8 @@ def test_app_asserts(
                     bootstrap(assets=(b_asset, b_asset)),
                 ),
             ],
+        ) + cases(
+            ConstantProductAMM.bootstrap, [("unauthorized", bootstrap())], fake_client
         )
 
     def mint_cases():
@@ -604,6 +612,10 @@ def test_app_asserts(
                     mint(pool_asset=a_asset),
                 ),
             ],
+        ) + cases(
+            ConstantProductAMM.mint,
+            [(ConstantProductAMMErrors.SenderInvalid, mint())],
+            fake_client,
         )
 
         def valid_asset_xfer(key: str):
@@ -627,10 +639,6 @@ def test_app_asserts(
                     ConstantProductAMMErrors.AmountLessThanMinimum,
                     override_axfer_amount(mint(), key, 0),
                 ),
-                (
-                    ConstantProductAMMErrors.SenderInvalid,
-                    mint(app_client=fake_client),
-                ),  # Needs to be specialized
             ]
 
         valid_asset_a_xfer = cases(ConstantProductAMM.mint, valid_asset_xfer("a_xfer"))
@@ -687,6 +695,8 @@ def test_app_asserts(
     # TODO: rest of them
 
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
+
+    print(f"Total asserts ({len(all_asserts)})")
     for msg, method, kwargs, app_client in (
         bootstrap_cases() + mint_cases() + burn_cases()
     ):
