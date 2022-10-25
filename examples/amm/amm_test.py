@@ -485,8 +485,16 @@ def test_app_asserts(
     def cases(
         m: abi.Method | decorators.HandlerFunc,
         xs: list[tuple[str, dict[str, typing.Any]]],
-    ):
-        return [(a, m, txn) for a, txn in xs]
+        client: client.ApplicationClient = creator_app_client,
+    ) -> list[
+        tuple[
+            str,
+            abi.Method | decorators.HandlerFunc,
+            dict[str, typing.Any],
+            client.ApplicationClient,
+        ]
+    ]:
+        return [(a, m, txn, client) for a, txn in xs]
 
     fake_addr, fake_pk, fake_signer = user_acct
     fake_client = creator_app_client.prepare(signer=fake_signer, sender=fake_addr)
@@ -499,6 +507,8 @@ def test_app_asserts(
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
     assets = (a_asset, b_asset)
+
+    _opt_in_to_token(fake_addr, fake_signer, pool_asset)
 
     sp = creator_app_client.client.suggested_params()
 
@@ -535,14 +545,6 @@ def test_app_asserts(
         d: dict[str, TransactionWithSigner], key: str, override: int
     ) -> dict[str, TransactionWithSigner]:
         d[key].txn.index = override
-        return d
-
-    def override_sender(
-        d: dict[str, TransactionWithSigner], key: str, override: str
-    ) -> dict[str, TransactionWithSigner]:
-        print(f"{d}")
-        print(f"{d[key].txn.__dict__=}")
-        d[key].txn.sender = override
         return d
 
     def bootstrap_cases():
@@ -673,8 +675,11 @@ def test_app_asserts(
                     ConstantProductAMMErrors.AssetPoolIncorrect,
                     override_axfer_asset(burn(), "pool_xfer", a_asset),
                 ),
-                # (ConstantProductAMMErrors.SenderInvalid, burn(app_client=fake_client)), # Not working
             ],
+        ) + cases(
+            ConstantProductAMM.burn,
+            [(ConstantProductAMMErrors.SenderInvalid, burn())],
+            fake_client,
         )
 
         return well_formed_burn + valid_pool_xfer
@@ -682,11 +687,13 @@ def test_app_asserts(
     # TODO: rest of them
 
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
-    for msg, method, kwargs in bootstrap_cases() + mint_cases() + burn_cases():
+    for msg, method, kwargs, app_client in (
+        bootstrap_cases() + mint_cases() + burn_cases()
+    ):
         print(f"Testing {msg}")
         with pytest.raises(LogicException, match=msg):
             try:
-                creator_app_client.call(method, **kwargs)
+                app_client.call(method, **kwargs)
             except LogicException as e:
                 if e.pc in all_asserts:
                     del all_asserts[e.pc]
