@@ -234,6 +234,14 @@ class ApplicationStateValue(StateValue):
 
         return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
 
+    def get_external(self, app_id: Expr) -> MaybeValue:
+        if app_id.type_of() is not TealType.uint64:
+            raise TealTypeError(app_id, TealType.uint64)
+
+        if self.key is None:
+            raise TealInputError(f"ApplicationStateValue {self} has no key defined")
+        return App.globalGetEx(app_id, self.key)
+
     def exists(self) -> Expr:
         return Seq(val := self.get_maybe(), val.hasValue())
 
@@ -369,6 +377,17 @@ class AccountStateValue(StateValue):
             v.value(),
             val,
         )
+
+    def get_external(self, app_id: Expr) -> MaybeValue:
+        if app_id.type_of() is not TealType.uint64:
+            raise TealTypeError(app_id, TealType.uint64)
+
+        if self.key is None:
+            raise TealInputError(f"AccountStateValue {self} has no key defined")
+        if self.acct is None:
+            raise TealInputError(f"AccountStateValue {self} has no account defined")
+
+        return App.localGetEx(self.acct, app_id, self.key)
 
     def exists(self) -> Expr:
         return Seq(val := self.get_maybe(), val.hasValue())

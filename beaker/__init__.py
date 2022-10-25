@@ -23,7 +23,7 @@ from .decorators import (
     clear_state,
 )
 from .logic_signature import LogicSignature, TemplateVariable
-from .precompile import Precompile
+from .precompile import Precompile, AppPrecompile, LSigPrecompile
 
 from . import client
 from . import sandbox

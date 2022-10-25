@@ -1,4 +1,6 @@
 from pyteal import (
+    Approve,
+    OnComplete,
     abi,
     TealType,
     TxnType,
@@ -10,14 +12,29 @@ from pyteal import (
     Int,
     InnerTxn,
     ScratchVar,
+    Bytes,
+    Log,
 )
 import beaker as bkr
 from beaker.application import get_method_signature
-from beaker.precompile import AppPrecompile
 
 
 class C2CSub(bkr.Application):
     """Sub application who's only purpose is to opt into then close out of an asset"""
+
+    rasv = bkr.ReservedApplicationStateValue(TealType.bytes, 1)
+    asv = bkr.ApplicationStateValue(TealType.bytes, default=Bytes("asv"))
+
+    racsv = bkr.ReservedAccountStateValue(TealType.bytes, 1)
+    acsv = bkr.AccountStateValue(TealType.bytes, default=Bytes("acsv"))
+
+    @bkr.create
+    def create(self):
+        return Seq(self.initialize_application_state(), Approve())
+
+    @bkr.opt_in
+    def opt_in(self):
+        return Seq(self.initialize_account_state(), Approve())
 
     @bkr.external
     def opt_in_to_asset(self, asset: abi.Asset):
@@ -48,10 +65,8 @@ class C2CSub(bkr.Application):
 class C2CMain(bkr.Application):
     """Main application that handles creation of the sub app and asset and calls it"""
 
-    # Init sub app object
-    sub_app = C2CSub()
-    # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app: AppPrecompile = AppPrecompile(sub_app)
+    # Create sub app to be precompiled before allowing TEAL generation
+    sub_app: bkr.AppPrecompile = bkr.AppPrecompile(C2CSub())
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
@@ -61,10 +76,36 @@ class C2CMain(bkr.Application):
                     TxnField.type_enum: TxnType.ApplicationCall,
                     TxnField.approval_program: self.sub_app.approval.binary,
                     TxnField.clear_state_program: self.sub_app.clear.binary,
+                    TxnField.local_num_byte_slices: Int(
+                        self.sub_app.app.acct_state.num_byte_slices
+                    ),
+                    TxnField.local_num_uints: Int(
+                        self.sub_app.app.acct_state.num_uints
+                    ),
+                    TxnField.global_num_byte_slices: Int(
+                        self.sub_app.app.app_state.num_byte_slices
+                    ),
+                    TxnField.global_num_uints: Int(
+                        self.sub_app.app.app_state.num_uints
+                    ),
                 }
             ),
-            # return the app id of the newly created app
+            # set the return value to the app id of the newly created app
             output.set(InnerTxn.created_application_id()),
+            # Try to read the global state
+            sv := C2CSub.asv.get_external(output.get()),
+            Log(sv.value()),
+            # Opt in to the new app for funsies
+            InnerTxnBuilder.Execute(
+                {
+                    TxnField.type_enum: TxnType.ApplicationCall,
+                    TxnField.application_id: output.get(),
+                    TxnField.on_completion: OnComplete.OptIn,
+                }
+            ),
+            # Try to read the local state
+            sv := C2CSub.acsv[self.address].get_external(output.get()),
+            Log(sv.value()),
         )
 
     @bkr.internal(TealType.uint64)
@@ -163,6 +204,7 @@ def demo():
 
     # Call the main app to create the sub app
     result = app_client_main.call(C2CMain.create_sub)
+    print(result.tx_info)
     sub_app_id = result.return_value
     print(f"Created sub app: {sub_app_id}")
 
