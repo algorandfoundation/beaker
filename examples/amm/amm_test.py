@@ -788,9 +788,6 @@ def test_app_asserts(
 
         return well_formed_swap + valid_swap_xfer
 
-    # TODO: rest of them
-    # Unhandled asserts (13): {615: ProgramAssertion(line=408, message='invalid sender'), 648: ProgramAssertion(line=426, message='missing required balances'), 651: ProgramAssertion(line=429, message='missing required balances'), 654: ProgramAssertion(line=432, message='missing required balances'), 835: ProgramAssertion(line=552, message='missing required balances'), 838: ProgramAssertion(line=555, message='missing required balances'), 841: ProgramAssertion(line=558, message='missing required balances'), 992: ProgramAssertion(line=658, message='missing required balances'), 995: ProgramAssertion(line=661, message='missing required balances'), 1254: ProgramAssertion(line=857, message='missing required balances'), 1257: ProgramAssertion(line=860, message='missing required balances'), 1333: ProgramAssertion(line=904, message='missing required balances'), 1336: ProgramAssertion(line=907, message='missing required balances')}
-
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
 
     print(f"Total asserts ({len(all_asserts)})")
