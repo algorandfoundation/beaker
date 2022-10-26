@@ -486,7 +486,7 @@ def test_swap(creator_app_client: ApplicationClient):
         creator_app_client.sender,
     )
 
-    pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
+    _, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
     assert addr
     balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
