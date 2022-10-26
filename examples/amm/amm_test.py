@@ -11,7 +11,7 @@ from algosdk.atomic_transaction_composer import (
 )
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
-from algosdk.encoding import decode_address
+from algosdk.encoding import decode_address, encode_address
 from beaker import client, sandbox, testing, consts, decorators
 from beaker.client.application_client import ApplicationClient, ProgramAssertion
 from beaker.client.logic_error import LogicException
@@ -25,20 +25,23 @@ TOTAL_POOL_TOKENS = 10000000000
 TOTAL_ASSET_TOKENS = 10000000000
 
 
+AcctInfo = tuple[str, str, AccountTransactionSigner]
+
+
 @pytest.fixture(scope="session")
-def creator_acct() -> tuple[str, str, AccountTransactionSigner]:
+def creator_acct() -> AcctInfo:
     return accts[0].address, accts[0].private_key, accts[0].signer
 
 
 @pytest.fixture(scope="session")
-def user_acct() -> tuple[str, str, AccountTransactionSigner]:
+def user_acct() -> AcctInfo:
     return accts[1].address, accts[1].private_key, accts[1].signer
 
 
 @pytest.fixture(scope="session")
-def assets(creator_acct, user_acct) -> tuple[int, int]:
-    addr, sk, signer = creator_acct
-    user_addr, user_sk, user_signer = user_acct
+def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
+    addr, sk, _ = creator_acct
+    user_addr, _, user_signer = user_acct
 
     sp = algod_client.suggested_params()
     txns: list[transaction.Transaction] = transaction.assign_group_id(
@@ -101,8 +104,8 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     app_state = creator_app_client.get_application_state()
     sender = creator_app_client.get_sender()
 
-    assert (
-        app_state[ConstantProductAMM.governor.str_key()] == decode_address(sender).hex()
+    assert app_state[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
+        sender
     ), "The governor should be my address"
     assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
 
@@ -144,9 +147,7 @@ app_algo_balance: typing.Final = consts.algo * 10
 
 
 def build_set_governor_transaction(new_governor: str) -> dict[str, typing.Any]:
-    return {
-        "new_governor": new_governor,
-    }
+    return {"new_governor": new_governor}
 
 
 def build_boostrap_transaction(
@@ -243,7 +244,7 @@ def build_swap_transaction(
     app_client: ApplicationClient,
     assets: tuple[int, int],
     swap_amt: int,
-    swap_a: bool = True,
+    swap_asset: int = None,
 ):
     app_addr, addr, signer = (
         app_client.app_addr,
@@ -254,7 +255,8 @@ def build_swap_transaction(
     sp = app_client.get_suggested_params()
     a_asset, b_asset = assets
 
-    swap_asset = a_asset if swap_a else b_asset
+    if swap_asset is None:
+        swap_asset = a_asset
 
     return {
         "suggested_params": minimum_fee_for_txn_count(sp, 2),
@@ -265,6 +267,40 @@ def build_swap_transaction(
         "a_asset": a_asset,
         "b_asset": b_asset,
     }
+
+
+def test_app_set_governor(
+    creator_app_client: client.ApplicationClient, user_acct: AcctInfo
+):
+    creator_addr, _ = creator_app_client.sender, creator_app_client.app_addr
+
+    user_addr, _, user_signer = user_acct
+
+    state_before = creator_app_client.get_application_state()
+    assert state_before[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
+        creator_addr
+    )
+
+    # Set the new gov
+    creator_app_client.call(
+        ConstantProductAMM.set_governor,
+        **build_set_governor_transaction(user_addr),
+    )
+
+    state_after = creator_app_client.get_application_state()
+    assert state_after[ConstantProductAMM.governor.str_key()] == _addr_to_hex(user_addr)
+
+    user_client = creator_app_client.prepare(signer=user_signer)
+    # Return state to old gov
+    user_client.call(
+        ConstantProductAMM.set_governor,
+        **build_set_governor_transaction(creator_addr),
+    )
+
+    state_after_revert = creator_app_client.get_application_state()
+    assert state_after_revert[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
+        creator_addr
+    )
 
 
 def test_app_bootstrap(
@@ -486,7 +522,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
 def test_app_asserts(
     creator_app_client: client.ApplicationClient,
-    user_acct: tuple[str, str, AccountTransactionSigner],
+    user_acct: AcctInfo,
 ):
     def cases(
         m: abi.Method | decorators.HandlerFunc,
@@ -552,6 +588,16 @@ def test_app_asserts(
     ) -> dict[str, TransactionWithSigner]:
         d[key].txn.index = override
         return d
+
+    def set_governor_cases():
+        def set_governor(new_gov: str):
+            return build_set_governor_transaction(new_governor=new_gov)
+
+        return cases(
+            ConstantProductAMM.set_governor,
+            [("unauthorized", set_governor(addr))],
+            fake_client,
+        )
 
     def bootstrap_cases():
         def bootstrap(
@@ -701,9 +747,9 @@ def test_app_asserts(
             app_client: client.ApplicationClient = creator_app_client,
             assets: tuple[int, int] = assets,
             swap_amt: int = 1,
-            swap_a: bool = True,
+            swap_asset: int = a_asset,
         ):
-            return build_swap_transaction(app_client, assets, swap_amt, swap_a)
+            return build_swap_transaction(app_client, assets, swap_amt, swap_asset)
 
         well_formed_swap = cases(
             ConstantProductAMM.swap,
@@ -725,7 +771,11 @@ def test_app_asserts(
                 (ConstantProductAMMErrors.AmountLessThanMinimum, swap(swap_amt=0)),
                 (
                     ConstantProductAMMErrors.SendAmountTooLow,
-                    swap(swap_amt=1, swap_a=True),
+                    swap(swap_amt=1),
+                ),
+                (
+                    ConstantProductAMMErrors.AssetIdsIncorrect,
+                    swap(swap_amt=0, swap_asset=pool_asset),
                 ),
             ],
         ) + cases(
@@ -737,14 +787,19 @@ def test_app_asserts(
         return well_formed_swap + valid_swap_xfer
 
     # TODO: rest of them
+    # Unhandled asserts (13): {615: ProgramAssertion(line=408, message='invalid sender'), 648: ProgramAssertion(line=426, message='missing required balances'), 651: ProgramAssertion(line=429, message='missing required balances'), 654: ProgramAssertion(line=432, message='missing required balances'), 835: ProgramAssertion(line=552, message='missing required balances'), 838: ProgramAssertion(line=555, message='missing required balances'), 841: ProgramAssertion(line=558, message='missing required balances'), 992: ProgramAssertion(line=658, message='missing required balances'), 995: ProgramAssertion(line=661, message='missing required balances'), 1254: ProgramAssertion(line=857, message='missing required balances'), 1257: ProgramAssertion(line=860, message='missing required balances'), 1333: ProgramAssertion(line=904, message='missing required balances'), 1336: ProgramAssertion(line=907, message='missing required balances')}
 
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
 
     print(f"Total asserts ({len(all_asserts)})")
     for msg, method, kwargs, app_client in (
-        bootstrap_cases() + mint_cases() + burn_cases() + swap_cases()
+        set_governor_cases()
+        + bootstrap_cases()
+        + mint_cases()
+        + burn_cases()
+        + swap_cases()
     ):
-        print(f"Testing {msg}")
+        print(f"Testing {msg} for {method}")
         with pytest.raises(LogicException, match=msg):
             try:
                 app_client.call(method, **kwargs)
@@ -809,3 +864,11 @@ def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
         )
     )
     atc.execute(algod_client, 2)
+
+
+def _addr_from_hex(hex: str) -> str:
+    return encode_address(bytes.fromhex(hex))
+
+
+def _addr_to_hex(addr: str) -> str:
+    return decode_address(addr).hex()
