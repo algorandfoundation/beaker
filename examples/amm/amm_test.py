@@ -277,6 +277,8 @@ def test_app_set_governor(
     user_addr, _, user_signer = user_acct
 
     state_before = creator_app_client.get_application_state()
+
+    assert creator_addr is not None
     assert state_before[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
         creator_addr
     )
@@ -864,10 +866,6 @@ def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
         )
     )
     atc.execute(algod_client, 2)
-
-
-def _addr_from_hex(hex: str) -> str:
-    return encode_address(bytes.fromhex(hex))
 
 
 def _addr_to_hex(addr: str) -> str:
