@@ -18,16 +18,20 @@ class JasonsArrayExample(Application):
                 i.load() < Int(16),
                 i.store(i.load() + Int(1)),
             ).Do(buf.store(Concat(buf.load(), Itob(i.load())))),
+            # Now do the write once (its expensive in ops)
             self.data.write(Int(0), buf.load()),
         )
 
     @external
     def gimme_static_array(self, *, output: abi.StaticArray[abi.Uint64, Literal[16]]):
+        # A static array of static types needs no special treatment (use static if possible)
         return output.decode(self.data.read(Int(0), Int(8 * 16)))
 
     @external
     def gimme_dynamic_array(self, *, output: abi.DynamicArray[abi.Uint64]):
+        # A dynamic array needs some finagling
         return output.decode(
+            # Prepend the bytes with the length as a uint16, according to ABI spec
             Concat(Suffix(Itob(Int(16)), Int(6)), self.data.read(Int(0), Int(8 * 16)))
         )
 
@@ -36,19 +40,17 @@ if __name__ == "__main__":
     algod_client = sandbox.get_algod_client()
     acct = sandbox.get_accounts().pop()
 
-    JasonsArrayExample().dump(".")
-
     ac = client.ApplicationClient(
         algod_client, JasonsArrayExample(), signer=acct.signer
     )
 
-    print("Creating")
+    print("Creating App")
     ac.create()
 
-    print("Calling")
+    print("Getting the static array")
     result = ac.call(JasonsArrayExample.gimme_static_array)
-    print(result.return_value)
+    print(f"result: {result.return_value}")
 
-    print("Calling")
+    print("Getting the dynamic array")
     result = ac.call(JasonsArrayExample.gimme_dynamic_array)
-    print(result.return_value)
+    print(f"result: {result.return_value}")
