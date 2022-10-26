@@ -24,14 +24,14 @@ class JasonsArrayExample(Application):
 
     @external
     def gimme_static_array(self, *, output: abi.StaticArray[abi.Uint64, Literal[16]]):
-        # A static array of static types needs no special treatment (use static if possible)
+        # A static array of static types needs no special treatment (use static wherever possible)
         return output.decode(self.data.read(Int(0), Int(8 * 16)))
 
     @external
     def gimme_dynamic_array(self, *, output: abi.DynamicArray[abi.Uint64]):
         # A dynamic array needs some finagling
         return output.decode(
-            # Prepend the bytes with the length as a uint16, according to ABI spec
+            # Prepend the bytes with the number of elements as a uint16, according to ABI spec
             Concat(Suffix(Itob(Int(16)), Int(6)), self.data.read(Int(0), Int(8 * 16)))
         )
 
