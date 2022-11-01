@@ -22,7 +22,6 @@ from pyteal import (
 )
 from algosdk.v2client.algod import AlgodClient
 from algosdk.source_map import SourceMap
-from algosdk.v2client.algod import AlgodClient
 from algosdk.future.transaction import LogicSigAccount
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
@@ -108,11 +107,6 @@ class Precompile:
         for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
-
-    def compile(self, algod_client: AlgodClient):
-        result = algod_client.compile(self.program, source_map=True)
-        src_map = SourceMap(result["sourcemap"])
-        self._set_compiled(b64decode(result["result"]), result["hash"], src_map)
 
     def hash(self) -> Expr:
         """
