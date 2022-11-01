@@ -1,0 +1,147 @@
+#pragma version 8
+intcblock 0 1 8 4096
+bytecblock 0x426f7841 0x6465636c617265645f636f756e74
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0xe377bfd5 // "add_int(uint64)uint64[]"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0x3ff8fbae // "box_create_test()void"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub boxcreatetest_2
+intc_1 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub addint_1
+store 0
+pushbytes 0x151f7c75 // 0x151f7c75
+load 0
+concat
+log
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+intc_1 // 1
+return
+
+// add_int
+addint_1:
+store 1
+bytec_0 // "BoxA"
+box_get
+store 3
+store 2
+bytec_1 // "declared_count"
+app_global_get
+store 4
+addint_1_l1:
+load 1
+load 2
+load 4
+intc_2 // 8
+*
+extract_uint64
+<
+bz addint_1_l3
+load 4
+intc_1 // 1
+-
+store 4
+b addint_1_l1
+addint_1_l3:
+bytec_0 // "BoxA"
+load 2
+intc_0 // 0
+load 4
+intc_2 // 8
+*
+extract3
+load 1
+itob
+concat
+load 2
+load 4
+intc_2 // 8
+*
+intc_3 // 4096
+load 4
+intc_2 // 8
+*
+-
+intc_2 // 8
+-
+extract3
+concat
+box_put
+global OpcodeBudget
+itob
+log
+bytec_1 // "declared_count"
+bytec_1 // "declared_count"
+app_global_get
+intc_1 // 1
++
+app_global_put
+pushint 10 // 10
+itob
+extract 6 0
+bytec_0 // "BoxA"
+intc_0 // 0
+intc_2 // 8
+pushint 10 // 10
+*
+box_extract
+concat
+retsub
+
+// box_create_test
+boxcreatetest_2:
+bytec_0 // "BoxA"
+intc_3 // 4096
+box_create
+assert
+bytec_1 // "declared_count"
+intc_0 // 0
+app_global_put
+retsub
