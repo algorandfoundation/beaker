@@ -358,6 +358,17 @@ app_global_get
 // asset pool incorrect
 assert
 load 35
+gtxns Sender
+txn Sender
+==
+load 36
+gtxns Sender
+txn Sender
+==
+&&
+// invalid sender
+assert
+load 35
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
@@ -375,12 +386,6 @@ gtxns AssetAmount
 intc_0 // 0
 >
 // amount minimum not met
-assert
-load 35
-gtxns Sender
-txn Sender
-==
-// invalid sender
 assert
 load 36
 gtxns AssetReceiver
@@ -401,12 +406,6 @@ intc_0 // 0
 >
 // amount minimum not met
 assert
-load 36
-gtxns Sender
-txn Sender
-==
-// invalid sender
-assert
 global CurrentApplicationAddress
 load 37
 asset_holding_get AssetBalance
@@ -423,13 +422,10 @@ asset_holding_get AssetBalance
 store 45
 store 44
 load 41
-// missing required balances
 assert
 load 43
-// missing required balances
 assert
 load 45
-// missing required balances
 assert
 load 42
 load 35
@@ -549,13 +545,10 @@ asset_holding_get AssetBalance
 store 67
 store 66
 load 63
-// missing required balances
 assert
 load 65
-// missing required balances
 assert
 load 67
-// missing required balances
 assert
 intc 4 // 10000000000
 load 62
@@ -655,10 +648,8 @@ asset_holding_get AssetBalance
 store 80
 store 79
 load 78
-// missing required balances
 assert
 load 80
-// missing required balances
 assert
 load 74
 gtxns AssetAmount
@@ -854,10 +845,8 @@ asset_params_get AssetUnitName
 store 34
 store 33
 load 32
-// missing required balances
 assert
 load 34
-// missing required balances
 assert
 itxn_begin
 pushint 3 // acfg
@@ -901,10 +890,8 @@ asset_holding_get AssetBalance
 store 57
 store 56
 load 55
-// missing required balances
 assert
 load 57
-// missing required balances
 assert
 load 54
 intc_2 // 1000
