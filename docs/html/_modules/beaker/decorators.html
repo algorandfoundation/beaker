@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
 </ul>
 
@@ -86,6 +85,7 @@
     <span class="n">abi</span><span class="p">,</span>
     <span class="n">ABIReturnSubroutine</span><span class="p">,</span>
     <span class="n">And</span><span class="p">,</span>
+    <span class="n">Global</span><span class="p">,</span>
     <span class="n">App</span><span class="p">,</span>
     <span class="n">Assert</span><span class="p">,</span>
     <span class="n">AssetHolding</span><span class="p">,</span>
@@ -348,7 +348,7 @@
         <span class="k">return</span> <span class="n">_impl</span></div>
 
 <div class="viewcode-block" id="Authorize.opted_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize.opted_in">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">opted_in</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">opted_in</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_id</span><span class="p">()):</span>
         <span class="sd">&quot;&quot;&quot;require that the sender of the app call has already opted-in to a given app id&quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>

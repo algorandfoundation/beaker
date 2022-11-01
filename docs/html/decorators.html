@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Contracts" href="contracts.html" />
+    <link rel="next" title="Testing" href="testing.html" />
     <link rel="prev" title="Precompile" href="precompile.html" /> 
 </head>
 
@@ -62,7 +62,6 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -139,6 +138,17 @@
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">authorize</span></code> parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.</p>
+<p>Now lets write a new method to allow any account that is opted in to call it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Authorize</span>
+
+<span class="c1"># ...</span>
+
+<span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">opted_in</span><span class="p">())</span>
+<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">approve</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">):</span>
+    <span class="c1"># ...</span>
+</pre></div>
+</div>
+<p>This authorize check will cause the contract call to fail if the sender has not opted in to the app. Another app id may also be passed in case you want to check if the Sender is opted in to a different application.</p>
 <p>The pre-defined Authorized checks are:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.decorators.Authorize.only">
@@ -154,7 +164,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.decorators.Authorize.opted_in">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Authorize.</span></span><span class="sig-name descname"><span class="pre">opted_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/decorators.html#Authorize.opted_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.Authorize.opted_in" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Authorize.</span></span><span class="sig-name descname"><span class="pre">opted_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_id:</span> <span class="pre">~pyteal.Expr</span> <span class="pre">=</span> <span class="pre">&lt;pyteal.Global</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/decorators.html#Authorize.opted_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.decorators.Authorize.opted_in" title="Permalink to this definition"></a></dt>
 <dd><p>require that the sender of the app call has already opted-in to a given app id</p>
 </dd></dl>
 
@@ -387,7 +397,7 @@ We don’t want to expose these methods to the ABI but we do want to allow them 
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="precompile.html" class="btn btn-neutral float-left" title="Precompile" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="contracts.html" class="btn btn-neutral float-right" title="Contracts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="testing.html" class="btn btn-neutral float-right" title="Testing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

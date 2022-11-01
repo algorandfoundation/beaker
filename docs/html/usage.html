@@ -45,10 +45,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#tutorial">Tutorial</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#decorators">Decorators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#state-management">State Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#inheritance">Inheritance</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#parameter-default-value">Parameter Default Value</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#inheritance">Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-default-values">Parameter Default Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#precompiles">Precompiles</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
@@ -58,7 +57,6 @@
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -104,13 +102,17 @@
 </div>
 <p>This is a full application, though it doesn’t do much.</p>
 <p>Instantiate it and take a look at some of the resulting fields.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">calc</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">approval_program</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">clear_program</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">dictify</span><span class="p">()))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">json</span>
+
 </pre></div>
 </div>
 <p>Nice!  This is already enough to provide the TEAL programs and ABI specification.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Application.dump</span></code> method can be used to write the <code class="docutils literal notranslate"><span class="pre">approval.teal</span></code>, <code class="docutils literal notranslate"><span class="pre">clear.teal</span></code>, <code class="docutils literal notranslate"><span class="pre">contract.json</span></code>, and <code class="docutils literal notranslate"><span class="pre">application.json</span></code> to the local file system.</p>
+</div>
 <p>Lets add some methods to be handled by an incoming <a class="reference external" href="https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction">ApplicationCallTransaction</a>.
 We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine">PyTeal ABI</a> method with with the <a class="reference internal" href="decorators.html#external"><span class="std std-ref">external</span></a> decorator.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
@@ -142,19 +144,21 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <p><code class="docutils literal notranslate"><span class="pre">self</span></code> may be omitted if the method does not need to access any instance variables. Class variables or methods may be accessed through the class name like <code class="docutils literal notranslate"><span class="pre">MySickApp.do_thing(data)</span></code></p>
 </div>
 <p>Lets now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Here we use `sandbox` but beaker.client.api_providers can also be used</span>
+    <span class="c1"># with something like ``AlgoNode(Network.TestNet).algod()``</span>
+    <span class="n">algod_client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
 
     <span class="n">acct</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
     <span class="c1"># Create an Application client containing both an algod client and app</span>
-    <span class="n">app_client</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">Calculator</span><span class="p">(),</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="p">)</span>
+    <span class="n">app_client</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">algod_client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">Calculator</span><span class="p">(),</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span>
+    <span class="p">)</span>
 
     <span class="c1"># Create the application on chain, set the app id for the app client</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created App with id: </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> and address addr: </span><span class="si">{</span><span class="n">app_addr</span><span class="si">}</span><span class="s2"> in tx: </span><span class="si">{</span><span class="n">txid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">Calculator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;add result: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Thats it!</p>
@@ -247,13 +251,18 @@ The constructor may also be passed an app_id directly if one is already deployed
 <p class="admonition-title">Note</p>
 <p>The base <code class="docutils literal notranslate"><span class="pre">Application</span></code> class has several externals pre-defined, including <code class="docutils literal notranslate"><span class="pre">create</span></code> which performs <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> initialization for us, setting the keys to default values.</p>
 </div>
-<p>You may also define state values for applications, called <a class="reference internal" href="state.html#account-state"><span class="std std-ref">AccountState</span></a> (or Local storage) and even allow for dynamic state keys.</p>
+<p>You may also define state values for applications, called <a class="reference internal" href="state.html#account-state"><span class="std std-ref">AccountState</span></a> (or Local storage) and even allow for reserved state keys.</p>
 <p>For more example usage see the example <a class="reference internal" href="state.html#state-example"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="inheritance">
 <span id="id2"></span><h2>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this heading"></a></h2>
 <p>What about extending our Application with some other functionality?</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.contracts</span> <span class="kn">import</span> <span class="n">OpUp</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">external</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">op_up</span> <span class="kn">import</span> <span class="n">OpUp</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.op_up</span> <span class="kn">import</span> <span class="n">OpUp</span>
 
 
 <span class="k">class</span> <span class="nc">ExpensiveApp</span><span class="p">(</span><span class="n">OpUp</span><span class="p">):</span>
@@ -274,18 +283,14 @@ The constructor may also be passed an app_id directly if one is already deployed
             <span class="p">(</span><span class="n">current</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">()),</span>
             <span class="n">For</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">i</span> <span class="o">:=</span> <span class="n">ScratchVar</span><span class="p">())</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
-                <span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">iters</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
-                <span class="n">i</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">Sha256</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()))),</span>
-            <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()),</span>
-        <span class="p">)</span>
 </pre></div>
 </div>
 <p>Here we subclassed the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.</p>
 <p>We inherit the methods and class variables that <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> defined, allowing us to encapsulate and compose behavior.</p>
 <p>Also note that the <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> argument specifies a default value. This is a bit of magic that serves only to produce a hint for the caller in the resulting Application Spec.</p>
-<section id="parameter-default-value">
-<span id="parameter-default"></span><h3>Parameter Default Value<a class="headerlink" href="#parameter-default-value" title="Permalink to this heading"></a></h3>
+</section>
+<section id="parameter-default-values">
+<span id="parameter-default"></span><h2>Parameter Default Values<a class="headerlink" href="#parameter-default-values" title="Permalink to this heading"></a></h2>
 <p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example above, the argument <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> should be the id of the application that we use to increase our budget via inner app calls.
 This value should not change frequently, if at all, but is still required to be passed by the caller so we may <strong>use</strong> it in our logic, namely to execute an application call against it.</p>
 <p>By specifying the default value of the argument in the method signature, we can communicate to the caller, through the hints of the Application Spec, what the value <strong>should</strong> be.</p>
@@ -303,6 +308,72 @@ This value should not change frequently, if at all, but is still required to be 
 If it finds that an argument is not passed, it will check the hints for a default argument for the method that may be used directly (constant) or resolved (need to look it up on chain or call method).
 Upon finding a resolvable it will look up the state value, call the method. The resulting value is passed in for argument to the application call.</p>
 </section>
+<section id="precompiles">
+<h2>Precompiles<a class="headerlink" href="#precompiles" title="Permalink to this heading"></a></h2>
+<p>Often an app developer needs to have the assembled binary of a program available at contract runtime. One way to get this binary is to use the <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> feature.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example above, the <code class="docutils literal notranslate"><span class="pre">ExpensiveApp</span></code> inherits from the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> app. The <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> app contains an <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> for the target app we’d like to call
+when we make opup requests.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TargetApp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple app that allows the creator to call `opup` in order to increase its opcode budget&quot;&quot;&quot;</span>
+
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+    <span class="k">def</span> <span class="nf">opup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">OpUp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;OpUp creates a &quot;target&quot; application to make opup calls against in order to increase our opcode budget.&quot;&quot;&quot;</span>
+
+    <span class="c1">#: The app to be created to receiver opup requests</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">AppPrecompile</span> <span class="o">=</span> <span class="n">AppPrecompile</span><span class="p">(</span><span class="n">TargetApp</span><span class="p">())</span>
+
+</pre></div>
+</div>
+<p>The inclusion of a <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> prevents building the TEAL until its been fully compiled to assembled binary but we can still reference it in our Application.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> Application defines a method to create the target application by referencing the <code class="docutils literal notranslate"><span class="pre">AppPrecompile's</span></code> approval/clear binary attribute which contains the assembled binary
+for the target Application as a <code class="docutils literal notranslate"><span class="pre">Bytes</span></code> Expression.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="nd">@internal</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">create_opup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;internal method to create the target application&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Begin</span><span class="p">(),</span>
+            <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">SetFields</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">approval_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">clear_state_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Submit</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">opup_app_id</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p>Another situations where a <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> is useful is when validating the logic of a LogicSignature.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">offload_compute</span></code> example, we check to make sure that the hash of the signer is the LogicSignature we’re expecting so that we’re sure it is doing “the right thing”.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">check_eth_sig</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="nb">hash</span><span class="p">:</span> <span class="n">HashValue</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="c1"># The precompiled lsig should have its address and binary available</span>
+            <span class="c1"># here so we can use it to make sure we&#39;ve been called</span>
+            <span class="c1"># with the correct lsig</span>
+            <span class="n">Assert</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">verifier</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">hash</span><span class="p">()),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;lsig validated&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p>Additionally, if the LogicSignature has one or more <code class="docutils literal notranslate"><span class="pre">TemplateVariables</span></code> specified, the <code class="docutils literal notranslate"><span class="pre">template_hash</span></code> function may be used by passing arguments that should be populated into the templated <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signer_address</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Assert</span><span class="p">(</span>
+            <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_checker</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">template_hash</span><span class="p">(</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="p">)</span>
+
+</pre></div>
+</div>
 </section>
 </section>
 

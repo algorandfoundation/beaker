@@ -12,7 +12,7 @@ See the `developer docs <https://developer.algorand.org/docs/get-details/dapps/s
 
 .. warning::
     When using the ``ApplicationStateBlob`` or ``AccountStateBlob``, the keys used to store data are 1 byte in the range [0-255]. Care must be taken to prevent any other state values from overwriting those keys.
-    For example if ``DynamicAccountStateValue`` tries to write to key ``0x00`` and a blob is already using that key, bad things will happen.
+    For example if ``ReservedAccountStateValue`` tries to write to key ``0x00`` and a blob is already using that key, bad things will happen.
 
 
 :ref:`Full Example <state_example>`
@@ -38,12 +38,12 @@ Application State Value
     :members:
 
 
-.. _dynamic_application_state_value:
+.. _reserved_application_state_value:
 
-Dynamic Application State Value
+Reserved Application State Value
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: DynamicApplicationStateValue
+.. autoclass:: ReservedApplicationStateValue
     :members:
 
 
@@ -78,12 +78,12 @@ AccountStateValue
     :members:
 
 
-.. _dynamic_account_state_value:
+.. _reserved_account_state_value:
 
-DynamicAccountStateValue
-^^^^^^^^^^^^^^^^^^^^^^^^
+ReservedAccountStateValue
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: DynamicAccountStateValue
+.. autoclass:: ReservedAccountStateValue
     :members:
 
 

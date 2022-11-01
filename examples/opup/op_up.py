@@ -19,7 +19,7 @@ from pyteal import (
 )
 
 from beaker.application import Application, get_method_signature
-from beaker.precompile import Precompile
+from beaker.precompile import AppPrecompile
 from beaker.state import ApplicationStateValue
 from beaker.consts import Algos
 from beaker.decorators import internal, external, Authorize
@@ -37,9 +37,7 @@ class OpUp(Application):
     """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget."""
 
     #: The app to be created to receiver opup requests
-    target_app: Final[TargetApp] = TargetApp()
-    target_app_approval: Final[Precompile] = Precompile(target_app.approval_program)
-    target_app_clear: Final[Precompile] = Precompile(target_app.clear_program)
+    target: AppPrecompile = AppPrecompile(TargetApp())
 
     #: The minimum balance required for this class
     min_balance: Final[Expr] = Algos(0.1)
@@ -66,8 +64,8 @@ class OpUp(Application):
             InnerTxnBuilder.SetFields(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: Bytes(self.target_app_approval.binary),
-                    TxnField.clear_state_program: Bytes(self.target_app_clear.binary),
+                    TxnField.approval_program: self.target.approval.binary,
+                    TxnField.clear_state_program: self.target.clear.binary,
                     TxnField.fee: Int(0),
                 }
             ),
@@ -93,7 +91,7 @@ class OpUp(Application):
         """internal method to just return the method call to our target app"""
         return InnerTxnBuilder.ExecuteMethodCall(
             app_id=self.opup_app_id,
-            method_signature=get_method_signature(self.target_app.opup),
+            method_signature=get_method_signature(TargetApp.opup),
             args=[],
             extra_fields={TxnField.fee: Int(0)},
         )

@@ -9,7 +9,7 @@ from beaker.lib.storage.blob import blob_page_size
 
 
 class GlobalBlobTest(UnitTestingApp):
-    lb = bkr.DynamicApplicationStateValue(pt.TealType.bytes, max_keys=64)
+    lb = bkr.ReservedApplicationStateValue(pt.TealType.bytes, max_keys=64)
     blob = GlobalBlob()
 
 

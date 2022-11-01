@@ -29,12 +29,16 @@ class Calculator(Application):
 
 
 def demo():
-    client = sandbox.get_algod_client()
+    # Here we use `sandbox` but beaker.client.api_providers can also be used
+    # with something like ``AlgoNode(Network.TestNet).algod()``
+    algod_client = sandbox.get_algod_client()
 
     acct = sandbox.get_accounts().pop()
 
     # Create an Application client containing both an algod client and app
-    app_client = ApplicationClient(client=client, app=Calculator(), signer=acct.signer)
+    app_client = ApplicationClient(
+        client=algod_client, app=Calculator(), signer=acct.signer
+    )
 
     # Create the application on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()

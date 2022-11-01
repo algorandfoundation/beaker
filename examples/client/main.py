@@ -14,6 +14,7 @@ from beaker import (
     sandbox,
     consts,
 )
+from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
 
@@ -115,10 +116,18 @@ def demo():
     app_client2.call(ClientExample.set_manager, new_manager=acct1.address)
     print(f"Current app state: {app_client1.get_application_state()}")
 
+    ## Create a new client that just sets the app id we wish to interact with
+    app_client3 = ApplicationClient(
+        client=sandbox.get_algod_client(),
+        app=ClientExample(),
+        signer=acct1.signer,
+        app_id=app_client1.app_id,
+    )
+
     try:
         app_client1.close_out()
         app_client2.close_out()
-        app_client1.delete()
+        app_client3.delete()
     except Exception as e:
         print(e)
 

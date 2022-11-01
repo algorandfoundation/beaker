@@ -4,7 +4,7 @@ from algosdk.v2client.indexer import IndexerClient
 DEFAULT_ALGOD_ADDRESS = "http://localhost:4001"
 DEFAULT_ALGOD_TOKEN = "a" * 64
 
-DEFAULT_INDEXER_ADDRESS = "http://localhost:8090"
+DEFAULT_INDEXER_ADDRESS = "http://localhost:8980"
 DEFAULT_INDEXER_TOKEN = "a" * 64
 
 

@@ -43,13 +43,15 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Logic Signatures</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Logic Signatures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#logic-signature-example">Logic Signature Example</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -80,13 +82,14 @@
   <section id="module-beaker.logic_signature">
 <span id="logic-signatures"></span><h1>Logic Signatures<a class="headerlink" href="#module-beaker.logic_signature" title="Permalink to this heading"></a></h1>
 <p>This is the base class that all Beaker LogicSignatures should inherit from.</p>
-<p>This should _not_ be initialized directly.</p>
+<p>This class should <strong>not</strong> be initialized directly.</p>
+<p><a class="reference internal" href="#lsig-example"><span class="std std-ref">Full Example</span></a></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.logic_signature.LogicSignature">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.logic_signature.</span></span><span class="sig-name descname"><span class="pre">LogicSignature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignature" title="Permalink to this definition"></a></dt>
 <dd><p>LogicSignature allows the definition of a logic signature program.</p>
 <p>A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes</p>
-<p>The <cite>evauluate</cite> method is the entry point to the application and must be overridden in any subclass
+<p>The <cite>evaluate</cite> method is the entry point to the application and must be overridden in any subclass
 to call the necessary logic.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.logic_signature.LogicSignature.evaluate">
@@ -111,6 +114,123 @@ need some hardcoded well defined behavior.</p>
 
 </dd></dl>
 
+<section id="logic-signature-example">
+<span id="lsig-example"></span><h2>Logic Signature Example<a class="headerlink" href="#logic-signature-example" title="Permalink to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">nacl.signing</span> <span class="kn">import</span> <span class="n">SigningKey</span>
+
+<span class="kn">from</span> <span class="nn">algosdk.encoding</span> <span class="kn">import</span> <span class="n">decode_address</span>
+<span class="kn">from</span> <span class="nn">algosdk.future</span> <span class="kn">import</span> <span class="n">transaction</span>
+<span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
+    <span class="n">TransactionWithSigner</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">LSigPrecompile</span>
+
+<span class="n">Signature</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
+
+
+<span class="k">class</span> <span class="nc">App</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">SigChecker</span><span class="p">(</span><span class="n">LogicSignature</span><span class="p">):</span>
+        <span class="c1"># Simple program to check an ed25519 signature given a message and signature</span>
+        <span class="n">user_addr</span> <span class="o">=</span> <span class="n">TemplateVariable</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+                <span class="c1"># Borrow the msg and sig from the abi call arguments</span>
+                <span class="c1"># TODO: this kinda stinks, what do?</span>
+                <span class="p">(</span><span class="n">msg</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+                <span class="p">(</span><span class="n">sig</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">Signature</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
+                <span class="c1"># Assert that the sig matches</span>
+                <span class="n">Assert</span><span class="p">(</span><span class="n">Ed25519Verify_Bare</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">sig</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_addr</span><span class="p">)),</span>
+                <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+            <span class="p">)</span>
+
+    <span class="n">sig_checker</span> <span class="o">=</span> <span class="n">LSigPrecompile</span><span class="p">(</span><span class="n">SigChecker</span><span class="p">())</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signer_address</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Assert</span><span class="p">(</span>
+            <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_checker</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">template_hash</span><span class="p">(</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sign_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sk</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;utility function for signing arbitrary data&quot;&quot;&quot;</span>
+    <span class="n">pk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">sk</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">SigningKey</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">pk</span><span class="p">[:</span><span class="mi">32</span><span class="p">]))</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">signature</span>
+
+
+<span class="k">def</span> <span class="nf">demo</span><span class="p">():</span>
+    <span class="n">acct</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="c1"># Create app client</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">App</span><span class="p">()</span>
+    <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
+        <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span>
+    <span class="p">)</span>
+
+    <span class="c1"># deploy app</span>
+    <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+    <span class="c1"># Write the populated template as binary</span>
+    <span class="c1"># with open(&quot;tmp.teal.tok&quot;, &quot;wb&quot;) as f:</span>
+    <span class="c1">#     f.write(app.sig_checker.populate_template(decode_address(acct.address)))</span>
+
+    <span class="c1"># Get the signer for the lsig from its populated precompile</span>
+    <span class="n">lsig_signer</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">sig_checker</span><span class="o">.</span><span class="n">template_signer</span><span class="p">(</span><span class="n">decode_address</span><span class="p">(</span><span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">))</span>
+    <span class="c1"># Prepare a new client so it can sign calls</span>
+    <span class="n">lsig_client</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">lsig_signer</span><span class="p">)</span>
+
+    <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
+
+    <span class="c1"># Create a dummy transaction to cover fees (still cheaper than multiple app calls)</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">suggested_params</span><span class="p">()</span>
+    <span class="n">covering_sp</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+    <span class="n">covering_sp</span><span class="o">.</span><span class="n">flat_fee</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">covering_sp</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">consts</span><span class="o">.</span><span class="n">milli_algo</span>
+    <span class="n">atc</span><span class="o">.</span><span class="n">add_transaction</span><span class="p">(</span>
+        <span class="n">TransactionWithSigner</span><span class="p">(</span>
+            <span class="n">txn</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">PaymentTxn</span><span class="p">(</span><span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">covering_sp</span><span class="p">,</span> <span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Message to sign</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Sign me please&quot;</span>
+    <span class="c1"># Signature</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">sign_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="o">.</span><span class="n">private_key</span><span class="p">)</span>
+
+    <span class="c1"># Since we dont fund this account, just set its fees to 0</span>
+    <span class="n">free_sp</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+    <span class="n">free_sp</span><span class="o">.</span><span class="n">flat_fee</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">free_sp</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Add the call to the `check` method to be signed by the populated template logic</span>
+    <span class="n">lsig_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
+        <span class="n">atc</span><span class="p">,</span>
+        <span class="n">App</span><span class="o">.</span><span class="n">check</span><span class="p">,</span>
+        <span class="n">suggested_params</span><span class="o">=</span><span class="n">free_sp</span><span class="p">,</span>
+        <span class="n">signer_address</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+        <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span>
+        <span class="n">sig</span><span class="o">=</span><span class="n">sig</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># run it</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">app_client</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Confirmed in round </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">confirmed_round</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">demo</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 

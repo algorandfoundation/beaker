@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -114,12 +113,14 @@
 </li>
       <li><a href="sandbox.html#beaker.sandbox.SandboxAccount.address">address (beaker.sandbox.SandboxAccount attribute)</a>
 </li>
+      <li><a href="precompile.html#beaker.precompile.AppPrecompile.app">app (beaker.precompile.AppPrecompile attribute)</a>
+</li>
       <li><a href="application.html#beaker.application.Application">Application (class in beaker.application)</a>
+</li>
+      <li><a href="application.html#beaker.application.Application.application_spec">application_spec() (beaker.application.Application method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="application.html#beaker.application.Application.application_spec">application_spec() (beaker.application.Application method)</a>
-</li>
       <li><a href="application_client.html#beaker.client.ApplicationClient">ApplicationClient (class in beaker.client)</a>
 </li>
       <li><a href="state.html#beaker.state.ApplicationState">ApplicationState (class in beaker.state)</a>
@@ -127,6 +128,12 @@
       <li><a href="state.html#beaker.state.ApplicationStateBlob">ApplicationStateBlob (class in beaker.state)</a>
 </li>
       <li><a href="state.html#beaker.state.ApplicationStateValue">ApplicationStateValue (class in beaker.state)</a>
+</li>
+      <li><a href="precompile.html#beaker.precompile.AppPrecompile">AppPrecompile (class in beaker.precompile)</a>
+</li>
+      <li><a href="precompile.html#beaker.precompile.AppPrecompile.approval">approval (beaker.precompile.AppPrecompile attribute)</a>
+</li>
+      <li><a href="precompile.html#beaker.precompile.Precompile.assemble">assemble() (beaker.precompile.Precompile method)</a>
 </li>
       <li><a href="testing.html#beaker.testing.assert_output">assert_output() (in module beaker.testing)</a>
 </li>
@@ -152,13 +159,6 @@
 
       <ul>
         <li><a href="application.html#module-beaker.application">module</a>
-</li>
-      </ul></li>
-      <li>
-    beaker.contracts
-
-      <ul>
-        <li><a href="contracts.html#module-beaker.contracts">module</a>
 </li>
       </ul></li>
   </ul></td>
@@ -192,7 +192,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="application_client.html#beaker.client.ApplicationClient.call">call() (beaker.client.ApplicationClient method)</a>
 </li>
-      <li><a href="contracts.html#beaker.contracts.OpUp.call_opup">call_opup() (beaker.contracts.OpUp method)</a>
+      <li><a href="precompile.html#beaker.precompile.AppPrecompile.clear">clear (beaker.precompile.AppPrecompile attribute)</a>
 </li>
       <li><a href="application_client.html#beaker.client.ApplicationClient.clear_state">clear_state() (beaker.client.ApplicationClient method)</a>
 
@@ -208,6 +208,14 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="application.html#beaker.application.Application.compile">compile() (beaker.application.Application method)</a>
+
+      <ul>
+        <li><a href="precompile.html#beaker.precompile.AppPrecompile.compile">(beaker.precompile.AppPrecompile method)</a>
+</li>
+        <li><a href="precompile.html#beaker.precompile.LSigPrecompile.compile">(beaker.precompile.LSigPrecompile method)</a>
+</li>
+      </ul></li>
       <li><a href="application.html#beaker.application.Application.create">create() (beaker.application.Application method)</a>
 
       <ul>
@@ -216,8 +224,6 @@
         <li><a href="decorators.html#beaker.decorators.create">(in module beaker.decorators)</a>
 </li>
       </ul></li>
-      <li><a href="contracts.html#beaker.contracts.OpUp.create_opup">create_opup() (beaker.contracts.OpUp method)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -249,14 +255,12 @@
       <ul>
         <li><a href="state.html#beaker.state.ApplicationStateValue.descr">(beaker.state.ApplicationStateValue attribute)</a>
 </li>
-        <li><a href="state.html#beaker.state.DynamicAccountStateValue.descr">(beaker.state.DynamicAccountStateValue attribute)</a>
+        <li><a href="state.html#beaker.state.ReservedAccountStateValue.descr">(beaker.state.ReservedAccountStateValue attribute)</a>
 </li>
-        <li><a href="state.html#beaker.state.DynamicApplicationStateValue.descr">(beaker.state.DynamicApplicationStateValue attribute)</a>
+        <li><a href="state.html#beaker.state.ReservedApplicationStateValue.descr">(beaker.state.ReservedApplicationStateValue attribute)</a>
 </li>
       </ul></li>
-      <li><a href="state.html#beaker.state.DynamicAccountStateValue">DynamicAccountStateValue (class in beaker.state)</a>
-</li>
-      <li><a href="state.html#beaker.state.DynamicApplicationStateValue">DynamicApplicationStateValue (class in beaker.state)</a>
+      <li><a href="application.html#beaker.application.Application.dump">dump() (beaker.application.Application method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -382,10 +386,10 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="state.html#beaker.state.DynamicAccountStateValue.key_gen">key_gen (beaker.state.DynamicAccountStateValue attribute)</a>
+      <li><a href="state.html#beaker.state.ReservedAccountStateValue.key_gen">key_gen (beaker.state.ReservedAccountStateValue attribute)</a>
 
       <ul>
-        <li><a href="state.html#beaker.state.DynamicApplicationStateValue.key_gen">(beaker.state.DynamicApplicationStateValue attribute)</a>
+        <li><a href="state.html#beaker.state.ReservedApplicationStateValue.key_gen">(beaker.state.ReservedApplicationStateValue attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -396,9 +400,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="precompile.html#beaker.precompile.PrecompileTemplateValue.line">line (beaker.precompile.PrecompileTemplateValue attribute)</a>
 </li>
+      <li><a href="precompile.html#beaker.precompile.LSigPrecompile.logic">logic (beaker.precompile.LSigPrecompile attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="lsig.html#beaker.logic_signature.LogicSignature">LogicSignature (class in beaker.logic_signature)</a>
+</li>
+      <li><a href="precompile.html#beaker.precompile.LSigPrecompile.lsig">lsig (beaker.precompile.LSigPrecompile attribute)</a>
+</li>
+      <li><a href="precompile.html#beaker.precompile.LSigPrecompile">LSigPrecompile (class in beaker.precompile)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -406,15 +416,13 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="state.html#beaker.state.DynamicAccountStateValue.max_keys">max_keys (beaker.state.DynamicAccountStateValue attribute)</a>
+      <li><a href="state.html#beaker.state.ReservedAccountStateValue.max_keys">max_keys (beaker.state.ReservedAccountStateValue attribute)</a>
 
       <ul>
-        <li><a href="state.html#beaker.state.DynamicApplicationStateValue.max_keys">(beaker.state.DynamicApplicationStateValue attribute)</a>
+        <li><a href="state.html#beaker.state.ReservedApplicationStateValue.max_keys">(beaker.state.ReservedApplicationStateValue attribute)</a>
 </li>
       </ul></li>
       <li><a href="decorators.html#beaker.decorators.MethodHints">MethodHints (class in beaker.decorators)</a>
-</li>
-      <li><a href="contracts.html#beaker.contracts.OpUp.min_balance">min_balance (beaker.contracts.OpUp attribute)</a>
 </li>
       <li>
     module
@@ -423,8 +431,6 @@
         <li><a href="index.html#module-beaker">beaker</a>
 </li>
         <li><a href="application.html#module-beaker.application">beaker.application</a>
-</li>
-        <li><a href="contracts.html#module-beaker.contracts">beaker.contracts</a>
 </li>
         <li><a href="decorators.html#module-beaker.decorators">beaker.decorators</a>
 </li>
@@ -458,12 +464,6 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="decorators.html#beaker.decorators.Authorize.opted_in">opted_in() (beaker.decorators.Authorize static method)</a>
-</li>
-      <li><a href="contracts.html#beaker.contracts.OpUp">OpUp (class in beaker.contracts)</a>
-</li>
-      <li><a href="contracts.html#beaker.contracts.OpUp.opup_app_id">opup_app_id (beaker.contracts.OpUp attribute)</a>
-</li>
-      <li><a href="contracts.html#beaker.contracts.OpUp.opup_bootstrap">opup_bootstrap() (beaker.contracts.OpUp method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -499,15 +499,19 @@
         <li><a href="state.html#beaker.state.ApplicationStateBlob.read">(beaker.state.ApplicationStateBlob method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="state.html#beaker.state.AccountStateBlob.read_byte">read_byte() (beaker.state.AccountStateBlob method)</a>
 
       <ul>
         <li><a href="state.html#beaker.state.ApplicationStateBlob.read_byte">(beaker.state.ApplicationStateBlob method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="decorators.html#beaker.decorators.MethodHints.read_only">read_only (beaker.decorators.MethodHints attribute)</a>
+</li>
+      <li><a href="state.html#beaker.state.ReservedAccountStateValue">ReservedAccountStateValue (class in beaker.state)</a>
+</li>
+      <li><a href="state.html#beaker.state.ReservedApplicationStateValue">ReservedApplicationStateValue (class in beaker.state)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -525,16 +529,16 @@
       </ul></li>
       <li><a href="sandbox.html#beaker.sandbox.SandboxAccount.signer">signer (beaker.sandbox.SandboxAccount attribute)</a>
 </li>
-      <li><a href="precompile.html#beaker.precompile.Precompile.signer">signer() (beaker.precompile.Precompile method)</a>
+      <li><a href="precompile.html#beaker.precompile.LSigPrecompile.signer">signer() (beaker.precompile.LSigPrecompile method)</a>
 </li>
       <li><a href="state.html#beaker.state.AccountStateValue.stack_type">stack_type (beaker.state.AccountStateValue attribute)</a>
 
       <ul>
         <li><a href="state.html#beaker.state.ApplicationStateValue.stack_type">(beaker.state.ApplicationStateValue attribute)</a>
 </li>
-        <li><a href="state.html#beaker.state.DynamicAccountStateValue.stack_type">(beaker.state.DynamicAccountStateValue attribute)</a>
+        <li><a href="state.html#beaker.state.ReservedAccountStateValue.stack_type">(beaker.state.ReservedAccountStateValue attribute)</a>
 </li>
-        <li><a href="state.html#beaker.state.DynamicApplicationStateValue.stack_type">(beaker.state.DynamicApplicationStateValue attribute)</a>
+        <li><a href="state.html#beaker.state.ReservedApplicationStateValue.stack_type">(beaker.state.ReservedApplicationStateValue attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -553,11 +557,11 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="contracts.html#beaker.contracts.OpUp.target_app">target_app (beaker.contracts.OpUp attribute)</a>
+      <li><a href="precompile.html#beaker.precompile.Precompile.template_hash">template_hash() (beaker.precompile.Precompile method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="precompile.html#beaker.precompile.Precompile.template_hash">template_hash() (beaker.precompile.Precompile method)</a>
+      <li><a href="precompile.html#beaker.precompile.LSigPrecompile.template_signer">template_signer() (beaker.precompile.LSigPrecompile method)</a>
 </li>
       <li><a href="lsig.html#beaker.logic_signature.TemplateVariable">TemplateVariable (class in beaker.logic_signature)</a>
 </li>

@@ -1,6 +1,6 @@
+import base64
 from dataclasses import dataclass, field
-from base64 import b64decode
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from pyteal import (
     Seq,
     Bytes,
@@ -17,14 +17,20 @@ from pyteal import (
     Suffix,
     Subroutine,
     Sha512_256,
+    TxnField,
+    TxnType,
 )
+from algosdk.v2client.algod import AlgodClient
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 from algosdk.future.transaction import LogicSigAccount
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
-
-from beaker.consts import PROGRAM_DOMAIN_SEPARATOR
+from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
 from beaker.lib.strings import encode_uvarint
+
+if TYPE_CHECKING:
+    from beaker.application import Application
+    from beaker.logic_signature import LogicSignature
 
 
 #: The prefix for template variables that should be substituted
@@ -55,24 +61,23 @@ class PrecompileTemplateValue:
 
 class Precompile:
     """
-    Precompile allows a contract to signal that some LogicSignature should be
-    fully compiled prior to trying to construct the approval and clear programs.
+    Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
+    and LSigPrecompile for Applications and Logic Signature programs, respectively.
     """
 
-    def __init__(self, teal_src: str | None, algod_client: AlgodClient = None):
+    _program: str = ""
+    _binary: Optional[bytes] = None
+    _program_hash: Optional[str] = None
+    _map: Optional[SourceMap] = None
+    _template_values: list[PrecompileTemplateValue] = []
 
-        if teal_src is None:
-            raise TealInputError("teal_src cannot be None")
+    binary: Bytes = Bytes("")
 
-        self.program = teal_src
+    def __init__(self, program: str):
+        self._program = program
 
-        self.binary: Optional[bytes] = None
-        self.program_hash: Optional[str] = None
-        self.map: Optional[SourceMap] = None
-
-        self.template_values: list[PrecompileTemplateValue] = []
-
-        lines = self.program.splitlines()
+        lines = self._program.splitlines()
+        template_values: list[PrecompileTemplateValue] = []
         # Replace the teal program TMPL_* template variables with
         # the 0 value for the given type and save the list of TemplateValues
         for idx, line in enumerate(lines):
@@ -82,28 +87,27 @@ class Precompile:
                     name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
                 )
                 lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
-                self.template_values.append(tv)
+                template_values.append(tv)
 
-        self.program = "\n".join(lines)
+        program = "\n".join(lines)
 
-        if algod_client is not None:
-            self.compile(algod_client=algod_client)
+        self._program = program
+        self._template_values = template_values
 
-    def _set_compiled(self, binary: bytes, program_hash: str, map: SourceMap):
-        """
-        Called by application_client to set the binary/addr/map for
-        this precompile.
-        """
-        self.binary = binary
-        self.program_hash = program_hash
-        self.map = map
+    def assemble(self, client: AlgodClient):
+        """Fully compile the program source to binary and generate a source map for matching pc to line number"""
+        result = client.compile(self._program, source_map=True)
+        self._binary = base64.b64decode(result["result"])
+        self._program_hash = result["hash"]
 
-        self.binary_bytes = Bytes(binary)
+        self._map = SourceMap(result["sourcemap"])
 
-        # Denote the pc for each template value
-        for tv in self.template_values:
+        self._asserts = _gather_asserts(self._program, self._map)
+
+        self.binary = Bytes(self._binary)
+        for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
-            tv.pc = self.map.get_pcs_for_line(tv.line)[0] + 1
+            tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
     def compile(self, algod_client: AlgodClient):
         result = algod_client.compile(self.program, source_map=True)
@@ -116,22 +120,12 @@ class Precompile:
 
         It will fail if any template_values are set.
         """
-
-        assert self.binary is not None
-        assert len(self.template_values) == 0
-        if self.program_hash is None:
+        assert self._binary is not None
+        assert len(self._template_values) == 0
+        if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
 
-        return Addr(self.program_hash)
-
-    def signer(self) -> LogicSigTransactionSigner:
-        """
-        signer returns a LogicSigTransactionSigner to be used with
-        an ApplicationClient or AtomicTransactionComposer.
-
-        It should only be used for non templated Precompiles.
-        """
-        return LogicSigTransactionSigner(LogicSigAccount(self.binary))
+        return Addr(self._program_hash)
 
     def populate_template(self, *args) -> bytes:
         """
@@ -142,16 +136,16 @@ class Precompile:
         template values declared.
         """
 
-        assert self.binary is not None
-        assert len(self.template_values) > 0
-        assert len(args) == len(self.template_values)
+        assert self._binary is not None
+        assert len(self._template_values) > 0
+        assert len(args) == len(self._template_values)
 
         # Get a copy of the binary so we can work on it in place
-        populated_binary = list(self.binary).copy()
+        populated_binary = list(self._binary).copy()
         # Any time we add bytes, we need to update the offset so the rest
         # of the pc values can be updated to account for the difference
         offset = 0
-        for idx, tv in enumerate(self.template_values):
+        for idx, tv in enumerate(self._template_values):
             arg: str | bytes | int = args[idx]
 
             if tv.is_bytes:
@@ -180,10 +174,6 @@ class Precompile:
 
         return bytes(populated_binary)
 
-    def template_signer(self, *args) -> LogicSigTransactionSigner:
-        # TODO: assert its being called with an lsig
-        return LogicSigTransactionSigner(LogicSigAccount(self.populate_template(*args)))
-
     def populate_template_expr(self, *args: Expr) -> Expr:
         """
         populate_template_expr returns the Expr that will patch a
@@ -197,9 +187,9 @@ class Precompile:
         # it should produce an identical output in terms of populated binary.
         # This function just reproduces the same effects in pyteal
 
-        assert self.binary_bytes is not None
-        assert len(self.template_values)
-        assert len(args) == len(self.template_values)
+        assert self.binary is not None
+        assert len(self._template_values)
+        assert len(args) == len(self._template_values)
 
         populate_program: list[Expr] = [
             (last_pos := ScratchVar(TealType.uint64)).store(Int(0)),
@@ -208,7 +198,7 @@ class Precompile:
             (buff := ScratchVar(TealType.bytes)).store(Bytes("")),
         ]
 
-        for idx, tv in enumerate(self.template_values):
+        for idx, tv in enumerate(self._template_values):
             # Add expressions to encode the values and insert them into the working buffer
             populate_program += [
                 curr_val.store(Concat(encode_uvarint(Len(args[idx])), args[idx]))
@@ -218,7 +208,7 @@ class Precompile:
                     Concat(
                         buff.load(),
                         Substring(
-                            self.binary_bytes,
+                            self.binary,
                             last_pos.load(),
                             Int(tv.pc),
                         ),
@@ -231,7 +221,7 @@ class Precompile:
 
         # append the bytes from the last template variable to the end
         populate_program += [
-            buff.store(Concat(buff.load(), Suffix(self.binary_bytes, last_pos.load()))),
+            buff.store(Concat(buff.load(), Suffix(self.binary, last_pos.load()))),
             buff.load(),
         ]
 
@@ -249,6 +239,134 @@ class Precompile:
         return Sha512_256(
             Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(*args))
         )
+
+
+class AppPrecompile:
+    """
+    AppPrecompile allows a smart contract to signal that some child Application
+    should be fully compiled prior to constructing its own program.
+    """
+
+    def __init__(self, app: "Application"):
+        #: The App to be used and compiled before it's parent
+        self.app: "Application" = app
+        #: The App's approval program as a Precompile
+        self.approval: Precompile = Precompile("")
+        #: The App's clear program as a Precompile
+        self.clear: Precompile = Precompile("")
+
+    def compile(self, client: AlgodClient):
+        """fully compile this lsig precompile by recursively compiling children depth first
+
+        Note:
+            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
+        for p in self.app.precompiles.values():
+            p.compile(client)
+
+        # at this point, we should have all the dependant logic built
+        # so we can compile the app teal
+        approval, clear = self.app.compile(client)
+        self.approval = Precompile(approval)
+        self.clear = Precompile(clear)
+
+        if self.approval._binary is None:
+            self.approval.assemble(client)
+
+        if self.clear._binary is None:
+            self.clear.assemble(client)
+
+    def get_create_config(self) -> dict[TxnField, Expr]:
+        """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
+        assert self.approval._binary is not None
+        assert self.clear._binary is not None
+
+        return {
+            TxnField.type_enum: TxnType.ApplicationCall,
+            TxnField.approval_program: self.approval.binary,
+            TxnField.clear_state_program: self.clear.binary,
+            TxnField.local_num_byte_slices: Int(self.app.acct_state.num_byte_slices),
+            TxnField.local_num_uints: Int(self.app.acct_state.num_uints),
+            TxnField.global_num_byte_slices: Int(self.app.app_state.num_byte_slices),
+            TxnField.global_num_uints: Int(self.app.app_state.num_uints),
+            TxnField.extra_program_pages: Int(
+                num_extra_program_pages(self.approval._binary, self.clear._binary)
+            ),
+        }
+
+
+class LSigPrecompile:
+    """
+    LSigPrecompile allows a smart contract to signal that some child Logic Signature
+    should be fully compiled prior to constructing its own program.
+    """
+
+    def __init__(self, lsig: "LogicSignature"):
+        #: the LogicSignature to be used and compiled before it's parent
+        self.lsig: "LogicSignature" = lsig
+
+        #: The LogicSignature's logic as a Precompile
+        self.logic: Precompile = Precompile("")
+
+    def compile(self, client: AlgodClient):
+        """
+        fully compile this lsig precompile by recursively compiling children depth first
+
+        Note:
+            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+        """
+        for p in self.lsig.precompiles.values():
+            p.compile(client)
+
+        # at this point, we should have all the dependant logic built
+        # so we can compile the lsig teal
+        self.logic = Precompile(self.lsig.compile(client))
+
+        if self.logic._binary is None:
+            self.logic.assemble(client)
+
+    def template_signer(self, *args) -> LogicSigTransactionSigner:
+        """Get the Signer object for a populated version of the template contract"""
+        return LogicSigTransactionSigner(
+            LogicSigAccount(self.logic.populate_template(*args))
+        )
+
+    def signer(self) -> LogicSigTransactionSigner:
+        """
+        signer returns a LogicSigTransactionSigner to be used with
+        an ApplicationClient or AtomicTransactionComposer.
+
+        It should only be used for non templated Precompiles.
+        """
+        return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
+
+
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first chunk before spaces
+        line = line.split(" ").pop()
+        if line != "assert":
+            continue
+
+        pc = src_map.get_pcs_for_line(idx)[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+
+    return asserts
 
 
 def py_encode_uvarint(integer: int) -> bytes:

@@ -3,12 +3,13 @@ from typing import Final, cast
 from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
+from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
 from beaker.state import (
-    DynamicApplicationStateValue,
+    ReservedApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
-    DynamicAccountStateValue,
+    ReservedAccountStateValue,
 )
 
 from beaker.errors import BareOverwriteError
@@ -84,6 +85,30 @@ def test_single_external():
 
     with pytest.raises(Exception):
         sh.contract.get_method_by_name("made up")
+
+
+def test_method_override():
+    class MethodOverride(Application):
+        @external(name="handle")
+        def handle_algo(self, txn: PaymentTransaction):
+            return pt.Approve()
+
+        @external(name="handle")
+        def handle_asa(self, txn: AssetTransferTransaction):
+            return pt.Approve()
+
+    mo = MethodOverride()
+
+    assert len(mo.methods) == 2, "Expected two externals"
+    assert mo.methods["handle_algo"]
+    assert mo.methods["handle_asa"]
+
+    overlapping_methods = [
+        method for method in mo.contract.methods if method.name == "handle"
+    ]
+    assert len(overlapping_methods) == 2
+    assert get_method_spec(mo.handle_algo) in overlapping_methods
+    assert get_method_spec(mo.handle_asa) in overlapping_methods
 
 
 def test_bare():
@@ -246,15 +271,15 @@ def test_app_state():
     assert app.app_state.num_uints == 1, "Expected 1 int"
     assert app.app_state.num_byte_slices == 1, "Expected 1 byte slice"
 
-    class DynamicAppState(BasicAppState):
+    class ReservedAppState(BasicAppState):
         uint_dynamic: Final[
-            DynamicApplicationStateValue
-        ] = DynamicApplicationStateValue(stack_type=pt.TealType.uint64, max_keys=10)
+            ReservedApplicationStateValue
+        ] = ReservedApplicationStateValue(stack_type=pt.TealType.uint64, max_keys=10)
         byte_dynamic: Final[
-            DynamicApplicationStateValue
-        ] = DynamicApplicationStateValue(stack_type=pt.TealType.bytes, max_keys=10)
+            ReservedApplicationStateValue
+        ] = ReservedApplicationStateValue(stack_type=pt.TealType.bytes, max_keys=10)
 
-    app = DynamicAppState()
+    app = ReservedAppState()
     assert app.app_state.num_uints == 11, "Expected 11 ints"
     assert app.app_state.num_byte_slices == 11, "Expected 11 byte slices"
 
@@ -273,15 +298,15 @@ def test_acct_state():
     assert app.acct_state.num_uints == 1, "Expected 1 int"
     assert app.acct_state.num_byte_slices == 1, "Expected 1 byte slice"
 
-    class DynamicAcctState(BasicAcctState):
-        uint_dynamic: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+    class ReservedAcctState(BasicAcctState):
+        uint_dynamic: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
             stack_type=pt.TealType.uint64, max_keys=5
         )
-        byte_dynamic: Final[DynamicAccountStateValue] = DynamicAccountStateValue(
+        byte_dynamic: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
             stack_type=pt.TealType.bytes, max_keys=5
         )
 
-    app = DynamicAcctState()
+    app = ReservedAcctState()
     assert app.acct_state.num_uints == 6, "Expected 6 ints"
     assert app.acct_state.num_byte_slices == 6, "Expected 6 byte slices"
 
@@ -493,7 +518,7 @@ def test_app_spec():
                     "descr": "",
                 }
             },
-            "dynamic": {},
+            "reserved": {},
         },
         "global": {
             "declared": {
@@ -503,7 +528,7 @@ def test_app_spec():
                     "descr": "",
                 }
             },
-            "dynamic": {},
+            "reserved": {},
         },
     }
 

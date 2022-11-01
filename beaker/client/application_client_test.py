@@ -13,7 +13,7 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
 )
 
-from ..decorators import (
+from beaker.decorators import (
     Authorize,
     DefaultArgument,
     create,

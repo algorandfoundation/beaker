@@ -1,7 +1,6 @@
 from base64 import b64decode
 import copy
-from math import ceil
-from typing import Any, cast
+from typing import Any, cast, Optional
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -19,9 +18,9 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
-from algosdk.constants import APP_PAGE_MAX_SIZE
 
 from beaker.application import Application, get_method_spec
+from beaker.consts import num_extra_program_pages
 from beaker.decorators import (
     HandlerFunc,
     MethodHints,
@@ -30,6 +29,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
+from beaker.precompile import AppPrecompile, ProgramAssertion
 
 
 class ApplicationClient:
@@ -52,11 +52,13 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval_binary = None
-        self.approval_src_map = None
+        self.approval_binary: Optional[bytes] = None
+        self.approval_src_map: Optional[SourceMap] = None
+        self.approval_asserts: Optional[dict[int, ProgramAssertion]] = None
 
-        self.clear_binary = None
-        self.clear_src_map = None
+        self.clear_binary: Optional[bytes] = None
+        self.clear_src_map: Optional[SourceMap] = None
+        self.clear_asserts: Optional[dict[int, ProgramAssertion]] = None
 
         self.suggested_params = suggested_params
 
@@ -69,23 +71,25 @@ class ApplicationClient:
             src_map = SourceMap(result["sourcemap"])
         return (b64decode(result["result"]), result["hash"], src_map)
 
-    def build(self):
-        for _, v in self.app.precompiles.items():
-            if v.binary is None:
-                v.compile(self.client)
+    def build(self) -> None:
+        """
+        Wraps the Application in an AppPrecompile before calling `compile` on the Precompile which
+        recursively compiles all the dependencies (depth first). The result is then used
+        to assign the approval and clear state program binaries and src maps.
+        """
+        if self.approval_binary is not None and self.clear_binary is not None:
+            return
 
-        if self.app.approval_program is None or self.app.clear_program is None:
-            self.app.generate_teal()
+        compiled_app = AppPrecompile(self.app)
+        compiled_app.compile(self.client)
 
-        if self.approval_binary is None:
-            approval, _, approval_map = self.compile(self.app.approval_program, True)
-            self.approval_binary = approval
-            self.approval_src_map = approval_map
+        self.approval_binary = compiled_app.approval._binary
+        self.approval_src_map = compiled_app.approval._map
+        self.approval_asserts = compiled_app.approval._asserts
 
-        if self.clear_binary is None:
-            clear, _, clear_map = self.compile(self.app.clear_program, True)
-            self.clear_binary = clear
-            self.clear_src_map = clear_map
+        self.clear_binary = compiled_app.clear._binary
+        self.clear_src_map = compiled_app.clear._map
+        self.clear_asserts = compiled_app.clear._asserts
 
     def create(
         self,
@@ -103,12 +107,8 @@ class ApplicationClient:
         assert self.clear_binary is not None and self.approval_binary is not None
 
         if extra_pages is None:
-            extra_pages = ceil(
-                (
-                    (len(self.approval_binary) + len(self.clear_binary))
-                    - APP_PAGE_MAX_SIZE
-                )
-                / APP_PAGE_MAX_SIZE
+            extra_pages = num_extra_program_pages(
+                self.approval_binary, self.clear_binary
             )
 
         sp = self.get_suggested_params(suggested_params)
@@ -392,6 +392,7 @@ class ApplicationClient:
             self.add_method_call(
                 atc,
                 self.app.on_delete,
+                on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
                 sp=sp,
                 index=self.app_id,
@@ -454,6 +455,7 @@ class ApplicationClient:
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
+        atc: AtomicTransactionComposer = None,
         **kwargs,
     ) -> ABIResult:
 
@@ -464,8 +466,11 @@ class ApplicationClient:
 
         hints = self.method_hints(method.name)
 
+        if atc is None:
+            atc = AtomicTransactionComposer()
+
         atc = self.add_method_call(
-            AtomicTransactionComposer(),
+            atc,
             method,
             sender,
             signer,
@@ -746,12 +751,8 @@ class ApplicationClient:
         return self.client.suggested_params()
 
     def wrap_approval_exception(self, e: Exception) -> Exception:
-        if self.approval_src_map is None:
-            if self.app.approval_program is None:
-                return e
-
-            _, _, map = self.compile(self.app.approval_program, True)
-            self.approval_src_map = map
+        if self.app.approval_program is None or self.approval_src_map is None:
+            return e
 
         return LogicException(e, self.app.approval_program, self.approval_src_map)
 

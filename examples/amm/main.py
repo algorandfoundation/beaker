@@ -8,7 +8,7 @@ from beaker import consts
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
 
-from amm import ConstantProductAMM
+from .amm import ConstantProductAMM
 
 
 # Take first account from sandbox

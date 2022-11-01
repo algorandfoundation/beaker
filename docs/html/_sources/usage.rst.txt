@@ -32,6 +32,9 @@ Instantiate it and take a look at some of the resulting fields.
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
 
+.. note::
+    The ``Application.dump`` method can be used to write the ``approval.teal``, ``clear.teal``, ``contract.json``, and ``application.json`` to the local file system.
+
 Lets add some methods to be handled by an incoming `ApplicationCallTransaction <https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction>`_.  
 We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine>`_ method with with the :ref:`external <external>` decorator. 
 
@@ -50,7 +53,7 @@ The python method must return an ``Expr`` of some kind, invoked when the externa
 Lets now deploy and call our contract using an :ref:`ApplicationClient <application_client>`.
 
 .. literalinclude:: ../../examples/simple/calculator.py
-    :lines: 32-44
+    :lines: 32-46
 
 
 Thats it! 
@@ -111,7 +114,7 @@ We've added an :ref:`ApplicationStateValue <application_state_value>` attribute 
 .. note:: 
     The base ``Application`` class has several externals pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
-You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for dynamic state keys.
+You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for reserved state keys.
 
 For more example usage see the example :ref:`here <state_example>`.
 
@@ -133,8 +136,8 @@ Also note that the ``opup_app`` argument specifies a default value. This is a bi
 
 .. _parameter_default:
 
-Parameter Default Value
-^^^^^^^^^^^^^^^^^^^^^^^
+Parameter Default Values
+------------------------
 
 In the ``OpUp`` example above, the argument ``opup_app`` should be the id of the application that we use to increase our budget via inner app calls.  
 This value should not change frequently, if at all, but is still required to be passed by the caller so we may **use** it in our logic, namely to execute an application call against it. 
@@ -157,3 +160,38 @@ The result of specifying the default value here is that we can call the method, 
 When invoked, the ``ApplicationClient`` consults the method definition to check that all the expected arguments are passed. 
 If it finds that an argument is not passed, it will check the hints for a default argument for the method that may be used directly (constant) or resolved (need to look it up on chain or call method). 
 Upon finding a resolvable it will look up the state value, call the method. The resulting value is passed in for argument to the application call.
+
+
+Precompiles
+-----------
+
+Often an app developer needs to have the assembled binary of a program available at contract runtime. One way to get this binary is to use the ``Precompile`` feature.
+
+In the ``OpUp`` example above, the ``ExpensiveApp`` inherits from the ``OpUp`` app. The ``OpUp`` app contains an ``AppPrecompile`` for the target app we'd like to call 
+when we make opup requests.
+
+.. literalinclude:: ../../examples/opup/op_up.py
+    :lines: 28-41
+
+The inclusion of a ``Precompile`` prevents building the TEAL until its been fully compiled to assembled binary but we can still reference it in our Application.
+
+The ``OpUp`` Application defines a method to create the target application by referencing the ``AppPrecompile's`` approval/clear binary attribute which contains the assembled binary 
+for the target Application as a ``Bytes`` Expression.
+
+.. literalinclude:: ../../examples/opup/op_up.py
+    :lines: 59-74
+
+Another situations where a ``Precompile`` is useful is when validating the logic of a LogicSignature.
+
+In the ``offload_compute`` example, we check to make sure that the hash of the signer is the LogicSignature we're expecting so that we're sure it is doing "the right thing".
+
+.. literalinclude:: ../../examples/offload_compute/main.py
+    :lines: 28-38 
+
+Additionally, if the LogicSignature has one or more ``TemplateVariables`` specified, the ``template_hash`` function may be used by passing arguments that should be populated into the templated ``LogicSignature``.
+
+.. literalinclude:: ../../examples/templated_lsig/main.py
+    :lines: 38-43 
+
+
+

@@ -49,13 +49,13 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">State</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#application-state">Application State</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#application-state-value">Application State Value</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#dynamic-application-state-value">Dynamic Application State Value</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reserved-application-state-value">Reserved Application State Value</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#application-state-blob">Application State Blob</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#account-state">Account State</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#accountstatevalue">AccountStateValue</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#dynamicaccountstatevalue">DynamicAccountStateValue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reservedaccountstatevalue">ReservedAccountStateValue</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#account-state-blob">Account State Blob</a></li>
 </ul>
 </li>
@@ -64,7 +64,6 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -103,7 +102,7 @@
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>When using the <code class="docutils literal notranslate"><span class="pre">ApplicationStateBlob</span></code> or <code class="docutils literal notranslate"><span class="pre">AccountStateBlob</span></code>, the keys used to store data are 1 byte in the range [0-255]. Care must be taken to prevent any other state values from overwriting those keys.
-For example if <code class="docutils literal notranslate"><span class="pre">DynamicAccountStateValue</span></code> tries to write to key <code class="docutils literal notranslate"><span class="pre">0x00</span></code> and a blob is already using that key, bad things will happen.</p>
+For example if <code class="docutils literal notranslate"><span class="pre">ReservedAccountStateValue</span></code> tries to write to key <code class="docutils literal notranslate"><span class="pre">0x00</span></code> and a blob is already using that key, bad things will happen.</p>
 </div>
 <p><a class="reference internal" href="#state-example"><span class="std std-ref">Full Example</span></a></p>
 <section id="application-state">
@@ -112,7 +111,7 @@ For example if <code class="docutils literal notranslate"><span class="pre">Dyna
 <p>The <code class="docutils literal notranslate"><span class="pre">ApplicationState</span></code> class is produced automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code>, there is no need to create it directly.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.ApplicationState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ApplicationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateValue" title="beaker.state.ApplicationStateValue"><span class="pre">beaker.state.ApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.DynamicApplicationStateValue" title="beaker.state.DynamicApplicationStateValue"><span class="pre">beaker.state.DynamicApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateBlob" title="beaker.state.ApplicationStateBlob"><span class="pre">beaker.state.ApplicationStateBlob</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ApplicationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationState" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ApplicationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateValue" title="beaker.state.ApplicationStateValue"><span class="pre">beaker.state.ApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ReservedApplicationStateValue" title="beaker.state.ReservedApplicationStateValue"><span class="pre">beaker.state.ReservedApplicationStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ApplicationStateBlob" title="beaker.state.ApplicationStateBlob"><span class="pre">beaker.state.ApplicationStateBlob</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ApplicationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationState" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.ApplicationState.initialize">
 <span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#ApplicationState.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationState.initialize" title="Permalink to this definition"></a></dt>
@@ -126,7 +125,7 @@ For example if <code class="docutils literal notranslate"><span class="pre">Dyna
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.ApplicationStateValue">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ApplicationStateValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">static</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ApplicationStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ApplicationStateValue" title="Permalink to this definition"></a></dt>
-<dd><p>Allows storage of global state values for an application</p>
+<dd><p>Allows storage of state values for an application (global state)</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="beaker.state.ApplicationStateValue.stack_type">
 <span class="sig-name descname"><span class="pre">stack_type</span></span><a class="headerlink" href="#beaker.state.ApplicationStateValue.stack_type" title="Permalink to this definition"></a></dt>
@@ -202,15 +201,16 @@ For example if <code class="docutils literal notranslate"><span class="pre">Dyna
 </dd></dl>
 
 </section>
-<section id="dynamic-application-state-value">
-<span id="id3"></span><h3>Dynamic Application State Value<a class="headerlink" href="#dynamic-application-state-value" title="Permalink to this heading"></a></h3>
+<section id="reserved-application-state-value">
+<span id="id3"></span><h3>Reserved Application State Value<a class="headerlink" href="#reserved-application-state-value" title="Permalink to this heading"></a></h3>
 <dl class="py class">
-<dt class="sig sig-object py" id="beaker.state.DynamicApplicationStateValue">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">DynamicApplicationStateValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#DynamicApplicationStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.DynamicApplicationStateValue" title="Permalink to this definition"></a></dt>
-<dd><p>Dynamically keyed Application State</p>
+<dt class="sig sig-object py" id="beaker.state.ReservedApplicationStateValue">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ReservedApplicationStateValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ReservedApplicationStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedApplicationStateValue" title="Permalink to this definition"></a></dt>
+<dd><p>Reserved Application State (global state)</p>
+<p>Used when there should be a number of reserved state fields but the keys are uncertain at build time.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicApplicationStateValue.stack_type">
-<span class="sig-name descname"><span class="pre">stack_type</span></span><a class="headerlink" href="#beaker.state.DynamicApplicationStateValue.stack_type" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.state.ReservedApplicationStateValue.stack_type">
+<span class="sig-name descname"><span class="pre">stack_type</span></span><a class="headerlink" href="#beaker.state.ReservedApplicationStateValue.stack_type" title="Permalink to this definition"></a></dt>
 <dd><p>The type of the state value (either TealType.bytes or TealType.uint64)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -220,9 +220,9 @@ For example if <code class="docutils literal notranslate"><span class="pre">Dyna
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicApplicationStateValue.max_keys">
-<span class="sig-name descname"><span class="pre">max_keys</span></span><a class="headerlink" href="#beaker.state.DynamicApplicationStateValue.max_keys" title="Permalink to this definition"></a></dt>
-<dd><p>Maximum number of keys to reserve for this dynamic state value</p>
+<dt class="sig sig-object py" id="beaker.state.ReservedApplicationStateValue.max_keys">
+<span class="sig-name descname"><span class="pre">max_keys</span></span><a class="headerlink" href="#beaker.state.ReservedApplicationStateValue.max_keys" title="Permalink to this definition"></a></dt>
+<dd><p>Maximum number of keys to reserve for this reserved state value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)">int</a></p>
@@ -231,8 +231,8 @@ For example if <code class="docutils literal notranslate"><span class="pre">Dyna
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicApplicationStateValue.key_gen">
-<span class="sig-name descname"><span class="pre">key_gen</span></span><a class="headerlink" href="#beaker.state.DynamicApplicationStateValue.key_gen" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.state.ReservedApplicationStateValue.key_gen">
+<span class="sig-name descname"><span class="pre">key_gen</span></span><a class="headerlink" href="#beaker.state.ReservedApplicationStateValue.key_gen" title="Permalink to this definition"></a></dt>
 <dd><p>A subroutine returning TealType.bytes, used to create a key where some data is stored.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -242,8 +242,8 @@ For example if <code class="docutils literal notranslate"><span class="pre">Dyna
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicApplicationStateValue.descr">
-<span class="sig-name descname"><span class="pre">descr</span></span><a class="headerlink" href="#beaker.state.DynamicApplicationStateValue.descr" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.state.ReservedApplicationStateValue.descr">
+<span class="sig-name descname"><span class="pre">descr</span></span><a class="headerlink" href="#beaker.state.ReservedApplicationStateValue.descr" title="Permalink to this definition"></a></dt>
 <dd><p>Description of the state value to provide some information to clients</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -330,7 +330,7 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 <p>The <code class="docutils literal notranslate"><span class="pre">AccountState</span></code> class is produced automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code>, there is no need to create it directly.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.AccountState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">AccountState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateValue" title="beaker.state.AccountStateValue"><span class="pre">beaker.state.AccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.DynamicAccountStateValue" title="beaker.state.DynamicAccountStateValue"><span class="pre">beaker.state.DynamicAccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateBlob" title="beaker.state.AccountStateBlob"><span class="pre">beaker.state.AccountStateBlob</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#AccountState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountState" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">AccountState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><span class="pre">Mapping</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateValue" title="beaker.state.AccountStateValue"><span class="pre">beaker.state.AccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.ReservedAccountStateValue" title="beaker.state.ReservedAccountStateValue"><span class="pre">beaker.state.ReservedAccountStateValue</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#beaker.state.AccountStateBlob" title="beaker.state.AccountStateBlob"><span class="pre">beaker.state.AccountStateBlob</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#AccountState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountState" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.AccountState.initialize">
 <span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acct:</span> <span class="pre">~pyteal.Expr</span> <span class="pre">=</span> <span class="pre">&lt;pyteal.TxnExpr</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/state.html#AccountState.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountState.initialize" title="Permalink to this definition"></a></dt>
@@ -344,7 +344,7 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.AccountStateValue">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">AccountStateValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">static</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#AccountStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.AccountStateValue" title="Permalink to this definition"></a></dt>
-<dd><p>Allows storage of global state values for an account opted into an application</p>
+<dd><p>Allows storage of keyed values for an account opted into an application (local state)</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="beaker.state.AccountStateValue.stack_type">
 <span class="sig-name descname"><span class="pre">stack_type</span></span><a class="headerlink" href="#beaker.state.AccountStateValue.stack_type" title="Permalink to this definition"></a></dt>
@@ -420,15 +420,16 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 </dd></dl>
 
 </section>
-<section id="dynamicaccountstatevalue">
-<span id="dynamic-account-state-value"></span><h3>DynamicAccountStateValue<a class="headerlink" href="#dynamicaccountstatevalue" title="Permalink to this heading"></a></h3>
+<section id="reservedaccountstatevalue">
+<span id="reserved-account-state-value"></span><h3>ReservedAccountStateValue<a class="headerlink" href="#reservedaccountstatevalue" title="Permalink to this heading"></a></h3>
 <dl class="py class">
-<dt class="sig sig-object py" id="beaker.state.DynamicAccountStateValue">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">DynamicAccountStateValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#DynamicAccountStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.DynamicAccountStateValue" title="Permalink to this definition"></a></dt>
-<dd><p>Dynamically keyed Account State</p>
+<dt class="sig sig-object py" id="beaker.state.ReservedAccountStateValue">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ReservedAccountStateValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TealType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">SubroutineFnWrapper</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state.html#ReservedAccountStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedAccountStateValue" title="Permalink to this definition"></a></dt>
+<dd><p>Reserved Account State (local state)</p>
+<p>Used when there should be a number of reserved state fields but the keys are uncertain at build time.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicAccountStateValue.stack_type">
-<span class="sig-name descname"><span class="pre">stack_type</span></span><a class="headerlink" href="#beaker.state.DynamicAccountStateValue.stack_type" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.state.ReservedAccountStateValue.stack_type">
+<span class="sig-name descname"><span class="pre">stack_type</span></span><a class="headerlink" href="#beaker.state.ReservedAccountStateValue.stack_type" title="Permalink to this definition"></a></dt>
 <dd><p>The type of the state value (either TealType.bytes or TealType.uint64)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -438,9 +439,9 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicAccountStateValue.max_keys">
-<span class="sig-name descname"><span class="pre">max_keys</span></span><a class="headerlink" href="#beaker.state.DynamicAccountStateValue.max_keys" title="Permalink to this definition"></a></dt>
-<dd><p>Maximum number of keys to reserve for this dynamic state value</p>
+<dt class="sig sig-object py" id="beaker.state.ReservedAccountStateValue.max_keys">
+<span class="sig-name descname"><span class="pre">max_keys</span></span><a class="headerlink" href="#beaker.state.ReservedAccountStateValue.max_keys" title="Permalink to this definition"></a></dt>
+<dd><p>Maximum number of keys to reserve for this reserved state value</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)">int</a></p>
@@ -449,8 +450,8 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicAccountStateValue.key_gen">
-<span class="sig-name descname"><span class="pre">key_gen</span></span><a class="headerlink" href="#beaker.state.DynamicAccountStateValue.key_gen" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.state.ReservedAccountStateValue.key_gen">
+<span class="sig-name descname"><span class="pre">key_gen</span></span><a class="headerlink" href="#beaker.state.ReservedAccountStateValue.key_gen" title="Permalink to this definition"></a></dt>
 <dd><p>A subroutine returning TealType.bytes, used to create a key where some data is stored.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -460,8 +461,8 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.state.DynamicAccountStateValue.descr">
-<span class="sig-name descname"><span class="pre">descr</span></span><a class="headerlink" href="#beaker.state.DynamicAccountStateValue.descr" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.state.ReservedAccountStateValue.descr">
+<span class="sig-name descname"><span class="pre">descr</span></span><a class="headerlink" href="#beaker.state.ReservedAccountStateValue.descr" title="Permalink to this definition"></a></dt>
 <dd><p>Description of the state value to provide some information to clients</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -547,9 +548,9 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Application</span><span class="p">,</span>
     <span class="n">ApplicationStateValue</span><span class="p">,</span>
-    <span class="n">DynamicApplicationStateValue</span><span class="p">,</span>
+    <span class="n">ReservedApplicationStateValue</span><span class="p">,</span>
     <span class="n">AccountStateValue</span><span class="p">,</span>
-    <span class="n">DynamicAccountStateValue</span><span class="p">,</span>
+    <span class="n">ReservedAccountStateValue</span><span class="p">,</span>
     <span class="n">create</span><span class="p">,</span>
     <span class="n">opt_in</span><span class="p">,</span>
     <span class="n">external</span><span class="p">,</span>
@@ -571,8 +572,8 @@ Algorand refers to Account state as <cite>Local State</cite></p>
     <span class="p">)</span>
 
     <span class="n">dynamic_app_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span>
-        <span class="n">DynamicApplicationStateValue</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="n">DynamicApplicationStateValue</span><span class="p">(</span>
+        <span class="n">ReservedApplicationStateValue</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n">ReservedApplicationStateValue</span><span class="p">(</span>
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A dynamic app state variable, with 32 possible keys&quot;</span><span class="p">,</span>
@@ -588,7 +589,7 @@ Algorand refers to Account state as <cite>Local State</cite></p>
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;An int stored for each account that opts in&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">dynamic_account_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">DynamicAccountStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">DynamicAccountStateValue</span><span class="p">(</span>
+    <span class="n">dynamic_account_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">ReservedAccountStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">ReservedAccountStateValue</span><span class="p">(</span>
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A dynamic state value, allowing 8 keys to be reserved, in this case byte type&quot;</span><span class="p">,</span>

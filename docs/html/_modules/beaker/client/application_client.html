@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
 </ul>
 
@@ -78,7 +77,7 @@
 <span></span><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">algosdk.account</span> <span class="kn">import</span> <span class="n">address_from_private_key</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
@@ -107,6 +106,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.client.state_decode</span> <span class="kn">import</span> <span class="n">decode_state</span>
 <span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span>
+<span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">AppPrecompile</span><span class="p">,</span> <span class="n">ProgramAssertion</span>
 
 
 <div class="viewcode-block" id="ApplicationClient"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient">[docs]</a><span class="k">class</span> <span class="nc">ApplicationClient</span><span class="p">:</span>
@@ -129,11 +129,13 @@
         <span class="k">if</span> <span class="n">signer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">sender</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">signer</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceMap</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_asserts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ProgramAssertion</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceMap</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_asserts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ProgramAssertion</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">suggested_params</span> <span class="o">=</span> <span class="n">suggested_params</span>
 
@@ -146,25 +148,25 @@
             <span class="n">src_map</span> <span class="o">=</span> <span class="n">SourceMap</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;sourcemap&quot;</span><span class="p">])</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">b64decode</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]),</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;hash&quot;</span><span class="p">],</span> <span class="n">src_map</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wraps the Application in an AppPrecompile before calling `compile` on the Precompile which</span>
+<span class="sd">        recursively compiles all the dependencies (depth first). The result is then used</span>
+<span class="sd">        to assign the approval and clear state program binaries and src maps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
 
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">precompiles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">binary</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="nb">map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">program</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-                <span class="n">v</span><span class="o">.</span><span class="n">_set_compiled</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="nb">map</span><span class="p">)</span>
+        <span class="n">compiled_app</span> <span class="o">=</span> <span class="n">AppPrecompile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+        <span class="n">compiled_app</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">clear_program</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="o">=</span> <span class="n">compiled_app</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">_binary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="o">=</span> <span class="n">compiled_app</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approval_asserts</span> <span class="o">=</span> <span class="n">compiled_app</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">_asserts</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">approval</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">approval_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">approval_binary</span> <span class="o">=</span> <span class="n">approval</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="o">=</span> <span class="n">approval_map</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">clear</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">clear_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">clear_program</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="o">=</span> <span class="n">clear</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span> <span class="o">=</span> <span class="n">clear_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_binary</span> <span class="o">=</span> <span class="n">compiled_app</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">_binary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_src_map</span> <span class="o">=</span> <span class="n">compiled_app</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_asserts</span> <span class="o">=</span> <span class="n">compiled_app</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">_asserts</span>
 
 <div class="viewcode-block" id="ApplicationClient.create"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -471,6 +473,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
                 <span class="n">atc</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">on_delete</span><span class="p">,</span>
+                <span class="n">on_complete</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">DeleteApplicationOC</span><span class="p">,</span>
                 <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                 <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
                 <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
@@ -532,6 +535,7 @@
         <span class="n">note</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">lease</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rekey_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">atc</span><span class="p">:</span> <span class="n">AtomicTransactionComposer</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIResult</span><span class="p">:</span>
 
@@ -542,8 +546,11 @@
 
         <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_hints</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">atc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
+
         <span class="n">atc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
-            <span class="n">AtomicTransactionComposer</span><span class="p">(),</span>
+            <span class="n">atc</span><span class="p">,</span>
             <span class="n">method</span><span class="p">,</span>
             <span class="n">sender</span><span class="p">,</span>
             <span class="n">signer</span><span class="p">,</span>
@@ -821,12 +828,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">suggested_params</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">wrap_approval_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">e</span>
-
-            <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="nb">map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="o">=</span> <span class="nb">map</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">e</span>
 
         <span class="k">return</span> <span class="n">LogicException</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_src_map</span><span class="p">)</span>
 

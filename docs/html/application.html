@@ -49,7 +49,6 @@
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -80,7 +79,7 @@
   <section id="module-beaker.application">
 <span id="application"></span><h1>Application<a class="headerlink" href="#module-beaker.application" title="Permalink to this heading"></a></h1>
 <p>This is the base class that all Beaker Applications should inherit from.</p>
-<p>This should _not_ be initialized directly.</p>
+<p>This class should <strong>not</strong> be initialized directly.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.application.Application">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.application.</span></span><span class="sig-name descname"><span class="pre">Application</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/application.html#Application"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application" title="Permalink to this definition"></a></dt>
@@ -94,15 +93,35 @@ ABI Methods and internal subroutines.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.application.Application.initialize_application_state">
-<span class="sig-name descname"><span class="pre">initialize_application_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.initialize_application_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.initialize_application_state" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize any application state variables declared</p>
+<dt class="sig sig-object py" id="beaker.application.Application.compile">
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">AlgodClient</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.compile" title="Permalink to this definition"></a></dt>
+<dd><p>Fully compile the application to TEAL</p>
+<p>Note: If the application has <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> fields, the <code class="docutils literal notranslate"><span class="pre">client</span></code> must be passed to
+compile them into bytecode.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The Expr to initialize the application state.</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>client</strong> (<em>optional</em>) – An Algod client that can be passed to <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> to have them fully compiled.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>pyteal.Expr</p>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.application.Application.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.create" title="Permalink to this definition"></a></dt>
+<dd><p>create is the only handler defined by default and only approves the transaction.</p>
+<p>Override this method to define custom behavior.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.application.Application.dump">
+<span class="sig-name descname"><span class="pre">dump</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">AlgodClient</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/application.html#Application.dump"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.dump" title="Permalink to this definition"></a></dt>
+<dd><p>write out the artifacts generated by the application to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directory</strong> (<em>optional</em>) – str path to the directory where the artifacts should be written</p></li>
+<li><p><strong>client</strong> (<em>optional</em>) – AlgodClient to be passed to any precompiles</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -124,11 +143,19 @@ ABI Methods and internal subroutines.</p>
 </dl>
 </dd></dl>
 
-<p>Override the create method define custom behavior</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.application.Application.create">
-<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.create" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="beaker.application.Application.initialize_application_state">
+<span class="sig-name descname"><span class="pre">initialize_application_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.initialize_application_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.initialize_application_state" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize any application state variables declared</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The Expr to initialize the application state.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>pyteal.Expr</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

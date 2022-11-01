@@ -46,6 +46,20 @@ Lets add a parameter to the external to allow only the app creator to call this 
 
 The ``authorize`` parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
 
+Now lets write a new method to allow any account that is opted in to call it:
+
+.. code-block:: python
+    
+    from beaker import Authorize
+
+    # ...
+
+    @external(authorize=Authorize.opted_in())
+    def vote(self, approve: abi.Bool):
+        # ...
+
+This authorize check will cause the contract call to fail if the sender has not opted in to the app. Another app id may also be passed in case you want to check if the Sender is opted in to a different application.
+
 The pre-defined Authorized checks are: 
 
 .. automethod:: Authorize.only

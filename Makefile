@@ -34,7 +34,7 @@ lint: black flake8 mypy
 tests:
 	pytest beaker examples/amm
 
-lint-and-test: lint tests
+lint-and-test: lint tests gen
 
 # ---- Integration Tests (algod required) ---- #
 
@@ -51,6 +51,11 @@ local-gh-simulate:
 	act
 
 # ---- Extras ---- #
-
 coverage:
 	pytest --cov-report html --cov=pyteal
+
+gen:
+	./scripts/gen.sh
+
+gen-check:
+	./scripts/gen.sh -c

@@ -13,6 +13,7 @@ from pyteal import (
 )
 import beaker as bkr
 from beaker.application import get_method_signature
+from beaker.precompile import AppPrecompile
 
 algod_client = bkr.sandbox.get_algod_client()
 
@@ -50,23 +51,12 @@ class C2CMain(bkr.Application):
     """Main application that handles creation of the sub app and asset and calls it"""
 
     # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app = C2CSub()
-    sub_app_approval = bkr.Precompile(
-        sub_app.approval_program, algod_client=algod_client
-    )
-    sub_app_clear = bkr.Precompile(sub_app.clear_program, algod_client=algod_client)
+    sub_app: AppPrecompile = AppPrecompile(sub_app)
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
         return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.sub_app_approval.binary_bytes,
-                    TxnField.clear_state_program: self.sub_app_clear.binary_bytes,
-                    TxnField.fee: Int(0),
-                }
-            ),
+            InnerTxnBuilder.Execute(self.sub_app.get_create_config()),
             # return the app id of the newly created app
             output.set(InnerTxn.created_application_id()),
         )
@@ -142,6 +132,15 @@ class C2CMain(bkr.Application):
             output.set(asset_id.load()),
         )
 
+    @bkr.external
+    def delete_asset(self, asset: abi.Asset):
+        return InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.AssetConfig,
+                TxnField.config_asset: asset.asset_id(),
+            }
+        )
+
 
 def demo():
 
@@ -185,7 +184,14 @@ def demo():
         sub_app=sub_app_id,
         suggested_params=sp,
     )
-    print(f"Created asset id: {result.return_value}")
+    created_asset = result.return_value
+    print(f"Created asset id: {created_asset}")
+
+    result = app_client.call(
+        C2CMain.delete_asset,
+        asset=created_asset,
+    )
+    print(f"Deleted asset in tx: {result.tx_id}")
 
 
 if __name__ == "__main__":

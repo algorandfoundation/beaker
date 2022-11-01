@@ -47,9 +47,11 @@
 <li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Precompile</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Precompile</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contracts.html">Contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 </ul>
 
@@ -81,13 +83,108 @@
 <h1>Precompile<a class="headerlink" href="#precompile" title="Permalink to this heading"></a></h1>
 <p>A Precompile as an attribute on a Beaker Application allows the contract to
 have some program be included in the source of the applications programs.</p>
-<p>An example of where it might be used is in offloading some compute into a LogicSignature
+<p><a class="reference internal" href="#offload-compute-example"><span class="std std-ref">One example</span></a> of where it might be used is in offloading some compute into a LogicSignature
 which has a max budget of 20k ops compared with 700 ops in a single Application call.</p>
+<p><a class="reference internal" href="#sub-app-example"><span class="std std-ref">Another example</span></a> might be if you need to deploy some child Application and want to have the logic
+locally as compiled bytes to create the app directly in program logic.</p>
+<p>When you include an <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> or <code class="docutils literal notranslate"><span class="pre">LSigPrecompile</span></code> in your Application as a class var, Beaker knows to prevent building the TEAL
+until the <code class="docutils literal notranslate"><span class="pre">Precompiles</span></code> it depends on are fully assembled.</p>
+<dl class="simple">
+<dt>This can be done in two ways:</dt><dd><ol class="arabic simple">
+<li><p>By passing the top level <code class="docutils literal notranslate"><span class="pre">Application</span></code> to an <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> and calling the <code class="docutils literal notranslate"><span class="pre">build</span></code> method, the top level <code class="docutils literal notranslate"><span class="pre">Application</span></code> will have its dependencies fully assembled recursively.</p></li>
+<li><p>By calling <code class="docutils literal notranslate"><span class="pre">compile</span></code> method on the <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> or <code class="docutils literal notranslate"><span class="pre">LSigPrecompile</span></code> and passing an <code class="docutils literal notranslate"><span class="pre">AlgodClient</span></code> to assemble the dependencies.</p></li>
+</ol>
+</dd>
+</dl>
 <span class="target" id="module-beaker.precompile"></span><dl class="py class">
+<dt class="sig sig-object py" id="beaker.precompile.AppPrecompile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">AppPrecompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="application.html#beaker.application.Application" title="beaker.application.Application"><span class="pre">Application</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#AppPrecompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.AppPrecompile" title="Permalink to this definition"></a></dt>
+<dd><p>AppPrecompile allows a smart contract to signal that some child Application
+should be fully compiled prior to constructing its own program.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="beaker.precompile.AppPrecompile.app">
+<span class="sig-name descname"><span class="pre">app</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="application.html#beaker.application.Application" title="beaker.application.Application"><span class="pre">Application</span></a></em><a class="headerlink" href="#beaker.precompile.AppPrecompile.app" title="Permalink to this definition"></a></dt>
+<dd><p>The App to be used and compiled before it’s parent</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="beaker.precompile.AppPrecompile.approval">
+<span class="sig-name descname"><span class="pre">approval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#beaker.precompile.Precompile" title="beaker.precompile.Precompile"><span class="pre">Precompile</span></a></em><a class="headerlink" href="#beaker.precompile.AppPrecompile.approval" title="Permalink to this definition"></a></dt>
+<dd><p>The App’s approval program as a Precompile</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="beaker.precompile.AppPrecompile.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#beaker.precompile.Precompile" title="beaker.precompile.Precompile"><span class="pre">Precompile</span></a></em><a class="headerlink" href="#beaker.precompile.AppPrecompile.clear" title="Permalink to this definition"></a></dt>
+<dd><p>The App’s clear program as a Precompile</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.AppPrecompile.compile">
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#AppPrecompile.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.AppPrecompile.compile" title="Permalink to this definition"></a></dt>
+<dd><p>fully compile this lsig precompile by recursively compiling children depth first</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Must be called (even indirectly) prior to using the <code class="docutils literal notranslate"><span class="pre">approval</span></code> and <code class="docutils literal notranslate"><span class="pre">clear</span></code> fields</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">LSigPrecompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lsig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="lsig.html#beaker.logic_signature.LogicSignature" title="beaker.logic_signature.LogicSignature"><span class="pre">LogicSignature</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile" title="Permalink to this definition"></a></dt>
+<dd><p>LSigPrecompile allows a smart contract to signal that some child Logic Signature
+should be fully compiled prior to constructing its own program.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.compile">
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.compile" title="Permalink to this definition"></a></dt>
+<dd><p>fully compile this lsig precompile by recursively compiling children depth first</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Must be called (even indirectly) prior to using the <code class="docutils literal notranslate"><span class="pre">approval</span></code> and <code class="docutils literal notranslate"><span class="pre">clear</span></code> fields</p>
+</div>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.logic">
+<span class="sig-name descname"><span class="pre">logic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#beaker.precompile.Precompile" title="beaker.precompile.Precompile"><span class="pre">Precompile</span></a></em><a class="headerlink" href="#beaker.precompile.LSigPrecompile.logic" title="Permalink to this definition"></a></dt>
+<dd><p>The LogicSignature’s logic as a Precompile</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.lsig">
+<span class="sig-name descname"><span class="pre">lsig</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="lsig.html#beaker.logic_signature.LogicSignature" title="beaker.logic_signature.LogicSignature"><span class="pre">LogicSignature</span></a></em><a class="headerlink" href="#beaker.precompile.LSigPrecompile.lsig" title="Permalink to this definition"></a></dt>
+<dd><p>the LogicSignature to be used and compiled before it’s parent</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.signer">
+<span class="sig-name descname"><span class="pre">signer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LogicSigTransactionSigner</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.signer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.signer" title="Permalink to this definition"></a></dt>
+<dd><p>signer returns a LogicSigTransactionSigner to be used with
+an ApplicationClient or AtomicTransactionComposer.</p>
+<p>It should only be used for non templated Precompiles.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.template_signer">
+<span class="sig-name descname"><span class="pre">template_signer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LogicSigTransactionSigner</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.template_signer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.template_signer" title="Permalink to this definition"></a></dt>
+<dd><p>Get the Signer object for a populated version of the template contract</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">Precompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teal_src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile" title="Permalink to this definition"></a></dt>
-<dd><p>Precompile allows a contract to signal that some LogicSignature should be
-fully compiled prior to trying to construct the approval and clear programs.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">Precompile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile" title="Permalink to this definition"></a></dt>
+<dd><p>Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
+and LSigPrecompile for Applications and Logic Signature programs, respectively.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.Precompile.assemble">
+<span class="sig-name descname"><span class="pre">assemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.assemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.assemble" title="Permalink to this definition"></a></dt>
+<dd><p>Fully compile the program source to binary and generate a source map for matching pc to line number</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile.hash">
 <span class="sig-name descname"><span class="pre">hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.hash" title="Permalink to this definition"></a></dt>
@@ -111,14 +208,6 @@ template values declared.</p>
 blank binary given a set of arguments.</p>
 <p>It is called by <code class="docutils literal notranslate"><span class="pre">template_address</span></code> to return a Expr that
 can be used to compare with a sender given some arguments.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="beaker.precompile.Precompile.signer">
-<span class="sig-name descname"><span class="pre">signer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LogicSigTransactionSigner</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.signer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.signer" title="Permalink to this definition"></a></dt>
-<dd><p>signer returns a LogicSigTransactionSigner to be used with
-an ApplicationClient or AtomicTransactionComposer.</p>
-<p>It should only be used for non templated Precompiles.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -159,6 +248,136 @@ hash given some set of values that should be included in the logic itself</p>
 
 </dd></dl>
 
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p id="offload-compute-example">Using Precompile for offloading compute</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="k">class</span> <span class="nc">EthChecker</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+
+    <span class="c1"># The lsig that will be responsible for validating the</span>
+    <span class="c1"># incoming signature against the incoming hash</span>
+    <span class="c1"># When passed to Precompile, it flags the init of the Application</span>
+    <span class="c1"># to prevent building approval/clear programs until the precompile is</span>
+    <span class="c1"># compiled so we have access to compiled information (its address for instance)</span>
+    <span class="n">verifier</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">LSigPrecompile</span><span class="p">]</span> <span class="o">=</span> <span class="n">LSigPrecompile</span><span class="p">(</span><span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">))</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">check_eth_sig</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="nb">hash</span><span class="p">:</span> <span class="n">HashValue</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="c1"># The precompiled lsig should have its address and binary available</span>
+            <span class="c1"># here so we can use it to make sure we&#39;ve been called</span>
+            <span class="c1"># with the correct lsig</span>
+            <span class="n">Assert</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">verifier</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">hash</span><span class="p">()),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;lsig validated&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+</pre></div>
+</div>
+<p id="sub-app-example">Using Precompile for a child Application</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">abi</span><span class="p">,</span>
+    <span class="n">InnerTxn</span><span class="p">,</span>
+    <span class="n">InnerTxnBuilder</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TxnField</span><span class="p">,</span>
+    <span class="n">TxnType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">AppPrecompile</span><span class="p">,</span> <span class="n">LSigPrecompile</span>
+
+
+<span class="k">class</span> <span class="nc">LSig</span><span class="p">(</span><span class="n">LogicSignature</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">Child1</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="n">counter</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">ApplicationStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">ApplicationStateValue</span><span class="p">(</span>
+        <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="nd">@create</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initialize_application_state</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">increment_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Increment the counter global state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">increment</span><span class="p">(),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">get</span><span class="p">()),</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Child2</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="n">lsig</span><span class="p">:</span> <span class="n">LSigPrecompile</span> <span class="o">=</span> <span class="n">LSigPrecompile</span><span class="p">(</span><span class="n">LSig</span><span class="p">())</span>
+
+    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">get_lsig_addr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lsig</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">hash</span><span class="p">())</span>
+
+
+<span class="k">class</span> <span class="nc">Parent</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="n">child_1</span><span class="p">:</span> <span class="n">AppPrecompile</span> <span class="o">=</span> <span class="n">AppPrecompile</span><span class="p">(</span><span class="n">Child1</span><span class="p">())</span>
+    <span class="n">child_2</span><span class="p">:</span> <span class="n">AppPrecompile</span> <span class="o">=</span> <span class="n">AppPrecompile</span><span class="p">(</span><span class="n">Child2</span><span class="p">())</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">create_child_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">approval_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_1</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">clear_state_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_1</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">global_num_uints</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+        <span class="p">)</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">create_child_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">approval_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_2</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">clear_state_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_2</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">global_num_uints</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Grandparent</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
+    <span class="n">parent</span><span class="p">:</span> <span class="n">AppPrecompile</span> <span class="o">=</span> <span class="n">AppPrecompile</span><span class="p">(</span><span class="n">Parent</span><span class="p">())</span>
+
+    <span class="nd">@external</span>
+    <span class="k">def</span> <span class="nf">create_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new parent app.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">approval_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                    <span class="n">TxnField</span><span class="o">.</span><span class="n">clear_state_program</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
