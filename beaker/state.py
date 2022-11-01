@@ -253,11 +253,7 @@ class ReservedApplicationStateValue(ReservedStateValue):
 
     Attributes:
         stack_type (TealType): The type of the state value (either TealType.bytes or TealType.uint64)
-<<<<<<< HEAD
-        max_keys (int): Maximum number of keys to reserve for this dynamic state value
-=======
         max_keys (int): Maximum number of keys to reserve for this reserved state value
->>>>>>> master
         key_gen (SubroutineFnWrapper): A subroutine returning TealType.bytes, used to create a key where some data is stored.
         descr (str): Description of the state value to provide some information to clients
     """

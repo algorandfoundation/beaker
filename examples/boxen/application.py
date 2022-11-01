@@ -9,6 +9,7 @@ class MembershipRecord(abi.NamedTuple):
     role: abi.Field[abi.Uint8]
     voted: abi.Field[abi.Bool]
 
+
 class Boxen(Application):
     membership = Mapping(abi.Address, MembershipRecord)
 
