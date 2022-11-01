@@ -72,24 +72,34 @@ bytec_0 // "BoxA"
 box_get
 store 3
 store 2
-bytec_1 // "declared_count"
-app_global_get
+intc_0 // 0
 store 4
 addint_1_l1:
+load 4
+bytec_1 // "declared_count"
+app_global_get
+<
+bz addint_1_l4
 load 1
 load 2
 load 4
 intc_2 // 8
 *
 extract_uint64
-<
-bz addint_1_l3
+<=
+bnz addint_1_l4
 load 4
 intc_1 // 1
--
++
 store 4
 b addint_1_l1
-addint_1_l3:
+addint_1_l4:
+bytec_1 // "declared_count"
+bytec_1 // "declared_count"
+app_global_get
+intc_1 // 1
++
+app_global_put
 bytec_0 // "BoxA"
 load 2
 intc_0 // 0
@@ -117,12 +127,6 @@ box_put
 global OpcodeBudget
 itob
 log
-bytec_1 // "declared_count"
-bytec_1 // "declared_count"
-app_global_get
-intc_1 // 1
-+
-app_global_put
 pushint 10 // 10
 itob
 extract 6 0

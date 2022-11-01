@@ -26,10 +26,16 @@ class NumberOrder(Application):
             # Get the current array
             array_contents := App.box_get(self.BoxName),
             # figure out the correct index
-            (i := ScratchVar()).store(self.declared_count),
-            While(
-                val.get() < ExtractUint64(array_contents.value(), i.load() * Int(8))
-            ).Do(i.store(i.load() - Int(1))),
+            (i := ScratchVar()).store(Int(0)),
+            While(i.load() < self.declared_count).Do(
+                If(
+                    val.get()
+                    <= ExtractUint64(array_contents.value(), i.load() * Int(8)),
+                    Break(),
+                    i.store(i.load() + Int(1)),
+                )
+            ),
+            self.declared_count.increment(),
             # Write the new array with the contents
             App.box_put(
                 self.BoxName,
@@ -39,7 +45,7 @@ class NumberOrder(Application):
                 ),
             ),
             Log(Itob(Global.opcode_budget())),
-            self.declared_count.increment(),
+            # self.declared_count.increment(),
             output.decode(
                 # Prepend the bytes with the number of elements as a uint16, according to ABI spec
                 Concat(
@@ -49,10 +55,14 @@ class NumberOrder(Application):
             ),
         )
 
+    def get_idx(last: Expr):
+        pass
+
     def insert_element(self, buff: Expr, new_val: Expr, pos: Expr):
         return Concat(
             Extract(buff, Int(0), pos),
             new_val,
+            # extract from pos -> max len of box leaving off
             Extract(buff, pos, self.BoxSize - pos - Int(8)),
         )
 
@@ -92,14 +102,29 @@ if __name__ == "__main__":
             val=num,
             boxes=boxes,
         )
+        print(result.return_value)
         return decode_budget(result.tx_info)
+
+    def get_box() -> list[int]:
+        box_contents = app_client.client.application_box_by_name(
+            app_client.app_id, b"BoxA"
+        )
+
+        vals = []
+        data = base64.b64decode(box_contents["value"])
+        for idx in range(len(data) // 8):
+            vals.append(int.from_bytes(data[idx * 8 : (idx + 1) * 8], "big"))
+
+        return vals
 
     import random
 
-    nums = list(range(512))
+    nums = list(range(40))
     random.shuffle(nums)
+    budgets = []
     for idx, n in enumerate(nums):
-        print(f"Iteration: {nums.index(n)}")
-        budget = add_number(n)
-        if (idx + 1) % 64 == 0:
-            print(f"Budget: {budget}")
+        print(f"Iteration {idx}: {n}")
+        budgets.append(add_number(n))
+
+    print(budgets)
+    print(get_box())
