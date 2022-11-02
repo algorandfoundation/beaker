@@ -110,6 +110,12 @@ def div_ceil(a, b) -> Expr:
     q = a / b
     return If(a % b > Int(0), q + Int(1), q)
 
+@Subroutine(TealType.uint64)
+def div_round(a,b)->Expr:
+    quo = a / b
+    mod = a % b
+    return If(mod/b > Int(0), quo + Int(1), quo)
+
 
 @Subroutine(TealType.uint64)
 def pow10(x) -> Expr:

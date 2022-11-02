@@ -5,6 +5,13 @@ from pyteal import *
 from beaker import *
 
 
+@Subroutine(TealType.uint64)
+def div_round(a, b) -> Expr:
+    quo = a / b
+    mod = a % b
+    return If(mod > (b / Int(2)), quo + Int(1), quo)
+
+
 class NumberOrder(Application):
     declared_count: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
@@ -26,16 +33,15 @@ class NumberOrder(Application):
             # Get the current array
             array_contents := App.box_get(self.BoxName),
             # figure out the correct index
-            (i := ScratchVar()).store(Int(0)),
-            While(i.load() < self.declared_count).Do(
-                If(
-                    val.get()
-                    <= ExtractUint64(array_contents.value(), i.load() * Int(8)),
-                    Break(),
-                    i.store(i.load() + Int(1)),
+            self.declared_count.increment(),
+            (i := ScratchVar()).store(
+                self.binary_search(
+                    val.get(),
+                    array_contents.value(),
+                    Int(1),
+                    self.declared_count - Int(1),
                 )
             ),
-            self.declared_count.increment(),
             # Write the new array with the contents
             App.box_put(
                 self.BoxName,
@@ -55,8 +61,27 @@ class NumberOrder(Application):
             ),
         )
 
-    def get_idx(last: Expr):
-        pass
+    @internal(TealType.uint64)
+    def binary_search(self, val: Expr, arr: Expr, start: Expr, end: Expr) -> Expr:
+        return Seq(
+            If(start > end, Return(start)),
+            If(
+                start == end,
+                Return(
+                    start + If(self.lookup_element(arr, start) > val, Int(0), Int(1))
+                ),
+            ),
+            (mid := ScratchVar()).store((start + end) / Int(2)),
+            (midval := ScratchVar()).store(self.lookup_element(arr, mid.load())),
+            If(midval.load() < val)
+            .Then(self.binary_search(val, arr, mid.load() + Int(1), end))
+            .ElseIf(midval.load() > val)
+            .Then(self.binary_search(val, arr, start, mid.load() - Int(1)))
+            .Else(mid.load()),
+        )
+
+    def lookup_element(self, buff: Expr, idx: Expr):
+        return ExtractUint64(buff, idx * Int(8))
 
     def insert_element(self, buff: Expr, new_val: Expr, pos: Expr):
         return Concat(
@@ -74,7 +99,32 @@ class NumberOrder(Application):
         )
 
 
+def binary_search(arr, val, start, end):
+    if start > end:
+        return start
+
+    if start == end:
+        if arr[start] > val:
+            return start
+        return start + 1
+
+    mid = (start + end) // 2
+
+    if arr[mid] < val:
+        return binary_search(arr, val, mid + 1, end)
+    elif arr[mid] > val:
+        return binary_search(arr, val, start, mid - 1)
+    else:
+        return mid
+
+
 if __name__ == "__main__":
+    # arr = []
+    # for x in [37, 23, 0, 31, 22, 17, 12, 72, 31, 46, 100, 88, 54]:
+    #    j = binary_search(arr, x, 0, len(arr) - 1)
+    #    arr = arr[:j] + [x] + arr[j:]
+    # print(arr)
+
     accts = sandbox.get_accounts()
     acct = accts.pop()
     acct2 = accts.pop()
@@ -93,8 +143,11 @@ if __name__ == "__main__":
         boxes=boxes,
     )
 
+    def decode_int(b: str) -> int:
+        return int.from_bytes(base64.b64decode(b), "big")
+
     def decode_budget(tx_info) -> int:
-        return int.from_bytes(base64.b64decode(tx_info["logs"][0]), "big")
+        return decode_int(tx_info["logs"][0])
 
     def add_number(num: int) -> int:
         result = app_client.call(
@@ -102,6 +155,7 @@ if __name__ == "__main__":
             val=num,
             boxes=boxes,
         )
+        print([decode_int(v) for v in result.tx_info["logs"][:-1]])
         print(result.return_value)
         return decode_budget(result.tx_info)
 
@@ -119,7 +173,7 @@ if __name__ == "__main__":
 
     import random
 
-    nums = list(range(40))
+    nums = list(range(511))
     random.shuffle(nums)
     budgets = []
     for idx, n in enumerate(nums):
