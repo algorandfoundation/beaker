@@ -97,6 +97,8 @@ load 4
 intc_0 // 0
 bytec_0 // "declared_count"
 app_global_get
+intc_1 // 1
+-
 callsub binarysearch_3
 b addint_2_l3
 addint_2_l2:

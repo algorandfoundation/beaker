@@ -42,7 +42,7 @@ class NumberOrder(Application):
                         val.get(),
                         array_contents.value(),
                         Int(0),
-                        self.declared_count,  # - Int(1),
+                        self.declared_count - Int(1),
                     )
                 )
                 * Int(8),
@@ -105,7 +105,7 @@ class NumberOrder(Application):
             Extract(buff, Int(0), pos),
             new_val,
             # extract from pos -> max len of box leaving off
-            Extract(buff, pos, self.BoxSize - pos - Int(8)),
+            Extract(buff, pos, (self.BoxSize - pos) - Int(8)),
         )
 
     @external
