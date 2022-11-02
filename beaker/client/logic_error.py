@@ -39,7 +39,7 @@ class LogicException(Exception):
 
     def trace(self, lines: int = 5) -> str:
         program_lines = copy(self.lines)
-        program_lines[self.line_no] += "\t\t<-- Error"
+        program_lines[self.line_no] += f"\t\t<-- Error ./artifacts/approval.teal#{self.line_no} "
         lines_before = max(0, self.line_no - lines)
         lines_after = min(len(program_lines), self.line_no + lines)
         return "\n\t".join(program_lines[lines_before:lines_after])

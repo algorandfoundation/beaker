@@ -3,6 +3,7 @@ from typing import Final
 from algosdk import *
 from pyteal import *
 from beaker import *
+from beaker.lib.math import max
 
 
 @Subroutine(TealType.uint64)
@@ -30,24 +31,30 @@ class NumberOrder(Application):
     @external
     def add_int(self, val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
         return Seq(
-            # Get the current array
             array_contents := App.box_get(self.BoxName),
             # figure out the correct index
-            self.declared_count.increment(),
-            (i := ScratchVar()).store(
-                self.binary_search(
-                    val.get(),
-                    array_contents.value(),
-                    Int(1),
-                    self.declared_count - Int(1),
-                )
-            ),
             # Write the new array with the contents
+            (idx := ScratchVar()).store(
+                If(self.declared_count == Int(0))
+                .Then(Int(0))
+                .Else(
+                    self.binary_search(
+                        val.get(),
+                        array_contents.value(),
+                        Int(0),
+                        self.declared_count,  # - Int(1),
+                    )
+                )
+                * Int(8),
+            ),
+            self.declared_count.increment(),
             App.box_put(
                 self.BoxName,
                 # Take the bytes that would fit in the box
                 self.insert_element(
-                    array_contents.value(), val.encode(), i.load() * Int(8)
+                    array_contents.value(),
+                    val.encode(),
+                    idx.load(),
                 ),
             ),
             Log(Itob(Global.opcode_budget())),
@@ -64,20 +71,30 @@ class NumberOrder(Application):
     @internal(TealType.uint64)
     def binary_search(self, val: Expr, arr: Expr, start: Expr, end: Expr) -> Expr:
         return Seq(
+            Comment("in bin"),
             If(start > end, Return(start)),
+            Comment("start<=end"),
             If(
                 start == end,
                 Return(
                     start + If(self.lookup_element(arr, start) > val, Int(0), Int(1))
                 ),
             ),
+            Comment("start!=end"),
             (mid := ScratchVar()).store((start + end) / Int(2)),
             (midval := ScratchVar()).store(self.lookup_element(arr, mid.load())),
+            Comment("gotvals"),
             If(midval.load() < val)
-            .Then(self.binary_search(val, arr, mid.load() + Int(1), end))
+            .Then(
+                Comment("midval<val"),
+                self.binary_search(val, arr, mid.load() + Int(1), end),
+            )
             .ElseIf(midval.load() > val)
-            .Then(self.binary_search(val, arr, start, mid.load() - Int(1)))
-            .Else(mid.load()),
+            .Then(
+                Comment("midval>val"),
+                self.binary_search(val, arr, start, max(Int(1), mid.load()) - Int(1)),
+            )
+            .Else(Comment("midval=val"), mid.load()),
         )
 
     def lookup_element(self, buff: Expr, idx: Expr):
@@ -165,6 +182,7 @@ if __name__ == "__main__":
         )
 
         vals = []
+        print(box_contents["value"])
         data = base64.b64decode(box_contents["value"])
         for idx in range(len(data) // 8):
             vals.append(int.from_bytes(data[idx * 8 : (idx + 1) * 8], "big"))
@@ -173,7 +191,7 @@ if __name__ == "__main__":
 
     import random
 
-    nums = list(range(511))
+    nums = list(range(512))
     random.shuffle(nums)
     budgets = []
     for idx, n in enumerate(nums):
@@ -181,4 +199,10 @@ if __name__ == "__main__":
         budgets.append(add_number(n))
 
     print(budgets)
-    print(get_box())
+    box = get_box()
+    print(box)
+    mx = 0
+    for x in box:
+        print(x)
+        assert mx <= x
+        mx = x
