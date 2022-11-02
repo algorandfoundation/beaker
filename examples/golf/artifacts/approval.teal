@@ -62,38 +62,39 @@ return
 
 // max
 max_0:
-store 12
-store 11
-load 11
-load 12
+proto 2 1
+frame_dig -2
+frame_dig -1
 >
 bnz max_0_l2
-load 12
+frame_dig -1
 b max_0_l3
 max_0_l2:
-load 11
+frame_dig -2
 max_0_l3:
 retsub
 
 // create
 create_1:
+proto 0 0
 intc_1 // 1
 return
 
 // add_int
 addint_2:
-store 1
+proto 1 1
+intc_0 // 0
 bytec_1 // "BoxA"
 box_get
-store 3
 store 2
+store 1
 bytec_0 // "declared_count"
 app_global_get
 intc_0 // 0
 ==
 bnz addint_2_l2
+frame_dig -1
 load 1
-load 2
 intc_0 // 0
 bytec_0 // "declared_count"
 app_global_get
@@ -106,7 +107,7 @@ intc_0 // 0
 addint_2_l3:
 intc_2 // 8
 *
-store 4
+store 3
 bytec_0 // "declared_count"
 bytec_0 // "declared_count"
 app_global_get
@@ -114,17 +115,17 @@ intc_1 // 1
 +
 app_global_put
 bytec_1 // "BoxA"
-load 2
-intc_0 // 0
-load 4
-extract3
 load 1
+intc_0 // 0
+load 3
+extract3
+frame_dig -1
 itob
 concat
-load 2
-load 4
+load 1
+load 3
 intc_3 // 4096
-load 4
+load 3
 -
 intc_2 // 8
 -
@@ -144,106 +145,85 @@ pushint 10 // 10
 *
 box_extract
 concat
+frame_bury 0
+frame_dig 0
 retsub
 
 // binary_search
 binarysearch_3:
-store 8
-store 7
-store 6
-store 5
-load 7
-load 8
+proto 4 1
+frame_dig -2
+frame_dig -1
 >
 bnz binarysearch_3_l11
-load 7
-load 8
+frame_dig -2
+frame_dig -1
 ==
 bnz binarysearch_3_l7
-load 7
-load 8
+frame_dig -2
+frame_dig -1
 +
 pushint 2 // 2
 /
-store 9
-load 6
-load 9
+store 4
+frame_dig -3
+load 4
 intc_2 // 8
 *
 extract_uint64
-store 10
-load 10
+store 5
 load 5
+frame_dig -4
 <
 bnz binarysearch_3_l6
-load 10
 load 5
+frame_dig -4
 >
 bnz binarysearch_3_l5
-load 9
+load 4
 b binarysearch_3_l12
 binarysearch_3_l5:
-load 5
-load 6
-load 7
+frame_dig -4
+frame_dig -3
+frame_dig -2
 intc_1 // 1
-load 9
+load 4
 callsub max_0
 intc_1 // 1
 -
+load 4
+cover 4
 load 5
-load 6
-load 7
-load 8
-load 9
-load 10
-uncover 9
-uncover 9
-uncover 9
-uncover 9
+cover 4
 callsub binarysearch_3
-cover 6
-store 10
-store 9
-store 8
-store 7
-store 6
+cover 2
 store 5
+store 4
 b binarysearch_3_l12
 binarysearch_3_l6:
-load 5
-load 6
-load 9
+frame_dig -4
+frame_dig -3
+load 4
 intc_1 // 1
 +
-load 8
+frame_dig -1
+load 4
+cover 4
 load 5
-load 6
-load 7
-load 8
-load 9
-load 10
-uncover 9
-uncover 9
-uncover 9
-uncover 9
+cover 4
 callsub binarysearch_3
-cover 6
-store 10
-store 9
-store 8
-store 7
-store 6
+cover 2
 store 5
+store 4
 b binarysearch_3_l12
 binarysearch_3_l7:
-load 7
-load 6
-load 7
+frame_dig -2
+frame_dig -3
+frame_dig -2
 intc_2 // 8
 *
 extract_uint64
-load 5
+frame_dig -4
 >
 bnz binarysearch_3_l10
 intc_1 // 1
@@ -254,13 +234,14 @@ binarysearch_3_l10:
 intc_0 // 0
 b binarysearch_3_l9
 binarysearch_3_l11:
-load 7
+frame_dig -2
 retsub
 binarysearch_3_l12:
 retsub
 
 // box_create_test
 boxcreatetest_4:
+proto 0 0
 bytec_1 // "BoxA"
 intc_3 // 4096
 box_create
