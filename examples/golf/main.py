@@ -8,13 +8,13 @@ from beaker.lib.math import max
 
 
 class NumberOrder(Application):
-    declared_count: Final[ApplicationStateValue] = ApplicationStateValue(
+    elements: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
-        descr="wouldnt you like to know",
+        descr="The number of elements in the array",
     )
 
-    _box_name = "BoxA"
+    _box_name = "sorted_ints"
     _box_size = 1024 * 4
     _max_ints = _box_size // 8
 
@@ -29,19 +29,18 @@ class NumberOrder(Application):
             # figure out the correct index
             # Write the new array with the contents
             (idx := ScratchVar()).store(
-                If(self.declared_count == Int(0))
-                .Then(Int(0))
-                .Else(
+                If(
+                    self.elements == Int(0),
+                    Int(0),
                     self.binary_search(
                         val.get(),
                         array_contents.value(),
                         Int(0),
-                        self.declared_count - Int(1),
+                        self.elements - Int(1),
                     )
+                    * Int(8),
                 )
-                * Int(8),
             ),
-            self.declared_count.increment(),
             App.box_put(
                 self.BoxName,
                 # Take the bytes that would fit in the box
@@ -51,8 +50,8 @@ class NumberOrder(Application):
                     idx.load(),
                 ),
             ),
+            self.elements.increment(),
             Log(Itob(Global.opcode_budget())),
-            # self.declared_count.increment(),
             output.decode(
                 # Prepend the bytes with the number of elements as a uint16, according to ABI spec
                 Concat(
@@ -72,17 +71,19 @@ class NumberOrder(Application):
                     start + If(self.lookup_element(arr, start) > val, Int(0), Int(1))
                 ),
             ),
-            (mid := ScratchVar()).store((start + end) / Int(2)),
-            (midval := ScratchVar()).store(self.lookup_element(arr, mid.load())),
+            (mididx := ScratchVar()).store((start + end) / Int(2)),
+            (midval := ScratchVar()).store(self.lookup_element(arr, mididx.load())),
             If(midval.load() < val)
             .Then(
-                self.binary_search(val, arr, mid.load() + Int(1), end),
+                self.binary_search(val, arr, mididx.load() + Int(1), end),
             )
             .ElseIf(midval.load() > val)
             .Then(
-                self.binary_search(val, arr, start, max(Int(1), mid.load()) - Int(1)),
+                self.binary_search(
+                    val, arr, start, max(Int(1), mididx.load()) - Int(1)
+                ),
             )
-            .Else(mid.load()),
+            .Else(mididx.load()),
         )
 
     def lookup_element(self, buff: Expr, idx: Expr):
@@ -100,55 +101,49 @@ class NumberOrder(Application):
     def box_create_test(self):
         return Seq(
             Assert(App.box_create(self.BoxName, self.BoxSize)),
-            self.declared_count.set(Int(0)),
+            self.elements.set(Int(0)),
         )
 
 
-if __name__ == "__main__":
+#
+# Util funcs
+#
+def decode_int(b: str) -> int:
+    return int.from_bytes(base64.b64decode(b), "big")
 
+
+def decode_budget(tx_info) -> int:
+    return decode_int(tx_info["logs"][0])
+
+
+def get_box(app_id: int, name: bytes, client: v2client.algod.AlgodClient) -> list[int]:
+    box_contents = client.application_box_by_name(app_id, name)
+
+    vals = []
+    data = base64.b64decode(box_contents["value"])
+    for idx in range(len(data) // 8):
+        vals.append(int.from_bytes(data[idx * 8 : (idx + 1) * 8], "big"))
+
+    return vals
+
+
+def demo():
     acct = sandbox.get_accounts().pop()
 
+    app = NumberOrder(version=8)
+    app.dump("./artifacts")
+
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), NumberOrder(version=8), signer=acct.signer
+        sandbox.get_algod_client(), app, signer=acct.signer
     )
-    app_client.app.dump("./artifacts")
-
-    # Create 4 box refs since we need to touch 4k
-    boxes = [[app_client.app_id, "BoxA"]] * 4
-
-    # Util funcs
-    def decode_int(b: str) -> int:
-        return int.from_bytes(base64.b64decode(b), "big")
-
-    def decode_budget(tx_info) -> int:
-        return decode_int(tx_info["logs"][0])
-
-    def add_number(num: int) -> int:
-        result = app_client.call(
-            NumberOrder.add_int,
-            val=num,
-            boxes=boxes,
-        )
-        return decode_budget(result.tx_info)
-
-    def get_box() -> list[int]:
-        box_contents = app_client.client.application_box_by_name(
-            app_client.app_id, b"BoxA"
-        )
-
-        vals = []
-        data = base64.b64decode(box_contents["value"])
-        for idx in range(len(data) // 8):
-            vals.append(int.from_bytes(data[idx * 8 : (idx + 1) * 8], "big"))
-
-        return vals
-
-    ##########
 
     # Create && fund app acct
     app_client.create()
     app_client.fund(100 * consts.algo)
     print(f"AppID: {app_client.app_id}  AppAddr: {app_client.app_addr}")
+
+    # Create 4 box refs since we need to touch 4k
+    boxes = [[app_client.app_id, app._box_name]] * 4
 
     # Make App Create box
     result = app_client.call(
@@ -163,14 +158,25 @@ if __name__ == "__main__":
     for idx, n in enumerate(nums):
         if idx % 32 == 0:
             print(f"Iteration {idx}: {n}")
-        budgets.append(add_number(n))
+
+        result = app_client.call(
+            NumberOrder.add_int,
+            val=n,
+            boxes=boxes,
+        )
+
+        budgets.append(decode_budget(result.tx_info))
 
     print(budgets)
 
     # Get contents of box
-    print(box := get_box())
+    print(box := get_box(app_client.app_id, app._box_name.encode(), app_client.client))
     # Make sure its sorted
     mx = 0
     for x in box:
         assert mx <= x
         mx = x
+
+
+if __name__ == "__main__":
+    demo()
