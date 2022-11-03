@@ -1,8 +1,10 @@
-from pyteal import abi, Int, BoxCreate, BoxExtract, Expr, BoxReplace, Bytes
+from pyteal import abi, Int, BoxCreate, BoxExtract, Expr, BoxReplace, Bytes, TealType
 
 
 class Listing:
-    def __init__(self, name: Bytes, value_type: type[abi.BaseType], elements: int):
+    def __init__(
+        self, value_type: type[abi.BaseType], elements: int, name: Expr = None
+    ):
         ts = abi.type_spec_from_annotation(value_type)
 
         assert not ts.is_dynamic(), "Expected static type for value"
@@ -10,7 +12,9 @@ class Listing:
             ts.byte_length_static() * elements < 32e3
         ), "Cannot be larger than MAX_BOX_SIZE"
 
-        self.name = name
+        if name is not None:
+            self.name = Bytes(name)
+
         self.value_type = ts
 
         self._element_size = ts.byte_length_static()
@@ -19,6 +23,8 @@ class Listing:
         self._elements = elements
         self.elements = Int(self._elements)
 
+        self._box_size = self._element_size * self._elements
+
     def create(self) -> Expr:
         return BoxCreate(self.name, self.element_size * self.elements)
 
@@ -26,7 +32,7 @@ class Listing:
         return ListElement(self.name, self.element_size, idx)
 
 
-class ListElement:
+class ListElement(Expr):
     def __init__(self, name, size, idx):
         self.name = name
         self.size = size
@@ -40,3 +46,15 @@ class ListElement:
 
     def set(self, val: abi.BaseType) -> Expr:
         return BoxReplace(self.name, self.size * self.idx, val.encode())
+
+    def __str__(self) -> str:
+        return f"List Element: {self.name}"
+
+    def __teal__(self, compile_options):
+        return self.get().__teal__(compile_options)
+
+    def has_return(self):
+        return False
+
+    def type_of(self):
+        return TealType.bytes

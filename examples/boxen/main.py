@@ -12,12 +12,30 @@ from application import MembershipRecord, MembershipClub
 record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))
 
 
+affirmations = [
+    "I am successful.",
+    "I am confident.",
+    "I am powerful.",
+    "I am strong.",
+    "I am getting better and better every day.",
+    "All I need is within me right now.",
+    "I wake up motivated.",
+    "I am an unstoppable force of nature.",
+    "I am a living, breathing example of motivation.",
+    "All I need is GM.",
+]
+
+
 def print_boxes(app_client: client.ApplicationClient):
     boxes = app_client.get_box_names()
     print(f"{len(boxes)} boxes found")
     for box_name in boxes:
-        membership_record = record_codec.decode(app_client.get_box_contents(box_name))
-        print(f"\t{encode_address(box_name)} => {membership_record} ")
+        contents = app_client.get_box_contents(box_name)
+        if box_name == b"affirmations":
+            print(contents)
+        else:
+            membership_record = record_codec.decode(contents)
+            print(f"\t{encode_address(box_name)} => {membership_record} ")
 
 
 def demo():
@@ -43,6 +61,7 @@ def demo():
         MembershipClub.bootstrap,
         seed=TransactionWithSigner(ptxn, acct.signer),
         token_name="fight club",
+        boxes=[[app_client.app_id, "affirmations"]] * 8,
     )
     membership_token = result.return_value
     print(f"Created asset id: {membership_token}")
@@ -72,6 +91,21 @@ def demo():
     )
     print(result.return_value)
 
+    member_client = app_client.prepare(signer=member_acct.signer)
+    for idx, aff in enumerate(affirmations):
+        result = member_client.call(
+            MembershipClub.set_affirmation,
+            idx=idx,
+            affirmation=aff.ljust(64, " ").encode(),
+            boxes=[[app_client.app_id, "affirmations"]] * 7,
+        )
+
+    result = member_client.call(
+        MembershipClub.get_affirmation,
+        boxes=[[app_client.app_id, "affirmations"]] * 7,
+    )
+    print(bytes(result.return_value).decode("utf-8").strip())
+
     app_client.call(
         MembershipClub.remove_member,
         boxes=[[app_client.app_id, decode_address(member_acct.address)]],
@@ -81,8 +115,4 @@ def demo():
 
 
 if __name__ == "__main__":
-    from pyteal import *
-
-    print(abi.Address().encode().type_of())
-
     demo()

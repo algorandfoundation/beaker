@@ -1,8 +1,9 @@
+from typing import Literal
 from pyteal import *
 from beaker import *
 
 from beaker.lib.txn import clawback_axfer
-from beaker.lib.storage import Mapping
+from beaker.lib.storage import Mapping, Listing
 
 # Use a box per member to denote membership parameters
 class MembershipRecord(abi.NamedTuple):
@@ -10,26 +11,44 @@ class MembershipRecord(abi.NamedTuple):
     voted: abi.Field[abi.Bool]
 
 
+Affirmation = abi.StaticBytes[Literal[64]]
+
 BoxFlatMinBalance = 2500
 BoxByteMinBalance = 400
 AssetMinBalance = 100000
 
 
 class MembershipClub(Application):
+    ####
+    # Box abstractions
 
+    # A Listing is a simple list, initialized with some _static_ data type and a length
+    affirmations = Listing(Affirmation, 10)
+
+    # A Mapping will create a new box for every unique key, taking a data type for key and value
+    # Only static types can provide information about the max size (and min balance required)
     membership_records = Mapping(abi.Address, MembershipRecord)
+
+    #####
+
     membership_token = ApplicationStateValue(
-        TealType.uint64, static=True, descr="The asset that represents membership of this club"
+        TealType.uint64,
+        static=True,
+        descr="The asset that represents membership of this club",
     )
 
     _max_members = 1000
     MaxMembers = Int(_max_members)
 
-    _box_size = abi.size_of(MembershipRecord)
+    _member_box_size = abi.size_of(MembershipRecord)
 
     _min_balance = (
-        AssetMinBalance # Cover min bal for member token
-        + (BoxFlatMinBalance + (_box_size * BoxByteMinBalance)) * _max_members # cover min bal for boxes we might create
+        AssetMinBalance  # Cover min bal for member token
+        + (BoxFlatMinBalance + (_member_box_size * BoxByteMinBalance))
+        * _max_members  # cover min bal for member record boxes we might create
+        + (
+            BoxFlatMinBalance + (affirmations._box_size * BoxByteMinBalance)
+        )  # cover min bal for affirmation box
     )
     MinimumBalance = Int(_min_balance)
 
@@ -51,6 +70,7 @@ class MembershipClub(Application):
                 seed.get().amount() >= self.MinimumBalance,
                 comment=f"payment must be for >= {self._min_balance}",
             ),
+            Pop(self.affirmations.create()),
             InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.AssetConfig,
@@ -92,6 +112,23 @@ class MembershipClub(Application):
     @external(read_only=True)
     def get_membership_record(self, member: abi.Address, *, output: MembershipRecord):
         return self.membership_records[member].store_into(output)
+
+    @external(authorize=Authorize.holds_token(membership_token))
+    def set_affirmation(
+        self,
+        idx: abi.Uint16,
+        affirmation: Affirmation,
+        membership_token: abi.Asset = membership_token,
+    ):
+        return self.affirmations[idx.get()].set(affirmation)
+
+    @external(authorize=Authorize.holds_token(membership_token))
+    def get_affirmation(
+        self, membership_token: abi.Asset = membership_token, *, output: Affirmation
+    ):
+        return output.set(
+            self.affirmations[Global.round() % self.affirmations.elements]
+        )
 
 
 if __name__ == "__main__":

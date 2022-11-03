@@ -38,6 +38,7 @@ from beaker.state import (
 )
 from beaker.errors import BareOverwriteError
 from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker.lib.storage import Listing
 
 
 def get_method_spec(fn) -> Method:
@@ -114,6 +115,7 @@ class Application:
             # Check for state vals
             match bound_attr:
 
+                # Account state
                 case AccountStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
@@ -123,6 +125,7 @@ class Application:
                 case AccountStateBlob():
                     acct_vals[name] = bound_attr
 
+                # App state
                 case ApplicationStateBlob():
                     app_vals[name] = bound_attr
                 case ApplicationStateValue():
@@ -132,8 +135,13 @@ class Application:
                 case ReservedApplicationStateValue():
                     app_vals[name] = bound_attr
 
+                # Precompiles
                 case LSigPrecompile() | AppPrecompile():
                     self.precompiles[name] = bound_attr
+
+                # Boxes
+                case Listing():
+                    bound_attr.name = Bytes(name)
 
             # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
