@@ -30,9 +30,9 @@ class Mapping:
 
 class MapElement:
     def __init__(self, key: Expr, value_type: type[abi.BaseType]):
-        assert key.type_of() == TealType.bytes, TealTypeError(
-            key.type_of(), TealType.bytes
-        )
+        # assert key.type_of() == TealType.bytes, TealTypeError(
+        #     key.type_of(), TealType.bytes
+        # )
 
         self.key = key
         self.value_type = value_type
