@@ -17,11 +17,10 @@ AssetMinBalance = 100000
 
 class MembershipClub(Application):
 
-    membership_token = ApplicationStateValue(
-        TealType.uint64, descr="The asset that represents membership of this club"
-    )
-
     membership_records = Mapping(abi.Address, MembershipRecord)
+    membership_token = ApplicationStateValue(
+        TealType.uint64, static=True, descr="The asset that represents membership of this club"
+    )
 
     _max_members = 1000
     MaxMembers = Int(_max_members)
@@ -29,8 +28,8 @@ class MembershipClub(Application):
     _box_size = abi.size_of(MembershipRecord)
 
     _min_balance = (
-        AssetMinBalance
-        + (BoxFlatMinBalance + (_box_size * BoxByteMinBalance)) * _max_members
+        AssetMinBalance # Cover min bal for member token
+        + (BoxFlatMinBalance + (_box_size * BoxByteMinBalance)) * _max_members # cover min bal for boxes we might create
     )
     MinimumBalance = Int(_min_balance)
 
@@ -42,6 +41,7 @@ class MembershipClub(Application):
         *,
         output: abi.Uint64,
     ):
+        """create membership token and receive initial seed payment"""
         return Seq(
             Assert(
                 seed.get().receiver() == self.address,
