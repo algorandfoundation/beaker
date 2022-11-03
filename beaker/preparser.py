@@ -1,0 +1,156 @@
+from pyteal import *
+import copy
+from typing import cast, Optional
+import inspect
+import ast
+
+
+class Preparser:
+    def __init__(self, c: callable):
+        self.orig = c
+        self.src = inspect.getsource(c).strip()
+        self.tree = ast.parse(self.src)
+        self.definition = cast(ast.FunctionDef, self.tree.body[0])
+        self.arguemnts = self.definition.args
+
+        self.funcs: dict[str, SubroutineFnWrapper] = {
+            "range": Subroutine(TealType.none)(lambda x: Seq())
+        }
+
+        self.variables: dict[str, ScratchSlot] = {}
+        self.slot = 0
+
+        self.body: list[Expr] = [
+            self._translate_ast(expr) for expr in self.definition.body
+        ]
+
+    def as_expr(self) -> Expr:
+        return Seq(*self.body)
+
+    def _translate_ast(self, expr: ast.AST) -> Expr:
+        print(ast.dump(expr, indent=4))
+        print(expr.__dict__)
+
+        match expr:
+            case ast.Return():
+                return Return(self._translate_ast(expr.value))
+            case ast.Constant():
+                match expr.value:
+                    case int():
+                        return Int(expr.value)
+                    case bytes() | str():
+                        return Bytes(expr.value)
+            case ast.If():
+                test: Expr = self._translate_ast(expr.test)
+                body: list[Expr] = [self._translate_ast(e) for e in expr.body]
+
+                if len(expr.orelse) > 0:
+                    raise Exception("plz pr")
+
+                return If(test).Then(*body)
+
+            case ast.For():
+                target: callable = self._translate_ast(expr.target)
+                iter: Expr = self._translate_ast(expr.iter)
+                body: list[Expr] = [self._translate_ast(e) for e in expr.body]
+
+                if len(expr.orelse) > 0:
+                    raise Exception("not handled yet")
+
+                return Seq()
+
+            case ast.While():
+                cond: Expr = self._translate_ast(expr.test)
+                body: list[Expr] = [self._translate_ast(e) for e in expr.body]
+                return While(cond).Do(*body)
+
+            case ast.Call():
+                func: callable = self._lookup_function(expr.func)
+                args: list[Expr] = [self._translate_ast(a) for a in expr.args]
+
+                if len(expr.keywords) > 0:
+                    raise Exception("not handled yet")
+
+                return func(*args)
+
+            case ast.Compare():
+                left: Expr = self._translate_ast(expr.left)
+                ops: list[callable] = [
+                    self._translate_op(e, left.type_of()) for e in expr.ops
+                ]
+
+                comparators: list[Expr] = [
+                    self._translate_ast(e) for e in expr.comparators
+                ]
+
+                if len(ops) > 1 or len(comparators) > 1:
+                    raise Exception("wat?")
+
+                return ops[0](left, comparators[0])
+
+            case ast.BinOp():
+                left: Expr = self._translate_ast(expr.left)
+                right: Expr = self._translate_ast(expr.right)
+                op: callable = self._translate_op(expr.op, left.type_of())
+                return op(left, right)
+
+            ### Var access
+            case ast.Name():
+                id: str = expr.id
+                match expr.ctx:
+                    case ast.Store():
+                        self.slot += 1
+                        slot = ScratchSlot(self.slot)
+                        self.variables[id] = slot
+                        return lambda v: ScratchStore(slot, v)
+                    case ast.Load():
+                        # TODO: If we defer eval of id, can it change?
+                        return ScratchLoad(self.variables[id])
+
+            case ast.AugAssign():
+                target: callable = self._translate_ast(expr.target)
+                value: Expr = self._translate_ast(expr.value)
+                op: callable = self._translate_op(expr.op, value.type_of())
+
+                load_ref: ast.Name = copy.deepcopy(expr.target)
+                load_ref.ctx = ast.Load()
+                load_op: Expr = self._translate_ast(load_ref)
+
+                return target(op(load_op, value))
+
+            case ast.Assign():
+                targets: list[callable] = [self._translate_ast(e) for e in expr.targets]
+                value: Expr = self._translate_ast(expr.value)
+                if len(targets) > 1:
+                    raise Exception("unhandled")
+                return targets[0](value)
+
+            case _:
+                raise Exception("idk what this is")
+
+    def _translate_op(self, op: ast.AST, type: TealType) -> callable:
+        match op:
+            ### Ops
+            case ast.Mult():
+                return Mul
+            case ast.Pow():
+                return Exp
+            case ast.Eq():
+                return Eq
+            case ast.Gt():
+                return Gt
+            case ast.Lt():
+                return Lt
+            case ast.Sub():
+                return Minus
+            case ast.Add():
+                match type:
+                    case TealType.bytes:
+                        return Concat
+                    case TealType.uint64:
+                        return Add
+            case ast.Div() | ast.FloorDiv():
+                return Div
+
+    def _lookup_function(self, name: ast.Name) -> SubroutineFnWrapper:
+        return self.funcs[name.id]
