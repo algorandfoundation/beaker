@@ -1,5 +1,6 @@
 import copy
 
+import itertools
 import pytest
 import typing
 
@@ -11,7 +12,7 @@ from algosdk.atomic_transaction_composer import (
 )
 from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
-from algosdk.encoding import decode_address, encode_address
+from algosdk.encoding import decode_address
 from beaker import client, sandbox, testing, consts, decorators
 from beaker.client.application_client import ApplicationClient, ProgramAssertion
 from beaker.client.logic_error import LogicException
@@ -26,6 +27,12 @@ TOTAL_ASSET_TOKENS = 10000000000
 
 
 AcctInfo = tuple[str, str, AccountTransactionSigner]
+AssertTestCase = tuple[
+    str,
+    abi.Method | decorators.HandlerFunc,
+    dict[str, typing.Any],
+    client.ApplicationClient,
+]
 
 
 @pytest.fixture(scope="session")
@@ -92,7 +99,7 @@ def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
 
 
 @pytest.fixture(scope="session")
-def creator_app_client(creator_acct) -> client.ApplicationClient:
+def creator_app_client(creator_acct: AcctInfo) -> client.ApplicationClient:
     _, _, signer = creator_acct
     app = ConstantProductAMM()
     app_client = client.ApplicationClient(algod_client, app, signer=signer)
@@ -522,22 +529,36 @@ def test_swap(creator_app_client: ApplicationClient):
     assert ratio_after == expected_ratio
 
 
-def test_app_asserts(
+all_assert_groups = ["governor", "bootstrap", "mint", "burn", "swap"]
+
+
+@pytest.fixture(
+    scope="session",
+    params=all_assert_groups,
+)
+def grouped_assert_cases(
+    request, creator_app_client: client.ApplicationClient, user_acct: AcctInfo
+) -> list[AssertTestCase]:
+    return _assert_cases(request.param, creator_app_client, user_acct)
+
+
+@pytest.fixture(scope="session")
+def all_assert_cases(
+    creator_app_client: client.ApplicationClient, user_acct: AcctInfo
+) -> list[AssertTestCase]:
+    return _assert_cases("all", creator_app_client, user_acct)
+
+
+def _assert_cases(
+    group_key: str,
     creator_app_client: client.ApplicationClient,
     user_acct: AcctInfo,
-):
+) -> list[AssertTestCase]:
     def cases(
         m: abi.Method | decorators.HandlerFunc,
         xs: list[tuple[str, dict[str, typing.Any]]],
         client: client.ApplicationClient = creator_app_client,
-    ) -> list[
-        tuple[
-            str,
-            abi.Method | decorators.HandlerFunc,
-            dict[str, typing.Any],
-            client.ApplicationClient,
-        ]
-    ]:
+    ) -> list[AssertTestCase]:
         return [(a, m, txn, client) for a, txn in xs]
 
     fake_addr, fake_pk, fake_signer = user_acct
@@ -788,17 +809,42 @@ def test_app_asserts(
 
         return well_formed_swap + valid_swap_xfer
 
+    key_to_group: dict[str, list[AssertTestCase]] = {
+        "governor": set_governor_cases(),
+        "bootstrap": bootstrap_cases(),
+        "mint": mint_cases(),
+        "burn": burn_cases(),
+        "swap": swap_cases(),
+    }
+
+    # Sanity check - Confirm additions to `key_to_group` are added to fixture parameterization.
+    assert sorted(key_to_group.keys()) == sorted(all_assert_groups)
+
+    all_cases = list(itertools.chain.from_iterable(key_to_group.values()))
+    return all_cases if group_key == "all" else key_to_group[group_key]
+
+
+def test_approval_asserts(grouped_assert_cases: list[AssertTestCase]):
+    """
+    Confirms each logical grouping of assertions raises the expected error message.
+    """
+    for msg, method, kwargs, app_client in grouped_assert_cases:
+        with pytest.raises(LogicException, match=msg):
+            app_client.call(method, **kwargs)
+
+
+def test_approval_assert_coverage(
+    all_assert_cases: list[AssertTestCase], creator_app_client: client.ApplicationClient
+):
+    """
+    Confirms `test_approval_asserts` exercises all app approval asserts.
+
+    If `test_approval_asserts` passes and this test fails, it implies some asserts are _not_ tested.
+    """
+
     all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
 
-    print(f"Total asserts ({len(all_asserts)})")
-    for msg, method, kwargs, app_client in (
-        set_governor_cases()
-        + bootstrap_cases()
-        + mint_cases()
-        + burn_cases()
-        + swap_cases()
-    ):
-        print(f"Testing {msg} for {method}")
+    for msg, method, kwargs, app_client in all_assert_cases:
         with pytest.raises(LogicException, match=msg):
             try:
                 app_client.call(method, **kwargs)
@@ -807,7 +853,7 @@ def test_app_asserts(
                     del all_asserts[e.pc]
                 raise e
 
-    print(f"Unhandled asserts ({len(all_asserts)}): {all_asserts}")
+    assert len(all_asserts) == 0
 
 
 def _get_tokens_to_mint(
