@@ -51,7 +51,7 @@ class C2CMain(bkr.Application):
     """Main application that handles creation of the sub app and asset and calls it"""
 
     # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app: AppPrecompile = AppPrecompile(sub_app)
+    sub_app: AppPrecompile = AppPrecompile(C2CSub())
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):

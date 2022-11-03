@@ -1,6 +1,5 @@
 from pyteal import *
 
-
 def axfer(asset_id: Expr, amount: Expr, receiver: Expr) -> dict[TxnField, Expr]:
     return {
         TxnField.type_enum: TxnType.AssetTransfer,
@@ -9,6 +8,12 @@ def axfer(asset_id: Expr, amount: Expr, receiver: Expr) -> dict[TxnField, Expr]:
         TxnField.asset_receiver: receiver,
     }
 
+def payment(amount: Expr, receiver: Expr) -> dict[TxnField, Expr]:
+    return {
+        TxnField.type_enum: TxnType.Payment,
+        TxnField.amount: amount,
+        TxnField.receiver: receiver,
+    }
 
 def clawback_axfer(
     asset_id: Expr, amount: Expr, receiver: Expr, clawback_addr: Expr
