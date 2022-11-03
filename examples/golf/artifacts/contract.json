@@ -1,5 +1,5 @@
 {
-    "name": "NumberOrder",
+    "name": "SortedIntegers",
     "methods": [
         {
             "name": "add_int",

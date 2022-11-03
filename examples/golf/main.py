@@ -7,7 +7,7 @@ from beaker import *
 from beaker.lib.math import max
 
 
-class NumberOrder(Application):
+class SortedIntegers(Application):
     elements: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
@@ -26,6 +26,7 @@ class NumberOrder(Application):
     def add_int(self, val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
         return Seq(
             array_contents := App.box_get(self.BoxName),
+            Assert(Or(Int(0), Int(1))),
             # figure out the correct index
             # Write the new array with the contents
             (idx := ScratchVar()).store(
@@ -130,7 +131,7 @@ def get_box(app_id: int, name: bytes, client: v2client.algod.AlgodClient) -> lis
 def demo():
     acct = sandbox.get_accounts().pop()
 
-    app = NumberOrder(version=8)
+    app = SortedIntegers(version=8)
     app.dump("./artifacts")
 
     app_client = client.ApplicationClient(
@@ -147,7 +148,7 @@ def demo():
 
     # Make App Create box
     result = app_client.call(
-        NumberOrder.box_create_test,
+        SortedIntegers.box_create_test,
         boxes=boxes,
     )
 
@@ -160,22 +161,19 @@ def demo():
             print(f"Iteration {idx}: {n}")
 
         result = app_client.call(
-            NumberOrder.add_int,
+            SortedIntegers.add_int,
             val=n,
             boxes=boxes,
         )
 
         budgets.append(decode_budget(result.tx_info))
 
-    print(budgets)
+    print(f"Budget left after each insert: {budgets}")
 
     # Get contents of box
-    print(box := get_box(app_client.app_id, app._box_name.encode(), app_client.client))
+    box = get_box(app_client.app_id, app._box_name.encode(), app_client.client)
     # Make sure its sorted
-    mx = 0
-    for x in box:
-        assert mx <= x
-        mx = x
+    assert box == sorted(box)
 
 
 if __name__ == "__main__":
