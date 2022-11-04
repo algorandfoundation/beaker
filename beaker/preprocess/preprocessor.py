@@ -3,15 +3,9 @@ from typing import cast
 import inspect
 import ast
 
+from .builtins import BuiltIns
 
 Unsupported = lambda feature: Exception(f"This feature is not supported yet: {feature}")
-
-
-def _range(iters: Int) -> callable:
-    def _impl(sv: ScratchVar):
-        return (sv.store(Int(0)), sv.load() < iters, sv.store(sv.load() + Int(1)))
-
-    return _impl
 
 
 class Preprocessor:
@@ -22,7 +16,7 @@ class Preprocessor:
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
         self.arguemnts = self.definition.args
 
-        self.funcs: dict[str, callable] = {"range": _range}
+        self.funcs: dict[str, callable] = BuiltIns
 
         self.variables: dict[str, ScratchSlot] = {}
         self.slot = 0
@@ -45,6 +39,9 @@ class Preprocessor:
                         return Int(expr.value)
                     case bytes() | str():
                         return Bytes(expr.value)
+            case ast.Expr():
+                return self._translate_ast(expr.value)
+
             case ast.If():
                 test: Expr = self._translate_ast(expr.test)
                 body: list[Expr] = [self._translate_ast(e) for e in expr.body]
@@ -161,5 +158,6 @@ class Preprocessor:
             self.variables[name.id] = ScratchVar()
         return self.variables[name.id]
 
-    def _lookup_function(self, name: ast.Name) -> callable:
+    def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:
+        print(ast.dump(name, indent=4))
         return self.funcs[name.id]
