@@ -1,37 +1,37 @@
-from pyteal import *
+import pyteal as pt
 
 ## Types
 
-BuiltInTypes: dict[str, abi.BaseType] = {
-    "int": abi.Uint64,
-    "str": abi.String,
-    "bytes": abi.DynamicBytes,
+BuiltInTypes: dict[str, pt.abi.BaseType] = {
+    "int": pt.abi.Uint64,
+    "str": pt.abi.String,
+    "bytes": pt.abi.DynamicBytes,
 }
 
 ## Functions
 
 
-def _range(iters: Expr) -> callable:
-    def _impl(sv: ScratchVar) -> tuple[Expr, Expr, Expr]:
-        return (sv.store(Int(0)), sv.load() < iters, sv.store(sv.load() + Int(1)))
+def _range(iters: pt.Expr) -> callable:
+    def _impl(sv: pt.ScratchVar) -> tuple[pt.Expr, pt.Expr, pt.Expr]:
+        return (sv.store(pt.Int(0)), sv.load() < iters, sv.store(sv.load() + pt.Int(1)))
 
     return _impl
 
 
-def app_get(key: Expr) -> Expr:
-    return App.globalGet(key)
+def app_get(key: pt.Expr) -> pt.Expr:
+    return pt.App.globalGet(key)
 
 
-def app_get_ex(app_id: Expr, key: Expr) -> Expr:
-    return App.globalGetEx(app_id, key)
+def app_get_ex(app_id: pt.Expr, key: pt.Expr) -> pt.Expr:
+    return pt.App.globalGetEx(app_id, key)
 
 
-def app_put(key: Expr, val: Expr) -> Expr:
-    return App.globalPut(key, val)
+def app_put(key: pt.Expr, val: pt.Expr) -> pt.Expr:
+    return pt.App.globalPut(key, val)
 
 
-def app_del(key: Expr) -> Expr:
-    return App.globalDel(key)
+def app_del(key: pt.Expr) -> pt.Expr:
+    return pt.App.globalDel(key)
 
 
 BuiltInFuncs: dict[str, callable] = {

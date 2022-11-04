@@ -4,7 +4,6 @@ from typing import Final, Any, cast, Optional
 from algosdk.v2client.algod import AlgodClient
 from algosdk.abi import Method
 from pyteal import (
-    Cond,
     SubroutineFnWrapper,
     TealInputError,
     Txn,

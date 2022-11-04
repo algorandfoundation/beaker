@@ -1,4 +1,4 @@
-from pyteal import *
+import pyteal as pt
 from typing import cast, Any
 from textwrap import dedent
 import inspect
@@ -17,30 +17,30 @@ class Preprocessor:
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
 
         self.funcs: dict[str, callable] = BuiltInFuncs
-        self.types: dict[str, abi.BaseType] = BuiltInTypes
+        self.types: dict[str, pt.abi.BaseType] = BuiltInTypes
 
-        self.variables: dict[str, ScratchSlot] = {}
+        self.variables: dict[str, pt.ScratchSlot] = {}
 
-        self.args: dict[str, type[abi.BaseType] | None] = self._translate_args(
+        self.args: dict[str, type[pt.abi.BaseType] | None] = self._translate_args(
             self.definition.args
         )
 
-        self.returns: type[abi.BaseType] | None = None
-        self.output: abi.BaseType | None = None
+        self.returns: type[pt.abi.BaseType] | None = None
+        self.output: pt.abi.BaseType | None = None
 
         if self.definition.returns is not None:
-            self.returns: type[abi.BaseType] = self._translate_return_type(
+            self.returns: type[pt.abi.BaseType] = self._translate_return_type(
                 self.definition.returns
             )
             self.output = self.returns()
 
-        self.body: Expr = Seq(
+        self.body: pt.Expr = pt.Seq(
             *[self._translate_ast(expr) for expr in self.definition.body]
         )
 
     def _translate_args(
         self, args: ast.arguments
-    ) -> dict[str, type[abi.BaseType] | None]:
+    ) -> dict[str, type[pt.abi.BaseType] | None]:
         if len(args.posonlyargs) > 0:
             raise Unsupported("posonly in args")
         if args.vararg is not None:
@@ -69,33 +69,33 @@ class Preprocessor:
 
         return arguments
 
-    def _translate_return_type(self, ret: ast.Name) -> type[abi.BaseType]:
+    def _translate_return_type(self, ret: ast.Name) -> type[pt.abi.BaseType]:
         return self.types[ret.id]
 
-    def _translate_ast(self, expr: ast.AST) -> Expr:
+    def _translate_ast(self, expr: ast.AST) -> pt.Expr:
         match expr:
             case ast.Expr():
                 return self._translate_ast(expr.value)
             case ast.Constant():
                 match expr.value:
                     case int():
-                        return Int(expr.value)
+                        return pt.Int(expr.value)
                     case bytes() | str():
-                        return Bytes(expr.value)
+                        return pt.Bytes(expr.value)
 
             case ast.Return():
-                val: Expr = self._lookup_value(expr.value)
+                val: pt.Expr = self._lookup_value(expr.value)
                 if self.output is not None:
                     return self.output.set(val)
 
-                return Return(val)
+                return pt.Return(val)
 
             case ast.Compare():
-                left: Expr = self._lookup_value(expr.left)
+                left: pt.Expr = self._lookup_value(expr.left)
                 ops: list[callable] = [
                     self._translate_op(e, left.type_of()) for e in expr.ops
                 ]
-                comparators: list[Expr] = [
+                comparators: list[pt.Expr] = [
                     self._lookup_value(e) for e in expr.comparators
                 ]
 
@@ -107,8 +107,8 @@ class Preprocessor:
                 return ops[0](left, comparators[0])
 
             case ast.BinOp():
-                left: Expr = self._lookup_value(expr.left)
-                right: Expr = self._lookup_value(expr.right)
+                left: pt.Expr = self._lookup_value(expr.left)
+                right: pt.Expr = self._lookup_value(expr.right)
                 op: callable = self._translate_op(expr.op, left.type_of())
                 return op(left, right)
 
@@ -116,7 +116,7 @@ class Preprocessor:
 
             case ast.Call():
                 func: callable = self._lookup_function(expr.func)
-                args: list[Expr] = [self._translate_ast(a) for a in expr.args]
+                args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
@@ -124,42 +124,44 @@ class Preprocessor:
                 return func(*args)
 
             case ast.If():
-                test: Expr = self._translate_ast(expr.test)
-                body: list[Expr] = [self._translate_ast(e) for e in expr.body]
+                test: pt.Expr = self._translate_ast(expr.test)
+                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
 
                 if len(expr.orelse) > 0:
                     raise Unsupported("orelse in If")
 
-                return If(test).Then(*body)
+                return pt.If(test).Then(*body)
 
             case ast.For():
-                target: ScratchVar = self._lookup_storage(expr.target)
-                iter: tuple[Expr, Expr, Expr] = self._translate_iter(expr.iter, target)
-                body: list[Expr] = [self._translate_ast(e) for e in expr.body]
+                target: pt.ScratchVar = self._lookup_storage(expr.target)
+                iter: tuple[pt.Expr, pt.Expr, pt.Expr] = self._translate_iter(
+                    expr.iter, target
+                )
+                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
 
                 if len(expr.orelse) > 0:
                     raise Unsupported("orelse in For")
 
                 start, cond, step = iter
-                return For(start, cond, step).Do(body)
+                return pt.For(start, cond, step).Do(body)
 
             case ast.While():
-                cond: Expr = self._translate_ast(expr.test)
-                body: list[Expr] = [self._translate_ast(e) for e in expr.body]
-                return While(cond).Do(*body)
+                cond: pt.Expr = self._translate_ast(expr.test)
+                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
+                return pt.While(cond).Do(*body)
 
             ### Var access
             case ast.AugAssign():
-                target: ScratchVar = self._lookup_storage(expr.target)
-                value: Expr = self._translate_ast(expr.value)
+                target: pt.ScratchVar = self._lookup_storage(expr.target)
+                value: pt.Expr = self._translate_ast(expr.value)
                 op: callable = self._translate_op(expr.op, value.type_of())
                 return target.store(op(target.load(), value))
 
             case ast.Assign():
-                targets: list[ScratchVar] = [
+                targets: list[pt.ScratchVar] = [
                     self._lookup_storage(e) for e in expr.targets
                 ]
-                value: Expr = self._translate_ast(expr.value)
+                value: pt.Expr = self._translate_ast(expr.value)
                 if len(targets) > 1:
                     raise Unsupported(">1 target in Assign")
 
@@ -170,46 +172,48 @@ class Preprocessor:
                 print(expr.__dict__)
                 raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
 
-    def _translate_iter(self, iter: ast.AST, target: Expr) -> tuple[Expr, Expr, Expr]:
+    def _translate_iter(
+        self, iter: ast.AST, target: pt.Expr
+    ) -> tuple[pt.Expr, pt.Expr, pt.Expr]:
         e2 = self._translate_ast(iter)
         return e2(target)
 
-    def _translate_op(self, op: ast.AST, type: TealType) -> callable:
+    def _translate_op(self, op: ast.AST, type: pt.TealType) -> callable:
         match op:
             ### Ops
             case ast.Mult():
-                return Mul
+                return pt.Mul
             case ast.Pow():
-                return Exp
+                return pt.Exp
             case ast.Eq():
-                return Eq
+                return pt.Eq
             case ast.Gt():
-                return Gt
+                return pt.Gt
             case ast.Lt():
-                return Lt
+                return pt.Lt
             case ast.Sub():
-                return Minus
+                return pt.Minus
             case ast.Add():
                 match type:
-                    case TealType.bytes:
-                        return Concat
-                    case TealType.uint64:
-                        return Add
+                    case pt.TealType.bytes:
+                        return pt.Concat
+                    case pt.TealType.uint64:
+                        return pt.Add
             case ast.Div() | ast.FloorDiv():
-                return Div
+                return pt.Div
             case _:
                 raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
-    def _lookup_value(self, val: ast.Name | ast.Constant) -> Expr:
+    def _lookup_value(self, val: ast.Name | ast.Constant) -> pt.Expr:
         match val:
             case ast.Name():
                 return self._lookup_storage(val).load()
             case ast.Constant():
                 return self._translate_ast(val)
 
-    def _lookup_storage(self, name: ast.Name) -> ScratchVar:
+    def _lookup_storage(self, name: ast.Name) -> pt.ScratchVar:
         if name.id not in self.variables:
-            self.variables[name.id] = ScratchVar()
+            self.variables[name.id] = pt.ScratchVar()
         return self.variables[name.id]
 
     def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:
