@@ -27,4 +27,4 @@ def test_parse_exprs():
 
     pp = Preparser(meth)
     print(pp.as_expr())
-    compileTeal(pp.as_expr(), mode=Mode.Application, version=8)
+    print(compileTeal(pp.as_expr(), mode=Mode.Application, version=8))

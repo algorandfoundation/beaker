@@ -5,6 +5,13 @@ import inspect
 import ast
 
 
+def _range(iters: Int) -> callable:
+    def _impl(sv: ScratchVar):
+        return (sv.store(Int(0)), sv.load() < iters, sv.store(sv.load() + Int(1)))
+
+    return _impl
+
+
 class Preparser:
     def __init__(self, c: callable):
         self.orig = c
@@ -13,9 +20,7 @@ class Preparser:
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
         self.arguemnts = self.definition.args
 
-        self.funcs: dict[str, SubroutineFnWrapper] = {
-            "range": Subroutine(TealType.none)(lambda x: Seq())
-        }
+        self.funcs: dict[str, callable] = {"range": _range}
 
         self.variables: dict[str, ScratchSlot] = {}
         self.slot = 0
@@ -51,14 +56,14 @@ class Preparser:
 
             case ast.For():
                 target: ScratchVar = self._lookup_storage(expr.target)
-                iter: Expr = self._translate_ast(expr.iter)
+                iter: tuple[Expr, Expr, Expr] = self._translate_iter(expr.iter, target)
                 body: list[Expr] = [self._translate_ast(e) for e in expr.body]
 
-                print(target, iter, body)
                 if len(expr.orelse) > 0:
                     raise Exception("not handled yet")
 
-                return Seq()
+                start, cond, step = iter
+                return For(start, cond, step).Do(body)
 
             case ast.While():
                 cond: Expr = self._translate_ast(expr.test)
@@ -113,6 +118,10 @@ class Preparser:
             case _:
                 raise Exception("idk what this is")
 
+    def _translate_iter(self, iter: ast.AST, target: Expr) -> tuple[Expr, Expr, Expr]:
+        e2 = self._translate_ast(iter)
+        return e2(target)
+
     def _translate_op(self, op: ast.AST, type: TealType) -> callable:
         match op:
             ### Ops
@@ -149,5 +158,5 @@ class Preparser:
             self.variables[name.id] = ScratchVar()
         return self.variables[name.id]
 
-    def _lookup_function(self, name: ast.Name) -> SubroutineFnWrapper:
+    def _lookup_function(self, name: ast.Name) -> callable:
         return self.funcs[name.id]
