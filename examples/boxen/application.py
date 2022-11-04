@@ -2,7 +2,8 @@ from typing import Literal
 from pyteal import *
 from beaker import *
 
-from beaker.lib.txn import clawback_axfer
+from beaker.lib.txn import clawback_axfer, axfer
+from beaker.application import get_method_signature
 from beaker.lib.storage import Mapping, Listing
 
 # Use a box per member to denote membership parameters
@@ -128,6 +129,40 @@ class MembershipClub(Application):
     ):
         return output.set(
             self.affirmations[Global.round() % self.affirmations.elements]
+        )
+
+
+class AppMember(Application):
+
+    membership_token = ApplicationStateValue(TealType.uint64)
+    club_app_id = ApplicationStateValue(TealType.uint64)
+    last_affirmation = ApplicationStateValue(TealType.bytes)
+
+    @external(authorize=Authorize.only(Global.creator_address()))
+    def bootstrap(self, app_id: abi.Application, membership_token: abi.Asset):
+        return Seq(
+            # Set app id
+            self.club_app_id.set(app_id.application_id()),
+            # Opt in to membership token
+            InnerTxnBuilder.Execute(
+                axfer(membership_token.asset_id(), Int(0), self.address)
+            )
+            | {TxnField.fee: Int(0)},
+        )
+
+    @external
+    def get_affirmation(
+        self,
+        member_token: abi.Asset = membership_token,
+        club_app: abi.Application = club_app_id,
+    ):
+        return Seq(
+            InnerTxnBuilder.ExecuteMethodCall(
+                app_id=self.club_app_id,
+                method_signature=get_method_signature(MembershipClub.get_affirmation),
+                args=[member_token],
+            ),
+            self.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
         )
 
 
