@@ -119,7 +119,7 @@ class Preprocessor:
                 return targets[0].store(value)
 
             case _:
-                raise Unsupported(expr.__class__.__name__)
+                raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
 
     def _translate_iter(self, iter: ast.AST, target: Expr) -> tuple[Expr, Expr, Expr]:
         e2 = self._translate_ast(iter)
