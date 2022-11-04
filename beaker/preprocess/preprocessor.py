@@ -1,8 +1,10 @@
 from pyteal import *
-import copy
-from typing import cast, Optional
+from typing import cast
 import inspect
 import ast
+
+
+Unsupported = lambda feature: Exception(f"This feature is not supported yet: {feature}")
 
 
 def _range(iters: Int) -> callable:
@@ -12,7 +14,7 @@ def _range(iters: Int) -> callable:
     return _impl
 
 
-class Preparser:
+class Preprocessor:
     def __init__(self, c: callable):
         self.orig = c
         self.src = inspect.getsource(c).strip()
@@ -28,9 +30,7 @@ class Preparser:
         self.body: list[Expr] = [
             self._translate_ast(expr) for expr in self.definition.body
         ]
-
-    def as_expr(self) -> Expr:
-        return Seq(*self.body)
+        self.expr = Seq(*self.body)
 
     def _translate_ast(self, expr: ast.AST) -> Expr:
         print(ast.dump(expr, indent=4))
@@ -50,7 +50,7 @@ class Preparser:
                 body: list[Expr] = [self._translate_ast(e) for e in expr.body]
 
                 if len(expr.orelse) > 0:
-                    raise Exception("plz pr")
+                    raise Unsupported("orelse in If")
 
                 return If(test).Then(*body)
 
@@ -60,7 +60,7 @@ class Preparser:
                 body: list[Expr] = [self._translate_ast(e) for e in expr.body]
 
                 if len(expr.orelse) > 0:
-                    raise Exception("not handled yet")
+                    raise Unsupported("orelse in For")
 
                 start, cond, step = iter
                 return For(start, cond, step).Do(body)
@@ -75,7 +75,7 @@ class Preparser:
                 args: list[Expr] = [self._translate_ast(a) for a in expr.args]
 
                 if len(expr.keywords) > 0:
-                    raise Exception("not handled yet")
+                    raise Unsupported("keywords in Call")
 
                 return func(*args)
 
@@ -88,8 +88,10 @@ class Preparser:
                     self._lookup_value(e) for e in expr.comparators
                 ]
 
-                if len(ops) > 1 or len(comparators) > 1:
-                    raise Exception("wat?")
+                if len(ops) > 1:
+                    raise Unsupported(">1 op in Compare")
+                if len(comparators) > 1:
+                    raise Unsupported(">1 comparator in Compare")
 
                 return ops[0](left, comparators[0])
 
@@ -112,11 +114,12 @@ class Preparser:
                 ]
                 value: Expr = self._translate_ast(expr.value)
                 if len(targets) > 1:
-                    raise Exception("unhandled")
+                    raise Unsupported(">1 target in Assign")
+
                 return targets[0].store(value)
 
             case _:
-                raise Exception("idk what this is")
+                raise Unsupported(expr.__class__.__name__)
 
     def _translate_iter(self, iter: ast.AST, target: Expr) -> tuple[Expr, Expr, Expr]:
         e2 = self._translate_ast(iter)

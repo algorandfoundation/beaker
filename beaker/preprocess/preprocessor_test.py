@@ -1,5 +1,5 @@
 from pyteal import *
-from .preparser import Preparser
+from .preprocessor import Preprocessor
 
 
 def test_parse_exprs():
@@ -25,6 +25,6 @@ def test_parse_exprs():
 
         return x
 
-    pp = Preparser(meth)
-    print(pp.as_expr())
-    print(compileTeal(pp.as_expr(), mode=Mode.Application, version=8))
+    pp = Preprocessor(meth)
+    print(pp.expr)
+    print(compileTeal(pp.expr, mode=Mode.Application, version=8))
