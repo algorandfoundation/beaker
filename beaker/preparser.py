@@ -33,7 +33,7 @@ class Preparser:
 
         match expr:
             case ast.Return():
-                return Return(self._translate_ast(expr.value))
+                return Return(self._lookup_value(expr.value))
             case ast.Constant():
                 match expr.value:
                     case int():
@@ -50,10 +50,11 @@ class Preparser:
                 return If(test).Then(*body)
 
             case ast.For():
-                target: callable = self._translate_ast(expr.target)
+                target: ScratchVar = self._lookup_storage(expr.target)
                 iter: Expr = self._translate_ast(expr.iter)
                 body: list[Expr] = [self._translate_ast(e) for e in expr.body]
 
+                print(target, iter, body)
                 if len(expr.orelse) > 0:
                     raise Exception("not handled yet")
 
@@ -74,13 +75,12 @@ class Preparser:
                 return func(*args)
 
             case ast.Compare():
-                left: Expr = self._translate_ast(expr.left)
+                left: Expr = self._lookup_value(expr.left)
                 ops: list[callable] = [
                     self._translate_op(e, left.type_of()) for e in expr.ops
                 ]
-
                 comparators: list[Expr] = [
-                    self._translate_ast(e) for e in expr.comparators
+                    self._lookup_value(e) for e in expr.comparators
                 ]
 
                 if len(ops) > 1 or len(comparators) > 1:
@@ -89,41 +89,26 @@ class Preparser:
                 return ops[0](left, comparators[0])
 
             case ast.BinOp():
-                left: Expr = self._translate_ast(expr.left)
-                right: Expr = self._translate_ast(expr.right)
+                left: Expr = self._lookup_value(expr.left)
+                right: Expr = self._lookup_value(expr.right)
                 op: callable = self._translate_op(expr.op, left.type_of())
                 return op(left, right)
 
             ### Var access
-            case ast.Name():
-                id: str = expr.id
-                match expr.ctx:
-                    case ast.Store():
-                        self.slot += 1
-                        slot = ScratchSlot(self.slot)
-                        self.variables[id] = slot
-                        return lambda v: ScratchStore(slot, v)
-                    case ast.Load():
-                        # TODO: If we defer eval of id, can it change?
-                        return ScratchLoad(self.variables[id])
-
             case ast.AugAssign():
-                target: callable = self._translate_ast(expr.target)
+                target: ScratchVar = self._lookup_storage(expr.target)
                 value: Expr = self._translate_ast(expr.value)
                 op: callable = self._translate_op(expr.op, value.type_of())
-
-                load_ref: ast.Name = copy.deepcopy(expr.target)
-                load_ref.ctx = ast.Load()
-                load_op: Expr = self._translate_ast(load_ref)
-
-                return target(op(load_op, value))
+                return target.store(op(target.load(), value))
 
             case ast.Assign():
-                targets: list[callable] = [self._translate_ast(e) for e in expr.targets]
+                targets: list[ScratchVar] = [
+                    self._lookup_storage(e) for e in expr.targets
+                ]
                 value: Expr = self._translate_ast(expr.value)
                 if len(targets) > 1:
                     raise Exception("unhandled")
-                return targets[0](value)
+                return targets[0].store(value)
 
             case _:
                 raise Exception("idk what this is")
@@ -151,6 +136,18 @@ class Preparser:
                         return Add
             case ast.Div() | ast.FloorDiv():
                 return Div
+
+    def _lookup_value(self, val: ast.Name | ast.Constant) -> Expr:
+        match val:
+            case ast.Name():
+                return self._lookup_storage(val).load()
+            case ast.Constant():
+                return self._translate_ast(val)
+
+    def _lookup_storage(self, name: ast.Name) -> ScratchVar:
+        if name.id not in self.variables:
+            self.variables[name.id] = ScratchVar()
+        return self.variables[name.id]
 
     def _lookup_function(self, name: ast.Name) -> SubroutineFnWrapper:
         return self.funcs[name.id]
