@@ -32,8 +32,23 @@ class Preprocessor:
                 self.definition.returns
             )
 
-        exprs = [self._translate_ast(expr) for expr in self.definition.body]
-        self.body: pt.Expr = pt.Seq(*exprs)
+    def expr(self, *args, **kwargs):
+
+        for idx, name in enumerate(self.args.keys()):
+            if name == "self":
+                continue
+
+            arg = args[idx]
+            match arg:
+                case pt.abi.BaseType():
+                    self._provide_value(name, arg._stored_value)
+                case _:
+                    raise Unsupported(
+                        "idk what do do with this arg ", args[idx].__class__.__name__
+                    )
+
+        self.exprs = [self._translate_ast(expr) for expr in self.definition.body]
+        return pt.Seq(*self.exprs)
 
     def _translate_args(
         self, args: ast.arguments
@@ -209,11 +224,14 @@ class Preprocessor:
             case ast.Constant():
                 return self._translate_ast(val)
 
+    def _provide_value(self, name: str, val: pt.ScratchVar):
+        self.variables[name] = val
+
     def _lookup_storage(self, name: ast.Name) -> pt.ScratchVar:
         if name.id not in self.variables:
+            print("new var")
             self.variables[name.id] = pt.ScratchVar()
 
-        print("LOOKUP: ", name.id, self.variables[name.id].index())
         return self.variables[name.id]
 
     def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:

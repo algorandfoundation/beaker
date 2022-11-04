@@ -329,11 +329,11 @@ def _translate(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
 
-    def _impl(*arg, **kwargs) -> Expr:
+    def _impl(*args, **kwargs) -> Expr:
         if "output" in kwargs:
-            return kwargs["output"].set(pp.body)
+            return kwargs["output"].set(pp.expr(*args, **kwargs))
         else:
-            return pp.body
+            return pp.expr(*args, **kwargs)
 
     orig_annotations = get_annotations(fn)
     translated_annotations = get_annotations(_impl)

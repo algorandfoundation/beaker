@@ -35,8 +35,8 @@ def test_parse_method():
         return x
 
     pp = Preprocessor(meth)
-    print(pp.body)
-    print(compileTeal(pp.body, mode=Mode.Application, version=8))
+    print(pp.expr())
+    print(compileTeal(pp.expr(), mode=Mode.Application, version=8))
 
 
 def test_built_ins():
@@ -48,8 +48,8 @@ def test_built_ins():
         return x
 
     pp = Preprocessor(meth)
-    print(pp.body)
-    print(compileTeal(pp.body, mode=Mode.Application, version=8))
+    print(pp.expr())
+    print(compileTeal(pp.expr(), mode=Mode.Application, version=8))
 
 
 def test_app():
@@ -65,7 +65,11 @@ def test_app():
 
         @external(translate=True)
         def no_args_yes_output_py(self) -> int:
-            x = 3 
+            x = 3
+            return x
+
+        @external(translate=True)
+        def yes_args_no_output_py(self, x: int) -> int:
             return x
 
     app = App()
