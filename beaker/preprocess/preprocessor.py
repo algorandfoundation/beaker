@@ -84,6 +84,7 @@ class Preprocessor:
         return self.types[ret.id]
 
     def _translate_ast(self, expr: ast.AST) -> pt.Expr:
+        print(ast.dump(expr, indent=4))
         match expr:
             case ast.Expr():
                 return self._translate_ast(expr.value)
@@ -95,19 +96,19 @@ class Preprocessor:
                         return pt.Bytes(expr.value)
 
             case ast.Return():
-                val: pt.Expr = self._lookup_value(expr.value)
+                val: pt.Expr = self._translate_ast(expr.value)
                 if self.returns is not None:
                     return val
 
                 return pt.Return(val)
 
             case ast.Compare():
-                left: pt.Expr = self._lookup_value(expr.left)
+                left: pt.Expr = self._translate_ast(expr.left)
                 ops: list[callable] = [
                     self._translate_op(e, left.type_of()) for e in expr.ops
                 ]
                 comparators: list[pt.Expr] = [
-                    self._lookup_value(e) for e in expr.comparators
+                    self._translate_ast(e) for e in expr.comparators
                 ]
 
                 if len(ops) > 1:
@@ -118,8 +119,8 @@ class Preprocessor:
                 return ops[0](left, comparators[0])
 
             case ast.BinOp():
-                left: pt.Expr = self._lookup_value(expr.left)
-                right: pt.Expr = self._lookup_value(expr.right)
+                left: pt.Expr = self._translate_ast(expr.left)
+                right: pt.Expr = self._translate_ast(expr.right)
                 op: callable = self._translate_op(expr.op, left.type_of())
                 return op(left, right)
 
@@ -145,9 +146,11 @@ class Preprocessor:
 
             case ast.For():
                 target: pt.ScratchVar = self._lookup_storage(expr.target)
-                iter: tuple[pt.Expr, pt.Expr, pt.Expr] = self._translate_iter(
-                    expr.iter, target
+
+                iter: tuple[pt.Expr, pt.Expr, pt.Expr] = self._translate_ast(expr.iter)(
+                    target
                 )
+
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
 
                 if len(expr.orelse) > 0:
@@ -178,16 +181,20 @@ class Preprocessor:
 
                 return targets[0].store(value)
 
+            ## Namespace
+            case ast.Name():
+                match expr.ctx:
+                    case ast.Store():
+                        pass
+                    case ast.Load():
+                        return self._lookup_storage(expr).load()
+                    case _:
+                        raise Unsupported("ctx in name" + expr.ctx)
+
             case _:
                 print(ast.dump(expr, indent=4))
                 print(expr.__dict__)
                 raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
-
-    def _translate_iter(
-        self, iter: ast.AST, target: pt.Expr
-    ) -> tuple[pt.Expr, pt.Expr, pt.Expr]:
-        e2 = self._translate_ast(iter)
-        return e2(target)
 
     def _translate_op(self, op: ast.AST, type: pt.TealType) -> callable:
         match op:
@@ -208,21 +215,16 @@ class Preprocessor:
                 match type:
                     case pt.TealType.bytes:
                         return pt.Concat
-                    case pt.TealType.uint64:
+                    case pt.TealType.uint64 | pt.TealType.anytype:
                         return pt.Add
+                    case _:
+                        raise Unsupported(
+                            "Unsupported op: " + op.__class__.__name__ + str(type)
+                        )
             case ast.Div() | ast.FloorDiv():
                 return pt.Div
             case _:
                 raise Unsupported("Unsupported op: ", op.__class__.__name__)
-
-    def _lookup_value(self, val: ast.Name | ast.Constant) -> pt.Expr:
-        print(ast.dump(val, indent=4))
-
-        match val:
-            case ast.Name():
-                return self._lookup_storage(val).load()
-            case ast.Constant():
-                return self._translate_ast(val)
 
     def _provide_value(self, name: str, val: pt.ScratchVar):
         self.variables[name] = val
