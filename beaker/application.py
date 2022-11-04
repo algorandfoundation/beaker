@@ -183,8 +183,6 @@ class Application:
                     static_attr, overriding_name=handler_config.method_spec.name
                 )
 
-                print(abi_meth.subroutine.get_declaration())
-
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 

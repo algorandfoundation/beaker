@@ -26,31 +26,29 @@ class Preprocessor:
         )
 
         self.returns: type[pt.abi.BaseType] | None = None
-        self.output: pt.abi.BaseType | None = None
 
         if self.definition.returns is not None:
             self.returns: type[pt.abi.BaseType] = self._translate_return_type(
                 self.definition.returns
             )
-            self.output = self.returns()
 
-        self.body: pt.Expr = pt.Seq(
-            *[self._translate_ast(expr) for expr in self.definition.body]
-        )
+        exprs = [self._translate_ast(expr) for expr in self.definition.body]
+        self.body: pt.Expr = pt.Seq(*exprs)
+        print(self.body.type_of())
 
     def _translate_args(
         self, args: ast.arguments
     ) -> dict[str, type[pt.abi.BaseType] | None]:
-        if len(args.posonlyargs) > 0:
-            raise Unsupported("posonly in args")
+        if args.kwarg is not None:
+            raise Unsupported("kwarg in args")
         if args.vararg is not None:
             raise Unsupported("vararg in args")
+        if len(args.posonlyargs) > 0:
+            raise Unsupported("posonly in args")
         if len(args.kwonlyargs) > 0:
             raise Unsupported("kwonly in args")
         if len(args.kw_defaults) > 0:
             raise Unsupported("kwdefaults in args")
-        if args.kwarg is not None:
-            raise Unsupported("kwarg in args")
         if len(args.defaults) > 0:
             raise Unsupported("defaults in args")
 
@@ -66,7 +64,6 @@ class Preprocessor:
                         )
             else:
                 arguments[arg.arg] = None
-
         return arguments
 
     def _translate_return_type(self, ret: ast.Name) -> type[pt.abi.BaseType]:
@@ -85,8 +82,8 @@ class Preprocessor:
 
             case ast.Return():
                 val: pt.Expr = self._lookup_value(expr.value)
-                if self.output is not None:
-                    return self.output.set(val)
+                if self.returns is not None:
+                    return val
 
                 return pt.Return(val)
 
@@ -205,6 +202,8 @@ class Preprocessor:
                 raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
     def _lookup_value(self, val: ast.Name | ast.Constant) -> pt.Expr:
+        print(ast.dump(val, indent=4))
+
         match val:
             case ast.Name():
                 return self._lookup_storage(val).load()
@@ -214,6 +213,8 @@ class Preprocessor:
     def _lookup_storage(self, name: ast.Name) -> pt.ScratchVar:
         if name.id not in self.variables:
             self.variables[name.id] = pt.ScratchVar()
+
+        print("LOOKUP: ", name.id, self.variables[name.id].index())
         return self.variables[name.id]
 
     def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:

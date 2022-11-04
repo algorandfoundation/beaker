@@ -330,7 +330,7 @@ def _translate(fn: HandlerFunc) -> HandlerFunc:
     params = sig.parameters.copy()
 
     def _impl(*arg, **kwargs) -> Expr:
-        return pp.body
+        return kwargs["output"].set(pp.body)
 
     orig_annotations = get_annotations(fn)
     translated_annotations = get_annotations(_impl)
@@ -357,7 +357,6 @@ def _translate(fn: HandlerFunc) -> HandlerFunc:
     _impl.__name__ = fn.__name__
     _impl.__signature__ = newsig
     _impl.__annotations__ = orig_annotations | translated_annotations
-    print("FNDICT", _impl.__dict__)
 
     return _impl
 
