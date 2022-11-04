@@ -190,8 +190,6 @@ class Preprocessor:
             case ast.Sub():
                 return Minus
             case ast.Add():
-                return Add
-            case ast.Add():
                 match type:
                     case TealType.bytes:
                         return Concat
