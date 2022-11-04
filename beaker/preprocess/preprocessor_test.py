@@ -33,7 +33,6 @@ def test_parse_method():
 
 def test_built_ins():
     def meth():
-
         app_put("ok", 123)
         x = app_get("ok")
         app_del("ok")
@@ -41,3 +40,4 @@ def test_built_ins():
 
     pp = Preprocessor(meth)
     print(pp.expr)
+    print(compileTeal(pp.expr, mode=Mode.Application, version=8))

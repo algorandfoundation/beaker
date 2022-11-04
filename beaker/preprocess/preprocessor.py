@@ -31,16 +31,50 @@ class Preprocessor:
         print(expr.__dict__)
 
         match expr:
-            case ast.Return():
-                return Return(self._lookup_value(expr.value))
+            case ast.Expr():
+                return self._translate_ast(expr.value)
             case ast.Constant():
                 match expr.value:
                     case int():
                         return Int(expr.value)
                     case bytes() | str():
                         return Bytes(expr.value)
-            case ast.Expr():
-                return self._translate_ast(expr.value)
+
+            case ast.Return():
+                return Return(self._lookup_value(expr.value))
+
+            case ast.Compare():
+                left: Expr = self._lookup_value(expr.left)
+                ops: list[callable] = [
+                    self._translate_op(e, left.type_of()) for e in expr.ops
+                ]
+                comparators: list[Expr] = [
+                    self._lookup_value(e) for e in expr.comparators
+                ]
+
+                if len(ops) > 1:
+                    raise Unsupported(">1 op in Compare")
+                if len(comparators) > 1:
+                    raise Unsupported(">1 comparator in Compare")
+
+                return ops[0](left, comparators[0])
+
+            case ast.BinOp():
+                left: Expr = self._lookup_value(expr.left)
+                right: Expr = self._lookup_value(expr.right)
+                op: callable = self._translate_op(expr.op, left.type_of())
+                return op(left, right)
+
+            ## Flow Control
+
+            case ast.Call():
+                func: callable = self._lookup_function(expr.func)
+                args: list[Expr] = [self._translate_ast(a) for a in expr.args]
+
+                if len(expr.keywords) > 0:
+                    raise Unsupported("keywords in Call")
+
+                return func(*args)
 
             case ast.If():
                 test: Expr = self._translate_ast(expr.test)
@@ -66,37 +100,6 @@ class Preprocessor:
                 cond: Expr = self._translate_ast(expr.test)
                 body: list[Expr] = [self._translate_ast(e) for e in expr.body]
                 return While(cond).Do(*body)
-
-            case ast.Call():
-                func: callable = self._lookup_function(expr.func)
-                args: list[Expr] = [self._translate_ast(a) for a in expr.args]
-
-                if len(expr.keywords) > 0:
-                    raise Unsupported("keywords in Call")
-
-                return func(*args)
-
-            case ast.Compare():
-                left: Expr = self._lookup_value(expr.left)
-                ops: list[callable] = [
-                    self._translate_op(e, left.type_of()) for e in expr.ops
-                ]
-                comparators: list[Expr] = [
-                    self._lookup_value(e) for e in expr.comparators
-                ]
-
-                if len(ops) > 1:
-                    raise Unsupported(">1 op in Compare")
-                if len(comparators) > 1:
-                    raise Unsupported(">1 comparator in Compare")
-
-                return ops[0](left, comparators[0])
-
-            case ast.BinOp():
-                left: Expr = self._lookup_value(expr.left)
-                right: Expr = self._lookup_value(expr.right)
-                op: callable = self._translate_op(expr.op, left.type_of())
-                return op(left, right)
 
             ### Var access
             case ast.AugAssign():
