@@ -1,5 +1,15 @@
 from pyteal import *
 
+## Types
+
+BuiltInTypes: dict[str, abi.BaseType] = {
+    "int": abi.Uint64,
+    "str": abi.String,
+    "bytes": abi.DynamicBytes,
+}
+
+## Functions
+
 
 def _range(iters: Expr) -> callable:
     def _impl(sv: ScratchVar) -> tuple[Expr, Expr, Expr]:
@@ -24,7 +34,7 @@ def app_del(key: Expr) -> Expr:
     return App.globalDel(key)
 
 
-BuiltIns: dict[str, callable] = {
+BuiltInFuncs: dict[str, callable] = {
     "range": _range,
     "app_get": app_get,
     "app_get_ex": app_get_ex,

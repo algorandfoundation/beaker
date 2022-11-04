@@ -4,6 +4,7 @@ from typing import Final, Any, cast, Optional
 from algosdk.v2client.algod import AlgodClient
 from algosdk.abi import Method
 from pyteal import (
+    Cond,
     SubroutineFnWrapper,
     TealInputError,
     Txn,
@@ -183,6 +184,8 @@ class Application:
                     static_attr, overriding_name=handler_config.method_spec.name
                 )
 
+                print(abi_meth.subroutine.get_declaration())
+
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 
@@ -272,6 +275,9 @@ class Application:
                 method_config=method_config,
                 overriding_name=method.name(),
             )
+
+        approval, _, _ = self.router.build_program()
+        print(approval)
 
         # Compile approval and clear programs
         (

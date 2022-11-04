@@ -25,6 +25,7 @@ from .decorators import (
 from .logic_signature import LogicSignature, TemplateVariable
 from .precompile import Precompile
 
+from . import preprocess
 from . import client
 from . import sandbox
 from . import consts

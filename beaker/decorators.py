@@ -1,13 +1,14 @@
 from dataclasses import asdict, dataclass, field, replace, astuple
 from enum import Enum
 from functools import wraps
-from inspect import get_annotations, signature, Parameter
+from inspect import get_annotations, signature, Parameter, _ParameterKind
 from typing import Optional, Callable, Final, cast, Any, TypeVar
 from types import FunctionType
 from algosdk.abi import Method
 from pyteal import (
     abi,
     ABIReturnSubroutine,
+    Approve,
     And,
     Global,
     App,
@@ -28,7 +29,7 @@ from pyteal import (
     Bytes,
     Txn,
 )
-
+from beaker.preprocess import Preprocessor
 from beaker.state import AccountStateValue, ApplicationStateValue
 
 HandlerFunc = Callable[..., Expr]
@@ -322,6 +323,45 @@ def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
     return _impl
 
 
+def _translate(fn: HandlerFunc) -> HandlerFunc:
+    pp = Preprocessor(fn)
+
+    sig = signature(fn)
+    params = sig.parameters.copy()
+
+    def _impl(*arg, **kwargs) -> Expr:
+        return pp.body
+
+    orig_annotations = get_annotations(fn)
+    translated_annotations = get_annotations(_impl)
+
+    for k, v in params.items():
+        if k == "self":
+            continue
+        if k not in pp.args:
+            raise Exception("Cant find arg?: ", k)
+
+        translated_type = cast(type[abi.BaseType], pp.args[k])
+
+        params[k] = v.replace(annotation=translated_type)
+        orig_annotations[k] = translated_type
+
+    if pp.returns is not None:
+        params["output"] = Parameter(
+            name="output", kind=_ParameterKind.KEYWORD_ONLY, annotation=pp.returns
+        )
+        orig_annotations["output"] = pp.returns
+
+    newsig = sig.replace(parameters=list(params.values()), return_annotation=Expr)
+
+    _impl.__name__ = fn.__name__
+    _impl.__signature__ = newsig
+    _impl.__annotations__ = orig_annotations | translated_annotations
+    print("FNDICT", _impl.__dict__)
+
+    return _impl
+
+
 def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
@@ -434,6 +474,7 @@ def external(
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
+    translate: bool = False,
 ) -> HandlerFunc:
 
     """
@@ -451,6 +492,9 @@ def external(
     """
 
     def _impl(fn: HandlerFunc):
+        if translate:
+            fn = _translate(fn)
+
         fn = _remove_self(fn)
         fn = _capture_defaults(fn)
         fn = _replace_structs(fn)

@@ -1,9 +1,10 @@
 from pyteal import *
-from typing import cast
+from typing import cast, Any
+from textwrap import dedent
 import inspect
 import ast
 
-from .builtins import BuiltIns
+from .builtins import BuiltInFuncs, BuiltInTypes
 
 Unsupported = lambda feature: Exception(f"This feature is not supported yet: {feature}")
 
@@ -11,25 +12,67 @@ Unsupported = lambda feature: Exception(f"This feature is not supported yet: {fe
 class Preprocessor:
     def __init__(self, c: callable):
         self.orig = c
-        self.src = inspect.getsource(c).strip()
+        self.src = dedent(inspect.getsource(c))
         self.tree = ast.parse(self.src)
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
-        self.arguemnts = self.definition.args
 
-        self.funcs: dict[str, callable] = BuiltIns
+        self.funcs: dict[str, callable] = BuiltInFuncs
+        self.types: dict[str, abi.BaseType] = BuiltInTypes
 
         self.variables: dict[str, ScratchSlot] = {}
-        self.slot = 0
 
-        self.body: list[Expr] = [
-            self._translate_ast(expr) for expr in self.definition.body
-        ]
-        self.expr = Seq(*self.body)
+        self.args: dict[str, type[abi.BaseType] | None] = self._translate_args(
+            self.definition.args
+        )
+
+        self.returns: type[abi.BaseType] | None = None
+        self.output: abi.BaseType | None = None
+
+        if self.definition.returns is not None:
+            self.returns: type[abi.BaseType] = self._translate_return_type(
+                self.definition.returns
+            )
+            self.output = self.returns()
+
+        self.body: Expr = Seq(
+            *[self._translate_ast(expr) for expr in self.definition.body]
+        )
+
+    def _translate_args(
+        self, args: ast.arguments
+    ) -> dict[str, type[abi.BaseType] | None]:
+        if len(args.posonlyargs) > 0:
+            raise Unsupported("posonly in args")
+        if args.vararg is not None:
+            raise Unsupported("vararg in args")
+        if len(args.kwonlyargs) > 0:
+            raise Unsupported("kwonly in args")
+        if len(args.kw_defaults) > 0:
+            raise Unsupported("kwdefaults in args")
+        if args.kwarg is not None:
+            raise Unsupported("kwarg in args")
+        if len(args.defaults) > 0:
+            raise Unsupported("defaults in args")
+
+        arguments: dict[str, Any] = {}
+        for arg in args.args:
+            if arg.annotation is not None:
+                match arg.annotation:
+                    case ast.Name():
+                        arguments[arg.arg] = self.types[arg.annotation.id]
+                    case _:
+                        raise Unsupported(
+                            "arg type in args: ", arg.annotation.__class__.__name__
+                        )
+            else:
+                arguments[arg.arg] = None
+
+        return arguments
+
+    def _translate_return_type(self, ret: ast.Name) -> type[abi.BaseType]:
+        return self.types[ret.id]
 
     def _translate_ast(self, expr: ast.AST) -> Expr:
-        print(ast.dump(expr, indent=4))
-        print(expr.__dict__)
-
         match expr:
             case ast.Expr():
                 return self._translate_ast(expr.value)
@@ -41,7 +84,11 @@ class Preprocessor:
                         return Bytes(expr.value)
 
             case ast.Return():
-                return Return(self._lookup_value(expr.value))
+                val: Expr = self._lookup_value(expr.value)
+                if self.output is not None:
+                    return self.output.set(val)
+
+                return Return(val)
 
             case ast.Compare():
                 left: Expr = self._lookup_value(expr.left)
@@ -119,6 +166,8 @@ class Preprocessor:
                 return targets[0].store(value)
 
             case _:
+                print(ast.dump(expr, indent=4))
+                print(expr.__dict__)
                 raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
 
     def _translate_iter(self, iter: ast.AST, target: Expr) -> tuple[Expr, Expr, Expr]:
@@ -141,6 +190,8 @@ class Preprocessor:
             case ast.Sub():
                 return Minus
             case ast.Add():
+                return Add
+            case ast.Add():
                 match type:
                     case TealType.bytes:
                         return Concat
@@ -148,6 +199,8 @@ class Preprocessor:
                         return Add
             case ast.Div() | ast.FloorDiv():
                 return Div
+            case _:
+                raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
     def _lookup_value(self, val: ast.Name | ast.Constant) -> Expr:
         match val:
@@ -162,5 +215,4 @@ class Preprocessor:
         return self.variables[name.id]
 
     def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:
-        print(ast.dump(name, indent=4))
         return self.funcs[name.id]
