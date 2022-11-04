@@ -65,7 +65,8 @@ def test_app():
 
         @external(translate=True)
         def no_args_yes_output_py(self) -> int:
-            return 2
+            x = 3 
+            return x
 
     app = App()
     print(app.approval_program)
