@@ -34,7 +34,6 @@ class Preprocessor:
 
         exprs = [self._translate_ast(expr) for expr in self.definition.body]
         self.body: pt.Expr = pt.Seq(*exprs)
-        print(self.body.type_of())
 
     def _translate_args(
         self, args: ast.arguments
