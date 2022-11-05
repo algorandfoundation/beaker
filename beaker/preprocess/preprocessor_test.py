@@ -192,3 +192,25 @@ def test_app():
 
     app = App()
     # print(app.approval_program)
+
+
+def test_calculator_app():
+    class Calculator(Application):
+        @external(translate=True)
+        def add(x: u64, y: u64) -> u64:
+            return x + y
+
+        @external(translate=True)
+        def sub(x: u64, y: u64) -> u64:
+            return x - y
+
+        @external(translate=True)
+        def mul(x: u64, y: u64) -> u64:
+            return x * y
+
+        @external(translate=True)
+        def div(x: u64, y: u64) -> u64:
+            return x / y
+
+    calc = Calculator()
+    print(calc.approval_program)

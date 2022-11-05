@@ -245,6 +245,14 @@ class Preprocessor:
                 return targets[0].store(value)
 
             ## Namespace
+            case ast.FunctionDef():
+                raise Unsupported("Cant define a new func in a func")
+                # body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
+                # def _impl(*args, **kwargs):
+                #    return pt.Seq(*body)
+                # _impl.__name__ = expr.name
+                # self.funcs[expr.name] = pt.Subroutine(pt.TealType.uint64)(_impl)
+
             case ast.Name():
                 match expr.ctx:
                     case ast.Store():
