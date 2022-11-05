@@ -1,4 +1,4 @@
-from pyteal import *
+from pyteal import Expr, TxnField, TxnType
 
 
 def axfer(asset_id: Expr, amount: Expr, receiver: Expr) -> dict[TxnField, Expr]:
