@@ -118,6 +118,19 @@ class Preprocessor:
                     return val
                 return pt.Return(val)
 
+            case ast.Assert():
+                test: pt.Expr = self._translate_ast(expr.test)
+
+                msg: str | None = None
+                if expr.msg is not None:
+                    # TODO: translate ast returns Bytes expr
+                    msg = cast(ast.Constant, expr.msg).value
+                    # msg: pt.Expr = self._translate_ast(expr.msg)
+                    # if msg.type_of() != pt.TealType.bytes:
+                    #    raise Unsupported("Need bytes for assert message")
+
+                return pt.Assert(test, comment=msg)
+
             ## Ops
             case ast.Compare():
                 left: pt.Expr = self._translate_ast(expr.left)

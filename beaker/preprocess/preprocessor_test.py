@@ -157,6 +157,7 @@ def test_app():
         def no_args_no_output(self):
             x = 2
             x += 3
+            assert 0, "bad"
 
         @external
         def no_args_yes_output_pt(self, *, output: abi.Uint64) -> Expr:
