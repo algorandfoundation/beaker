@@ -88,8 +88,6 @@ class Preprocessor:
                     raise Unsupported("Type in translate type:", _type.id)
 
             case ast.Subscript():
-                print(ast.dump(_type, indent=4))
-
                 _value: type[pt.abi.BaseType] = self._translate_type(_type.value)
                 _slice: type[pt.abi.BaseType] = self._translate_type(_type.slice)
 
@@ -103,7 +101,6 @@ class Preprocessor:
                 raise Unsupported("arg type in args: ", _type.__class__.__name__)
 
     def _translate_ast(self, expr: ast.AST) -> pt.Expr:
-        print(ast.dump(expr, indent=4))
         match expr:
             case ast.Expr():
                 return self._translate_ast(expr.value)
@@ -156,11 +153,8 @@ class Preprocessor:
             case ast.If():
                 test: pt.Expr = self._translate_ast(expr.test)
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
-
-                if len(expr.orelse) > 0:
-                    raise Unsupported("orelse in If")
-
-                return pt.If(test).Then(*body)
+                orelse: list[pt.Expr] = [self._translate_ast(e) for e in expr.orelse]
+                return pt.If(test).Then(pt.Seq(*body)).Else(pt.Seq(*orelse))
 
             case ast.For():
                 if len(expr.orelse) > 0:
@@ -170,7 +164,7 @@ class Preprocessor:
                 iter: callable[tuple[pt.Expr, pt.Expr, pt.Expr]]
 
                 match expr.iter:
-                    # We're iterating over a list
+                    # We're iterating over some variable
                     case ast.Name():
                         var = self.variables[expr.iter.id]
                         match var:
@@ -191,9 +185,7 @@ class Preprocessor:
                                 iter = (init, cond, step)
                             case _:
                                 # Check if its a list?
-                                raise Unsupported(
-                                    "iter with list(maybe?)",
-                                )
+                                raise Unsupported("iter with unsupported type ", var)
 
                     # We're iterating over the result of a function call
                     case ast.Call():
@@ -202,10 +194,7 @@ class Preprocessor:
                     case _:
                         raise Unsupported("iter type in for loop: ", expr.iter)
 
-                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
-
-                start, cond, step = iter
-                return pt.For(start, cond, step).Do(body)
+                return pt.For(*iter).Do([self._translate_ast(e) for e in expr.body])
 
             case ast.While():
                 cond: pt.Expr = self._translate_ast(expr.test)
@@ -220,10 +209,11 @@ class Preprocessor:
                 return target.store(op(target.load(), value))
 
             case ast.Assign():
-                targets: list[pt.ScratchVar] = [
-                    self._lookup_storage_var(e) for e in expr.targets
-                ]
                 value: pt.Expr = self._translate_ast(expr.value)
+                targets: list[Variable] = [
+                    self._lookup_or_alloc(e, value.type_of()) for e in expr.targets
+                ]
+
                 if len(targets) > 1:
                     raise Unsupported(">1 target in Assign")
 
@@ -233,9 +223,11 @@ class Preprocessor:
             case ast.Name():
                 match expr.ctx:
                     case ast.Store():
-                        pass
+                        raise Unsupported("wat")
                     case ast.Load():
-                        return self._lookup_storage_var(expr).load()
+
+                        v = self._lookup_storage_var(expr)
+                        return v.load()
                     case _:
                         raise Unsupported("ctx in name" + expr.ctx)
 
@@ -245,46 +237,95 @@ class Preprocessor:
                 raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
 
     def _translate_op(self, op: ast.AST, type: pt.TealType) -> callable:
-        match op:
-            ### Ops
-            case ast.Mult():
-                return pt.Mul
-            case ast.Pow():
-                return pt.Exp
-            case ast.Eq():
-                return pt.Eq
-            case ast.Gt():
-                return pt.Gt
-            case ast.Lt():
-                return pt.Lt
-            case ast.Sub():
-                return pt.Minus
-            case ast.Add():
-                match type:
-                    case pt.TealType.bytes:
-                        return pt.Concat
-                    case pt.TealType.uint64 | pt.TealType.anytype:
-                        return pt.Add
-                    case _:
-                        raise Unsupported(
-                            "Unsupported op: " + op.__class__.__name__ + str(type)
-                        )
-            case ast.Div() | ast.FloorDiv():
-                return pt.Div
-            case _:
-                raise Unsupported("Unsupported op: ", op.__class__.__name__)
+        if type == pt.TealType.bytes:
+            match op:
+                ### Ops
+                case ast.Mult():
+                    return pt.BytesMul
+                case ast.Eq():
+                    return pt.BytesEq
+                case ast.NotEq():
+                    return pt.BytesNeq
+                case ast.Gt():
+                    return pt.BytesGt
+                case ast.GtE():
+                    return pt.BytesGe
+                case ast.Lt():
+                    return pt.BytesLt
+                case ast.LtE():
+                    return pt.BytesLe
+                case ast.Sub():
+                    return pt.BytesMinus
+                case ast.Mod():
+                    return pt.BytesMod
+                case ast.BitOr():
+                    return pt.BytesOr
+                case ast.BitAnd():
+                    return pt.BytesAnd
+                case ast.BitXor():
+                    return pt.BytesXor
+                case ast.Add():
+                    return pt.BytesAdd
+                case ast.Div() | ast.FloorDiv():
+                    return pt.BytesDiv
+                case ast.Pow() | ast.RShift() | ast.LShift():
+                    raise Unsupported("Unsupported op: ", op.__class__.__name__)
+                case _:
+                    raise Unsupported("Unsupported op: ", op.__class__.__name__)
+        else:
+            match op:
+                ### Ops
+                case ast.Mult():
+                    return pt.Mul
+                case ast.Pow():
+                    return pt.Exp
+                case ast.Eq():
+                    return pt.Eq
+                case ast.NotEq():
+                    return pt.Neq
+                case ast.Gt():
+                    return pt.Gt
+                case ast.GtE():
+                    return pt.Ge
+                case ast.Lt():
+                    return pt.Lt
+                case ast.LtE():
+                    return pt.Le
+                case ast.Sub():
+                    return pt.Minus
+                case ast.Mod():
+                    return pt.Mod
+                case ast.BitOr():
+                    return pt.BitwiseOr
+                case ast.BitAnd():
+                    return pt.BitwiseAnd
+                case ast.BitXor():
+                    return pt.BitwiseXor
+                case ast.RShift():
+                    return pt.ShiftRight
+                case ast.LShift():
+                    return pt.ShiftLeft
+                case ast.Add():
+                    return pt.Add
+                case ast.Div() | ast.FloorDiv():
+                    return pt.Div
+                case _:
+                    raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
     def _provide_value(self, name: str, val: pt.ScratchVar):
         self.variables[name] = val
 
     def _lookup_or_alloc(
-        self, name: ast.Name, ts: pt.abi.TypeSpec | None = None
+        self, name: ast.Name, ts: pt.abi.TypeSpec | pt.TealType | None = None
     ) -> Variable:
         if name.id not in self.variables:
-            if ts is not None:
-                self.variables[name.id] = ts.new_instance()
-            else:
+            if ts is None:
                 self.variables[name.id] = pt.ScratchVar()
+            else:
+                if isinstance(ts, pt.abi.TypeSpec):
+                    self.variables[name.id] = ts.new_instance()
+                else:
+                    self.variables[name.id] = pt.ScratchVar(ts)
 
         return self.variables[name.id]
 
@@ -294,7 +335,7 @@ class Preprocessor:
             case pt.abi.BaseType():
                 return v._stored_value
             case pt.ScratchVar():
-                return v.slot
+                return v
             case _:
                 raise Unsupported("type in slot lookup: ", v)
 

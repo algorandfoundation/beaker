@@ -273,9 +273,6 @@ class Application:
                 overriding_name=method.name(),
             )
 
-        approval, _, _ = self.router.build_program()
-        print(approval)
-
         # Compile approval and clear programs
         (
             self.approval_program,
