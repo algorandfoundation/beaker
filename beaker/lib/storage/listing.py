@@ -13,7 +13,7 @@ class Listing:
         ), "Cannot be larger than MAX_BOX_SIZE"
 
         if name is not None:
-            self.name = Bytes(name)
+            self.name = Bytes(name)  # type: ignore
 
         self.value_type = ts
 
