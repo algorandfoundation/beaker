@@ -177,7 +177,7 @@ def test_app():
             return sum
 
         @external(translate=True)
-        def fib(self, x: u64) -> u64:
+        def add_sequence(self, x: u64) -> u64:
             sum = 1
             for y in range(x):
                 sum += y
