@@ -6,9 +6,9 @@ import ast
 
 from .builtins import BuiltInFuncs, BuiltInTypes
 
-Unsupported = lambda *feature: Exception(
-    f"This feature is not supported yet: {' '.join(feature)}"
-)
+
+def Unsupported(*feature):
+    return Exception(f"This feature is not supported yet: {' '.join(feature)}")
 
 
 Variable = pt.ScratchVar | pt.abi.BaseType
@@ -131,7 +131,7 @@ class Preprocessor:
 
                 return pt.Assert(test, comment=msg)
 
-            ## Ops
+            # Ops
             case ast.Compare():
                 left: pt.Expr = self._translate_ast(expr.left)
                 ops: list[callable] = [
@@ -164,7 +164,7 @@ class Preprocessor:
                 op: callable = self._translate_op(expr.op, operand.type_of())
                 return op(operand)
 
-            ## Flow Control
+            # Flow Control
 
             case ast.Call():
                 func: callable = self._lookup_function(expr.func)
@@ -226,7 +226,7 @@ class Preprocessor:
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
                 return pt.While(cond).Do(*body)
 
-            ### Var access
+            # Var access
             case ast.AugAssign():
                 target: pt.ScratchSlot = self._lookup_storage_var(expr.target)
                 value: pt.Expr = self._translate_ast(expr.value)
@@ -244,7 +244,7 @@ class Preprocessor:
 
                 return targets[0].store(value)
 
-            ## Namespace
+            # Namespace
             case ast.FunctionDef():
                 raise Unsupported("Cant define a new func in a func")
                 # body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
@@ -274,7 +274,6 @@ class Preprocessor:
     ) -> callable:
         if type == pt.TealType.bytes:
             match op:
-                ### Ops
                 case ast.Mult():
                     return pt.BytesMul
                 case ast.Eq():
@@ -309,7 +308,6 @@ class Preprocessor:
                     raise Unsupported("Unsupported op: ", op.__class__.__name__)
         else:
             match op:
-                ### Ops
                 case ast.And():
                     return pt.And
                 case ast.Or():
@@ -374,7 +372,10 @@ class Preprocessor:
         v = self._lookup_or_alloc(name)
         match v:
             case pt.abi.BaseType():
-                return v._stored_value
+                if hasattr(v, "_stored_value"):
+                    return v._stored_value
+                else:
+                    return v.stored_value
             case pt.ScratchVar():
                 return v
             case _:

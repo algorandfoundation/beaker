@@ -8,7 +8,6 @@ from algosdk.abi import Method
 from pyteal import (
     abi,
     ABIReturnSubroutine,
-    Approve,
     And,
     Global,
     App,

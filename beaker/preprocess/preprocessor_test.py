@@ -1,9 +1,9 @@
-from pyteal import *
+import pyteal as pt
 from beaker.application import Application
 from beaker.decorators import external
 
 from .preprocessor import Preprocessor
-from .builtins import *
+from .builtins import app_get, app_put, app_del, u64
 
 
 def test_parse_method():
@@ -105,6 +105,7 @@ def test_int_ops():
         x = 3 & 1
         x = 3 >> 1
         x = 3 << 1
+        x = x
 
     Preprocessor(meth).expr()
 
@@ -119,16 +120,17 @@ def test_bytes_ops():
         x = val * val
         x = val % val
 
-        ## compare
+        # compare
         y = val == val
         y = val != val
         y = val < val
         y = val <= val
         y = val > val
         y = val >= val
+        y = y and y
 
-        ## bitwise
-        x = val | val
+        # bitwise
+        x = x | val
         x = val ^ val
         x = val & val
 
@@ -160,8 +162,8 @@ def test_app():
             assert 0, "bad"
 
         @external
-        def no_args_yes_output_pt(self, *, output: abi.Uint64) -> Expr:
-            return output.set(Int(2))
+        def no_args_yes_output_pt(self, *, output: pt.abi.Uint64) -> pt.Expr:
+            return output.set(pt.Int(2))
 
         @external(translate=True)
         def no_args_yes_output_py(self) -> int:
@@ -190,7 +192,7 @@ def test_app():
                 sum += x
             return sum
 
-    app = App()
+    App()
     # print(app.approval_program)
 
 

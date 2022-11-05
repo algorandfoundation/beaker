@@ -1,6 +1,6 @@
 import pyteal as pt
 
-## Types
+# Types
 
 u64 = pt.abi.Uint64
 u32 = pt.abi.Uint32
@@ -25,7 +25,7 @@ BuiltInTypes: dict[str, pt.abi.BaseType] = {
     "tuple": pt.abi.Tuple,
 }
 
-## Functions
+# Functions
 
 
 def _range(iters: pt.Expr) -> callable:
