@@ -2,10 +2,27 @@ import pyteal as pt
 
 ## Types
 
+u64 = pt.abi.Uint64
+u32 = pt.abi.Uint32
+u16 = pt.abi.Uint16
+u8 = pt.abi.Byte
+byte = pt.abi.Byte
+
+
 BuiltInTypes: dict[str, pt.abi.BaseType] = {
+    # shorthand types
+    "u64": u64,
+    "u32": u32,
+    "u16": u16,
+    "u8": u8,
+    "byte": byte,
+    # Python types
     "int": pt.abi.Uint64,
     "str": pt.abi.String,
     "bytes": pt.abi.DynamicBytes,
+    # compound types
+    "list": pt.abi.DynamicArray,
+    "tuple": pt.abi.Tuple,
 }
 
 ## Functions

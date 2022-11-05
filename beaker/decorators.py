@@ -326,21 +326,24 @@ def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
 def _translate(fn: HandlerFunc) -> HandlerFunc:
     pp = Preprocessor(fn)
 
-    sig = signature(fn)
-    params = sig.parameters.copy()
-
+    # Make a callable that passes args and sets output appropriately,
+    # we modify its signature below
     def _impl(*args, **kwargs) -> Expr:
         if "output" in kwargs:
+            # TODO: change output types
             return kwargs["output"].set(pp.expr(*args, **kwargs))
         else:
             return pp.expr(*args, **kwargs)
 
+    sig = signature(fn)
     orig_annotations = get_annotations(fn)
     translated_annotations = get_annotations(_impl)
 
+    params = sig.parameters.copy()
     for k, v in params.items():
         if k == "self":
             continue
+
         if k not in pp.args:
             raise Exception("Cant find arg?: ", k)
 

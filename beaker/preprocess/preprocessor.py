@@ -6,7 +6,12 @@ import ast
 
 from .builtins import BuiltInFuncs, BuiltInTypes
 
-Unsupported = lambda feature: Exception(f"This feature is not supported yet: {feature}")
+Unsupported = lambda *feature: Exception(
+    f"This feature is not supported yet: {' '.join(feature)}"
+)
+
+
+Variable = pt.ScratchVar | pt.abi.BaseType
 
 
 class Preprocessor:
@@ -19,7 +24,7 @@ class Preprocessor:
         self.funcs: dict[str, callable] = BuiltInFuncs
         self.types: dict[str, pt.abi.BaseType] = BuiltInTypes
 
-        self.variables: dict[str, pt.ScratchSlot] = {}
+        self.variables: dict[str, Variable] = {}
 
         self.args: dict[str, type[pt.abi.BaseType] | None] = self._translate_args(
             self.definition.args
@@ -28,12 +33,12 @@ class Preprocessor:
         self.returns: type[pt.abi.BaseType] | None = None
 
         if self.definition.returns is not None:
-            self.returns: type[pt.abi.BaseType] = self._translate_return_type(
+            self.returns: type[pt.abi.BaseType] = self._translate_type(
                 self.definition.returns
             )
 
     def expr(self, *args, **kwargs):
-
+        """called at build time with slots provided"""
         for idx, name in enumerate(self.args.keys()):
             if name == "self":
                 continue
@@ -41,7 +46,7 @@ class Preprocessor:
             arg = args[idx]
             match arg:
                 case pt.abi.BaseType():
-                    self._provide_value(name, arg._stored_value)
+                    self._provide_value(name, arg)
                 case _:
                     raise Unsupported(
                         "idk what do do with this arg ", args[idx].__class__.__name__
@@ -69,19 +74,33 @@ class Preprocessor:
         arguments: dict[str, Any] = {}
         for arg in args.args:
             if arg.annotation is not None:
-                match arg.annotation:
-                    case ast.Name():
-                        arguments[arg.arg] = self.types[arg.annotation.id]
-                    case _:
-                        raise Unsupported(
-                            "arg type in args: ", arg.annotation.__class__.__name__
-                        )
+                arguments[arg.arg] = self._translate_type(arg.annotation)
             else:
                 arguments[arg.arg] = None
         return arguments
 
-    def _translate_return_type(self, ret: ast.Name) -> type[pt.abi.BaseType]:
-        return self.types[ret.id]
+    def _translate_type(self, _type: ast.AST) -> type[pt.abi.BaseType] | None:
+        match _type:
+            case ast.Name():
+                if _type.id in self.types:
+                    return self.types[_type.id]
+                else:
+                    raise Unsupported("Type in translate type:", _type.id)
+
+            case ast.Subscript():
+                print(ast.dump(_type, indent=4))
+
+                _value: type[pt.abi.BaseType] = self._translate_type(_type.value)
+                _slice: type[pt.abi.BaseType] = self._translate_type(_type.slice)
+
+                if _value is pt.abi.DynamicArray:
+                    da = pt.abi.DynamicArray[_slice]
+                    return da
+                else:
+                    raise Unsupported("Non dynamic array in subscript of args", _type)
+
+            case _:
+                raise Unsupported("arg type in args: ", _type.__class__.__name__)
 
     def _translate_ast(self, expr: ast.AST) -> pt.Expr:
         print(ast.dump(expr, indent=4))
@@ -94,14 +113,13 @@ class Preprocessor:
                         return pt.Int(expr.value)
                     case bytes() | str():
                         return pt.Bytes(expr.value)
-
             case ast.Return():
                 val: pt.Expr = self._translate_ast(expr.value)
                 if self.returns is not None:
                     return val
-
                 return pt.Return(val)
 
+            ## Ops
             case ast.Compare():
                 left: pt.Expr = self._translate_ast(expr.left)
                 ops: list[callable] = [
@@ -145,16 +163,46 @@ class Preprocessor:
                 return pt.If(test).Then(*body)
 
             case ast.For():
-                target: pt.ScratchVar = self._lookup_storage(expr.target)
-
-                iter: tuple[pt.Expr, pt.Expr, pt.Expr] = self._translate_ast(expr.iter)(
-                    target
-                )
-
-                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
-
                 if len(expr.orelse) > 0:
                     raise Unsupported("orelse in For")
+
+                target: pt.ScratchVar | pt.abi.BaseType
+                iter: callable[tuple[pt.Expr, pt.Expr, pt.Expr]]
+
+                match expr.iter:
+                    # We're iterating over a list
+                    case ast.Name():
+                        var = self.variables[expr.iter.id]
+                        match var:
+                            case pt.abi.DynamicArray():
+                                target = self._lookup_or_alloc(
+                                    expr.target, var.type_spec().value_type_spec()
+                                )
+                                idx = pt.ScratchVar()
+                                init = pt.Seq(
+                                    idx.store(pt.Int(0)),
+                                    var[pt.Int(0)].store_into(target),
+                                )
+                                cond = idx.load() < var.length()
+                                step = pt.Seq(
+                                    idx.store(idx.load() + pt.Int(1)),
+                                    var[idx.load()].store_into(target),
+                                )
+                                iter = (init, cond, step)
+                            case _:
+                                # Check if its a list?
+                                raise Unsupported(
+                                    "iter with list(maybe?)",
+                                )
+
+                    # We're iterating over the result of a function call
+                    case ast.Call():
+                        target = self._lookup_or_alloc(expr.target)
+                        iter = self._translate_ast(expr.iter)(target)
+                    case _:
+                        raise Unsupported("iter type in for loop: ", expr.iter)
+
+                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
 
                 start, cond, step = iter
                 return pt.For(start, cond, step).Do(body)
@@ -166,14 +214,14 @@ class Preprocessor:
 
             ### Var access
             case ast.AugAssign():
-                target: pt.ScratchVar = self._lookup_storage(expr.target)
+                target: pt.ScratchSlot = self._lookup_storage_var(expr.target)
                 value: pt.Expr = self._translate_ast(expr.value)
                 op: callable = self._translate_op(expr.op, value.type_of())
                 return target.store(op(target.load(), value))
 
             case ast.Assign():
                 targets: list[pt.ScratchVar] = [
-                    self._lookup_storage(e) for e in expr.targets
+                    self._lookup_storage_var(e) for e in expr.targets
                 ]
                 value: pt.Expr = self._translate_ast(expr.value)
                 if len(targets) > 1:
@@ -187,7 +235,7 @@ class Preprocessor:
                     case ast.Store():
                         pass
                     case ast.Load():
-                        return self._lookup_storage(expr).load()
+                        return self._lookup_storage_var(expr).load()
                     case _:
                         raise Unsupported("ctx in name" + expr.ctx)
 
@@ -229,12 +277,38 @@ class Preprocessor:
     def _provide_value(self, name: str, val: pt.ScratchVar):
         self.variables[name] = val
 
-    def _lookup_storage(self, name: ast.Name) -> pt.ScratchVar:
+    def _lookup_or_alloc(
+        self, name: ast.Name, ts: pt.abi.TypeSpec | None = None
+    ) -> Variable:
         if name.id not in self.variables:
-            print("new var")
-            self.variables[name.id] = pt.ScratchVar()
+            if ts is not None:
+                self.variables[name.id] = ts.new_instance()
+            else:
+                self.variables[name.id] = pt.ScratchVar()
 
         return self.variables[name.id]
+
+    def _lookup_storage_var(self, name: ast.Name) -> pt.ScratchVar:
+        v = self._lookup_or_alloc(name)
+        match v:
+            case pt.abi.BaseType():
+                return v._stored_value
+            case pt.ScratchVar():
+                return v.slot
+            case _:
+                raise Unsupported("type in slot lookup: ", v)
+
+    def _lookup_storage_type(
+        self, name: ast.Name
+    ) -> pt.TealType | type[pt.abi.BaseType]:
+        v = self.variables[name.id]
+        match v:
+            case pt.abi.BaseType():
+                return v.__class__
+            case pt.ScratchVar():
+                return v.storage_type()
+            case _:
+                raise Unsupported("var type in lookup type", v)
 
     def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:
         return self.funcs[name.id]
