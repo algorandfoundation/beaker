@@ -228,10 +228,10 @@ class Preprocessor:
 
             # Var access
             case ast.AugAssign():
-                target: pt.ScratchSlot = self._lookup_storage_var(expr.target)
+                target: pt.Expr = self._read_storage_var(expr.target)
                 value: pt.Expr = self._translate_ast(expr.value)
-                op: Callable = self._translate_op(expr.op, value.type_of())
-                return target.store(op(target.load(), value))
+                op: Callable = self._translate_op(expr.op, target.type_of())
+                return self._write_storage_var(expr.target, op(target, value))
 
             case ast.Assign():
                 value: pt.Expr = self._translate_ast(expr.value)
@@ -255,12 +255,10 @@ class Preprocessor:
 
             case ast.Name():
                 match expr.ctx:
-                    case ast.Store():
-                        raise Unsupported("wat")
                     case ast.Load():
-
-                        v = self._lookup_storage_var(expr)
-                        return v.load()
+                        return self._read_storage_var(expr)
+                    case ast.Store():
+                        raise Unsupported("Where did you come from?")
                     case _:
                         raise Unsupported("ctx in name" + expr.ctx)
 
@@ -370,30 +368,32 @@ class Preprocessor:
 
         return self.variables[name.id]
 
-    def _lookup_storage_var(self, name: ast.Name) -> pt.ScratchVar:
+    def _write_storage_var(self, name: ast.Name, val: pt.Expr) -> pt.Expr:
         v = self._lookup_or_alloc(name)
         match v:
+            case pt.abi.String() | pt.abi.Address() | pt.abi.Uint() | pt.abi.DynamicBytes() | pt.abi.StaticBytes():
+                return v.set(val)
+            case pt.abi.BaseType():
+                return v.encode(val)
+            case pt.ScratchVar():
+                return v.store(val)
+            case _:
+                raise Unsupported("idk what to do with a ", val)
+
+    def _read_storage_var(self, name: ast.Name) -> pt.Expr:
+        v = self._lookup_or_alloc(name)
+        match v:
+            case pt.abi.String() | pt.abi.Address() | pt.abi.DynamicBytes() | pt.abi.StaticBytes() | pt.abi.Transaction() | pt.abi.Uint():
+                return v.get()
             case pt.abi.BaseType():
                 if hasattr(v, "_stored_value"):
-                    return v._stored_value
+                    return v._stored_value.load()
                 else:
-                    return v.stored_value
+                    return v.stored_value.load()
             case pt.ScratchVar():
-                return v
+                return v.load()
             case _:
                 raise Unsupported("type in slot lookup: ", v)
-
-    def _lookup_storage_type(
-        self, name: ast.Name
-    ) -> pt.TealType | type[pt.abi.BaseType]:
-        v = self.variables[name.id]
-        match v:
-            case pt.abi.BaseType():
-                return v.__class__
-            case pt.ScratchVar():
-                return v.storage_type()
-            case _:
-                raise Unsupported("var type in lookup type", v)
 
     def _lookup_function(self, name: ast.Name | ast.Attribute) -> Callable:
         return self.funcs[name.id]

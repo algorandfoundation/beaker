@@ -36,6 +36,20 @@ def _range(iters: pt.Expr) -> Callable:
     return _impl
 
 
+def _print(msg: pt.Expr) -> pt.Expr:
+    if msg.type_of() is pt.TealType.uint64:
+        return pt.Log(pt.Itob(msg))
+    return pt.Log(msg)
+
+
+def _len(i: pt.Expr) -> pt.Expr:
+    return pt.Len(i)
+
+
+def concat(l: pt.Expr, *r: pt.Expr) -> pt.Expr:
+    return pt.Concat(l, *r)
+
+
 def app_get(key: pt.Expr) -> pt.Expr:
     return pt.App.globalGet(key)
 
@@ -53,9 +67,14 @@ def app_del(key: pt.Expr) -> pt.Expr:
 
 
 BuiltInFuncs: dict[str, Callable] = {
+    # python
+    "print": _print,
+    "len": _len,
     "range": _range,
+    # avm
     "app_get": app_get,
     "app_get_ex": app_get_ex,
     "app_put": app_put,
     "app_del": app_del,
+    "concat": concat,
 }

@@ -3,7 +3,16 @@ from beaker.application import Application
 from beaker.decorators import external
 
 from .preprocessor import Preprocessor
-from ._builtins import app_get, app_put, app_del, u64
+from ._builtins import app_get, app_put, app_del, concat, u64
+
+
+def compile(e: pt.Expr) -> str:
+    return pt.compileTeal(
+        e,
+        mode=pt.Mode.Application,
+        version=8,
+        optimize=pt.OptimizeOptions(scratch_slots=True),
+    )
 
 
 def test_parse_method():
@@ -142,6 +151,15 @@ def test_bytes_ops():
     Preprocessor(meth).expr()
 
 
+def test_str_ops():
+    def meth():
+        s = "stringy"
+        return len(concat(s, "hi"))
+
+    expr = Preprocessor(meth).expr()
+    print(compile(expr))
+
+
 def test_built_ins():
     # TODO: all the others
     def meth():
@@ -150,7 +168,7 @@ def test_built_ins():
         app_del("ok")
         return x
 
-    Preprocessor(meth).expr()
+    print(compile(Preprocessor(meth).expr()))
 
 
 def test_app():
@@ -192,8 +210,12 @@ def test_app():
                 sum += x
             return sum
 
-    App()
-    # print(app.approval_program)
+        @external(translate=True)
+        def echo(self, msg: str) -> str:
+            return msg
+
+    app = App()
+    print(app.approval_program)
 
 
 def test_calculator_app():
