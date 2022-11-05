@@ -3,7 +3,7 @@ from beaker.application import Application
 from beaker.decorators import external
 
 from .preprocessor import Preprocessor
-from .builtins import app_get, app_put, app_del, u64
+from ._builtins import app_get, app_put, app_del, u64
 
 
 def test_parse_method():
@@ -199,19 +199,19 @@ def test_app():
 def test_calculator_app():
     class Calculator(Application):
         @external(translate=True)
-        def add(x: u64, y: u64) -> u64:
+        def add(self, x: u64, y: u64) -> u64:
             return x + y
 
         @external(translate=True)
-        def sub(x: u64, y: u64) -> u64:
+        def sub(self, x: u64, y: u64) -> u64:
             return x - y
 
         @external(translate=True)
-        def mul(x: u64, y: u64) -> u64:
+        def mul(self, x: u64, y: u64) -> u64:
             return x * y
 
         @external(translate=True)
-        def div(x: u64, y: u64) -> u64:
+        def div(self, x: u64, y: u64) -> u64:
             return x / y
 
     calc = Calculator()

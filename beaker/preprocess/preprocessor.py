@@ -1,10 +1,10 @@
 import pyteal as pt
-from typing import cast, Any
+from typing import Callable, cast, Any
 from textwrap import dedent
 import inspect
 import ast
 
-from .builtins import BuiltInFuncs, BuiltInTypes
+from ._builtins import BuiltInFuncs, BuiltInTypes
 
 
 def Unsupported(*feature):
@@ -15,14 +15,14 @@ Variable = pt.ScratchVar | pt.abi.BaseType
 
 
 class Preprocessor:
-    def __init__(self, c: callable):
+    def __init__(self, c: Callable):
         self.orig = c
         self.src = dedent(inspect.getsource(c))
         self.tree = ast.parse(self.src)
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
 
-        self.funcs: dict[str, callable] = BuiltInFuncs
-        self.types: dict[str, pt.abi.BaseType] = BuiltInTypes
+        self.funcs: dict[str, Callable] = BuiltInFuncs
+        self.types: dict[str, type[pt.abi.BaseType]] = BuiltInTypes
 
         self.variables: dict[str, Variable] = {}
 
@@ -33,9 +33,7 @@ class Preprocessor:
         self.returns: type[pt.abi.BaseType] | None = None
 
         if self.definition.returns is not None:
-            self.returns: type[pt.abi.BaseType] = self._translate_type(
-                self.definition.returns
-            )
+            self.returns = self._translate_type(self.definition.returns)
 
     def expr(self, *args, **kwargs):
         """called at build time with slots provided"""
@@ -88,11 +86,11 @@ class Preprocessor:
                     raise Unsupported("Type in translate type:", _type.id)
 
             case ast.Subscript():
-                _value: type[pt.abi.BaseType] = self._translate_type(_type.value)
-                _slice: type[pt.abi.BaseType] = self._translate_type(_type.slice)
+                _value: type[pt.abi.BaseType] | None = self._translate_type(_type.value)
+                _slice: type[pt.abi.BaseType] | None = self._translate_type(_type.slice)
 
-                if _value is pt.abi.DynamicArray:
-                    da = pt.abi.DynamicArray[_slice]
+                if _value is pt.abi.DynamicArray and _slice is not None:
+                    da = pt.abi.DynamicArray[_slice]  # type: ignore
                     return da
                 else:
                     raise Unsupported("Non dynamic array in subscript of args", _type)
@@ -113,10 +111,12 @@ class Preprocessor:
                     case bytes() | str():
                         return pt.Bytes(expr.value)
             case ast.Return():
-                val: pt.Expr = self._translate_ast(expr.value)
-                if self.returns is not None:
-                    return val
-                return pt.Return(val)
+                if expr.value is not None:
+                    val: pt.Expr = self._translate_ast(expr.value)
+                    if self.returns is not None:
+                        return val
+                    return pt.Return(val)
+                return pt.Return()
 
             case ast.Assert():
                 test: pt.Expr = self._translate_ast(expr.test)
@@ -134,7 +134,7 @@ class Preprocessor:
             # Ops
             case ast.Compare():
                 left: pt.Expr = self._translate_ast(expr.left)
-                ops: list[callable] = [
+                ops: list[Callable] = [
                     self._translate_op(e, left.type_of()) for e in expr.ops
                 ]
                 comparators: list[pt.Expr] = [
@@ -150,24 +150,24 @@ class Preprocessor:
 
             case ast.BoolOp():
                 vals: list[pt.Expr] = [self._translate_ast(v) for v in expr.values]
-                op: callable = self._translate_op(expr.op, vals[0].type_of())
+                op: Callable = self._translate_op(expr.op, vals[0].type_of())
                 return op(*vals)
 
             case ast.BinOp():
-                left: pt.Expr = self._translate_ast(expr.left)
-                right: pt.Expr = self._translate_ast(expr.right)
-                op: callable = self._translate_op(expr.op, left.type_of())
+                left: pt.Expr = self._translate_ast(expr.left)  # type: ignore
+                right: pt.Expr = self._translate_ast(expr.right)  # type: ignore
+                op: Callable = self._translate_op(expr.op, left.type_of())  # type: ignore
                 return op(left, right)
 
             case ast.UnaryOp():
                 operand: pt.Expr = self._translate_ast(expr.operand)
-                op: callable = self._translate_op(expr.op, operand.type_of())
+                op: Callable = self._translate_op(expr.op, operand.type_of())  # type: ignore
                 return op(operand)
 
             # Flow Control
 
             case ast.Call():
-                func: callable = self._lookup_function(expr.func)
+                func: Callable = self._lookup_function(expr.func)
                 args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
                 if len(expr.keywords) > 0:
@@ -186,7 +186,7 @@ class Preprocessor:
                     raise Unsupported("orelse in For")
 
                 target: pt.ScratchVar | pt.abi.BaseType
-                iter: callable[tuple[pt.Expr, pt.Expr, pt.Expr]]
+                iter: Callable[..., tuple[pt.Expr, pt.Expr, pt.Expr]]
 
                 match expr.iter:
                     # We're iterating over some variable
@@ -230,7 +230,7 @@ class Preprocessor:
             case ast.AugAssign():
                 target: pt.ScratchSlot = self._lookup_storage_var(expr.target)
                 value: pt.Expr = self._translate_ast(expr.value)
-                op: callable = self._translate_op(expr.op, value.type_of())
+                op: Callable = self._translate_op(expr.op, value.type_of())
                 return target.store(op(target.load(), value))
 
             case ast.Assign():
@@ -269,9 +269,11 @@ class Preprocessor:
                 print(expr.__dict__)
                 raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
 
+        return None
+
     def _translate_op(
         self, op: ast.AST, type: pt.TealType = pt.TealType.anytype
-    ) -> callable:
+    ) -> Callable:
         if type == pt.TealType.bytes:
             match op:
                 case ast.Mult():
@@ -393,5 +395,5 @@ class Preprocessor:
             case _:
                 raise Unsupported("var type in lookup type", v)
 
-    def _lookup_function(self, name: ast.Name | ast.Attribute) -> callable:
+    def _lookup_function(self, name: ast.Name | ast.Attribute) -> Callable:
         return self.funcs[name.id]
