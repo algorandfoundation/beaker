@@ -68,6 +68,19 @@ def test_if_else():
     Preprocessor(meth).expr()
 
 
+def test_bool_op():
+    def meth():
+        x = 1
+        y = 2
+        z = False
+        z = 1 and 2
+        z = (x and y and x) or y
+        z = not (x or y)
+        return z
+
+    Preprocessor(meth).expr()
+
+
 def test_int_ops():
     def meth():
         # int math

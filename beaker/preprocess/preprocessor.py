@@ -106,6 +106,8 @@ class Preprocessor:
                 return self._translate_ast(expr.value)
             case ast.Constant():
                 match expr.value:
+                    case bool():
+                        return pt.Int(int(expr.value))
                     case int():
                         return pt.Int(expr.value)
                     case bytes() | str():
@@ -133,11 +135,21 @@ class Preprocessor:
 
                 return ops[0](left, comparators[0])
 
+            case ast.BoolOp():
+                vals: list[pt.Expr] = [self._translate_ast(v) for v in expr.values]
+                op: callable = self._translate_op(expr.op, vals[0].type_of())
+                return op(*vals)
+
             case ast.BinOp():
                 left: pt.Expr = self._translate_ast(expr.left)
                 right: pt.Expr = self._translate_ast(expr.right)
                 op: callable = self._translate_op(expr.op, left.type_of())
                 return op(left, right)
+
+            case ast.UnaryOp():
+                operand: pt.Expr = self._translate_ast(expr.operand)
+                op: callable = self._translate_op(expr.op, operand.type_of())
+                return op(operand)
 
             ## Flow Control
 
@@ -236,7 +248,9 @@ class Preprocessor:
                 print(expr.__dict__)
                 raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
 
-    def _translate_op(self, op: ast.AST, type: pt.TealType) -> callable:
+    def _translate_op(
+        self, op: ast.AST, type: pt.TealType = pt.TealType.anytype
+    ) -> callable:
         if type == pt.TealType.bytes:
             match op:
                 ### Ops
@@ -275,6 +289,12 @@ class Preprocessor:
         else:
             match op:
                 ### Ops
+                case ast.And():
+                    return pt.And
+                case ast.Or():
+                    return pt.Or
+                case ast.Not():
+                    return pt.Not
                 case ast.Mult():
                     return pt.Mul
                 case ast.Pow():
