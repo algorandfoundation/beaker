@@ -189,7 +189,7 @@ def demo():
     app_client.fund(1 * bkr.consts.algo)
 
     # Call the main app to create the sub app
-    result = app_client_main.call(C2CMain.create_sub)
+    result = app_client.call(C2CMain.create_sub)
     print(result.tx_info)
     sub_app_id = result.return_value
     print(f"Created sub app: {sub_app_id}")
