@@ -46,11 +46,13 @@ def demo():
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), MembershipClub(), signer=acct.signer
     )
+    print("Creating app")
     app_client.create()
 
     ##
     # Bootstrap
     ##
+    print("Bootstrapping app")
     sp = app_client.get_suggested_params()
     sp.flat_fee = True
     sp.fee = 2000

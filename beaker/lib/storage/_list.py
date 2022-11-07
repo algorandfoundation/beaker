@@ -14,8 +14,10 @@ class List:
             ts.byte_length_static() * elements < 32e3
         ), "Cannot be larger than MAX_BOX_SIZE"
 
+        # Will be set later if its part of an Application
+        self.name: Bytes | None = None
         if name is not None:
-            self.name = Bytes(name)  # type: ignore
+            self.name = Bytes(name) 
 
         self.value_type = ts
 
