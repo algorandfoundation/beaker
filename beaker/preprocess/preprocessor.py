@@ -330,12 +330,12 @@ class Preprocessor:
                     case ast.Store():
                         raise Unsupported("Where did you come from?")
                     case _:
-                        raise Unsupported("ctx in name" + expr.ctx)
+                        raise Unsupported("ctx in name", expr.ctx)
 
             case _:
                 print(ast.dump(expr, indent=4))
                 print(expr.__dict__)
-                raise Unsupported("Unhandled AST type: " + expr.__class__.__name__)
+                raise Unsupported("Unhandled AST type: ", expr.__class__.__name__)
 
         return None
 

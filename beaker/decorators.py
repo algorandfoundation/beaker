@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, field, replace, astuple
 from enum import Enum
 from functools import wraps
-from inspect import get_annotations, signature, Parameter, _ParameterKind
+from inspect import get_annotations, signature, Parameter
 from typing import Optional, Callable, Final, cast, Any, TypeVar
 from types import FunctionType
 from algosdk.abi import Method

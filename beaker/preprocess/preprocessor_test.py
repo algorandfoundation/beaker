@@ -174,13 +174,14 @@ def test_str_ops():
     print(compile(expr))
 
 
-def test_list_ops():
-    def meth():
-        z = [1, 2, 3]
-
-    expr = Preprocessor(meth).expr()
-    print(expr)
-    # print(compile(expr))
+# def test_list_ops():
+#    def meth():
+#        z = [1, 2, 3]
+#        z
+#
+#    expr = Preprocessor(meth).expr()
+#    print(expr)
+#    # print(compile(expr))
 
 
 def test_built_ins():

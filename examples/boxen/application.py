@@ -2,9 +2,8 @@ from typing import Literal
 from pyteal import *
 from beaker import *
 
-from beaker.lib.txn import clawback_axfer, axfer
 from beaker.application import get_method_signature
-from beaker.lib.storage import Mapping, Listing
+from beaker.lib.storage import Mapping, List
 
 # Use a box per member to denote membership parameters
 class MembershipRecord(abi.NamedTuple):
@@ -19,16 +18,47 @@ BoxByteMinBalance = 400
 AssetMinBalance = 100000
 
 
+def axfer(
+    asset_id: Expr,
+    amount: Expr,
+    receiver: Expr,
+    extra: dict[TxnField, Expr] | None = None,
+) -> dict[TxnField, Expr]:
+    extra = extra if extra is None else {}
+    return {
+        TxnField.type_enum: TxnType.AssetTransfer,
+        TxnField.xfer_asset: asset_id,
+        TxnField.asset_amount: amount,
+        TxnField.asset_receiver: receiver,
+    } | extra
+
+
+def clawback_axfer(
+    asset_id: Expr,
+    amount: Expr,
+    receiver: Expr,
+    clawback_addr: Expr,
+    extra: dict[TxnField, Expr] | None = None,
+) -> dict[TxnField, Expr]:
+    return axfer(asset_id, amount, receiver, extra) | {
+        TxnField.asset_sender: clawback_addr,
+    }
+
+
 class MembershipClub(Application):
     ####
     # Box abstractions
 
     # A Listing is a simple list, initialized with some _static_ data type and a length
-    affirmations = Listing(Affirmation, 10)
+    affirmations = List(Affirmation, 10)
 
     # A Mapping will create a new box for every unique key, taking a data type for key and value
     # Only static types can provide information about the max size (and min balance required)
     membership_records = Mapping(abi.Address, MembershipRecord)
+
+    # TODO: should these be generic? more like:
+    # membership_records = Mapping[abi.Address, MembershipRecord]()
+    # affirmations = List[Affirmation, Literal[10]]()
 
     #####
 
@@ -104,9 +134,12 @@ class MembershipClub(Application):
             self.membership_records[new_member.address()].set(mr),
             InnerTxnBuilder.Execute(
                 clawback_axfer(
-                    self.membership_token, Int(1), new_member.address(), self.address
+                    self.membership_token,
+                    Int(1),
+                    new_member.address(),
+                    self.address,
+                    extra={TxnField.fee: Int(0)},
                 )
-                | {TxnField.fee: Int(0)}
             ),
         )
 
