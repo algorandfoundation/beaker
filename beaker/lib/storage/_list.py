@@ -4,9 +4,7 @@ from pyteal import abi, Int, BoxCreate, BoxExtract, Expr, BoxReplace, Bytes, Tea
 class List:
     """List stores a list of static types in a box, named as the class attribute unless an overriding name is provided"""
 
-    def __init__(
-        self, value_type: type[abi.BaseType], elements: int, name: str = None
-    ):
+    def __init__(self, value_type: type[abi.BaseType], elements: int, name: str = None):
         ts = abi.type_spec_from_annotation(value_type)
 
         assert not ts.is_dynamic(), "Expected static type for value"
@@ -15,9 +13,9 @@ class List:
         ), "Cannot be larger than MAX_BOX_SIZE"
 
         # Will be set later if its part of an Application
-        self.name: Bytes | None = None
+        self.name: Expr | None = None
         if name is not None:
-            self.name = Bytes(name) 
+            self.name = Bytes(name)
 
         self.value_type = ts
 
@@ -30,9 +28,11 @@ class List:
         self._box_size = self._element_size * self._elements
 
     def create(self) -> Expr:
+        assert self.name is not None
         return BoxCreate(self.name, self.element_size * self.elements)
 
     def __getitem__(self, idx: Int) -> "ListElement":
+        assert self.name is not None
         return ListElement(self.name, self.element_size, idx)
 
 

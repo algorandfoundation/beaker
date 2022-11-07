@@ -70,7 +70,6 @@ class C2CMain(bkr.Application):
     # Create sub app to be precompiled before allowing TEAL generation
     sub_app: bkr.AppPrecompile = bkr.AppPrecompile(C2CSub())
 
-
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
         return Seq(
@@ -194,7 +193,6 @@ def demo():
     print(result.tx_info)
     sub_app_id = result.return_value
     print(f"Created sub app: {sub_app_id}")
-
 
     # Call main app method to:
     #   create the asset

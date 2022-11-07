@@ -23,7 +23,6 @@ class Mapping:
         self._value_type = value_type
         self._value_type_spec = abi.type_spec_from_annotation(value_type)
 
-
     def __getitem__(self, idx: abi.BaseType | Expr) -> "MapElement":
         match idx:
             case abi.BaseType():
@@ -57,7 +56,7 @@ class MapElement:
                     # delete the old one
                     Pop(BoxDelete(self.key)),
                     # write the new one
-                    BoxPut(self.key, val.encode())
+                    BoxPut(self.key, val.encode()),
                 )
             case Expr():
                 if val.type_of() != TealType.bytes:

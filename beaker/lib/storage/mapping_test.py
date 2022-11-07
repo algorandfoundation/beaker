@@ -3,8 +3,8 @@ from .mapping import Mapping
 from beaker.application import Application
 from beaker.decorators import external
 
-def test_mapping():
 
+def test_mapping():
     class T(Application):
         m = Mapping(pt.abi.Address, pt.abi.Uint64)
 
@@ -13,3 +13,4 @@ def test_mapping():
             return self.m[name].store_into(output)
 
     t = T()
+    assert len(t.approval_program) > 0
