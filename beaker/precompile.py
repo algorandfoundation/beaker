@@ -250,7 +250,7 @@ class AppPrecompile:
         self.clear: Precompile = Precompile("")
 
     def compile(self, client: AlgodClient):
-        """fully compile this lsig precompile by recursively compiling children depth first
+        """fully compile this app precompile by recursively compiling children depth first
 
         Note:
             Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
