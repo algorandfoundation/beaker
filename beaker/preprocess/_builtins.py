@@ -1,14 +1,12 @@
 import pyteal as pt
 from typing import Callable
 
-# Types
-
+# Type aliases
 u64 = int
 u32 = int
 u16 = int
 u8 = int
 byte = int
-
 
 BuiltInTypes: dict[str, type[pt.abi.BaseType]] = {
     # shorthand types

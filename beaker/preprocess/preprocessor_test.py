@@ -10,6 +10,7 @@ TODOS = """
         Create
         Append
         Pop
+
     Tuple:
         Create
         Element wise access
@@ -173,6 +174,15 @@ def test_str_ops():
     print(compile(expr))
 
 
+def test_list_ops():
+    def meth():
+        z = [1, 2, 3]
+
+    expr = Preprocessor(meth).expr()
+    print(expr)
+    # print(compile(expr))
+
+
 def test_built_ins():
     # TODO: all the others
     def meth():
@@ -184,26 +194,32 @@ def test_built_ins():
     print(compile(Preprocessor(meth).expr()))
 
 
-def test_app():
-    class App(Application):
+def test_arg_returns():
+    class ArgReturn(Application):
         @external(translate=True)
         def no_args_no_output(self):
             x = 2
             x += 3
             assert 0, "bad"
 
-        @external
-        def no_args_yes_output_pt(self, *, output: pt.abi.Uint64) -> pt.Expr:
-            return output.set(pt.Int(2))
-
         @external(translate=True)
         def no_args_yes_output_py(self) -> int:
             return 2
 
         @external(translate=True)
-        def yes_args_no_output_py(self, x: int) -> int:
+        def yes_args_no_output_py(self, x: int):
+            x += 1
+
+        @external(translate=True)
+        def yes_args_yes_output_py(self, x: int) -> int:
             return x
 
+    ar = ArgReturn()
+    assert len(ar.approval_program) > 0
+
+
+def test_kitchen_sink():
+    class KitchenSink(Application):
         @external(translate=True)
         def add(self, x: int, y: int) -> int:
             sum = x + y
@@ -227,8 +243,8 @@ def test_app():
         def echo(self, msg: str) -> str:
             return msg
 
-    app = App()
-    print(app.approval_program)
+    ks = KitchenSink()
+    print(ks.approval_program)
 
 
 def test_calculator_app():

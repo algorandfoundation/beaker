@@ -238,6 +238,7 @@ class Preprocessor:
                                 target = self._lookup_or_alloc(
                                     expr.target, var.type_spec().value_type_spec()
                                 )
+
                                 idx = pt.ScratchVar()
                                 init = pt.Seq(
                                     idx.store(pt.Int(0)),
@@ -266,6 +267,34 @@ class Preprocessor:
                 cond: pt.Expr = self._translate_ast(expr.test)
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
                 return pt.While(cond).Do(*body)
+
+            # case ast.ListComp():
+            # ListComp(
+            #    elt=Name(id='x', ctx=Load()),
+            #    generators=[
+            #        comprehension(
+            #            target=Name(id='x', ctx=Store()),
+            #            iter=List(
+            #                elts=[
+            #                    Constant(value=1),
+            #                    Constant(value=2),
+            #                    Constant(value=3)],
+            #                ctx=Load()),
+            #            ifs=[],
+            #            is_async=0)])
+
+            # Types
+            case ast.List():
+                # Translate to vals and exprs that populate 'em
+                elts: list[tuple[pt.abi.BaseType, pt.Expr]] = [
+                    self._wrap_as(self._translate_ast(e), pt.abi.Uint64)
+                    for e in expr.elts
+                ]
+                exprs: list[pt.Expr] = [e[1] for e in elts]
+                vals: list[pt.abi.BaseType] = [e[0] for e in elts]
+                return pt.Seq(
+                    *exprs, pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64]).set(vals)
+                )
 
             # Var access
             case ast.AugAssign():
@@ -394,6 +423,13 @@ class Preprocessor:
 
     def _provide_value(self, name: str, val: pt.ScratchVar):
         self.variables[name] = val
+
+    def _wrap_as(
+        self, e: pt.Expr, t: type[pt.abi.BaseType]
+    ) -> tuple[pt.abi.BaseType, pt.Expr]:
+        ts = pt.abi.type_spec_from_annotation(t)
+        v = ts.new_instance()
+        return (v, self.__write_to_var(v, e))
 
     def _lookup_or_alloc(
         self, name: ast.Name, ts: pt.abi.TypeSpec | pt.TealType | None = None
