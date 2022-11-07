@@ -141,7 +141,8 @@ class Application:
 
                 # Boxes
                 case List():
-                    bound_attr.name = Bytes(name)
+                    if bound_attr.name is None:
+                        bound_attr.name = Bytes(name)
 
             # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
