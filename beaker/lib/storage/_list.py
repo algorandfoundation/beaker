@@ -1,7 +1,7 @@
 from pyteal import abi, Int, BoxCreate, BoxExtract, Expr, BoxReplace, Bytes, TealType
 
 
-class Listing:
+class List:
     def __init__(
         self, value_type: type[abi.BaseType], elements: int, name: Expr = None
     ):
