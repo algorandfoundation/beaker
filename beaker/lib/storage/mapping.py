@@ -15,6 +15,7 @@ class Mapping:
     """Mapping is an interface to create a new box per map key"""
 
     def __init__(self, key_type: type[abi.BaseType], value_type: type[abi.BaseType]):
+
         self.key_type = key_type
         self.value_type = value_type
 
@@ -45,9 +46,10 @@ class MapElement:
         return Seq(maybe := BoxGet(self.key), Assert(maybe.hasValue()), maybe.value())
 
     def set(self, val: abi.BaseType | Expr) -> Expr:
-        # TODO: does BoxPut work if it needs to be resized later?
         match val:
             case abi.BaseType():
+                # TODO: If the size of the input does not match
+                # we should raise an exception 
                 return BoxPut(self.key, val.encode())
             case Expr():
                 if val.type_of() != TealType.bytes:
