@@ -1,4 +1,5 @@
 import base64
+import hashlib
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
 from algosdk.v2client.algod import AlgodClient
@@ -65,6 +66,7 @@ class Application:
     # Convenience constant fields
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
+    programPages: list[Bytes]
 
     def __init__(self, version: int = MAX_TEAL_VERSION):
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
@@ -157,8 +159,8 @@ class Application:
                     # Swap the implementation with the bound version
                     if handler_config.referenced_self:
                         if not (
-                            isinstance(action.action, SubroutineFnWrapper)
-                            or isinstance(action.action, ABIReturnSubroutine)
+                                isinstance(action.action, SubroutineFnWrapper)
+                                or isinstance(action.action, ABIReturnSubroutine)
                         ):
                             raise TealInputError(
                                 f"Expected Subroutine or ABIReturnSubroutine, for {oc} got {action.action}"
@@ -276,7 +278,13 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
-        return (self.approval_program, self.clear_program)
+        compiled_approval_b64 = (client.compile(self.approval_program, True))["result"]
+        self.programPages = [
+            Bytes(base64.b64decode(compiled_approval_b64)[i: i + 2047])
+            for i in range(0, len(compiled_approval_b64), 2047)
+        ]
+
+        return self.approval_program, self.clear_program
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
