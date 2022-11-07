@@ -451,6 +451,7 @@ class ApplicationClient:
         accounts: list[str] = None,
         foreign_apps: list[int] = None,
         foreign_assets: list[int] = None,
+        boxes: list[tuple[int, bytes]] = None,
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
@@ -486,6 +487,7 @@ class ApplicationClient:
             note=note,
             lease=lease,
             rekey_to=rekey_to,
+            boxes=boxes,
             **kwargs,
         )
 
@@ -586,6 +588,7 @@ class ApplicationClient:
         accounts: list[str] = None,
         foreign_apps: list[int] = None,
         foreign_assets: list[int] = None,
+        boxes: list[tuple[int, bytes]] = None,
         note: bytes = None,
         lease: bytes = None,
         rekey_to: str = None,
@@ -606,10 +609,8 @@ class ApplicationClient:
         args = []
         for method_arg in method.args:
             name = method_arg.name
-
             if name in kwargs:
                 argument = kwargs[name]
-
                 if type(argument) is dict:
                     if hints.structs is None or name not in hints.structs:
                         raise Exception(f"Name {name} name in struct hints")
@@ -649,6 +650,7 @@ class ApplicationClient:
             accounts=accounts,
             foreign_apps=foreign_apps,
             foreign_assets=foreign_assets,
+            boxes=boxes,
             note=note,
             lease=lease,
             rekey_to=rekey_to,
@@ -711,6 +713,14 @@ class ApplicationClient:
         app_state = self.client.account_info(self.app_addr)
         return app_state
 
+    def get_box_names(self) -> list[bytes]:
+        box_resp = self.client.application_boxes(self.app_id)
+        return [b64decode(box["name"]) for box in box_resp["boxes"]]
+
+    def get_box_contents(self, name: bytes) -> bytes:
+        contents = self.client.application_box_by_name(self.app_id, name)
+        return b64decode(contents["value"])
+
     def resolve(self, to_resolve: DefaultArgument) -> Any:
         if to_resolve.resolvable_class == DefaultArgumentClass.Constant:
             return to_resolve.resolve_hint()
@@ -735,7 +745,8 @@ class ApplicationClient:
         return self.app.hints[method_name]
 
     def get_suggested_params(
-        self, sp: transaction.SuggestedParams = None
+        self,
+        sp: transaction.SuggestedParams = None,
     ) -> transaction.SuggestedParams:
 
         if sp is not None:
