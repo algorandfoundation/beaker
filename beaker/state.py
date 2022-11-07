@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import Mapping, cast, Any, Optional
+from typing import Callable, Mapping, cast, Any, Optional
 from algosdk.future.transaction import StateSchema
 from pyteal import (
     abi,
@@ -19,29 +19,24 @@ from pyteal import (
     Txn,
     Seq,
     If,
+    Subroutine,
+    Concat,
 )
 from beaker.lib.storage import LocalBlob
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.lib.storage.global_blob import GlobalBlob
 
 
-def get_default_for_type(stack_type, default):
-    if default is not None:
-        return default
+def prefix_key_gen(prefix: str) -> SubroutineFnWrapper:
+    @Subroutine(TealType.bytes)
+    def prefix_key_gen(key_seed: Expr) -> Expr:
+        return Concat(Bytes(prefix), key_seed)
 
-    if stack_type == TealType.bytes:
-        return Bytes("")
-    else:
-        return Int(0)
+    return prefix_key_gen
 
 
-def stack_type_to_string(st: TealType):
-    if st == TealType.uint64:
-        return "uint64"
-    if st == TealType.bytes:
-        return "bytes"
-    else:
-        raise Exception("Only uint64 and bytes supported")
+def identity_key_gen(key_seed: Expr) -> Expr:
+    return key_seed
 
 
 class StateValue(Expr):
@@ -111,11 +106,11 @@ class StateValue(Expr):
     def set_default(self) -> Expr:
         """sets the default value if one is provided, if none provided sets the zero value for its type"""
 
-        return self.set(get_default_for_type(self.stack_type, self.default))
+        return self.set(_get_default_for_type(self.stack_type, self.default))
 
     def is_default(self) -> Expr:
         """checks to see if the value set equals the default value"""
-        default = get_default_for_type(self.stack_type, self.default)
+        default = _get_default_for_type(self.stack_type, self.default)
         return self.get() == default
 
     @abstractmethod
@@ -162,16 +157,23 @@ class ReservedStateValue(ABC):
         self,
         stack_type: TealType,
         max_keys: int,
-        key_gen: SubroutineFnWrapper = None,
+        key_gen: Optional[SubroutineFnWrapper | Callable] = None,
         descr: str = None,
     ):
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
+        self.key_generator: Optional[SubroutineFnWrapper | Callable] = None
 
-        if key_gen is not None and key_gen.type_of() != TealType.bytes:
+        if key_gen is not None:
+            self.set_key_gen(key_gen)
+
+    def set_key_gen(self, key_gen: SubroutineFnWrapper | Callable):
+        if (
+            isinstance(key_gen, SubroutineFnWrapper)
+            and key_gen.type_of() != TealType.bytes
+        ):
             raise TealTypeError(key_gen.type_of(), TealType.bytes)
-
         self.key_generator = key_gen
 
     @abstractmethod
@@ -270,7 +272,7 @@ class ReservedApplicationStateValue(ReservedStateValue):
         self,
         stack_type: TealType,
         max_keys: int,
-        key_gen: SubroutineFnWrapper = None,
+        key_gen: Optional[SubroutineFnWrapper | Callable] = None,
         descr: str = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
@@ -422,7 +424,7 @@ class ReservedAccountStateValue(ReservedStateValue):
         self,
         stack_type: TealType,
         max_keys: int,
-        key_gen: SubroutineFnWrapper = None,
+        key_gen: Optional[SubroutineFnWrapper | Callable] = None,
         descr: str = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
@@ -622,7 +624,7 @@ class State:
         return {
             "declared": {
                 k: {
-                    "type": stack_type_to_string(v.stack_type),
+                    "type": _stack_type_to_string(v.stack_type),
                     "key": v.str_key(),
                     "descr": v.descr if v.descr is not None else "",
                 }
@@ -630,7 +632,7 @@ class State:
             },
             "reserved": {
                 k: {
-                    "type": stack_type_to_string(v.stack_type),
+                    "type": _stack_type_to_string(v.stack_type),
                     "max_keys": v.max_keys,
                     "descr": v.descr if v.descr is not None else "",
                 }
@@ -696,3 +698,22 @@ class AccountState(State):
             ]
             + [v.initialize() for v in self.blob_vals.values()]
         )
+
+
+def _get_default_for_type(stack_type, default):
+    if default is not None:
+        return default
+
+    if stack_type == TealType.bytes:
+        return Bytes("")
+    else:
+        return Int(0)
+
+
+def _stack_type_to_string(st: TealType):
+    if st == TealType.uint64:
+        return "uint64"
+    if st == TealType.bytes:
+        return "bytes"
+    else:
+        raise Exception("Only uint64 and bytes supported")
