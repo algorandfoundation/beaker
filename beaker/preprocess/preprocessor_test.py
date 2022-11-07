@@ -5,6 +5,19 @@ from beaker.decorators import external
 from .preprocessor import Preprocessor
 from ._builtins import app_get, app_put, app_del, concat, u64
 
+TODOS = """
+    List:
+        Create
+        Append
+        Pop
+    Tuple:
+        Create
+        Element wise access
+
+    allow + to map to concat for string types
+
+"""
+
 
 def compile(e: pt.Expr) -> str:
     return pt.compileTeal(
@@ -35,7 +48,7 @@ def test_parse_method():
 
         # `range` is a "builtin" we provide
         for _ in range(3):
-            # maps to concat if the type is a string
+            # TODO: map to concat if the type is a string
             z += "no way"
 
         if x * y:

@@ -323,47 +323,7 @@ def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
 
 
 def _translate(fn: HandlerFunc) -> HandlerFunc:
-    pp = Preprocessor(fn)
-
-    # Make a callable that passes args and sets output appropriately,
-    # we modify its signature below
-    def _impl(*args, **kwargs) -> Expr:
-        if "output" in kwargs:
-            # TODO: change output types
-            return kwargs["output"].set(pp.expr(*args, **kwargs))
-        else:
-            return pp.expr(*args, **kwargs)
-
-    sig = signature(fn)
-    orig_annotations = get_annotations(fn)
-    translated_annotations = get_annotations(_impl)
-
-    params = sig.parameters.copy()
-    for k, v in params.items():
-        if k == "self":
-            continue
-
-        if k not in pp.args:
-            raise Exception("Cant find arg?: ", k)
-
-        translated_type = cast(type[abi.BaseType], pp.args[k])
-
-        params[k] = v.replace(annotation=translated_type)
-        orig_annotations[k] = translated_type
-
-    if pp.returns is not None:
-        params["output"] = Parameter(
-            name="output", kind=_ParameterKind.KEYWORD_ONLY, annotation=pp.returns
-        )
-        orig_annotations["output"] = pp.returns
-
-    newsig = sig.replace(parameters=list(params.values()), return_annotation=Expr)
-
-    _impl.__name__ = fn.__name__
-    _impl.__signature__ = newsig
-    _impl.__annotations__ = orig_annotations | translated_annotations
-
-    return _impl
+    return Preprocessor(fn).subroutine()
 
 
 def _replace_structs(fn: HandlerFunc) -> HandlerFunc:

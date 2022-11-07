@@ -16,7 +16,7 @@ Variable = pt.ScratchVar | pt.abi.BaseType
 
 class Preprocessor:
     def __init__(self, c: Callable):
-        self.orig = c
+        self.fn = c
         self.src = dedent(inspect.getsource(c))
         self.tree = ast.parse(self.src)
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
@@ -34,6 +34,47 @@ class Preprocessor:
 
         if self.definition.returns is not None:
             self.returns = self._translate_type(self.definition.returns)
+
+    def subroutine(self):
+        # Make a callable that passes args and sets output appropriately,
+        # we modify its signature below
+        def _impl(*args, **kwargs) -> pt.Expr:
+            if "output" in kwargs:
+                return self.__write_to_var(kwargs["output"], self.expr(*args, **kwargs))
+            else:
+                return self.expr(*args, **kwargs)
+
+        sig = inspect.signature(self.fn)
+        orig_annotations = inspect.get_annotations(self.fn)
+        translated_annotations = inspect.get_annotations(_impl)
+
+        params = sig.parameters.copy()
+        for k, v in params.items():
+            if k == "self":
+                continue
+            if k not in self.args:
+                raise Exception("Cant find arg?: ", k)
+
+            translated_type = cast(type[pt.abi.BaseType], self.args[k])
+
+            params[k] = v.replace(annotation=translated_type)
+            orig_annotations[k] = translated_type
+
+        if self.returns is not None:
+            params["output"] = inspect.Parameter(
+                name="output",
+                kind=inspect._ParameterKind.KEYWORD_ONLY,
+                annotation=self.returns,
+            )
+            orig_annotations["output"] = self.returns
+
+        _impl.__name__ = self.fn.__name__
+        _impl.__signature__ = sig.replace(
+            parameters=list(params.values()), return_annotation=pt.Expr
+        )
+        _impl.__annotations__ = orig_annotations | translated_annotations
+
+        return _impl
 
     def expr(self, *args, **kwargs):
         """called at build time with slots provided"""
@@ -370,6 +411,9 @@ class Preprocessor:
 
     def _write_storage_var(self, name: ast.Name, val: pt.Expr) -> pt.Expr:
         v = self._lookup_or_alloc(name)
+        return self.__write_to_var(v, val)
+
+    def __write_to_var(self, v: Any, val: pt.Expr) -> pt.Expr:
         match v:
             case pt.abi.String() | pt.abi.Address() | pt.abi.Uint() | pt.abi.DynamicBytes() | pt.abi.StaticBytes():
                 return v.set(val)
