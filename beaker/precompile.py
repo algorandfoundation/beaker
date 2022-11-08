@@ -68,8 +68,10 @@ class Precompile:
     _program_hash: Optional[str] = None
     _map: Optional[SourceMap] = None
     _template_values: list[PrecompileTemplateValue] = []
-
-    pages: Optional[list[Bytes]]
+    _approval_pages: Optional[list[bytes]] = []
+    approval_pages: Optional[list[Bytes]] = []
+    _clear_state_pages: Optional[list[bytes]] = []
+    clear_state_pages: Optional[list[Bytes]] = []
     binary: Bytes = Bytes("")
 
     def __init__(self, program: str):
@@ -108,7 +110,7 @@ class Precompile:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
-    def hash(self) -> Expr:
+    def hash(self, page_idx: Optional[int]) -> Expr:
         """
         address returns an expression for this Precompile.
 
@@ -270,11 +272,22 @@ class AppPrecompile:
         if self.clear._binary is None:
             self.clear.assemble(client)
 
-        self.approval.pages = [
-            Bytes(self.approval._binary[i: i + 2047])
+        self.approval._approval_pages = [
+            self.approval._binary[i: i + 2048]
             for i in range(0, len(self.approval._binary), 2048)
         ]
-
+        self.approval._clear_state_pages = [
+            self.clear._binary[i: i + 2048]
+            for i in range(0, len(self.clear._binary), 2048)
+        ]
+        self.approval.approval_pages = [
+            Bytes(native_page)
+            for native_page in self.approval._approval_pages
+        ]
+        self.approval.clear_state_pages = [
+            Bytes(native_page)
+            for native_page in self.approval._clear_state_pages
+        ]
 
     def get_create_config(self) -> dict[TxnField, Expr]:
         """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""

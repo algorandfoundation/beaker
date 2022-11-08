@@ -278,12 +278,6 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
-        compiled_approval_b64 = (client.compile(self.approval_program, True))["result"]
-        self.programPages = [
-            Bytes(base64.b64decode(compiled_approval_b64)[i: i + 2047])
-            for i in range(0, len(compiled_approval_b64), 2047)
-        ]
-
         return self.approval_program, self.clear_program
 
     def application_spec(self) -> dict[str, Any]:
