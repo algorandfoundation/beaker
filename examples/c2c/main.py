@@ -15,6 +15,8 @@ import beaker as bkr
 from beaker.application import get_method_signature
 from beaker.precompile import AppPrecompile
 
+algod_client = bkr.sandbox.get_algod_client()
+
 
 class C2CSub(bkr.Application):
     """Sub application who's only purpose is to opt into then close out of an asset"""
@@ -48,10 +50,8 @@ class C2CSub(bkr.Application):
 class C2CMain(bkr.Application):
     """Main application that handles creation of the sub app and asset and calls it"""
 
-    # Init sub app object
-    sub_app = C2CSub()
     # Specify precompiles of approval/clear program so we have the binary before we deploy
-    sub_app: AppPrecompile = AppPrecompile(sub_app)
+    sub_app: AppPrecompile = AppPrecompile(C2CSub())
 
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
@@ -146,29 +146,39 @@ def demo():
 
     accts = bkr.sandbox.get_accounts()
     acct = accts.pop()
+    algod_client = bkr.sandbox.get_algod_client()
 
     # Create main app and fund it
-    app_client_main = bkr.client.ApplicationClient(
-        bkr.sandbox.get_algod_client(), C2CMain(), signer=acct.signer
+    app_client = bkr.client.ApplicationClient(
+        algod_client, C2CMain(), signer=acct.signer
     )
-    main_app_id, _, _ = app_client_main.create()
+    main_app_id, _, _ = app_client.create()
+
     print(f"Created main app: {main_app_id}")
-    app_client_main.fund(1 * bkr.consts.algo)
+    app_client.fund(1 * bkr.consts.algo)
 
     # Call the main app to create the sub app
-    result = app_client_main.call(C2CMain.create_sub)
-    sub_app_id = result.return_value
-    print(f"Created sub app: {sub_app_id}")
+    sp = app_client.client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 1 * bkr.consts.algo
+
+    try:
+        result = app_client.call(C2CMain.create_sub, suggested_params=sp)
+        sub_app_id = result.return_value
+        print(f"Created sub app: {sub_app_id}")
+    except Exception as e:
+        print(e)
+        return
 
     # Call main app method to:
     #   create the asset
     #   call the sub app optin method
     #   send asset to sub app
     #   call the sub app return asset method
-    sp = app_client_main.client.suggested_params()
+    sp = app_client.client.suggested_params()
     sp.flat_fee = True
     sp.fee = 1 * bkr.consts.algo
-    result = app_client_main.call(
+    result = app_client.call(
         C2CMain.create_asset_and_send,
         name="dope asset",
         sub_app=sub_app_id,
@@ -177,7 +187,7 @@ def demo():
     created_asset = result.return_value
     print(f"Created asset id: {created_asset}")
 
-    result = app_client_main.call(
+    result = app_client.call(
         C2CMain.delete_asset,
         asset=created_asset,
     )
