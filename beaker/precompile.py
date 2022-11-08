@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from beaker.application import Application
     from beaker.logic_signature import LogicSignature
 
-
 #: The prefix for template variables that should be substituted
 TMPL_PREFIX = "TMPL_"
 
@@ -83,7 +82,7 @@ class Precompile:
             if TMPL_PREFIX in line:
                 op, name, _, _ = line.split(" ")
                 tv = PrecompileTemplateValue(
-                    name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
+                    name=name[len(TMPL_PREFIX):], is_bytes=op == PUSH_BYTES, line=idx
                 )
                 lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
                 template_values.append(tv)
@@ -160,7 +159,7 @@ class Precompile:
                 curr_val = py_encode_uvarint(arg)
 
             # update the working buffer to include the new value, replacing the current 0 value
-            populated_binary[tv.pc + offset : tv.pc + offset + 1] = curr_val
+            populated_binary[tv.pc + offset: tv.pc + offset + 1] = curr_val
 
             # update the offset with the length(value) - 1 to account for the existing 0 value
             # and help keep track of how to shift the pc later
@@ -240,6 +239,7 @@ class AppPrecompile:
     AppPrecompile allows a smart contract to signal that some child Application
     should be fully compiled prior to constructing its own program.
     """
+    approvalProgramPages: list[Bytes]
 
     def __init__(self, app: "Application"):
         #: The App to be used and compiled before it's parent
@@ -269,6 +269,12 @@ class AppPrecompile:
 
         if self.clear._binary is None:
             self.clear.assemble(client)
+
+        self.approvalProgramPages = [
+            Bytes(self.approval._binary[i: i + 2047])
+            for i in range(0, len(self.approval._binary), 2048)
+        ]
+
 
     def get_create_config(self) -> dict[TxnField, Expr]:
         """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
