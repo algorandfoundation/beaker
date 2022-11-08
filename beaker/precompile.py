@@ -69,6 +69,7 @@ class Precompile:
     _map: Optional[SourceMap] = None
     _template_values: list[PrecompileTemplateValue] = []
 
+    pages: Optional[list[Bytes]]
     binary: Bytes = Bytes("")
 
     def __init__(self, program: str):
@@ -239,7 +240,6 @@ class AppPrecompile:
     AppPrecompile allows a smart contract to signal that some child Application
     should be fully compiled prior to constructing its own program.
     """
-    approvalProgramPages: list[Bytes]
 
     def __init__(self, app: "Application"):
         #: The App to be used and compiled before it's parent
@@ -270,7 +270,7 @@ class AppPrecompile:
         if self.clear._binary is None:
             self.clear.assemble(client)
 
-        self.approvalProgramPages = [
+        self.approval.pages = [
             Bytes(self.approval._binary[i: i + 2047])
             for i in range(0, len(self.approval._binary), 2048)
         ]
