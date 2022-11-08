@@ -168,8 +168,8 @@ class Application:
                     # Swap the implementation with the bound version
                     if handler_config.referenced_self:
                         if not (
-                                isinstance(action.action, SubroutineFnWrapper)
-                                or isinstance(action.action, ABIReturnSubroutine)
+                            isinstance(action.action, SubroutineFnWrapper)
+                            or isinstance(action.action, ABIReturnSubroutine)
                         ):
                             raise TealInputError(
                                 f"Expected Subroutine or ABIReturnSubroutine, for {oc} got {action.action}"

@@ -1,4 +1,5 @@
 import base64
+import hashlib
 from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING
 from pyteal import (
@@ -57,6 +58,24 @@ class PrecompileTemplateValue:
     pc: int = 0
 
 
+@dataclass
+class ProgramPage:
+    # index of the program page
+    index: int = field(kw_only=True, init=True)
+    # binary of the page
+    _binary: bytes = field(kw_only=True, init=True)
+    # hash of the page as pyteal Bytes
+    binary: Bytes = field(init=False)
+    # hash of the page in native bytes
+    _hash_digest: bytes = field(kw_only=True, init=True)
+    # hash of the page as pyteal Addr
+    hash_digest: Bytes = field(init=False)
+
+    def __post_init__(self):
+        self.binary = Bytes(self._binary)
+        self.hash_digest = Bytes(self._hash_digest)
+
+
 class Precompile:
     """
     Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
@@ -68,15 +87,11 @@ class Precompile:
     _program_hash: Optional[str] = None
     _map: Optional[SourceMap] = None
     _template_values: list[PrecompileTemplateValue] = []
-    _approval_pages: Optional[list[bytes]] = []
-    approval_pages: Optional[list[Bytes]] = []
-    _clear_state_pages: Optional[list[bytes]] = []
-    clear_state_pages: Optional[list[Bytes]] = []
+    program_pages: Optional[list[ProgramPage]]
     binary: Bytes = Bytes("")
 
     def __init__(self, program: str):
         self._program = program
-
         lines = self._program.splitlines()
         template_values: list[PrecompileTemplateValue] = []
         # Replace the teal program TMPL_* template variables with
@@ -110,7 +125,16 @@ class Precompile:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
-    def hash(self, page_idx: Optional[int]) -> Expr:
+        self.program_pages = [
+            ProgramPage(
+                index=i,
+                _binary=self._binary[i: i + 2048],
+                _hash_digest=hashlib.sha256(self._binary[i: i + 2048]).digest(),
+            )
+            for i in range(0, len(self._binary), 2048)
+        ]
+
+    def hash(self, page_idx: Optional[int] = -1) -> Expr:
         """
         address returns an expression for this Precompile.
 
@@ -120,6 +144,9 @@ class Precompile:
         assert len(self._template_values) == 0
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
+
+        if page_idx > -1:
+            return self.program_pages[page_idx].hash_digest
 
         return Addr(self._program_hash)
 
@@ -265,29 +292,10 @@ class AppPrecompile:
         approval, clear = self.app.compile(client)
         self.approval = Precompile(approval)
         self.clear = Precompile(clear)
-
         if self.approval._binary is None:
             self.approval.assemble(client)
-
         if self.clear._binary is None:
             self.clear.assemble(client)
-
-        self.approval._approval_pages = [
-            self.approval._binary[i: i + 2048]
-            for i in range(0, len(self.approval._binary), 2048)
-        ]
-        self.approval._clear_state_pages = [
-            self.clear._binary[i: i + 2048]
-            for i in range(0, len(self.clear._binary), 2048)
-        ]
-        self.approval.approval_pages = [
-            Bytes(native_page)
-            for native_page in self.approval._approval_pages
-        ]
-        self.approval.clear_state_pages = [
-            Bytes(native_page)
-            for native_page in self.approval._clear_state_pages
-        ]
 
     def get_create_config(self) -> dict[TxnField, Expr]:
         """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
