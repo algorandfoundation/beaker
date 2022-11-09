@@ -72,12 +72,14 @@ def demo():
     # Add Member
     ##
 
+    # Opt member account in to asset
     app_client.client.send_transaction(
         AssetOptInTxn(member_acct.address, sp, membership_token).sign(
             member_acct.private_key
         )
     )
 
+    # Add member account as member
     app_client.call(
         MembershipClub.add_member,
         new_member=member_acct.address,
@@ -86,6 +88,7 @@ def demo():
     )
     print_boxes(app_client)
 
+    # read the membership record box
     result = app_client.call(
         MembershipClub.get_membership_record,
         member=member_acct.address,
@@ -93,18 +96,19 @@ def demo():
     )
     print(result.return_value)
 
+    # Create a new client for the member
     member_client = app_client.prepare(signer=member_acct.signer)
     for idx, aff in enumerate(affirmations):
         result = member_client.call(
             MembershipClub.set_affirmation,
             idx=idx,
             affirmation=aff.ljust(64, " ").encode(),
-            boxes=[[app_client.app_id, "affirmations"]] * 2,
+            boxes=[[app_client.app_id, "affirmations"]],
         )
 
     result = member_client.call(
         MembershipClub.get_affirmation,
-        boxes=[[app_client.app_id, "affirmations"]] * 2,
+        boxes=[[app_client.app_id, "affirmations"]],
     )
     print(bytes(result.return_value).decode("utf-8").strip())
 
@@ -115,12 +119,7 @@ def demo():
     )
     print_boxes(app_client)
 
-    add_app_member(app_client, membership_token)
-
-
-def add_app_member(app_client: client.ApplicationClient, membership_token: int):
-
-    # Create App as member of club
+    # Create App we'll use to be a member of club
     print("Creating app member")
 
     app_member_client = client.ApplicationClient(
@@ -148,8 +147,9 @@ def add_app_member(app_client: client.ApplicationClient, membership_token: int):
         boxes=[[app_client.app_id, decode_address(app_member_addr)]],
     )
 
+    # Call method to get a new affirmation,
     app_member_client.call(
-        AppMember.get_affirmation, boxes=[[app_client.app_id, "affirmations"]] * 2
+        AppMember.get_affirmation, boxes=[[app_client.app_id, "affirmations"]]
     )
 
     app_state = app_member_client.get_application_state()
