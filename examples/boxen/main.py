@@ -6,7 +6,7 @@ from algosdk.future.transaction import *
 from pyteal import *
 from beaker import *
 
-from application import MembershipRecord, MembershipClub
+from application import AppMember, MembershipRecord, MembershipClub
 
 
 record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))
@@ -99,12 +99,12 @@ def demo():
             MembershipClub.set_affirmation,
             idx=idx,
             affirmation=aff.ljust(64, " ").encode(),
-            boxes=[[app_client.app_id, "affirmations"]] * 7,
+            boxes=[[app_client.app_id, "affirmations"]] * 2,
         )
 
     result = member_client.call(
         MembershipClub.get_affirmation,
-        boxes=[[app_client.app_id, "affirmations"]] * 7,
+        boxes=[[app_client.app_id, "affirmations"]] * 2,
     )
     print(bytes(result.return_value).decode("utf-8").strip())
 
@@ -114,6 +114,46 @@ def demo():
         member=member_acct.address,
     )
     print_boxes(app_client)
+
+    add_app_member(app_client, membership_token)
+
+
+def add_app_member(app_client: client.ApplicationClient, membership_token: int):
+
+    # Create App as member of club
+    print("Creating app member")
+
+    app_member_client = client.ApplicationClient(
+        sandbox.get_algod_client(), AppMember(), signer=app_client.signer
+    )
+    _, app_member_addr, _ = app_member_client.create()
+
+    print("Bootstrapping app member")
+    sp = app_member_client.get_suggested_params()
+    sp.flat_fee = True
+    sp.fee = 2000
+    ptxn = PaymentTxn(app_client.sender, sp, app_member_addr, consts.algo * 1)
+    app_member_client.call(
+        AppMember.bootstrap,
+        seed=TransactionWithSigner(ptxn, app_client.signer),
+        app_id=app_client.app_id,
+        membership_token=membership_token,
+    )
+
+    # Add app to club using the member_club client
+    app_client.call(
+        MembershipClub.add_member,
+        new_member=app_member_addr,
+        suggested_params=sp,
+        boxes=[[app_client.app_id, decode_address(app_member_addr)]],
+    )
+
+    app_member_client.call(
+        AppMember.get_affirmation, boxes=[[app_client.app_id, "affirmations"]] * 2
+    )
+
+    app_state = app_member_client.get_application_state()
+    print(f"Last affirmation received by app member: {app_state['last_affirmation']}")
 
 
 if __name__ == "__main__":

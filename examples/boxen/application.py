@@ -24,7 +24,7 @@ def axfer(
     receiver: Expr,
     extra: dict[TxnField, Expr] | None = None,
 ) -> dict[TxnField, Expr]:
-    extra = extra if extra is None else {}
+    extra = extra if extra is not None else {}
     return {
         TxnField.type_enum: TxnType.AssetTransfer,
         TxnField.xfer_asset: asset_id,
@@ -172,15 +172,22 @@ class AppMember(Application):
     last_affirmation = ApplicationStateValue(TealType.bytes)
 
     @external(authorize=Authorize.only(Global.creator_address()))
-    def bootstrap(self, app_id: abi.Application, membership_token: abi.Asset):
+    def bootstrap(
+        self,
+        seed: abi.PaymentTransaction,
+        app_id: abi.Application,
+        membership_token: abi.Asset,
+    ):
         return Seq(
             # Set app id
             self.club_app_id.set(app_id.application_id()),
+            # Set membership token
+            self.membership_token.set(membership_token.asset_id()),
             # Opt in to membership token
             InnerTxnBuilder.Execute(
                 axfer(membership_token.asset_id(), Int(0), self.address)
-            )
-            | {TxnField.fee: Int(0)},
+                | {TxnField.fee: Int(0)},
+            ),
         )
 
     @external
