@@ -128,10 +128,10 @@ class Precompile:
         self.program_pages = [
             ProgramPage(
                 index=i,
-                _binary=self._binary[i: i + 2047],
-                _hash_digest=hashlib.sha256(self._binary[i: i + 2047]).digest(),
+                _binary=self._binary[i: i + 2048],
+                _hash_digest=hashlib.sha256(self._binary[i: i + 2048]).digest(),
             )
-            for i in range(0, len(self._binary), 2047)
+            for i in range(0, len(self._binary), 2048)
         ]
 
     def hash(self, page_idx: Optional[int] = -1) -> Expr:
