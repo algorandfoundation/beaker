@@ -6,7 +6,7 @@ from algosdk.future.transaction import *
 from pyteal import *
 from beaker import *
 
-from application import MembershipRecord, MembershipClub
+from application import AppMember, MembershipRecord, MembershipClub
 
 
 record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))
@@ -46,11 +46,13 @@ def demo():
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), MembershipClub(), signer=acct.signer
     )
+    print("Creating app")
     app_client.create()
 
     ##
-    # Bootstrap
+    # Bootstrap Club app
     ##
+    print("Bootstrapping app")
     sp = app_client.get_suggested_params()
     sp.flat_fee = True
     sp.fee = 2000
@@ -67,15 +69,17 @@ def demo():
     print(f"Created asset id: {membership_token}")
 
     ##
-    # Add Member
+    # Add Member to club
     ##
 
+    # Opt member account in to asset
     app_client.client.send_transaction(
         AssetOptInTxn(member_acct.address, sp, membership_token).sign(
             member_acct.private_key
         )
     )
 
+    # Add member account as member
     app_client.call(
         MembershipClub.add_member,
         new_member=member_acct.address,
@@ -84,6 +88,7 @@ def demo():
     )
     print_boxes(app_client)
 
+    # read the membership record box
     result = app_client.call(
         MembershipClub.get_membership_record,
         member=member_acct.address,
@@ -91,27 +96,71 @@ def demo():
     )
     print(result.return_value)
 
+    # Create a new client for the member
     member_client = app_client.prepare(signer=member_acct.signer)
     for idx, aff in enumerate(affirmations):
         result = member_client.call(
             MembershipClub.set_affirmation,
             idx=idx,
             affirmation=aff.ljust(64, " ").encode(),
-            boxes=[[app_client.app_id, "affirmations"]] * 7,
+            boxes=[[app_client.app_id, "affirmations"]],
         )
 
+    # Get the affirmation from the app, passing box ref holding affirmations
     result = member_client.call(
         MembershipClub.get_affirmation,
-        boxes=[[app_client.app_id, "affirmations"]] * 7,
+        boxes=[[app_client.app_id, "affirmations"]],
     )
     print(bytes(result.return_value).decode("utf-8").strip())
 
+    # Remove the member we'd just added
     app_client.call(
         MembershipClub.remove_member,
         boxes=[[app_client.app_id, decode_address(member_acct.address)]],
         member=member_acct.address,
     )
     print_boxes(app_client)
+
+    ##
+    # Create Application that will be a member of the MembershipClub
+    ##
+
+    # Create App we'll use to be a member of club
+    print("Creating app member")
+    app_member_client = client.ApplicationClient(
+        sandbox.get_algod_client(), AppMember(), signer=app_client.signer
+    )
+    _, app_member_addr, _ = app_member_client.create()
+
+    # Fund the app member and make it opt into the membership token
+    print("Bootstrapping app member")
+    sp = app_member_client.get_suggested_params()
+    sp.flat_fee = True
+    sp.fee = 2000
+    ptxn = PaymentTxn(app_client.sender, sp, app_member_addr, consts.algo * 1)
+    app_member_client.call(
+        AppMember.bootstrap,
+        seed=TransactionWithSigner(ptxn, app_client.signer),
+        app_id=app_client.app_id,
+        membership_token=membership_token,
+    )
+
+    # Add app to club using the member_club client
+    app_client.call(
+        MembershipClub.add_member,
+        new_member=app_member_addr,
+        suggested_params=sp,
+        boxes=[[app_client.app_id, decode_address(app_member_addr)]],
+    )
+
+    # Call method to get a new affirmation
+    app_member_client.call(
+        AppMember.get_affirmation, boxes=[[app_client.app_id, "affirmations"]]
+    )
+
+    # Read the affirmation out of the AppMembers app state
+    app_state = app_member_client.get_application_state()
+    print(f"Last affirmation received by app member: {app_state['last_affirmation']}")
 
 
 if __name__ == "__main__":

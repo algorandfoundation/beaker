@@ -8,6 +8,8 @@ from .state import (
     AccountStateValue,
     AccountStateBlob,
     ApplicationStateBlob,
+    prefix_key_gen,
+    identity_key_gen,
 )
 from .decorators import (
     Authorize,
@@ -23,7 +25,7 @@ from .decorators import (
     clear_state,
 )
 from .logic_signature import LogicSignature, TemplateVariable
-from .precompile import Precompile
+from .precompile import Precompile, AppPrecompile, LSigPrecompile
 
 from . import preprocess
 from . import client

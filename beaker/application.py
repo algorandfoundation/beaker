@@ -35,6 +35,7 @@ from beaker.state import (
     AccountStateValue,
     ApplicationStateValue,
     ReservedApplicationStateValue,
+    prefix_key_gen,
 )
 from beaker.errors import BareOverwriteError
 from beaker.precompile import AppPrecompile, LSigPrecompile
@@ -121,6 +122,8 @@ class Application:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
                 case ReservedAccountStateValue():
+                    if bound_attr.key_generator is None:
+                        bound_attr.set_key_gen(prefix_key_gen(name))
                     acct_vals[name] = bound_attr
                 case AccountStateBlob():
                     acct_vals[name] = bound_attr
@@ -133,6 +136,8 @@ class Application:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
                 case ReservedApplicationStateValue():
+                    if bound_attr.key_generator is None:
+                        bound_attr.set_key_gen(prefix_key_gen(name))
                     app_vals[name] = bound_attr
 
                 # Precompiles
