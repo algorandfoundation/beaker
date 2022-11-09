@@ -1,7 +1,5 @@
 from base64 import b64decode
 import copy
-from dataclasses import dataclass
-from math import ceil
 from typing import Any, cast, Optional
 
 from algosdk.account import address_from_private_key
@@ -20,10 +18,9 @@ from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
-from algosdk.constants import APP_PAGE_MAX_SIZE
-from pyteal import TealInputError
 
 from beaker.application import Application, get_method_spec
+from beaker.consts import num_extra_program_pages
 from beaker.decorators import (
     HandlerFunc,
     MethodHints,
@@ -32,7 +29,7 @@ from beaker.decorators import (
 )
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException
-from beaker.precompile import LSigPrecompile, AppPrecompile
+from beaker.precompile import AppPrecompile, ProgramAssertion
 
 
 class ApplicationClient:
@@ -57,11 +54,11 @@ class ApplicationClient:
 
         self.approval_binary: Optional[bytes] = None
         self.approval_src_map: Optional[SourceMap] = None
-        self.approval_asserts: dict[int, ProgramAssertion] = {}
+        self.approval_asserts: Optional[dict[int, ProgramAssertion]] = None
 
         self.clear_binary: Optional[bytes] = None
         self.clear_src_map: Optional[SourceMap] = None
-        self.clear_asserts: dict[int, ProgramAssertion] = {}
+        self.clear_asserts: Optional[dict[int, ProgramAssertion]] = None
 
         self.suggested_params = suggested_params
 
@@ -76,73 +73,23 @@ class ApplicationClient:
 
     def build(self) -> None:
         """
-        Wraps the Application in an AppPrecompile before handing off to
-        _build_app for recursive compiling. The result is then used
+        Wraps the Application in an AppPrecompile before calling `compile` on the Precompile which
+        recursively compiles all the dependencies (depth first). The result is then used
         to assign the approval and clear state program binaries and src maps.
         """
-        app_precompile = AppPrecompile(self.app)
+        if self.approval_binary is not None and self.clear_binary is not None:
+            return
 
-        compiled_app = self._build_app(app_precompile)
+        compiled_app = AppPrecompile(self.app)
+        compiled_app.compile(self.client)
 
         self.approval_binary = compiled_app.approval._binary
         self.approval_src_map = compiled_app.approval._map
+        self.approval_asserts = compiled_app.approval._asserts
 
         self.clear_binary = compiled_app.clear._binary
         self.clear_src_map = compiled_app.clear._map
-
-        if self.app.approval_program and self.app.clear_program:
-            self.approval_asserts = _gather_asserts(
-                self.app.approval_program, self.approval_src_map
-            )
-            self.clear_asserts = _gather_asserts(
-                self.app.clear_program, self.clear_src_map
-            )
-
-    def _build_app(self, app_precompile: AppPrecompile) -> AppPrecompile:
-        """
-        Recursively traverse through precompiles within an Application
-        in a depth-first manner to then compile bottom-up.
-        """
-
-        for _, p in app_precompile.app.precompiles.items():
-            match p:
-                case LSigPrecompile():
-                    self._build_lsig(p)
-                case AppPrecompile():
-                    self._build_app(p)
-                case _:
-                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
-
-        app_precompile.compile_to_teal()
-
-        if app_precompile.approval._binary is None:
-            app_precompile.approval.compile(self.client)
-
-        if app_precompile.clear._binary is None:
-            app_precompile.clear.compile(self.client)
-
-        return app_precompile
-
-    def _build_lsig(self, lsig_precompile: LSigPrecompile) -> LSigPrecompile:
-        """
-        Recursively traverse through precompiles within a LogicSignature
-        in a depth-first manner to then compile bottom-up.
-        """
-        for _, p in lsig_precompile.lsig.precompiles.items():
-            match p:
-                case LSigPrecompile():
-                    self._build_lsig(p)
-                case AppPrecompile():
-                    self._build_app(p)
-                case _:
-                    raise TealInputError(f"Unrecognized precompile type: {type(p)}")
-
-        lsig_precompile.compile_to_teal()
-
-        if lsig_precompile.logic._binary is None:
-            lsig_precompile.logic.compile(self.client)
-
-        return lsig_precompile
+        self.clear_asserts = compiled_app.clear._asserts
 
     def create(
         self,
@@ -160,12 +107,8 @@ class ApplicationClient:
         assert self.clear_binary is not None and self.approval_binary is not None
 
         if extra_pages is None:
-            extra_pages = ceil(
-                (
-                    (len(self.approval_binary) + len(self.clear_binary))
-                    - APP_PAGE_MAX_SIZE
-                )
-                / APP_PAGE_MAX_SIZE
+            extra_pages = num_extra_program_pages(
+                self.approval_binary, self.clear_binary
             )
 
         sp = self.get_suggested_params(suggested_params)
@@ -804,19 +747,16 @@ class ApplicationClient:
         return self.client.suggested_params()
 
     def wrap_approval_exception(self, e: Exception) -> Exception:
-        if self.app.approval_program is None:
+        if self.app.approval_program is None or self.approval_src_map is None:
             return e
-
-        if self.approval_src_map is None:
-            _, _, map = self.compile(self.app.approval_program, True)
-            self.approval_src_map = map
 
         return LogicException(
             e,
             self.app.approval_program,
             self.approval_src_map,
-            self.app.pyteal_approval_sourcemap,
         )
+        #     self.app.pyteal_approval_sourcemap,
+        # )
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
         if signer is not None:
@@ -845,32 +785,3 @@ class ApplicationClient:
                 return signer.lsig.address()
 
         raise Exception("No sender provided")
-
-
-@dataclass
-class ProgramAssertion:
-    line: int
-    message: str
-
-
-def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
-    asserts: dict[int, ProgramAssertion] = {}
-
-    program_lines = program.split("\n")
-    for idx, line in enumerate(program_lines):
-        # Take only the first bit
-        line = line.split(" ").pop()
-        if line != "assert":
-            continue
-
-        # take the first one, assert should be alone on the line
-        pc = src_map.get_pcs_for_line(idx)[0]
-
-        # TODO: this will be wrong for multiline comments
-        line_before = program_lines[idx - 1]
-        if not line_before.startswith("//"):
-            continue
-
-        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
-
-    return asserts

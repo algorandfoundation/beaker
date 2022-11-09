@@ -3,6 +3,7 @@ from typing import Final, cast
 from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
+from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
 from beaker.state import (
     ReservedApplicationStateValue,
@@ -84,6 +85,30 @@ def test_single_external():
 
     with pytest.raises(Exception):
         sh.contract.get_method_by_name("made up")
+
+
+def test_method_override():
+    class MethodOverride(Application):
+        @external(name="handle")
+        def handle_algo(self, txn: PaymentTransaction):
+            return pt.Approve()
+
+        @external(name="handle")
+        def handle_asa(self, txn: AssetTransferTransaction):
+            return pt.Approve()
+
+    mo = MethodOverride()
+
+    assert len(mo.methods) == 2, "Expected two externals"
+    assert mo.methods["handle_algo"]
+    assert mo.methods["handle_asa"]
+
+    overlapping_methods = [
+        method for method in mo.contract.methods if method.name == "handle"
+    ]
+    assert len(overlapping_methods) == 2
+    assert get_method_spec(mo.handle_algo) in overlapping_methods
+    assert get_method_spec(mo.handle_asa) in overlapping_methods
 
 
 def test_bare():

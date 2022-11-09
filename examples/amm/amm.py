@@ -37,7 +37,7 @@ from beaker import (
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
-pragma(compiler_version="^0.18.0")
+pragma(compiler_version="^0.19.0")
 
 
 def commented_assert(conditions: list[tuple[Expr, str]]) -> list[Expr]:
@@ -215,6 +215,13 @@ class ConstantProductAMM(Application):
                 pool_asset.asset_id() == self.pool_token,
                 ConstantProductAMMErrors.AssetPoolIncorrect,
             ),
+            (
+                And(
+                    a_xfer.get().sender() == Txn.sender(),
+                    b_xfer.get().sender() == Txn.sender(),
+                ),
+                ConstantProductAMMErrors.SenderInvalid,
+            ),
         ]
 
         valid_asset_a_xfer = [
@@ -229,10 +236,6 @@ class ConstantProductAMM(Application):
             (
                 a_xfer.get().asset_amount() > Int(0),
                 ConstantProductAMMErrors.AmountLessThanMinimum,
-            ),
-            (
-                a_xfer.get().sender() == Txn.sender(),
-                ConstantProductAMMErrors.SenderInvalid,
             ),
         ]
 
@@ -249,10 +252,6 @@ class ConstantProductAMM(Application):
                 b_xfer.get().asset_amount() > Int(0),
                 ConstantProductAMMErrors.AmountLessThanMinimum,
             ),
-            (
-                b_xfer.get().sender() == Txn.sender(),
-                ConstantProductAMMErrors.SenderInvalid,
-            ),
         ]
 
         return Seq(
@@ -268,7 +267,6 @@ class ConstantProductAMM(Application):
                 pool_bal.hasValue(),
                 a_bal.hasValue(),
                 b_bal.hasValue(),
-                comment=ConstantProductAMMErrors.MissingBalances,
             ),
             (to_mint := ScratchVar()).store(
                 If(
@@ -360,7 +358,6 @@ class ConstantProductAMM(Application):
                 pool_bal.hasValue(),
                 a_bal.hasValue(),
                 b_bal.hasValue(),
-                comment=ConstantProductAMMErrors.MissingBalances,
             ),
             # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
             (issued := ScratchVar()).store(
@@ -452,7 +449,6 @@ class ConstantProductAMM(Application):
             Assert(
                 in_sup.hasValue(),
                 out_sup.hasValue(),
-                comment=ConstantProductAMMErrors.MissingBalances,
             ),
             (to_swap := ScratchVar()).store(
                 self.tokens_to_swap(
@@ -549,7 +545,6 @@ class ConstantProductAMM(Application):
             Assert(
                 una.hasValue(),
                 unb.hasValue(),
-                comment=ConstantProductAMMErrors.MissingBalances,
             ),
             InnerTxnBuilder.Execute(
                 {
@@ -582,7 +577,6 @@ class ConstantProductAMM(Application):
             Assert(
                 bal_a.hasValue(),
                 bal_b.hasValue(),
-                comment=ConstantProductAMMErrors.MissingBalances,
             ),
             WideRatio([bal_a.value(), self.scale], [bal_b.value()]),
         )

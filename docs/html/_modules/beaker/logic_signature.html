@@ -75,6 +75,8 @@
              
   <h1>Source code for beaker.logic_signature</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getattr_static</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">CompileOptions</span><span class="p">,</span>
     <span class="n">TealInputError</span><span class="p">,</span>
@@ -152,6 +154,7 @@
         <span class="sd">&quot;&quot;&quot;initialize the logic signature and identify relevant attributes&quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">program</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># Get initial list of all attrs declared</span>
         <span class="n">initial_attrs</span> <span class="o">=</span> <span class="p">{</span>
@@ -202,7 +205,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>  <span class="c1"># will have to be deferred if lsig contains precompiles</span>
 
-    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AlgodClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">program</span>
+
         <span class="n">template_expressions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">tv</span><span class="o">.</span><span class="n">_init_expr</span><span class="p">()</span> <span class="k">for</span> <span class="n">tv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_variables</span>
         <span class="p">]</span>
@@ -213,6 +219,8 @@
             <span class="n">version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span><span class="p">,</span>
             <span class="n">assembleConstants</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">program</span>
 
 <div class="viewcode-block" id="LogicSignature.evaluate"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.LogicSignature.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

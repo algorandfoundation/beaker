@@ -56,13 +56,7 @@ class C2CMain(bkr.Application):
     @bkr.external
     def create_sub(self, *, output: abi.Uint64):
         return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.sub_app.approval.binary,
-                    TxnField.clear_state_program: self.sub_app.clear.binary,
-                }
-            ),
+            InnerTxnBuilder.Execute(self.sub_app.get_create_config()),
             # return the app id of the newly created app
             output.set(InnerTxn.created_application_id()),
         )
