@@ -1,4 +1,14 @@
-from pyteal import abi, Int, BoxCreate, BoxExtract, Expr, BoxReplace, Bytes, TealType
+from pyteal import (
+    abi,
+    Int,
+    BoxCreate,
+    BoxExtract,
+    Expr,
+    BoxReplace,
+    Bytes,
+    TealType,
+    TealTypeError,
+)
 
 
 class List:
@@ -26,33 +36,43 @@ class List:
         self.elements = Int(self._elements)
 
         self._box_size = self._element_size * self._elements
+        self.box_size = Int(self._box_size)
 
     def create(self) -> Expr:
         assert self.name is not None
-        return BoxCreate(self.name, self.element_size * self.elements)
+        return BoxCreate(self.name, self.box_size)
 
-    def __getitem__(self, idx: Int) -> "ListElement":
+    def __getitem__(self, idx: Expr) -> "ListElement":
         assert self.name is not None
         return ListElement(self.name, self.element_size, idx)
 
 
 class ListElement(Expr):
-    def __init__(self, name, size, idx):
+    def __init__(self, name: Expr, element_size: Expr, idx: Expr):
+        if name.type_of() != TealType.bytes:
+            raise TealTypeError(name.type_of(), TealType.bytes)
+
+        if element_size.type_of() != TealType.uint64:
+            raise TealTypeError(element_size.type_of(), TealType.uint64)
+
+        if element_size.type_of() != TealType.uint64:
+            raise TealTypeError(idx.type_of(), TealType.uint64)
+
         self.name = name
-        self.size = size
+        self.element_size = element_size
         self.idx = idx
 
     def store_into(self, val: abi.BaseType) -> Expr:
         return val.decode(self.get())
 
     def get(self) -> Expr:
-        return BoxExtract(self.name, self.size * self.idx, self.size)
+        return BoxExtract(self.name, self.element_size * self.idx, self.element_size)
 
     def set(self, val: abi.BaseType) -> Expr:
-        return BoxReplace(self.name, self.size * self.idx, val.encode())
+        return BoxReplace(self.name, self.element_size * self.idx, val.encode())
 
     def __str__(self) -> str:
-        return f"List Element: {self.name}"
+        return f"List Element: {self.name}[{self.idx}]"
 
     def __teal__(self, compile_options):
         return self.get().__teal__(compile_options)

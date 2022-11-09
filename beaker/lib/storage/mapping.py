@@ -26,7 +26,8 @@ class Mapping:
     def __getitem__(self, idx: abi.BaseType | Expr) -> "MapElement":
         match idx:
             case abi.BaseType():
-                assert idx.type_spec() == self._key_type_spec
+                if idx.type_spec() != self._key_type_spec:
+                    raise TealTypeError(idx.type_spec(), self._key_type_spec)
                 return MapElement(idx.encode(), self._value_type)
             case Expr():
                 if idx.type_of() != TealType.bytes:
@@ -52,6 +53,8 @@ class MapElement:
     def set(self, val: abi.BaseType | Expr) -> Expr:
         match val:
             case abi.BaseType():
+                if not isinstance(val, self._value_type):
+                    raise TealTypeError(val.__class__, self._value_type)
                 return Seq(
                     # delete the old one
                     Pop(BoxDelete(self.key)),
