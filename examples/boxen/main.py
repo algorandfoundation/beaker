@@ -50,7 +50,7 @@ def demo():
     app_client.create()
 
     ##
-    # Bootstrap
+    # Bootstrap Club app
     ##
     print("Bootstrapping app")
     sp = app_client.get_suggested_params()
@@ -69,7 +69,7 @@ def demo():
     print(f"Created asset id: {membership_token}")
 
     ##
-    # Add Member
+    # Add Member to club
     ##
 
     # Opt member account in to asset
@@ -106,12 +106,14 @@ def demo():
             boxes=[[app_client.app_id, "affirmations"]],
         )
 
+    # Get the affirmation from the app, passing box ref holding affirmations
     result = member_client.call(
         MembershipClub.get_affirmation,
         boxes=[[app_client.app_id, "affirmations"]],
     )
     print(bytes(result.return_value).decode("utf-8").strip())
 
+    # Remove the member we'd just added
     app_client.call(
         MembershipClub.remove_member,
         boxes=[[app_client.app_id, decode_address(member_acct.address)]],
@@ -119,14 +121,18 @@ def demo():
     )
     print_boxes(app_client)
 
+    ##
+    # Create Application that will be a member of the MembershipClub
+    ##
+
     # Create App we'll use to be a member of club
     print("Creating app member")
-
     app_member_client = client.ApplicationClient(
         sandbox.get_algod_client(), AppMember(), signer=app_client.signer
     )
     _, app_member_addr, _ = app_member_client.create()
 
+    # Fund the app member and make it opt into the membership token
     print("Bootstrapping app member")
     sp = app_member_client.get_suggested_params()
     sp.flat_fee = True
@@ -147,11 +153,12 @@ def demo():
         boxes=[[app_client.app_id, decode_address(app_member_addr)]],
     )
 
-    # Call method to get a new affirmation,
+    # Call method to get a new affirmation
     app_member_client.call(
         AppMember.get_affirmation, boxes=[[app_client.app_id, "affirmations"]]
     )
 
+    # Read the affirmation out of the AppMembers app state
     app_state = app_member_client.get_application_state()
     print(f"Last affirmation received by app member: {app_state['last_affirmation']}")
 
