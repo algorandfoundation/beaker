@@ -131,7 +131,7 @@ class Precompile:
                 _binary=self._binary[i: i + 2047],
                 _hash_digest=hashlib.sha256(self._binary[i: i + 2047]).digest(),
             )
-            for i in range(0, len(self._binary), 2048)
+            for i in range(0, len(self._binary), 2047)
         ]
 
     def hash(self, page_idx: Optional[int] = -1) -> Expr:
