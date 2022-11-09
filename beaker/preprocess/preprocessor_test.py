@@ -5,20 +5,6 @@ from beaker.decorators import external
 from .preprocessor import Preprocessor
 from ._builtins import app_get, app_put, app_del, concat, u64
 
-TODOS = """
-    List:
-        Create
-        Append
-        Pop
-
-    Tuple:
-        Create
-        Element wise access
-
-    allow + to map to concat for string types
-
-"""
-
 
 def compile(e: pt.Expr) -> str:
     return pt.compileTeal(
@@ -174,16 +160,6 @@ def test_str_ops():
     print(compile(expr))
 
 
-# def test_list_ops():
-#    def meth():
-#        z = [1, 2, 3]
-#        z
-#
-#    expr = Preprocessor(meth).expr()
-#    print(expr)
-#    # print(compile(expr))
-
-
 def test_built_ins():
     # TODO: all the others
     def meth():
@@ -264,7 +240,45 @@ def test_calculator_app():
 
         @external(translate=True)
         def div(self, x: u64, y: u64) -> u64:
-            return x / y
+            return x / y  # type: ignore[return-value]
 
     calc = Calculator()
     print(calc.approval_program)
+
+
+TODOS = """
+    List:
+        Create
+        Append
+        Pop
+
+    Tuple:
+        Create
+        Element wise access
+
+    allow + to map to concat for string types
+
+"""
+
+# def test_method_call():
+#    class MC(Application):
+#        @external(translate=True)
+#        def caller(self) -> u64:
+#            x = self.echo(10)
+#            return x
+#
+#        @external(translate=True)
+#        def echo(self, a: u64) -> u64:
+#            return a
+#
+#    mc = MC()
+#    print(mc.approval_program)
+
+# def test_list_ops():
+#    def meth():
+#        z = [1, 2, 3]
+#        z
+#
+#    expr = Preprocessor(meth).expr()
+#    print(expr)
+#    # print(compile(expr))

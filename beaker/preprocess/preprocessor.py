@@ -17,6 +17,10 @@ Variable = pt.ScratchVar | pt.abi.BaseType
 class Preprocessor:
     def __init__(self, c: Callable):
         self.fn = c
+
+        self.defined_in = c.__qualname__.rsplit(".", 1)[0]
+        print(self.defined_in)
+
         self.src = dedent(inspect.getsource(c))
         self.tree = ast.parse(self.src)
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
@@ -195,20 +199,20 @@ class Preprocessor:
                 return op(*vals)
 
             case ast.BinOp():
-                left: pt.Expr = self._translate_ast(expr.left)  # type: ignore
-                right: pt.Expr = self._translate_ast(expr.right)  # type: ignore
-                op: Callable = self._translate_op(expr.op, left.type_of())  # type: ignore
+                left: pt.Expr = self._translate_ast(expr.left)  # type: ignore[no-redef]
+                right: pt.Expr = self._translate_ast(expr.right)  # type: ignore[no-redef]
+                op: Callable = self._translate_op(expr.op, left.type_of())  # type: ignore[no-redef]
                 return op(left, right)
 
             case ast.UnaryOp():
                 operand: pt.Expr = self._translate_ast(expr.operand)
-                op: Callable = self._translate_op(expr.op, operand.type_of())  # type: ignore
+                op: Callable = self._translate_op(expr.op, operand.type_of())  # type: ignore[no-redef]
                 return op(operand)
 
             # Flow Control
 
             case ast.Call():
-                func: Callable = self._lookup_function(expr.func)
+                func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
                 args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
                 if len(expr.keywords) > 0:
@@ -217,7 +221,7 @@ class Preprocessor:
                 return func(*args)
 
             case ast.If():
-                test: pt.Expr = self._translate_ast(expr.test)
+                test: pt.Expr = self._translate_ast(expr.test)  # type: ignore[no-redef]
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
                 orelse: list[pt.Expr] = [self._translate_ast(e) for e in expr.orelse]
                 return pt.If(test).Then(pt.Seq(*body)).Else(pt.Seq(*orelse))
@@ -227,8 +231,6 @@ class Preprocessor:
                     raise Unsupported("orelse in For")
 
                 target: pt.ScratchVar | pt.abi.BaseType
-                iter: Callable[..., tuple[pt.Expr, pt.Expr, pt.Expr]]
-
                 match expr.iter:
                     # We're iterating over some variable
                     case ast.Name():
@@ -240,7 +242,7 @@ class Preprocessor:
                                 )
 
                                 idx = pt.ScratchVar()
-                                init = pt.Seq(
+                                start = pt.Seq(
                                     idx.store(pt.Int(0)),
                                     var[pt.Int(0)].store_into(target),
                                 )
@@ -249,39 +251,26 @@ class Preprocessor:
                                     idx.store(idx.load() + pt.Int(1)),
                                     var[idx.load()].store_into(target),
                                 )
-                                iter = (init, cond, step)
                             case _:
                                 # Check if its a list?
                                 raise Unsupported("iter with unsupported type ", var)
 
                     # We're iterating over the result of a function call
                     case ast.Call():
-                        target = self._lookup_or_alloc(expr.target)
-                        iter = self._translate_ast(expr.iter)(target)
+                        call_target: Variable = self._lookup_or_alloc(expr.target)
+                        iterator: pt.Expr = self._translate_ast(expr.iter)
+                        start, cond, step = iterator(call_target)  # type: ignore
                     case _:
                         raise Unsupported("iter type in for loop: ", expr.iter)
 
-                return pt.For(*iter).Do([self._translate_ast(e) for e in expr.body])
+                return pt.For(start, cond, step).Do(
+                    *[self._translate_ast(e) for e in expr.body]
+                )
 
             case ast.While():
-                cond: pt.Expr = self._translate_ast(expr.test)
-                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
+                cond: pt.Expr = self._translate_ast(expr.test)  # type: ignore[no-redef]
+                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]  # type: ignore[no-redef]
                 return pt.While(cond).Do(*body)
-
-            # case ast.ListComp():
-            # ListComp(
-            #    elt=Name(id='x', ctx=Load()),
-            #    generators=[
-            #        comprehension(
-            #            target=Name(id='x', ctx=Store()),
-            #            iter=List(
-            #                elts=[
-            #                    Constant(value=1),
-            #                    Constant(value=2),
-            #                    Constant(value=3)],
-            #                ctx=Load()),
-            #            ifs=[],
-            #            is_async=0)])
 
             # Types
             case ast.List():
@@ -290,21 +279,22 @@ class Preprocessor:
                     self._wrap_as(self._translate_ast(e), pt.abi.Uint64)
                     for e in expr.elts
                 ]
-                exprs: list[pt.Expr] = [e[1] for e in elts]
-                vals: list[pt.abi.BaseType] = [e[0] for e in elts]
+                list_values: list[pt.abi.BaseType] = [e[0] for e in elts]
+                exprs: list[pt.Expr] = [e[1] for e in elts]  # type: ignore[no-redef]
                 return pt.Seq(
-                    *exprs, pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64]).set(vals)
+                    *exprs,
+                    pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64]).set(list_values),  # type: ignore[arg-type]
                 )
 
             # Var access
             case ast.AugAssign():
-                target: pt.Expr = self._read_storage_var(expr.target)
-                value: pt.Expr = self._translate_ast(expr.value)
-                op: Callable = self._translate_op(expr.op, target.type_of())
-                return self._write_storage_var(expr.target, op(target, value))
+                lookup_target: pt.Expr = self._read_storage_var(expr.target)  # type: ignore[no-redef]
+                value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
+                op: Callable = self._translate_op(expr.op, lookup_target.type_of())  # type: ignore[no-redef]
+                return self._write_storage_var(expr.target, op(lookup_target, value))
 
             case ast.Assign():
-                value: pt.Expr = self._translate_ast(expr.value)
+                value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
                 targets: list[Variable] = [
                     self._lookup_or_alloc(e, value.type_of()) for e in expr.targets
                 ]
@@ -312,7 +302,7 @@ class Preprocessor:
                 if len(targets) > 1:
                     raise Unsupported(">1 target in Assign")
 
-                return targets[0].store(value)
+                return self.__write_to_var(targets[0], value)
 
             # Namespace
             case ast.FunctionDef():
@@ -337,7 +327,7 @@ class Preprocessor:
                 print(expr.__dict__)
                 raise Unsupported("Unhandled AST type: ", expr.__class__.__name__)
 
-        return None
+        return pt.Seq()
 
     def _translate_op(
         self, op: ast.AST, type: pt.TealType = pt.TealType.anytype
@@ -432,20 +422,24 @@ class Preprocessor:
         return (v, self.__write_to_var(v, e))
 
     def _lookup_or_alloc(
-        self, name: ast.Name, ts: pt.abi.TypeSpec | pt.TealType | None = None
+        self, name: ast.expr, ts: pt.abi.TypeSpec | pt.TealType | None = None
     ) -> Variable:
-        if name.id not in self.variables:
-            if ts is None:
-                self.variables[name.id] = pt.ScratchVar()
-            else:
-                if isinstance(ts, pt.abi.TypeSpec):
-                    self.variables[name.id] = ts.new_instance()
-                else:
-                    self.variables[name.id] = pt.ScratchVar(ts)
+        match name:
+            case ast.Name():
+                if name.id not in self.variables:
+                    if ts is None:
+                        self.variables[name.id] = pt.ScratchVar()
+                    else:
+                        if isinstance(ts, pt.abi.TypeSpec):
+                            self.variables[name.id] = ts.new_instance()
+                        else:
+                            self.variables[name.id] = pt.ScratchVar(ts)
 
-        return self.variables[name.id]
+                return self.variables[name.id]
+            case _:
+                raise Unsupported("An expr other than Name in lookup_or_alloc", name)
 
-    def _write_storage_var(self, name: ast.Name, val: pt.Expr) -> pt.Expr:
+    def _write_storage_var(self, name: ast.expr, val: pt.Expr) -> pt.Expr:
         v = self._lookup_or_alloc(name)
         return self.__write_to_var(v, val)
 
@@ -454,26 +448,48 @@ class Preprocessor:
             case pt.abi.String() | pt.abi.Address() | pt.abi.Uint() | pt.abi.DynamicBytes() | pt.abi.StaticBytes():
                 return v.set(val)
             case pt.abi.BaseType():
-                return v.encode(val)
+                return v.decode(val)
             case pt.ScratchVar():
                 return v.store(val)
             case _:
                 raise Unsupported("idk what to do with a ", val)
 
-    def _read_storage_var(self, name: ast.Name) -> pt.Expr:
+    def _read_storage_var(self, name: ast.expr) -> pt.Expr:
         v = self._lookup_or_alloc(name)
         match v:
-            case pt.abi.String() | pt.abi.Address() | pt.abi.DynamicBytes() | pt.abi.StaticBytes() | pt.abi.Transaction() | pt.abi.Uint():
+            case pt.abi.String() | pt.abi.Address() | pt.abi.DynamicBytes() | pt.abi.StaticBytes() | pt.abi.Uint():
                 return v.get()
             case pt.abi.BaseType():
                 if hasattr(v, "_stored_value"):
-                    return v._stored_value.load()
+                    return v._stored_value.load()  # type: ignore[attr-defined]
                 else:
                     return v.stored_value.load()
             case pt.ScratchVar():
                 return v.load()
             case _:
                 raise Unsupported("type in slot lookup: ", v)
+        return pt.Seq()
 
-    def _lookup_function(self, name: ast.Name | ast.Attribute) -> Callable:
-        return self.funcs[name.id]
+    def _lookup_function(self, fn: ast.AST) -> Callable:
+        print(ast.dump(fn, indent=4))
+        match fn:
+            case ast.Name():
+                return self.funcs[fn.id]
+            case ast.Attribute():
+                name = ""
+                match fn.value:
+                    case ast.Name():
+                        name = fn.value.id
+                    case _:
+                        raise Unsupported(
+                            "In lookup_function: a value that isnt a Name type",
+                            fn.value,
+                        )
+
+                # doesnt work
+                return eval(f"{name}.{fn.attr}")
+
+        def _impl(*args):
+            raise Unsupported("You triggered my trap card")
+
+        return _impl
