@@ -15,11 +15,9 @@ Variable = pt.ScratchVar | pt.abi.BaseType
 
 
 class Preprocessor:
-    def __init__(self, c: Callable):
+    def __init__(self, c: Callable, obj: Any = None):
         self.fn = c
-
-        self.defined_in = c.__qualname__.rsplit(".", 1)[0]
-        print(self.defined_in)
+        self.obj = obj
 
         self.src = dedent(inspect.getsource(c))
         self.tree = ast.parse(self.src)
@@ -44,9 +42,9 @@ class Preprocessor:
         # we modify its signature below
         def _impl(*args, **kwargs) -> pt.Expr:
             if "output" in kwargs:
-                return self.__write_to_var(kwargs["output"], self.expr(*args, **kwargs))
+                return self.__write_to_var(kwargs["output"], self.expr(*args))
             else:
-                return self.expr(*args, **kwargs)
+                return self.expr(*args)
 
         sig = inspect.signature(self.fn)
         orig_annotations = inspect.get_annotations(self.fn)
@@ -80,8 +78,8 @@ class Preprocessor:
 
         return _impl
 
-    def expr(self, *args, **kwargs):
-        """called at build time with slots provided"""
+    def expr(self, *args) -> pt.Expr:
+        """called at build time with arguments provided for variables"""
         for idx, name in enumerate(self.args.keys()):
             if name == "self":
                 continue
@@ -90,6 +88,8 @@ class Preprocessor:
             match arg:
                 case pt.abi.BaseType():
                     self._provide_value(name, arg)
+                case pt.Expr():
+                    self._write_storage_var(name, arg)
                 case _:
                     raise Unsupported(
                         "idk what do do with this arg ", args[idx].__class__.__name__
@@ -215,9 +215,17 @@ class Preprocessor:
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
                 args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
+                print("FUNC: ", dir(func))
+                print(type(func))
+
+                from beaker.application import get_handler_config
+
+                print(get_handler_config(func))
+
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
 
+                print(args)
                 return func(*args)
 
             case ast.If():
@@ -294,6 +302,7 @@ class Preprocessor:
                 return self._write_storage_var(expr.target, op(lookup_target, value))
 
             case ast.Assign():
+                print(ast.dump(expr, indent=4))
                 value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
                 targets: list[Variable] = [
                     self._lookup_or_alloc(e, value.type_of()) for e in expr.targets
@@ -411,7 +420,7 @@ class Preprocessor:
                 case _:
                     raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
-    def _provide_value(self, name: str, val: pt.ScratchVar):
+    def _provide_value(self, name: str, val: Variable):
         self.variables[name] = val
 
     def _wrap_as(
@@ -422,24 +431,32 @@ class Preprocessor:
         return (v, self.__write_to_var(v, e))
 
     def _lookup_or_alloc(
-        self, name: ast.expr, ts: pt.abi.TypeSpec | pt.TealType | None = None
+        self, name: ast.expr | str, ts: pt.abi.TypeSpec | pt.TealType | None = None
     ) -> Variable:
+
+        name_str = ""
         match name:
             case ast.Name():
-                if name.id not in self.variables:
-                    if ts is None:
-                        self.variables[name.id] = pt.ScratchVar()
-                    else:
-                        if isinstance(ts, pt.abi.TypeSpec):
-                            self.variables[name.id] = ts.new_instance()
-                        else:
-                            self.variables[name.id] = pt.ScratchVar(ts)
-
-                return self.variables[name.id]
+                name_str = name.id
+            case str():
+                name_str = name
             case _:
-                raise Unsupported("An expr other than Name in lookup_or_alloc", name)
+                raise Unsupported(
+                    "An name arg other than Name | str in lookup_or_alloc", name
+                )
 
-    def _write_storage_var(self, name: ast.expr, val: pt.Expr) -> pt.Expr:
+        if name_str not in self.variables:
+            if ts is None:
+                self.variables[name_str] = pt.ScratchVar()
+            else:
+                if isinstance(ts, pt.abi.TypeSpec):
+                    self.variables[name_str] = ts.new_instance()
+                else:
+                    self.variables[name_str] = pt.ScratchVar(ts)
+
+        return self.variables[name_str]
+
+    def _write_storage_var(self, name: ast.expr | str, val: pt.Expr) -> pt.Expr:
         v = self._lookup_or_alloc(name)
         return self.__write_to_var(v, val)
 
@@ -468,10 +485,8 @@ class Preprocessor:
                 return v.load()
             case _:
                 raise Unsupported("type in slot lookup: ", v)
-        return pt.Seq()
 
     def _lookup_function(self, fn: ast.AST) -> Callable:
-        print(ast.dump(fn, indent=4))
         match fn:
             case ast.Name():
                 return self.funcs[fn.id]
@@ -486,8 +501,16 @@ class Preprocessor:
                             fn.value,
                         )
 
-                # doesnt work
-                return eval(f"{name}.{fn.attr}")
+                if name == "self":
+                    bound_func = getattr(self.obj, fn.attr)
+                    static_func = inspect.getattr_static(self.obj, fn.attr)
+
+                    abi_meth = pt.ABIReturnSubroutine(static_func)
+                    abi_meth.subroutine.implementation = bound_func
+
+                    return bound_func
+            case _:
+                raise Unsupported("idk what to do with this")
 
         def _impl(*args):
             raise Unsupported("You triggered my trap card")

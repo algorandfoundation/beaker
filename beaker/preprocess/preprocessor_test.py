@@ -1,5 +1,6 @@
 import pyteal as pt
-from beaker.application import Application
+import inspect
+from beaker.application import Application, get_handler_config
 from beaker.decorators import external
 
 from .preprocessor import Preprocessor
@@ -74,7 +75,7 @@ def test_if_else():
         else:
             return 3
 
-    Preprocessor(meth).expr()
+    print(compile(Preprocessor(meth).expr()))
 
 
 def test_bool_op():
@@ -246,19 +247,49 @@ def test_calculator_app():
     print(calc.approval_program)
 
 
-TODOS = """
-    List:
-        Create
-        Append
-        Pop
+class NativeApplication(Application):
+    def __init__(self, version=pt.MAX_TEAL_VERSION):
 
-    Tuple:
-        Create
-        Element wise access
+        self._user_defined = {
+            ud: (getattr(self, ud), inspect.getattr_static(self, ud))
+            for ud in list(set(dir(self)) - set(dir(Application)))
+        }
 
-    allow + to map to concat for string types
+        for name, (b_attr, s_attr) in self._user_defined.items():
+            pp = Preprocessor(s_attr, self)
+            setattr(self.__class__, name, external(pp.subroutine()))
 
-"""
+        super().__init__(version=version)
+
+
+def test_native_app():
+    class Native(NativeApplication):
+        def thing(self, a: u64) -> u64:
+            return a**2
+
+        def other_thing(self, b: u64) -> u64:
+            return self.thing(b)
+
+    n = Native()
+    print(get_handler_config(n.thing))
+    print(get_handler_config(Native.thing))
+    print(dir(n.thing))
+    print(n.approval_program)
+
+
+# TODOS = """
+#    List:
+#        Create
+#        Append
+#        Pop
+#
+#    Tuple:
+#        Create
+#        Element wise access
+#
+#    allow + to map to concat for string types
+#
+# """
 
 # def test_method_call():
 #    class MC(Application):
@@ -275,10 +306,11 @@ TODOS = """
 #    print(mc.approval_program)
 
 # def test_list_ops():
-#    def meth():
-#        z = [1, 2, 3]
-#        z
+#   def meth():
+#       z = [1, 2, 3]
+#       z
 #
-#    expr = Preprocessor(meth).expr()
-#    print(expr)
-#    # print(compile(expr))
+#   expr = Preprocessor(meth).expr()
+#   print(expr)
+#   # print(compile(expr))
+#
