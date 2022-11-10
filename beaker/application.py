@@ -88,6 +88,9 @@ class Application:
         self.approval_program: Optional[str] = None
         self.clear_program: Optional[str] = None
 
+        self.annotated_approval_program: Optional[str] = None
+        self.annotated_clear_program: Optional[str] = None
+
         self.pyteal_approval_sourcemap = None
         self.pyteal_clear_sourcemap = None
 
@@ -268,35 +271,40 @@ class Application:
                 overriding_name=method.name(),
             )
 
-        rbundle = self.router.compile_program_with_sourcemaps(
+        # Using all the DELUXE router compile options including:
+        # * Teal <-- PC source mapper
+        # * PyTeal <-- Teal source mapper
+        # The PC source mapper duplicates what's already available in Beaker.
+        # Its usage should either be DROPPED or should REPLACE the current functionality.
+        rbundle = self.router.compile(
             version=self.teal_version,
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),
+            with_sourcemaps=True,
+            pcs_in_sourcemap=True,  # NOTE: if set False, there is no need to supply algod_client below
+            algod_client=client,
+            annotate_teal=True,
+            annotate_teal_headers=True,
+            annotate_teal_concise=False,
         )
 
         (
             self.approval_program,
             self.clear_program,
             self.contract,
+            self.annotated_approval_program,
+            self.annotated_clear_program,
             self.pyteal_approval_sourcemap,
             self.pyteal_clear_sourcemap,
         ) = (
             rbundle.approval_teal,
             rbundle.clear_teal,
             rbundle.abi_contract,
+            rbundle.approval_annotated_teal,
+            rbundle.clear_annotated_teal,
             rbundle.approval_sourcemap,
             rbundle.clear_sourcemap,
         )
-        # # Compile approval and clear programs
-        # (
-        #     self.approval_program,
-        #     self.clear_program,
-        #     self.contract,
-        # ) = self.router.compile_program(
-        #     version=self.teal_version,
-        #     assemble_constants=True,
-        #     optimize=OptimizeOptions(scratch_slots=True),
-        # )
         return (self.approval_program, self.clear_program)
 
     def application_spec(self) -> dict[str, Any]:

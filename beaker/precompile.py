@@ -249,6 +249,9 @@ class AppPrecompile:
         #: The App's clear program as a Precompile
         self.clear: Precompile = Precompile("")
 
+        self.annotated_approval: str | None = None
+        self.annotated_clear: str | None = None
+
         self.pyteal_approval_sourcemap: PyTealSourceMap | None
         self.pyteal_clear_sourcemap: PyTealSourceMap | None
 
@@ -273,16 +276,16 @@ class AppPrecompile:
         if self.clear._binary is None:
             self.clear.assemble(client)
 
-        self.pyteal_clear_sourcemap = self.app.pyteal_clear_sourcemap            ),
-        self.pyteal_approval_sourcemap = self.app.pyteal_approval_sourcemap
+        self.annotated_approval = self.app.annotated_approval_program
+        self.annotated_clear = self.app.annotated_clear_program
 
+        self.pyteal_clear_sourcemap = self.app.pyteal_clear_sourcemap
+        self.pyteal_approval_sourcemap = self.app.pyteal_approval_sourcemap
 
     def get_create_config(self) -> dict[TxnField, Expr]:
         """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
         assert self.approval._binary is not None
         assert self.clear._binary is not None
-
-
 
         return {
             TxnField.type_enum: TxnType.ApplicationCall,
@@ -292,7 +295,9 @@ class AppPrecompile:
             TxnField.local_num_uints: Int(self.app.acct_state.num_uints),
             TxnField.global_num_byte_slices: Int(self.app.app_state.num_byte_slices),
             TxnField.global_num_uints: Int(self.app.app_state.num_uints),
-            TxnField.extra_program_pages: Int(num_extra_program_pages(self.approval._binary, self.clear._binary)),
+            TxnField.extra_program_pages: Int(
+                num_extra_program_pages(self.approval._binary, self.clear._binary)
+            ),
         }
 
 

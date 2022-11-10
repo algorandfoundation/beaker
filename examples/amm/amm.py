@@ -37,7 +37,8 @@ from beaker import (
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
-pragma(compiler_version="^0.19.0")
+# TODO: reveal pragma before merging
+# pragma(compiler_version="^0.19.0")
 
 
 def commented_assert(conditions: list[tuple[Expr, str]]) -> list[Expr]:

@@ -1,4 +1,4 @@
-// GENERATED TEAL    //    PYTEAL PATH               LINE    PYTEAL HYBRID UNPARSED
-#pragma version 7    //    examples/amm/amm_test.py  98      ConstantProductAMM()
-pushint 0 // 0       //
-return               //
+// GENERATED TEAL    //    PC       PYTEAL PATH               LINE    PYTEAL
+#pragma version 7    //    PC[0]    examples/amm/amm_test.py  75      ConstantProductAMM()
+pushint 0 // 0       //    PC[1-2]
+return               //    PC[3]

@@ -1,16 +1,16 @@
-from base64 import b64decode
 import copy
-from typing import Any, cast, Optional
+from base64 import b64decode
+from typing import Any, Optional, cast
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
-    TransactionSigner,
-    AccountTransactionSigner,
-    MultisigTransactionSigner,
-    LogicSigTransactionSigner,
-    AtomicTransactionComposer,
-    ABIResult,
     ABI_RETURN_HASH,
+    ABIResult,
+    AccountTransactionSigner,
+    AtomicTransactionComposer,
+    LogicSigTransactionSigner,
+    MultisigTransactionSigner,
+    TransactionSigner,
     TransactionWithSigner,
     abi,
 )
@@ -20,15 +20,15 @@ from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker.application import Application, get_method_spec
+from beaker.client.logic_error import LogicException
+from beaker.client.state_decode import decode_state
 from beaker.consts import num_extra_program_pages
 from beaker.decorators import (
-    HandlerFunc,
-    MethodHints,
     DefaultArgument,
     DefaultArgumentClass,
+    HandlerFunc,
+    MethodHints,
 )
-from beaker.client.state_decode import decode_state
-from beaker.client.logic_error import LogicException
 from beaker.precompile import AppPrecompile, ProgramAssertion
 
 
@@ -754,9 +754,8 @@ class ApplicationClient:
             e,
             self.app.approval_program,
             self.approval_src_map,
+            self.app.pyteal_approval_sourcemap,
         )
-        #     self.app.pyteal_approval_sourcemap,
-        # )
 
     def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
         if signer is not None:

@@ -40,10 +40,13 @@ class LogicException(Exception):
         self.pyteal_map = pyteal_map
 
     def __str__(self):
-        r = self.pyteal_map.get_r3sourcemap()[self.line_no, 0]
+        pt_map_info = ""
+        if self.pyteal_map:
+            r = self.pyteal_map.get_r3sourcemap()[self.line_no, 0]
+            pt_map_info = f"\nMapped back to PyTeal expression '{r.source_extract}' @ {r.source}::L{r.source_line+1} (COL{r.source_column+1}, COL{r.source_column_end})"
         return (
             f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}."
-            f"\nMapped back to PyTeal expression '{r.source_extract}' @ {r.source}::L{r.source_line+1} (COL{r.source_column+1}, COL{r.source_column_end})"
+            f"{pt_map_info}"
             f"\nSurrounding lines:\n\n\t{self.trace()}"
         )
 
