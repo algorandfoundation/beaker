@@ -96,6 +96,7 @@ class Preprocessor:
                     )
 
         self.exprs = [self._translate_ast(expr) for expr in self.definition.body]
+        print(self.exprs)
         return pt.Seq(*self.exprs)
 
     def _translate_args(
@@ -215,6 +216,15 @@ class Preprocessor:
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
                 args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
+                print(self.args)
+                for idx, arg in enumerate(args):
+                    print(idx, arg)
+                    if isinstance(arg, pt.ScratchLoad):
+                        args[idx] = self._lookup_or_alloc(expr.args[idx], arg.type_of())
+                        print(arg)
+
+                print(ast.dump(expr, indent=4))
+                print(args)
                 print("FUNC: ", dir(func))
                 print(type(func))
 
@@ -225,7 +235,13 @@ class Preprocessor:
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
 
-                print(args)
+                if isinstance(func, pt.ABIReturnSubroutine):
+                    ret_val = func(*args)
+
+                    if func.output_kwarg_info is not None:
+                        return pt.Seq(ret_val.computation, pt.Int(1))
+                    return ret_val
+
                 return func(*args)
 
             case ast.If():
@@ -508,6 +524,7 @@ class Preprocessor:
                     abi_meth = pt.ABIReturnSubroutine(static_func)
                     abi_meth.subroutine.implementation = bound_func
 
+                    return abi_meth
                     return bound_func
             case _:
                 raise Unsupported("idk what to do with this")

@@ -263,12 +263,18 @@ class NativeApplication(Application):
 
 
 def test_native_app():
+    from ._builtins import log
+
     class Native(NativeApplication):
         def thing(self, a: u64) -> u64:
             return a**2
 
+        def ok(self):
+            log("ok")
+
         def other_thing(self, b: u64) -> u64:
-            return self.thing(b)
+            self.ok()
+            return 1
 
     n = Native()
     print(get_handler_config(n.thing))
