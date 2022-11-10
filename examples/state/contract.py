@@ -114,6 +114,8 @@ class StateExample(Application):
 
     @external(read_only=True)
     def get_account_state_val(self, *, output: abi.Uint64):
+        # If read account state without bracket specifying specific account,
+        # defaults to Txn.Sender()
         return output.set(self.declared_account_value[Txn.sender()])
 
     @external
