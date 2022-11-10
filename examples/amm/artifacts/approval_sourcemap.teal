@@ -1,5 +1,5 @@
 // GENERATED TEAL                                                  //    PC             PYTEAL PATH                        LINE    PYTEAL
-#pragma version 7                                                  //    PC[0]          examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+#pragma version 7                                                  //    PC[0]          examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 intcblock 0 1 1000 4 10000000000                                   //    PC[1-12]
 bytecblock 0x61 0x62 0x70 0x67 0x72                                //    PC[13-24]
 txn NumAppArgs                                                     //    PC[25-26]
@@ -219,21 +219,21 @@ app_global_put                                                     //    PC[378]
 bytec 4 // "r"                                                     //    PC[379-380]                                       91      Bytes('r')
 intc_0 // 0                                                        //    PC[381]                                           117     self.initialize_application_state()
 app_global_put                                                     //    PC[382]
-retsub                                                             //    PC[383]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[383]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]           examples/amm/amm.py                121     def set_governor(self, new_governor: abi.Account):
 // auth_only                                                       //
 authonly_1:                                                        //
 bytec_3 // "g"                                                     //    PC[384]                                           67      Bytes('g')
-app_global_get                                                     //    PC[385]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[385]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[386]        examples/amm/amm.py                121     def set_governor(self, new_governor: abi.Account):
-retsub                                                             //    PC[387]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[387]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]           examples/amm/amm.py                127     def bootstrap(
 // auth_only                                                       //
 authonly_2:                                                        //
 bytec_3 // "g"                                                     //    PC[388]                                           67      Bytes('g')
-app_global_get                                                     //    PC[389]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[389]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[390]        examples/amm/amm.py                127     def bootstrap(
-retsub                                                             //    PC[391]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[391]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // set_governor                                                    //
 setgovernor_3:                                                     //
@@ -246,7 +246,7 @@ bytec_3 // "g"                                                     //    PC[400]
 load 25                                                            //    PC[401-402]                                       123     new_governor.address()
 txnas Accounts                                                     //    PC[403-404]
 app_global_put                                                     //    PC[405]                                                   self.governor.set(new_governor.address())
-retsub                                                             //    PC[406]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[406]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // bootstrap                                                       //
 bootstrap_4:                                                       //
@@ -260,31 +260,31 @@ assert                                                             //    PC[418]
 global GroupSize                                                   //    PC[419-420]    examples/amm/amm.py                150     Global.group_size()
 pushint 2 // 2                                                     //    PC[421-422]                                               Int(2)
 ==                                                                 //    PC[423]                                                   Global.group_size() == Int(2)
-// group size not 2                                                //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// group size not 2                                                //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[424]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 4                                                             //    PC[425-426]                                       152     seed.get()
 gtxns Receiver                                                     //    PC[427-428]                                               seed.get().receiver()
 global CurrentApplicationAddress                                   //    PC[429-430]                                       28      from beaker import (
 ==                                                                 //    PC[431]                                           152     seed.get().receiver() == self.address
-// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[432]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 4                                                             //    PC[433-434]                                       156     seed.get()
 gtxns Amount                                                       //    PC[435-436]                                               seed.get().amount()
 pushint 300000 // 300000                                           //    PC[437-440]                                               consts.Algos(0.3)
 >=                                                                 //    PC[441]                                                   seed.get().amount() >= consts.Algos(0.3)
-// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[442]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 5                                                             //    PC[443-444]                                       160     a_asset.asset_id()
 txnas Assets                                                       //    PC[445-446]
 load 6                                                             //    PC[447-448]                                               b_asset.asset_id()
 txnas Assets                                                       //    PC[449-450]
 <                                                                  //    PC[451]                                                   a_asset.asset_id() < b_asset.asset_id()
-// asset a or asset b incorrect                                    //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset a or asset b incorrect                                    //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[452]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 intc_0 // 0                                                        //    PC[453]                                           167     self.asset_a.set(a_asset.asset_id())
 bytec_0 // "a"                                                     //    PC[454]                                           73      Bytes('a')
 app_global_get_ex                                                  //    PC[455]                                           167     self.asset_a.set(a_asset.asset_id())
-store 8                                                            //    PC[456-457]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 8                                                            //    PC[456-457]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 7                                                            //    PC[458-459]
 load 8                                                             //    PC[460-461]    examples/amm/amm.py                167     self.asset_a.set(a_asset.asset_id())
 !                                                                  //    PC[462]
@@ -296,7 +296,7 @@ app_global_put                                                     //    PC[469]
 intc_0 // 0                                                        //    PC[470]                                           168     self.asset_b.set(b_asset.asset_id())
 bytec_1 // "b"                                                     //    PC[471]                                           79      Bytes('b')
 app_global_get_ex                                                  //    PC[472]                                           168     self.asset_b.set(b_asset.asset_id())
-store 10                                                           //    PC[473-474]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 10                                                           //    PC[473-474]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 9                                                            //    PC[475-476]
 load 10                                                            //    PC[477-478]    examples/amm/amm.py                168     self.asset_b.set(b_asset.asset_id())
 !                                                                  //    PC[479]
@@ -308,26 +308,26 @@ app_global_put                                                     //    PC[486]
 intc_0 // 0                                                        //    PC[487]                                           169     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
 bytec_2 // "p"                                                     //    PC[488]                                           85      Bytes('p')
 app_global_get_ex                                                  //    PC[489]                                           169     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
-store 12                                                           //    PC[490-491]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 12                                                           //    PC[490-491]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 11                                                           //    PC[492-493]
 load 12                                                            //    PC[494-495]    examples/amm/amm.py                169     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
 !                                                                  //    PC[496]
 assert                                                             //    PC[497]
 bytec_2 // "p"                                                     //    PC[498]                                           85      Bytes('p')
 bytec_0 // "a"                                                     //    PC[499]                                           73      Bytes('a')
-app_global_get                                                     //    PC[500]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[500]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 bytec_1 // "b"                                                     //    PC[501]        examples/amm/amm.py                79      Bytes('b')
-app_global_get                                                     //    PC[502]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[502]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 callsub docreatepooltoken_14                                       //    PC[503-505]    examples/amm/amm.py                170     self.do_create_pool_token(self.asset_a, self.asset_b)
 app_global_put                                                     //    PC[506]                                           169     self.pool_token.set(self.do_create_pool_token(self.asset_a, self.asset_b))
 bytec_0 // "a"                                                     //    PC[507]                                           73      Bytes('a')
-app_global_get                                                     //    PC[508]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[508]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 callsub dooptin_13                                                 //    PC[509-511]    examples/amm/amm.py                175     self.do_opt_in(self.asset_a)
 bytec_1 // "b"                                                     //    PC[512]                                           79      Bytes('b')
-app_global_get                                                     //    PC[513]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[513]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 callsub dooptin_13                                                 //    PC[514-516]    examples/amm/amm.py                176     self.do_opt_in(self.asset_b)
 bytec_2 // "p"                                                     //    PC[517]                                           85      Bytes('p')
-app_global_get                                                     //    PC[518]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[518]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 retsub                                                             //    PC[519]
                                                                    //    PC[]
 // mint                                                            //
@@ -340,23 +340,23 @@ store 35                                                           //    PC[528-
 load 38                                                            //    PC[530-531]    examples/amm/amm.py                208     a_asset.asset_id()
 txnas Assets                                                       //    PC[532-533]
 bytec_0 // "a"                                                     //    PC[534]                                           73      Bytes('a')
-app_global_get                                                     //    PC[535]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[535]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[536]        examples/amm/amm.py                208     a_asset.asset_id() == self.asset_a
-// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[537]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 39                                                            //    PC[538-539]                                       212     b_asset.asset_id()
 txnas Assets                                                       //    PC[540-541]
 bytec_1 // "b"                                                     //    PC[542]                                           79      Bytes('b')
-app_global_get                                                     //    PC[543]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[543]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[544]        examples/amm/amm.py                212     b_asset.asset_id() == self.asset_b
-// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[545]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 37                                                            //    PC[546-547]                                       216     pool_asset.asset_id()
 txnas Assets                                                       //    PC[548-549]
 bytec_2 // "p"                                                     //    PC[550]                                           85      Bytes('p')
-app_global_get                                                     //    PC[551]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[551]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[552]        examples/amm/amm.py                216     pool_asset.asset_id() == self.pool_token
-// asset pool incorrect                                            //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset pool incorrect                                            //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[553]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 35                                                            //    PC[554-555]                                       221     a_xfer.get()
 gtxns Sender                                                       //    PC[556-557]                                               a_xfer.get().sender()
@@ -367,67 +367,67 @@ gtxns Sender                                                       //    PC[563-
 txn Sender                                                         //    PC[565-566]                                               Txn.sender()
 ==                                                                 //    PC[567]                                                   b_xfer.get().sender() == Txn.sender()
 &&                                                                 //    PC[568]                                           220     And(a_xfer.get().sender() == Txn.sender(), b_xfer.get().sender() == Txn.sender())
-// invalid sender                                                  //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// invalid sender                                                  //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[569]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 35                                                            //    PC[570-571]                                       230     a_xfer.get()
 gtxns AssetReceiver                                                //    PC[572-573]                                               a_xfer.get().asset_receiver()
 global CurrentApplicationAddress                                   //    PC[574-575]                                       28      from beaker import (
 ==                                                                 //    PC[576]                                           230     a_xfer.get().asset_receiver() == self.address
-// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[577]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 35                                                            //    PC[578-579]                                       234     a_xfer.get()
 gtxns XferAsset                                                    //    PC[580-581]                                               a_xfer.get().xfer_asset()
 bytec_0 // "a"                                                     //    PC[582]                                           73      Bytes('a')
-app_global_get                                                     //    PC[583]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[583]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[584]        examples/amm/amm.py                234     a_xfer.get().xfer_asset() == self.asset_a
-// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[585]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 35                                                            //    PC[586-587]                                       238     a_xfer.get()
 gtxns AssetAmount                                                  //    PC[588-589]                                               a_xfer.get().asset_amount()
 intc_0 // 0                                                        //    PC[590]                                                   Int(0)
 >                                                                  //    PC[591]                                                   a_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[592]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 36                                                            //    PC[593-594]                                       245     b_xfer.get()
 gtxns AssetReceiver                                                //    PC[595-596]                                               b_xfer.get().asset_receiver()
 global CurrentApplicationAddress                                   //    PC[597-598]                                       28      from beaker import (
 ==                                                                 //    PC[599]                                           245     b_xfer.get().asset_receiver() == self.address
-// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[600]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 36                                                            //    PC[601-602]                                       249     b_xfer.get()
 gtxns XferAsset                                                    //    PC[603-604]                                               b_xfer.get().xfer_asset()
 bytec_1 // "b"                                                     //    PC[605]                                           79      Bytes('b')
-app_global_get                                                     //    PC[606]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[606]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[607]        examples/amm/amm.py                249     b_xfer.get().xfer_asset() == self.asset_b
-// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[608]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 36                                                            //    PC[609-610]                                       253     b_xfer.get()
 gtxns AssetAmount                                                  //    PC[611-612]                                               b_xfer.get().asset_amount()
 intc_0 // 0                                                        //    PC[613]                                                   Int(0)
 >                                                                  //    PC[614]                                                   b_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[615]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 global CurrentApplicationAddress                                   //    PC[616-617]                                       28      from beaker import (
 load 37                                                            //    PC[618-619]                                       264     pool_asset.holding(self.address)
 asset_holding_get AssetBalance                                     //    PC[620-621]                                               pool_asset.holding(self.address).balance()
-store 41                                                           //    PC[622-623]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 41                                                           //    PC[622-623]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 40                                                           //    PC[624-625]
-global CurrentApplicationAddress                                   //    PC[626-627]    examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[626-627]    examples/amm/amm.py                28      from beaker import (
 load 38                                                            //    PC[628-629]                                       265     a_asset.holding(self.address)
 asset_holding_get AssetBalance                                     //    PC[630-631]                                               a_asset.holding(self.address).balance()
-store 43                                                           //    PC[632-633]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 43                                                           //    PC[632-633]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 42                                                           //    PC[634-635]
-global CurrentApplicationAddress                                   //    PC[636-637]    examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[636-637]    examples/amm/amm.py                28      from beaker import (
 load 39                                                            //    PC[638-639]                                       266     b_asset.holding(self.address)
 asset_holding_get AssetBalance                                     //    PC[640-641]                                               b_asset.holding(self.address).balance()
-store 45                                                           //    PC[642-643]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 45                                                           //    PC[642-643]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 44                                                           //    PC[644-645]
 load 41                                                            //    PC[646-647]    examples/amm/amm.py                268     pool_bal.hasValue()
-assert                                                             //    PC[648]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[648]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 43                                                            //    PC[649-650]    examples/amm/amm.py                269     a_bal.hasValue()
-assert                                                             //    PC[651]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[651]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 45                                                            //    PC[652-653]    examples/amm/amm.py                270     b_bal.hasValue()
-assert                                                             //    PC[654]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[654]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 42                                                            //    PC[655-656]    examples/amm/amm.py                275     a_bal.value()
 load 35                                                            //    PC[657-658]                                               a_xfer.get()
 gtxns AssetAmount                                                  //    PC[659-660]                                               a_xfer.get().asset_amount()
@@ -466,17 +466,17 @@ store 46                                                           //    PC[717-
 load 46                                                            //    PC[719-720]                                       294     to_mint.load()
 intc_0 // 0                                                        //    PC[721]                                                   Int(0)
 >                                                                  //    PC[722]                                                   to_mint.load() > Int(0)
-// outgoing amount too low                                         //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// outgoing amount too low                                         //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[723]        examples/amm/amm.py                293     Assert(to_mint.load() > Int(0), comment=ConstantProductAMMErrors.SendAmountTooLow)
 txn Sender                                                         //    PC[724-725]                                       298     Txn.sender()
 bytec_2 // "p"                                                     //    PC[726]                                           85      Bytes('p')
-app_global_get                                                     //    PC[727]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[727]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 46                                                            //    PC[728-729]    examples/amm/amm.py                298     to_mint.load()
 callsub doaxfer_12                                                 //    PC[730-732]                                               self.do_axfer(Txn.sender(), self.pool_token, to_mint.load())
 bytec 4 // "r"                                                     //    PC[733-734]                                       91      Bytes('r')
 callsub computeratio_15                                            //    PC[735-737]                                       299     self.compute_ratio()
 app_global_put                                                     //    PC[738]                                                   self.ratio.set(self.compute_ratio())
-retsub                                                             //    PC[739]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[739]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // burn                                                            //
 burn_6:                                                            //
@@ -487,70 +487,70 @@ store 58                                                           //    PC[746-
 load 59                                                            //    PC[748-749]    examples/amm/amm.py                321     pool_asset.asset_id()
 txnas Assets                                                       //    PC[750-751]
 bytec_2 // "p"                                                     //    PC[752]                                           85      Bytes('p')
-app_global_get                                                     //    PC[753]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[753]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[754]        examples/amm/amm.py                321     pool_asset.asset_id() == self.pool_token
-// asset pool incorrect                                            //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset pool incorrect                                            //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[755]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 60                                                            //    PC[756-757]                                       325     a_asset.asset_id()
 txnas Assets                                                       //    PC[758-759]
 bytec_0 // "a"                                                     //    PC[760]                                           73      Bytes('a')
-app_global_get                                                     //    PC[761]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[761]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[762]        examples/amm/amm.py                325     a_asset.asset_id() == self.asset_a
-// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[763]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 61                                                            //    PC[764-765]                                       329     b_asset.asset_id()
 txnas Assets                                                       //    PC[766-767]
 bytec_1 // "b"                                                     //    PC[768]                                           79      Bytes('b')
-app_global_get                                                     //    PC[769]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[769]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[770]        examples/amm/amm.py                329     b_asset.asset_id() == self.asset_b
-// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[771]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 58                                                            //    PC[772-773]                                       336     pool_xfer.get()
 gtxns AssetReceiver                                                //    PC[774-775]                                               pool_xfer.get().asset_receiver()
 global CurrentApplicationAddress                                   //    PC[776-777]                                       28      from beaker import (
 ==                                                                 //    PC[778]                                           336     pool_xfer.get().asset_receiver() == self.address
-// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// receiver not app address                                        //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[779]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 58                                                            //    PC[780-781]                                       340     pool_xfer.get()
 gtxns AssetAmount                                                  //    PC[782-783]                                               pool_xfer.get().asset_amount()
 intc_0 // 0                                                        //    PC[784]                                                   Int(0)
 >                                                                  //    PC[785]                                                   pool_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[786]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 58                                                            //    PC[787-788]                                       344     pool_xfer.get()
 gtxns XferAsset                                                    //    PC[789-790]                                               pool_xfer.get().xfer_asset()
 bytec_2 // "p"                                                     //    PC[791]                                           85      Bytes('p')
-app_global_get                                                     //    PC[792]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[792]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[793]        examples/amm/amm.py                344     pool_xfer.get().xfer_asset() == self.pool_token
-// asset pool incorrect                                            //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset pool incorrect                                            //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[794]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 58                                                            //    PC[795-796]                                       348     pool_xfer.get()
 gtxns Sender                                                       //    PC[797-798]                                               pool_xfer.get().sender()
 txn Sender                                                         //    PC[799-800]                                               Txn.sender()
 ==                                                                 //    PC[801]                                                   pool_xfer.get().sender() == Txn.sender()
-// invalid sender                                                  //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// invalid sender                                                  //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[802]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 global CurrentApplicationAddress                                   //    PC[803-804]                                       28      from beaker import (
 load 59                                                            //    PC[805-806]                                       355     pool_asset.holding(self.address)
 asset_holding_get AssetBalance                                     //    PC[807-808]                                               pool_asset.holding(self.address).balance()
-store 63                                                           //    PC[809-810]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 63                                                           //    PC[809-810]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 62                                                           //    PC[811-812]
-global CurrentApplicationAddress                                   //    PC[813-814]    examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[813-814]    examples/amm/amm.py                28      from beaker import (
 load 60                                                            //    PC[815-816]                                       356     a_asset.holding(self.address)
 asset_holding_get AssetBalance                                     //    PC[817-818]                                               a_asset.holding(self.address).balance()
-store 65                                                           //    PC[819-820]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 65                                                           //    PC[819-820]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 64                                                           //    PC[821-822]
-global CurrentApplicationAddress                                   //    PC[823-824]    examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[823-824]    examples/amm/amm.py                28      from beaker import (
 load 61                                                            //    PC[825-826]                                       357     b_asset.holding(self.address)
 asset_holding_get AssetBalance                                     //    PC[827-828]                                               b_asset.holding(self.address).balance()
-store 67                                                           //    PC[829-830]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 67                                                           //    PC[829-830]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 66                                                           //    PC[831-832]
 load 63                                                            //    PC[833-834]    examples/amm/amm.py                359     pool_bal.hasValue()
-assert                                                             //    PC[835]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[835]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 65                                                            //    PC[836-837]    examples/amm/amm.py                360     a_bal.hasValue()
-assert                                                             //    PC[838]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[838]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 67                                                            //    PC[839-840]    examples/amm/amm.py                361     b_bal.hasValue()
-assert                                                             //    PC[841]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[841]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 intc 4 // 10000000000                                              //    PC[842-843]    examples/amm/amm.py                101     Int(_total_supply)
 load 62                                                            //    PC[844-845]                                       365     pool_bal.value()
 load 58                                                            //    PC[846-847]                                               pool_xfer.get()
@@ -572,18 +572,18 @@ callsub tokenstoburn_10                                            //    PC[875-
 store 70                                                           //    PC[878-879]                                       374     (b_amt := ScratchVar()).store(self.tokens_to_burn(issued.load(), b_bal.value(), pool_xfer.get().asset_amount()))
 txn Sender                                                         //    PC[880-881]                                       383     Txn.sender()
 bytec_0 // "a"                                                     //    PC[882]                                           73      Bytes('a')
-app_global_get                                                     //    PC[883]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[883]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 69                                                            //    PC[884-885]    examples/amm/amm.py                385     a_amt.load()
 callsub doaxfer_12                                                 //    PC[886-888]                                       382     self.do_axfer(Txn.sender(), self.asset_a, a_amt.load())
 txn Sender                                                         //    PC[889-890]                                       389     Txn.sender()
 bytec_1 // "b"                                                     //    PC[891]                                           79      Bytes('b')
-app_global_get                                                     //    PC[892]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[892]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 70                                                            //    PC[893-894]    examples/amm/amm.py                391     b_amt.load()
 callsub doaxfer_12                                                 //    PC[895-897]                                       388     self.do_axfer(Txn.sender(), self.asset_b, b_amt.load())
 bytec 4 // "r"                                                     //    PC[898-899]                                       91      Bytes('r')
 callsub computeratio_15                                            //    PC[900-902]                                       393     self.compute_ratio()
 app_global_put                                                     //    PC[903]                                                   self.ratio.set(self.compute_ratio())
-retsub                                                             //    PC[904]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[904]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // swap                                                            //
 swap_7:                                                            //
@@ -593,65 +593,65 @@ store 74                                                           //    PC[909-
 load 75                                                            //    PC[911-912]    examples/amm/amm.py                412     a_asset.asset_id()
 txnas Assets                                                       //    PC[913-914]
 bytec_0 // "a"                                                     //    PC[915]                                           73      Bytes('a')
-app_global_get                                                     //    PC[916]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[916]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[917]        examples/amm/amm.py                412     a_asset.asset_id() == self.asset_a
-// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset a incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[918]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 76                                                            //    PC[919-920]                                       416     b_asset.asset_id()
 txnas Assets                                                       //    PC[921-922]
 bytec_1 // "b"                                                     //    PC[923]                                           79      Bytes('b')
-app_global_get                                                     //    PC[924]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[924]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[925]        examples/amm/amm.py                416     b_asset.asset_id() == self.asset_b
-// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset b incorrect                                               //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[926]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 74                                                            //    PC[927-928]                                       424     swap_xfer.get()
 gtxns XferAsset                                                    //    PC[929-930]                                               swap_xfer.get().xfer_asset()
 bytec_0 // "a"                                                     //    PC[931]                                           73      Bytes('a')
-app_global_get                                                     //    PC[932]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[932]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[933]        examples/amm/amm.py                424     swap_xfer.get().xfer_asset() == self.asset_a
 load 74                                                            //    PC[934-935]                                       425     swap_xfer.get()
 gtxns XferAsset                                                    //    PC[936-937]                                               swap_xfer.get().xfer_asset()
 bytec_1 // "b"                                                     //    PC[938]                                           79      Bytes('b')
-app_global_get                                                     //    PC[939]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[939]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[940]        examples/amm/amm.py                425     swap_xfer.get().xfer_asset() == self.asset_b
 ||                                                                 //    PC[941]                                           423     Or(swap_xfer.get().xfer_asset() == self.asset_a, swap_xfer.get().xfer_asset() == self.asset_b)
-// asset a or asset b incorrect                                    //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// asset a or asset b incorrect                                    //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[942]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 74                                                            //    PC[943-944]                                       430     swap_xfer.get()
 gtxns AssetAmount                                                  //    PC[945-946]                                               swap_xfer.get().asset_amount()
 intc_0 // 0                                                        //    PC[947]                                                   Int(0)
 >                                                                  //    PC[948]                                                   swap_xfer.get().asset_amount() > Int(0)
-// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// amount minimum not met                                          //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[949]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 load 74                                                            //    PC[950-951]                                       434     swap_xfer.get()
 gtxns Sender                                                       //    PC[952-953]                                               swap_xfer.get().sender()
 txn Sender                                                         //    PC[954-955]                                               Txn.sender()
 ==                                                                 //    PC[956]                                                   swap_xfer.get().sender() == Txn.sender()
-// invalid sender                                                  //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// invalid sender                                                  //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[957]        examples/amm/amm.py                45      Assert(cond, comment=cmt)
 global CurrentApplicationAddress                                   //    PC[958-959]                                       28      from beaker import (
 load 74                                                            //    PC[960-961]                                       444     swap_xfer.get()
 gtxns XferAsset                                                    //    PC[962-963]                                               swap_xfer.get().xfer_asset()
 asset_holding_get AssetBalance                                     //    PC[964-965]                                       448     AssetHolding.balance(self.address, in_id)
-store 78                                                           //    PC[966-967]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 78                                                           //    PC[966-967]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 77                                                           //    PC[968-969]
-global CurrentApplicationAddress                                   //    PC[970-971]    examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[970-971]    examples/amm/amm.py                28      from beaker import (
 load 74                                                            //    PC[972-973]                                       440     swap_xfer.get()
 gtxns XferAsset                                                    //    PC[974-975]                                               swap_xfer.get().xfer_asset()
 bytec_0 // "a"                                                     //    PC[976]                                           73      Bytes('a')
-app_global_get                                                     //    PC[977]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[977]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[978]        examples/amm/amm.py                440     swap_xfer.get().xfer_asset() == self.asset_a
 bnz swap_7_l5                                                      //    PC[979-981]                                       439     If(swap_xfer.get().xfer_asset() == self.asset_a, self.asset_b, self.asset_a)
 bytec_0 // "a"                                                     //    PC[982]                                           73      Bytes('a')
-app_global_get                                                     //    PC[983]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[983]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 swap_7_l2:                                                         //    PC[]           examples/amm/amm.py                439     If(swap_xfer.get().xfer_asset() == self.asset_a, self.asset_b, self.asset_a)
 asset_holding_get AssetBalance                                     //    PC[984-985]                                       449     AssetHolding.balance(self.address, out_id)
-store 80                                                           //    PC[986-987]    examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 80                                                           //    PC[986-987]    examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 79                                                           //    PC[988-989]
 load 78                                                            //    PC[990-991]    examples/amm/amm.py                451     in_sup.hasValue()
-assert                                                             //    PC[992]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[992]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 80                                                            //    PC[993-994]    examples/amm/amm.py                452     out_sup.hasValue()
-assert                                                             //    PC[995]        examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[995]        examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 74                                                            //    PC[996-997]    examples/amm/amm.py                456     swap_xfer.get()
 gtxns AssetAmount                                                  //    PC[998-999]                                               swap_xfer.get().asset_amount()
 load 77                                                            //    PC[1000-1001]                                     457     in_sup.value()
@@ -664,25 +664,25 @@ store 81                                                           //    PC[1012
 load 81                                                            //    PC[1014-1015]                                     462     to_swap.load()
 intc_0 // 0                                                        //    PC[1016]                                                  Int(0)
 >                                                                  //    PC[1017]                                                  to_swap.load() > Int(0)
-// outgoing amount too low                                         //    PC[]           examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+// outgoing amount too low                                         //    PC[]           examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 assert                                                             //    PC[1018]       examples/amm/amm.py                461     Assert(to_swap.load() > Int(0), comment=ConstantProductAMMErrors.SendAmountTooLow)
 txn Sender                                                         //    PC[1019-1020]                                     466     Txn.sender()
 load 74                                                            //    PC[1021-1022]                                     440     swap_xfer.get()
 gtxns XferAsset                                                    //    PC[1023-1024]                                             swap_xfer.get().xfer_asset()
 bytec_0 // "a"                                                     //    PC[1025]                                          73      Bytes('a')
-app_global_get                                                     //    PC[1026]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[1026]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 ==                                                                 //    PC[1027]       examples/amm/amm.py                440     swap_xfer.get().xfer_asset() == self.asset_a
 bnz swap_7_l4                                                      //    PC[1028-1030]                                     439     If(swap_xfer.get().xfer_asset() == self.asset_a, self.asset_b, self.asset_a)
 bytec_0 // "a"                                                     //    PC[1031]                                          73      Bytes('a')
-app_global_get                                                     //    PC[1032]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[1032]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 b swap_7_l6                                                        //    PC[1033-1035]  examples/amm/amm.py                439     If(swap_xfer.get().xfer_asset() == self.asset_a, self.asset_b, self.asset_a)
 swap_7_l4:                                                         //    PC[]
 bytec_1 // "b"                                                     //    PC[1036]                                          79      Bytes('b')
-app_global_get                                                     //    PC[1037]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[1037]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 b swap_7_l6                                                        //    PC[1038-1040]  examples/amm/amm.py                439     If(swap_xfer.get().xfer_asset() == self.asset_a, self.asset_b, self.asset_a)
 swap_7_l5:                                                         //    PC[]
 bytec_1 // "b"                                                     //    PC[1041]                                          79      Bytes('b')
-app_global_get                                                     //    PC[1042]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[1042]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 b swap_7_l2                                                        //    PC[1043-1045]  examples/amm/amm.py                439     If(swap_xfer.get().xfer_asset() == self.asset_a, self.asset_b, self.asset_a)
 swap_7_l6:                                                         //    PC[]
 load 81                                                            //    PC[1046-1047]                                     468     to_swap.load()
@@ -690,7 +690,7 @@ callsub doaxfer_12                                                 //    PC[1048
 bytec 4 // "r"                                                     //    PC[1051-1052]                                     91      Bytes('r')
 callsub computeratio_15                                            //    PC[1053-1055]                                     470     self.compute_ratio()
 app_global_put                                                     //    PC[1056]                                                  self.ratio.set(self.compute_ratio())
-retsub                                                             //    PC[1057]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1057]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // tokens_to_mint                                                  //
 tokenstomint_8:                                                    //
@@ -703,7 +703,7 @@ load 50                                                            //    PC[1068
 intc_2 // 1000                                                     //    PC[1070]       examples/amm/amm.py                105     Int(_scale)
 mulw                                                               //    PC[1071]                                          494     WideRatio([a_amount, self.scale], [a_supply])
 intc_0 // 0                                                        //    PC[1072]
-load 48                                                            //    PC[1073-1074]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 48                                                            //    PC[1073-1074]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 divmodw                                                            //    PC[1075]       examples/amm/amm.py                494     WideRatio([a_amount, self.scale], [a_supply])
 pop                                                                //    PC[1076]
 pop                                                                //    PC[1077]
@@ -711,11 +711,11 @@ swap                                                               //    PC[1078
 !                                                                  //    PC[1079]
 assert                                                             //    PC[1080]
 store 52                                                           //    PC[1081-1082]                                     493     (a_rat := ScratchVar()).store(WideRatio([a_amount, self.scale], [a_supply]))
-load 51                                                            //    PC[1083-1084]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 51                                                            //    PC[1083-1084]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 intc_2 // 1000                                                     //    PC[1085]       examples/amm/amm.py                105     Int(_scale)
 mulw                                                               //    PC[1086]                                          497     WideRatio([b_amount, self.scale], [b_supply])
 intc_0 // 0                                                        //    PC[1087]
-load 49                                                            //    PC[1088-1089]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 49                                                            //    PC[1088-1089]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 divmodw                                                            //    PC[1090]       examples/amm/amm.py                497     WideRatio([b_amount, self.scale], [b_supply])
 pop                                                                //    PC[1091]
 pop                                                                //    PC[1092]
@@ -732,7 +732,7 @@ b tokenstomint_8_l3                                                //    PC[1108
 tokenstomint_8_l2:                                                 //    PC[]
 load 52                                                            //    PC[1111-1112]                                             a_rat.load()
 tokenstomint_8_l3:                                                 //    PC[]                                                      If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load())
-load 47                                                            //    PC[1113-1114]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 47                                                            //    PC[1113-1114]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 mulw                                                               //    PC[1115]       examples/amm/amm.py                499     WideRatio([If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued], [self.scale])
 intc_0 // 0                                                        //    PC[1116]
 intc_2 // 1000                                                     //    PC[1117]                                          105     Int(_scale)
@@ -742,7 +742,7 @@ pop                                                                //    PC[1120
 swap                                                               //    PC[1121]
 !                                                                  //    PC[1122]
 assert                                                             //    PC[1123]
-retsub                                                             //    PC[1124]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1124]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // tokens_to_mint_initial                                          //
 tokenstomintinitial_9:                                             //
@@ -750,7 +750,7 @@ tokenstomintinitial_9:                                             //
 sqrt                                                               //    PC[1126]                                                  Sqrt(a_amount * b_amount)
 intc_2 // 1000                                                     //    PC[1127]                                          105     Int(_scale)
 -                                                                  //    PC[1128]                                          507     Sqrt(a_amount * b_amount) - self.scale
-retsub                                                             //    PC[1129]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1129]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // tokens_to_burn                                                  //
 tokenstoburn_10:                                                   //
@@ -761,14 +761,14 @@ load 72                                                            //    PC[1136
 load 73                                                            //    PC[1138-1139]
 mulw                                                               //    PC[1140]       examples/amm/amm.py                511     WideRatio([supply, amount], [issued])
 intc_0 // 0                                                        //    PC[1141]
-load 71                                                            //    PC[1142-1143]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 71                                                            //    PC[1142-1143]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 divmodw                                                            //    PC[1144]       examples/amm/amm.py                511     WideRatio([supply, amount], [issued])
 pop                                                                //    PC[1145]
 pop                                                                //    PC[1146]
 swap                                                               //    PC[1147]
 !                                                                  //    PC[1148]
 assert                                                             //    PC[1149]
-retsub                                                             //    PC[1150]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1150]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // tokens_to_swap                                                  //
 tokenstoswap_11:                                                   //
@@ -780,7 +780,7 @@ intc_2 // 1000                                                     //    PC[1159
 pushint 5 // 5                                                     //    PC[1160-1161]                                     108     Int(_fee)
 -                                                                  //    PC[1162]                                          515     self.scale - self.fee
 mulw                                                               //    PC[1163]                                          516     WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
-load 84                                                            //    PC[1164-1165]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 84                                                            //    PC[1164-1165]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 uncover 2                                                          //    PC[1166-1167]  examples/amm/amm.py                516     WideRatio([in_amount, factor, out_supply], [in_supply * self.scale + in_amount * factor])
 dig 1                                                              //    PC[1168-1169]
 *                                                                  //    PC[1170]
@@ -790,10 +790,10 @@ cover 2                                                            //    PC[1174
 +                                                                  //    PC[1176]
 swap                                                               //    PC[1177]
 intc_0 // 0                                                        //    PC[1178]
-load 83                                                            //    PC[1179-1180]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 83                                                            //    PC[1179-1180]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 intc_2 // 1000                                                     //    PC[1181]       examples/amm/amm.py                105     Int(_scale)
 *                                                                  //    PC[1182]                                          518     in_supply * self.scale
-load 82                                                            //    PC[1183-1184]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 82                                                            //    PC[1183-1184]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 intc_2 // 1000                                                     //    PC[1185]       examples/amm/amm.py                105     Int(_scale)
 pushint 5 // 5                                                     //    PC[1186-1187]                                     108     Int(_fee)
 -                                                                  //    PC[1188]                                          515     self.scale - self.fee
@@ -805,7 +805,7 @@ pop                                                                //    PC[1193
 swap                                                               //    PC[1194]
 !                                                                  //    PC[1195]
 assert                                                             //    PC[1196]
-retsub                                                             //    PC[1197]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1197]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // do_axfer                                                        //
 doaxfer_12:                                                        //
@@ -815,16 +815,16 @@ store 27                                                           //    PC[1202
 itxn_begin                                                         //    PC[1204]       examples/amm/amm.py                527     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
 intc_3 // axfer                                                    //    PC[1205]
 itxn_field TypeEnum                                                //    PC[1206-1207]
-load 28                                                            //    PC[1208-1209]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 28                                                            //    PC[1208-1209]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 itxn_field XferAsset                                               //    PC[1210-1211]  examples/amm/amm.py                527     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
-load 29                                                            //    PC[1212-1213]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 29                                                            //    PC[1212-1213]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 itxn_field AssetAmount                                             //    PC[1214-1215]  examples/amm/amm.py                527     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
-load 27                                                            //    PC[1216-1217]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+load 27                                                            //    PC[1216-1217]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 itxn_field AssetReceiver                                           //    PC[1218-1219]  examples/amm/amm.py                527     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
 intc_0 // 0                                                        //    PC[1220]                                          533     Int(0)
 itxn_field Fee                                                     //    PC[1221-1222]                                     527     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetTransfer, TxnField.xfer_asset: aid, TxnField.asset_amount: amt, TxnField.asset_receiver: rx, TxnField.fee: Int(0)})
 itxn_submit                                                        //    PC[1223]
-retsub                                                             //    PC[1224]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1224]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // do_opt_in                                                       //
 dooptin_13:                                                        //
@@ -833,22 +833,22 @@ global CurrentApplicationAddress                                   //    PC[1227
 load 26                                                            //    PC[1229-1230]
 intc_0 // 0                                                        //    PC[1231]       examples/amm/amm.py                539     Int(0)
 callsub doaxfer_12                                                 //    PC[1232-1234]                                             self.do_axfer(self.address, aid, Int(0))
-retsub                                                             //    PC[1235]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1235]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // do_create_pool_token                                            //
 docreatepooltoken_14:                                              //
 store 30                                                           //    PC[1236-1237]
 asset_params_get AssetUnitName                                     //    PC[1238-1239]  examples/amm/amm.py                544     AssetParam.unitName(a)
-store 32                                                           //    PC[1240-1241]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 32                                                           //    PC[1240-1241]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 31                                                           //    PC[1242-1243]
 load 30                                                            //    PC[1244-1245]
 asset_params_get AssetUnitName                                     //    PC[1246-1247]  examples/amm/amm.py                545     AssetParam.unitName(b)
-store 34                                                           //    PC[1248-1249]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 34                                                           //    PC[1248-1249]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 33                                                           //    PC[1250-1251]
 load 32                                                            //    PC[1252-1253]  examples/amm/amm.py                547     una.hasValue()
-assert                                                             //    PC[1254]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[1254]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 34                                                            //    PC[1255-1256]  examples/amm/amm.py                548     unb.hasValue()
-assert                                                             //    PC[1257]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[1257]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 itxn_begin                                                         //    PC[1258]       examples/amm/amm.py                550     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
 pushint 3 // acfg                                                  //    PC[1259-1260]
 itxn_field TypeEnum                                                //    PC[1261-1262]
@@ -874,26 +874,26 @@ intc_0 // 0                                                        //    PC[1304
 itxn_field Fee                                                     //    PC[1305-1306]                                     550     InnerTxnBuilder.Execute({TxnField.type_enum: TxnType.AssetConfig, TxnField.config_asset_name: Concat(Bytes('DPT-'), una.value(), Bytes('-'), unb.value()), TxnField.config_asset_unit_name: Bytes('dpt'), TxnField.config_asset_total: self.total_supply, TxnField.config_asset_decimals: Int(3), TxnField.config_asset_manager: self.address, TxnField.config_asset_reserve: self.address, TxnField.fee: Int(0)})
 itxn_submit                                                        //    PC[1307]
 itxn CreatedAssetID                                                //    PC[1308-1309]                                     564     InnerTxn.created_asset_id()
-retsub                                                             //    PC[1310]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1310]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
                                                                    //    PC[]
 // compute_ratio                                                   //
 computeratio_15:                                                   //
-global CurrentApplicationAddress                                   //    PC[1311-1312]  examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[1311-1312]  examples/amm/amm.py                28      from beaker import (
 bytec_0 // "a"                                                     //    PC[1313]                                          73      Bytes('a')
-app_global_get                                                     //    PC[1314]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[1314]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 asset_holding_get AssetBalance                                     //    PC[1315-1316]  examples/amm/amm.py                570     AssetHolding.balance(self.address, self.asset_a)
-store 55                                                           //    PC[1317-1318]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 55                                                           //    PC[1317-1318]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 54                                                           //    PC[1319-1320]
-global CurrentApplicationAddress                                   //    PC[1321-1322]  examples/amm/amm.py                        from beaker import (
+global CurrentApplicationAddress                                   //    PC[1321-1322]  examples/amm/amm.py                28      from beaker import (
 bytec_1 // "b"                                                     //    PC[1323]                                          79      Bytes('b')
-app_global_get                                                     //    PC[1324]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+app_global_get                                                     //    PC[1324]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 asset_holding_get AssetBalance                                     //    PC[1325-1326]  examples/amm/amm.py                574     AssetHolding.balance(self.address, self.asset_b)
-store 57                                                           //    PC[1327-1328]  examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+store 57                                                           //    PC[1327-1328]  examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 store 56                                                           //    PC[1329-1330]
 load 55                                                            //    PC[1331-1332]  examples/amm/amm.py                579     bal_a.hasValue()
-assert                                                             //    PC[1333]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[1333]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 57                                                            //    PC[1334-1335]  examples/amm/amm.py                580     bal_b.hasValue()
-assert                                                             //    PC[1336]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+assert                                                             //    PC[1336]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
 load 54                                                            //    PC[1337-1338]  examples/amm/amm.py                582     bal_a.value()
 intc_2 // 1000                                                     //    PC[1339]                                          105     Int(_scale)
 mulw                                                               //    PC[1340]                                          582     WideRatio([bal_a.value(), self.scale], [bal_b.value()])
@@ -905,4 +905,4 @@ pop                                                                //    PC[1346
 swap                                                               //    PC[1347]
 !                                                                  //    PC[1348]
 assert                                                             //    PC[1349]
-retsub                                                             //    PC[1350]       examples/amm/pt_sourcemap_test.py  28      ConstantProductAMM()
+retsub                                                             //    PC[1350]       examples/amm/pt_sourcemap_test.py  22      ConstantProductAMM()
