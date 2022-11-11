@@ -1,6 +1,9 @@
+
 import pytest
 import pyteal as pt
+
 from beaker.application import Application
+from beaker.consts import num_extra_program_pages
 from beaker.decorators import external
 from beaker.client import ApplicationClient
 
@@ -12,6 +15,7 @@ from beaker.precompile import (
     AppPrecompile,
     LSigPrecompile,
     py_encode_uvarint,
+    Precompile,
 )
 
 
@@ -137,12 +141,23 @@ class InnerLsig(LogicSignature):
         return pt.Approve()
 
 
+class LargeApp(Application):
+    longBytes = 4092 * b"A"
+    longBytes2 = 2048 * b"A"
+
+    @external
+    def gonnaFillWithByteBlocks(self):
+        return pt.Assert(
+            pt.Bytes(self.longBytes) != pt.Bytes(self.longBytes2)
+        )
+
+
+
 class InnerApp(Application):
     pass
 
 
 class OuterApp(Application):
-
     child: AppPrecompile = AppPrecompile(InnerApp())
     lsig: LSigPrecompile = LSigPrecompile(InnerLsig())
 
@@ -163,7 +178,6 @@ class OuterApp(Application):
 
 
 def test_nested_precompile():
-
     oa = OuterApp()
 
     # Nothing is available until we build out the app and all its precompiles
@@ -194,6 +208,13 @@ def test_build_recursive():
     pc = AppPrecompile(app)
     pc.compile(get_algod_client())
     _check_app_precompiles(pc)
+
+
+def test_extra_page_population():
+    app = LargeApp()
+    pc = AppPrecompile(app)
+    pc.compile(get_algod_client())
+    _check_populated_program_pages(pc)
 
 
 def _check_app_precompiles(app_precompile: AppPrecompile):
@@ -235,3 +256,21 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
     assert len(lsig_precompile.logic._template_values) == len(
         lsig_precompile.lsig.template_variables
     )
+
+
+def _check_populated_program_pages(app_precompile: AppPrecompile):
+    assert app_precompile.approval.program_pages is not None
+    assert app_precompile.clear.program_pages is not None
+    recovered_approval_binary = b""
+    for approval_page in app_precompile.approval.program_pages:
+       recovered_approval_binary += approval_page._binary
+
+    recovered_clear_binary = b""
+    for clear_page in app_precompile.clear.program_pages:
+       recovered_clear_binary += clear_page._binary
+
+    assert recovered_approval_binary == app_precompile.approval._binary
+    assert recovered_clear_binary == app_precompile.clear._binary
+    for page in app_precompile.approval.program_pages:
+        assert len(page._hash_digest) == 32
+    print("GOT IT")

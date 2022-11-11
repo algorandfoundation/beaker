@@ -72,7 +72,7 @@ class ProgramPage:
     hash_digest: Bytes = field(init=False)
 
     def __post_init__(self):
-        self.binary = Bytes(self._binary),
+        self.binary = (Bytes(self._binary),)
         self.hash_digest = Bytes(self._hash_digest)
 
 
@@ -100,7 +100,7 @@ class Precompile:
             if TMPL_PREFIX in line:
                 op, name, _, _ = line.split(" ")
                 tv = PrecompileTemplateValue(
-                    name=name[len(TMPL_PREFIX):], is_bytes=op == PUSH_BYTES, line=idx
+                    name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
                 )
                 lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
                 template_values.append(tv)
@@ -128,8 +128,8 @@ class Precompile:
         self.program_pages = [
             ProgramPage(
                 index=i,
-                _binary=self._binary[i: i + 2048],
-                _hash_digest=hashlib.sha256(self._binary[i: i + 2048]).digest(),
+                _binary=self._binary[i : i + 2048],
+                _hash_digest=hashlib.sha256(self._binary[i : i + 2048]).digest(),
             )
             for i in range(0, len(self._binary), 2048)
         ]
@@ -189,7 +189,7 @@ class Precompile:
                 curr_val = py_encode_uvarint(arg)
 
             # update the working buffer to include the new value, replacing the current 0 value
-            populated_binary[tv.pc + offset: tv.pc + offset + 1] = curr_val
+            populated_binary[tv.pc + offset : tv.pc + offset + 1] = curr_val
 
             # update the offset with the length(value) - 1 to account for the existing 0 value
             # and help keep track of how to shift the pc later
