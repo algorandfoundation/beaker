@@ -12,12 +12,10 @@ op_lookup = {str(op): op.name for op in pt.Op}
 class Unprocessor:
     def __init__(self, e: pt.Expr):
         self.slots_in_use: dict[int, pt.ScratchSlot] = {}
-        self.native_ast = ast.Module(
-            body=self._translate_ast(e), type_ignores=[], lineno=0, coloffset=0
-        )
+        self.native_ast = ast.Module(body=self._translate_ast(e, 0), type_ignores=[])
         # self.source = ast.unparse(self.native_ast)
 
-    def _translate_ast(self, e: pt.Expr) -> ast.AST:
+    def _translate_ast(self, e: pt.Expr, lineno: int = 0) -> ast.AST:
         match e:
             case pt.Seq():
                 return [self._translate_ast(expr) for expr in e.args]
@@ -67,9 +65,30 @@ class Unprocessor:
                             value=unary_val,
                             targets=[ast.Name(id="_", ctx=ast.Store())],
                         )
+                    case pt.Op.len:
+                        return ast.Call(
+                            func=ast.Name(id="len", ctx=ast.Load()),
+                            args=[unary_val],
+                            keywords={},
+                        )
 
                 unary_op: ast.AST = self._translate_op(e.op, e.type_of())
                 return ast.UnaryOp(operand=unary_val, op=unary_op)
+
+            case pt.BinaryExpr():
+                binary_op: ast.AST = self._translate_op(e.op, e.type_of())
+                match binary_op:
+                    case ast.cmpop():
+                        return ast.Compare(
+                            ops=[binary_op],
+                            left=self._translate_ast(e.argLeft),
+                            comparators=[self._translate_ast(e.argRight)],
+                        )
+                return ast.BinOp(
+                    op=binary_op,
+                    left=self._translate_ast(e.argLeft),
+                    right=self._translate_ast(e.argRight),
+                )
 
             case pt.Assert():
                 test: ast.AST = self._translate_ast(e.cond[0])
@@ -90,6 +109,14 @@ class Unprocessor:
 
             case pt.Int():
                 return ast.Constant(value=e.value)
+
+            case pt.TxnExpr():
+                return ast.Call(
+                    func=ast.Name(id=f"txn_{e.field.name}", ctx=ast.Load()),
+                    args=[],
+                    keywords={},
+                )
+
             case _:
                 print(dir(e))
                 raise Unsupported(str(e.__class__))
@@ -106,9 +133,6 @@ class Unprocessor:
             #    nested_args.append(
             #        self._translate_ast(e.byte_str.replace('"', ""))
             #    )
-            # case pt.TxnExpr():
-            #    field = str(e.field).split(".")[1]
-            #    name = "Txn." + field
             # case pt.UnaryExpr():
             #    nested_args.append(self._translate_ast(e.arg))
             # case pt.TxnaExpr():
@@ -167,6 +191,7 @@ class Unprocessor:
             #    pass
 
     def _translate_op(self, op: pt.Op, type: pt.TealType) -> ast.AST:
+        # TODO: currently only ints
         match op:
             case pt.Op.logic_and:
                 return ast.And()
@@ -208,6 +233,8 @@ class Unprocessor:
                 return ast.RShift()
             case pt.Op.shl:
                 return ast.LShift()
+            case pt.Op.len:
+                raise Unsupported("Cant len stuff as an op")
             case pt.Op.pop:
                 raise Unsupported("Cant pop stuff in python :thinking_face:")
             case _:

@@ -24,6 +24,8 @@ def test_unprocessor():
         .Else(pt.Int(3))
     )
 
+    prog = pt.Seq(pt.Assert(pt.Len(pt.Txn.sender()) > pt.Int(0)), pt.Int(1))
+
     print(prog)
     u = Unprocessor(prog)
     print(ast.dump(u.native_ast, indent=4))
