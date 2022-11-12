@@ -216,30 +216,38 @@ class Preprocessor:
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
                 args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
-                print(self.args)
-                for idx, arg in enumerate(args):
-                    print(idx, arg)
-                    if isinstance(arg, pt.ScratchLoad):
-                        args[idx] = self._lookup_or_alloc(expr.args[idx], arg.type_of())
-                        print(arg)
-
-                print(ast.dump(expr, indent=4))
-                print(args)
-                print("FUNC: ", dir(func))
-                print(type(func))
-
-                from beaker.application import get_handler_config
-
-                print(get_handler_config(func))
+                # This is weird,
 
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
 
                 if isinstance(func, pt.ABIReturnSubroutine):
+                    # If its an ABIReturnSubroutine:
+                    #   first map the args passed to a variable that the subr will accept
+                    #   scratch/frames => abi type
+                    from pyteal.ast.frame import FrameDig
+
+                    for idx, arg in enumerate(args):
+                        print(expr.args[idx])
+                        if isinstance(arg, pt.ScratchLoad):
+                            args[idx] = self._lookup_or_alloc(
+                                expr.args[idx], arg.type_of()
+                            )
+                        if isinstance(arg, FrameDig):
+                            args[idx] = self._lookup_or_alloc(
+                                expr.args[idx], arg.type_of()
+                            )
+
                     ret_val = func(*args)
 
+                    # The expression returned may have an output var,
+                    # if it does, we have to load it back onto the stack or frame
+                    # before returning an expression
                     if func.output_kwarg_info is not None:
-                        return pt.Seq(ret_val.computation, pt.Int(1))
+                        return pt.Seq(
+                            ret_val.computation, self._read_storage_var(expr.args[-1])
+                        )
+
                     return ret_val
 
                 return func(*args)

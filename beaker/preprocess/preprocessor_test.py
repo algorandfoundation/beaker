@@ -266,20 +266,20 @@ def test_native_app():
     from ._builtins import log
 
     class Native(NativeApplication):
-        def thing(self, a: u64) -> u64:
-            return a**2
-
         def ok(self):
             log("ok")
 
-        def other_thing(self, b: u64) -> u64:
+        def ok_caller(self):
             self.ok()
-            return 1
+
+        def sqr(self, a: u64) -> u64:
+            return a**2
+
+        def sqr_caller(self, b: u64) -> u64:
+            x = self.sqr(b)
+            return x
 
     n = Native()
-    print(get_handler_config(n.thing))
-    print(get_handler_config(Native.thing))
-    print(dir(n.thing))
     print(n.approval_program)
 
 
