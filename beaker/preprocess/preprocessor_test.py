@@ -309,7 +309,7 @@ def test_native_app():
     ac.create()
 
     result = ac.call(Native.sqr_caller, b=2)
-    print(result.return_value)
+    assert result.return_value == 4
 
     # TODO: initializing the CLASS more than once, breaks things
     # n = Native()
