@@ -220,8 +220,8 @@ class Preprocessor:
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
 
-                if isinstance(func, pt.ABIReturnSubroutine):
-                    # If its an ABIReturnSubroutine:
+                if isinstance(func, pt.ABIReturnSubroutine | pt.SubroutineFnWrapper):
+                    # If its an ABIReturnSubroutine or a SubroutineFnWrapper:
                     #   first map the args passed to a variable that the subr will accept
                     #   scratch/frames => abi type
                     from pyteal.ast.frame import FrameDig
@@ -232,6 +232,7 @@ class Preprocessor:
                                 expr.args[idx], arg.type_of()
                             )
                         if isinstance(arg, FrameDig):
+                            print(arg)
                             args[idx] = self._lookup_or_alloc(
                                 expr.args[idx], arg.type_of()
                             )
@@ -241,7 +242,10 @@ class Preprocessor:
                     # The expression returned may have an output var,
                     # if it does, we have to load it back onto the stack or frame
                     # before returning an expression
-                    if func.output_kwarg_info is not None:
+                    if (
+                        hasattr(func, "output_kwarg_info")
+                        and func.output_kwarg_info is not None
+                    ):
                         return pt.Seq(
                             ret_val.computation, self._read_storage_var(expr.args[-1])
                         )
@@ -523,14 +527,13 @@ class Preprocessor:
                         )
 
                 if name == "self":
-                    bound_func = getattr(self.obj, fn.attr)
+                    # Initialize abi return with static func, replace impl with bound version
                     static_func = inspect.getattr_static(self.obj, fn.attr)
-
+                    if self.returns is not None:
+                        return static_func
                     abi_meth = pt.ABIReturnSubroutine(static_func)
-                    abi_meth.subroutine.implementation = bound_func
-
+                    abi_meth.subroutine.implementation = getattr(self.obj, fn.attr)
                     return abi_meth
-                    return bound_func
             case _:
                 raise Unsupported("idk what to do with this")
 

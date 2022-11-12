@@ -1,7 +1,14 @@
 import pyteal as pt
 import inspect
+
+from algosdk.atomic_transaction_composer import AtomicTransactionComposer
+from algosdk.dryrun_results import DryrunResponse
+from algosdk.future.transaction import create_dryrun
+
 from beaker.application import Application, get_handler_config
-from beaker.decorators import external
+from beaker.decorators import external, internal
+from beaker.client import ApplicationClient
+from beaker.sandbox import get_accounts, get_algod_client
 
 from .preprocessor import Preprocessor
 from ._builtins import app_get, app_put, app_del, concat, u64
@@ -229,7 +236,8 @@ def test_calculator_app():
     class Calculator(Application):
         @external(translate=True)
         def add(self, x: u64, y: u64) -> u64:
-            return x + y
+            z = x + y
+            return z
 
         @external(translate=True)
         def sub(self, x: u64, y: u64) -> u64:
@@ -246,6 +254,18 @@ def test_calculator_app():
     calc = Calculator()
     print(calc.approval_program)
 
+    acct = get_accounts().pop()
+    ac = ApplicationClient(get_algod_client(), Calculator(), signer=acct.signer)
+    ac.create()
+
+    atc = AtomicTransactionComposer()
+    atc = ac.add_method_call(atc, Calculator.add, x=2, y=4)
+
+    txns = atc.gather_signatures()
+    drreq = create_dryrun(ac.client, txns)
+    drresp = DryrunResponse(ac.client.dryrun(drreq))
+    print(drresp.txns[0].app_trace())
+
 
 class NativeApplication(Application):
     def __init__(self, version=pt.MAX_TEAL_VERSION):
@@ -255,9 +275,15 @@ class NativeApplication(Application):
             for ud in list(set(dir(self)) - set(dir(Application)))
         }
 
+        print(self._user_defined.items())
         for name, (b_attr, s_attr) in self._user_defined.items():
             pp = Preprocessor(s_attr, self)
-            setattr(self.__class__, name, external(pp.subroutine()))
+            if name.startswith("_"):
+                setattr(
+                    self.__class__, name, internal(pt.TealType.uint64)(pp.subroutine())
+                )
+            else:
+                setattr(self.__class__, name, external(pp.subroutine()))
 
         super().__init__(version=version)
 
@@ -273,14 +299,52 @@ def test_native_app():
             self.ok()
 
         def sqr_caller(self, b: u64) -> u64:
-            return self.sqr(b)
+            x = self._sqr(b)
+            return x
 
-        def sqr(self, a: u64) -> u64:
+        def _sqr(self, a: int):
             return a**2
 
-    n = Native()
-    print(n.approval_program)
+    # TODO: initializing the CLASS more than once, breaks things
+    # n = Native()
+    # print(n.approval_program)
 
+    acct = get_accounts().pop()
+    ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
+    ac.create()
+
+    result = ac.call(Native.sqr_caller, b=2)
+    print(result.return_value)
+
+    # print(ac.app.approval_program)
+
+    # atc = AtomicTransactionComposer()
+    # atc = ac.add_method_call(atc, Native.sqr_caller, b=2)
+    # txns = atc.gather_signatures()
+    # drreq = create_dryrun(ac.client, txns)
+    # drresp = DryrunResponse(ac.client.dryrun(drreq))
+    # print(drresp.txns[0].app_trace())
+
+
+# // sqr
+# sqr_4:
+# proto 1 1
+# intc_0 // 0
+# frame_dig -1
+# intc_2 // 2
+# exp
+# frame_bury 0
+# retsub
+
+# // sqr
+# sqr_10:
+# proto 1 1
+# intc_0 // 0
+# frame_dig -1
+# intc_2 // 2
+# exp
+# frame_bury 0
+# retsub
 
 # TODOS = """
 #    List:
