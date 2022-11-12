@@ -96,7 +96,6 @@ class Preprocessor:
                     )
 
         self.exprs = [self._translate_ast(expr) for expr in self.definition.body]
-        print(self.exprs)
         return pt.Seq(*self.exprs)
 
     def _translate_args(
@@ -228,7 +227,6 @@ class Preprocessor:
                     from pyteal.ast.frame import FrameDig
 
                     for idx, arg in enumerate(args):
-                        print(expr.args[idx])
                         if isinstance(arg, pt.ScratchLoad):
                             args[idx] = self._lookup_or_alloc(
                                 expr.args[idx], arg.type_of()
@@ -326,7 +324,6 @@ class Preprocessor:
                 return self._write_storage_var(expr.target, op(lookup_target, value))
 
             case ast.Assign():
-                print(ast.dump(expr, indent=4))
                 value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
                 targets: list[Variable] = [
                     self._lookup_or_alloc(e, value.type_of()) for e in expr.targets

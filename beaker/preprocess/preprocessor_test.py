@@ -272,12 +272,11 @@ def test_native_app():
         def ok_caller(self):
             self.ok()
 
+        def sqr_caller(self, b: u64) -> u64:
+            return self.sqr(b)
+
         def sqr(self, a: u64) -> u64:
             return a**2
-
-        def sqr_caller(self, b: u64) -> u64:
-            x = self.sqr(b)
-            return x
 
     n = Native()
     print(n.approval_program)
