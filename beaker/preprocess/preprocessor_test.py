@@ -5,7 +5,7 @@ from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 from algosdk.dryrun_results import DryrunResponse
 from algosdk.future.transaction import create_dryrun
 
-from beaker.application import Application, get_handler_config
+from beaker.application import Application
 from beaker.decorators import external, internal
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
@@ -280,7 +280,7 @@ class NativeApplication(Application):
             pp = Preprocessor(s_attr, self)
             if name.startswith("_"):
                 setattr(
-                    self.__class__, name, internal(pt.TealType.uint64)(pp.subroutine())
+                    self.__class__, name, internal(pt.TealType.anytype)(pp.subroutine())
                 )
             else:
                 setattr(self.__class__, name, external(pp.subroutine()))
@@ -299,15 +299,10 @@ def test_native_app():
             self.ok()
 
         def sqr_caller(self, b: u64) -> u64:
-            x = self._sqr(b)
-            return x
+            return self._sqr(b)
 
-        def _sqr(self, a: int):
+        def _sqr(self, a: u64):
             return a**2
-
-    # TODO: initializing the CLASS more than once, breaks things
-    # n = Native()
-    # print(n.approval_program)
 
     acct = get_accounts().pop()
     ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
@@ -315,6 +310,10 @@ def test_native_app():
 
     result = ac.call(Native.sqr_caller, b=2)
     print(result.return_value)
+
+    # TODO: initializing the CLASS more than once, breaks things
+    # n = Native()
+    # print(n.approval_program)
 
     # print(ac.app.approval_program)
 
@@ -324,62 +323,3 @@ def test_native_app():
     # drreq = create_dryrun(ac.client, txns)
     # drresp = DryrunResponse(ac.client.dryrun(drreq))
     # print(drresp.txns[0].app_trace())
-
-
-# // sqr
-# sqr_4:
-# proto 1 1
-# intc_0 // 0
-# frame_dig -1
-# intc_2 // 2
-# exp
-# frame_bury 0
-# retsub
-
-# // sqr
-# sqr_10:
-# proto 1 1
-# intc_0 // 0
-# frame_dig -1
-# intc_2 // 2
-# exp
-# frame_bury 0
-# retsub
-
-# TODOS = """
-#    List:
-#        Create
-#        Append
-#        Pop
-#
-#    Tuple:
-#        Create
-#        Element wise access
-#
-#    allow + to map to concat for string types
-#
-# """
-
-# def test_method_call():
-#    class MC(Application):
-#        @external(translate=True)
-#        def caller(self) -> u64:
-#            x = self.echo(10)
-#            return x
-#
-#        @external(translate=True)
-#        def echo(self, a: u64) -> u64:
-#            return a
-#
-#    mc = MC()
-#    print(mc.approval_program)
-
-# def test_list_ops():
-#   def meth():
-#       z = [1, 2, 3]
-#       z
-#
-#   expr = Preprocessor(meth).expr()
-#   print(expr)
-#   # print(compile(expr))
-#

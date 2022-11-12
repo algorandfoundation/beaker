@@ -213,7 +213,9 @@ class Preprocessor:
 
             case ast.Call():
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
-                args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
+                args: list[pt.Expr | Variable] = [
+                    self._translate_ast(a) for a in expr.args
+                ]
 
                 # This is weird,
 
@@ -242,10 +244,7 @@ class Preprocessor:
                     # The expression returned may have an output var,
                     # if it does, we have to load it back onto the stack or frame
                     # before returning an expression
-                    if (
-                        hasattr(func, "output_kwarg_info")
-                        and func.output_kwarg_info is not None
-                    ):
+                    if isinstance(ret_val, pt.abi.ReturnedValue):
                         return pt.Seq(
                             ret_val.computation, self._read_storage_var(expr.args[-1])
                         )
@@ -275,15 +274,15 @@ class Preprocessor:
                                     expr.target, var.type_spec().value_type_spec()
                                 )
 
-                                idx = pt.ScratchVar()
+                                scratch_idx = pt.ScratchVar()
                                 start = pt.Seq(
-                                    idx.store(pt.Int(0)),
+                                    scratch_idx.store(pt.Int(0)),
                                     var[pt.Int(0)].store_into(target),
                                 )
-                                cond = idx.load() < var.length()
+                                cond = scratch_idx.load() < var.length()
                                 step = pt.Seq(
-                                    idx.store(idx.load() + pt.Int(1)),
-                                    var[idx.load()].store_into(target),
+                                    scratch_idx.store(scratch_idx.load() + pt.Int(1)),
+                                    var[scratch_idx.load()].store_into(target),
                                 )
                             case _:
                                 # Check if its a list?
@@ -505,7 +504,7 @@ class Preprocessor:
                 if hasattr(v, "_stored_value"):
                     return v._stored_value.load()  # type: ignore[attr-defined]
                 else:
-                    return v.stored_value.load()
+                    return v.stored_value.load()  # type: ignore[attr-defined]
             case pt.ScratchVar():
                 return v.load()
             case _:
@@ -529,9 +528,12 @@ class Preprocessor:
                 if name == "self":
                     # Initialize abi return with static func, replace impl with bound version
                     static_func = inspect.getattr_static(self.obj, fn.attr)
-                    if self.returns is not None:
+                    if isinstance(static_func, pt.SubroutineFnWrapper):
                         return static_func
+
+                    # TODO: this conflicts with the one we create in the init of Application
                     abi_meth = pt.ABIReturnSubroutine(static_func)
+                    # Add bound version as implementation so `self` is provided
                     abi_meth.subroutine.implementation = getattr(self.obj, fn.attr)
                     return abi_meth
             case _:
