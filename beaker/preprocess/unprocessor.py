@@ -2,6 +2,9 @@ import pyteal as pt
 import ast
 
 
+# Note: Wrapping an ast node in `Expr(value=xxx)` pushes it to the next line
+
+
 def Unsupported(*feature):
     return Exception(f"This feature is not supported yet: {' '.join(feature)}")
 
@@ -12,18 +15,20 @@ op_lookup = {str(op): op.name for op in pt.Op}
 class Unprocessor:
     def __init__(self, e: pt.Expr):
         self.slots_in_use: dict[int, pt.ScratchSlot] = {}
-        self.native_ast = ast.Module(body=self._translate_ast(e, 0), type_ignores=[])
+        self.native_ast = ast.fix_missing_locations(
+            ast.Module(body=self._translate_ast(e, 0), type_ignores=[])
+        )
         # self.source = ast.unparse(self.native_ast)
 
     def _translate_ast(self, e: pt.Expr, lineno: int = 0) -> ast.AST:
         match e:
             case pt.Seq():
-                return [self._translate_ast(expr) for expr in e.args]
+                return [ast.Expr(value=self._translate_ast(expr)) for expr in e.args]
             case pt.Cond():
                 conditions: list[ast.If] = []
                 for arg in e.args:
                     test: ast.AST = self._translate_ast(arg[0])
-                    body: ast.AST = self._translate_ast(arg[1])
+                    body: ast.AST = ast.Expr(value=self._translate_ast(arg[1]))
                     conditions.append(ast.If(test=test, body=body, orelse=[]))
 
                 conditions[0].orelse = conditions[1:]
@@ -31,7 +36,7 @@ class Unprocessor:
 
             case pt.If():
                 test: ast.AST = self._translate_ast(e.cond)
-                body: ast.AST = self._translate_ast(e.thenBranch)
+                body: ast.AST = ast.Expr(value=self._translate_ast(e.thenBranch))
                 orelse: list[ast.AST] = []
                 if e.elseBranch is not None:
                     orelse.append(self._translate_ast(e.elseBranch))
