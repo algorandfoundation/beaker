@@ -11,7 +11,7 @@ from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
 
 from .preprocessor import Preprocessor
-from ._builtins import app_get, app_put, app_del, concat, u64
+from ._builtins import app_get, app_put, app_del, concat, u64, log, i
 
 
 def compile(e: pt.Expr) -> str:
@@ -207,7 +207,9 @@ def test_kitchen_sink():
     class KitchenSink(Application):
         @external(translate=True)
         def add(self, x: int, y: int) -> int:
+            # wat
             sum = x + y
+            # no way
             return sum
 
         @external(translate=True)
@@ -275,13 +277,13 @@ class NativeApplication(Application):
             for ud in list(set(dir(self)) - set(dir(Application)))
         }
 
-        print(self._user_defined.items())
-        for name, (b_attr, s_attr) in self._user_defined.items():
-            pp = Preprocessor(s_attr, self)
+        for name, (bound_attr, static_attr) in self._user_defined.items():
+            pp = Preprocessor(static_attr, self)
             if name.startswith("_"):
-                setattr(
-                    self.__class__, name, internal(pt.TealType.anytype)(pp.subroutine())
+                ret_type = (
+                    pp.return_type if pp.return_type is not None else pt.TealType.none
                 )
+                setattr(self.__class__, name, internal(ret_type)(pp.subroutine()))
             else:
                 setattr(self.__class__, name, external(pp.subroutine()))
 
@@ -289,8 +291,6 @@ class NativeApplication(Application):
 
 
 def test_native_app():
-    from ._builtins import log
-
     class Native(NativeApplication):
         def ok(self):
             log("ok")
@@ -298,22 +298,22 @@ def test_native_app():
         def ok_caller(self):
             self.ok()
 
-        def sqr_caller(self, b: u64) -> u64:
-            return self._sqr(b)
+        def sqr(self, a: u64) -> u64:
+            return self._sqr(a)
 
-        def _sqr(self, a: u64):
+        def _sqr(self, a: u64) -> i:
             return a**2
 
-    acct = get_accounts().pop()
-    ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
-    ac.create()
-
-    result = ac.call(Native.sqr_caller, b=2)
-    assert result.return_value == 4
-
     # TODO: initializing the CLASS more than once, breaks things
-    # n = Native()
-    # print(n.approval_program)
+    n = Native()
+    print(n.approval_program)
+
+    # acct = get_accounts().pop()
+    # ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
+    # ac.create()
+
+    # result = ac.call(Native.sqr_caller, b=2)
+    # assert result.return_value == 4
 
     # print(ac.app.approval_program)
 

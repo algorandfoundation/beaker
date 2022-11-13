@@ -4,14 +4,11 @@ from textwrap import dedent
 import inspect
 import ast
 
-from ._builtins import BuiltInFuncs, BuiltInTypes
+from ._builtins import VariableType, ValueType, BuiltInTypes, BuiltInFuncs
 
 
 def Unsupported(*feature):
     return Exception(f"This feature is not supported yet: {' '.join(feature)}")
-
-
-Variable = pt.ScratchVar | pt.abi.BaseType
 
 
 class Preprocessor:
@@ -20,22 +17,21 @@ class Preprocessor:
         self.obj = obj
 
         self.src = dedent(inspect.getsource(c))
-        self.tree = ast.parse(self.src)
+        self.tree = ast.parse(self.src, type_comments=True)
         self.definition = cast(ast.FunctionDef, self.tree.body[0])
 
         self.funcs: dict[str, Callable] = BuiltInFuncs
-        self.types: dict[str, type[pt.abi.BaseType]] = BuiltInTypes
+        self.types: dict[str, ValueType] = BuiltInTypes
 
-        self.variables: dict[str, Variable] = {}
+        self.variables: dict[str, VariableType] = {}
 
-        self.args: dict[str, type[pt.abi.BaseType] | None] = self._translate_args(
+        self.args: dict[str, VariableType | None] = self._translate_args(
             self.definition.args
         )
 
-        self.returns: type[pt.abi.BaseType] | None = None
-
+        self.return_type: ValueType | None = None
         if self.definition.returns is not None:
-            self.returns = self._translate_type(self.definition.returns)
+            self.return_type = self._translate_value_type(self.definition.returns)
 
     def subroutine(self):
         # Make a callable that passes args and sets output appropriately,
@@ -62,13 +58,14 @@ class Preprocessor:
             params[k] = v.replace(annotation=translated_type)
             orig_annotations[k] = translated_type
 
-        if self.returns is not None:
+        # If its an abi type we're returning, add output kwarg
+        if self.return_type is not None and type(self.return_type) is not pt.TealType:
             params["output"] = inspect.Parameter(
                 name="output",
                 kind=inspect._ParameterKind.KEYWORD_ONLY,
-                annotation=self.returns,
+                annotation=self.return_type,
             )
-            orig_annotations["output"] = self.returns
+            orig_annotations["output"] = self.return_type
 
         _impl.__name__ = self.fn.__name__
         _impl.__signature__ = sig.replace(
@@ -98,9 +95,7 @@ class Preprocessor:
         self.exprs = [self._translate_ast(expr) for expr in self.definition.body]
         return pt.Seq(*self.exprs)
 
-    def _translate_args(
-        self, args: ast.arguments
-    ) -> dict[str, type[pt.abi.BaseType] | None]:
+    def _translate_args(self, args: ast.arguments) -> dict[str, VariableType | None]:
         if args.kwarg is not None:
             raise Unsupported("kwarg in args")
         if args.vararg is not None:
@@ -114,15 +109,19 @@ class Preprocessor:
         if len(args.defaults) > 0:
             raise Unsupported("defaults in args")
 
-        arguments: dict[str, Any] = {}
+        arguments: dict[str, VariableType | None] = {}
         for arg in args.args:
             if arg.annotation is not None:
-                arguments[arg.arg] = self._translate_type(arg.annotation)
+                anno_type = self._translate_value_type(arg.annotation)
+                if type(anno_type) is pt.TealType:
+                    arguments[arg.arg] = pt.Expr
+                else:
+                    arguments[arg.arg] = anno_type
             else:
                 arguments[arg.arg] = None
         return arguments
 
-    def _translate_type(self, _type: ast.AST) -> type[pt.abi.BaseType] | None:
+    def _translate_value_type(self, _type: ast.AST) -> ValueType | None:
         match _type:
             case ast.Name():
                 if _type.id in self.types:
@@ -131,8 +130,8 @@ class Preprocessor:
                     raise Unsupported("Type in translate type:", _type.id)
 
             case ast.Subscript():
-                _value: type[pt.abi.BaseType] | None = self._translate_type(_type.value)
-                _slice: type[pt.abi.BaseType] | None = self._translate_type(_type.slice)
+                _value: ValueType | None = self._translate_value_type(_type.value)
+                _slice: ValueType | None = self._translate_value_type(_type.slice)
 
                 if _value is pt.abi.DynamicArray and _slice is not None:
                     da = pt.abi.DynamicArray[_slice]  # type: ignore
@@ -158,7 +157,7 @@ class Preprocessor:
             case ast.Return():
                 if expr.value is not None:
                     val: pt.Expr = self._translate_ast(expr.value)
-                    if self.returns is not None:
+                    if self.return_type is not None:
                         return val
                     return pt.Return(val)
                 return pt.Return()
@@ -213,9 +212,7 @@ class Preprocessor:
 
             case ast.Call():
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
-                args: list[pt.Expr | Variable] = [
-                    self._translate_ast(a) for a in expr.args
-                ]
+                args: list[VariableType] = [self._translate_ast(a) for a in expr.args]
 
                 # This is weird,
 
@@ -290,7 +287,7 @@ class Preprocessor:
 
                     # We're iterating over the result of a function call
                     case ast.Call():
-                        call_target: Variable = self._lookup_or_alloc(expr.target)
+                        call_target: VariableType = self._lookup_or_alloc(expr.target)
                         iterator: pt.Expr = self._translate_ast(expr.iter)
                         start, cond, step = iterator(call_target)  # type: ignore
                     case _:
@@ -328,7 +325,7 @@ class Preprocessor:
 
             case ast.Assign():
                 value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
-                targets: list[Variable] = [
+                targets: list[VariableType] = [
                     self._lookup_or_alloc(e, value.type_of()) for e in expr.targets
                 ]
 
@@ -444,7 +441,7 @@ class Preprocessor:
                 case _:
                     raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
-    def _provide_value(self, name: str, val: Variable):
+    def _provide_value(self, name: str, val: VariableType):
         self.variables[name] = val
 
     def _wrap_as(
@@ -456,7 +453,7 @@ class Preprocessor:
 
     def _lookup_or_alloc(
         self, name: ast.expr | str, ts: pt.abi.TypeSpec | pt.TealType | None = None
-    ) -> Variable:
+    ) -> VariableType:
 
         name_str = ""
         match name:

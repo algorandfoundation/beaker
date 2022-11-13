@@ -8,7 +8,19 @@ u16 = int
 u8 = int
 byte = int
 
-BuiltInTypes: dict[str, type[pt.abi.BaseType]] = {
+void = None
+i = int
+b = bytes
+
+
+VariableType = pt.ScratchVar | pt.abi.BaseType | pt.Expr
+ValueType = type[pt.abi.BaseType] | pt.TealType
+
+BuiltInTypes: dict[str, ValueType] = {
+    # Stack types
+    "void": pt.TealType.none,
+    "i": pt.TealType.uint64,
+    "b": pt.TealType.bytes,
     # shorthand types
     "u64": pt.abi.Uint64,
     "u32": pt.abi.Uint32,
