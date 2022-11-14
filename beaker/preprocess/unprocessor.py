@@ -122,6 +122,33 @@ class Unprocessor:
                     keywords={},
                 )
 
+            case pt.ScratchStore():
+                slot_id = 0
+                if e.slot is not None:
+                    slot_id = e.slot.id
+                else:
+                    raise Unsupported("Store with no slot id?", e)
+
+                return ast.Assign(
+                    value=self._translate_ast(e.value),
+                    targets=[ast.Name(id=f"var_{slot_id}", ctx=ast.Store())],
+                )
+
+            case pt.ScratchLoad():
+                slot_id = 0
+                if e.slot is not None:
+                    slot_id = e.slot.id
+                else:
+                    raise Unsupported("Load with no slot id?", e)
+
+                return ast.Name(f"var_{slot_id}", ctx=ast.Load())
+
+            # case pt.ScratchSlot():
+            #    nested_args.append(self._translate_ast(e.id))
+            # case pt.ScratchStackStore():
+            #    if e.slot is not None:
+            #        nested_args.append(self._translate_ast(e.slot))
+
             case _:
                 print(dir(e))
                 raise Unsupported(str(e.__class__))
@@ -171,18 +198,6 @@ class Unprocessor:
 
             # case pt.EnumInt():
             #    name = "OnComplete." + e.name
-            # case pt.ScratchSlot():
-            #    nested_args.append(self._translate_ast(e.id))
-            # case pt.ScratchStackStore():
-            #    if e.slot is not None:
-            #        nested_args.append(self._translate_ast(e.slot))
-            # case pt.ScratchLoad():
-            #    if e.slot is not None:
-            #        nested_args.append(self._translate_ast(e.slot))
-            # case pt.ScratchStore():
-            #    if e.slot is not None:
-            #        nested_args.append(self._translate_ast(e.slot))
-            #    nested_args.append(self._translate_ast(e.value))
             # case pt.ExitProgram():
             #    name = "ExitProgram"
             #    nested_args.append(self._translate_ast(e.success))
