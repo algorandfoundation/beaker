@@ -14,6 +14,8 @@ def Unsupported(*feature):
 class Preprocessor:
     def __init__(self, c: Callable, obj: Any = None):
         self.fn = c
+        self.fn_name = c.__name__
+
         self.obj = obj
 
         self.src = dedent(inspect.getsource(c))
@@ -32,6 +34,10 @@ class Preprocessor:
         self.return_type: ValueType | None = None
         if self.definition.returns is not None:
             self.return_type = self._translate_value_type(self.definition.returns)
+
+        self.return_stack_type: pt.TealType = pt.TealType.none
+        if type(self) is pt.TealType:
+            self.return_stack_type = self.return_type
 
     def subroutine(self):
         # Make a callable that passes args and sets output appropriately,

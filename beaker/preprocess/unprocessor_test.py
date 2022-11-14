@@ -62,10 +62,10 @@ def test_unprocessor(ptexpr: pt.Expr, pystr: str):
 
 def test_amm():
     from .amm import ConstantProductAMM
-    from typing import cast
 
     cpamm = ConstantProductAMM()
     approval, _, _ = cpamm.router.build_program()
+    print(approval)
     up = Unprocessor(approval)
     # print(ast.dump(up.native_ast, indent=4))
     print()

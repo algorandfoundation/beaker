@@ -1,3 +1,5 @@
+import inspect
+from typing import Callable
 from pyteal.ast.return_ import ExitProgram
 import pyteal as pt
 import ast
@@ -14,22 +16,37 @@ op_lookup = {str(op): op.name for op in pt.Op}
 
 
 class Unprocessor:
-    def __init__(self, e: pt.Expr):
+    def __init__(self, e: pt.Expr, name: str, *args, **kwargs):
+        self.expr = e
         self.slots_in_use: dict[int, pt.ScratchSlot] = {}
         self.native_ast = ast.fix_missing_locations(
-            ast.Module(body=[self._translate_ast(e)], type_ignores=[])
+            ast.Module(
+                body=[
+                    ast.FunctionDef(
+                        name=name,
+                        args=ast.arguments(
+                            args=[],
+                            posonlyargs=[],
+                            vararg=None,
+                            kwonlyargs=[],
+                            kw_defaults=[],
+                            kwarg=None,
+                            defaults=[],
+                        ),
+                        body=self._translate_ast(pt.Seq(e)),
+                        decorator_list=[],
+                        returns=None,
+                        lineno=1,
+                    )
+                ],
+                type_ignores=[],
+            )
         )
-        # self.source = ast.unparse(self.native_ast)
 
     def _translate_ast(self, e: pt.Expr) -> ast.AST:
         match e:
             case pt.Seq():
-                return ast.Try(
-                    body=[self._translate_ast(expr) for expr in e.args],
-                    handlers=[],
-                    orelse=[],
-                    finalbody=[],
-                )
+                return [self._translate_ast(expr) for expr in e.args]
             case pt.Cond():
                 conditions: list[ast.If] = []
                 for arg in e.args:
@@ -166,6 +183,7 @@ class Unprocessor:
                 return ast.Assign(
                     value=self._translate_ast(e.value),
                     targets=[ast.Name(id=f"var_{slot_id}", ctx=ast.Store())],
+                    lineno=0,
                 )
 
             case pt.ScratchLoad():
@@ -179,9 +197,9 @@ class Unprocessor:
 
             case pt.MethodSignature():
                 return ast.Call(
-                    func=ast.Name(id='method_signature', ctx=ast.Load()),
+                    func=ast.Name(id="method_signature", ctx=ast.Load()),
                     args=[ast.Constant(value=e.methodName)],
-                    keywords={}
+                    keywords={},
                 )
 
             case pt.EnumInt():
@@ -196,7 +214,6 @@ class Unprocessor:
             case pt.abi.BaseType():
                 return ast.Name(id="TODO", ctx=ast.Load())
 
-
             case _:
                 print(dir(e))
                 raise Unsupported(str(e.__class__))
@@ -207,9 +224,6 @@ class Unprocessor:
             #    if e.slot is not None:
             #        nested_args.append(self._translate_ast(e.slot))
 
-            # case pt.BinaryExpr():
-            #    nested_args.append(self._translate_ast(e.argLeft))
-            #    nested_args.append(self._translate_ast(e.argRight))
             # case pt.App():
             #    field = str(e.field).split(".")[1]
             #    name = "App." + field
@@ -219,28 +233,16 @@ class Unprocessor:
             #    nested_args.append(
             #        self._translate_ast(e.byte_str.replace('"', ""))
             #    )
-            # case pt.UnaryExpr():
-            #    nested_args.append(self._translate_ast(e.arg))
-            # case pt.Return():
-            #    nested_args.append(self._translate_ast(e.value))
-            # case pt.If():
-            #    nested_args.append(self._translate_ast(e.cond))
-            #    nested_args.append(self._translate_ast(e.thenBranch))
-            #    if e.elseBranch is not None:
-            #        nested_args.append(self._translate_ast(e.elseBranch))
             # case pt.Global():
             #    field = str(e.field).split(".")[1]
             #    name = "Global." + field
             # case pt.MultiValue():
             #    if len(e.immediate_args) > 0:
             #        nested_args.append(self._translate_ast(e.immediate_args))
-
             #    for arg in e.args:
             #        nested_args.append(self._translate_ast(arg))
-
             #    for os in e.output_slots:
             #        nested_args.append(self._translate_ast(os))
-
             #    if e.op.name == "app_local_get_ex":
             #        name = "App.localGetEx"
             #    elif e.op.name == "app_global_get_ex":
@@ -249,12 +251,6 @@ class Unprocessor:
             # case pt.CommentExpr():
             #    name="Comment"
             #    #nested_args.append(e.comment)
-
-            # case int() | str() | bytes():
-            #    pass
-            # case _:
-            #    print(f"unhandled: {e.__class__}")
-            #    pass
 
     def _translate_op(self, op: pt.Op, type: pt.TealType) -> ast.AST:
         # TODO: currently only ints
