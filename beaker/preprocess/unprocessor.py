@@ -1,3 +1,4 @@
+from pyteal.ast.return_ import ExitProgram
 import pyteal as pt
 import ast
 
@@ -16,19 +17,24 @@ class Unprocessor:
     def __init__(self, e: pt.Expr):
         self.slots_in_use: dict[int, pt.ScratchSlot] = {}
         self.native_ast = ast.fix_missing_locations(
-            ast.Module(body=self._translate_ast(e, 0), type_ignores=[])
+            ast.Module(body=[self._translate_ast(e)], type_ignores=[])
         )
         # self.source = ast.unparse(self.native_ast)
 
-    def _translate_ast(self, e: pt.Expr, lineno: int = 0) -> ast.AST:
+    def _translate_ast(self, e: pt.Expr) -> ast.AST:
         match e:
             case pt.Seq():
-                return [self._translate_ast(expr) for expr in e.args]
+                return ast.Try(
+                    body=[self._translate_ast(expr) for expr in e.args],
+                    handlers=[],
+                    orelse=[],
+                    finalbody=[],
+                )
             case pt.Cond():
                 conditions: list[ast.If] = []
                 for arg in e.args:
                     test: ast.AST = self._translate_ast(arg[0])
-                    body: ast.AST = ast.Expr(value=self._translate_ast(arg[1]))
+                    body: ast.AST = self._translate_ast(arg[1])
                     conditions.append(ast.If(test=test, body=body, orelse=[]))
 
                 conditions[0].orelse = conditions[1:]
@@ -39,7 +45,7 @@ class Unprocessor:
                 body: ast.AST = ast.Expr(value=self._translate_ast(e.thenBranch))
                 orelse: list[ast.AST] = []
                 if e.elseBranch is not None:
-                    orelse.append(self._translate_ast(e.elseBranch))
+                    orelse.append(ast.Expr(value=self._translate_ast(e.elseBranch)))
                 return ast.If(test=test, body=body, orelse=orelse)
 
             case pt.NaryExpr():
@@ -81,6 +87,18 @@ class Unprocessor:
                 return ast.UnaryOp(operand=unary_val, op=unary_op)
 
             case pt.BinaryExpr():
+
+                match e.op:
+                    case pt.Op.getbyte:
+                        return ast.Call(
+                            func=ast.Name(id="getbyte", ctx=ast.Load()),
+                            args=[
+                                self._translate_ast(e.argLeft),
+                                self._translate_ast(e.argRight),
+                            ],
+                            keywords={},
+                        )
+
                 binary_op: ast.AST = self._translate_op(e.op, e.type_of())
                 match binary_op:
                     case ast.cmpop():
@@ -104,12 +122,14 @@ class Unprocessor:
                 return ast.Assert(test=test)
 
             case pt.SubroutineCall():
-                fn_name: str = e.subroutine.implementation.__name__
+                fn_name: str = e.subroutine.name()
                 call_args: list[ast.AST] = [self._translate_ast(a) for a in e.args]
-                return ast.Call(
-                    func=ast.Name(id=fn_name, ctx=ast.Load()),
-                    args=call_args,
-                    keywords={},
+                return ast.Expr(
+                    value=ast.Call(
+                        func=ast.Name(id=fn_name, ctx=ast.Load()),
+                        args=call_args,
+                        keywords={},
+                    )
                 )
 
             case pt.Int():
@@ -119,6 +139,20 @@ class Unprocessor:
                 return ast.Call(
                     func=ast.Name(id=f"txn_{e.field.name}", ctx=ast.Load()),
                     args=[],
+                    keywords={},
+                )
+
+            case pt.TxnaExpr():
+                arg: ast.AST
+                match e.index:
+                    case int():
+                        arg = ast.Constant(value=e.index)
+                    case _:
+                        arg = self._translate_ast(e.index)
+
+                return ast.Call(
+                    func=ast.Name(id=f"txn_{e.field.name}", ctx=ast.Load()),
+                    args=[arg],
                     keywords={},
                 )
 
@@ -143,18 +177,33 @@ class Unprocessor:
 
                 return ast.Name(f"var_{slot_id}", ctx=ast.Load())
 
+            case pt.EnumInt():
+                # TODO: only oncompletes?
+                return ast.Name(id="OnComplete." + e.name, ctx=ast.Load())
+
+            case pt.abi.BaseType():
+                return ast.Name(id="TODO", ctx=ast.Load())
+
             case pt.Return():
                 return ast.Return(value=self._translate_ast(e.value))
+
+            case pt.MethodSignature():
+                return ast.Constant(value=e.methodName)
+
+            case pt.abi.MethodReturn():
+                return ast.Return(value=self._translate_ast(e.arg))
+            case ExitProgram():
+                return ast.Return(value=self._translate_ast(e.success))
+
+            case _:
+                print(dir(e))
+                raise Unsupported(str(e.__class__))
 
             # case pt.ScratchSlot():
             #    nested_args.append(self._translate_ast(e.id))
             # case pt.ScratchStackStore():
             #    if e.slot is not None:
             #        nested_args.append(self._translate_ast(e.slot))
-
-            case _:
-                print(dir(e))
-                raise Unsupported(str(e.__class__))
 
             # case pt.BinaryExpr():
             #    nested_args.append(self._translate_ast(e.argLeft))
@@ -170,10 +219,6 @@ class Unprocessor:
             #    )
             # case pt.UnaryExpr():
             #    nested_args.append(self._translate_ast(e.arg))
-            # case pt.TxnaExpr():
-            #    field = str(e.field).split(".")[1]
-            #    name = f"Txna.{field}"
-            #    nested_args.append(self._translate_ast(e.index))
             # case pt.Return():
             #    nested_args.append(self._translate_ast(e.value))
             # case pt.If():
@@ -199,14 +244,10 @@ class Unprocessor:
             #    elif e.op.name == "app_global_get_ex":
             #        name = "App.globalGetEx"
 
-            # case pt.EnumInt():
-            #    name = "OnComplete." + e.name
-            # case pt.ExitProgram():
-            #    name = "ExitProgram"
-            #    nested_args.append(self._translate_ast(e.success))
             # case pt.CommentExpr():
             #    name="Comment"
             #    #nested_args.append(e.comment)
+
             # case int() | str() | bytes():
             #    pass
             # case _:
@@ -256,6 +297,8 @@ class Unprocessor:
                 return ast.RShift()
             case pt.Op.shl:
                 return ast.LShift()
+            case pt.Op.getbyte:
+                raise Unsupported("Cant get byte as an op")
             case pt.Op.len:
                 raise Unsupported("Cant len stuff as an op")
             case pt.Op.pop:
