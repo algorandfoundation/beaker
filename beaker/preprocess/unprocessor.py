@@ -177,23 +177,25 @@ class Unprocessor:
 
                 return ast.Name(f"var_{slot_id}", ctx=ast.Load())
 
+            case pt.MethodSignature():
+                return ast.Call(
+                    func=ast.Name(id='method_signature', ctx=ast.Load()),
+                    args=[ast.Constant(value=e.methodName)],
+                    keywords={}
+                )
+
             case pt.EnumInt():
-                # TODO: only oncompletes?
                 return ast.Name(id="OnComplete." + e.name, ctx=ast.Load())
-
-            case pt.abi.BaseType():
-                return ast.Name(id="TODO", ctx=ast.Load())
-
             case pt.Return():
                 return ast.Return(value=self._translate_ast(e.value))
-
-            case pt.MethodSignature():
-                return ast.Constant(value=e.methodName)
-
             case pt.abi.MethodReturn():
                 return ast.Return(value=self._translate_ast(e.arg))
             case ExitProgram():
                 return ast.Return(value=self._translate_ast(e.success))
+
+            case pt.abi.BaseType():
+                return ast.Name(id="TODO", ctx=ast.Load())
+
 
             case _:
                 print(dir(e))
