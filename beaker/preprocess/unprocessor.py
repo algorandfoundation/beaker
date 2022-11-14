@@ -143,6 +143,9 @@ class Unprocessor:
 
                 return ast.Name(f"var_{slot_id}", ctx=ast.Load())
 
+            case pt.Return():
+                return ast.Return(value=self._translate_ast(e.value))
+
             # case pt.ScratchSlot():
             #    nested_args.append(self._translate_ast(e.id))
             # case pt.ScratchStackStore():
