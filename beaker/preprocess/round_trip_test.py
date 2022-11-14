@@ -11,11 +11,7 @@ def test_round_trip():
         return var_256
 
     pp = Preprocessor(meth)
-    expected = pp.src
-
     up = Unprocessor(pp.expr(), name=pp.fn_name, args=pp.args, returns=pp.return_type)
     actual = ast.unparse(up.native_ast)
-    print()
-    print(actual)
-    print()
-    print(expected)
+
+    assert actual.strip() == pp.src.strip()
