@@ -87,7 +87,7 @@ class Precompile:
     _program_hash: Optional[str] = None
     _map: Optional[SourceMap] = None
     _template_values: list[PrecompileTemplateValue] = []
-    program_pages: Optional[list[ProgramPage]]
+    program_pages: list[ProgramPage]
     binary: Bytes = Bytes("")
 
     def __init__(self, program: str):
@@ -134,7 +134,7 @@ class Precompile:
             for i in range(0, len(self._binary), 2048)
         ]
 
-    def hash(self, page_idx: Optional[int] = -1) -> Expr:
+    def hash(self, page_idx: int = -1) -> Expr:
         """
         address returns an expression for this Precompile.
 

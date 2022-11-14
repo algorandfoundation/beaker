@@ -1,5 +1,4 @@
 import base64
-import hashlib
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
 from algosdk.v2client.algod import AlgodClient

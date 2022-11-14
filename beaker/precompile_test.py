@@ -2,7 +2,6 @@ import pytest
 import pyteal as pt
 
 from beaker.application import Application
-from beaker.consts import num_extra_program_pages
 from beaker.decorators import external
 from beaker.client import ApplicationClient
 
@@ -14,7 +13,6 @@ from beaker.precompile import (
     AppPrecompile,
     LSigPrecompile,
     py_encode_uvarint,
-    Precompile,
 )
 
 
