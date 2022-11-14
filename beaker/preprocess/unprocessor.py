@@ -23,7 +23,7 @@ class Unprocessor:
     def _translate_ast(self, e: pt.Expr, lineno: int = 0) -> ast.AST:
         match e:
             case pt.Seq():
-                return [ast.Expr(value=self._translate_ast(expr)) for expr in e.args]
+                return [self._translate_ast(expr) for expr in e.args]
             case pt.Cond():
                 conditions: list[ast.If] = []
                 for arg in e.args:

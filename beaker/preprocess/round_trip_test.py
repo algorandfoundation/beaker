@@ -6,15 +6,14 @@ from .preprocessor import Preprocessor
 
 def test_round_trip():
     def meth():
-        x = 1
-        x += 2
-        return x
+        var_256 = 1
+        var_256 = var_256 + 2
+        return var_256
 
     pp = Preprocessor(meth)
-    expr = pp.expr()
+    up = Unprocessor(pp.expr())
 
-    up = Unprocessor(expr)
-    actual = ast.unparse(up.native_ast)
-    expected = pp.src
-    print(actual)
-    print(expected)
+    print()
+    print(ast.unparse(up.native_ast))
+    print()
+    print(pp.src)
