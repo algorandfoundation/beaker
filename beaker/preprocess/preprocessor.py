@@ -35,9 +35,11 @@ class Preprocessor:
         if self.definition.returns is not None:
             self.return_type = self._translate_value_type(self.definition.returns)
 
-        self.return_stack_type: pt.TealType = pt.TealType.none
-        if type(self) is pt.TealType:
-            self.return_stack_type = self.return_type
+        self.return_stack_type: pt.TealType = (
+            self.return_type
+            if type(self.return_type) is pt.TealType
+            else pt.TealType.none
+        )
 
     def subroutine(self):
         # Make a callable that passes args and sets output appropriately,
