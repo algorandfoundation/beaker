@@ -4,7 +4,7 @@ from .unprocessor import Unprocessor
 from .preprocessor import Preprocessor
 
 
-def test_round_trip():
+def test_round_trip_method():
     def meth():
         var_256 = 1
         var_256 = var_256 + 2

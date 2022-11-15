@@ -51,7 +51,7 @@ def test_parse_method():
 
         return x
 
-    Preprocessor(meth).expr()
+    compile(Preprocessor(meth).expr())
 
 
 def test_if_else():
@@ -82,7 +82,7 @@ def test_if_else():
         else:
             return 3
 
-    print(compile(Preprocessor(meth).expr()))
+    compile(Preprocessor(meth).expr())
 
 
 def test_bool_op():
@@ -95,7 +95,7 @@ def test_bool_op():
         z = not (x or y)
         return z
 
-    Preprocessor(meth).expr()
+    compile(Preprocessor(meth).expr())
 
 
 def test_int_ops():
@@ -123,8 +123,9 @@ def test_int_ops():
         x = 3 >> 1
         x = 3 << 1
         x = x
+        return x
 
-    Preprocessor(meth).expr()
+    compile(Preprocessor(meth).expr())
 
 
 def test_bytes_ops():
@@ -155,8 +156,9 @@ def test_bytes_ops():
         # x = val ** val
         # x = val >> val
         # x = val << val
+        return x
 
-    Preprocessor(meth).expr()
+    # compile(Preprocessor(meth).expr())
 
 
 def test_str_ops():
@@ -164,8 +166,7 @@ def test_str_ops():
         s = "stringy"
         return len(concat(s, "hi"))
 
-    expr = Preprocessor(meth).expr()
-    print(compile(expr))
+    compile(Preprocessor(meth).expr())
 
 
 def test_built_ins():
@@ -176,7 +177,7 @@ def test_built_ins():
         app_del("ok")
         return x
 
-    print(compile(Preprocessor(meth).expr()))
+    compile(Preprocessor(meth).expr())
 
 
 def test_arg_returns():
@@ -231,7 +232,7 @@ def test_kitchen_sink():
             return msg
 
     ks = KitchenSink()
-    print(ks.approval_program)
+    assert len(ks.approval_program) > 0
 
 
 def test_calculator_app():
@@ -254,19 +255,19 @@ def test_calculator_app():
             return x / y  # type: ignore[return-value]
 
     calc = Calculator()
-    print(calc.approval_program)
+    assert len(calc.approval_program) > 0
 
-    acct = get_accounts().pop()
-    ac = ApplicationClient(get_algod_client(), Calculator(), signer=acct.signer)
-    ac.create()
+    # acct = get_accounts().pop()
+    # ac = ApplicationClient(get_algod_client(), Calculator(), signer=acct.signer)
+    # ac.create()
 
-    atc = AtomicTransactionComposer()
-    atc = ac.add_method_call(atc, Calculator.add, x=2, y=4)
+    # atc = AtomicTransactionComposer()
+    # atc = ac.add_method_call(atc, Calculator.add, x=2, y=4)
 
-    txns = atc.gather_signatures()
-    drreq = create_dryrun(ac.client, txns)
-    drresp = DryrunResponse(ac.client.dryrun(drreq))
-    print(drresp.txns[0].app_trace())
+    # txns = atc.gather_signatures()
+    # drreq = create_dryrun(ac.client, txns)
+    # drresp = DryrunResponse(ac.client.dryrun(drreq))
+    # print(drresp.txns[0].app_trace())
 
 
 class NativeApplication(Application):
@@ -306,7 +307,7 @@ def test_native_app():
 
     # TODO: initializing the CLASS more than once, breaks things
     n = Native()
-    print(n.approval_program)
+    assert len(n.approval_program) > 0
 
     # acct = get_accounts().pop()
     # ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)

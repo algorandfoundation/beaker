@@ -237,7 +237,6 @@ class Preprocessor:
                                 expr.args[idx], arg.type_of()
                             )
                         if isinstance(arg, FrameDig):
-                            print(arg)
                             args[idx] = self._lookup_or_alloc(
                                 expr.args[idx], arg.type_of()
                             )

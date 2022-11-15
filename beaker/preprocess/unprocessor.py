@@ -2,6 +2,7 @@ import inspect
 from typing import Callable
 from pyteal.ast.return_ import ExitProgram
 import pyteal as pt
+import beaker as bkr
 import ast
 
 
@@ -16,9 +17,14 @@ op_lookup = {str(op): op.name for op in pt.Op}
 
 
 class Unprocessor:
-    def __init__(self, e: pt.Expr, name: str, *args, **kwargs):
+    def __init__(
+        self, e: pt.Expr, name: str, methods: dict[str, pt.Subroutine], *args, **kwargs
+    ):
         self.expr = e
-        self.slots_in_use: dict[int, pt.ScratchSlot] = {}
+        # self.slots_in_use: dict[int, pt.ScratchSlot] = {}
+
+        self.methods = methods
+
         self.native_ast = ast.fix_missing_locations(
             ast.Module(
                 body=[
@@ -133,8 +139,8 @@ class Unprocessor:
             case pt.Assert():
                 test: ast.AST = self._translate_ast(e.cond[0])
                 for cond in e.cond[1:]:
-                    test = ast.BinOp(
-                        left=test, right=self._translate_ast(cond), op=ast.And()
+                    test = ast.BoolOp(
+                        values=[test, self._translate_ast(cond)], op=ast.And()
                     )
                 return ast.Assert(test=test)
 
@@ -148,9 +154,6 @@ class Unprocessor:
                         keywords={},
                     )
                 )
-
-            case pt.Int():
-                return ast.Constant(value=e.value)
 
             case pt.TxnExpr():
                 return ast.Call(
@@ -204,6 +207,40 @@ class Unprocessor:
 
             case pt.EnumInt():
                 return ast.Name(id="OnComplete." + e.name, ctx=ast.Load())
+
+            case pt.App():
+                return ast.Call(
+                    func=ast.Name(id="App." + e.field.name, ctx=ast.Load()),
+                    args=[self._translate_ast(ex) for ex in e.args],
+                    keywords={},
+                )
+
+            case pt.Global():
+                return ast.Call(
+                    func=ast.Name(id="Global." + e.field.arg_name, ctx=ast.Load()),
+                    args=[],
+                    keywords={},
+                )
+
+            case pt.MaybeValue():
+                return ast.Assign(
+                    targets=[
+                        ast.Tuple(
+                            elts=[
+                                ast.Name(id="val", ctx=ast.Store()),
+                                ast.Name(id="exists", ctx=ast.Store()),
+                            ],
+                            ctx=ast.Store(),
+                        )
+                    ],
+                    value=ast.Call(
+                        func=ast.Name(id=e.op.name, ctx=ast.Load()),
+                        args=[self._translate_ast(ex) for ex in e.args],
+                        keywords={},
+                    ),
+                    lineno=0,
+                )
+
             case pt.Return():
                 return ast.Return(value=self._translate_ast(e.value))
             case pt.abi.MethodReturn():
@@ -213,6 +250,15 @@ class Unprocessor:
 
             case pt.abi.BaseType():
                 return ast.Name(id="TODO", ctx=ast.Load())
+
+            case pt.Int():
+                return ast.Constant(value=e.value)
+            case pt.Bytes():
+                return ast.Constant(value=eval(e.byte_str))
+            case str() | int():
+                return ast.Constant(value=e)
+            case bkr.state.ApplicationStateValue():
+                return self._translate_ast(pt.App.globalGet(e.key))
 
             case _:
                 print(dir(e))
@@ -224,11 +270,6 @@ class Unprocessor:
             #    if e.slot is not None:
             #        nested_args.append(self._translate_ast(e.slot))
 
-            # case pt.App():
-            #    field = str(e.field).split(".")[1]
-            #    name = "App." + field
-            #    for arg in e.args:
-            #        nested_args.append(self._translate_ast(arg))
             # case pt.Bytes():
             #    nested_args.append(
             #        self._translate_ast(e.byte_str.replace('"', ""))

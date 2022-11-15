@@ -50,14 +50,14 @@ TRANSLATE_TESTS: list[tuple[pt.Expr, str]] = [
 ]
 
 
-@pytest.mark.parametrize("ptexpr,pystr", TRANSLATE_TESTS)
-def test_unprocessor(ptexpr: pt.Expr, pystr: str):
-
-    u = Unprocessor(ptexpr)
-    print(ast.dump(u.native_ast, indent=4))
-
-    actual_str = ast.unparse(u.native_ast)
-    assert actual_str == pystr
+# @pytest.mark.parametrize("ptexpr,pystr", TRANSLATE_TESTS)
+# def test_unprocessor(ptexpr: pt.Expr, pystr: str):
+#
+#    u = Unprocessor(ptexpr)
+#    print(ast.dump(u.native_ast, indent=4))
+#
+#    actual_str = ast.unparse(u.native_ast)
+#    assert actual_str == pystr
 
 
 def test_amm():
@@ -65,8 +65,53 @@ def test_amm():
 
     cpamm = ConstantProductAMM()
     approval, _, _ = cpamm.router.build_program()
-    print(approval)
-    up = Unprocessor(approval)
-    # print(ast.dump(up.native_ast, indent=4))
+    methods = {k: v[0].subroutine for k, v in cpamm.methods.items()}
+    up = Unprocessor(approval, name="main", methods=methods)
     print()
     print(ast.unparse(up.native_ast))
+
+    for k, (meth, _) in cpamm.methods.items():
+        subr = meth.subroutine
+        if subr.has_abi_output:
+            continue
+
+        kwargs = {}
+        for a, v in subr.abi_args.items():
+            kwargs[a] = v.new_instance()
+
+        subr_call = meth.subroutine.implementation(**kwargs)
+        mup = Unprocessor(subr_call, name=k, methods=methods)
+        print(ast.unparse(mup.native_ast))
+
+    # {
+    #   'id': 41,
+    #   'return_type': <TealType.none: 3>,
+    #   'declaration': None,
+    #   'declarations': <pyteal._SubroutineDeclByVersion object at 0x7f05a5312830>,
+    #   'implementation': <bound method ConstantProductAMM.swap of <beaker.preprocess.amm.ConstantProductAMM object at 0x7f05a543b6a0>>,
+    #   'has_abi_output': False,
+    #   'implementation_params': mappingproxy(OrderedDict([
+    #         ('swap_xfer', <Parameter "swap_xfer: pyteal.abi.AssetTransferTransaction">),
+    #         ('a_asset', <Parameter "a_asset: pyteal.abi.Asset">),
+    #         ('b_asset', <Parameter "b_asset: pyteal.abi.Asset">)
+    #   ])),
+    #   'annotations': {
+    #         'swap_xfer': <class 'pyteal.abi.AssetTransferTransaction'>,
+    #         'a_asset': <class 'pyteal.abi.Asset'>,
+    #         'b_asset': <class 'pyteal.abi.Asset'>
+    #   },
+    #   'expected_arg_types': [
+    #         <pyteal.abi.AssetTransferTransactionTypeSpec object at 0x7f05a5312a70>,
+    #         <pyteal.abi.AssetTypeSpec object at 0x7f05a5312a40>,
+    #         <pyteal.abi.AssetTypeSpec object at 0x7f05a5312aa0>
+    #   ],
+    #   'by_ref_args': set(),
+    #   'abi_args': {
+    #       'swap_xfer': <pyteal.abi.AssetTransferTransactionTypeSpec object at 0x7f05a5312a70>,
+    #       'a_asset': <pyteal.abi.AssetTypeSpec object at 0x7f05a5312a40>,
+    #       'b_asset': <pyteal.abi.AssetTypeSpec object at 0x7f05a5312aa0>
+    #    },
+    #   'output_kwarg': {},
+    #   '_SubroutineDefinition__name': 'swap',
+    #   'locals_suggested': None
+    # }
