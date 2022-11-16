@@ -39,6 +39,7 @@ class List:
         self.box_size = Int(self._box_size)
 
     def create(self) -> Expr:
+        """creates a box with the given name and with a size that will allow storage of the number of the element specified."""
         assert self.name is not None
         return BoxCreate(self.name, self.box_size)
 
@@ -63,12 +64,23 @@ class ListElement(Expr):
         self.idx = idx
 
     def store_into(self, val: abi.BaseType) -> Expr:
+        """decode the bytes from this list element into the instance of the type provided
+
+        Args:
+            val: An instance of the type to decode into
+        """
         return val.decode(self.get())
 
     def get(self) -> Expr:
+        """get the bytes for this element in the list"""
         return BoxExtract(self.name, self.element_size * self.idx, self.element_size)
 
     def set(self, val: abi.BaseType) -> Expr:
+        """set the bytes for this element in the list
+
+        Args:
+            The value to write into the list at the given index
+        """
         return BoxReplace(self.name, self.element_size * self.idx, val.encode())
 
     def __str__(self) -> str:
