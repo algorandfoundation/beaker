@@ -76,7 +76,7 @@
   <h1>Source code for beaker.state</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">ABC</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">algosdk.future.transaction</span> <span class="kn">import</span> <span class="n">StateSchema</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">abi</span><span class="p">,</span>
@@ -95,29 +95,24 @@
     <span class="n">Txn</span><span class="p">,</span>
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">If</span><span class="p">,</span>
+    <span class="n">Subroutine</span><span class="p">,</span>
+    <span class="n">Concat</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.lib.storage</span> <span class="kn">import</span> <span class="n">LocalBlob</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">MAX_GLOBAL_STATE</span><span class="p">,</span> <span class="n">MAX_LOCAL_STATE</span>
 <span class="kn">from</span> <span class="nn">beaker.lib.storage.global_blob</span> <span class="kn">import</span> <span class="n">GlobalBlob</span>
 
 
-<span class="k">def</span> <span class="nf">get_default_for_type</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default</span>
+<span class="k">def</span> <span class="nf">prefix_key_gen</span><span class="p">(</span><span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
+    <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">prefix_key_gen</span><span class="p">(</span><span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="n">key_seed</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">prefix_key_gen</span>
 
 
-<span class="k">def</span> <span class="nf">stack_type_to_string</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;uint64&quot;</span>
-    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;bytes&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Only uint64 and bytes supported&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">identity_key_gen</span><span class="p">(</span><span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">key_seed</span>
 
 
 <span class="k">class</span> <span class="nc">StateValue</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
@@ -187,11 +182,11 @@
     <span class="k">def</span> <span class="nf">set_default</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;sets the default value if one is provided, if none provided sets the zero value for its type&quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">_get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">is_default</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;checks to see if the value set equals the default value&quot;&quot;&quot;</span>
-        <span class="n">default</span> <span class="o">=</span> <span class="n">get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="n">_get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">==</span> <span class="n">default</span>
 
     <span class="nd">@abstractmethod</span>
@@ -238,16 +233,23 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">key_gen</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">key_gen</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">=</span> <span class="n">stack_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span> <span class="o">=</span> <span class="n">max_keys</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">descr</span> <span class="o">=</span> <span class="n">descr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">key_gen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key_gen</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key_gen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_key_gen</span><span class="p">(</span><span class="n">key_gen</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_key_gen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_gen</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">key_gen</span><span class="p">,</span> <span class="n">SubroutineFnWrapper</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">key_gen</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">key_gen</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">key_generator</span> <span class="o">=</span> <span class="n">key_gen</span>
 
     <span class="nd">@abstractmethod</span>
@@ -310,6 +312,14 @@
 
         <span class="k">return</span> <span class="n">If</span><span class="p">((</span><span class="n">v</span> <span class="o">:=</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">))</span><span class="o">.</span><span class="n">hasValue</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="n">val</span><span class="p">)</span></div>
 
+    <span class="k">def</span> <span class="nf">get_external</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+
 <div class="viewcode-block" id="ApplicationStateValue.exists"><a class="viewcode-back" href="../../state.html#beaker.state.ApplicationStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
 
@@ -338,7 +348,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">key_gen</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">key_gen</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">,</span> <span class="n">key_gen</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
@@ -446,6 +456,17 @@
             <span class="n">val</span><span class="p">,</span>
         <span class="p">)</span></div>
 
+    <span class="k">def</span> <span class="nf">get_external</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGetEx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+
 <div class="viewcode-block" id="AccountStateValue.exists"><a class="viewcode-back" href="../../state.html#beaker.state.AccountStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
 
@@ -479,7 +500,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">key_gen</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">key_gen</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">,</span> <span class="n">key_gen</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
@@ -679,7 +700,7 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;declared&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="n">k</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">_stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
                     <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">str_key</span><span class="p">(),</span>
                     <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
                 <span class="p">}</span>
@@ -687,7 +708,7 @@
             <span class="p">},</span>
             <span class="s2">&quot;reserved&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="n">k</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">_stack_type_to_string</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">),</span>
                     <span class="s2">&quot;max_keys&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">max_keys</span><span class="p">,</span>
                     <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">descr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
                 <span class="p">}</span>
@@ -753,6 +774,25 @@
             <span class="p">]</span>
             <span class="o">+</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blob_vals</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
         <span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_get_default_for_type</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span>
+
+    <span class="k">if</span> <span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_stack_type_to_string</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">TealType</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;uint64&quot;</span>
+    <span class="k">if</span> <span class="n">st</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;bytes&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Only uint64 and bytes supported&quot;</span><span class="p">)</span>
 </pre></div>
 
            </div>

@@ -75,13 +75,13 @@
              
   <h1>Source code for beaker.precompile</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">from</span> <span class="nn">Cryptodome.Hash</span> <span class="kn">import</span> <span class="n">SHA512</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">Bytes</span><span class="p">,</span>
     <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">Addr</span><span class="p">,</span>
     <span class="n">ScratchVar</span><span class="p">,</span>
     <span class="n">TealType</span><span class="p">,</span>
     <span class="n">TealTypeError</span><span class="p">,</span>
@@ -101,6 +101,7 @@
 <span class="kn">from</span> <span class="nn">algosdk.future.transaction</span> <span class="kn">import</span> <span class="n">LogicSigAccount</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">LogicSigTransactionSigner</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">PROGRAM_DOMAIN_SEPARATOR</span><span class="p">,</span> <span class="n">num_extra_program_pages</span>
+<span class="kn">from</span> <span class="nn">algosdk.constants</span> <span class="kn">import</span> <span class="n">APP_PAGE_MAX_SIZE</span>
 <span class="kn">from</span> <span class="nn">beaker.lib.strings</span> <span class="kn">import</span> <span class="n">encode_uvarint</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -134,6 +135,24 @@
     <span class="n">pc</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
 
 
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ProgramPage</span><span class="p">:</span>
+    <span class="c1">#: index of the program page</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#: binary of the page</span>
+    <span class="n">_binary</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#: bytes of the page as pyteal Bytes</span>
+    <span class="n">binary</span><span class="p">:</span> <span class="n">Bytes</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1">#: hash of the page in native bytes</span>
+    <span class="n">_hash_digest</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#: hash of the page as pyteal Addr</span>
+    <span class="n">hash_digest</span><span class="p">:</span> <span class="n">Bytes</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hash_digest</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hash_digest</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="Precompile"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile">[docs]</a><span class="k">class</span> <span class="nc">Precompile</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile</span>
@@ -145,12 +164,11 @@
     <span class="n">_program_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceMap</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_template_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PrecompileTemplateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
+    <span class="n">program_pages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProgramPage</span><span class="p">]</span>
     <span class="n">binary</span><span class="p">:</span> <span class="n">Bytes</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_program</span> <span class="o">=</span> <span class="n">program</span>
-
         <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_program</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
         <span class="n">template_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PrecompileTemplateValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Replace the teal program TMPL_* template variables with</span>
@@ -182,20 +200,36 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_template_values</span><span class="p">:</span>
             <span class="c1"># +1 to acount for the pushbytes/pushint op</span>
-            <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span></div>
+            <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Precompile.hash"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.hash">[docs]</a>    <span class="k">def</span> <span class="nf">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        address returns an expression for this Precompile.</span>
+        <span class="k">def</span> <span class="nf">_hash_program</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;compute the hash&quot;&quot;&quot;</span>
+            <span class="n">chksum</span> <span class="o">=</span> <span class="n">SHA512</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">truncate</span><span class="o">=</span><span class="s2">&quot;256&quot;</span><span class="p">)</span>
+            <span class="n">chksum</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">PROGRAM_DOMAIN_SEPARATOR</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="o">+</span> <span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">chksum</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
 
-<span class="sd">        It will fail if any template_values are set.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">program_pages</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ProgramPage</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                <span class="n">_binary</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">APP_PAGE_MAX_SIZE</span><span class="p">],</span>
+                <span class="n">_hash_digest</span><span class="o">=</span><span class="n">_hash_program</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">APP_PAGE_MAX_SIZE</span><span class="p">]),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">),</span> <span class="n">APP_PAGE_MAX_SIZE</span><span class="p">)</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="Precompile.hash"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.hash">[docs]</a>    <span class="k">def</span> <span class="nf">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;hash returns an expression for this Precompile.  It will fail if any template_values are set.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            page_idx(optional): If the application has multiple pages, the index of the page can be specified to get the program hash for that page.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_template_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_program_hash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;No address defined for precompile&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">Addr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_program_hash</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">program_pages</span><span class="p">[</span><span class="n">page_idx</span><span class="p">]</span><span class="o">.</span><span class="n">hash_digest</span></div>
 
 <div class="viewcode-block" id="Precompile.populate_template"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.populate_template">[docs]</a>    <span class="k">def</span> <span class="nf">populate_template</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -326,7 +360,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">:</span> <span class="n">Precompile</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AppPrecompile.compile"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.AppPrecompile.compile">[docs]</a>    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">AlgodClient</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;fully compile this lsig precompile by recursively compiling children depth first</span>
+        <span class="sd">&quot;&quot;&quot;fully compile this app precompile by recursively compiling children depth first</span>
 
 <span class="sd">        Note:</span>
 <span class="sd">            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields</span>
@@ -339,10 +373,8 @@
         <span class="n">approval</span><span class="p">,</span> <span class="n">clear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approval</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="n">approval</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear</span> <span class="o">=</span> <span class="n">Precompile</span><span class="p">(</span><span class="n">clear</span><span class="p">)</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">assemble</span><span class="p">(</span><span class="n">client</span><span class="p">)</span></div>
 

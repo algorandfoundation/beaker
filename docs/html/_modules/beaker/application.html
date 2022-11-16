@@ -111,9 +111,11 @@
     <span class="n">AccountStateValue</span><span class="p">,</span>
     <span class="n">ApplicationStateValue</span><span class="p">,</span>
     <span class="n">ReservedApplicationStateValue</span><span class="p">,</span>
+    <span class="n">prefix_key_gen</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.errors</span> <span class="kn">import</span> <span class="n">BareOverwriteError</span>
 <span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">AppPrecompile</span><span class="p">,</span> <span class="n">LSigPrecompile</span>
+<span class="kn">from</span> <span class="nn">beaker.lib.storage</span> <span class="kn">import</span> <span class="n">List</span>
 
 
 <span class="k">def</span> <span class="nf">get_method_spec</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Method</span><span class="p">:</span>
@@ -190,15 +192,19 @@
             <span class="c1"># Check for state vals</span>
             <span class="k">match</span> <span class="n">bound_attr</span><span class="p">:</span>
 
+                <span class="c1"># Account state</span>
                 <span class="k">case</span> <span class="n">AccountStateValue</span><span class="p">():</span>
                     <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">ReservedAccountStateValue</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key_generator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">bound_attr</span><span class="o">.</span><span class="n">set_key_gen</span><span class="p">(</span><span class="n">prefix_key_gen</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">AccountStateBlob</span><span class="p">():</span>
                     <span class="n">acct_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
 
+                <span class="c1"># App state</span>
                 <span class="k">case</span> <span class="n">ApplicationStateBlob</span><span class="p">():</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">ApplicationStateValue</span><span class="p">():</span>
@@ -206,10 +212,18 @@
                         <span class="n">bound_attr</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
                 <span class="k">case</span> <span class="n">ReservedApplicationStateValue</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">key_generator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">bound_attr</span><span class="o">.</span><span class="n">set_key_gen</span><span class="p">(</span><span class="n">prefix_key_gen</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
                     <span class="n">app_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
 
+                <span class="c1"># Precompiles</span>
                 <span class="k">case</span> <span class="n">LSigPrecompile</span><span class="p">()</span> <span class="o">|</span> <span class="n">AppPrecompile</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">precompiles</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound_attr</span>
+
+                <span class="c1"># Boxes</span>
+                <span class="k">case</span> <span class="n">List</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">bound_attr</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">bound_attr</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
             <span class="c1"># Already dealt with these, move on</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">app_vals</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">acct_vals</span><span class="p">:</span>
@@ -352,7 +366,7 @@
             <span class="n">optimize</span><span class="o">=</span><span class="n">OptimizeOptions</span><span class="p">(</span><span class="n">scratch_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span></div>
 
 <div class="viewcode-block" id="Application.application_spec"><a class="viewcode-back" href="../../application.html#beaker.application.Application.application_spec">[docs]</a>    <span class="k">def</span> <span class="nf">application_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;returns a dictionary, helpful to provide to callers with information about the application specification&quot;&quot;&quot;</span>
