@@ -1,11 +1,11 @@
 import base64
+import hashlib
 from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING
 from pyteal import (
     Seq,
     Bytes,
     Expr,
-    Addr,
     ScratchVar,
     TealType,
     TealTypeError,
@@ -30,7 +30,6 @@ from beaker.lib.strings import encode_uvarint
 if TYPE_CHECKING:
     from beaker.application import Application
     from beaker.logic_signature import LogicSignature
-
 
 #: The prefix for template variables that should be substituted
 TMPL_PREFIX = "TMPL_"
@@ -58,6 +57,24 @@ class PrecompileTemplateValue:
     pc: int = 0
 
 
+@dataclass
+class ProgramPage:
+    # index of the program page
+    index: int = field(kw_only=True, init=True)
+    # binary of the page
+    _binary: bytes = field(kw_only=True, init=True)
+    # bytes of the page as pyteal Bytes
+    binary: Bytes = field(init=False)
+    # hash of the page in native bytes
+    _hash_digest: bytes = field(kw_only=True, init=True)
+    # hash of the page as pyteal Addr
+    hash_digest: Bytes = field(init=False)
+
+    def __post_init__(self):
+        self.binary = Bytes(self._binary)
+        self.hash_digest = Bytes(self._hash_digest)
+
+
 class Precompile:
     """
     Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
@@ -69,12 +86,11 @@ class Precompile:
     _program_hash: Optional[str] = None
     _map: Optional[SourceMap] = None
     _template_values: list[PrecompileTemplateValue] = []
-
+    program_pages: list[ProgramPage]
     binary: Bytes = Bytes("")
 
     def __init__(self, program: str):
         self._program = program
-
         lines = self._program.splitlines()
         template_values: list[PrecompileTemplateValue] = []
         # Replace the teal program TMPL_* template variables with
@@ -108,7 +124,16 @@ class Precompile:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
-    def hash(self) -> Expr:
+        self.program_pages = [
+            ProgramPage(
+                index=i,
+                _binary=self._binary[i : i + 2048],
+                _hash_digest=hashlib.sha256(self._binary[i : i + 2048]).digest(),
+            )
+            for i in range(0, len(self._binary), 2048)
+        ]
+
+    def hash(self, page_idx: int = 0) -> Expr:
         """
         address returns an expression for this Precompile.
 
@@ -118,8 +143,7 @@ class Precompile:
         assert len(self._template_values) == 0
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
-
-        return Addr(self._program_hash)
+        return self.program_pages[page_idx].hash_digest
 
     def populate_template(self, *args) -> bytes:
         """
@@ -263,10 +287,8 @@ class AppPrecompile:
         approval, clear = self.app.compile(client)
         self.approval = Precompile(approval)
         self.clear = Precompile(clear)
-
         if self.approval._binary is None:
             self.approval.assemble(client)
-
         if self.clear._binary is None:
             self.clear.assemble(client)
 

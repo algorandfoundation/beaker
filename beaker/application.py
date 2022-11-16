@@ -290,7 +290,7 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
-        return (self.approval_program, self.clear_program)
+        return self.approval_program, self.clear_program
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
