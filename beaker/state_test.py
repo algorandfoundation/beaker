@@ -7,7 +7,7 @@ from beaker.state import (
     ReservedApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
-    get_default_for_type,
+    _get_default_for_type,
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
@@ -78,7 +78,7 @@ def do_lv_test(key, stack_type, default, val):
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = get_default_for_type(stack_type, default)
+    expected_default = _get_default_for_type(stack_type, default)
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -103,7 +103,7 @@ def do_lv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    default = get_default_for_type(stack_type=stack_type, default=None)
+    default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.If(
         (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)).hasValue(),
@@ -170,7 +170,7 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = get_default_for_type(stack_type, None)
+    expected_default = _get_default_for_type(stack_type, None)
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -190,7 +190,7 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    default = get_default_for_type(stack_type=stack_type, default=None)
+    default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.If(
         (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)).hasValue(),
@@ -270,7 +270,7 @@ def do_gv_test(key, stack_type, default, val, static):
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = get_default_for_type(stack_type, default)
+    expected_default = _get_default_for_type(stack_type, default)
 
     if static:
         expected = pt.Seq(
@@ -321,7 +321,7 @@ def do_gv_test(key, stack_type, default, val, static):
         with pytest.raises(pt.TealInputError):
             lv.decrement()
 
-    default = get_default_for_type(stack_type=stack_type, default=None)
+    default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.If(
         (v := pt.App.globalGetEx(pt.Int(0), key)).hasValue(), v.value(), default
@@ -447,7 +447,7 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
         with pytest.raises(pt.TealInputError):
             lv.decrement()
 
-    default = get_default_for_type(stack_type=stack_type, default=None)
+    default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.If(
         (v := pt.App.globalGetEx(pt.Int(0), key)).hasValue(), v.value(), default

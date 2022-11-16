@@ -10,6 +10,7 @@ from beaker import (
     external,
     sandbox,
     client,
+    identity_key_gen,
 )
 
 
@@ -23,6 +24,7 @@ class Structer(Application):
     orders: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
+        key_gen=identity_key_gen,
     )
 
     @opt_in

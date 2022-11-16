@@ -35,9 +35,11 @@ from beaker.state import (
     AccountStateValue,
     ApplicationStateValue,
     ReservedApplicationStateValue,
+    prefix_key_gen,
 )
 from beaker.errors import BareOverwriteError
 from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker.lib.storage import List
 
 
 def get_method_spec(fn) -> Method:
@@ -114,15 +116,19 @@ class Application:
             # Check for state vals
             match bound_attr:
 
+                # Account state
                 case AccountStateValue():
                     if bound_attr.key is None:
                         bound_attr.key = Bytes(name)
                     acct_vals[name] = bound_attr
                 case ReservedAccountStateValue():
+                    if bound_attr.key_generator is None:
+                        bound_attr.set_key_gen(prefix_key_gen(name))
                     acct_vals[name] = bound_attr
                 case AccountStateBlob():
                     acct_vals[name] = bound_attr
 
+                # App state
                 case ApplicationStateBlob():
                     app_vals[name] = bound_attr
                 case ApplicationStateValue():
@@ -130,10 +136,18 @@ class Application:
                         bound_attr.key = Bytes(name)
                     app_vals[name] = bound_attr
                 case ReservedApplicationStateValue():
+                    if bound_attr.key_generator is None:
+                        bound_attr.set_key_gen(prefix_key_gen(name))
                     app_vals[name] = bound_attr
 
+                # Precompiles
                 case LSigPrecompile() | AppPrecompile():
                     self.precompiles[name] = bound_attr
+
+                # Boxes
+                case List():
+                    if bound_attr.name is None:
+                        bound_attr.name = Bytes(name)
 
             # Already dealt with these, move on
             if name in app_vals or name in acct_vals:
@@ -276,7 +290,7 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True),
         )
 
-        return (self.approval_program, self.clear_program)
+        return self.approval_program, self.clear_program
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
