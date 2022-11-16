@@ -20,6 +20,7 @@ from pyteal import (
     TealType,
 )
 from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
+from beaker.consts import MAX_LOCAL_STATE
 
 
 class LocalBlob(Blob):
@@ -30,7 +31,7 @@ class LocalBlob(Blob):
     """
 
     def __init__(self, /, *, keys: Optional[int | list[int]] = None):
-        super().__init__(16, keys=keys)
+        super().__init__(MAX_LOCAL_STATE, keys=keys)
 
     def zero(self, acct: Expr = Txn.sender()) -> Expr:
         """

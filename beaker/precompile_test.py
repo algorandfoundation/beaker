@@ -1,14 +1,12 @@
 import pytest
 import pyteal as pt
+from algosdk import encoding
 
 from beaker.application import Application
 from beaker.decorators import external
 from beaker.client import ApplicationClient
-
 from beaker.sandbox import get_accounts, get_algod_client
-
 from beaker.logic_signature import LogicSignature, TemplateVariable
-
 from beaker.precompile import (
     AppPrecompile,
     LSigPrecompile,
@@ -204,7 +202,17 @@ class LargeApp(Application):
         return pt.Assert(pt.Bytes(self.longBytes) != pt.Bytes(self.longBytes2))
 
 
+def test_page_hash():
+    class SmallApp(Application):
+        pass
+
+    small_precompile = AppPrecompile(SmallApp())
+    small_precompile.compile(get_algod_client())
+    _check_app_precompiles(small_precompile)
+
+
 def test_extra_page_population():
+
     app = LargeApp()
     app_precompile = AppPrecompile(app)
     app_precompile.compile(get_algod_client())
@@ -240,12 +248,23 @@ def _check_app_precompiles(app_precompile: AppPrecompile):
     assert app_precompile.approval._program_hash is not None
     assert app_precompile.approval._template_values == []
 
+    assert len(app_precompile.approval.program_pages) > 0
+    if len(app_precompile.approval.program_pages) == 1:
+        assert app_precompile.approval.program_pages[
+            0
+        ]._hash_digest == encoding.decode_address(app_precompile.approval._program_hash)
+
     assert app_precompile.clear._program != ""
     assert app_precompile.clear._binary is not None
     assert app_precompile.clear.binary.byte_str != b""
     assert app_precompile.clear._map is not None
     assert app_precompile.clear._program_hash is not None
     assert app_precompile.clear._template_values == []
+    assert len(app_precompile.clear.program_pages) > 0
+    if len(app_precompile.clear.program_pages) == 1:
+        assert app_precompile.clear.program_pages[
+            0
+        ]._hash_digest == encoding.decode_address(app_precompile.clear._program_hash)
 
 
 def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
