@@ -267,5 +267,3 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
     assert len(lsig_precompile.logic._template_values) == len(
         lsig_precompile.lsig.template_variables
     )
-
-

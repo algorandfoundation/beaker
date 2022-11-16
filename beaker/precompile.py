@@ -134,7 +134,7 @@ class Precompile:
             for i in range(0, len(self._binary), 2048)
         ]
 
-    def hash(self, page_idx: int = -1) -> Expr:
+    def hash(self, page_idx: int = 0) -> Expr:
         """
         address returns an expression for this Precompile.
 
@@ -144,11 +144,7 @@ class Precompile:
         assert len(self._template_values) == 0
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
-
-        if page_idx > -1:
-            return self.program_pages[page_idx].hash_digest
-
-        return Addr(self._program_hash)
+        return self.program_pages[page_idx].hash_digest
 
     def populate_template(self, *args) -> bytes:
         """
