@@ -25,6 +25,7 @@ from algosdk.source_map import SourceMap
 from algosdk.future.transaction import LogicSigAccount
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
+from algosdk.constants import APP_PAGE_MAX_SIZE
 from beaker.lib.strings import encode_uvarint
 
 if TYPE_CHECKING:
@@ -134,10 +135,10 @@ class Precompile:
         self.program_pages = [
             ProgramPage(
                 index=i,
-                _binary=self._binary[i : i + 2048],
-                _hash_digest=_hash_program(self._binary[i : i + 2048]),
+                _binary=self._binary[i : i + APP_PAGE_MAX_SIZE],
+                _hash_digest=_hash_program(self._binary[i : i + APP_PAGE_MAX_SIZE]),
             )
-            for i in range(0, len(self._binary), 2048)
+            for i in range(0, len(self._binary), APP_PAGE_MAX_SIZE)
         ]
 
     def hash(self, page_idx: int = 0) -> Expr:
