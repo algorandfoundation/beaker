@@ -66,7 +66,6 @@ class Application:
     # Convenience constant fields
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
-    programPages: list[Bytes]
 
     def __init__(self, version: int = MAX_TEAL_VERSION):
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
