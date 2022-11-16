@@ -72,7 +72,7 @@ class ProgramPage:
     hash_digest: Bytes = field(init=False)
 
     def __post_init__(self):
-        self.binary = (Bytes(self._binary),)
+        self.binary = Bytes(self._binary)
         self.hash_digest = Bytes(self._hash_digest)
 
 
