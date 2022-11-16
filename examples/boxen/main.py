@@ -6,7 +6,10 @@ from algosdk.future.transaction import *
 from pyteal import *
 from beaker import *
 
-from application import AppMember, MembershipRecord, MembershipClub
+if __name__ == "__main__":
+    from application import AppMember, MembershipRecord, MembershipClub
+else:
+    from .application import AppMember, MembershipRecord, MembershipClub
 
 
 record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))
