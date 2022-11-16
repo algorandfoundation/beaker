@@ -21,11 +21,12 @@ from pyteal import (
 
 from beaker.lib.inline import InlineAssembly
 from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
+from beaker.consts import MAX_GLOBAL_STATE
 
 
 class GlobalBlob(Blob):
     def __init__(self, /, *, keys: Optional[int | list[int]] = None):
-        super().__init__(64, keys=keys)
+        super().__init__(MAX_GLOBAL_STATE, keys=keys)
 
     def zero(self) -> Expr:
         """
