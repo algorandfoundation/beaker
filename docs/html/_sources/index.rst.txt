@@ -63,6 +63,7 @@ See full examples `here <https://github.com/algorand-devrel/beaker/tree/master/e
     precompile
     decorators
     testing
+    boxes
 
 
 Indices and tables
