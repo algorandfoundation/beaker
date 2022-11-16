@@ -143,7 +143,7 @@ class LargeApp(Application):
     longBytes2 = 2048 * b"A"
 
     @external
-    def gonnaFillWithByteBlocks(self):
+    def compare_big_byte_strings(self):
         return pt.Assert(pt.Bytes(self.longBytes) != pt.Bytes(self.longBytes2))
 
 
