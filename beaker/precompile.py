@@ -1,5 +1,5 @@
 import base64
-import hashlib
+from Cryptodome.Hash import SHA512
 from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING
 from pyteal import (
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from beaker.application import Application
     from beaker.logic_signature import LogicSignature
 
+
 #: The prefix for template variables that should be substituted
 TMPL_PREFIX = "TMPL_"
 
@@ -59,15 +60,15 @@ class PrecompileTemplateValue:
 
 @dataclass
 class ProgramPage:
-    # index of the program page
+    #: index of the program page
     index: int = field(kw_only=True, init=True)
-    # binary of the page
+    #: binary of the page
     _binary: bytes = field(kw_only=True, init=True)
-    # bytes of the page as pyteal Bytes
+    #: bytes of the page as pyteal Bytes
     binary: Bytes = field(init=False)
-    # hash of the page in native bytes
+    #: hash of the page in native bytes
     _hash_digest: bytes = field(kw_only=True, init=True)
-    # hash of the page as pyteal Addr
+    #: hash of the page as pyteal Addr
     hash_digest: Bytes = field(init=False)
 
     def __post_init__(self):
@@ -124,25 +125,33 @@ class Precompile:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
+        def _hash_program(data: bytes) -> bytes:
+            """compute the hash"""
+            chksum = SHA512.new(truncate="256")
+            chksum.update(PROGRAM_DOMAIN_SEPARATOR.encode() + data)
+            return chksum.digest()
+
         self.program_pages = [
             ProgramPage(
                 index=i,
                 _binary=self._binary[i : i + 2048],
-                _hash_digest=hashlib.sha256(self._binary[i : i + 2048]).digest(),
+                _hash_digest=_hash_program(self._binary[i : i + 2048]),
             )
             for i in range(0, len(self._binary), 2048)
         ]
 
     def hash(self, page_idx: int = 0) -> Expr:
-        """
-        address returns an expression for this Precompile.
+        """hash returns an expression for this Precompile.  It will fail if any template_values are set.
 
-        It will fail if any template_values are set.
+        Args:
+            page_idx(optional): If the application has multiple pages, the index of the page can be specified to get the program hash for that page.
+
         """
         assert self._binary is not None
         assert len(self._template_values) == 0
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
+
         return self.program_pages[page_idx].hash_digest
 
     def populate_template(self, *args) -> bytes:
