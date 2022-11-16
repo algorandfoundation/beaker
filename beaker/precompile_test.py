@@ -208,6 +208,23 @@ def test_extra_page_population():
     app = LargeApp()
     pc = AppPrecompile(app)
     pc.compile(get_algod_client())
+
+    def _check_populated_program_pages(app_precompile: AppPrecompile):
+        assert app_precompile.approval.program_pages is not None
+        assert app_precompile.clear.program_pages is not None
+        recovered_approval_binary = b""
+        for approval_page in app_precompile.approval.program_pages:
+            recovered_approval_binary += approval_page._binary
+
+        recovered_clear_binary = b""
+        for clear_page in app_precompile.clear.program_pages:
+            recovered_clear_binary += clear_page._binary
+
+        assert recovered_approval_binary == app_precompile.approval._binary
+        assert recovered_clear_binary == app_precompile.clear._binary
+        for page in app_precompile.approval.program_pages:
+            assert len(page._hash_digest) == 32
+
     _check_populated_program_pages(pc)
 
 
@@ -252,18 +269,3 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
     )
 
 
-def _check_populated_program_pages(app_precompile: AppPrecompile):
-    assert app_precompile.approval.program_pages is not None
-    assert app_precompile.clear.program_pages is not None
-    recovered_approval_binary = b""
-    for approval_page in app_precompile.approval.program_pages:
-        recovered_approval_binary += approval_page._binary
-
-    recovered_clear_binary = b""
-    for clear_page in app_precompile.clear.program_pages:
-        recovered_clear_binary += clear_page._binary
-
-    assert recovered_approval_binary == app_precompile.approval._binary
-    assert recovered_clear_binary == app_precompile.clear._binary
-    for page in app_precompile.approval.program_pages:
-        assert len(page._hash_digest) == 32
