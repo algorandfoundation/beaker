@@ -9,33 +9,50 @@ from pyteal import (
     BoxDelete,
     BoxGet,
     Pop,
+    Concat,
 )
 
 
 class Mapping:
-    """Mapping is an interface to create a new box per map key"""
+    """Mapping provides an abstraction to store some typed data in a box keyed with a typed key"""
 
-    def __init__(self, key_type: type[abi.BaseType], value_type: type[abi.BaseType]):
-
+    def __init__(
+        self,
+        key_type: type[abi.BaseType],
+        value_type: type[abi.BaseType],
+        prefix: Expr | None = None,
+    ):
         self._key_type = key_type
         self._key_type_spec = abi.type_spec_from_annotation(key_type)
 
         self._value_type = value_type
         self._value_type_spec = abi.type_spec_from_annotation(value_type)
 
-    def __getitem__(self, idx: abi.BaseType | Expr) -> "MapElement":
-        match idx:
+        if isinstance(prefix, Expr) and prefix.type_of() != TealType.bytes:
+            raise TealTypeError(prefix.type_of(), TealType.bytes)
+
+        self.prefix = prefix
+
+    def _prefix_key(self, key: Expr) -> Expr:
+        if self.prefix is not None:
+            return Concat(self.prefix, key)
+        return key
+
+    def __getitem__(self, key: abi.BaseType | Expr) -> "MapElement":
+        match key:
             case abi.BaseType():
-                if idx.type_spec() != self._key_type_spec:
-                    raise TealTypeError(idx.type_spec(), self._key_type_spec)
-                return MapElement(idx.encode(), self._value_type)
+                if key.type_spec() != self._key_type_spec:
+                    raise TealTypeError(key.type_spec(), self._key_type_spec)
+                return MapElement(self._prefix_key(key.encode()), self._value_type)
             case Expr():
-                if idx.type_of() != TealType.bytes:
-                    raise TealTypeError(idx.type_of(), TealType.bytes)
-                return MapElement(idx, self._value_type)
+                if key.type_of() != TealType.bytes:
+                    raise TealTypeError(key.type_of(), TealType.bytes)
+                return MapElement(self._prefix_key(key), self._value_type)
 
 
 class MapElement:
+    """Container type for a specific box key and type"""
+
     def __init__(self, key: Expr, value_type: type[abi.BaseType]):
         assert key.type_of() == TealType.bytes, TealTypeError(
             key.type_of(), TealType.bytes
@@ -43,6 +60,9 @@ class MapElement:
 
         self.key = key
         self._value_type = value_type
+
+    def exists(self) -> Expr:
+        return Seq(maybe := BoxGet(self.key), maybe.hasValue())
 
     def store_into(self, val: abi.BaseType) -> Expr:
         return val.decode(self.get())

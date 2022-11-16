@@ -49,18 +49,15 @@ class MembershipClub(Application):
     ####
     # Box abstractions
 
+    # A Mapping will create a new box for every unique key, taking a data type for key and value
+    # Only static types can provide information about the max size (and min balance required).
+    membership_records = Mapping(abi.Address, MembershipRecord)
+
     # A Listing is a simple list, initialized with some _static_ data type and a length
     affirmations = List(Affirmation, 10)
 
-    # A Mapping will create a new box for every unique key, taking a data type for key and value
-    # Only static types can provide information about the max size (and min balance required)
-    membership_records = Mapping(abi.Address, MembershipRecord)
-
-    # TODO: should these be generic? more like:
-    # membership_records = Mapping[abi.Address, MembershipRecord]()
-    # affirmations = List[Affirmation, Literal[10]]()
-
     #####
+    # State vars
 
     membership_token = ApplicationStateValue(
         TealType.uint64,
@@ -68,11 +65,10 @@ class MembershipClub(Application):
         descr="The asset that represents membership of this club",
     )
 
+    #####
+    # Math for determining min balance based on expected size of boxes
     _max_members = 1000
-    MaxMembers = Int(_max_members)
-
     _member_box_size = abi.size_of(MembershipRecord)
-
     _min_balance = (
         AssetMinBalance  # Cover min bal for member token
         + (BoxFlatMinBalance + (_member_box_size * BoxByteMinBalance))
@@ -81,6 +77,9 @@ class MembershipClub(Application):
             BoxFlatMinBalance + (affirmations._box_size * BoxByteMinBalance)
         )  # cover min bal for affirmation box
     )
+    ####
+
+    MaxMembers = Int(_max_members)
     MinimumBalance = Int(_min_balance)
 
     @external(authorize=Authorize.only(Global.creator_address()))
