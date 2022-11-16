@@ -64,7 +64,7 @@ class ProgramPage:
     index: int = field(kw_only=True, init=True)
     # binary of the page
     _binary: bytes = field(kw_only=True, init=True)
-    # hash of the page as pyteal Bytes
+    # bytes of the page as pyteal Bytes
     binary: Bytes = field(init=False)
     # hash of the page in native bytes
     _hash_digest: bytes = field(kw_only=True, init=True)
