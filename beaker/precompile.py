@@ -6,7 +6,6 @@ from pyteal import (
     Seq,
     Bytes,
     Expr,
-    Addr,
     ScratchVar,
     TealType,
     TealTypeError,
