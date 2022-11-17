@@ -67,8 +67,8 @@ def test_amm():
     approval, _, _ = cpamm.router.build_program()
     methods = {k: v[0].subroutine for k, v in cpamm.methods.items()}
     up = Unprocessor(approval, name="main", methods=methods)
-    print()
-    print(ast.unparse(up.native_ast))
+    # print()
+    # print(ast.unparse(up.native_ast))
 
     for k, (meth, _) in cpamm.methods.items():
         subr = meth.subroutine
@@ -79,8 +79,9 @@ def test_amm():
         for a, v in subr.abi_args.items():
             kwargs[a] = v.new_instance()
 
-        subr_call = meth.subroutine.implementation(**kwargs)
-        mup = Unprocessor(subr_call, name=k, methods=methods)
+        mup = Unprocessor(
+            subr.implementation(**kwargs), name=k, methods=methods, definition=subr
+        )
         print(ast.unparse(mup.native_ast))
 
     # {

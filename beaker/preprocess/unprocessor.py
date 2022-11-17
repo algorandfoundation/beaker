@@ -16,20 +16,36 @@ op_lookup = {str(op): op.name for op in pt.Op}
 
 class Unprocessor:
     def __init__(
-        self, e: pt.Expr, name: str, methods: dict[str, pt.Subroutine], *args, **kwargs
+        self,
+        e: pt.Expr,
+        name: str,
+        methods: dict[str, pt.Subroutine],
+        definition: pt.SubroutineDefinition = None,
+        *args,
+        **kwargs,
     ):
         self.expr = e
         # self.slots_in_use: dict[int, pt.ScratchSlot] = {}
 
         self.methods = methods
 
+        self.definition = definition
+
+        args = []
+        if self.definition is not None:
+            for a, v in self.definition.abi_args.items():
+                args.append(
+                    ast.arg(arg=a, annotation=ast.Name(id=str(v), ctx=ast.Load()))
+                )
+
+            
         self.native_ast = ast.fix_missing_locations(
             ast.Module(
                 body=[
                     ast.FunctionDef(
                         name=name,
                         args=ast.arguments(
-                            args=[],
+                            args=args,
                             posonlyargs=[],
                             vararg=None,
                             kwonlyargs=[],
@@ -63,11 +79,16 @@ class Unprocessor:
 
             case pt.If():
                 test: ast.AST = self._translate_ast(e.cond)
-                body: ast.AST = ast.Expr(value=self._translate_ast(e.thenBranch))
+                body: ast.AST = self._translate_ast(e.thenBranch)
                 orelse: list[ast.AST] = []
                 if e.elseBranch is not None:
-                    orelse.append(ast.Expr(value=self._translate_ast(e.elseBranch)))
-                return ast.If(test=test, body=body, orelse=orelse)
+                    orelse.append(self._translate_ast(e.elseBranch))
+
+                if len(orelse) > 0:
+                    if len(orelse) > 1:
+                        return ast.If(test=test, body=body, orelse=orelse)
+                    return ast.IfExp(test=test, body=body, orelse=orelse[0])
+                return ast.IfExp(test=test, body=body)
 
             case pt.NaryExpr():
                 nary_op: ast.AST = self._translate_op(e.op, e.outputType)
@@ -145,12 +166,10 @@ class Unprocessor:
             case pt.SubroutineCall():
                 fn_name: str = e.subroutine.name()
                 call_args: list[ast.AST] = [self._translate_ast(a) for a in e.args]
-                return ast.Expr(
-                    value=ast.Call(
-                        func=ast.Name(id=fn_name, ctx=ast.Load()),
-                        args=call_args,
-                        keywords={},
-                    )
+                return ast.Call(
+                    func=ast.Name(id=fn_name, ctx=ast.Load()),
+                    args=call_args,
+                    keywords={},
                 )
 
             case pt.TxnExpr():
