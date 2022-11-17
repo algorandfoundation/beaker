@@ -1,10 +1,6 @@
 import pyteal as pt
 import inspect
 
-from algosdk.atomic_transaction_composer import AtomicTransactionComposer
-from algosdk.dryrun_results import DryrunResponse
-from algosdk.future.transaction import create_dryrun
-
 from beaker.application import Application
 from beaker.decorators import external, internal
 from beaker.client import ApplicationClient
@@ -158,9 +154,9 @@ def test_bytes_ops():
         # x = val ** val
         # x = val >> val
         # x = val << val
-        return x
+        return len(x)
 
-    # compile(Preprocessor(meth).function_body())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_str_ops():
@@ -237,6 +233,30 @@ def test_kitchen_sink():
     assert len(ks.approval_program) > 0
 
 
+class NativeApplication(Application):
+    def __init__(self, version=pt.MAX_TEAL_VERSION):
+
+        self._user_defined = {
+            ud: (getattr(self, ud), inspect.getattr_static(self, ud))
+            for ud in list(set(dir(self)) - set(dir(Application)))
+        }
+
+        # TODO: we're overriding the methods defined on the class during init.
+        # If you try to initialized >1 time, it breaks stuff. Fix that.
+        for name, (_, static_attr) in self._user_defined.items():
+            pp = Preprocessor(static_attr, self)
+            # Treat underscore prefixed methods as internal
+            setattr(
+                self.__class__,
+                name,
+                internal(pp.return_stack_type)(pp.subroutine())
+                if name.startswith("_")
+                else external(pp.subroutine()),
+            )
+
+        super().__init__(version=version)
+
+
 def test_calculator_app():
     class Calculator(NativeApplication):
         def add(self, x: u64, y: u64) -> u64:
@@ -267,37 +287,6 @@ def test_calculator_app():
     result = ac.call(Calculator.div, x=25, y=5)
     assert result.return_value == 5
 
-    # calc = Calculator()
-    # assert len(calc.approval_program)>0
-    # print(calc.approval_program)
-    # atc = AtomicTransactionComposer()
-    # atc = ac.add_method_call(atc, Calculator.add, x=2, y=4)
-    # txns = atc.gather_signatures()
-    # drreq = create_dryrun(ac.client, txns)
-    # drresp = DryrunResponse(ac.client.dryrun(drreq))
-    # print(drresp.txns[0].app_trace())
-
-
-class NativeApplication(Application):
-    def __init__(self, version=pt.MAX_TEAL_VERSION):
-
-        self._user_defined = {
-            ud: (getattr(self, ud), inspect.getattr_static(self, ud))
-            for ud in list(set(dir(self)) - set(dir(Application)))
-        }
-
-        for name, (bound_attr, static_attr) in self._user_defined.items():
-            pp = Preprocessor(static_attr, self)
-            if name.startswith("_"):
-                ret_type = (
-                    pp.return_type if pp.return_type is not None else pt.TealType.none
-                )
-                setattr(self.__class__, name, internal(ret_type)(pp.subroutine()))
-            else:
-                setattr(self.__class__, name, external(pp.subroutine()))
-
-        super().__init__(version=version)
-
 
 def test_native_app():
     class Native(NativeApplication):
@@ -313,22 +302,11 @@ def test_native_app():
         def _sqr(self, a: u64) -> i:
             return a**2
 
-    # TODO: initializing the CLASS more than once, breaks things
-    # n = Native()
-    # assert len(n.approval_program) > 0
-
     acct = get_accounts().pop()
     ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
     ac.create()
     result = ac.call(Native.sqr, a=2)
     assert result.return_value == 4
-
-    # atc = AtomicTransactionComposer()
-    # atc = ac.add_method_call(atc, Native.sqr_caller, b=2)
-    # txns = atc.gather_signatures()
-    # drreq = create_dryrun(ac.client, txns)
-    # drresp = DryrunResponse(ac.client.dryrun(drreq))
-    # print(drresp.txns[0].app_trace())
 
 
 def test_recursive_func():
@@ -336,8 +314,9 @@ def test_recursive_func():
     def factorial(x: i) -> i:
         return x * factorial(x - 1) if x > 0 else 1
 
-    # Translated the python logic to PyTeal AST
+    # Translate the python logic to PyTeal AST
     pp = Preprocessor(factorial)
+
     # Get the expression resulting from a SubroutineCall to our translated
     # function
     expr = pp.callable(pt.Int(10))
@@ -351,13 +330,3 @@ def test_recursive_func():
     assert_output(ut, [], output)
 
     print(f"\n{compile(expr)}")
-
-
-
-
-
-
-
-
-
-

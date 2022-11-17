@@ -1,5 +1,4 @@
 import ast
-import pyteal as pt
 from .unprocessor import Unprocessor
 from .preprocessor import Preprocessor
 

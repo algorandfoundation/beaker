@@ -1,5 +1,3 @@
-import inspect
-from typing import Callable
 from pyteal.ast.return_ import ExitProgram
 import pyteal as pt
 import beaker as bkr

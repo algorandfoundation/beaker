@@ -57,10 +57,6 @@ class Preprocessor:
         self.callable = self.funcs[self.fn_name]
 
     def subroutine(self):
-        # Lazy gen
-        # if hasattr(self, "as_subroutine") and self.as_subroutine is not None:
-        #    return self.as_subroutine
-
         # Make a callable that passes args and sets output appropriately,
         # we modify its signature below
         def _impl(*args, **kwargs) -> pt.Expr:
@@ -236,10 +232,10 @@ class Preprocessor:
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
                 args: list[VariableType] = [self._translate_ast(a) for a in expr.args]
 
-                # This is weird,
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
 
+                # This is weird
                 if isinstance(func, pt.ABIReturnSubroutine | pt.SubroutineFnWrapper):
                     # If its an ABIReturnSubroutine or a SubroutineFnWrapper:
                     #   first map the args passed to a variable that the subr will accept
@@ -270,15 +266,15 @@ class Preprocessor:
 
                 return func(*args)
             case ast.If():
-                test: pt.Expr = self._translate_ast(expr.test)  # type: ignore[no-redef]
-                body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
-                orelse: list[pt.Expr] = [self._translate_ast(e) for e in expr.orelse]
-                return pt.If(test).Then(pt.Seq(*body)).Else(pt.Seq(*orelse))
+                if_test: pt.Expr = self._translate_ast(expr.test)
+                if_body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
+                if_orelse: list[pt.Expr] = [self._translate_ast(e) for e in expr.orelse]
+                return pt.If(if_test).Then(pt.Seq(*if_body)).Else(pt.Seq(*if_orelse))
             case ast.IfExp():
-                test: pt.Expr = self._translate_ast(expr.test)
-                body: pt.Expr = self._translate_ast(expr.body)
-                orelse: pt.Expr = self._translate_ast(expr.orelse)
-                return pt.If(test).Then(body).Else(orelse)
+                ifExp_test: pt.Expr = self._translate_ast(expr.test)
+                ifExp_body: pt.Expr = self._translate_ast(expr.body)
+                ifExp_orelse: pt.Expr = self._translate_ast(expr.orelse)
+                return pt.If(ifExp_test).Then(ifExp_body).Else(ifExp_orelse)
             case ast.For():
                 if len(expr.orelse) > 0:
                     raise Unsupported("orelse in For")

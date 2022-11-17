@@ -14,7 +14,7 @@ b = bytes
 
 
 VariableType = pt.ScratchVar | pt.abi.BaseType | pt.Expr
-ValueType = type[pt.abi.BaseType] | pt.TealType
+ValueType = type[pt.abi.BaseType] | pt.TealType  # type: ignore[index]
 
 BuiltInTypes: dict[str, ValueType] = {
     # Stack types
