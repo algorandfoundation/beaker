@@ -51,7 +51,7 @@ def test_parse_method():
 
         return x
 
-    compile(Preprocessor(meth).expr())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_if_else():
@@ -82,7 +82,7 @@ def test_if_else():
         else:
             return 3
 
-    compile(Preprocessor(meth).expr())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_bool_op():
@@ -95,7 +95,7 @@ def test_bool_op():
         z = not (x or y)
         return z
 
-    compile(Preprocessor(meth).expr())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_int_ops():
@@ -125,7 +125,7 @@ def test_int_ops():
         x = x
         return x
 
-    compile(Preprocessor(meth).expr())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_bytes_ops():
@@ -158,7 +158,7 @@ def test_bytes_ops():
         # x = val << val
         return x
 
-    # compile(Preprocessor(meth).expr())
+    # compile(Preprocessor(meth).function_body())
 
 
 def test_str_ops():
@@ -166,7 +166,7 @@ def test_str_ops():
         s = "stringy"
         return len(concat(s, "hi"))
 
-    compile(Preprocessor(meth).expr())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_built_ins():
@@ -177,7 +177,7 @@ def test_built_ins():
         app_del("ok")
         return x
 
-    compile(Preprocessor(meth).expr())
+    compile(Preprocessor(meth).function_body())
 
 
 def test_arg_returns():
@@ -236,34 +236,40 @@ def test_kitchen_sink():
 
 
 def test_calculator_app():
-    class Calculator(Application):
-        @external(translate=True)
+    class Calculator(NativeApplication):
         def add(self, x: u64, y: u64) -> u64:
-            z = x + y
-            return z
+            return x + y
 
-        @external(translate=True)
         def sub(self, x: u64, y: u64) -> u64:
             return x - y
 
-        @external(translate=True)
         def mul(self, x: u64, y: u64) -> u64:
             return x * y
 
-        @external(translate=True)
         def div(self, x: u64, y: u64) -> u64:
-            return x / y  # type: ignore[return-value]
+            return x / y
 
-    calc = Calculator()
-    assert len(calc.approval_program) > 0
+    acct = get_accounts().pop()
+    ac = ApplicationClient(get_algod_client(), Calculator(), signer=acct.signer)
+    ac.create()
 
-    # acct = get_accounts().pop()
-    # ac = ApplicationClient(get_algod_client(), Calculator(), signer=acct.signer)
-    # ac.create()
+    result = ac.call(Calculator.add, x=2, y=2)
+    assert result.return_value == 4
 
+    result = ac.call(Calculator.sub, x=6, y=1)
+    assert result.return_value == 5
+
+    result = ac.call(Calculator.mul, x=6, y=3)
+    assert result.return_value == 18
+
+    result = ac.call(Calculator.div, x=25, y=5)
+    assert result.return_value == 5
+
+    # calc = Calculator()
+    # assert len(calc.approval_program)>0
+    # print(calc.approval_program)
     # atc = AtomicTransactionComposer()
     # atc = ac.add_method_call(atc, Calculator.add, x=2, y=4)
-
     # txns = atc.gather_signatures()
     # drreq = create_dryrun(ac.client, txns)
     # drresp = DryrunResponse(ac.client.dryrun(drreq))
@@ -306,17 +312,14 @@ def test_native_app():
             return a**2
 
     # TODO: initializing the CLASS more than once, breaks things
-    n = Native()
-    assert len(n.approval_program) > 0
+    # n = Native()
+    # assert len(n.approval_program) > 0
 
-    # acct = get_accounts().pop()
-    # ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
-    # ac.create()
-
-    # result = ac.call(Native.sqr_caller, b=2)
-    # assert result.return_value == 4
-
-    # print(ac.app.approval_program)
+    acct = get_accounts().pop()
+    ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
+    ac.create()
+    result = ac.call(Native.sqr, a=2)
+    assert result.return_value == 4
 
     # atc = AtomicTransactionComposer()
     # atc = ac.add_method_call(atc, Native.sqr_caller, b=2)
@@ -324,3 +327,13 @@ def test_native_app():
     # drreq = create_dryrun(ac.client, txns)
     # drresp = DryrunResponse(ac.client.dryrun(drreq))
     # print(drresp.txns[0].app_trace())
+
+
+def test_recursive_func():
+    def factorial(x: i) -> i:
+        return 1 if x == 0 else x * factorial(x - 1)
+
+    pp = Preprocessor(factorial)
+    print(
+        compile(pt.Seq((n := pt.ScratchVar()).store(pt.Int(10)), pp.as_subroutine(n)))
+    )

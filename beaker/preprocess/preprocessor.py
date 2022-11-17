@@ -12,19 +12,24 @@ def Unsupported(*feature):
 
 
 class Preprocessor:
-    def __init__(self, c: Callable, obj: Any = None):
-        self.fn = c
-        self.fn_name = c.__name__
+    def __init__(self, fn: Callable | ast.FunctionDef, obj: Any = None):
 
-        self.obj = obj
+        if not isinstance(fn, ast.FunctionDef):
+            self.fn_name = fn.__name__
+            self.sig = inspect.signature(fn)
+            self.orig_annotations = inspect.get_annotations(fn)
+            self.obj = obj
+            self.src = dedent(inspect.getsource(fn))
 
-        self.src = dedent(inspect.getsource(c))
-        self.tree = ast.parse(self.src, type_comments=True)
-        self.definition = cast(ast.FunctionDef, self.tree.body[0])
+            tree = ast.parse(self.src, type_comments=True)
+            self.definition = cast(ast.FunctionDef, tree.body[0])
+        else:
+            self.fn_name = fn.name
+            self.definition = fn
 
+        # Context
         self.funcs: dict[str, Callable] = BuiltInFuncs
         self.types: dict[str, ValueType] = BuiltInTypes
-
         self.variables: dict[str, VariableType] = {}
 
         self.args: dict[str, VariableType | None] = self._translate_args(
@@ -35,36 +40,42 @@ class Preprocessor:
         if self.definition.returns is not None:
             self.return_type = self._translate_value_type(self.definition.returns)
 
-        self.return_stack_type: pt.TealType = (
-            self.return_type
-            if type(self.return_type) is pt.TealType
-            else pt.TealType.none
-        )
+        self.as_subroutine = self.subroutine()
+
+        self.return_stack_type = pt.TealType.none
+        if type(self.return_type) is pt.TealType:
+            self.return_stack_type = self.return_type
+            self.funcs[self.fn_name] = pt.Subroutine(self.return_stack_type)(
+                self.as_subroutine
+            )
+        else:
+            self.funcs[self.fn_name] = pt.ABIReturnSubroutine(self.as_subroutine)
 
     def subroutine(self):
+        # Lazy gen
+        if hasattr(self, "as_subroutine") and self.as_subroutine is not None:
+            return self.as_subroutine
+
         # Make a callable that passes args and sets output appropriately,
         # we modify its signature below
         def _impl(*args, **kwargs) -> pt.Expr:
+            expr = self.function_body(*args)
             if "output" in kwargs:
-                return self.__write_to_var(kwargs["output"], self.expr(*args))
-            else:
-                return self.expr(*args)
+                return self.__write_to_var(kwargs["output"], expr)
+            return expr
 
-        sig = inspect.signature(self.fn)
-        orig_annotations = inspect.get_annotations(self.fn)
         translated_annotations = inspect.get_annotations(_impl)
+        orig_annos = self.orig_annotations.copy()
+        params = self.sig.parameters.copy()
 
-        params = sig.parameters.copy()
+        # Incoming args
         for k, v in params.items():
             if k == "self":
                 continue
-            if k not in self.args:
-                raise Exception("Cant find arg?: ", k)
-
             translated_type = cast(type[pt.abi.BaseType], self.args[k])
 
             params[k] = v.replace(annotation=translated_type)
-            orig_annotations[k] = translated_type
+            orig_annos[k] = translated_type
 
         # If its an abi type we're returning, add output kwarg
         if self.return_type is not None and type(self.return_type) is not pt.TealType:
@@ -73,17 +84,17 @@ class Preprocessor:
                 kind=inspect._ParameterKind.KEYWORD_ONLY,
                 annotation=self.return_type,
             )
-            orig_annotations["output"] = self.return_type
+            orig_annos["output"] = self.return_type
 
-        _impl.__name__ = self.fn.__name__
-        _impl.__signature__ = sig.replace(
+        _impl.__name__ = self.fn_name
+        _impl.__signature__ = self.sig.replace(
             parameters=list(params.values()), return_annotation=pt.Expr
         )
-        _impl.__annotations__ = orig_annotations | translated_annotations
+        _impl.__annotations__ = orig_annos | translated_annotations
 
         return _impl
 
-    def expr(self, *args) -> pt.Expr:
+    def function_body(self, *args) -> pt.Expr:
         """called at build time with arguments provided for variables"""
         for idx, name in enumerate(self.args.keys()):
             if name == "self":
@@ -92,6 +103,8 @@ class Preprocessor:
             arg = args[idx]
             match arg:
                 case pt.abi.BaseType():
+                    self._provide_value(name, arg)
+                case pt.ScratchVar():
                     self._provide_value(name, arg)
                 case pt.Expr():
                     self._write_storage_var(name, arg)
@@ -263,6 +276,12 @@ class Preprocessor:
                 orelse: list[pt.Expr] = [self._translate_ast(e) for e in expr.orelse]
                 return pt.If(test).Then(pt.Seq(*body)).Else(pt.Seq(*orelse))
 
+            case ast.IfExp():
+                test: pt.Expr = self._translate_ast(expr.test)
+                body: pt.Expr = self._translate_ast(expr.body)
+                orelse: pt.Expr = self._translate_ast(expr.orelse)
+                return pt.If(test).Then(body).Else(orelse)
+
             case ast.For():
                 if len(expr.orelse) > 0:
                     raise Unsupported("orelse in For")
@@ -343,6 +362,8 @@ class Preprocessor:
 
             # Namespace
             case ast.FunctionDef():
+                pp = Preprocessor(expr)
+                print(pp.__dict__)
                 raise Unsupported("Cant define a new func in a func")
                 # body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
                 # def _impl(*args, **kwargs):
