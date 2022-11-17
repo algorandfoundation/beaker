@@ -331,9 +331,14 @@ def test_native_app():
 
 def test_recursive_func():
     def factorial(x: i) -> i:
-        return 1 if x == 0 else x * factorial(x - 1)
+        return x * factorial(x - 1) if x > 0 else 1
 
     pp = Preprocessor(factorial)
-    print(
-        compile(pt.Seq((n := pt.ScratchVar()).store(pt.Int(10)), pp.as_subroutine(n)))
-    )
+    expr = pp.callable(pt.Int(10))
+    assert len(compile(expr)) > 0
+
+    from beaker.testing import UnitTestingApp, assert_output, returned_int_as_bytes
+
+    ut = UnitTestingApp(pt.Itob(expr))
+    output = [returned_int_as_bytes(factorial(10))]
+    assert_output(ut, [], output)

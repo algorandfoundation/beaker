@@ -15,17 +15,20 @@ class Preprocessor:
     def __init__(self, fn: Callable | ast.FunctionDef, obj: Any = None):
 
         if not isinstance(fn, ast.FunctionDef):
-            self.fn_name = fn.__name__
-            self.sig = inspect.signature(fn)
-            self.orig_annotations = inspect.get_annotations(fn)
-            self.obj = obj
             self.src = dedent(inspect.getsource(fn))
+
+            self.fn_name = fn.__name__
 
             tree = ast.parse(self.src, type_comments=True)
             self.definition = cast(ast.FunctionDef, tree.body[0])
+
+            self.sig = inspect.signature(fn)
+            self.orig_annotations = inspect.get_annotations(fn)
         else:
             self.fn_name = fn.name
             self.definition = fn
+
+        self.obj = obj
 
         # Context
         self.funcs: dict[str, Callable] = BuiltInFuncs
@@ -40,21 +43,23 @@ class Preprocessor:
         if self.definition.returns is not None:
             self.return_type = self._translate_value_type(self.definition.returns)
 
-        self.as_subroutine = self.subroutine()
-
         self.return_stack_type = pt.TealType.none
         if type(self.return_type) is pt.TealType:
             self.return_stack_type = self.return_type
-            self.funcs[self.fn_name] = pt.Subroutine(self.return_stack_type)(
-                self.as_subroutine
-            )
+            self.funcs[self.fn_name] = pt.Subroutine(
+                self.return_stack_type, name=self.fn_name
+            )(self.subroutine())
         else:
-            self.funcs[self.fn_name] = pt.ABIReturnSubroutine(self.as_subroutine)
+            self.funcs[self.fn_name] = pt.ABIReturnSubroutine(
+                self.subroutine(), overriding_name=self.fn_name
+            )
+
+        self.callable = self.funcs[self.fn_name]
 
     def subroutine(self):
         # Lazy gen
-        if hasattr(self, "as_subroutine") and self.as_subroutine is not None:
-            return self.as_subroutine
+        # if hasattr(self, "as_subroutine") and self.as_subroutine is not None:
+        #    return self.as_subroutine
 
         # Make a callable that passes args and sets output appropriately,
         # we modify its signature below
@@ -65,6 +70,8 @@ class Preprocessor:
             return expr
 
         translated_annotations = inspect.get_annotations(_impl)
+
+        ######
         orig_annos = self.orig_annotations.copy()
         params = self.sig.parameters.copy()
 
@@ -72,10 +79,9 @@ class Preprocessor:
         for k, v in params.items():
             if k == "self":
                 continue
-            translated_type = cast(type[pt.abi.BaseType], self.args[k])
 
-            params[k] = v.replace(annotation=translated_type)
-            orig_annos[k] = translated_type
+            params[k] = v.replace(annotation=self.args[k])
+            orig_annos[k] = self.args[k]
 
         # If its an abi type we're returning, add output kwarg
         if self.return_type is not None and type(self.return_type) is not pt.TealType:
@@ -96,6 +102,8 @@ class Preprocessor:
 
     def function_body(self, *args) -> pt.Expr:
         """called at build time with arguments provided for variables"""
+
+        stores: list[pt.Expr] = []
         for idx, name in enumerate(self.args.keys()):
             if name == "self":
                 continue
@@ -103,17 +111,19 @@ class Preprocessor:
             arg = args[idx]
             match arg:
                 case pt.abi.BaseType():
-                    self._provide_value(name, arg)
+                    self.variables[name] = arg
                 case pt.ScratchVar():
-                    self._provide_value(name, arg)
+                    self.variables[name] = arg
                 case pt.Expr():
-                    self._write_storage_var(name, arg)
+                    stores.append(self._write_storage_var(name, arg))
                 case _:
                     raise Unsupported(
                         "idk what do do with this arg ", args[idx].__class__.__name__
                     )
 
-        self.exprs = [self._translate_ast(expr) for expr in self.definition.body]
+        self.exprs = stores + [
+            self._translate_ast(expr) for expr in self.definition.body
+        ]
         return pt.Seq(*self.exprs)
 
     def _translate_args(self, args: ast.arguments) -> dict[str, VariableType | None]:
@@ -182,7 +192,6 @@ class Preprocessor:
                         return val
                     return pt.Return(val)
                 return pt.Return()
-
             case ast.Assert():
                 test: pt.Expr = self._translate_ast(expr.test)
 
@@ -195,8 +204,6 @@ class Preprocessor:
                     #    raise Unsupported("Need bytes for assert message")
 
                 return pt.Assert(test, comment=msg)
-
-            # Ops
             case ast.Compare():
                 left: pt.Expr = self._translate_ast(expr.left)
                 ops: list[Callable] = [
@@ -212,31 +219,24 @@ class Preprocessor:
                     raise Unsupported(">1 comparator in Compare")
 
                 return ops[0](left, comparators[0])
-
             case ast.BoolOp():
                 vals: list[pt.Expr] = [self._translate_ast(v) for v in expr.values]
                 op: Callable = self._translate_op(expr.op, vals[0].type_of())
                 return op(*vals)
-
             case ast.BinOp():
                 left: pt.Expr = self._translate_ast(expr.left)  # type: ignore[no-redef]
                 right: pt.Expr = self._translate_ast(expr.right)  # type: ignore[no-redef]
                 op: Callable = self._translate_op(expr.op, left.type_of())  # type: ignore[no-redef]
                 return op(left, right)
-
             case ast.UnaryOp():
                 operand: pt.Expr = self._translate_ast(expr.operand)
                 op: Callable = self._translate_op(expr.op, operand.type_of())  # type: ignore[no-redef]
                 return op(operand)
-
-            # Flow Control
-
             case ast.Call():
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
                 args: list[VariableType] = [self._translate_ast(a) for a in expr.args]
 
                 # This is weird,
-
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
 
@@ -269,19 +269,16 @@ class Preprocessor:
                     return ret_val
 
                 return func(*args)
-
             case ast.If():
                 test: pt.Expr = self._translate_ast(expr.test)  # type: ignore[no-redef]
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
                 orelse: list[pt.Expr] = [self._translate_ast(e) for e in expr.orelse]
                 return pt.If(test).Then(pt.Seq(*body)).Else(pt.Seq(*orelse))
-
             case ast.IfExp():
                 test: pt.Expr = self._translate_ast(expr.test)
                 body: pt.Expr = self._translate_ast(expr.body)
                 orelse: pt.Expr = self._translate_ast(expr.orelse)
                 return pt.If(test).Then(body).Else(orelse)
-
             case ast.For():
                 if len(expr.orelse) > 0:
                     raise Unsupported("orelse in For")
@@ -322,13 +319,10 @@ class Preprocessor:
                 return pt.For(start, cond, step).Do(
                     *[self._translate_ast(e) for e in expr.body]
                 )
-
             case ast.While():
                 cond: pt.Expr = self._translate_ast(expr.test)  # type: ignore[no-redef]
                 body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]  # type: ignore[no-redef]
                 return pt.While(cond).Do(*body)
-
-            # Types
             case ast.List():
                 # Translate to vals and exprs that populate 'em
                 elts: list[tuple[pt.abi.BaseType, pt.Expr]] = [
@@ -341,14 +335,11 @@ class Preprocessor:
                     *exprs,
                     pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64]).set(list_values),  # type: ignore[arg-type]
                 )
-
-            # Var access
             case ast.AugAssign():
                 lookup_target: pt.Expr = self._read_storage_var(expr.target)  # type: ignore[no-redef]
                 value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
                 op: Callable = self._translate_op(expr.op, lookup_target.type_of())  # type: ignore[no-redef]
                 return self._write_storage_var(expr.target, op(lookup_target, value))
-
             case ast.Assign():
                 value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
                 targets: list[VariableType] = [
@@ -359,18 +350,8 @@ class Preprocessor:
                     raise Unsupported(">1 target in Assign")
 
                 return self.__write_to_var(targets[0], value)
-
-            # Namespace
             case ast.FunctionDef():
-                pp = Preprocessor(expr)
-                print(pp.__dict__)
-                raise Unsupported("Cant define a new func in a func")
-                # body: list[pt.Expr] = [self._translate_ast(e) for e in expr.body]
-                # def _impl(*args, **kwargs):
-                #    return pt.Seq(*body)
-                # _impl.__name__ = expr.name
-                # self.funcs[expr.name] = pt.Subroutine(pt.TealType.uint64)(_impl)
-
+                return Preprocessor(expr).callable
             case ast.Name():
                 match expr.ctx:
                     case ast.Load():
@@ -469,9 +450,6 @@ class Preprocessor:
                 case _:
                     raise Unsupported("Unsupported op: ", op.__class__.__name__)
 
-    def _provide_value(self, name: str, val: VariableType):
-        self.variables[name] = val
-
     def _wrap_as(
         self, e: pt.Expr, t: type[pt.abi.BaseType]
     ) -> tuple[pt.abi.BaseType, pt.Expr]:
@@ -506,7 +484,7 @@ class Preprocessor:
         return self.variables[name_str]
 
     def _write_storage_var(self, name: ast.expr | str, val: pt.Expr) -> pt.Expr:
-        v = self._lookup_or_alloc(name)
+        v = self._lookup_or_alloc(name, val.type_of())
         return self.__write_to_var(v, val)
 
     def __write_to_var(self, v: Any, val: pt.Expr) -> pt.Expr:
