@@ -10,6 +10,8 @@ from beaker.decorators import external, internal
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
 
+from beaker.testing import UnitTestingApp, assert_output, returned_int_as_bytes
+
 from .preprocessor import Preprocessor
 from ._builtins import app_get, app_put, app_del, concat, u64, log, i
 
@@ -330,15 +332,32 @@ def test_native_app():
 
 
 def test_recursive_func():
+    # Define recursive function using python syntax
     def factorial(x: i) -> i:
         return x * factorial(x - 1) if x > 0 else 1
 
+    # Translated the python logic to PyTeal AST
     pp = Preprocessor(factorial)
+    # Get the expression resulting from a SubroutineCall to our translated
+    # function
     expr = pp.callable(pt.Int(10))
-    assert len(compile(expr)) > 0
 
-    from beaker.testing import UnitTestingApp, assert_output, returned_int_as_bytes
+    # Call the logic in Python :brain-explode:
+    expected = factorial(10)
 
+    # Deploy an app on chain to run the logic in the AVM
     ut = UnitTestingApp(pt.Itob(expr))
-    output = [returned_int_as_bytes(factorial(10))]
+    output = [returned_int_as_bytes(expected)]
     assert_output(ut, [], output)
+
+    print(f"\n{compile(expr)}")
+
+
+
+
+
+
+
+
+
+
