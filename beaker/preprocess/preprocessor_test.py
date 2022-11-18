@@ -303,11 +303,10 @@ def test_native_app():
 
     acct = get_accounts().pop()
     ac = ApplicationClient(get_algod_client(), Native(), signer=acct.signer)
+    ac.create()
 
-
-# ac.create()
-# result = ac.call(Native.sqr, a=2)
-# assert result.return_value == 4
+    result = ac.call(Native.sqr, a=2)
+    assert result.return_value == 4
 
 
 def test_recursive_func():
@@ -315,19 +314,20 @@ def test_recursive_func():
     def factorial(x: i) -> i:
         return x * factorial(x - 1) if x > 0 else 1
 
+    val = 10
+    # Call the logic in Python :brain-explode:
+    expected = factorial(val)
+
     # Translate the python logic to PyTeal AST
     pp = Preprocessor(factorial)
 
     # Get the expression resulting from a SubroutineCall to our translated
     # function
-    expr = pp.callable(pt.Int(10))
-
-    # Call the logic in Python :brain-explode:
-    expected = factorial(10)
+    expr = pp.callable(pt.Int(val))
 
     # Deploy an app on chain to run the logic in the AVM
     ut = UnitTestingApp(pt.Itob(expr))
     output = [returned_int_as_bytes(expected)]
     assert_output(ut, [], output)
 
-    # print(f"\n{compile(expr)}")
+    print(f"\n{compile(expr)}")
