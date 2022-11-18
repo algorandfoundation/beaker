@@ -32,7 +32,7 @@ class Preprocessor:
 
         # Context
         self.funcs: dict[str, Callable] = BuiltInFuncs
-        self.types: dict[str, ValueType] = BuiltInTypes
+        self.types: dict[str, tuple[ValueType, type]] = BuiltInTypes
         self.variables: dict[str, VariableType] = {}
 
         self.args: dict[str, VariableType | None] = self._translate_args(
@@ -152,7 +152,7 @@ class Preprocessor:
         match _type:
             case ast.Name():
                 if _type.id in self.types:
-                    return self.types[_type.id]
+                    return self.types[_type.id][0]
                 else:
                     raise Unsupported("Type in translate type:", _type.id)
 
@@ -332,22 +332,33 @@ class Preprocessor:
                     pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64]).set(list_values),  # type: ignore[arg-type]
                 )
             case ast.AugAssign():
-                lookup_target: pt.Expr = self._read_storage_var(expr.target)  # type: ignore[no-redef]
-                value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
-                op: Callable = self._translate_op(expr.op, lookup_target.type_of())  # type: ignore[no-redef]
-                return self._write_storage_var(expr.target, op(lookup_target, value))
+                aug_lookup_target: pt.Expr = self._read_storage_var(expr.target)
+                aug_value: pt.Expr = self._translate_ast(expr.value)
+                aug_op: Callable = self._translate_op(
+                    expr.op, aug_lookup_target.type_of()
+                )
+                return self._write_storage_var(
+                    expr.target, aug_op(aug_lookup_target, aug_value)
+                )
             case ast.Assign():
-                value: pt.Expr = self._translate_ast(expr.value)  # type: ignore[no-redef]
-                targets: list[VariableType] = [
-                    self._lookup_or_alloc(e, value.type_of()) for e in expr.targets
+                assign_value: pt.Expr = self._translate_ast(expr.value)
+                assign_targets: list[VariableType] = [
+                    self._lookup_or_alloc(e, assign_value.type_of())
+                    for e in expr.targets
                 ]
 
-                if len(targets) > 1:
+                if len(assign_targets) > 1:
                     raise Unsupported(">1 target in Assign")
 
-                return self.__write_to_var(targets[0], value)
+                return self.__write_to_var(assign_targets[0], assign_value)
+            case ast.AnnAssign():
+                ann: VariableType = self._translate_value_type(expr.annotation)
+                ann_target: VariableType = self._lookup_or_alloc(expr.target, ann)
+                ann_value: pt.Expr = self._translate_ast(expr.value)
+                return self.__write_to_var(ann_target, ann_value)
             case ast.FunctionDef():
-                return Preprocessor(expr).callable
+                self.funcs[expr.name] = Preprocessor(expr).callable
+                return pt.Seq()
             case ast.Name():
                 match expr.ctx:
                     case ast.Load():
@@ -356,7 +367,6 @@ class Preprocessor:
                         raise Unsupported("Where did you come from?")
                     case _:
                         raise Unsupported("ctx in name", expr.ctx)
-
             case _:
                 print(ast.dump(expr, indent=4))
                 print(expr.__dict__)

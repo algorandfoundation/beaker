@@ -38,7 +38,6 @@ class Unprocessor:
                     ast.arg(arg=a, annotation=ast.Name(id=str(v), ctx=ast.Load()))
                 )
 
-            
         self.native_ast = ast.fix_missing_locations(
             ast.Module(
                 body=[

@@ -1,44 +1,48 @@
 import pyteal as pt
 from typing import Callable
 
-# Type aliases
+# Type aliases for vars/values
+VariableType = pt.ScratchVar | pt.abi.BaseType | pt.Expr
+ValueType = type[pt.abi.BaseType] | pt.TealType  # type: ignore[index]
+
+# ABI type aliases
 u64 = int
 u32 = int
 u16 = int
 u8 = int
 byte = int
 
+# Stack type aliases
 void = None
 i = int
 b = bytes
+bigint = bytes
 
 
-VariableType = pt.ScratchVar | pt.abi.BaseType | pt.Expr
-ValueType = type[pt.abi.BaseType] | pt.TealType  # type: ignore[index]
-
-BuiltInTypes: dict[str, ValueType] = {
+# Things we can translate from annotations
+BuiltInTypes: dict[str, tuple[ValueType, type]] = {
     # Stack types
-    "void": pt.TealType.none,
-    "i": pt.TealType.uint64,
-    "b": pt.TealType.bytes,
-    # shorthand types
-    "u64": pt.abi.Uint64,
-    "u32": pt.abi.Uint32,
-    "u16": pt.abi.Uint16,
-    "u8": pt.abi.Uint8,
-    "byte": pt.abi.Byte,
+    "void": (pt.TealType.none, None),
+    "i": (pt.TealType.uint64, int),
+    "b": (pt.TealType.bytes, bytes),
+    "bigint": (pt.TealType.bytes, int),
+    # shorthand abi types
+    "u64": (pt.abi.Uint64, int),
+    "u32": (pt.abi.Uint32, int),
+    "u16": (pt.abi.Uint16, int),
+    "u8": (pt.abi.Uint8, int),
+    "byte": (pt.abi.Byte, bytes),
     # Python types
-    "int": pt.abi.Uint64,
-    "str": pt.abi.String,
-    "bytes": pt.abi.DynamicBytes,
+    "int": (pt.abi.Uint64, int),
+    "str": (pt.abi.String, bytes),
+    "bytes": (pt.abi.DynamicBytes, bytes),
     # compound types
-    "list": pt.abi.DynamicArray,
-    "tuple": pt.abi.Tuple,
+    "list": (pt.abi.DynamicArray, list),
+    "tuple": (pt.abi.Tuple, tuple),
 }
 
+
 # Functions
-
-
 def _range(iters: pt.Expr) -> Callable:
     def _impl(sv: pt.ScratchVar) -> tuple[pt.Expr, pt.Expr, pt.Expr]:
         return (sv.store(pt.Int(0)), sv.load() < iters, sv.store(sv.load() + pt.Int(1)))

@@ -9,7 +9,7 @@ from beaker.sandbox import get_accounts, get_algod_client
 from beaker.testing import UnitTestingApp, assert_output, returned_int_as_bytes
 
 from .preprocessor import Preprocessor
-from ._builtins import app_get, app_put, app_del, concat, u64, log, i
+from ._builtins import app_get, app_put, app_del, concat, u64, log, i, bigint
 
 
 def compile(e: pt.Expr) -> str:
@@ -129,7 +129,7 @@ def test_int_ops():
 def test_bytes_ops():
     def meth():
         # byteint math
-        val = b"deadbeef"
+        val: bigint = b"deadbeef"
         x = val - val
         x = val / val
         x = val // val
@@ -156,7 +156,9 @@ def test_bytes_ops():
         # x = val << val
         return len(x)
 
-    compile(Preprocessor(meth).function_body())
+    teal = compile(Preprocessor(meth).function_body())
+    assert len(teal) > 0
+    print(teal)
 
 
 def test_str_ops():
