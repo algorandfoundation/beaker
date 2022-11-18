@@ -688,7 +688,11 @@ class ApplicationClient:
         app_state = self.client.application_info(self.app_id)
         if "params" not in app_state or "global-state" not in app_state["params"]:
             return {}
-        return decode_state(app_state["params"]["global-state"], raw=raw)
+
+        return cast(
+            dict[bytes | str, bytes | str | int],
+            decode_state(app_state["params"]["global-state"], raw=raw),
+        )
 
     def get_account_state(
         self, account: str = None, raw: bool = False
@@ -706,7 +710,10 @@ class ApplicationClient:
         ):
             return {}
 
-        return decode_state(acct_state["app-local-state"]["key-value"], raw=raw)
+        return cast(
+            dict[str | bytes, bytes | str | int],
+            decode_state(acct_state["app-local-state"]["key-value"], raw=raw),
+        )
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""
