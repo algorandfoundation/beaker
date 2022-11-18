@@ -196,33 +196,39 @@ class Application:
 
                 if handler_config.is_create():
                     if self.on_create is not None:
-                        raise TealInputError("Multiple create methods specified")
-                    self.on_create = static_attr
+                        self.on_create = None
+                    else:
+                        self.on_create = static_attr
 
                 if handler_config.is_update():
                     if self.on_update is not None:
-                        raise TealInputError("Multiple update methods specified")
-                    self.on_update = static_attr
+                        self.on_update = None
+                    else:
+                        self.on_update = static_attr
 
                 if handler_config.is_delete():
                     if self.on_delete is not None:
-                        raise TealInputError("Multiple delete methods specified")
-                    self.on_delete = static_attr
+                        self.on_delete = None
+                    else:
+                        self.on_delete = static_attr
 
                 if handler_config.is_opt_in():
                     if self.on_opt_in is not None:
-                        raise TealInputError("Multiple opt in methods specified")
-                    self.on_opt_in = static_attr
+                        self.on_opt_in = None
+                    else:
+                        self.on_opt_in = static_attr
 
                 if handler_config.is_clear_state():
                     if self.on_clear_state is not None:
-                        raise TealInputError("Multiple clear state methods specified")
-                    self.on_clear_state = static_attr
+                        self.on_clear_state = None
+                    else:
+                        self.on_clear_state = static_attr
 
                 if handler_config.is_close_out():
                     if self.on_close_out is not None:
-                        raise TealInputError("Multiple close out methods specified")
-                    self.on_close_out = static_attr
+                        self.on_close_out = None
+                    else:
+                        self.on_close_out = static_attr
 
                 self.methods[name] = (abi_meth, handler_config.method_config)
                 self.hints[name] = handler_config.hints()
