@@ -90,12 +90,12 @@ class Application:
         self.approval_program: Optional[str] = None
         self.clear_program: Optional[str] = None
 
-        self.on_create = None
-        self.on_update = None
-        self.on_delete = None
-        self.on_opt_in = None
-        self.on_close_out = None
-        self.on_clear_state = None
+        all_creates = []
+        all_updates = []
+        all_deletes = []
+        all_opt_ins = []
+        all_close_outs = []
+        all_clear_states = []
 
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
@@ -195,40 +195,17 @@ class Application:
                 self.methods[name] = (abi_meth, handler_config.method_config)
 
                 if handler_config.is_create():
-                    if self.on_create is not None:
-                        self.on_create = None
-                    else:
-                        self.on_create = static_attr
-
+                    all_creates.append(static_attr)
                 if handler_config.is_update():
-                    if self.on_update is not None:
-                        self.on_update = None
-                    else:
-                        self.on_update = static_attr
-
+                    all_updates.append(static_attr)
                 if handler_config.is_delete():
-                    if self.on_delete is not None:
-                        self.on_delete = None
-                    else:
-                        self.on_delete = static_attr
-
+                    all_deletes.append(static_attr)
                 if handler_config.is_opt_in():
-                    if self.on_opt_in is not None:
-                        self.on_opt_in = None
-                    else:
-                        self.on_opt_in = static_attr
-
+                    all_opt_ins.append(static_attr)
                 if handler_config.is_clear_state():
-                    if self.on_clear_state is not None:
-                        self.on_clear_state = None
-                    else:
-                        self.on_clear_state = static_attr
-
+                    all_clear_states.append(static_attr)
                 if handler_config.is_close_out():
-                    if self.on_close_out is not None:
-                        self.on_close_out = None
-                    else:
-                        self.on_close_out = static_attr
+                    all_close_outs.append(static_attr)
 
                 self.methods[name] = (abi_meth, handler_config.method_config)
                 self.hints[name] = handler_config.hints()
@@ -243,6 +220,15 @@ class Application:
                         name,
                         handler_config.subroutine(static_attr),
                     )
+
+        self.on_create = all_creates.pop() if len(all_creates) == 1 else None
+        self.on_update = all_updates.pop() if len(all_updates) == 1 else None
+        self.on_delete = all_deletes.pop() if len(all_deletes) == 1 else None
+        self.on_opt_in = all_opt_ins.pop() if len(all_opt_ins) == 1 else None
+        self.on_close_out = all_close_outs.pop() if len(all_close_outs) == 1 else None
+        self.on_clear_state = (
+            all_clear_states.pop() if len(all_clear_states) == 1 else None
+        )
 
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
