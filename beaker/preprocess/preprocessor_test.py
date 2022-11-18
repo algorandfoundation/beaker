@@ -1,3 +1,4 @@
+import pytest
 import pyteal as pt
 import inspect
 
@@ -331,3 +332,12 @@ def test_recursive_func():
     assert_output(ut, [], output)
 
     print(f"\n{compile(expr)}")
+
+
+def test_float_fail():
+    def meth():
+        x = 2.0
+        x += 2
+        
+    with pytest.raises(pt.TealTypeError):
+        Preprocessor(meth).function_body()

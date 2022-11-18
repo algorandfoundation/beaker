@@ -9,7 +9,7 @@ from ._builtins import VariableType, ValueType, BuiltInTypes, BuiltInFuncs
 
 
 def Unsupported(*feature):
-    return Exception(f"This feature is not supported yet: {' '.join(feature)}")
+    return Exception(f"This feature is not supported yet: {' '.join([str(f) for f in feature])}")
 
 
 class Preprocessor:
