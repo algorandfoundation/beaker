@@ -3,7 +3,7 @@ from typing import Callable
 
 # Type aliases for vars/values
 VariableType = pt.ScratchVar | pt.abi.BaseType | pt.Expr
-ValueType = type[pt.abi.BaseType] | pt.TealType  # type: ignore[index]
+ValueType = pt.abi.TypeSpec | pt.TealType | None
 
 # ABI type aliases
 u64 = int
@@ -11,6 +11,7 @@ u32 = int
 u16 = int
 u8 = int
 byte = int
+string = str
 
 # Stack type aliases
 void = None
@@ -27,18 +28,19 @@ BuiltInTypes: dict[str, tuple[ValueType, type]] = {
     "b": (pt.TealType.bytes, bytes),
     "bigint": (pt.TealType.bytes, int),
     # shorthand abi types
-    "u64": (pt.abi.Uint64, int),
-    "u32": (pt.abi.Uint32, int),
-    "u16": (pt.abi.Uint16, int),
-    "u8": (pt.abi.Uint8, int),
-    "byte": (pt.abi.Byte, bytes),
+    "u64": (pt.abi.Uint64TypeSpec, int),
+    "u32": (pt.abi.Uint32TypeSpec, int),
+    "u16": (pt.abi.Uint16TypeSpec, int),
+    "u8": (pt.abi.Uint8TypeSpec, int),
+    "byte": (pt.abi.ByteTypeSpec, int),
+    "string": (pt.abi.StringTypeSpec, str),
     # Python types
-    "int": (pt.abi.Uint64, int),
-    "str": (pt.abi.String, bytes),
-    "bytes": (pt.abi.DynamicBytes, bytes),
+    "int": (pt.TealType.uint64, int),
+    "str": (pt.TealType.bytes, str),
+    "bytes": (pt.TealType.bytes, bytes),
     # compound types
-    "list": (pt.abi.DynamicArray, list),
-    "tuple": (pt.abi.Tuple, tuple),
+    "list": (pt.abi.DynamicArrayTypeSpec, list),
+    "tuple": (pt.abi.TupleTypeSpec, tuple),
 }
 
 

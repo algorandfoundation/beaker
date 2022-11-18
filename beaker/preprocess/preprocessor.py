@@ -4,6 +4,7 @@ from textwrap import dedent
 import inspect
 import ast
 
+from .variable import Variable, write_into_var, read_from_var
 from ._builtins import VariableType, ValueType, BuiltInTypes, BuiltInFuncs
 
 
@@ -33,7 +34,7 @@ class Preprocessor:
         # Context
         self.funcs: dict[str, Callable] = BuiltInFuncs
         self.types: dict[str, tuple[ValueType, type]] = BuiltInTypes
-        self.variables: dict[str, VariableType] = {}
+        self.variables: dict[str, Variable] = {}
 
         self.args: dict[str, VariableType | None] = self._translate_args(
             self.definition.args
@@ -41,7 +42,7 @@ class Preprocessor:
 
         self.return_type: ValueType | None = None
         if self.definition.returns is not None:
-            self.return_type = self._translate_value_type(self.definition.returns)
+            self.return_type = self._translate_annotation_type(self.definition.returns)
 
         self.return_stack_type = pt.TealType.none
         if type(self.return_type) is pt.TealType:
@@ -62,7 +63,7 @@ class Preprocessor:
         def _impl(*args, **kwargs) -> pt.Expr:
             expr = self.function_body(*args)
             if "output" in kwargs:
-                return self.__write_to_var(kwargs["output"], expr)
+                return write_into_var(kwargs["output"], expr)
             return expr
 
         translated_annotations = inspect.get_annotations(_impl)
@@ -107,9 +108,9 @@ class Preprocessor:
             arg = args[idx]
             match arg:
                 case pt.abi.BaseType():
-                    self.variables[name] = arg
+                    self.variables[name] = Variable(name, arg, arg.type_spec())
                 case pt.ScratchVar():
-                    self.variables[name] = arg
+                    self.variables[name] = Variable(name, arg, arg.storage_type())
                 case pt.Expr():
                     stores.append(self._write_storage_var(name, arg))
                 case _:
@@ -139,7 +140,7 @@ class Preprocessor:
         arguments: dict[str, VariableType | None] = {}
         for arg in args.args:
             if arg.annotation is not None:
-                anno_type = self._translate_value_type(arg.annotation)
+                anno_type = self._translate_annotation_type(arg.annotation)
                 if type(anno_type) is pt.TealType:
                     arguments[arg.arg] = pt.Expr
                 else:
@@ -148,23 +149,37 @@ class Preprocessor:
                 arguments[arg.arg] = None
         return arguments
 
-    def _translate_value_type(self, _type: ast.AST) -> ValueType | None:
+    def _translate_annotation_type(self, _type: ast.AST) -> VariableType | None:
         match _type:
             case ast.Name():
                 if _type.id in self.types:
-                    return self.types[_type.id][0]
+                    t = self.types[_type.id][0]
+                    if type(t) is pt.TealType:
+                        return t
+                    elif inspect.isclass(t) and issubclass(t, pt.abi.TypeSpec):
+                        ts: pt.abi.TypeSpec = t()
+                        return ts.annotation_type()
                 else:
                     raise Unsupported("Type in translate type:", _type.id)
 
             case ast.Subscript():
-                _value: ValueType | None = self._translate_value_type(_type.value)
-                _slice: ValueType | None = self._translate_value_type(_type.slice)
 
-                if _value is pt.abi.DynamicArray and _slice is not None:
-                    da = pt.abi.DynamicArray[_slice]  # type: ignore
-                    return da
-                else:
-                    raise Unsupported("Non dynamic array in subscript of args", _type)
+                _slice: VariableType = self._translate_annotation_type(_type.slice)
+                _container_type = self.types[_type.value.id][0]
+                if not inspect.isclass(_container_type) or not issubclass(
+                    _container_type, pt.abi.TypeSpec
+                ):
+                    raise Unsupported("Subscript with non typespec container")
+
+                if (
+                    _container_type is pt.abi.DynamicArrayTypeSpec
+                    and _slice is not None
+                ):
+                    return pt.abi.type_spec_from_annotation(
+                        pt.abi.DynamicArray[_slice]
+                    ).annotation_type()
+
+                raise Unsupported("annotation unsupported: ", _container_type, _slice)
 
             case _:
                 raise Unsupported("arg type in args: ", _type.__class__.__name__)
@@ -230,7 +245,7 @@ class Preprocessor:
                 return op(operand)
             case ast.Call():
                 func: Callable[..., pt.Expr] = self._lookup_function(expr.func)
-                args: list[VariableType] = [self._translate_ast(a) for a in expr.args]
+                args: list[pt.Expr] = [self._translate_ast(a) for a in expr.args]
 
                 if len(expr.keywords) > 0:
                     raise Unsupported("keywords in Call")
@@ -246,11 +261,11 @@ class Preprocessor:
                         if isinstance(arg, pt.ScratchLoad):
                             args[idx] = self._lookup_or_alloc(
                                 expr.args[idx], arg.type_of()
-                            )
+                            ).var
                         if isinstance(arg, FrameDig):
                             args[idx] = self._lookup_or_alloc(
                                 expr.args[idx], arg.type_of()
-                            )
+                            ).var
 
                     ret_val = func(*args)
 
@@ -284,21 +299,21 @@ class Preprocessor:
                     # We're iterating over some variable
                     case ast.Name():
                         var = self.variables[expr.iter.id]
-                        match var:
+                        match var.var:
                             case pt.abi.DynamicArray():
-                                target = self._lookup_or_alloc(
-                                    expr.target, var.type_spec().value_type_spec()
+                                target: Variable = self._lookup_or_alloc(
+                                    expr.target, var.var.type_spec().value_type_spec()
                                 )
 
                                 scratch_idx = pt.ScratchVar()
                                 start = pt.Seq(
                                     scratch_idx.store(pt.Int(0)),
-                                    var[pt.Int(0)].store_into(target),
+                                    var.var[pt.Int(0)].store_into(target.var),
                                 )
-                                cond = scratch_idx.load() < var.length()
+                                cond = scratch_idx.load() < var.var.length()
                                 step = pt.Seq(
                                     scratch_idx.store(scratch_idx.load() + pt.Int(1)),
-                                    var[scratch_idx.load()].store_into(target),
+                                    var.var[scratch_idx.load()].store_into(target.var),
                                 )
                             case _:
                                 # Check if its a list?
@@ -306,9 +321,9 @@ class Preprocessor:
 
                     # We're iterating over the result of a function call
                     case ast.Call():
-                        call_target: VariableType = self._lookup_or_alloc(expr.target)
+                        call_target: Variable = self._lookup_or_alloc(expr.target)
                         iterator: pt.Expr = self._translate_ast(expr.iter)
-                        start, cond, step = iterator(call_target)  # type: ignore
+                        start, cond, step = iterator(call_target.get_scratch_var())  # type: ignore
                     case _:
                         raise Unsupported("iter type in for loop: ", expr.iter)
 
@@ -342,7 +357,7 @@ class Preprocessor:
                 )
             case ast.Assign():
                 assign_value: pt.Expr = self._translate_ast(expr.value)
-                assign_targets: list[VariableType] = [
+                assign_targets: list[Variable] = [
                     self._lookup_or_alloc(e, assign_value.type_of())
                     for e in expr.targets
                 ]
@@ -350,12 +365,13 @@ class Preprocessor:
                 if len(assign_targets) > 1:
                     raise Unsupported(">1 target in Assign")
 
-                return self.__write_to_var(assign_targets[0], assign_value)
+                return assign_targets[0].write(assign_value)
+
             case ast.AnnAssign():
-                ann: VariableType = self._translate_value_type(expr.annotation)
-                ann_target: VariableType = self._lookup_or_alloc(expr.target, ann)
+                ann: VariableType = self._translate_annotation_type(expr.annotation)
+                ann_target: Variable = self._lookup_or_alloc(expr.target, ann)
                 ann_value: pt.Expr = self._translate_ast(expr.value)
-                return self.__write_to_var(ann_target, ann_value)
+                return ann_target.write(ann_value)
             case ast.FunctionDef():
                 self.funcs[expr.name] = Preprocessor(expr).callable
                 return pt.Seq()
@@ -363,7 +379,7 @@ class Preprocessor:
                 match expr.ctx:
                     case ast.Load():
                         return self._read_storage_var(expr)
-                    case ast.Store():
+                    case ast.Store() | ast.Del():
                         raise Unsupported("Where did you come from?")
                     case _:
                         raise Unsupported("ctx in name", expr.ctx)
@@ -461,11 +477,13 @@ class Preprocessor:
     ) -> tuple[pt.abi.BaseType, pt.Expr]:
         ts = pt.abi.type_spec_from_annotation(t)
         v = ts.new_instance()
-        return (v, self.__write_to_var(v, e))
+        return (v, write_into_var(v, e))
 
     def _lookup_or_alloc(
-        self, name: ast.expr | str, ts: pt.abi.TypeSpec | pt.TealType | None = None
-    ) -> VariableType:
+        self,
+        name: ast.expr | str,
+        ts: ValueType = None,
+    ) -> Variable:
 
         name_str = ""
         match name:
@@ -479,45 +497,21 @@ class Preprocessor:
                 )
 
         if name_str not in self.variables:
-            if ts is None:
-                self.variables[name_str] = pt.ScratchVar()
-            else:
-                if isinstance(ts, pt.abi.TypeSpec):
-                    self.variables[name_str] = ts.new_instance()
-                else:
-                    self.variables[name_str] = pt.ScratchVar(ts)
+            self.variables[name_str] = Variable.from_type(name_str, ts)
 
         return self.variables[name_str]
 
     def _write_storage_var(self, name: ast.expr | str, val: pt.Expr) -> pt.Expr:
         v = self._lookup_or_alloc(name, val.type_of())
-        return self.__write_to_var(v, val)
-
-    def __write_to_var(self, v: Any, val: pt.Expr) -> pt.Expr:
-        match v:
-            case pt.abi.String() | pt.abi.Address() | pt.abi.Uint() | pt.abi.DynamicBytes() | pt.abi.StaticBytes():
-                return v.set(val)
-            case pt.abi.BaseType():
-                return v.decode(val)
-            case pt.ScratchVar():
-                return v.store(val)
-            case _:
-                raise Unsupported("idk what to do with a ", val)
+        if isinstance(v, Variable):
+            return v.write(val)
+        return write_into_var(v, val)
 
     def _read_storage_var(self, name: ast.expr) -> pt.Expr:
         v = self._lookup_or_alloc(name)
-        match v:
-            case pt.abi.String() | pt.abi.Address() | pt.abi.DynamicBytes() | pt.abi.StaticBytes() | pt.abi.Uint():
-                return v.get()
-            case pt.abi.BaseType():
-                if hasattr(v, "_stored_value"):
-                    return v._stored_value.load()  # type: ignore[attr-defined]
-                else:
-                    return v.stored_value.load()  # type: ignore[attr-defined]
-            case pt.ScratchVar():
-                return v.load()
-            case _:
-                raise Unsupported("type in slot lookup: ", v)
+        if isinstance(v, Variable):
+            return v.read()
+        return read_from_var(v)
 
     def _lookup_function(self, fn: ast.AST) -> Callable:
         match fn:
