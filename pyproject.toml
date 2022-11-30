@@ -39,6 +39,8 @@ docs = [
 ]
 
 
+[tools.setuptools]
+packages = ["beaker"]
 
 [project.urls]
 "Homepage" = "https://beaker.algo.xyz"
