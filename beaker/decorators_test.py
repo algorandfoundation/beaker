@@ -273,6 +273,12 @@ def test_bare():
     hc = get_handler_config(impl)
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
 
+    @no_op
+    def impl():
+        return pt.Assert(pt.Int(1))
+
+    hc = get_handler_config(impl)
+    assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
 def test_resolvable():
     from .state import (

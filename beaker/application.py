@@ -1,4 +1,5 @@
 import base64
+from dataclasses import asdict
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
 from algosdk.v2client.algod import AlgodClient
@@ -161,12 +162,18 @@ class Application:
                 actions = {
                     oc: cast(OnCompleteAction, action)
                     for oc, action in handler_config.bare_method.__dict__.items()
-                    if action.action is not None
+                    if cast(OnCompleteAction, action).action is not None
                 }
 
                 for oc, action in actions.items():
                     if oc in self.bare_externals:
-                        raise BareOverwriteError(oc)
+                        # If we've seen this on complete AND it has the same call config
+                        # something went wrong
+                        if self.bare_externals[oc].call_config == action.call_config:
+                            raise BareOverwriteError(oc)
+
+                        # TODO: merge the call configs? allow for multiple?
+                        # self.bare_externals[oc].call_config 
 
                     # Swap the implementation with the bound version
                     if handler_config.referenced_self:

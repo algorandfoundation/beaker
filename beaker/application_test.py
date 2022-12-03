@@ -30,6 +30,7 @@ from beaker.decorators import (
     close_out,
     update,
     delete,
+    no_op,
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -121,15 +122,20 @@ def test_bare():
         def update():
             return pt.Approve()
 
+        @no_op
+        def no_op():
+            return pt.Approve()
+
         @delete
         def delete():
             return pt.Approve()
 
     bh = Bare()
 
+    expected = ["create", "update", "delete", "no_op"]
     assert (
-        len(bh.bare_externals) == 3
-    ), "Expected 3 bare externals: create,update,delete"
+        len(bh.bare_externals) == len(expected)
+    ), f"Expected 3 bare externals: {','.join(expected)}"
 
     class FailBare(Application):
         @create
@@ -146,12 +152,16 @@ def test_mixed_bares():
         def create(self):
             return pt.Approve()
 
+        @no_op
+        def no_op(self):
+            return pt.Approve()
+
         @opt_in
         def opt_in(self, s: pt.abi.String):
             return pt.Assert(pt.Len(s.get()))
 
     mb = MixedBare()
-    assert len(mb.bare_externals) == 1
+    assert len(mb.bare_externals) == 2
     assert len(mb.methods) == 1
 
 
