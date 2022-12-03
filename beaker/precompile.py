@@ -302,40 +302,26 @@ class AppPrecompile:
         if self.clear._binary is None:
             self.clear.assemble(client)
 
-    def get_create_config(self) -> dict[TxnField, Expr]:
+    def get_create_config(self) -> dict[TxnField, Expr | list[Expr]]:
         """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
         assert self.approval._binary is not None
         assert self.clear._binary is not None
-
-        approval_binary = {
+        return {
+            TxnField.type_enum: TxnType.ApplicationCall,
+            TxnField.local_num_byte_slices: Int(self.app.acct_state.num_byte_slices),
+            TxnField.local_num_uints: Int(self.app.acct_state.num_uints),
+            TxnField.global_num_byte_slices: Int(self.app.app_state.num_byte_slices),
+            TxnField.global_num_uints: Int(self.app.app_state.num_uints),
             TxnField.approval_program_pages: [
                 page.binary for page in self.approval.program_pages
-            ]
-        }
-        clear_binary = {
+            ],
             TxnField.clear_state_program_pages: [
                 page.binary for page in self.clear.program_pages
-            ]
+            ],
+            TxnField.extra_program_pages: Int(
+                num_extra_program_pages(self.approval._binary, self.clear._binary)
+            ),
         }
-
-        return (
-            {
-                TxnField.type_enum: TxnType.ApplicationCall,
-                TxnField.local_num_byte_slices: Int(
-                    self.app.acct_state.num_byte_slices
-                ),
-                TxnField.local_num_uints: Int(self.app.acct_state.num_uints),
-                TxnField.global_num_byte_slices: Int(
-                    self.app.app_state.num_byte_slices
-                ),
-                TxnField.global_num_uints: Int(self.app.app_state.num_uints),
-                TxnField.extra_program_pages: Int(
-                    num_extra_program_pages(self.approval._binary, self.clear._binary)
-                ),
-            }
-            | approval_binary
-            | clear_binary
-        )
 
 
 class LSigPrecompile:
