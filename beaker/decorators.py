@@ -136,16 +136,16 @@ class HandlerConfig:
             mh["default_arguments"] = self.default_arguments
 
         if self.structs is not None:
-            structs: dict[str, dict[str, str | list[tuple[str, str]]]] = {}
+            structs: dict[str, CustomType] = {}
             for arg_name, model_spec in self.structs.items():
                 annos: list[tuple[str, Any]] = list(model_spec.__annotations__.items())
-                structs[arg_name] = {
-                    "name": str(model_spec.__name__),  # type: ignore[attr-defined]
-                    "elements": [
+                structs[arg_name] = CustomType(
+                    name=str(model_spec.__name__),
+                    elements=[
                         (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
                         for name, typ in annos
                     ],
-                }
+                )
 
             mh["structs"] = structs
 
@@ -205,15 +205,19 @@ def set_handler_config(fn: HandlerFunc, **kwargs):
 
 
 @dataclass
+class CustomType:
+    name: str = field(kw_only=True)
+    elements: list[tuple[str, str]] = field(kw_only=True)
+
+
+@dataclass
 class MethodHints:
     """MethodHints provides hints to the caller about how to call the method"""
 
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices method_name=>param_name=>{name:str, elements:[str,str]}
-    structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
-        kw_only=True, default=None
-    )
+    #: hint to provide names for tuple argument indices param_name=>CustomType
+    structs: Optional[dict[str, CustomType]] = field(kw_only=True, default=None)
     #: defaults
     default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None

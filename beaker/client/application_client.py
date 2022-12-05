@@ -616,7 +616,7 @@ class ApplicationClient:
                         raise Exception(f"Name {name} name in struct hints")
 
                     elems: list[tuple[str, str]] = cast(
-                        list[tuple[str, str]], hints.structs[name]["elements"]
+                        list[tuple[str, str]], hints.structs[name].elements
                     )
 
                     argument = [
