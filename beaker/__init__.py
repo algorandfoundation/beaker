@@ -24,6 +24,7 @@ from .decorators import (
     close_out,
     clear_state,
 )
+from .application_spec import ApplicationSpec, ApplicationSchema, ApplicationSource
 from .logic_signature import LogicSignature, TemplateVariable
 from .precompile import Precompile, AppPrecompile, LSigPrecompile
 
