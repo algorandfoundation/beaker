@@ -35,16 +35,20 @@ class ApplicationSpec:
         self.source = ApplicationSource(app.approval_program, app.clear_program)
         self.schema = ApplicationSchema(app.app_state, app.acct_state)
         self.contract = app.contract
+
         self.hints = app.hints
 
         # Dedupe structs
         self.structs: dict[str, list[tuple[str, str]]] = {}
-        for v in self.hints.values():
+        for k, v in self.hints.items():
             if v.structs is None:
                 continue
 
             for s in v.structs.values():
                 self.structs[s.name] = s.elements
+
+            # wipe the structs from the hints
+            self.hints[k].structs = None
 
     def dictify(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
