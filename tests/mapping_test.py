@@ -1,6 +1,6 @@
 import pytest
 import pyteal as pt
-from .mapping import Mapping, MapElement
+from beaker.lib.storage.mapping import Mapping, MapElement
 from beaker.application import Application
 from beaker.decorators import external
 

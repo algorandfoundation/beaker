@@ -1,7 +1,7 @@
 import pytest
 import pyteal as pt
 
-from .decorators import (
+from beaker.decorators import (
     external,
     get_handler_config,
     DefaultArgument,
@@ -275,7 +275,7 @@ def test_bare():
 
 
 def test_resolvable():
-    from .state import (
+    from beaker.state import (
         AccountStateValue,
         ApplicationStateValue,
         ReservedAccountStateValue,

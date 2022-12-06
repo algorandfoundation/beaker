@@ -2,7 +2,7 @@ import pytest
 
 from algosdk.account import generate_account
 from algosdk.error import KMDHTTPError
-from .kmd import delete_account, get_accounts, add_account
+from beaker.sandbox.kmd import delete_account, get_accounts, add_account
 
 
 def test_get_accounts():

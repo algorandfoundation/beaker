@@ -1,5 +1,5 @@
 import pyteal as pt
-from ._list import List
+from beaker.lib.storage import List
 from beaker.application import Application
 from beaker.decorators import external
 
