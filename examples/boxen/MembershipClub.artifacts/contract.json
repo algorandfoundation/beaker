@@ -1,0 +1,95 @@
+{
+    "name": "MembershipClub",
+    "methods": [
+        {
+            "name": "bootstrap",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "seed"
+                },
+                {
+                    "type": "string",
+                    "name": "token_name"
+                }
+            ],
+            "returns": {
+                "type": "uint64"
+            },
+            "desc": "create membership token and receive initial seed payment"
+        },
+        {
+            "name": "remove_member",
+            "args": [
+                {
+                    "type": "address",
+                    "name": "member"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "add_member",
+            "args": [
+                {
+                    "type": "account",
+                    "name": "new_member"
+                },
+                {
+                    "type": "asset",
+                    "name": "membership_token"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_membership_record",
+            "args": [
+                {
+                    "type": "address",
+                    "name": "member"
+                }
+            ],
+            "returns": {
+                "type": "(uint8,bool)"
+            }
+        },
+        {
+            "name": "set_affirmation",
+            "args": [
+                {
+                    "type": "uint16",
+                    "name": "idx"
+                },
+                {
+                    "type": "byte[64]",
+                    "name": "affirmation"
+                },
+                {
+                    "type": "asset",
+                    "name": "membership_token"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_affirmation",
+            "args": [
+                {
+                    "type": "asset",
+                    "name": "membership_token"
+                }
+            ],
+            "returns": {
+                "type": "byte[64]"
+            }
+        }
+    ],
+    "networks": {}
+}

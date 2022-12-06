@@ -1,0 +1,43 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4NmY3NTYxNjk2NAp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sNAp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDEwMWNlYTAwIC8vICJvcHVwX2Jvb3RzdHJhcChwYXkpdWludDY0Igo9PQpibnogbWFpbl9sMwplcnIKbWFpbl9sMzoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuIEdyb3VwSW5kZXgKaW50Y18xIC8vIDEKLQpzdG9yZSAwCmxvYWQgMApndHhucyBUeXBlRW51bQppbnRjXzEgLy8gcGF5Cj09CmFzc2VydApsb2FkIDAKY2FsbHN1YiBvcHVwYm9vdHN0cmFwXzEKc3RvcmUgMQpwdXNoYnl0ZXMgMHgxNTFmN2M3NSAvLyAweDE1MWY3Yzc1CmxvYWQgMQppdG9iCmNvbmNhdApsb2cKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDQ6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KYm56IG1haW5fbDYKZXJyCm1haW5fbDY6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydApjYWxsc3ViIGNyZWF0ZV8wCmludGNfMSAvLyAxCnJldHVybgoKLy8gY3JlYXRlCmNyZWF0ZV8wOgppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIG9wdXBfYm9vdHN0cmFwCm9wdXBib290c3RyYXBfMToKZ3R4bnMgQW1vdW50CnB1c2hpbnQgMTAwMDAwIC8vIDEwMDAwMAo+PQphc3NlcnQKY2FsbHN1YiBjcmVhdGVvcHVwXzIKYnl0ZWNfMCAvLyAib3VhaWQiCmFwcF9nbG9iYWxfZ2V0CnJldHN1YgoKLy8gY3JlYXRlX29wdXAKY3JlYXRlb3B1cF8yOgppdHhuX2JlZ2luCnB1c2hpbnQgNiAvLyBhcHBsCml0eG5fZmllbGQgVHlwZUVudW0KcHVzaGJ5dGVzIDB4MDgyMDAyMDAwMTMxMWIyMjEyNDAwMDFkMzYxYTAwODAwNDRjNmJlYTcyMTI0MDAwMDEwMDMxMTkyMjEyMzExODIyMTMxMDQ0ODgwMDFhMjM0MzMxMTkyMjEyNDAwMDAxMDAzMTE4MjIxMjQ0ODgwMDAyMjM0MzIzNDMzMjA5MTI4OTMxMDA4OGZmZjc0NDIzNDMgLy8gMHgwODIwMDIwMDAxMzExYjIyMTI0MDAwMWQzNjFhMDA4MDA0NGM2YmVhNzIxMjQwMDAwMTAwMzExOTIyMTIzMTE4MjIxMzEwNDQ4ODAwMWEyMzQzMzExOTIyMTI0MDAwMDEwMDMxMTgyMjEyNDQ4ODAwMDIyMzQzMjM0MzMyMDkxMjg5MzEwMDg4ZmZmNzQ0MjM0MwppdHhuX2ZpZWxkIEFwcHJvdmFsUHJvZ3JhbQpwdXNoYnl0ZXMgMHgwODgxMDA0MyAvLyAweDA4ODEwMDQzCml0eG5fZmllbGQgQ2xlYXJTdGF0ZVByb2dyYW0KaW50Y18wIC8vIDAKaXR4bl9maWVsZCBGZWUKaXR4bl9zdWJtaXQKaW50Y18wIC8vIDAKYnl0ZWNfMCAvLyAib3VhaWQiCmFwcF9nbG9iYWxfZ2V0X2V4CnN0b3JlIDMKc3RvcmUgMgpsb2FkIDMKIQphc3NlcnQKYnl0ZWNfMCAvLyAib3VhaWQiCml0eG4gQ3JlYXRlZEFwcGxpY2F0aW9uSUQKYXBwX2dsb2JhbF9wdXQKcmV0c3Vi",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {
+                "opup_app_id": {
+                    "type": "uint64",
+                    "key": "ouaid",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "OpUp",
+        "methods": [
+            {
+                "name": "opup_bootstrap",
+                "args": [
+                    {
+                        "type": "pay",
+                        "name": "ptxn"
+                    }
+                ],
+                "returns": {
+                    "type": "uint64"
+                },
+                "desc": "initialize opup with bootstrap to create a target app"
+            }
+        ],
+        "networks": {},
+        "desc": "OpUp creates a \"target\" application to make opup calls against in order to increase our opcode budget."
+    }
+}

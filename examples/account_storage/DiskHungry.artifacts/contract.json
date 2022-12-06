@@ -1,0 +1,35 @@
+{
+    "name": "DiskHungry",
+    "methods": [
+        {
+            "name": "add_account",
+            "args": [
+                {
+                    "type": "byte[]",
+                    "name": "nonce"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "flip_bit",
+            "args": [
+                {
+                    "type": "account",
+                    "name": "nonce_acct"
+                },
+                {
+                    "type": "uint32",
+                    "name": "bit_idx"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Allows caller to flip a bit at a given index for some account that has already opted in"
+        }
+    ],
+    "networks": {}
+}

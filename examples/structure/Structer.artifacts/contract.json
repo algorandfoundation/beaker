@@ -1,0 +1,46 @@
+{
+    "name": "Structer",
+    "methods": [
+        {
+            "name": "place_order",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "order_number"
+                },
+                {
+                    "type": "(string,uint16)",
+                    "name": "order"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "read_item",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "order_number"
+                }
+            ],
+            "returns": {
+                "type": "(string,uint16)"
+            }
+        },
+        {
+            "name": "increase_quantity",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "order_number"
+                }
+            ],
+            "returns": {
+                "type": "(string,uint16)"
+            }
+        }
+    ],
+    "networks": {}
+}

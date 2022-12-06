@@ -1,0 +1,39 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sNAp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDM5M2QwM2YxIC8vICJjaGVja19ldGhfc2lnKGJ5dGVbMzJdLGJ5dGVbNjVdKXN0cmluZyIKPT0KYm56IG1haW5fbDMKZXJyCm1haW5fbDM6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKc3RvcmUgMAp0eG5hIEFwcGxpY2F0aW9uQXJncyAyCnN0b3JlIDEKbG9hZCAwCmxvYWQgMQpjYWxsc3ViIGNoZWNrZXRoc2lnXzEKc3RvcmUgMgpwdXNoYnl0ZXMgMHgxNTFmN2M3NSAvLyAweDE1MWY3Yzc1CmxvYWQgMgpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2w0Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CmJueiBtYWluX2w2CmVycgptYWluX2w2Ogp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAo9PQphc3NlcnQKY2FsbHN1YiBjcmVhdGVfMAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGNyZWF0ZQpjcmVhdGVfMDoKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBjaGVja19ldGhfc2lnCmNoZWNrZXRoc2lnXzE6CnN0b3JlIDQKc3RvcmUgMwp0eG4gU2VuZGVyCnB1c2hieXRlcyAweGNmNjMzYjU0OTJhMTM0YzcxZDNjZmJhZTAyYjJjNTI0MzM5NzkzMTJjYTA0YjE3YmJlYjhjNmU2ZGFjNWM4YzkgLy8gMHhjZjYzM2I1NDkyYTEzNGM3MWQzY2ZiYWUwMmIyYzUyNDMzOTc5MzEyY2EwNGIxN2JiZWI4YzZlNmRhYzVjOGM5Cj09CmFzc2VydApwdXNoYnl0ZXMgMHgwMDBlNmM3MzY5NjcyMDc2NjE2YzY5NjQ2MTc0NjU2NCAvLyAweDAwMGU2YzczNjk2NzIwNzY2MTZjNjk2NDYxNzQ2NTY0CnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "EthChecker",
+        "methods": [
+            {
+                "name": "check_eth_sig",
+                "args": [
+                    {
+                        "type": "byte[32]",
+                        "name": "hash"
+                    },
+                    {
+                        "type": "byte[65]",
+                        "name": "signature"
+                    }
+                ],
+                "returns": {
+                    "type": "string"
+                }
+            }
+        ],
+        "networks": {}
+    }
+}

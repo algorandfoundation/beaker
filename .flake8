@@ -8,6 +8,13 @@ ignore =
     W503,
     E741,
 
+# for consistency with black
+max-line-length = 88
+
+exclude =
+    __pycache__
+    .venv
+    examples
 
 per-file-ignores =
     */__init__.py:          F401
