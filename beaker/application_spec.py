@@ -29,7 +29,9 @@ class ApplicationSpec:
     def __init__(self, app: Application) -> None:
         if app.approval_program is None or app.clear_program is None:
             raise Exception(
-                "approval or clear program are not built, please build the programs first"
+                """
+                approval or clear program are not built, please build the programs first
+                """
             )
 
         self.source = ApplicationSource(app.approval_program, app.clear_program)
@@ -38,66 +40,34 @@ class ApplicationSpec:
 
         self.hints = app.hints
 
-        # Dedupe structs
-        self.structs: dict[str, list[tuple[str, str]]] = {}
+        # Gather custom types
+        self.types: dict[str, list[tuple[str, str]]] = {}
         for k, v in self.hints.items():
             if v.structs is None:
                 continue
 
             for s in v.structs.values():
-                self.structs[s.name] = s.elements
+                self.types[s.name] = s.elements
 
             # wipe the structs from the hints
             self.hints[k].structs = None
 
+        # TODO:
+
+        # Specify the method argument type alias as the type as `ref:TheType` to
+        # avoid future breakage with arc defined types vs user defined
+
+        # Change the `default args` to be part of the method spec and reference
+        # the state field (or methods) directly like `ref:the_key` spec
+
     def dictify(self) -> dict[str, Any]:
-        """returns a dictionary, helpful to provide to callers with information about the application specification"""
+        """
+        returns a dictionary, helpful to provide to callers with
+        information about the application specification
+        """
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
-            "structs": self.structs,
+            "types": self.types,
             "source": self.source.dictify(),
             "schema": self.schema.dictify(),
-            "contract": self.contract.dictify(),
-        }
-
-
-# ```
-# add types section, define types once using the list of fields w/ name and type
-# consider specifying the type as `ref:TheType` to avoid future breakage with arc defined types vs user defined
-# consider tweaking the `default args` to reference state field (or methods) directly from json defs
-# move contract elements (name, methods, ...) into root
-# consider removing `static` from Declared schema
-# ```
-
-# ```ts
-#
-# export interface AppSpec {
-#  hints: Record<string, HintSpec>;
-#  schema: SchemaSpec;
-#  source: AppSources;
-#  contract: algosdk.ABIContract;
-# }
-#
-# export interface HintSpec {
-#  structs: Record<string, Struct>;
-#  readonly: boolean;
-#  default_arguments: Record<string, DefaultArgument>;
-# }
-#
-# type StructElement = [string, string];
-#
-# export interface Struct {
-#  name: string;
-#  elements: StructElement[];
-# }
-#
-# export interface DefaultArgument {
-#  source: string;
-#  data: string | bigint | number;
-# }
-#
-# export enum AVMType {
-#  uint64,
-#  bytes,
-# }
-#
+        } | self.contract.dictify()

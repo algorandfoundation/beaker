@@ -73,9 +73,10 @@ class ApplicationClient:
 
     def build(self) -> None:
         """
-        Wraps the Application in an AppPrecompile before calling `compile` on the Precompile which
-        recursively compiles all the dependencies (depth first). The result is then used
-        to assign the approval and clear state program binaries and src maps.
+        Wraps the Application in an AppPrecompile before calling `compile` on the
+        Precompile which recursively compiles all the dependencies (depth first).
+        The result is then used to assign the approval and clear state program
+        binaries and src maps.
         """
         if self.approval_binary is not None and self.clear_binary is not None:
             return
@@ -101,7 +102,10 @@ class ApplicationClient:
         extra_pages: int = None,
         **kwargs,
     ) -> tuple[int, str, str]:
-        """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
+        """
+        Submits a signed ApplicationCallTransaction with application id == 0
+        and the schema and source from the Application passed
+        """
 
         self.build()
         assert self.clear_binary is not None and self.approval_binary is not None
@@ -178,7 +182,10 @@ class ApplicationClient:
         **kwargs,
     ) -> str:
 
-        """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
+        """
+        Submits a signed ApplicationCallTransaction with OnComplete
+        set to UpdateApplication and source from the Application passed
+        """
         self.build()
 
         sp = self.get_suggested_params(suggested_params)
@@ -284,7 +291,10 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
+        """
+        Submits a signed ApplicationCallTransaction with
+        OnComplete set to CloseOut
+        """
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
@@ -336,7 +346,10 @@ class ApplicationClient:
         **kwargs,
     ) -> str:
 
-        """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
+        """
+        Submits a signed ApplicationCallTransaction with
+        OnComplete set to ClearState
+        """
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
@@ -381,7 +394,10 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams = None,
         **kwargs,
     ) -> str:
-        """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
+        """
+        Submits a signed ApplicationCallTransaction with OnComplete
+        set to DeleteApplication
+        """
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
@@ -665,7 +681,10 @@ class ApplicationClient:
         return atc
 
     def fund(self, amt: int, addr: str = None) -> str:
-        """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
+        """
+        convenience method to pay the address passed, defaults to
+        paying the app address for this client from the current signer
+        """
         sender = self.get_sender()
         signer = self.get_signer()
 

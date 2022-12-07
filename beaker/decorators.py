@@ -51,7 +51,10 @@ class DefaultArgumentClass(str, Enum):
 
 
 class DefaultArgument:
-    """DefaultArgument is a container for any arguments that may be resolved prior to calling some target method"""
+    """
+    DefaultArgument is a container for any arguments that may be resolved
+        prior to calling some target method.
+    """
 
     def __init__(
         self,
@@ -244,7 +247,10 @@ class MethodHints:
 
 
 class Authorize:
-    """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""
+    """
+    Authorize contains methods that may be used as values to
+    the `authorize` keyword of the `handle` decorator
+    """
 
     @staticmethod
     def only(addr: Expr):
@@ -277,7 +283,9 @@ class Authorize:
 
     @staticmethod
     def opted_in(app_id: Expr = Global.current_application_id()):
-        """require that the sender of the app call has already opted-in to a given app id"""
+        """
+        require that the sender of the app call has already opted-in to a given app id
+        """
 
         if app_id.type_of() != TealType.uint64:
             raise TealTypeError(app_id.type_of(), TealType.uint64)
@@ -445,13 +453,17 @@ def external(
 
     Args:
         fn: The function being wrapped.
-        name: Name of ABI method. If not set, name of the python method will be used. Useful for method overriding.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
-        method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.
+        name: Name of ABI method. If not set, name of the python method will be used.
+            Useful for method overriding.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+            interpreted as allowed if the output>0.
+        method_config:  A subroutine that should take a single argument (Txn.sender())
+            and evaluate to 1/0 depending on the app call transaction sender.
         read_only: Mark a method as callable with no fee using dryrun or simulate
 
     Returns:
-        The original method with additional elements set in its  :code:`__handler_config__` attribute
+        The original method with additional elements set in
+            it's  :code:`__handler_config__` attribute
     """
 
     def _impl(fn: HandlerFunc):
@@ -497,7 +509,8 @@ def bare_external(
         close_out: CallConfig to handle a `CloseOut`
 
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in its `__handler_config__`.
 
     """
 
@@ -550,12 +563,15 @@ def create(
     authorize: SubroutineFnWrapper = None,
     method_config: Optional[MethodConfig] = None,
 ):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call and ApplicationId == 0
+    """
+    set method to be handled by an application call with
+        it's :code:`OnComplete` set to :code:`NoOp` call and ApplicationId == 0.
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in its `__handler_config__`
     """
 
     mconfig = (
@@ -586,13 +602,17 @@ def create(
 
 
 def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`DeleteApplication` call
+    """
+    set method to be handled by an application call with
+        its :code:`OnComplete` set to :code:`DeleteApplication` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()``
+            and output uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature
+            and attributes set in its `__handler_config__`
     """
 
     def _impl(fn: HandlerFunc):
@@ -613,13 +633,17 @@ def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`UpdateApplication` call
+    """
+        set method to be handled by an application call with its
+            :code:`OnComplete` set to :code:`UpdateApplication` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and
+            output uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in its `__handler_config__`
     """
 
     # If fn has abi args, call external
@@ -643,13 +667,17 @@ def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`OptIn` call
+    """
+    set method to be handled by an application call with it's
+        :code:`OnComplete` set to :code:`OptIn` call.
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+            interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in it's `__handler_config__`.
     """
 
     def _impl(fn: HandlerFunc):
@@ -669,13 +697,17 @@ def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
 
 
 def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`ClearState` call
+    """
+    set method to be handled by an application call with
+        its :code:`OnComplete` set to :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and
+            output uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in its `__handler_config__`
     """
 
     def _impl(fn: HandlerFunc):
@@ -696,13 +728,17 @@ def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = N
 
 
 def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`CloseOut` call
+    """
+    set method to be handled by an application call with
+        its :code:`OnComplete` set to :code:`CloseOut` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and
+            output uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in its `__handler_config__`
     """
 
     def _impl(fn: HandlerFunc):
@@ -723,13 +759,17 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
 
 
 def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call
+    """
+    set method to be handled by an application call with
+        its :code:`OnComplete` set to :code:`NoOp` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and
+            output uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in its `__handler_config__`
     """
 
     def _impl(fn: HandlerFunc):
