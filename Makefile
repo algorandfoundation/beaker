@@ -52,7 +52,7 @@ local-gh-simulate:
 
 # ---- Extras ---- #
 coverage:
-	pytest --cov-report html --cov=pyteal
+	pytest --cov-report html --cov=beaker
 
 gen:
 	./scripts/gen.sh
