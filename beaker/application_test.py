@@ -646,3 +646,16 @@ def test_abi_method_details():
 
     with pytest.raises(Exception):
         get_method_selector(meth2)
+
+
+def test_multi_optin():
+    class Test(Application):
+        @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+        def opt1(self, txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
+            return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
+
+        @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+        def opt2(self, txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
+            return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
+
+    Test()

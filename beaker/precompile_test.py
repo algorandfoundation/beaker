@@ -202,6 +202,26 @@ class LargeApp(Application):
         return pt.Assert(pt.Bytes(self.longBytes) != pt.Bytes(self.longBytes2))
 
 
+def test_large_app_create():
+    class LargeAppDeployer(Application):
+        large_app = AppPrecompile(LargeApp())
+
+        @external
+        def deploy_large_app(self, *, output: pt.abi.Uint64):
+            return pt.Seq(
+                pt.InnerTxnBuilder.Execute(self.large_app.get_create_config()),
+                output.set(pt.InnerTxn.application_id()),
+            )
+
+    acct = get_accounts().pop()
+    ac = ApplicationClient(get_algod_client(), LargeAppDeployer(), signer=acct.signer)
+
+    ac.create()
+    ac.fund(1_000_000)
+    result = ac.call(LargeAppDeployer.deploy_large_app)
+    print(result.return_value)
+
+
 def test_page_hash():
     class SmallApp(Application):
         pass
