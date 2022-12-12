@@ -167,12 +167,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_delete</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_opt_in</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_close_out</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_clear_state</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">all_creates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_updates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_deletes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_opt_ins</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_close_outs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_clear_states</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MethodHints</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bare_externals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OnCompleteAction</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -272,34 +272,17 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">abi_meth</span><span class="p">,</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">method_config</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">is_create</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;Multiple create methods specified&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span> <span class="o">=</span> <span class="n">static_attr</span>
-
+                    <span class="n">all_creates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">is_update</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;Multiple update methods specified&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span> <span class="o">=</span> <span class="n">static_attr</span>
-
+                    <span class="n">all_updates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">is_delete</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_delete</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;Multiple delete methods specified&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">on_delete</span> <span class="o">=</span> <span class="n">static_attr</span>
-
+                    <span class="n">all_deletes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">is_opt_in</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_opt_in</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;Multiple opt in methods specified&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">on_opt_in</span> <span class="o">=</span> <span class="n">static_attr</span>
-
+                    <span class="n">all_opt_ins</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">is_clear_state</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_clear_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;Multiple clear state methods specified&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">on_clear_state</span> <span class="o">=</span> <span class="n">static_attr</span>
-
+                    <span class="n">all_clear_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">is_close_out</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_close_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="s2">&quot;Multiple close out methods specified&quot;</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">on_close_out</span> <span class="o">=</span> <span class="n">static_attr</span>
+                    <span class="n">all_close_outs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_attr</span><span class="p">)</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">abi_meth</span><span class="p">,</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">method_config</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler_config</span><span class="o">.</span><span class="n">hints</span><span class="p">()</span>
@@ -314,6 +297,15 @@
                         <span class="n">name</span><span class="p">,</span>
                         <span class="n">handler_config</span><span class="o">.</span><span class="n">subroutine</span><span class="p">(</span><span class="n">static_attr</span><span class="p">),</span>
                     <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span> <span class="o">=</span> <span class="n">all_creates</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_creates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span> <span class="o">=</span> <span class="n">all_updates</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_updates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_delete</span> <span class="o">=</span> <span class="n">all_deletes</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_deletes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_opt_in</span> <span class="o">=</span> <span class="n">all_opt_ins</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_opt_ins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_close_out</span> <span class="o">=</span> <span class="n">all_close_outs</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_close_outs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_clear_state</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">all_clear_states</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_clear_states</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">acct_state</span> <span class="o">=</span> <span class="n">AccountState</span><span class="p">(</span><span class="n">acct_vals</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_state</span> <span class="o">=</span> <span class="n">ApplicationState</span><span class="p">(</span><span class="n">app_vals</span><span class="p">)</span>

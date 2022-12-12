@@ -27,7 +27,7 @@ This is a full application, though it doesn't do much.
 Instantiate it and take a look at some of the resulting fields. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
-    :lines: 59-62
+    :lines: 60-66
 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.

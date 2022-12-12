@@ -765,7 +765,11 @@
         <span class="n">app_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">application_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">app_state</span> <span class="ow">or</span> <span class="s2">&quot;global-state&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">app_state</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]:</span>
             <span class="k">return</span> <span class="p">{}</span>
-        <span class="k">return</span> <span class="n">decode_state</span><span class="p">(</span><span class="n">app_state</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="s2">&quot;global-state&quot;</span><span class="p">],</span> <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span></div>
+
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">],</span>
+            <span class="n">decode_state</span><span class="p">(</span><span class="n">app_state</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="s2">&quot;global-state&quot;</span><span class="p">],</span> <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">),</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ApplicationClient.get_account_state"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.get_account_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_account_state</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -783,7 +787,10 @@
         <span class="p">):</span>
             <span class="k">return</span> <span class="p">{}</span>
 
-        <span class="k">return</span> <span class="n">decode_state</span><span class="p">(</span><span class="n">acct_state</span><span class="p">[</span><span class="s2">&quot;app-local-state&quot;</span><span class="p">][</span><span class="s2">&quot;key-value&quot;</span><span class="p">],</span> <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">],</span>
+            <span class="n">decode_state</span><span class="p">(</span><span class="n">acct_state</span><span class="p">[</span><span class="s2">&quot;app-local-state&quot;</span><span class="p">][</span><span class="s2">&quot;key-value&quot;</span><span class="p">],</span> <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">),</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ApplicationClient.get_application_account_info"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.get_application_account_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_account_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;gets the account info for the application account&quot;&quot;&quot;</span>
