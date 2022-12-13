@@ -2,6 +2,8 @@ import inspect
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from beaker import Application, sandbox
 
 
@@ -57,6 +59,9 @@ def check_application_artifacts_output_stability(
     # first fail if there are any changes to already committed files, you must manually add them in that case
     assert git_diff.returncode == 0, git_diff.stdout
 
-    # if first time running, we can just add (stage) the changes
+    # if first time running, fail in case of accidental change to output directory
     if not output_dir_did_exist:
-        subprocess.run(["git", "add", output_dir_str], text=True, check=True)
+        pytest.fail(
+            f"New output folder created at {output_dir_str} from contract {app.__class__.__qualname__} - "
+            "if this was intentional, please commit the files to the git repo"
+        )
