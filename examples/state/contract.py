@@ -25,12 +25,12 @@ class StateExample(Application):
         static=True,
     )
 
-    dynamic_app_value: Final[
+    reserved_app_value: Final[
         ReservedApplicationStateValue
     ] = ReservedApplicationStateValue(
         stack_type=TealType.uint64,
         max_keys=32,
-        descr="A dynamic app state variable, with 32 possible keys",
+        descr="A reserved app state variable, with 32 possible keys",
     )
 
     application_blob: Final[ApplicationStateBlob] = ApplicationStateBlob(
@@ -43,10 +43,10 @@ class StateExample(Application):
         descr="An int stored for each account that opts in",
     )
 
-    dynamic_account_value: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
+    reserved_account_value: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
-        descr="A dynamic state value, allowing 8 keys to be reserved, in this case byte type",
+        descr="A reserved state value, allowing 8 keys to be reserved, in this case byte type",
     )
 
     account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
@@ -91,15 +91,15 @@ class StateExample(Application):
         return output.set(self.declared_app_value)
 
     @external
-    def set_dynamic_app_state_val(self, k: abi.Uint8, v: abi.Uint64):
+    def set_reserved_app_state_val(self, k: abi.Uint8, v: abi.Uint64):
         # Accessing the key with square brackets, accepts both Expr and an ABI type
         # If the value is an Expr it must evaluate to `TealType.bytes`
         # If the value is an ABI type, the `encode` method is used to convert it to bytes
-        return self.dynamic_app_value[k].set(v.get())
+        return self.reserved_app_value[k].set(v.get())
 
     @external(read_only=True)
-    def get_dynamic_app_state_val(self, k: abi.Uint8, *, output: abi.Uint64):
-        return output.set(self.dynamic_app_value[k])
+    def get_reserved_app_state_val(self, k: abi.Uint8, *, output: abi.Uint64):
+        return output.set(self.reserved_app_value[k])
 
     @external
     def set_account_state_val(self, v: abi.Uint64):
@@ -117,12 +117,12 @@ class StateExample(Application):
         return output.set(self.declared_account_value[Txn.sender()])
 
     @external
-    def set_dynamic_account_state_val(self, k: abi.Uint8, v: abi.String):
-        return self.dynamic_account_value[k][Txn.sender()].set(v.get())
+    def set_reserved_account_state_val(self, k: abi.Uint8, v: abi.String):
+        return self.reserved_account_value[k][Txn.sender()].set(v.get())
 
     @external(read_only=True)
-    def get_dynamic_account_state_val(self, k: abi.Uint8, *, output: abi.String):
-        return output.set(self.dynamic_account_value[k][Txn.sender()])
+    def get_reserved_account_state_val(self, k: abi.Uint8, *, output: abi.String):
+        return output.set(self.reserved_account_value[k][Txn.sender()])
 
 
 if __name__ == "__main__":
