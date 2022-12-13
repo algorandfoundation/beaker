@@ -1,6 +1,6 @@
 import pytest
 
-from beaker import Application, sandbox
+from beaker import Application
 from examples.opup.contract import ExpensiveApp
 from examples.opup.main import demo
 from examples.opup.op_up import TargetApp, OpUp
