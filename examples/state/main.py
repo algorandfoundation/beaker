@@ -32,8 +32,8 @@ def demo():
     result = app_client.call(StateExample.get_account_state_val)
     print(f"Set/get acct state result: {result.return_value}")
 
-    app_client.call(StateExample.set_dynamic_account_state_val, k=123, v="stuff")
-    result = app_client.call(StateExample.get_dynamic_account_state_val, k=123)
+    app_client.call(StateExample.set_reserved_account_state_val, k=123, v="stuff")
+    result = app_client.call(StateExample.get_reserved_account_state_val, k=123)
     print(f"Set/get dynamic acct state result: {result.return_value}")
 
     try:
@@ -43,8 +43,8 @@ def demo():
         result = app_client.call(StateExample.get_app_state_val)
         print(f"Set/get app state result: {result.return_value}")
 
-    app_client.call(StateExample.set_dynamic_app_state_val, k=15, v=123)
-    result = app_client.call(StateExample.get_dynamic_app_state_val, k=15)
+    app_client.call(StateExample.set_reserved_app_state_val, k=15, v=123)
+    result = app_client.call(StateExample.get_reserved_app_state_val, k=15)
     print(f"Set/get dynamic app state result: {result.return_value}")
 
     msg = "write this message please and make it readable"

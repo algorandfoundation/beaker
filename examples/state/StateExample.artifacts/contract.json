@@ -59,7 +59,7 @@
             }
         },
         {
-            "name": "set_dynamic_app_state_val",
+            "name": "set_reserved_app_state_val",
             "args": [
                 {
                     "type": "uint8",
@@ -75,7 +75,7 @@
             }
         },
         {
-            "name": "get_dynamic_app_state_val",
+            "name": "get_reserved_app_state_val",
             "args": [
                 {
                     "type": "uint8",
@@ -118,7 +118,7 @@
             }
         },
         {
-            "name": "set_dynamic_account_state_val",
+            "name": "set_reserved_account_state_val",
             "args": [
                 {
                     "type": "uint8",
@@ -134,7 +134,7 @@
             }
         },
         {
-            "name": "get_dynamic_account_state_val",
+            "name": "get_reserved_account_state_val",
             "args": [
                 {
                     "type": "uint8",
