@@ -43,7 +43,9 @@ class StateExample(Application):
         descr="An int stored for each account that opts in",
     )
 
-    reserved_account_value: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
+    reserved_account_value: Final[
+        ReservedAccountStateValue
+    ] = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
         descr="A reserved state value, allowing 8 keys to be reserved, in this case byte type",
