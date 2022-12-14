@@ -572,12 +572,12 @@ Algorand refers to Account state as <cite>Local State</cite></p>
         <span class="n">static</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">dynamic_app_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span>
+    <span class="n">reserved_app_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span>
         <span class="n">ReservedApplicationStateValue</span>
     <span class="p">]</span> <span class="o">=</span> <span class="n">ReservedApplicationStateValue</span><span class="p">(</span>
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
-        <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A dynamic app state variable, with 32 possible keys&quot;</span><span class="p">,</span>
+        <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A reserved app state variable, with 32 possible keys&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">application_blob</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">ApplicationStateBlob</span><span class="p">]</span> <span class="o">=</span> <span class="n">ApplicationStateBlob</span><span class="p">(</span>
@@ -590,10 +590,12 @@ Algorand refers to Account state as <cite>Local State</cite></p>
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;An int stored for each account that opts in&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">dynamic_account_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">ReservedAccountStateValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">ReservedAccountStateValue</span><span class="p">(</span>
+    <span class="n">reserved_account_value</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span>
+        <span class="n">ReservedAccountStateValue</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n">ReservedAccountStateValue</span><span class="p">(</span>
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-        <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A dynamic state value, allowing 8 keys to be reserved, in this case byte type&quot;</span><span class="p">,</span>
+        <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A reserved state value, allowing 8 keys to be reserved, in this case byte type&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">account_blob</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">AccountStateBlob</span><span class="p">]</span> <span class="o">=</span> <span class="n">AccountStateBlob</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
@@ -638,15 +640,15 @@ Algorand refers to Account state as <cite>Local State</cite></p>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declared_app_value</span><span class="p">)</span>
 
     <span class="nd">@external</span>
-    <span class="k">def</span> <span class="nf">set_dynamic_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_reserved_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="c1"># Accessing the key with square brackets, accepts both Expr and an ABI type</span>
         <span class="c1"># If the value is an Expr it must evaluate to `TealType.bytes`</span>
         <span class="c1"># If the value is an ABI type, the `encode` method is used to convert it to bytes</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_app_value</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_app_value</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_dynamic_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dynamic_app_value</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">get_reserved_app_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reserved_app_value</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">set_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
@@ -664,12 +666,12 @@ Algorand refers to Account state as <cite>Local State</cite></p>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declared_account_value</span><span class="p">[</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()])</span>
 
     <span class="nd">@external</span>
-    <span class="k">def</span> <span class="nf">set_dynamic_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_account_value</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+    <span class="k">def</span> <span class="nf">set_reserved_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserved_account_value</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_dynamic_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dynamic_account_value</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()])</span>
+    <span class="k">def</span> <span class="nf">get_reserved_account_state_val</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reserved_account_value</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()])</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
