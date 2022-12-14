@@ -1,0 +1,42 @@
+{
+    "name": "C2CMain",
+    "methods": [
+        {
+            "name": "create_sub",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            }
+        },
+        {
+            "name": "create_asset_and_send",
+            "args": [
+                {
+                    "type": "string",
+                    "name": "name"
+                },
+                {
+                    "type": "application",
+                    "name": "sub_app_ref"
+                }
+            ],
+            "returns": {
+                "type": "uint64"
+            }
+        },
+        {
+            "name": "delete_asset",
+            "args": [
+                {
+                    "type": "asset",
+                    "name": "asset"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {},
+    "desc": "Main application that handles creation of the sub app and asset and calls it"
+}

@@ -1,0 +1,79 @@
+{
+    "hints": {
+        "lookup": {
+            "structs": {
+                "output": {
+                    "name": "OracleData",
+                    "elements": [
+                        [
+                            "timestamp",
+                            "uint64"
+                        ],
+                        [
+                            "price",
+                            "uint64"
+                        ],
+                        [
+                            "confidence",
+                            "uint64"
+                        ]
+                    ]
+                }
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4MTUxZjdjNzUKdHhuIE51bUFwcEFyZ3MKaW50Y18wIC8vIDAKPT0KYm56IG1haW5fbDYKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHgxYzE4ZTJlOCAvLyAibG9va3VwKHVpbnQ2NCkodWludDY0LHVpbnQ2NCx1aW50NjQpIgo9PQpibnogbWFpbl9sNQp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDkwM2Y0NTM1IC8vICJwb3J0YWxfdHJhbnNmZXIoYnl0ZVtdKWJ5dGVbXSIKPT0KYm56IG1haW5fbDQKZXJyCm1haW5fbDQ6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKY2FsbHN1YiBwb3J0YWx0cmFuc2Zlcl8zCnN0b3JlIDUKYnl0ZWNfMCAvLyAweDE1MWY3Yzc1CmxvYWQgNQpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2w1Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmJ0b2kKY2FsbHN1YiBsb29rdXBfMgpzdG9yZSAxCmJ5dGVjXzAgLy8gMHgxNTFmN2M3NQpsb2FkIDEKY29uY2F0CmxvZwppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sNjoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sOAplcnIKbWFpbl9sODoKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKPT0KYXNzZXJ0CmNhbGxzdWIgY3JlYXRlXzAKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBjcmVhdGUKY3JlYXRlXzA6CmludGNfMSAvLyAxCnJldHVybgoKLy8gcHJlZml4X2tleV9nZW4KcHJlZml4a2V5Z2VuXzE6CnN0b3JlIDAKcHVzaGJ5dGVzIDB4NzA3MjY5NjM2NTczIC8vICJwcmljZXMiCmxvYWQgMApjb25jYXQKcmV0c3ViCgovLyBsb29rdXAKbG9va3VwXzI6CnN0b3JlIDIKaW50Y18wIC8vIDAKbG9hZCAyCml0b2IKY2FsbHN1YiBwcmVmaXhrZXlnZW5fMQphcHBfZ2xvYmFsX2dldF9leApzdG9yZSA0CnN0b3JlIDMKbG9hZCA0CmFzc2VydApsb2FkIDMKcmV0c3ViCgovLyBwb3J0YWxfdHJhbnNmZXIKcG9ydGFsdHJhbnNmZXJfMzoKc3RvcmUgNgpsb2FkIDYKZXh0cmFjdCAyIDAKaW50Y18wIC8vIDAKZ2V0Ynl0ZQpzdG9yZSA3CmxvYWQgNgpleHRyYWN0IDIgMAppbnRjXzEgLy8gMQpleHRyYWN0X3VpbnQzMgpzdG9yZSA4CmxvYWQgNgpleHRyYWN0IDIgMApwdXNoaW50IDUgLy8gNQpnZXRieXRlCnN0b3JlIDkKbG9hZCA2CmV4dHJhY3QgMiAwCnB1c2hpbnQgNiAvLyA2CmxvYWQgOQpwdXNoaW50IDY2IC8vIDY2CioKKwpkaWcgMQpsZW4Kc3Vic3RyaW5nMwpzdG9yZSAyNApsb2FkIDI0CmludGNfMCAvLyAwCmV4dHJhY3RfdWludDMyCnN0b3JlIDEwCmxvYWQgMjQKcHVzaGludCA0IC8vIDQKZXh0cmFjdF91aW50MzIKc3RvcmUgMTEKbG9hZCAyNApwdXNoaW50IDggLy8gOApleHRyYWN0X3VpbnQxNgpzdG9yZSAxMgpsb2FkIDI0CmV4dHJhY3QgMTAgMzIKc3RvcmUgMTMKbG9hZCAyNApwdXNoaW50IDQyIC8vIDQyCmV4dHJhY3RfdWludDY0CnN0b3JlIDE0CmxvYWQgMjQKcHVzaGludCA1MCAvLyA1MApnZXRieXRlCnN0b3JlIDE1CmxvYWQgMjQKcHVzaGludCA1MSAvLyA1MQpnZXRieXRlCnN0b3JlIDE2CmxvYWQgMjQKZXh0cmFjdCA1MiAzMgpzdG9yZSAxNwpsb2FkIDI0CmV4dHJhY3QgODQgMzIKc3RvcmUgMTgKbG9hZCAyNApwdXNoaW50IDExNiAvLyAxMTYKZXh0cmFjdF91aW50MTYKc3RvcmUgMTkKbG9hZCAyNApleHRyYWN0IDExOCAzMgpzdG9yZSAyMApsb2FkIDI0CnB1c2hpbnQgMTUwIC8vIDE1MApleHRyYWN0X3VpbnQxNgpzdG9yZSAyMQpsb2FkIDI0CmV4dHJhY3QgMTUyIDMyCnN0b3JlIDIyCmxvYWQgMjQKZXh0cmFjdCAxODQgMApzdG9yZSAyMwpsb2FkIDIzCmxlbgppdG9iCmV4dHJhY3QgNiAwCmxvYWQgMjMKY29uY2F0CnN0b3JlIDIzCmxvYWQgMjMKZXh0cmFjdCAyIDAKc3RvcmUgMjUKbG9hZCAyNQpwdXNoYnl0ZXMgMHg3NDczIC8vICJ0cyIKanNvbl9yZWYgSlNPTlVpbnQ2NApzdG9yZSAyNgpsb2FkIDI1CnB1c2hieXRlcyAweDcwNzI2OTYzNjUgLy8gInByaWNlIgpqc29uX3JlZiBKU09OVWludDY0CnN0b3JlIDI3CmxvYWQgMjUKcHVzaGJ5dGVzIDB4NjM2ZjZlNjY2OTY0NjU2ZTYzNjUgLy8gImNvbmZpZGVuY2UiCmpzb25fcmVmIEpTT05VaW50NjQKc3RvcmUgMjgKbG9hZCAyNgppdG9iCmxvYWQgMjcKaXRvYgpjb25jYXQKbG9hZCAyOAppdG9iCmNvbmNhdApzdG9yZSAyOQpsb2FkIDI2Cml0b2IKY2FsbHN1YiBwcmVmaXhrZXlnZW5fMQpsb2FkIDI5CmFwcF9nbG9iYWxfcHV0CmxvYWQgMjMKcmV0c3Vi",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {},
+            "reserved": {
+                "prices": {
+                    "type": "bytes",
+                    "max_keys": 64,
+                    "descr": ""
+                }
+            }
+        }
+    },
+    "contract": {
+        "name": "OracleDataCache",
+        "methods": [
+            {
+                "name": "lookup",
+                "args": [
+                    {
+                        "type": "uint64",
+                        "name": "ts"
+                    }
+                ],
+                "returns": {
+                    "type": "(uint64,uint64,uint64)"
+                }
+            },
+            {
+                "name": "portal_transfer",
+                "args": [
+                    {
+                        "type": "byte[]",
+                        "name": "vaa",
+                        "desc": "VAA encoded dynamic byte array"
+                    }
+                ],
+                "returns": {
+                    "type": "byte[]",
+                    "desc": "Undefined byte array"
+                },
+                "desc": "portal_transfer accepts a VAA containing information about the transfer and the payload."
+            }
+        ],
+        "networks": {},
+        "desc": "\n    Stores price feed in application state keyed by timestamp\n\n    TODO: more than 64 vals lol\n    "
+    }
+}

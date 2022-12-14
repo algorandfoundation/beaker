@@ -1,0 +1,29 @@
+#pragma version 8
+intcblock 0
+txna ApplicationArgs 0
+pushbytes 0x97f1fc11 // "create(string)string"
+==
+bnz main_l2
+err
+main_l2:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+==
+&&
+assert
+txna ApplicationArgs 1
+callsub create_0
+store 0
+pushbytes 0x151f7c75 // 0x151f7c75
+load 0
+concat
+log
+pushint 1 // 1
+return
+
+// create
+create_0:
+retsub

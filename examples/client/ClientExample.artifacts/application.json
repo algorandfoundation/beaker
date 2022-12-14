@@ -1,0 +1,70 @@
+{
+    "hints": {
+        "get_nick": {
+            "read_only": true
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4NmQ2MTZlNjE2NzY1NzIgMHg2ZTY5NjM2YjZlNjE2ZDY1CnR4biBOdW1BcHBBcmdzCmludGNfMCAvLyAwCj09CmJueiBtYWluX2w4CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4OTY2N2Q2ZGUgLy8gInNldF9tYW5hZ2VyKGFkZHJlc3Mpdm9pZCIKPT0KYm56IG1haW5fbDcKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHg4ZmQwMGZjYSAvLyAic2V0X25pY2soc3RyaW5nKXZvaWQiCj09CmJueiBtYWluX2w2CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4NjRhMzk2NWEgLy8gImdldF9uaWNrKClzdHJpbmciCj09CmJueiBtYWluX2w1CmVycgptYWluX2w1Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydApjYWxsc3ViIGdldG5pY2tfOApzdG9yZSAwCnB1c2hieXRlcyAweDE1MWY3Yzc1IC8vIDB4MTUxZjdjNzUKbG9hZCAwCmNvbmNhdApsb2cKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDY6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKY2FsbHN1YiBzZXRuaWNrXzcKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDc6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKY2FsbHN1YiBzZXRtYW5hZ2VyXzYKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDg6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KYm56IG1haW5fbDE2CnR4biBPbkNvbXBsZXRpb24KaW50Y18xIC8vIE9wdEluCj09CmJueiBtYWluX2wxNQp0eG4gT25Db21wbGV0aW9uCnB1c2hpbnQgMiAvLyBDbG9zZU91dAo9PQpibnogbWFpbl9sMTQKdHhuIE9uQ29tcGxldGlvbgpwdXNoaW50IDUgLy8gRGVsZXRlQXBwbGljYXRpb24KPT0KYm56IG1haW5fbDEzCmVycgptYWluX2wxMzoKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KYXNzZXJ0CmNhbGxzdWIgZGVsZXRlXzQKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDE0Ogp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQphc3NlcnQKY2FsbHN1YiBjbG9zZW91dF8yCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxNToKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KYXNzZXJ0CmNhbGxzdWIgb3B0aW5fMQppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sMTY6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydApjYWxsc3ViIGNyZWF0ZV8wCmludGNfMSAvLyAxCnJldHVybgoKLy8gY3JlYXRlCmNyZWF0ZV8wOgpieXRlY18wIC8vICJtYW5hZ2VyIgpnbG9iYWwgQ3JlYXRvckFkZHJlc3MKYXBwX2dsb2JhbF9wdXQKcmV0c3ViCgovLyBvcHRfaW4Kb3B0aW5fMToKdHhuIFNlbmRlcgpieXRlY18xIC8vICJuaWNrbmFtZSIKcHVzaGJ5dGVzIDB4IC8vICIiCmFwcF9sb2NhbF9wdXQKcmV0c3ViCgovLyBjbG9zZV9vdXQKY2xvc2VvdXRfMjoKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBhdXRoX29ubHkKYXV0aG9ubHlfMzoKYnl0ZWNfMCAvLyAibWFuYWdlciIKYXBwX2dsb2JhbF9nZXQKPT0KcmV0c3ViCgovLyBkZWxldGUKZGVsZXRlXzQ6CnR4biBTZW5kZXIKY2FsbHN1YiBhdXRob25seV8zCi8vIHVuYXV0aG9yaXplZAphc3NlcnQKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBhdXRoX29ubHkKYXV0aG9ubHlfNToKYnl0ZWNfMCAvLyAibWFuYWdlciIKYXBwX2dsb2JhbF9nZXQKPT0KcmV0c3ViCgovLyBzZXRfbWFuYWdlcgpzZXRtYW5hZ2VyXzY6CnN0b3JlIDIKdHhuIFNlbmRlcgpjYWxsc3ViIGF1dGhvbmx5XzUKLy8gdW5hdXRob3JpemVkCmFzc2VydApieXRlY18wIC8vICJtYW5hZ2VyIgpsb2FkIDIKYXBwX2dsb2JhbF9wdXQKcmV0c3ViCgovLyBzZXRfbmljawpzZXRuaWNrXzc6CnN0b3JlIDMKdHhuIFNlbmRlcgpieXRlY18xIC8vICJuaWNrbmFtZSIKbG9hZCAzCmV4dHJhY3QgMiAwCmFwcF9sb2NhbF9wdXQKcmV0c3ViCgovLyBnZXRfbmljawpnZXRuaWNrXzg6CnR4biBTZW5kZXIKYnl0ZWNfMSAvLyAibmlja25hbWUiCmFwcF9sb2NhbF9nZXQKc3RvcmUgMQpsb2FkIDEKbGVuCml0b2IKZXh0cmFjdCA2IDAKbG9hZCAxCmNvbmNhdApzdG9yZSAxCmxvYWQgMQpyZXRzdWI=",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {
+                "nickname": {
+                    "type": "bytes",
+                    "key": "nickname",
+                    "descr": "what this user prefers to be called"
+                }
+            },
+            "reserved": {}
+        },
+        "global": {
+            "declared": {
+                "manager": {
+                    "type": "bytes",
+                    "key": "manager",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "ClientExample",
+        "methods": [
+            {
+                "name": "set_manager",
+                "args": [
+                    {
+                        "type": "address",
+                        "name": "new_manager"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "set_nick",
+                "args": [
+                    {
+                        "type": "string",
+                        "name": "nick"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "get_nick",
+                "args": [],
+                "returns": {
+                    "type": "string"
+                }
+            }
+        ],
+        "networks": {}
+    }
+}

@@ -24,7 +24,12 @@ With few exceptions, each pull request should be initiated against the master br
 
 We make a best-effort attempt to adhere to [PEP 8 - Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/)
 
-A linter is run during CI to perform some basic checks
+A linter is run during CI to perform some basic checks.
+
+After running `poetry install` to set up your Python virtual environment for this project, 
+you will want to run (after activating the virtual environment with `poetry shell` if required) `pre-commit install`.
+
+This will set up linting, formatting, and static analysis to run prior to any git commits you make to avoid potential issues.
 
 ### Module Guidelines
 

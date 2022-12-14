@@ -1,0 +1,208 @@
+#pragma version 8
+intcblock 0 1 6
+bytecblock 0x6f75616964 0x151f7c75 0x4c6bea72
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0x6228c682 // "hash_it(string,uint64,application)byte[32]"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0x101cea00 // "opup_bootstrap(pay)uint64"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txn GroupIndex
+intc_1 // 1
+-
+store 9
+load 9
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+load 9
+callsub opupbootstrap_4
+store 10
+bytec_1 // 0x151f7c75
+load 10
+itob
+concat
+log
+intc_1 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+store 0
+txna ApplicationArgs 2
+btoi
+store 1
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+store 2
+load 0
+load 1
+load 2
+callsub hashit_1
+store 3
+bytec_1 // 0x151f7c75
+load 3
+concat
+log
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+intc_1 // 1
+return
+
+// hash_it
+hashit_1:
+store 6
+store 5
+store 4
+load 6
+txnas Applications
+bytec_0 // "ouaid"
+app_global_get
+==
+assert
+pushint 255 // 255
+callsub callopup_2
+load 4
+extract 2 0
+store 7
+intc_0 // 0
+store 8
+hashit_1_l1:
+load 8
+load 5
+<
+bz hashit_1_l3
+load 7
+sha256
+store 7
+load 8
+intc_1 // 1
++
+store 8
+b hashit_1_l1
+hashit_1_l3:
+load 7
+retsub
+
+// call_opup
+callopup_2:
+store 11
+load 11
+intc_1 // 1
+==
+bnz callopup_2_l4
+intc_0 // 0
+store 12
+callopup_2_l2:
+load 12
+load 11
+<
+bz callopup_2_l5
+itxn_begin
+intc_2 // appl
+itxn_field TypeEnum
+bytec_0 // "ouaid"
+app_global_get
+itxn_field ApplicationID
+bytec_2 // "opup()void"
+itxn_field ApplicationArgs
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+load 12
+intc_1 // 1
++
+store 12
+b callopup_2_l2
+callopup_2_l4:
+itxn_begin
+intc_2 // appl
+itxn_field TypeEnum
+bytec_0 // "ouaid"
+app_global_get
+itxn_field ApplicationID
+bytec_2 // "opup()void"
+itxn_field ApplicationArgs
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+callopup_2_l5:
+retsub
+
+// create_opup
+createopup_3:
+itxn_begin
+intc_2 // appl
+itxn_field TypeEnum
+pushbytes 0x0820020001311b221240001d361a0080044c6bea7212400001003119221231182213104488001a2343311922124000010031182212448800022343234332091289310088fff7442343 // 0x0820020001311b221240001d361a0080044c6bea7212400001003119221231182213104488001a2343311922124000010031182212448800022343234332091289310088fff7442343
+itxn_field ApprovalProgram
+pushbytes 0x08810043 // 0x08810043
+itxn_field ClearStateProgram
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+intc_0 // 0
+bytec_0 // "ouaid"
+app_global_get_ex
+store 14
+store 13
+load 14
+!
+assert
+bytec_0 // "ouaid"
+itxn CreatedApplicationID
+app_global_put
+retsub
+
+// opup_bootstrap
+opupbootstrap_4:
+gtxns Amount
+pushint 100000 // 100000
+>=
+assert
+callsub createopup_3
+bytec_0 // "ouaid"
+app_global_get
+retsub
