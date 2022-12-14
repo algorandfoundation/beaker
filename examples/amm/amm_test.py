@@ -16,6 +16,7 @@ from algosdk.encoding import decode_address
 from beaker import client, sandbox, testing, consts, decorators
 from beaker.client.application_client import ApplicationClient, ProgramAssertion
 from beaker.client.logic_error import LogicException
+from tests.conftest import check_application_artifacts_output_stability
 
 from .amm import ConstantProductAMM, ConstantProductAMMErrors
 
@@ -913,3 +914,8 @@ def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
 
 def _addr_to_hex(addr: str) -> str:
     return decode_address(addr).hex()
+
+
+def test_output_stability():
+    app = ConstantProductAMM()
+    check_application_artifacts_output_stability(app, dir_name="artifacts")

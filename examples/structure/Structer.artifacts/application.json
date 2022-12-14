@@ -1,0 +1,122 @@
+{
+    "hints": {
+        "place_order": {
+            "structs": {
+                "order": {
+                    "name": "Order",
+                    "elements": [
+                        [
+                            "item",
+                            "string"
+                        ],
+                        [
+                            "quantity",
+                            "uint16"
+                        ]
+                    ]
+                }
+            }
+        },
+        "read_item": {
+            "read_only": true,
+            "structs": {
+                "output": {
+                    "name": "Order",
+                    "elements": [
+                        [
+                            "item",
+                            "string"
+                        ],
+                        [
+                            "quantity",
+                            "uint16"
+                        ]
+                    ]
+                }
+            }
+        },
+        "increase_quantity": {
+            "structs": {
+                "output": {
+                    "name": "Order",
+                    "elements": [
+                        [
+                            "item",
+                            "string"
+                        ],
+                        [
+                            "quantity",
+                            "uint16"
+                        ]
+                    ]
+                }
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4MDAgMHgxNTFmN2M3NQp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sOAp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweGE0ZThkNzk1IC8vICJwbGFjZV9vcmRlcih1aW50OCwoc3RyaW5nLHVpbnQxNikpdm9pZCIKPT0KYm56IG1haW5fbDcKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHgzZmNhM2E0OSAvLyAicmVhZF9pdGVtKHVpbnQ4KShzdHJpbmcsdWludDE2KSIKPT0KYm56IG1haW5fbDYKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHhmNGIwNTdkOSAvLyAiaW5jcmVhc2VfcXVhbnRpdHkodWludDgpKHN0cmluZyx1aW50MTYpIgo9PQpibnogbWFpbl9sNQplcnIKbWFpbl9sNToKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQppbnRjXzAgLy8gMApnZXRieXRlCmNhbGxzdWIgaW5jcmVhc2VxdWFudGl0eV80CnN0b3JlIDQKYnl0ZWNfMSAvLyAweDE1MWY3Yzc1CmxvYWQgNApjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2w2Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKY2FsbHN1YiByZWFkaXRlbV8zCnN0b3JlIDIKYnl0ZWNfMSAvLyAweDE1MWY3Yzc1CmxvYWQgMgpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2w3Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKc3RvcmUgMAp0eG5hIEFwcGxpY2F0aW9uQXJncyAyCnN0b3JlIDEKbG9hZCAwCmxvYWQgMQpjYWxsc3ViIHBsYWNlb3JkZXJfMgppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sODoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sMTIKdHhuIE9uQ29tcGxldGlvbgppbnRjXzEgLy8gT3B0SW4KPT0KYm56IG1haW5fbDExCmVycgptYWluX2wxMToKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KYXNzZXJ0CmNhbGxzdWIgb3B0aW5fMQppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sMTI6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydApjYWxsc3ViIGNyZWF0ZV8wCmludGNfMSAvLyAxCnJldHVybgoKLy8gY3JlYXRlCmNyZWF0ZV8wOgppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIG9wdF9pbgpvcHRpbl8xOgpyZXRzdWIKCi8vIHBsYWNlX29yZGVyCnBsYWNlb3JkZXJfMjoKc3RvcmUgMTAKc3RvcmUgOQp0eG4gU2VuZGVyCmJ5dGVjXzAgLy8gMHgwMAppbnRjXzAgLy8gMApsb2FkIDkKc2V0Ynl0ZQpsb2FkIDEwCmFwcF9sb2NhbF9wdXQKcmV0c3ViCgovLyByZWFkX2l0ZW0KcmVhZGl0ZW1fMzoKc3RvcmUgMwp0eG4gU2VuZGVyCmJ5dGVjXzAgLy8gMHgwMAppbnRjXzAgLy8gMApsb2FkIDMKc2V0Ynl0ZQphcHBfbG9jYWxfZ2V0CnJldHN1YgoKLy8gaW5jcmVhc2VfcXVhbnRpdHkKaW5jcmVhc2VxdWFudGl0eV80OgpzdG9yZSA1CnR4biBTZW5kZXIKYnl0ZWNfMCAvLyAweDAwCmludGNfMCAvLyAwCmxvYWQgNQpzZXRieXRlCmFwcF9sb2NhbF9nZXQKc3RvcmUgNgpsb2FkIDYKcHVzaGludCAyIC8vIDIKZXh0cmFjdF91aW50MTYKc3RvcmUgNwpsb2FkIDcKaW50Y18xIC8vIDEKKwpzdG9yZSA3CmxvYWQgNwpwdXNoaW50IDY1NTM2IC8vIDY1NTM2CjwKYXNzZXJ0CmxvYWQgNgpsb2FkIDYKaW50Y18wIC8vIDAKZXh0cmFjdF91aW50MTYKZGlnIDEKbGVuCnN1YnN0cmluZzMKc3RvcmUgOApwdXNoaW50IDQgLy8gNAppdG9iCmV4dHJhY3QgNiAwCmxvYWQgNwppdG9iCmV4dHJhY3QgNiAwCmNvbmNhdApsb2FkIDgKY29uY2F0CnN0b3JlIDYKdHhuIFNlbmRlcgpieXRlY18wIC8vIDB4MDAKaW50Y18wIC8vIDAKbG9hZCA1CnNldGJ5dGUKbG9hZCA2CmFwcF9sb2NhbF9wdXQKbG9hZCA2CnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {
+                "orders": {
+                    "type": "bytes",
+                    "max_keys": 16,
+                    "descr": ""
+                }
+            }
+        },
+        "global": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "Structer",
+        "methods": [
+            {
+                "name": "place_order",
+                "args": [
+                    {
+                        "type": "uint8",
+                        "name": "order_number"
+                    },
+                    {
+                        "type": "(string,uint16)",
+                        "name": "order"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "read_item",
+                "args": [
+                    {
+                        "type": "uint8",
+                        "name": "order_number"
+                    }
+                ],
+                "returns": {
+                    "type": "(string,uint16)"
+                }
+            },
+            {
+                "name": "increase_quantity",
+                "args": [
+                    {
+                        "type": "uint8",
+                        "name": "order_number"
+                    }
+                ],
+                "returns": {
+                    "type": "(string,uint16)"
+                }
+            }
+        ],
+        "networks": {}
+    }
+}

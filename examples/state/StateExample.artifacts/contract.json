@@ -1,0 +1,150 @@
+{
+    "name": "StateExample",
+    "methods": [
+        {
+            "name": "write_acct_blob",
+            "args": [
+                {
+                    "type": "string",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "read_acct_blob",
+            "args": [],
+            "returns": {
+                "type": "byte[]"
+            }
+        },
+        {
+            "name": "write_app_blob",
+            "args": [
+                {
+                    "type": "string",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "read_app_blob",
+            "args": [],
+            "returns": {
+                "type": "byte[]"
+            }
+        },
+        {
+            "name": "set_app_state_val",
+            "args": [
+                {
+                    "type": "string",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_app_state_val",
+            "args": [],
+            "returns": {
+                "type": "string"
+            }
+        },
+        {
+            "name": "set_dynamic_app_state_val",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "k"
+                },
+                {
+                    "type": "uint64",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_dynamic_app_state_val",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "k"
+                }
+            ],
+            "returns": {
+                "type": "uint64"
+            }
+        },
+        {
+            "name": "set_account_state_val",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "incr_account_state_val",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_account_state_val",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            }
+        },
+        {
+            "name": "set_dynamic_account_state_val",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "k"
+                },
+                {
+                    "type": "string",
+                    "name": "v"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_dynamic_account_state_val",
+            "args": [
+                {
+                    "type": "uint8",
+                    "name": "k"
+                }
+            ],
+            "returns": {
+                "type": "string"
+            }
+        }
+    ],
+    "networks": {}
+}

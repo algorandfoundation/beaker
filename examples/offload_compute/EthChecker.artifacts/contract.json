@@ -1,0 +1,22 @@
+{
+    "name": "EthChecker",
+    "methods": [
+        {
+            "name": "check_eth_sig",
+            "args": [
+                {
+                    "type": "byte[32]",
+                    "name": "hash"
+                },
+                {
+                    "type": "byte[65]",
+                    "name": "signature"
+                }
+            ],
+            "returns": {
+                "type": "string"
+            }
+        }
+    ],
+    "networks": {}
+}

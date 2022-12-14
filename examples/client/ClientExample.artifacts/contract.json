@@ -1,0 +1,37 @@
+{
+    "name": "ClientExample",
+    "methods": [
+        {
+            "name": "set_manager",
+            "args": [
+                {
+                    "type": "address",
+                    "name": "new_manager"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "set_nick",
+            "args": [
+                {
+                    "type": "string",
+                    "name": "nick"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_nick",
+            "args": [],
+            "returns": {
+                "type": "string"
+            }
+        }
+    ],
+    "networks": {}
+}
