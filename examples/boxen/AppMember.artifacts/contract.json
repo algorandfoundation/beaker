@@ -1,0 +1,42 @@
+{
+    "name": "AppMember",
+    "methods": [
+        {
+            "name": "bootstrap",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "seed"
+                },
+                {
+                    "type": "application",
+                    "name": "app_id"
+                },
+                {
+                    "type": "asset",
+                    "name": "membership_token"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "get_affirmation",
+            "args": [
+                {
+                    "type": "asset",
+                    "name": "member_token"
+                },
+                {
+                    "type": "application",
+                    "name": "club_app"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

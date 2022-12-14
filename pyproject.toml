@@ -1,45 +1,41 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "beaker-pyteal"
-authors = [
-  { name="Ben Guidarelli", email="ben@algorand.com" },
-]
+version = "0.4.0"
 description = "A Framework for building PyTeal Applications"
+license = "MIT"
+authors = ["Ben Guidarelli <ben@algorand.com>"]
 readme = "README.md"
-license = { file="LICENSE" }
-requires-python = ">=3.10"
-dynamic = ["version"]
-dependencies = [
-  "py-algorand-sdk >= 1.20.1",
-  "pyteal == 0.20.1"
-]
+homepage = "https://beaker.algo.xyz"
+repository = "https://github.com/algorand-devrel/beaker"
+keywords = ["pyteal", "algorand"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
-  "Programming Language :: Python :: 3.10",
-  "License :: OSI Approved :: MIT License"
+]
+packages = [
+    { include = "beaker" },
 ]
 
-[tools.setuptools.dynamic]
-version = {attr = "beaker-pyteal.VERSION"} 
+[tool.poetry.dependencies]
+python = "^3.10"
+pyteal = "~0.20.1"
+py-algorand-sdk = ">=1.16.1"
 
-[project.optional-dependencies]
-tests = [
-  "black==22.6.0",
-  "pytest==7.1.2",
-  "flake8==4.0.1",
-  "mypy==0.971",
-  "mypy-extensions==0.4.3",
-]
-docs = [
-  "Sphinx==5.0.2",
-  "sphinx-rtd-theme==1.0.0",
-]
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+flake8 = "^6.0.0"
+mypy = "0.982"
+black = {extras = ["d"], version = "^22.12.0"}
+pytest-cov = "^4.0.0"
+pre-commit = "^2.20.0"
 
+[tool.poetry.group.docs.dependencies]
+sphinx = "~5.0.2"
+sphinx-rtd-theme = "~1.0.0"
 
+[tool.poetry.group.examples.dependencies]
+numpy = "^1.23.0"
+matplotlib = "^3.6.2"
 
-[project.urls]
-"Homepage" = "https://beaker.algo.xyz"
-"Bug Tracker" = "https://github.com/algorand-devrel/beaker/issues"
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

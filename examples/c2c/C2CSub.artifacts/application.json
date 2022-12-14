@@ -1,0 +1,76 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMSA0CmJ5dGVjYmxvY2sgMHg2MTczNzYgMHg2MTYzNzM3Ngp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sNgp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDI1NzY5ODRlIC8vICJvcHRfaW5fdG9fYXNzZXQoYXNzZXQpdm9pZCIKPT0KYm56IG1haW5fbDUKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHg0NzE3Nzg2ZCAvLyAicmV0dXJuX2Fzc2V0KGFzc2V0LGFjY291bnQpdm9pZCIKPT0KYm56IG1haW5fbDQKZXJyCm1haW5fbDQ6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKaW50Y18wIC8vIDAKZ2V0Ynl0ZQpzdG9yZSAwCnR4bmEgQXBwbGljYXRpb25BcmdzIDIKaW50Y18wIC8vIDAKZ2V0Ynl0ZQpzdG9yZSAxCmxvYWQgMApsb2FkIDEKY2FsbHN1YiByZXR1cm5hc3NldF8zCmludGNfMSAvLyAxCnJldHVybgptYWluX2w1Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKY2FsbHN1YiBvcHRpbnRvYXNzZXRfMgppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sNjoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sMTAKdHhuIE9uQ29tcGxldGlvbgppbnRjXzEgLy8gT3B0SW4KPT0KYm56IG1haW5fbDkKZXJyCm1haW5fbDk6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CmFzc2VydApjYWxsc3ViIG9wdGluXzEKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDEwOgp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAo9PQphc3NlcnQKY2FsbHN1YiBjcmVhdGVfMAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGNyZWF0ZQpjcmVhdGVfMDoKYnl0ZWNfMCAvLyAiYXN2IgpieXRlY18wIC8vICJhc3YiCmFwcF9nbG9iYWxfcHV0CmludGNfMSAvLyAxCnJldHVybgoKLy8gb3B0X2luCm9wdGluXzE6CnR4biBTZW5kZXIKYnl0ZWNfMSAvLyAiYWNzdiIKYnl0ZWNfMSAvLyAiYWNzdiIKYXBwX2xvY2FsX3B1dAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIG9wdF9pbl90b19hc3NldApvcHRpbnRvYXNzZXRfMjoKc3RvcmUgMgppdHhuX2JlZ2luCmludGNfMiAvLyBheGZlcgppdHhuX2ZpZWxkIFR5cGVFbnVtCmxvYWQgMgp0eG5hcyBBc3NldHMKaXR4bl9maWVsZCBYZmVyQXNzZXQKZ2xvYmFsIEN1cnJlbnRBcHBsaWNhdGlvbkFkZHJlc3MKaXR4bl9maWVsZCBBc3NldFJlY2VpdmVyCmludGNfMCAvLyAwCml0eG5fZmllbGQgRmVlCmludGNfMCAvLyAwCml0eG5fZmllbGQgQXNzZXRBbW91bnQKaXR4bl9zdWJtaXQKcmV0c3ViCgovLyByZXR1cm5fYXNzZXQKcmV0dXJuYXNzZXRfMzoKc3RvcmUgNApzdG9yZSAzCml0eG5fYmVnaW4KaW50Y18yIC8vIGF4ZmVyCml0eG5fZmllbGQgVHlwZUVudW0KbG9hZCAzCnR4bmFzIEFzc2V0cwppdHhuX2ZpZWxkIFhmZXJBc3NldApsb2FkIDQKdHhuYXMgQWNjb3VudHMKaXR4bl9maWVsZCBBc3NldFJlY2VpdmVyCmludGNfMCAvLyAwCml0eG5fZmllbGQgRmVlCmludGNfMCAvLyAwCml0eG5fZmllbGQgQXNzZXRBbW91bnQKbG9hZCA0CnR4bmFzIEFjY291bnRzCml0eG5fZmllbGQgQXNzZXRDbG9zZVRvCml0eG5fc3VibWl0CnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {
+                "acsv": {
+                    "type": "bytes",
+                    "key": "acsv",
+                    "descr": ""
+                }
+            },
+            "reserved": {
+                "racsv": {
+                    "type": "bytes",
+                    "max_keys": 1,
+                    "descr": ""
+                }
+            }
+        },
+        "global": {
+            "declared": {
+                "asv": {
+                    "type": "bytes",
+                    "key": "asv",
+                    "descr": ""
+                }
+            },
+            "reserved": {
+                "rasv": {
+                    "type": "bytes",
+                    "max_keys": 1,
+                    "descr": ""
+                }
+            }
+        }
+    },
+    "contract": {
+        "name": "C2CSub",
+        "methods": [
+            {
+                "name": "opt_in_to_asset",
+                "args": [
+                    {
+                        "type": "asset",
+                        "name": "asset"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "return_asset",
+                "args": [
+                    {
+                        "type": "asset",
+                        "name": "asset"
+                    },
+                    {
+                        "type": "account",
+                        "name": "addr"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {},
+        "desc": "Sub application who's only purpose is to opt into then close out of an asset"
+    }
+}

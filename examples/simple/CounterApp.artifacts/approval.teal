@@ -1,0 +1,117 @@
+#pragma version 8
+intcblock 0 1
+bytecblock 0x636f756e746572 0x151f7c75
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0x4a325901 // "increment()uint64"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0xdae6e4ce // "decrement()uint64"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub decrement_4
+store 1
+bytec_1 // 0x151f7c75
+load 1
+itob
+concat
+log
+intc_1 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub increment_3
+store 0
+bytec_1 // 0x151f7c75
+load 0
+itob
+concat
+log
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+bytec_0 // "counter"
+intc_0 // 0
+app_global_put
+retsub
+
+// auth_only
+authonly_1:
+global CreatorAddress
+==
+retsub
+
+// auth_only
+authonly_2:
+global CreatorAddress
+==
+retsub
+
+// increment
+increment_3:
+txn Sender
+callsub authonly_1
+// unauthorized
+assert
+bytec_0 // "counter"
+bytec_0 // "counter"
+app_global_get
+intc_1 // 1
++
+app_global_put
+bytec_0 // "counter"
+app_global_get
+retsub
+
+// decrement
+decrement_4:
+txn Sender
+callsub authonly_2
+// unauthorized
+assert
+bytec_0 // "counter"
+bytec_0 // "counter"
+app_global_get
+intc_1 // 1
+-
+app_global_put
+bytec_0 // "counter"
+app_global_get
+retsub
