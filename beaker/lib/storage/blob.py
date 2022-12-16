@@ -42,13 +42,13 @@ class Blob(ABC):
         self.max_keys = Int(self._max_keys)
         self.max_bytes = Int(self._max_bytes)
 
-    def _key(self, i) -> Expr:
+    def _key(self, i: Expr) -> Expr:
         return Extract(self.byte_key_str, i, Int(1))
 
-    def _key_idx(self, idx: Int) -> Expr:
+    def _key_idx(self, idx: Expr) -> Expr:
         return idx / BLOB_PAGE_SIZE
 
-    def _offset_for_idx(self, idx: Int) -> Expr:
+    def _offset_for_idx(self, idx: Expr) -> Expr:
         return idx % BLOB_PAGE_SIZE
 
     @abstractmethod
@@ -56,17 +56,17 @@ class Blob(ABC):
         ...
 
     @abstractmethod
-    def get_byte(self, idx) -> Expr:
+    def get_byte(self, idx: Int) -> Expr:
         ...
 
     @abstractmethod
-    def set_byte(self, idx, byte) -> Expr:
+    def set_byte(self, idx: Int, byte: Expr) -> Expr:
         ...
 
     @abstractmethod
-    def read(self, bstart, bstop) -> Expr:
+    def read(self, bstart: Expr, bstop: Expr) -> Expr:
         ...
 
     @abstractmethod
-    def write(self, bstart, buff) -> Expr:
+    def write(self, bstart: Expr, buff: Expr) -> Expr:
         ...

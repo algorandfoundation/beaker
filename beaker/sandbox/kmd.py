@@ -96,7 +96,7 @@ def delete_account(
     kmd_token: str = DEFAULT_KMD_TOKEN,
     wallet_name: str = DEFAULT_KMD_WALLET_NAME,
     wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
-):
+) -> None:
     """Deletes an existing account from the sandbox kmd"""
 
     kmd = KMDClient(kmd_token, kmd_address)

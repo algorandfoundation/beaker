@@ -34,7 +34,7 @@ class LogicException(Exception):
         self.txid, self.msg, self.pc = parse_logic_error(self.logic_error_str)
         self.line_no = self.map.get_line_for_pc(self.pc)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"
 
     def trace(self, lines: int = 5) -> str:

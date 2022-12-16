@@ -51,7 +51,10 @@ class DefaultArgumentClass(str, Enum):
 
 
 class DefaultArgument:
-    """DefaultArgument is a container for any arguments that may be resolved prior to calling some target method"""
+    """
+    DefaultArgument is a container for any arguments that may
+    be resolved prior to calling some target method
+    """
 
     def __init__(
         self,
@@ -82,7 +85,7 @@ class DefaultArgument:
 
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
 
-    def resolve_hint(self):
+    def resolve_hint(self) -> Any:
         match self.resolver:
             # Expr types
             case AccountStateValue() | ApplicationStateValue():
@@ -199,7 +202,7 @@ def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
     return HandlerConfig()
 
 
-def set_handler_config(fn: HandlerFunc, **kwargs):
+def set_handler_config(fn: HandlerFunc, **kwargs) -> None:  # type: ignore
     handler_config = get_handler_config(fn)
     setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
 
@@ -210,7 +213,8 @@ class MethodHints:
 
     #: hint to indicate this method can be called through Dryrun
     read_only: bool = field(kw_only=True, default=False)
-    #: hint to provide names for tuple argument indices method_name=>param_name=>{name:str, elements:[str,str]}
+    #: hint to provide names for tuple argument indices
+    #: method_name=>param_name=>{name:str, elements:[str,str]}
     structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
         kw_only=True, default=None
     )
@@ -240,10 +244,13 @@ class MethodHints:
 
 
 class Authorize:
-    """Authorize contains methods that may be used as values to the `authorize` keyword of the `handle` decorator"""
+    """
+    Authorize contains methods that may be used as values to
+    the `authorize` keyword of the `handle` decorator
+    """
 
     @staticmethod
-    def only(addr: Expr):
+    def only(addr: Expr) -> SubroutineFnWrapper:
         """require that the sender of the app call match exactly the address passed"""
 
         if addr.type_of() != TealType.bytes:
@@ -256,14 +263,14 @@ class Authorize:
         return _impl
 
     @staticmethod
-    def holds_token(asset_id: Expr):
+    def holds_token(asset_id: Expr) -> SubroutineFnWrapper:
         """require that the sender of the app call holds >0 of the asset id passed"""
 
         if asset_id.type_of() != TealType.uint64:
             raise TealTypeError(asset_id.type_of(), TealType.uint64)
 
         @Subroutine(TealType.uint64, name="auth_holds_token")
-        def _impl(sender: Expr):
+        def _impl(sender: Expr) -> Expr:
             return Seq(
                 bal := AssetHolding.balance(sender, asset_id),
                 And(bal.hasValue(), bal.value() > Int(0)),
@@ -272,14 +279,15 @@ class Authorize:
         return _impl
 
     @staticmethod
-    def opted_in(app_id: Expr = Global.current_application_id()):
-        """require that the sender of the app call has already opted-in to a given app id"""
+    def opted_in(app_id: Expr = Global.current_application_id()) -> SubroutineFnWrapper:
+        """require that the sender of the app call has
+        already opted-in to a given app id"""
 
         if app_id.type_of() != TealType.uint64:
             raise TealTypeError(app_id.type_of(), TealType.uint64)
 
         @Subroutine(TealType.uint64, name="auth_opted_in")
-        def _impl(sender: Expr):
+        def _impl(sender: Expr) -> Expr:
             return App.optedIn(sender, app_id)
 
         return _impl
@@ -298,7 +306,7 @@ def _authorize(allowed: SubroutineFnWrapper) -> Callable[..., HandlerFunc]:
 
     def _decorate(fn: HandlerFunc) -> HandlerFunc:
         @wraps(fn)
-        def _impl(*args, **kwargs) -> Expr:
+        def _impl(*args, **kwargs) -> Expr:  # type: ignore
             return Seq(
                 Assert(allowed(Txn.sender()), comment="unauthorized"),
                 fn(*args, **kwargs),
@@ -386,7 +394,9 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def internal(return_type_or_handler: TealType | HandlerFunc):
+def internal(
+    return_type_or_handler: TealType | HandlerFunc,
+) -> HandlerFunc | Callable[..., HandlerFunc]:
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -403,7 +413,7 @@ def internal(return_type_or_handler: TealType | HandlerFunc):
     else:
         fn = cast(HandlerFunc, return_type_or_handler)
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
 
         if return_type is not None:
             set_handler_config(fn, subroutine=Subroutine(return_type, name=fn.__name__))
@@ -434,23 +444,27 @@ def external(
     authorize: SubroutineFnWrapper = None,
     method_config: MethodConfig = None,
     read_only: bool = False,
-) -> HandlerFunc:
+) -> HandlerFunc | Callable[..., HandlerFunc]:
 
     """
     Add the method decorated to be handled as an ABI method for the Application
 
     Args:
         fn: The function being wrapped.
-        name: Name of ABI method. If not set, name of the python method will be used. Useful for method overriding.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
-        method_config:  A subroutine that should take a single argument (Txn.sender()) and evaluate to 1/0 depending on the app call transaction sender.
+        name: Name of ABI method. If not set, name of the python method will be used.
+            Useful for method overriding.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+            interpreted as allowed if the output>0.
+        method_config:  A subroutine that should take a single argument (Txn.sender())
+            and evaluate to 1/0 depending on the app call transaction sender.
         read_only: Mark a method as callable with no fee using dryrun or simulate
 
     Returns:
-        The original method with additional elements set in its  :code:`__handler_config__` attribute
+        The original method with additional elements set in it's
+        :code:`__handler_config__` attribute
     """
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         fn = _remove_self(fn)
         fn = _capture_defaults(fn)
         fn = _replace_structs(fn)
@@ -493,7 +507,8 @@ def bare_external(
         close_out: CallConfig to handle a `CloseOut`
 
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and attributes set
+        in it's :code:`__handler_config__`
 
     """
 
@@ -545,13 +560,15 @@ def create(
     *,
     authorize: SubroutineFnWrapper = None,
     method_config: Optional[MethodConfig] = None,
-):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call and ApplicationId == 0
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with its :code:`OnComplete`
+        set to :code:`NoOp` call and ApplicationId == 0
 
     Args:
         fn: The method to be wrapped.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and attributes set
+        in it's `__handler_config__`
     """
 
     mconfig = (
@@ -565,7 +582,7 @@ def create(
             "method_config for create may not have non create call configs"
         )
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -573,7 +590,7 @@ def create(
         else:
             return external(method_config=MethodConfig(**mconfig), authorize=authorize)(
                 fn
-            )
+            )  # type: ignore
 
     if fn is None:
         return _impl
@@ -581,17 +598,22 @@ def create(
     return _impl(fn)
 
 
-def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`DeleteApplication` call
+def delete(
+    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with it's
+        :code:`OnComplete` set to :code:`DeleteApplication` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+            interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and attributes
+            set in its :code:`__handler_config__`
     """
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -600,7 +622,9 @@ def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
             return external(
                 method_config=MethodConfig(delete_application=CallConfig.CALL),
                 authorize=authorize,
-            )(fn)
+            )(
+                fn
+            )  # type: ignore
 
     if fn is None:
         return _impl
@@ -608,20 +632,22 @@ def delete(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     return _impl(fn)
 
 
-def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`UpdateApplication` call
+def update(
+    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with it's
+        :code:`OnComplete` set to :code:`UpdateApplication` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+            interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and attributes
+            set in it's :code:`__handler_config__`
     """
 
-    # If fn has abi args, call external
-    # else bare
-
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -630,7 +656,9 @@ def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
             return external(
                 method_config=MethodConfig(update_application=CallConfig.CALL),
                 authorize=authorize,
-            )(fn)
+            )(
+                fn
+            )  # type: ignore
 
     if fn is None:
         return _impl
@@ -638,17 +666,22 @@ def update(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     return _impl(fn)
 
 
-def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`OptIn` call
+def opt_in(
+    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with it's
+           :code:`OnComplete` set to :code:`OptIn` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and output
+            uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and attributes
+            set in it's :code:`__handler_config__`
     """
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -656,7 +689,9 @@ def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
         else:
             return external(
                 method_config=MethodConfig(opt_in=CallConfig.CALL), authorize=authorize
-            )(fn)
+            )(
+                fn
+            )  # type: ignore
 
     if fn is None:
         return _impl
@@ -664,17 +699,22 @@ def opt_in(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
     return _impl(fn)
 
 
-def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`ClearState` call
+def clear_state(
+    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with it'ws
+        :code:`OnComplete` set to :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+            interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in it's :code:`__handler_config__`
     """
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -683,7 +723,9 @@ def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = N
             return external(
                 method_config=MethodConfig(clear_state=CallConfig.CALL),
                 authorize=authorize,
-            )(fn)
+            )(
+                fn
+            )  # type: ignore
 
     if fn is None:
         return _impl
@@ -691,17 +733,22 @@ def clear_state(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = N
     return _impl(fn)
 
 
-def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`CloseOut` call
+def close_out(
+    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with it's
+        :code:`OnComplete` set to :code:`CloseOut` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of :code:`Txn.sender()` and output uint64
+            interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in it's :code:`__handler_config__`
     """
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -710,7 +757,9 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
             return external(
                 method_config=MethodConfig(close_out=CallConfig.CALL),
                 authorize=authorize,
-            )(fn)
+            )(
+                fn
+            )  # type: ignore
 
     if fn is None:
         return _impl
@@ -718,17 +767,22 @@ def close_out(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = Non
     return _impl(fn)
 
 
-def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
-    """set method to be handled by an application call with its :code:`OnComplete` set to :code:`NoOp` call
+def no_op(
+    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+) -> HandlerFunc | Callable[..., HandlerFunc]:
+    """set method to be handled by an application call with
+        it's :code:`OnComplete` set to :code:`NoOp` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64 interpreted as allowed if the output>0.
+        authorize: a subroutine with input of :code:`Txn.sender()` and output
+            uint64 interpreted as allowed if the output>0.
     Returns:
-        The original method with changes made to its signature and attributes set in its `__handler_config__`
+        The original method with changes made to its signature and
+            attributes set in it's :code:`__handler_config__`
     """
 
-    def _impl(fn: HandlerFunc):
+    def _impl(fn: HandlerFunc) -> HandlerFunc:
         if is_bare(fn):
             if authorize is not None:
                 fn = _authorize(authorize)(fn)
@@ -736,7 +790,9 @@ def no_op(fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None):
         else:
             return external(
                 method_config=MethodConfig(no_op=CallConfig.CALL), authorize=authorize
-            )(fn)
+            )(
+                fn
+            )  # type: ignore
 
     if fn is None:
         return _impl

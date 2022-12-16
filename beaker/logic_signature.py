@@ -15,6 +15,8 @@ from pyteal import (
     Reject,
     Mode,
     ScratchVar,
+    TealBlock,
+    TealSimpleBlock,
 )
 from beaker.decorators import get_handler_config
 from beaker.precompile import AppPrecompile, LSigPrecompile
@@ -47,14 +49,14 @@ class TemplateVariable(Expr):
     def __str__(self) -> str:
         return f"(TemplateVariable {self.name})"
 
-    def __teal__(self, options: CompileOptions):
+    def __teal__(self, options: CompileOptions) -> tuple[TealBlock, TealSimpleBlock]:
         return self.scratch.load().__teal__(options)
 
-    def has_return(self):
+    def has_return(self) -> bool:
         """"""
         return False
 
-    def type_of(self):
+    def type_of(self) -> TealType:
         """"""
         return self.stack_type
 
@@ -146,7 +148,7 @@ class LogicSignature:
 
         return self.program
 
-    def evaluate(self):
+    def evaluate(self) -> Expr:
         """
         evaluate is the main entry point to the logic of the lsig.
 
