@@ -72,7 +72,7 @@ class ProgramPage:
     #: hash of the page as pyteal Addr
     hash_digest: Bytes = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.binary = Bytes(self._binary)
         self.hash_digest = Bytes(self._hash_digest)
 
@@ -111,8 +111,11 @@ class Precompile:
         self._program = program
         self._template_values = template_values
 
-    def assemble(self, client: AlgodClient):
-        """Fully compile the program source to binary and generate a source map for matching pc to line number"""
+    def assemble(self, client: AlgodClient) -> None:
+        """
+        Fully compile the program source to binary and generate a
+        source map for matching pc to line number
+        """
         result = client.compile(self._program, source_map=True)
         self._binary = base64.b64decode(result["result"])
         self._program_hash = result["hash"]
@@ -142,10 +145,13 @@ class Precompile:
         ]
 
     def hash(self, page_idx: int = 0) -> Expr:
-        """hash returns an expression for this Precompile.  It will fail if any template_values are set.
+        """hash returns an expression for this Precompile.
+                It will fail if any template_values are set.
 
         Args:
-            page_idx(optional): If the application has multiple pages, the index of the page can be specified to get the program hash for that page.
+            page_idx(optional): If the application has multiple pages,
+            the index of the page can be specified to get the program hash
+            for that page.
 
         """
         assert self._binary is not None
@@ -155,7 +161,7 @@ class Precompile:
 
         return self.program_pages[page_idx].hash_digest
 
-    def populate_template(self, *args) -> bytes:
+    def populate_template(self, *args: str | bytes | int) -> bytes:
         """
         populate_template returns the bytes resulting from patching the set of
         arguments passed into the blank binary
@@ -193,11 +199,12 @@ class Precompile:
                 # Ints are just the uvarint encoded number
                 curr_val = py_encode_uvarint(arg)
 
-            # update the working buffer to include the new value, replacing the current 0 value
+            # update the working buffer to include the new value,
+            # replacing the current 0 value
             populated_binary[tv.pc + offset : tv.pc + offset + 1] = curr_val
 
-            # update the offset with the length(value) - 1 to account for the existing 0 value
-            # and help keep track of how to shift the pc later
+            # update the offset with the length(value) - 1 to account
+            # for the existing 0 value and help keep track of how to shift the pc later
             offset += len(curr_val) - 1
 
         return bytes(populated_binary)
@@ -227,7 +234,8 @@ class Precompile:
         ]
 
         for idx, tv in enumerate(self._template_values):
-            # Add expressions to encode the values and insert them into the working buffer
+            # Add expressions to encode the values and insert
+            # them into the working buffer
             populate_program += [
                 curr_val.store(Concat(encode_uvarint(Len(args[idx])), args[idx]))
                 if tv.is_bytes
@@ -254,12 +262,12 @@ class Precompile:
         ]
 
         @Subroutine(TealType.bytes)
-        def populate_template_program():
+        def populate_template_program() -> Expr:
             return Seq(*populate_program)
 
         return populate_template_program()
 
-    def template_hash(self, *args) -> Expr:
+    def template_hash(self, *args) -> Expr:  # type: ignore
         """
         returns an expression that will generate the expected
         hash given some set of values that should be included in the logic itself
@@ -283,11 +291,13 @@ class AppPrecompile:
         #: The App's clear program as a Precompile
         self.clear: Precompile = Precompile("")
 
-    def compile(self, client: AlgodClient):
-        """fully compile this app precompile by recursively compiling children depth first
+    def compile(self, client: AlgodClient) -> None:
+        """fully compile this app precompile by recursively
+            compiling children depth first
 
         Note:
-            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+            Must be called (even indirectly) prior to using
+                the ``approval`` and ``clear`` fields
         """
         for p in self.app.precompiles.values():
             p.compile(client)
@@ -303,7 +313,10 @@ class AppPrecompile:
             self.clear.assemble(client)
 
     def get_create_config(self) -> dict[TxnField, Expr | list[Expr]]:
-        """get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method"""
+        """get a dictionary of the fields and values that should be set when
+        creating this application that can be passed directly to
+        the InnerTxnBuilder.Execute method
+        """
         assert self.approval._binary is not None
         assert self.clear._binary is not None
         return {
@@ -337,12 +350,12 @@ class LSigPrecompile:
         #: The LogicSignature's logic as a Precompile
         self.logic: Precompile = Precompile("")
 
-    def compile(self, client: AlgodClient):
+    def compile(self, client: AlgodClient) -> None:
         """
         fully compile this lsig precompile by recursively compiling children depth first
 
         Note:
-            Must be called (even indirectly) prior to using the ``approval`` and ``clear`` fields
+            Must be called (even indirectly) prior to using the ``logic`` field
         """
         for p in self.lsig.precompiles.values():
             p.compile(client)
@@ -354,7 +367,7 @@ class LSigPrecompile:
         if self.logic._binary is None:
             self.logic.assemble(client)
 
-    def template_signer(self, *args) -> LogicSigTransactionSigner:
+    def template_signer(self, *args: str | bytes | int) -> LogicSigTransactionSigner:
         """Get the Signer object for a populated version of the template contract"""
         return LogicSigTransactionSigner(
             LogicSigAccount(self.logic.populate_template(*args))

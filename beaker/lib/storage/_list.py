@@ -8,6 +8,9 @@ from pyteal import (
     Bytes,
     TealType,
     TealTypeError,
+    TealBlock,
+    TealSimpleBlock,
+    CompileOptions,
 )
 
 
@@ -86,11 +89,13 @@ class ListElement(Expr):
     def __str__(self) -> str:
         return f"List Element: {self.name}[{self.idx}]"
 
-    def __teal__(self, compile_options):
+    def __teal__(
+        self, compile_options: CompileOptions
+    ) -> tuple[TealBlock, TealSimpleBlock]:
         return self.get().__teal__(compile_options)
 
-    def has_return(self):
+    def has_return(self) -> bool:
         return False
 
-    def type_of(self):
+    def type_of(self) -> TealType:
         return TealType.bytes
