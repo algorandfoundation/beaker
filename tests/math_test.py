@@ -5,7 +5,7 @@ import beaker as bkr
 
 from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
-import beaker.lib.math as math
+from beaker.lib import math
 
 
 def test_even():

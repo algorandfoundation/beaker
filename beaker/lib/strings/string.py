@@ -20,7 +20,7 @@ from pyteal import (
     TealType,
 )
 
-from ..math import pow10
+from beaker.lib.math import pow10
 
 # Magic number to convert between ascii chars and integers
 _ascii_zero = 48
