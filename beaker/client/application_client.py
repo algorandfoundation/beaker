@@ -14,7 +14,7 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
     abi,
 )
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
@@ -64,12 +64,12 @@ class ApplicationClient:
 
     def compile(
         self, teal: str, source_map: bool = False
-    ) -> tuple[bytes, str, SourceMap]:
+    ) -> tuple[bytes, str, Optional[SourceMap]]:
         result = self.client.compile(teal, source_map=source_map)
         src_map = None
         if source_map:
             src_map = SourceMap(result["sourcemap"])
-        return (b64decode(result["result"]), result["hash"], src_map)
+        return (b64decode(result["result"]), cast(str, result["hash"]), src_map)
 
     def build(self) -> None:
         """
@@ -443,7 +443,7 @@ class ApplicationClient:
         self,
         method: abi.Method | HandlerFunc,
         sender: str | None = None,
-        signer: TransactionSigner = None,
+        signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema | None = None,
@@ -494,6 +494,9 @@ class ApplicationClient:
             **kwargs,
         )
 
+        if atc is None:
+            raise Exception("No ATC was built?")
+
         # If its a read-only method, use dryrun (TODO: swap with simulate later?)
         if hints.read_only:
             dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())
@@ -536,7 +539,7 @@ class ApplicationClient:
                     method_results.append(
                         ABIResult(
                             tx_id=txids[i],
-                            raw_value=raw_value,
+                            raw_value=b"",
                             return_value=return_value,
                             decode_error=decode_error,
                             tx_info=tx_info,
@@ -558,14 +561,14 @@ class ApplicationClient:
                     raise Exception("no logs")
 
                 raw_value = result_bytes[4:]
-                return_value = methods[i].returns.type.decode(raw_value)
+                return_value = methods[i].returns.type.decode(raw_value)  # type: ignore
             except Exception as e:
                 decode_error = e
 
             method_results.append(
                 ABIResult(
                     tx_id=txids[i],
-                    raw_value=raw_value,
+                    raw_value=raw_value,  # type: ignore
                     return_value=return_value,
                     decode_error=decode_error,
                     tx_info=tx_info,
@@ -664,6 +667,8 @@ class ApplicationClient:
     def add_transaction(
         self, atc: AtomicTransactionComposer, txn: transaction.Transaction
     ) -> AtomicTransactionComposer:
+        if self.signer is None:
+            raise Exception("Cannot add transaction without signer being set")
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 

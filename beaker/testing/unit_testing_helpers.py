@@ -105,9 +105,9 @@ def assert_output(
             if opups > 0:
                 atc = AtomicTransactionComposer()
 
-                app_client.add_method_call(atc, app.unit_test, **input)
+                app_client.add_method_call(atc, app.unit_test, **input)  # type: ignore
                 for x in range(opups):
-                    app_client.add_method_call(atc, app.opup, note=str(x).encode())
+                    app_client.add_method_call(atc, app.opup, note=str(x).encode())  # type: ignore
 
                 try:
                     results = atc.execute(algod_client, 2)
@@ -116,7 +116,7 @@ def assert_output(
 
                 assert results.abi_results[0].return_value == output
             else:
-                result = app_client.call(app.unit_test, **input)
+                result = app_client.call(app.unit_test, **input)  # type: ignore
                 assert result.return_value == output
     except Exception as e:
         raise e
