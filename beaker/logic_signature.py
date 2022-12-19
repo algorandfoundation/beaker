@@ -31,7 +31,7 @@ class TemplateVariable(Expr):
 
     """
 
-    def __init__(self, stack_type: TealType, name: str = None):
+    def __init__(self, stack_type: TealType, name: str | None = None):
         """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
 

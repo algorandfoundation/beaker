@@ -57,10 +57,10 @@ class StateValue(Expr):
     def __init__(
         self,
         stack_type: TealType,
-        key: Expr = None,
-        default: Expr = None,
+        key: Expr | None = None,
+        default: Expr | None = None,
         static: bool = False,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__()
 
@@ -163,7 +163,7 @@ class ReservedStateValue(ABC):
         stack_type: TealType,
         max_keys: int,
         key_gen: Optional[SubroutineFnWrapper | Callable] = None,
-        descr: str = None,
+        descr: str | None = None,
     ):
         self.stack_type = stack_type
         self.max_keys = max_keys
@@ -278,7 +278,7 @@ class ReservedApplicationStateValue(ReservedStateValue):
         stack_type: TealType,
         max_keys: int,
         key_gen: Optional[SubroutineFnWrapper | Callable] = None,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
 
@@ -316,10 +316,10 @@ class AccountStateValue(StateValue):
     def __init__(
         self,
         stack_type: TealType,
-        key: Expr = None,
-        default: Expr = None,
+        key: Expr | None = None,
+        default: Expr | None = None,
         static: bool = False,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__(stack_type, key, default, static, descr)
         self.acct: Expr = Txn.sender()
@@ -430,7 +430,7 @@ class ReservedAccountStateValue(ReservedStateValue):
         stack_type: TealType,
         max_keys: int,
         key_gen: Optional[SubroutineFnWrapper | Callable] = None,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
 

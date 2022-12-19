@@ -17,7 +17,9 @@ from pyteal import (
 class List:
     """List stores a list of static types in a box, named as the class attribute unless an overriding name is provided"""
 
-    def __init__(self, value_type: type[abi.BaseType], elements: int, name: str = None):
+    def __init__(
+        self, value_type: type[abi.BaseType], elements: int, name: str | None = None
+    ):
         ts = abi.type_spec_from_annotation(value_type)
 
         assert not ts.is_dynamic(), "Expected static type for value"
