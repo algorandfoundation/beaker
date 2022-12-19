@@ -437,12 +437,12 @@ def internal(
 
 
 def external(
-    fn: HandlerFunc = None,
+    fn: HandlerFunc | None = None,
     /,
     *,
-    name: str = None,
-    authorize: SubroutineFnWrapper = None,
-    method_config: MethodConfig = None,
+    name: str | None = None,
+    authorize: SubroutineFnWrapper | None = None,
+    method_config: MethodConfig | None = None,
     read_only: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
 
@@ -489,12 +489,12 @@ def external(
 
 
 def bare_external(
-    no_op: CallConfig = None,
-    opt_in: CallConfig = None,
-    clear_state: CallConfig = None,
-    delete_application: CallConfig = None,
-    update_application: CallConfig = None,
-    close_out: CallConfig = None,
+    no_op: CallConfig | None = None,
+    opt_in: CallConfig | None = None,
+    clear_state: CallConfig | None = None,
+    delete_application: CallConfig | None = None,
+    update_application: CallConfig | None = None,
+    close_out: CallConfig | None = None,
 ) -> Callable[..., HandlerFunc]:
     """Add method to be handled by specific bare :code:`OnComplete` actions.
 
@@ -555,11 +555,11 @@ def is_bare(fn: HandlerFunc) -> bool:
 
 
 def create(
-    fn: HandlerFunc = None,
+    fn: HandlerFunc | None = None,
     /,
     *,
-    authorize: SubroutineFnWrapper = None,
-    method_config: Optional[MethodConfig] = None,
+    authorize: SubroutineFnWrapper | None = None,
+    method_config: Optional[MethodConfig] | None = None,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with its :code:`OnComplete`
         set to :code:`NoOp` call and ApplicationId == 0
@@ -599,7 +599,7 @@ def create(
 
 
 def delete(
-    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`DeleteApplication` call
@@ -633,7 +633,7 @@ def delete(
 
 
 def update(
-    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`UpdateApplication` call
@@ -667,7 +667,7 @@ def update(
 
 
 def opt_in(
-    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
            :code:`OnComplete` set to :code:`OptIn` call
@@ -700,7 +700,7 @@ def opt_in(
 
 
 def clear_state(
-    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it'ws
         :code:`OnComplete` set to :code:`ClearState` call
@@ -734,7 +734,7 @@ def clear_state(
 
 
 def close_out(
-    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`CloseOut` call
@@ -768,7 +768,7 @@ def close_out(
 
 
 def no_op(
-    fn: HandlerFunc = None, /, *, authorize: SubroutineFnWrapper = None
+    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with
         it's :code:`OnComplete` set to :code:`NoOp` call
