@@ -40,7 +40,7 @@ CheckExpr = Callable[..., Expr]
 ABIType = TypeVar("ABIType", bound=abi.BaseType)
 
 
-DefaultArgumentType = Expr | FunctionType | int | bytes | str
+DefaultArgumentType = Expr | HandlerFunc | int | bytes | str
 
 
 class DefaultArgumentClass(str, Enum):
