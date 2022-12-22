@@ -183,7 +183,7 @@ class Application:
                     self.bare_externals[oc] = action
 
             # ABI externals
-            elif handler_config.method_spec is not None:
+            elif handler_config.method_spec is not None and not handler_config.internal:
                 # Create the ABIReturnSubroutine from the static attr
                 # but override the implementation with the bound version
                 abi_meth = ABIReturnSubroutine(
@@ -255,7 +255,7 @@ class Application:
         if len(self.precompiles) > 0:
             # make sure all the precompiles are available
             for precompile in self.precompiles.values():
-                precompile.compile(client)
+                precompile.compile(client)  # type: ignore
 
         self.router = Router(
             name=self.__class__.__name__,
