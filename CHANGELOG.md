@@ -1,6 +1,35 @@
 # Unreleased
 
 
+# 0.4.1
+
+ ## BugFix
+
+ - Correct boxes dependency for Beaker (update sdk in pyproject.toml). (#136)
+ - Properly handle "action" and "type" keys in decode_state (#130)
+ - Add internal flag to handler config to prevent exposing internal methods (#153)
+
+## Features
+
+ - Adding support for creating multi page apps in an inner transaction (#133)
+ - Allow multiple methods to specify on complete (#131)
+
+ ## Housekeeping
+
+ - Beaker productionisation, part 1 (moving tests, reconfigure CI, add tests for artifact output...) (#142)
+ - Fix naming of example state keys changed dynamic -> reserved (#145)
+ - Improved type annotations (#146, #147)
+
+
+
+
+
+
+
+
+# 0.4.0 
+
+
 - Add prefix to all `ReservedState` keys in order to prevent. 
 
     *WARNING: This is a BREAKING change* 
