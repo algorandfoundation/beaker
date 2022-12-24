@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Callable, cast
+from typing import Callable, TypeAlias
 
 from pyteal import TealType, SubroutineFnWrapper, TealTypeError, Expr
 from pyteal.ast import abi
@@ -12,6 +12,9 @@ __all__ = [
     "ReservedApplicationStateValue",
     "ReservedAccountStateValue",
 ]
+
+
+KeyGenerator: TypeAlias = SubroutineFnWrapper | Callable[[Expr], Expr]
 
 
 class ReservedStateValue(ABC):
@@ -29,28 +32,39 @@ class ReservedStateValue(ABC):
         self,
         stack_type: TealType,
         max_keys: int,
-        key_gen: Optional[SubroutineFnWrapper | Callable] = None,
+        key_gen: KeyGenerator | None = None,
         descr: str | None = None,
     ):
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
-        self.key_generator: Optional[SubroutineFnWrapper | Callable] = None
+        self.key_gen = key_gen
 
-        if key_gen is not None:
-            self.set_key_gen(key_gen)
+    @property
+    def key_gen(self) -> KeyGenerator | None:
+        return self._key_gen
 
-    def set_key_gen(self, key_gen: SubroutineFnWrapper | Callable) -> None:
-        if (
-            isinstance(key_gen, SubroutineFnWrapper)
-            and key_gen.type_of() != TealType.bytes
-        ):
-            raise TealTypeError(key_gen.type_of(), TealType.bytes)
-        self.key_generator = key_gen
+    @key_gen.setter
+    def key_gen(self, value: KeyGenerator) -> None:
+        if isinstance(value, SubroutineFnWrapper) and value.type_of() != TealType.bytes:
+            raise TealTypeError(value.type_of(), TealType.bytes)
+        self._key_gen = value
 
-    @abstractmethod
     def __getitem__(self, key_seed: Expr | abi.BaseType) -> StateValue:
         """Method to access the state value with the key seed provided"""
+        key: Expr
+        if isinstance(key_seed, abi.BaseType):
+            key = key_seed.encode()
+        else:
+            key = key_seed
+
+        if self.key_gen is not None:
+            key = self.key_gen(key)
+        return self._get_state_for_key(key)
+
+    @abstractmethod
+    def _get_state_for_key(self, key: Expr) -> StateValue:
+        ...
 
 
 class ReservedApplicationStateValue(ReservedStateValue):
@@ -69,7 +83,7 @@ class ReservedApplicationStateValue(ReservedStateValue):
         self,
         stack_type: TealType,
         max_keys: int,
-        key_gen: Optional[SubroutineFnWrapper | Callable] = None,
+        key_gen: KeyGenerator | None = None,
         descr: str | None = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
@@ -77,18 +91,8 @@ class ReservedApplicationStateValue(ReservedStateValue):
         if max_keys <= 0 or max_keys > MAX_GLOBAL_STATE:
             raise Exception(f"max keys expected to be between 0 and {MAX_GLOBAL_STATE}")
 
-    def __getitem__(self, key_seed: Expr | abi.BaseType) -> ApplicationStateValue:
+    def _get_state_for_key(self, key: Expr) -> ApplicationStateValue:
         """Method to access the state value with the key seed provided"""
-        key = key_seed
-
-        if isinstance(key_seed, abi.BaseType):
-            key = key_seed.encode()
-
-        key = cast(Expr, key)
-
-        if self.key_generator is not None:
-            key = self.key_generator(key)
-
         return ApplicationStateValue(
             stack_type=self.stack_type, key=key, descr=self.descr
         )
@@ -110,7 +114,7 @@ class ReservedAccountStateValue(ReservedStateValue):
         self,
         stack_type: TealType,
         max_keys: int,
-        key_gen: Optional[SubroutineFnWrapper | Callable] = None,
+        key_gen: KeyGenerator | None = None,
         descr: str | None = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
@@ -118,14 +122,6 @@ class ReservedAccountStateValue(ReservedStateValue):
         if max_keys <= 0 or max_keys > MAX_LOCAL_STATE:
             raise Exception(f"max keys expected to be between 0 and {MAX_LOCAL_STATE}")
 
-    def __getitem__(self, key_seed: Expr | abi.BaseType) -> AccountStateValue:
+    def _get_state_for_key(self, key: Expr) -> AccountStateValue:
         """Access AccountState value given key_seed"""
-        key = key_seed
-
-        if isinstance(key_seed, abi.BaseType):
-            key = key_seed.encode()
-
-        if self.key_generator is not None:
-            key = self.key_generator(key)
-
-        return AccountStateValue(stack_type=self.stack_type, key=cast(Expr, key))
+        return AccountStateValue(stack_type=self.stack_type, key=key, descr=self.descr)
