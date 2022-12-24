@@ -7,8 +7,8 @@ from beaker.state import (
     ReservedApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
-    _get_default_for_type,
 )
+from beaker.state.primitive import _get_default_for_type
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
 
