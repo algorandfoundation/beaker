@@ -381,7 +381,7 @@ class LSigPrecompile:
         It should only be used for non templated Precompiles.
         """
         if self.logic._binary is None:
-            raise Exception("Cannot provide a signer for Lsig with no binary")
+            raise ValueError("Cannot provide a signer for Lsig with no binary")
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
 
 

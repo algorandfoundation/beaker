@@ -64,12 +64,12 @@ class ApplicationClient:
 
     def compile(
         self, teal: str, source_map: bool = False
-    ) -> tuple[bytes, str, Optional[SourceMap]]:
+    ) -> tuple[bytes, str, SourceMap | None]:
         result = self.client.compile(teal, source_map=source_map)
         src_map = None
         if source_map:
             src_map = SourceMap(result["sourcemap"])
-        return (b64decode(result["result"]), cast(str, result["hash"]), src_map)
+        return b64decode(result["result"]), cast(str, result["hash"]), src_map
 
     def build(self) -> None:
         """
@@ -494,9 +494,6 @@ class ApplicationClient:
             **kwargs,
         )
 
-        if atc is None:
-            raise Exception("No ATC was built?")
-
         # If its a read-only method, use dryrun (TODO: swap with simulate later?)
         if hints.read_only:
             dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())
@@ -599,7 +596,7 @@ class ApplicationClient:
         lease: bytes | None = None,
         rekey_to: str | None = None,
         **kwargs,
-    ):
+    ) -> AtomicTransactionComposer:
 
         """Adds a transaction to the AtomicTransactionComposer passed"""
 
@@ -668,7 +665,7 @@ class ApplicationClient:
         self, atc: AtomicTransactionComposer, txn: transaction.Transaction
     ) -> AtomicTransactionComposer:
         if self.signer is None:
-            raise Exception("Cannot add transaction without signer being set")
+            raise ValueError("Cannot add transaction without signer being set")
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
