@@ -40,7 +40,7 @@ CheckExpr = Callable[..., Expr]
 ABIType = TypeVar("ABIType", bound=abi.BaseType)
 
 
-DefaultArgumentType = Expr | FunctionType | int | bytes | str
+DefaultArgumentType = Expr | HandlerFunc | int | bytes | str
 
 
 class DefaultArgumentClass(str, Enum):
@@ -125,9 +125,9 @@ class HandlerConfig:
     default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None
     )
-
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
+    internal: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
         mh: dict[str, Any] = {"read_only": self.read_only}
@@ -414,7 +414,7 @@ def internal(
         fn = cast(HandlerFunc, return_type_or_handler)
 
     def _impl(fn: HandlerFunc) -> HandlerFunc:
-
+        set_handler_config(fn, internal=True)
         if return_type is not None:
             set_handler_config(fn, subroutine=Subroutine(return_type, name=fn.__name__))
 

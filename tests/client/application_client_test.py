@@ -463,7 +463,7 @@ def test_call(sb_accts: SandboxAccounts):
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = get_method_selector(app.add)
+    ms = get_method_selector(app.add)  # type: ignore
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
@@ -506,7 +506,7 @@ def test_add_method_call(sb_accts: SandboxAccounts):
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = get_method_selector(app.add)
+    ms = get_method_selector(app.add)  # type: ignore
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
@@ -565,3 +565,29 @@ def test_resolve(sb_accts: SandboxAccounts):
     assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
     assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == b"test"
     assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"
+
+
+def test_override_app_create(sb_accts: SandboxAccounts):
+    class SpecialCreate(Application):
+        @create
+        def create(self, x: pt.abi.Uint64, *, output: pt.abi.Uint64):
+            return output.set(x.get())
+
+    sc = SpecialCreate()
+    assert sc.on_create == SpecialCreate.create
+
+    _, _, signer = sb_accts[0]
+
+    client = get_algod_client()
+    ac = ApplicationClient(client, sc, signer=signer)
+
+    val = 2
+
+    app_id, _, txid = ac.create(x=val)
+    assert app_id > 0
+
+    txinfo = client.pending_transaction_info(txid)
+    assert txinfo["application-index"] == app_id
+
+    retlog = b64decode(txinfo["logs"][0])
+    assert retlog[4:] == val.to_bytes(8, "big")
