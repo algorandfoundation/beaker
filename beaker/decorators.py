@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field, replace, astuple
+from dataclasses import asdict, dataclass, field, astuple
 from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Parameter
@@ -211,14 +211,12 @@ class HandlerConfig:
 
 
 def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
-    if hasattr(fn, _handler_config_attr):
-        return cast(HandlerConfig, getattr(fn, _handler_config_attr))
-    return HandlerConfig()
-
-
-def set_handler_config(fn: HandlerFunc, **kwargs) -> None:  # type: ignore
-    handler_config = get_handler_config(fn)
-    setattr(fn, _handler_config_attr, replace(handler_config, **kwargs))
+    try:
+        config = getattr(fn, _handler_config_attr)
+    except AttributeError:
+        return HandlerConfig()
+    else:
+        return cast(HandlerConfig, config)
 
 
 @dataclass
@@ -331,12 +329,7 @@ def _authorize(allowed: SubroutineFnWrapper) -> Callable[..., HandlerFunc]:
     return _decorate
 
 
-def _readonly(fn: HandlerFunc) -> HandlerFunc:
-    set_handler_config(fn, read_only=True)
-    return fn
-
-
-def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
+def _replace_structs(fn: HandlerFunc, config: HandlerConfig) -> None:
     sig = signature(fn)
     params = sig.parameters.copy()
 
@@ -354,16 +347,14 @@ def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
             replaced[k] = cls
 
     if replaced:
-        set_handler_config(fn, structs=replaced)
+        config.structs = replaced
 
     newsig = sig.replace(parameters=list(params.values()))
     fn.__signature__ = newsig  # type: ignore[attr-defined]
     fn.__annotations__ = annotations
 
-    return fn
 
-
-def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
+def _capture_defaults(fn: HandlerFunc, config: HandlerConfig) -> None:
     sig = signature(fn)
     params = sig.parameters.copy()
 
@@ -377,27 +368,26 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
 
     if default_args:
         # Update handler config
-        set_handler_config(fn, default_arguments=default_args)
+        config.default_arguments = default_args
 
         # Fix function sig/annotations
         newsig = sig.replace(parameters=list(params.values()))
         fn.__signature__ = newsig  # type: ignore[attr-defined]
 
-    return fn
 
-
-def _remove_self(fn: HandlerFunc) -> HandlerFunc:
+def _remove_self(fn: HandlerFunc, config: HandlerConfig) -> None:
     sig = signature(fn)
     params = sig.parameters.copy()
 
-    if "self" in params:
+    try:
         del params["self"]
+    except KeyError:
+        pass
+    else:
         # Flag that this method did have a `self` argument
-        set_handler_config(fn, referenced_self=True)
-    newsig = sig.replace(parameters=list(params.values()))
-    fn.__signature__ = newsig  # type: ignore[attr-defined]
-
-    return fn
+        config.referenced_self = True
+        newsig = sig.replace(parameters=list(params.values()))
+        fn.__signature__ = newsig  # type: ignore[attr-defined]
 
 
 @overload
@@ -433,20 +423,20 @@ def internal(
             fn = return_type_or_handler
 
     def _impl(f: HandlerFunc) -> HandlerFunc:
-        set_handler_config(f, internal=True)
-        if return_type is not None:
-            set_handler_config(f, subroutine=Subroutine(return_type, name=f.__name__))
+        config = get_handler_config(f)
+        config.internal = True
+        if return_type is None:
+            _remove_self(f, config)
+            config.method_spec = ABIReturnSubroutine(f).method_spec()
+        else:
+            config.subroutine = Subroutine(return_type, name=f.__name__)
 
             # Don't remove self for subroutine, it fails later on in pyteal
             # during call to _validate  with invalid signature
             sig = signature(f)
             if "self" in sig.parameters:
-                set_handler_config(f, referenced_self=True)
-
-        else:
-            f = _remove_self(f)
-            set_handler_config(f, method_spec=ABIReturnSubroutine(f).method_spec())
-
+                config.referenced_self = True
+        setattr(f, _handler_config_attr, config)
         return f
 
     if fn is not None:
@@ -508,20 +498,18 @@ def external(
     """
 
     def _impl(f: HandlerFunc) -> HandlerFunc:
-        f = _remove_self(f)
-        f = _capture_defaults(f)
-        f = _replace_structs(f)
+        config = get_handler_config(f)
+        _remove_self(f, config)
+        _capture_defaults(f, config)
+        _replace_structs(f, config)
 
         if authorize is not None:
             f = _authorize(authorize)(f)
-        if method_config is not None:
-            set_handler_config(f, method_config=method_config)
-        if read_only:
-            f = _readonly(f)
 
-        set_handler_config(
-            f, method_spec=ABIReturnSubroutine(f, overriding_name=name).method_spec()
-        )
+        config.method_config = method_config
+        config.read_only = read_only
+        config.method_spec = ABIReturnSubroutine(f, overriding_name=name).method_spec()
+        setattr(f, _handler_config_attr, config)
 
         return f
 
@@ -556,17 +544,19 @@ def bare_external(
     """
 
     def _impl(fun: HandlerFunc) -> HandlerFunc:
-        fun = _remove_self(fun)
-        fn = SubroutineFnWrapper(fun, return_type=TealType.none)
+        config = get_handler_config(fun)
+        _remove_self(fun, config)
+
+        sub = SubroutineFnWrapper(fun, return_type=TealType.none)
 
         def to_action(cc: CallConfig | None) -> OnCompleteAction:
             return (
-                OnCompleteAction(action=fn, call_config=cc)
+                OnCompleteAction(action=sub, call_config=cc)
                 if (cc is not None and cc is not CallConfig.NEVER)
                 else OnCompleteAction.never()
             )
 
-        bca = BareCallActions(
+        config.bare_method = BareCallActions(
             no_op=to_action(no_op),
             delete_application=to_action(delete_application),
             update_application=to_action(update_application),
@@ -574,8 +564,7 @@ def bare_external(
             close_out=to_action(close_out),
             clear_state=to_action(clear_state),
         )
-
-        set_handler_config(fun, bare_method=bca)
+        setattr(fun, _handler_config_attr, config)
 
         return fun
 
