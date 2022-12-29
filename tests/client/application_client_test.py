@@ -193,6 +193,7 @@ def test_compile():
     version = 5
     app = App(version=version)
     client = get_algod_client()
+    app.compile(client)
     ac = ApplicationClient(client, app)
 
     # TODO add precompiles

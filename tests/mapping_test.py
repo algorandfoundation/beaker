@@ -63,4 +63,5 @@ def test_app_mapping():
             return self.m[name].store_into(output)
 
     t = T()
+    t.compile()
     assert len(t.approval_program) > 0

@@ -41,6 +41,7 @@ def test_empty_application():
         pass
 
     ea = EmptyApp()
+    ea.compile()
 
     assert ea.contract.name == "EmptyApp", "Expected router name to match class"
     assert (
@@ -66,6 +67,7 @@ def test_teal_version():
         pass
 
     ea = EmptyApp(version=4)
+    ea.compile()
 
     assert ea.teal_version == 4, "Expected teal v4"
     assert ea.approval_program.split("\n")[0] == "#pragma version 4"
@@ -78,6 +80,7 @@ def test_single_external():
             return pt.Assert(pt.Int(1))
 
     sh = Singleexternal()
+    sh.compile()
 
     assert len(sh.methods) == 1, "Expected a single external"
     assert sh.contract.get_method_by_name("handle") == get_method_spec(
@@ -114,6 +117,7 @@ def test_method_override():
             return pt.Approve()
 
     mo = MethodOverride()
+    mo.compile()
 
     assert len(mo.methods) == 2, "Expected two externals"
     assert mo.methods["handle_algo"]
@@ -198,6 +202,7 @@ def test_bare_external():
             return pt.Assert(pt.Len(s.get()))
 
     be = BareExternal()
+    be.compile()
     assert len(be.bare_externals) == 0, "Should have no bare externals"
     assert (
         len(be.contract.methods) == 6
@@ -256,6 +261,7 @@ def test_subclass_application():
         pass
 
     sc = SubClass()
+    sc.compile()
     assert len(sc.methods) == 1, "Expected single method"
     assert sc.contract.get_method_by_name("handle") == get_method_spec(
         sc.handle
@@ -267,6 +273,7 @@ def test_subclass_application():
             return pt.Assert(pt.Int(2))
 
     osc = OverrideSubClass()
+    osc.compile()
     assert len(osc.methods) == 1, "Expected single method"
     assert osc.contract.get_method_by_name("handle") == get_method_spec(
         osc.handle
@@ -497,6 +504,7 @@ def test_app_spec():
             return pt.Approve()
 
     s = Specd()
+    s.compile()
 
     actual_spec = s.application_spec()
 
@@ -620,7 +628,9 @@ def test_instance_vars():
             return pt.Log(self.v)
 
     i1 = Inst("first")
+    i1.compile()
     i2 = Inst("second")
+    i2.compile()
 
     assert i1.approval_program.index("first") > 0, "Expected to see the string `first`"
     assert (

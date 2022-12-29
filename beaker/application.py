@@ -232,12 +232,6 @@ class Application:
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
 
-        # If there are no precompiles, we can build the programs
-        # with what we already have and don't need to pass an
-        # algod client
-        if not self.precompiles:
-            self.compile()
-
     def compile(self, client: Optional[AlgodClient] = None) -> tuple[str, str]:
         """Fully compile the application to TEAL
 

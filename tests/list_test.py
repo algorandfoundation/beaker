@@ -51,4 +51,5 @@ def test_list_app():
             return self.l[idx.get()].set(val)
 
     t = T()
+    t.compile()
     assert len(t.approval_program) > 0
