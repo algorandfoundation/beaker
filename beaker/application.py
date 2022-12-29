@@ -263,7 +263,7 @@ class Application:
                 )
 
             # Compile approval and clear programs
-            (approval_program, clear_program, contract,) = router.compile_program(
+            approval_program, clear_program, contract = router.compile_program(
                 version=self.teal_version,
                 assemble_constants=True,
                 optimize=OptimizeOptions(scratch_slots=True),

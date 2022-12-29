@@ -615,7 +615,7 @@ def create(
     /,
     *,
     authorize: SubroutineFnWrapper | None = None,
-    method_config: Optional[MethodConfig] | None = None,
+    method_config: MethodConfig | None = None,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with its :code:`OnComplete`
         set to :code:`NoOp` call and ApplicationId == 0
