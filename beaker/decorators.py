@@ -589,7 +589,7 @@ def is_bare(fn: HandlerFunc) -> bool:
     )
 
 
-def _base_decorator(
+def _on_completion(
     method_config: MethodConfig,
     *,
     fn: HandlerFunc | None = None,
@@ -639,7 +639,7 @@ def create(
             "method_config for create may not have non create call configs"
         )
 
-    return _base_decorator(method_config, fn=fn, authorize=authorize)
+    return _on_completion(method_config, fn=fn, authorize=authorize)
 
 
 def delete(
@@ -656,7 +656,7 @@ def delete(
         The original method with changes made to its signature and attributes
             set in its :code:`__handler_config__`
     """
-    return _base_decorator(
+    return _on_completion(
         MethodConfig(delete_application=CallConfig.CALL), fn=fn, authorize=authorize
     )
 
@@ -675,7 +675,7 @@ def update(
         The original method with changes made to its signature and attributes
             set in it's :code:`__handler_config__`
     """
-    return _base_decorator(
+    return _on_completion(
         MethodConfig(update_application=CallConfig.CALL), fn=fn, authorize=authorize
     )
 
@@ -694,7 +694,7 @@ def opt_in(
         The original method with changes made to its signature and attributes
             set in it's :code:`__handler_config__`
     """
-    return _base_decorator(
+    return _on_completion(
         MethodConfig(opt_in=CallConfig.CALL), fn=fn, authorize=authorize
     )
 
@@ -713,7 +713,7 @@ def clear_state(
         The original method with changes made to its signature and
             attributes set in it's :code:`__handler_config__`
     """
-    return _base_decorator(
+    return _on_completion(
         MethodConfig(clear_state=CallConfig.CALL), fn=fn, authorize=authorize
     )
 
@@ -732,7 +732,7 @@ def close_out(
         The original method with changes made to its signature and
             attributes set in it's :code:`__handler_config__`
     """
-    return _base_decorator(
+    return _on_completion(
         MethodConfig(close_out=CallConfig.CALL), fn=fn, authorize=authorize
     )
 
@@ -751,6 +751,6 @@ def no_op(
         The original method with changes made to its signature and
             attributes set in it's :code:`__handler_config__`
     """
-    return _base_decorator(
+    return _on_completion(
         MethodConfig(no_op=CallConfig.CALL), fn=fn, authorize=authorize
     )
