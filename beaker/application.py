@@ -45,6 +45,7 @@ from beaker.state import (
 from beaker.errors import BareOverwriteError
 from beaker.precompile import AppPrecompile, LSigPrecompile
 from beaker.lib.storage import List
+from beaker.utils import get_class_attributes
 
 
 def get_method_spec(fn: HandlerFunc) -> Method:
@@ -79,19 +80,6 @@ class Application:
 
         self._compiled: CompiledApplication | None = None
 
-        # Get initial list of all attrs declared
-        initial_attrs = {
-            m: (getattr(self, m), getattr_static(self, m))
-            for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
-            if not m.startswith("__")
-        }
-
-        # Make sure we preserve the ordering of declaration
-        ordering = [
-            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
-        ]
-        attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
-
         all_creates = []
         all_updates = []
         all_deletes = []
@@ -114,7 +102,9 @@ class Application:
             | ApplicationStateBlob,
         ] = {}
 
-        for name, (bound_attr, static_attr) in attrs.items():
+        for name in get_class_attributes(self.__class__):
+            bound_attr = getattr(self, name)
+            static_attr = getattr_static(self, name)
             # Check for state vals
             match bound_attr:
 

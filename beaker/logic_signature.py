@@ -20,6 +20,7 @@ from pyteal import (
 )
 from beaker.decorators import get_handler_config
 from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker.utils import get_class_attributes
 
 
 class TemplateVariable(Expr):
@@ -34,6 +35,7 @@ class TemplateVariable(Expr):
     def __init__(self, stack_type: TealType, name: str | None = None):
         """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
+        super().__init__()
 
         super().__init__()
         self.stack_type = stack_type
@@ -83,19 +85,6 @@ class LogicSignature:
         self.teal_version = version
         self.program: Optional[str] = None
 
-        # Get initial list of all attrs declared
-        initial_attrs = {
-            m: (getattr(self, m), getattr_static(self, m))
-            for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
-            if not m.startswith("__")
-        }
-
-        # Make sure we preserve the ordering of declaration
-        ordering = [
-            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
-        ]
-        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
-
         self.methods: dict[str, SubroutineDefinition] = {}
 
         self.template_variables: list[TemplateVariable] = []
@@ -103,8 +92,9 @@ class LogicSignature:
             str, LSigPrecompile | AppPrecompile
         ] = {}  # dummy for now
 
-        for name, (bound_attr, static_attr) in self.attrs.items():
-
+        for name in get_class_attributes(self.__class__):
+            bound_attr = getattr(self, name)
+            static_attr = getattr_static(self, name)
             # Check for externals and internal methods
             handler_config = get_handler_config(bound_attr)
 
