@@ -23,7 +23,7 @@ from pyteal import (
     TealType,
 )
 
-from ..inline.inline_asm import InlineAssembly
+from beaker.lib.inline import InlineAssembly
 
 _scale = 1000000
 _log2_10 = math.log2(10)

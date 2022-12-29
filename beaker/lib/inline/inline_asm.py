@@ -1,11 +1,21 @@
 from typing import cast
-from pyteal import CompileOptions, Expr, LeafExpr, Mode, TealBlock, TealOp, TealType, Op
+from pyteal import (
+    CompileOptions,
+    Expr,
+    LeafExpr,
+    Mode,
+    TealBlock,
+    TealType,
+    TealOp,
+    Op,
+    TealSimpleBlock,
+)
 
 # Credit Julian (RandLabs)
 
 
 class CustomOp:
-    def __init__(self, opcode):
+    def __init__(self, opcode: str) -> None:
         self.opcode = opcode
         self.mode = Mode.Signature | Mode.Application
         self.min_version = 2
@@ -40,12 +50,14 @@ class InlineAssembly(LeafExpr):
         self.opcode_args = opcode_with_args[1:]
         self.args = args
 
-    def __teal__(self, options: "CompileOptions"):
+    def __teal__(
+        self, compile_options: CompileOptions
+    ) -> tuple[TealBlock, TealSimpleBlock]:
         op = TealOp(self, cast(Op, self.op), *self.opcode_args)
-        return TealBlock.FromOp(options, op, *self.args[::1])
+        return TealBlock.FromOp(compile_options, op, *self.args[::1])
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "(InlineAssembly: {})".format(self.op.opcode)
 
-    def type_of(self):
+    def type_of(self) -> TealType:
         return self.type

@@ -32,7 +32,7 @@ class UnitTestingApp(Application):
     An instance of this class is passed to assert_output to check the return value against what you expect.
     """
 
-    def __init__(self, expr_to_test: pt.Expr = None):
+    def __init__(self, expr_to_test: pt.Expr | None = None):
         self.expr = expr_to_test
         super().__init__()
 

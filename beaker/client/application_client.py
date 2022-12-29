@@ -38,9 +38,9 @@ class ApplicationClient:
         client: AlgodClient,
         app: Application,
         app_id: int = 0,
-        signer: TransactionSigner = None,
-        sender: str = None,
-        suggested_params: transaction.SuggestedParams = None,
+        signer: TransactionSigner | None = None,
+        sender: str | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
     ):
         self.client = client
         self.app = app
@@ -94,12 +94,12 @@ class ApplicationClient:
 
     def create(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        extra_pages: int = None,
+        extra_pages: int | None = None,
         **kwargs,
     ) -> tuple[int, str, str]:
         """
@@ -175,10 +175,10 @@ class ApplicationClient:
 
     def update(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
 
@@ -234,10 +234,10 @@ class ApplicationClient:
 
     def opt_in(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
@@ -285,10 +285,10 @@ class ApplicationClient:
 
     def close_out(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
         """
@@ -339,10 +339,10 @@ class ApplicationClient:
 
     def clear_state(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
 
@@ -388,10 +388,10 @@ class ApplicationClient:
 
     def delete(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
         """
@@ -441,7 +441,10 @@ class ApplicationClient:
         return delete_result.tx_ids[0]
 
     def prepare(
-        self, signer: TransactionSigner = None, sender: str = None, **kwargs
+        self,
+        signer: TransactionSigner | None = None,
+        sender: str | None = None,
+        **kwargs,
     ) -> "ApplicationClient":
 
         """makes a copy of the current ApplicationClient and the fields passed"""
@@ -455,23 +458,23 @@ class ApplicationClient:
     def call(
         self,
         method: abi.Method | HandlerFunc,
-        sender: str = None,
+        sender: str | None = None,
         signer: TransactionSigner = None,
-        suggested_params: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        local_schema: transaction.StateSchema = None,
-        global_schema: transaction.StateSchema = None,
-        approval_program: bytes = None,
-        clear_program: bytes = None,
-        extra_pages: int = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
-        boxes: list[tuple[int, bytes]] = None,
-        note: bytes = None,
-        lease: bytes = None,
-        rekey_to: str = None,
-        atc: AtomicTransactionComposer = None,
+        local_schema: transaction.StateSchema | None = None,
+        global_schema: transaction.StateSchema | None = None,
+        approval_program: bytes | None = None,
+        clear_program: bytes | None = None,
+        extra_pages: int | None = None,
+        accounts: list[str] | None = None,
+        foreign_apps: list[int] | None = None,
+        foreign_assets: list[int] | None = None,
+        boxes: list[tuple[int, bytes]] | None = None,
+        note: bytes | None = None,
+        lease: bytes | None = None,
+        rekey_to: str | None = None,
+        atc: AtomicTransactionComposer | None = None,
         **kwargs,
     ) -> ABIResult:
 
@@ -592,22 +595,22 @@ class ApplicationClient:
         self,
         atc: AtomicTransactionComposer,
         method: abi.Method | HandlerFunc,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        local_schema: transaction.StateSchema = None,
-        global_schema: transaction.StateSchema = None,
-        approval_program: bytes = None,
-        clear_program: bytes = None,
-        extra_pages: int = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
-        boxes: list[tuple[int, bytes]] = None,
-        note: bytes = None,
-        lease: bytes = None,
-        rekey_to: str = None,
+        local_schema: transaction.StateSchema | None = None,
+        global_schema: transaction.StateSchema | None = None,
+        approval_program: bytes | None = None,
+        clear_program: bytes | None = None,
+        extra_pages: int | None = None,
+        accounts: list[str] | None = None,
+        foreign_apps: list[int] | None = None,
+        foreign_assets: list[int] | None = None,
+        boxes: list[tuple[int, bytes]] | None = None,
+        note: bytes | None = None,
+        lease: bytes | None = None,
+        rekey_to: str | None = None,
         **kwargs,
     ):
 
@@ -680,11 +683,8 @@ class ApplicationClient:
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
-    def fund(self, amt: int, addr: str = None) -> str:
-        """
-        convenience method to pay the address passed, defaults to
-        paying the app address for this client from the current signer
-        """
+    def fund(self, amt: int, addr: str | None = None) -> str:
+        """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
         sender = self.get_sender()
         signer = self.get_signer()
 
@@ -714,7 +714,7 @@ class ApplicationClient:
         )
 
     def get_account_state(
-        self, account: str = None, raw: bool = False
+        self, account: str | None = None, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
         """gets the local state info for the app id set and the account specified"""
@@ -772,7 +772,7 @@ class ApplicationClient:
 
     def get_suggested_params(
         self,
-        sp: transaction.SuggestedParams = None,
+        sp: transaction.SuggestedParams | None = None,
     ) -> transaction.SuggestedParams:
 
         if sp is not None:
@@ -789,7 +789,7 @@ class ApplicationClient:
 
         return LogicException(e, self.app.approval_program, self.approval_src_map)
 
-    def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
+    def get_signer(self, signer: TransactionSigner | None = None) -> TransactionSigner:
         if signer is not None:
             return signer
 
@@ -798,7 +798,9 @@ class ApplicationClient:
 
         raise Exception("No signer provided")
 
-    def get_sender(self, sender: str = None, signer: TransactionSigner = None) -> str:
+    def get_sender(
+        self, sender: str | None = None, signer: TransactionSigner | None = None
+    ) -> str:
         if sender is not None:
             return sender
 

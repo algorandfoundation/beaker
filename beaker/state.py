@@ -21,6 +21,8 @@ from pyteal import (
     If,
     Subroutine,
     Concat,
+    TealBlock,
+    TealSimpleBlock,
 )
 from beaker.lib.storage import LocalBlob
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
@@ -43,20 +45,22 @@ class StateValue(Expr):
     """Base Class for state values
 
     Attributes:
-        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)
+        stack_type: The type of the state value
+            (either TealType.bytes or TealType.uint64)
         key: key to use to store the the value, default is name of class variable
         default: Default value for the state value
-        static: Boolean flag to denote that this state value can only be set once and not deleted.
+        static: Boolean flag to denote that this state value can
+            only be set once and not deleted.
         descr: Description of the state value to provide some information to clients
     """
 
     def __init__(
         self,
         stack_type: TealType,
-        key: Expr = None,
-        default: Expr = None,
+        key: Expr | None = None,
+        default: Expr | None = None,
         static: bool = False,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__()
 
@@ -79,7 +83,7 @@ class StateValue(Expr):
     def type_of(self) -> TealType:
         return self.stack_type
 
-    def __teal__(self, options: "CompileOptions"):
+    def __teal__(self, options: CompileOptions) -> tuple[TealBlock, TealSimpleBlock]:
         return self.get().__teal__(options)
 
     def __str__(self) -> str:
@@ -104,7 +108,8 @@ class StateValue(Expr):
         return self.set(self.get() - cnt)
 
     def set_default(self) -> Expr:
-        """sets the default value if one is provided, if none provided sets the zero value for its type"""
+        """sets the default value if one is provided, if
+        none provided sets the zero value for its type"""
 
         return self.set(_get_default_for_type(self.stack_type, self.default))
 
@@ -158,7 +163,7 @@ class ReservedStateValue(ABC):
         stack_type: TealType,
         max_keys: int,
         key_gen: Optional[SubroutineFnWrapper | Callable] = None,
-        descr: str = None,
+        descr: str | None = None,
     ):
         self.stack_type = stack_type
         self.max_keys = max_keys
@@ -168,7 +173,7 @@ class ReservedStateValue(ABC):
         if key_gen is not None:
             self.set_key_gen(key_gen)
 
-    def set_key_gen(self, key_gen: SubroutineFnWrapper | Callable):
+    def set_key_gen(self, key_gen: SubroutineFnWrapper | Callable) -> None:
         if (
             isinstance(key_gen, SubroutineFnWrapper)
             and key_gen.type_of() != TealType.bytes
@@ -273,7 +278,7 @@ class ReservedApplicationStateValue(ReservedStateValue):
         stack_type: TealType,
         max_keys: int,
         key_gen: Optional[SubroutineFnWrapper | Callable] = None,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
 
@@ -311,10 +316,10 @@ class AccountStateValue(StateValue):
     def __init__(
         self,
         stack_type: TealType,
-        key: Expr = None,
-        default: Expr = None,
+        key: Expr | None = None,
+        default: Expr | None = None,
         static: bool = False,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__(stack_type, key, default, static, descr)
         self.acct: Expr = Txn.sender()
@@ -425,7 +430,7 @@ class ReservedAccountStateValue(ReservedStateValue):
         stack_type: TealType,
         max_keys: int,
         key_gen: Optional[SubroutineFnWrapper | Callable] = None,
-        descr: str = None,
+        descr: str | None = None,
     ):
         super().__init__(stack_type, max_keys, key_gen, descr)
 
@@ -554,17 +559,17 @@ class ApplicationStateBlob(StateBlob):
         return self.blob.set_byte(idx, byte)
 
 
-def check_not_static(sv: StateValue):
+def check_not_static(sv: StateValue) -> None:
     if sv.static:
         raise TealInputError(f"StateValue {sv} is static")
 
 
-def check_is_int(sv: StateValue):
+def check_is_int(sv: StateValue) -> None:
     if sv.stack_type != TealType.uint64:
         raise TealInputError(f"StateValue {sv} is not integer type")
 
 
-def check_match_type(sv: StateValue, val: Expr):
+def check_match_type(sv: StateValue, val: Expr) -> None:
     in_type = val.type_of()
     if in_type != sv.stack_type and in_type != TealType.anytype:
         raise TealTypeError(in_type, sv.stack_type)
@@ -700,7 +705,7 @@ class AccountState(State):
         )
 
 
-def _get_default_for_type(stack_type, default):
+def _get_default_for_type(stack_type: TealType, default: Expr | None) -> Expr:
     if default is not None:
         return default
 
@@ -710,7 +715,7 @@ def _get_default_for_type(stack_type, default):
         return Int(0)
 
 
-def _stack_type_to_string(st: TealType):
+def _stack_type_to_string(st: TealType) -> str:
     if st == TealType.uint64:
         return "uint64"
     if st == TealType.bytes:
