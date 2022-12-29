@@ -90,7 +90,7 @@ class Application:
         ordering = [
             m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
         ]
-        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
+        attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
 
         all_creates = []
         all_updates = []
@@ -114,7 +114,7 @@ class Application:
             | ApplicationStateBlob,
         ] = {}
 
-        for name, (bound_attr, static_attr) in self.attrs.items():
+        for name, (bound_attr, static_attr) in attrs.items():
             # Check for state vals
             match bound_attr:
 
