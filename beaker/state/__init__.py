@@ -150,9 +150,7 @@ class AccountState(State):
 
 
 def _stack_type_to_string(st: TealType) -> str:
-    if st == TealType.uint64:
-        return "uint64"
-    if st == TealType.bytes:
-        return "bytes"
-    else:
-        raise Exception("Only uint64 and bytes supported")
+    if st in (TealType.uint64, TealType.bytes):
+        return st.name
+
+    raise Exception("Only uint64 and bytes supported")
