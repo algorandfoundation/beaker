@@ -1,8 +1,12 @@
 import base64
+import dataclasses
+import json
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
+from pathlib import Path
+
 from algosdk.v2client.algod import AlgodClient
-from algosdk.abi import Method
+from algosdk.abi import Method, Contract
 from pyteal import (
     SubroutineFnWrapper,
     TealInputError,
@@ -73,6 +77,8 @@ class Application:
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
 
+        self._compiled: CompiledApplication | None = None
+
         # Get initial list of all attrs declared
         initial_attrs = {
             m: (getattr(self, m), getattr_static(self, m))
@@ -85,11 +91,6 @@ class Application:
             m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
         ]
         self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
-
-        # Initialize these ahead of time, may not
-        # be set after init if len(precompiles)>0
-        self.approval_program: Optional[str] = None
-        self.clear_program: Optional[str] = None
 
         all_creates = []
         all_updates = []
@@ -161,7 +162,7 @@ class Application:
             if handler_config.bare_method is not None:
                 for oc, action in handler_config.bare_method.__dict__.items():
                     action = cast(OnCompleteAction, action)
-                    if action.action is None:
+                    if action.is_empty():
                         continue
                     if oc in self.bare_externals:
                         raise BareOverwriteError(oc)
@@ -246,63 +247,85 @@ class Application:
         Args:
             client (optional): An Algod client that can be passed to ``Precompile`` to have them fully compiled.
         """
-        if self.approval_program is not None and self.clear_program is not None:
-            return self.approval_program, self.clear_program
+        if self._compiled is None:
 
-        # make sure all the precompiles are available
-        for precompile in self.precompiles.values():
-            precompile.compile(client)  # type: ignore
+            # make sure all the precompiles are available
+            for precompile in self.precompiles.values():
+                precompile.compile(client)
 
-        router = Router(
-            name=self.__class__.__name__,
-            bare_calls=BareCallActions(**self.bare_externals),
-            descr=self.__doc__,
-        )
-
-        # Add method externals
-        for _, method_tuple in self.methods.items():
-            method, method_config = method_tuple
-            router.add_method_handler(
-                method_call=method,
-                method_config=method_config,
-                overriding_name=method.name(),
+            router = Router(
+                name=self.__class__.__name__,
+                bare_calls=BareCallActions(**self.bare_externals),
+                descr=self.__doc__,
             )
 
-        # Compile approval and clear programs
-        (
-            self.approval_program,
-            self.clear_program,
-            self.contract,
-        ) = router.compile_program(
-            version=self.teal_version,
-            assemble_constants=True,
-            optimize=OptimizeOptions(scratch_slots=True),
-        )
+            # Add method externals
+            for _, method_tuple in self.methods.items():
+                method, method_config = method_tuple
+                router.add_method_handler(
+                    method_call=method,
+                    method_config=method_config,
+                    overriding_name=method.name(),
+                )
 
-        return self.approval_program, self.clear_program
+            # Compile approval and clear programs
+            (approval_program, clear_program, contract,) = router.compile_program(
+                version=self.teal_version,
+                assemble_constants=True,
+                optimize=OptimizeOptions(scratch_slots=True),
+            )
+
+            application_spec = {
+                "hints": {
+                    k: v.dictify() for k, v in self.hints.items() if not v.empty()
+                },
+                "source": {
+                    "approval": base64.b64encode(approval_program.encode()).decode(
+                        "utf8"
+                    ),
+                    "clear": base64.b64encode(clear_program.encode()).decode("utf8"),
+                },
+                "schema": {
+                    "local": self.acct_state.dictify(),
+                    "global": self.app_state.dictify(),
+                },
+                "contract": contract.dictify(),
+            }
+
+            self._compiled = CompiledApplication(
+                approval_program=approval_program,
+                clear_program=clear_program,
+                contract=contract,
+                application_spec=application_spec,
+            )
+
+        return self._compiled.approval_program, self._compiled.clear_program
+
+    @property
+    def approval_program(self) -> str | None:
+        if self._compiled is None:
+            return None
+        return self._compiled.approval_program
+
+    @property
+    def clear_program(self) -> str | None:
+        if self._compiled is None:
+            return None
+        return self._compiled.clear_program
+
+    @property
+    def contract(self) -> Contract | None:
+        if self._compiled is None:
+            return None
+        return self._compiled.contract
 
     def application_spec(self) -> dict[str, Any]:
         """returns a dictionary, helpful to provide to callers with information about the application specification"""
-
-        if self.approval_program is None or self.clear_program is None:
-            raise Exception(
+        if self._compiled is None:
+            raise ValueError(
                 "approval or clear program are none, please build the programs first"
             )
-
-        return {
-            "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
-            "source": {
-                "approval": base64.b64encode(self.approval_program.encode()).decode(
-                    "utf8"
-                ),
-                "clear": base64.b64encode(self.clear_program.encode()).decode("utf8"),
-            },
-            "schema": {
-                "local": self.acct_state.dictify(),
-                "global": self.app_state.dictify(),
-            },
-            "contract": self.contract.dictify(),
-        }
+        return self._compiled.application_spec
 
     def initialize_application_state(self) -> Expr:
         """
@@ -339,33 +362,37 @@ class Application:
             directory (optional): str path to the directory where the artifacts should be written
             client (optional): AlgodClient to be passed to any precompiles
         """
-        if self.approval_program is None:
-            if len(self.precompiles) > 0 and client is None:
-                raise Exception(
+        if self._compiled is None:
+            if self.precompiles and client is None:
+                raise ValueError(
                     "Approval program empty, if you have precompiles, pass an Algod client to build the precompiles"
                 )
             self.compile(client)
 
-        import json
-        import os
+        assert self._compiled is not None
+        self._compiled.dump(Path(directory))
 
-        if not os.path.exists(directory):
-            os.mkdir(directory)
 
-        with open(os.path.join(directory, "approval.teal"), "w") as f:
-            if self.approval_program is None:
-                raise Exception("Approval program empty")
-            f.write(self.approval_program)
+@dataclasses.dataclass
+class CompiledApplication:
+    approval_program: str
+    clear_program: str
+    contract: Contract
+    application_spec: dict[str, Any]
 
-        with open(os.path.join(directory, "clear.teal"), "w") as f:
-            if self.clear_program is None:
-                raise Exception("Clear program empty")
-            f.write(self.clear_program)
+    def dump(self, directory: Path) -> None:
+        """write out the artifacts generated by the application to disk
 
-        with open(os.path.join(directory, "contract.json"), "w") as f:
-            if self.contract is None:
-                raise Exception("Contract empty")
-            f.write(json.dumps(self.contract.dictify(), indent=4))
+        Args:
+            directory: path to the directory where the artifacts should be written
+        """
+        directory.mkdir(exist_ok=True)
 
-        with open(os.path.join(directory, "application.json"), "w") as f:
-            f.write(json.dumps(self.application_spec(), indent=4))
+        (directory / "approval.teal").write_text(self.approval_program)
+        (directory / "clear.teal").write_text(self.clear_program)
+        (directory / "contract.json").write_text(
+            json.dumps(self.contract.dictify(), indent=4)
+        )
+        (directory / "application.json").write_text(
+            json.dumps(self.application_spec, indent=4)
+        )
