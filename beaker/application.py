@@ -159,13 +159,10 @@ class Application:
 
             # Bare externals
             if handler_config.bare_method is not None:
-                actions = {
-                    oc: cast(OnCompleteAction, action)
-                    for oc, action in handler_config.bare_method.__dict__.items()
-                    if action.action is not None
-                }
-
-                for oc, action in actions.items():
+                for oc, action in handler_config.bare_method.__dict__.items():
+                    action = cast(OnCompleteAction, action)
+                    if action.action is None:
+                        continue
                     if oc in self.bare_externals:
                         raise BareOverwriteError(oc)
 
@@ -237,7 +234,7 @@ class Application:
         # If there are no precompiles, we can build the programs
         # with what we already have and don't need to pass an
         # algod client
-        if len(self.precompiles) == 0:
+        if not self.precompiles:
             self.compile()
 
     def compile(self, client: Optional[AlgodClient] = None) -> tuple[str, str]:
@@ -252,12 +249,11 @@ class Application:
         if self.approval_program is not None and self.clear_program is not None:
             return self.approval_program, self.clear_program
 
-        if len(self.precompiles) > 0:
-            # make sure all the precompiles are available
-            for precompile in self.precompiles.values():
-                precompile.compile(client)  # type: ignore
+        # make sure all the precompiles are available
+        for precompile in self.precompiles.values():
+            precompile.compile(client)  # type: ignore
 
-        self.router = Router(
+        router = Router(
             name=self.__class__.__name__,
             bare_calls=BareCallActions(**self.bare_externals),
             descr=self.__doc__,
@@ -266,7 +262,7 @@ class Application:
         # Add method externals
         for _, method_tuple in self.methods.items():
             method, method_config = method_tuple
-            self.router.add_method_handler(
+            router.add_method_handler(
                 method_call=method,
                 method_config=method_config,
                 overriding_name=method.name(),
@@ -277,7 +273,7 @@ class Application:
             self.approval_program,
             self.clear_program,
             self.contract,
-        ) = self.router.compile_program(
+        ) = router.compile_program(
             version=self.teal_version,
             assemble_constants=True,
             optimize=OptimizeOptions(scratch_slots=True),

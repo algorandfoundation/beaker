@@ -42,7 +42,7 @@ def test_empty_application():
 
     ea = EmptyApp()
 
-    assert ea.router.name == "EmptyApp", "Expected router name to match class"
+    assert ea.contract.name == "EmptyApp", "Expected router name to match class"
     assert (
         ea.acct_state.num_uints
         + ea.acct_state.num_byte_slices
