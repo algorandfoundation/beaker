@@ -336,14 +336,6 @@ def _readonly(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
-def _on_complete(mc: MethodConfig) -> Callable[..., HandlerFunc]:
-    def _impl(fn: HandlerFunc) -> HandlerFunc:
-        set_handler_config(fn, method_config=mc)
-        return fn
-
-    return _impl
-
-
 def _replace_structs(fn: HandlerFunc) -> HandlerFunc:
     sig = signature(fn)
     params = sig.parameters.copy()
@@ -383,7 +375,7 @@ def _capture_defaults(fn: HandlerFunc) -> HandlerFunc:
                 default_args[k] = DefaultArgument(v.default)
                 params[k] = v.replace(default=Parameter.empty)
 
-    if len(default_args.items()) > 0:
+    if default_args:
         # Update handler config
         set_handler_config(fn, default_arguments=default_args)
 
@@ -523,7 +515,7 @@ def external(
         if authorize is not None:
             f = _authorize(authorize)(f)
         if method_config is not None:
-            f = _on_complete(method_config)(f)
+            set_handler_config(f, method_config=method_config)
         if read_only:
             f = _readonly(f)
 
