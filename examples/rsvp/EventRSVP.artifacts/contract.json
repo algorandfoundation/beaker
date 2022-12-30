@@ -1,0 +1,64 @@
+{
+    "name": "EventRSVP",
+    "methods": [
+        {
+            "name": "create",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "event_price"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Deploys the contract and initialze the app states"
+        },
+        {
+            "name": "do_rsvp",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "payment"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Let txn sender rsvp to the event by opting into the contract"
+        },
+        {
+            "name": "check_in",
+            "args": [],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "If the Sender RSVPed, check-in the Sender"
+        },
+        {
+            "name": "withdraw_external",
+            "args": [],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Let event creator to withdraw all funds in the contract"
+        },
+        {
+            "name": "read_rsvp",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            },
+            "desc": "Read amount of RSVP to the event. Only callable by Creator."
+        },
+        {
+            "name": "read_price",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            },
+            "desc": "Read amount of RSVP to the event. Only callable by Creator."
+        }
+    ],
+    "networks": {}
+}
