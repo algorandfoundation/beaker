@@ -35,12 +35,15 @@ class TemplateVariable(Expr):
     def __init__(self, stack_type: TealType, name: str | None = None):
         """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
-        super().__init__()
 
         super().__init__()
         self.stack_type = stack_type
         self.scratch = ScratchVar(stack_type)
         self.name = name
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        if self.name is None:
+            self.name = name
 
     def get_name(self) -> str:
         """returns the name of the template variable that should be present in the output TEAL"""
@@ -99,8 +102,6 @@ class LogicSignature:
             handler_config = get_handler_config(bound_attr)
 
             if isinstance(static_attr, TemplateVariable):
-                if static_attr.name is None:
-                    static_attr.name = name
                 self.template_variables.append(static_attr)
 
             elif handler_config.method_spec is not None:

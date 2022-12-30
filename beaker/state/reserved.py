@@ -5,7 +5,12 @@ from pyteal import TealType, SubroutineFnWrapper, TealTypeError, Expr
 from pyteal.ast import abi
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
-from beaker.state.primitive import StateValue, ApplicationStateValue, AccountStateValue
+from beaker.state.primitive import (
+    StateValue,
+    ApplicationStateValue,
+    AccountStateValue,
+    prefix_key_gen,
+)
 
 __all__ = [
     "ReservedStateValue",
@@ -39,6 +44,10 @@ class ReservedStateValue(ABC):
         self.max_keys = max_keys
         self.descr = descr
         self.key_gen = key_gen
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        if self.key_gen is None:
+            self.key_gen = prefix_key_gen(name)
 
     @property
     def key_gen(self) -> KeyGenerator | None:

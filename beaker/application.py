@@ -19,7 +19,6 @@ from pyteal import (
     OnCompleteAction,
     OptimizeOptions,
     Router,
-    Bytes,
     Approve,
 )
 
@@ -40,11 +39,9 @@ from beaker.state import (
     AccountStateValue,
     ApplicationStateValue,
     ReservedApplicationStateValue,
-    prefix_key_gen,
 )
 from beaker.errors import BareOverwriteError
 from beaker.precompile import AppPrecompile, LSigPrecompile
-from beaker.lib.storage import List
 from beaker.utils import get_class_attributes
 
 
@@ -105,45 +102,19 @@ class Application:
         for name in get_class_attributes(self.__class__):
             bound_attr = getattr(self, name)
             static_attr = getattr_static(self, name)
-            # Check for state vals
             match bound_attr:
-
                 # Account state
-                case AccountStateValue():
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
+                case AccountStateValue() | ReservedAccountStateValue() | AccountStateBlob():
                     acct_vals[name] = bound_attr
-                case ReservedAccountStateValue():
-                    if bound_attr.key_gen is None:
-                        bound_attr.key_gen = prefix_key_gen(name)
-                    acct_vals[name] = bound_attr
-                case AccountStateBlob():
-                    acct_vals[name] = bound_attr
-
+                    continue
                 # App state
-                case ApplicationStateBlob():
+                case ApplicationStateBlob() | ApplicationStateValue() | ReservedApplicationStateValue():
                     app_vals[name] = bound_attr
-                case ApplicationStateValue():
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
-                    app_vals[name] = bound_attr
-                case ReservedApplicationStateValue():
-                    if bound_attr.key_gen is None:
-                        bound_attr.key_gen = prefix_key_gen(name)
-                    app_vals[name] = bound_attr
-
+                    continue
                 # Precompiles
                 case LSigPrecompile() | AppPrecompile():
                     self.precompiles[name] = bound_attr
-
-                # Boxes
-                case List():
-                    if bound_attr.name is None:
-                        bound_attr.name = Bytes(name)
-
-            # Already dealt with these, move on
-            if name in app_vals or name in acct_vals:
-                continue
+                    continue
 
             # Check for externals and internal methods
             handler_config = get_handler_config(bound_attr)

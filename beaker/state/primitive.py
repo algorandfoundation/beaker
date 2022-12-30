@@ -68,6 +68,10 @@ class StateValue(Expr):
             raise TealTypeError(default.type_of(), self.stack_type)
         self.default = default
 
+    def __set_name__(self, owner: type, name: str) -> None:
+        if self.key is None:
+            self.key = Bytes(name)
+
     # Required methods for `Expr subclass`
     def has_return(self) -> bool:
         return False

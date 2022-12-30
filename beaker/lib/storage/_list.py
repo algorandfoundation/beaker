@@ -43,6 +43,10 @@ class List:
         self._box_size = self._element_size * self._elements
         self.box_size = Int(self._box_size)
 
+    def __set_name__(self, owner: type, name: str) -> None:
+        if self.name is None:
+            self.name = Bytes(name)
+
     def create(self) -> Expr:
         """creates a box with the given name and with a size that will allow storage of the number of the element specified."""
         assert self.name is not None
