@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Callable
+from typing import Callable, ParamSpec, TypeVar
 
 from pyteal import (
     Expr,
@@ -17,8 +17,6 @@ from pyteal import (
     Assert,
     Txn,
 )
-
-HandlerFunc = Callable[..., Expr]
 
 
 # TODO: refactor this to be more of an Expr builder so it becomes composable
@@ -72,10 +70,16 @@ class Authorize:
         return _impl
 
 
-def _authorize(allowed: SubroutineFnWrapper) -> Callable[..., HandlerFunc]:
-    args = allowed.subroutine.expected_arg_types
+HandlerReturn = TypeVar("HandlerReturn", bound=Expr)
+HandlerParams = ParamSpec("HandlerParams")
 
-    if len(args) != 1 or args[0] is not Expr:
+
+def _authorize(
+    allowed: SubroutineFnWrapper,
+) -> Callable[[Callable[HandlerParams, HandlerReturn]], Callable[HandlerParams, Expr]]:
+    auth_sub_args = allowed.subroutine.expected_arg_types
+
+    if len(auth_sub_args) != 1 or auth_sub_args[0] is not Expr:
         raise TealInputError(
             "Expected a single expression argument to authorize function"
         )
@@ -83,14 +87,16 @@ def _authorize(allowed: SubroutineFnWrapper) -> Callable[..., HandlerFunc]:
     if allowed.type_of() != TealType.uint64:
         raise TealTypeError(allowed.type_of(), TealType.uint64)
 
-    def _decorate(fn: HandlerFunc) -> HandlerFunc:
+    def decorator(
+        fn: Callable[HandlerParams, HandlerReturn]
+    ) -> Callable[HandlerParams, Expr]:
         @wraps(fn)
-        def _impl(*args, **kwargs) -> Expr:  # type: ignore
+        def wrapped(*args: HandlerParams.args, **kwargs: HandlerParams.kwargs) -> Expr:
             return Seq(
                 Assert(allowed(Txn.sender()), comment="unauthorized"),
                 fn(*args, **kwargs),
             )
 
-        return _impl
+        return wrapped
 
-    return _decorate
+    return decorator
