@@ -31,6 +31,7 @@ from beaker.decorators import (
     update,
     delete,
 )
+from tests.conftest import check_application_artifacts_output_stability
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -98,6 +99,7 @@ def test_internal_not_exposed():
             return pt.Seq((b := pt.abi.Bool()).set(pt.Int(1)), output.set(b))
 
     si = SingleInternal()
+    check_application_artifacts_output_stability(si)
     assert len(si.methods) == 1, "Expected a single external"
 
 
