@@ -35,6 +35,7 @@ class TemplateVariable(Expr):
         """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
 
+        super().__init__()
         self.stack_type = stack_type
         self.scratch = ScratchVar(stack_type)
         self.name = name

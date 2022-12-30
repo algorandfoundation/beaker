@@ -2,6 +2,7 @@ import pytest
 import pyteal as pt
 from beaker.decorators import internal
 from beaker.logic_signature import LogicSignature, TemplateVariable
+from tests.conftest import check_lsig_output_stability
 
 
 def test_simple_logic_signature():
@@ -9,6 +10,7 @@ def test_simple_logic_signature():
         pass
 
     lsig = Lsig()
+    check_lsig_output_stability(lsig)
 
     assert len(lsig.template_variables) == 0
     assert len(lsig.methods) == 0
@@ -31,6 +33,7 @@ def test_evaluate_logic_signature():
             return pt.Approve()
 
     lsig = Lsig()
+    check_lsig_output_stability(lsig)
 
     assert len(lsig.template_variables) == 0
     assert len(lsig.methods) == 0
@@ -61,6 +64,7 @@ def test_handler_logic_signature():
             return pt.Len(s.get()) > pt.Int(0)
 
     lsig = Lsig()
+    check_lsig_output_stability(lsig)
 
     assert len(lsig.template_variables) == 0
     assert len(lsig.methods) == 0
@@ -93,6 +97,7 @@ def test_templated_logic_signature():
             )
 
     lsig = Lsig()
+    check_lsig_output_stability(lsig)
 
     assert len(lsig.template_variables) == 1
     assert len(lsig.methods) == 0
@@ -152,6 +157,7 @@ def test_different_methods_logic_signature():
             return x * y
 
     lsig = Lsig()
+    check_lsig_output_stability(lsig)
 
     assert len(lsig.template_variables) == 0
     assert len(lsig.methods) == 2

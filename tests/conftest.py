@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from beaker import Application, sandbox
+from beaker import Application, sandbox, LogicSignature
 
 
 def check_application_artifacts_output_stability(
@@ -64,4 +64,44 @@ def check_application_artifacts_output_stability(
         pytest.fail(
             f"New output folder created at {output_dir_str} from contract {app.__class__.__qualname__} - "
             "if this was intentional, please commit the files to the git repo"
+        )
+
+
+def check_lsig_output_stability(lsig: LogicSignature) -> None:
+    lsig.compile()
+    assert lsig.program is not None
+
+    lsig_class = lsig.__class__
+    lsig_name = lsig_class.__qualname__
+    module_path = Path(inspect.getfile(lsig_class))
+    module_dir = module_path.parent
+    output_dir = module_dir / "lsig_teal"
+    output_dir.mkdir(exist_ok=True)
+    output_path = output_dir / f"{lsig_name}.teal"
+
+    output_did_exist = output_path.is_file()
+
+    output_path_str = str(output_path.resolve())
+    output_path.write_text(lsig.program)
+    git_diff = subprocess.run(
+        [
+            "git",
+            "diff",
+            "--exit-code",
+            "--no-ext-diff",
+            "--no-color",
+            output_path_str,
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    # first fail if there are any changes to already committed files, you must manually add them in that case
+    assert git_diff.returncode == 0, git_diff.stdout
+
+    # if first time running, fail in case of accidental change to output directory
+    if not output_did_exist:
+        pytest.fail(
+            f"New output file created at {output_path_str} from logic-signature {lsig_name} - "
+            "if this was intentional, please commit the file to the git repo"
         )
