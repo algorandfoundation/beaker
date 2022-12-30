@@ -349,7 +349,7 @@ def internal(
             _remove_self(f, config)
             config.method_spec = ABIReturnSubroutine(f).method_spec()
         else:
-            config.subroutine = Subroutine(return_type, name=f.__name__)
+            config.subroutine = Subroutine(return_type)
 
             # Don't remove self for subroutine, it fails later on in pyteal
             # during call to _validate  with invalid signature
