@@ -5,7 +5,7 @@ from algosdk.atomic_transaction_composer import TransactionWithSigner
 from beaker import sandbox, consts
 from beaker.client import ApplicationClient
 
-from .contract import EventRSVP
+from .contract import rsvp as app
 
 
 def demo():
@@ -15,9 +15,6 @@ def demo():
     creator_acct = accts.pop()
     guest_acct1 = accts.pop()
     guest_acct2 = accts.pop()
-
-    # Create instance of the EventRSVP contract
-    app = EventRSVP()
 
     # Create an Application client for event creator containing both an algod client and my app
     app_client = ApplicationClient(client, app, signer=creator_acct.signer)

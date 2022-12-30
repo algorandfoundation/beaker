@@ -39,7 +39,7 @@ intc_1 // 0
 !=
 &&
 assert
-callsub readprice_11
+callsub readprice_10
 store 2
 bytec_2 // 0x151f7c75
 load 2
@@ -57,7 +57,7 @@ intc_1 // 0
 !=
 &&
 assert
-callsub readrsvp_10
+callsub readrsvp_9
 store 1
 bytec_2 // 0x151f7c75
 load 1
@@ -75,7 +75,7 @@ intc_1 // 0
 !=
 &&
 assert
-callsub withdrawexternal_9
+callsub withdrawexternal_8
 intc_0 // 1
 return
 main_l11:
@@ -87,7 +87,7 @@ intc_1 // 0
 !=
 &&
 assert
-callsub checkin_8
+callsub checkin_7
 intc_0 // 1
 return
 main_l12:
@@ -109,7 +109,7 @@ intc_0 // pay
 ==
 assert
 load 0
-callsub dorsvp_7
+callsub dorsvp_6
 intc_0 // 1
 return
 main_l13:
@@ -123,7 +123,7 @@ intc_1 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub create_6
+callsub create_5
 intc_0 // 1
 return
 main_l14:
@@ -149,7 +149,7 @@ txn ApplicationID
 intc_1 // 0
 !=
 assert
-callsub refund_4
+callsub refund_11
 intc_0 // 1
 return
 
@@ -207,35 +207,14 @@ itxn_submit
 delete_3_l2:
 retsub
 
-// refund
-refund_4:
-itxn_begin
-intc_0 // pay
-itxn_field TypeEnum
-txn Sender
-itxn_field Receiver
-bytec_1 // "price"
-app_global_get
-intc_2 // 1000
--
-itxn_field Amount
-itxn_submit
-bytec_0 // "rsvp"
-bytec_0 // "rsvp"
-app_global_get
-intc_0 // 1
--
-app_global_put
-retsub
-
 // auth_only
-authonly_5:
+authonly_4:
 global CreatorAddress
 ==
 retsub
 
 // create
-create_6:
+create_5:
 store 3
 bytec_1 // "price"
 pushint 1000000 // 1000000
@@ -249,7 +228,7 @@ app_global_put
 retsub
 
 // do_rsvp
-dorsvp_7:
+dorsvp_6:
 store 4
 global GroupSize
 pushint 2 // 2
@@ -279,7 +258,7 @@ app_global_put
 retsub
 
 // check_in
-checkin_8:
+checkin_7:
 txn Sender
 callsub authoptedin_0
 // unauthorized
@@ -291,7 +270,7 @@ app_local_put
 retsub
 
 // withdraw_external
-withdrawexternal_9:
+withdrawexternal_8:
 txn Sender
 callsub authonly_1
 // unauthorized
@@ -319,9 +298,9 @@ itxn_submit
 retsub
 
 // read_rsvp
-readrsvp_10:
+readrsvp_9:
 txn Sender
-callsub authonly_5
+callsub authonly_4
 // unauthorized
 assert
 bytec_0 // "rsvp"
@@ -329,7 +308,28 @@ app_global_get
 retsub
 
 // read_price
-readprice_11:
+readprice_10:
 bytec_1 // "price"
 app_global_get
+retsub
+
+// refund
+refund_11:
+itxn_begin
+intc_0 // pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+bytec_1 // "price"
+app_global_get
+intc_2 // 1000
+-
+itxn_field Amount
+itxn_submit
+bytec_0 // "rsvp"
+bytec_0 // "rsvp"
+app_global_get
+intc_0 // 1
+-
+app_global_put
 retsub

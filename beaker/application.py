@@ -2,7 +2,7 @@ import base64
 import dataclasses
 import json
 from inspect import getattr_static
-from typing import Final, Any, cast, Optional
+from typing import Final, Any, cast, Optional, Callable
 from pathlib import Path
 
 from algosdk.v2client.algod import AlgodClient
@@ -20,6 +20,8 @@ from pyteal import (
     OptimizeOptions,
     Router,
     Approve,
+    CallConfig,
+    TealType,
 )
 
 from beaker.decorators import (
@@ -99,6 +101,8 @@ class Application:
             | ApplicationStateBlob,
         ] = {}
 
+        self._bare_call_actions = BareCallActions()
+
         for name in get_class_attributes(self.__class__):
             bound_attr = getattr(self, name)
             static_attr = getattr_static(self, name)
@@ -140,6 +144,9 @@ class Application:
                         action.action.subroutine.implementation = bound_attr
 
                     self.bare_externals[oc] = action
+                    self._bare_call_actions = dataclasses.replace(
+                        self._bare_call_actions, **{oc: action}
+                    )
 
             # ABI externals
             elif handler_config.method_spec is not None and not handler_config.internal:
@@ -190,6 +197,65 @@ class Application:
 
         self.acct_state = AccountState(acct_vals)
         self.app_state = ApplicationState(app_vals)
+
+    def bare_external(
+        self,
+        no_op: CallConfig | None = None,
+        opt_in: CallConfig | None = None,
+        clear_state: CallConfig | None = None,
+        delete_application: CallConfig | None = None,
+        update_application: CallConfig | None = None,
+        close_out: CallConfig | None = None,
+    ) -> Callable[[HandlerFunc | SubroutineFnWrapper], SubroutineFnWrapper]:
+        """Add method to be handled by specific bare :code:`OnComplete` actions.
+
+        Args:
+            no_op: CallConfig to handle a `NoOp`
+            opt_in: CallConfig to handle an `OptIn`
+            clear_state: CallConfig to handle a `ClearState`
+            delete_application: CallConfig to handle a `DeleteApplication`
+            update_application: CallConfig to handle a `UpdateApplication`
+            close_out: CallConfig to handle a `CloseOut`
+
+        Returns:
+            The original method with changes made to its signature and attributes set
+            in it's :code:`__handler_config__`
+
+        """
+
+        all_kwargs: dict[str, CallConfig | None] = dict(
+            no_op=no_op,
+            opt_in=opt_in,
+            clear_state=clear_state,
+            delete_application=delete_application,
+            update_application=update_application,
+            close_out=close_out,
+        )
+        kwargs: dict[str, CallConfig] = {
+            k: v
+            for k, v in all_kwargs.items()
+            if v is not None and v is not CallConfig.NEVER
+        }
+
+        def _impl(fun: HandlerFunc | SubroutineFnWrapper) -> SubroutineFnWrapper:
+            if isinstance(fun, SubroutineFnWrapper):
+                sub = fun
+            else:
+                sub = SubroutineFnWrapper(fun, return_type=TealType.none)
+
+            for name, cc in kwargs.items():
+                current: OnCompleteAction = getattr(self._bare_call_actions, name)
+                if not current.is_empty():
+                    raise BareOverwriteError(name)
+                new = OnCompleteAction(action=sub, call_config=cc)
+                self.bare_externals[name] = new
+                self._bare_call_actions = dataclasses.replace(
+                    self._bare_call_actions, **{name: new}
+                )
+
+            return sub
+
+        return _impl
 
     def compile(self, client: Optional[AlgodClient] = None) -> tuple[str, str]:
         """Fully compile the application to TEAL

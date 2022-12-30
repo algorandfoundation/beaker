@@ -99,22 +99,6 @@ class EventRSVP(Application):
             Balance(self.address) > (self.MIN_BAL + self.FEE), self.withdraw_funds()
         )
 
-    @bare_external(close_out=CallConfig.CALL, clear_state=CallConfig.CALL)
-    def refund(self):
-        """Refunds event payment to guests"""
-        return Seq(
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.SetFields(
-                {
-                    TxnField.type_enum: TxnType.Payment,
-                    TxnField.receiver: Txn.sender(),
-                    TxnField.amount: self.price - self.FEE,
-                }
-            ),
-            InnerTxnBuilder.Submit(),
-            self.rsvp.decrement(),
-        )
-
     ################
     # Read Methods #
     ################
@@ -128,3 +112,23 @@ class EventRSVP(Application):
     def read_price(self, *, output: abi.Uint64):
         """Read amount of RSVP to the event. Only callable by Creator."""
         return output.set(self.price)
+
+
+rsvp = EventRSVP()
+
+
+@rsvp.bare_external(close_out=CallConfig.CALL, clear_state=CallConfig.CALL)
+def refund():
+    """Refunds event payment to guests"""
+    return Seq(
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields(
+            {
+                TxnField.type_enum: TxnType.Payment,
+                TxnField.receiver: Txn.sender(),
+                TxnField.amount: rsvp.price - rsvp.FEE,
+            }
+        ),
+        InnerTxnBuilder.Submit(),
+        rsvp.rsvp.decrement(),
+    )
