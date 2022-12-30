@@ -21,6 +21,7 @@ from pyteal import (
 HandlerFunc = Callable[..., Expr]
 
 
+# TODO: refactor this to be more of an Expr builder so it becomes composable
 class Authorize:
     """
     Authorize contains methods that may be used as values to
