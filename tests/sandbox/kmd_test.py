@@ -4,6 +4,8 @@ from algosdk.account import generate_account
 from algosdk.error import KMDHTTPError
 from beaker.sandbox.kmd import delete_account, get_accounts, add_account
 
+pytestmark = pytest.mark.network
+
 
 def test_get_accounts():
     accts = get_accounts()

@@ -1,3 +1,5 @@
+import pytest
+
 from beaker.client.api_providers import (
     Network,
     Sandbox,
@@ -5,6 +7,8 @@ from beaker.client.api_providers import (
     AlgoExplorer,
     PureStake,
 )
+
+pytestmark = pytest.mark.network
 
 
 def test_sandbox():

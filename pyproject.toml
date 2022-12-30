@@ -30,6 +30,7 @@ pre-commit = "^2.20.0"
 flake8-tidy-imports = "^4.8.0"
 python-semantic-release = "^7.32.2"
 pip-audit = "^2.4.12"
+pytest-xdist = "^3.1.0"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "~5.0.2"
@@ -54,3 +55,8 @@ tag_commit = true
 branch = "master"
 commit_message = "{version}\n\nskip-checks: true"
 tag_format = "{version}"
+
+[tool.pytest.ini_options]
+markers = [
+    "network: marks tests as slow network tests (deselect with '-m \"not network\"')",
+]
