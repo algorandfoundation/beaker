@@ -1,6 +1,6 @@
 from base64 import b64decode
 import copy
-from typing import Any, cast, Optional
+from typing import Any, cast
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -13,6 +13,7 @@ from algosdk.atomic_transaction_composer import (
     ABI_RETURN_HASH,
     TransactionWithSigner,
     abi,
+    AtomicTransactionResponse,
 )
 from algosdk.future import transaction
 from algosdk.logic import get_application_address
@@ -28,7 +29,7 @@ from beaker.decorators import (
     DefaultArgumentClass,
 )
 from beaker.client.state_decode import decode_state
-from beaker.client.logic_error import LogicException
+from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.precompile import AppPrecompile, ProgramAssertion
 
 
@@ -52,13 +53,15 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval_binary: Optional[bytes] = None
-        self.approval_src_map: Optional[SourceMap] = None
-        self.approval_asserts: Optional[dict[int, ProgramAssertion]] = None
+        self.approval_program: str | None = self.app.approval_program
+        self.approval_binary: bytes | None = None
+        self.approval_src_map: SourceMap | None = None
+        self.approval_asserts: dict[int, ProgramAssertion] | None = None
 
-        self.clear_binary: Optional[bytes] = None
-        self.clear_src_map: Optional[SourceMap] = None
-        self.clear_asserts: Optional[dict[int, ProgramAssertion]] = None
+        self.clear_program: str | None = self.app.clear_program
+        self.clear_binary: bytes | None = None
+        self.clear_src_map: SourceMap | None = None
+        self.clear_asserts: dict[int, ProgramAssertion] | None = None
 
         self.suggested_params = suggested_params
 
@@ -83,10 +86,12 @@ class ApplicationClient:
         compiled_app = AppPrecompile(self.app)
         compiled_app.compile(self.client)
 
+        self.approval_program = compiled_app.approval._program
         self.approval_binary = compiled_app.approval._binary
         self.approval_src_map = compiled_app.approval._map
         self.approval_asserts = compiled_app.approval._asserts
 
+        self.clear_program = compiled_app.clear._program
         self.clear_binary = compiled_app.clear._binary
         self.clear_src_map = compiled_app.clear._map
         self.clear_asserts = compiled_app.clear._asserts
@@ -150,13 +155,7 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            create_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        create_result = self._execute_atc(atc)
 
         create_txid = create_result.tx_ids[0]
 
@@ -215,13 +214,7 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            update_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        update_result = self._execute_atc(atc)
 
         return update_result.tx_ids[0]
 
@@ -266,13 +259,7 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            opt_in_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        opt_in_result = self._execute_atc(atc)
 
         return opt_in_result.tx_ids[0]
 
@@ -317,13 +304,7 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            close_out_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        close_out_result = self._execute_atc(atc)
 
         return close_out_result.tx_ids[0]
 
@@ -414,13 +395,7 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            delete_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        delete_result = self._execute_atc(atc)
 
         return delete_result.tx_ids[0]
 
@@ -503,13 +478,7 @@ class ApplicationClient:
             )
             return method_results.pop()
 
-        try:
-            result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        result = self._execute_atc(atc)
 
         return result.abi_results.pop()
 
@@ -767,11 +736,24 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def wrap_approval_exception(self, e: Exception) -> Exception:
-        if self.app.approval_program is None or self.approval_src_map is None:
-            return e
-
-        return LogicException(e, self.app.approval_program, self.approval_src_map)
+    def _execute_atc(
+        self, atc: AtomicTransactionComposer, wait_rounds: int = 4
+    ) -> AtomicTransactionResponse:
+        try:
+            return atc.execute(self.client, wait_rounds=wait_rounds)
+        except Exception as ex:
+            if (src_map := self.approval_src_map) and (
+                program := self.approval_program
+            ):
+                logic_error_data = parse_logic_error(str(ex))
+                if logic_error_data is not None:
+                    raise LogicException(
+                        logic_error=ex,
+                        program=program,
+                        map=src_map,
+                        **logic_error_data,
+                    ) from ex
+            raise ex
 
     def get_signer(self, signer: TransactionSigner | None = None) -> TransactionSigner:
         if signer is not None:
