@@ -396,7 +396,7 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
 
 def internal(
     return_type_or_handler: TealType | HandlerFunc,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -433,7 +433,7 @@ def internal(
     if fn is not None:
         return _impl(fn)
 
-    return _impl
+    return _impl  # type: ignore
 
 
 def external(
@@ -444,7 +444,7 @@ def external(
     authorize: SubroutineFnWrapper | None = None,
     method_config: MethodConfig | None = None,
     read_only: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
 
     """
     Add the method decorated to be handled as an ABI method for the Application
@@ -483,7 +483,7 @@ def external(
         return fn
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
@@ -560,7 +560,7 @@ def create(
     *,
     authorize: SubroutineFnWrapper | None = None,
     method_config: Optional[MethodConfig] | None = None,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with its :code:`OnComplete`
         set to :code:`NoOp` call and ApplicationId == 0
 
@@ -593,14 +593,14 @@ def create(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
 
 def delete(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`DeleteApplication` call
 
@@ -627,14 +627,14 @@ def delete(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
 
 def update(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`UpdateApplication` call
 
@@ -661,14 +661,14 @@ def update(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
 
 def opt_in(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with it's
            :code:`OnComplete` set to :code:`OptIn` call
 
@@ -694,14 +694,14 @@ def opt_in(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
 
 def clear_state(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with it'ws
         :code:`OnComplete` set to :code:`ClearState` call
 
@@ -728,14 +728,14 @@ def clear_state(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
 
 def close_out(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`CloseOut` call
 
@@ -762,14 +762,14 @@ def close_out(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
 
 
 def no_op(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+) -> HandlerFunc:
     """set method to be handled by an application call with
         it's :code:`OnComplete` set to :code:`NoOp` call
 
@@ -795,6 +795,6 @@ def no_op(
             )  # type: ignore
 
     if fn is None:
-        return _impl
+        return _impl  # type: ignore
 
     return _impl(fn)
