@@ -10,7 +10,6 @@ from beaker import (
     external,
     internal,
     delete,
-    bare_external,
     Authorize,
 )
 
@@ -117,7 +116,8 @@ class EventRSVP(Application):
 rsvp = EventRSVP()
 
 
-@rsvp.bare_external(close_out=CallConfig.CALL, clear_state=CallConfig.CALL)
+@rsvp.bare_external(close_out=CallConfig.CALL)
+@rsvp.bare_external(clear_state=CallConfig.CALL)
 def refund():
     """Refunds event payment to guests"""
     return Seq(
