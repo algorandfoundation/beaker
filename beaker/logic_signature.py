@@ -95,7 +95,7 @@ class LogicSignature:
             str, LSigPrecompile | AppPrecompile
         ] = {}  # dummy for now
 
-        for name in get_class_attributes(self.__class__):
+        for name in get_class_attributes(self.__class__, use_legacy_ordering=True):
             bound_attr = getattr(self, name)
             static_attr = getattr_static(self, name)
             # Check for externals and internal methods

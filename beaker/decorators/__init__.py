@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, field, astuple
 from enum import Enum
 from inspect import get_annotations, signature, Parameter
-from typing import Optional, Callable, Final, cast, Any, TypeVar, overload
+from typing import Optional, Callable, Final, cast, Any, TypeVar, overload, TypedDict
 from types import FunctionType
 from algosdk.abi import Method
 from pyteal import (
@@ -37,6 +37,7 @@ __all__ = [
     "opt_in",
     "close_out",
     "clear_state",
+    "ABIExternalMetadata",
 ]
 
 HandlerFunc = Callable[..., Expr]
@@ -120,6 +121,14 @@ class DefaultArgument:
 
 
 @dataclass
+class ABIExternalMetadata:
+    method_config: MethodConfig = field(kw_only=True)
+    name_override: str | None = field(kw_only=True, default=None)
+    read_only: bool = field(kw_only=True, default=False)
+    authorize: SubroutineFnWrapper | None = field(kw_only=True, default=None)
+
+
+@dataclass
 class HandlerConfig:
     """HandlerConfig contains all the extra bits of info about a given ABI method"""
 
@@ -138,29 +147,23 @@ class HandlerConfig:
     internal: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
-        mh: dict[str, Any] = {"read_only": self.read_only}
+        mh = MethodHints(read_only=self.read_only)
 
-        if (
-            self.default_arguments is not None
-            and len(self.default_arguments.keys()) > 0
-        ):
-            mh["default_arguments"] = self.default_arguments
+        if self.default_arguments:
+            mh.default_arguments = self.default_arguments
 
-        if self.structs is not None:
-            structs: dict[str, dict[str, str | list[tuple[str, str]]]] = {}
+        if self.structs:
+            mh.structs = {}
             for arg_name, model_spec in self.structs.items():
-                annos: list[tuple[str, Any]] = list(model_spec.__annotations__.items())
-                structs[arg_name] = {
-                    "name": str(model_spec.__name__),  # type: ignore[attr-defined]
+                mh.structs[arg_name] = {
+                    "name": str(model_spec.__name__),
                     "elements": [
                         (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
-                        for name, typ in annos
+                        for name, typ in model_spec.__annotations__.items()
                     ],
                 }
 
-            mh["structs"] = structs
-
-        return MethodHints(**mh)
+        return mh
 
     def is_create(self) -> bool:
         if self.method_config is None:
@@ -213,6 +216,11 @@ def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
         return cast(HandlerConfig, config)
 
 
+class StructArgDict(TypedDict):
+    name: str
+    elements: list[tuple[str, str]]
+
+
 @dataclass
 class MethodHints:
     """MethodHints provides hints to the caller about how to call the method"""
@@ -221,11 +229,9 @@ class MethodHints:
     read_only: bool = field(kw_only=True, default=False)
     #: hint to provide names for tuple argument indices
     #: method_name=>param_name=>{name:str, elements:[str,str]}
-    structs: Optional[dict[str, dict[str, str | list[tuple[str, str]]]]] = field(
-        kw_only=True, default=None
-    )
+    structs: dict[str, StructArgDict] | None = field(kw_only=True, default=None)
     #: defaults
-    default_arguments: Optional[dict[str, DefaultArgument]] = field(
+    default_arguments: dict[str, DefaultArgument] | None = field(
         kw_only=True, default=None
     )
 

@@ -486,30 +486,34 @@ def test_impl_expr():
 
 
 def test_application_state():
-    statevals = {
-        "a": ApplicationStateValue(pt.TealType.uint64),
-        "b": ApplicationStateValue(pt.TealType.bytes),
-    }
-    astate = ApplicationState(statevals)
+    class MyState:
+        a = ApplicationStateValue(pt.TealType.uint64)
+        b = ApplicationStateValue(pt.TealType.bytes)
+
+    astate = ApplicationState(MyState)
 
     assert astate.num_byte_slices == 1
     assert astate.num_uints == 1
 
-    statevals["c"] = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
+    class MyBigState(MyState):
+        c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
+
     with pytest.raises(Exception):
-        ApplicationState(statevals)
+        ApplicationState(MyBigState)
 
 
 def test_account_state():
-    statevals = {
-        "a": AccountStateValue(pt.TealType.uint64),
-        "b": AccountStateValue(pt.TealType.bytes),
-    }
-    astate = AccountState(statevals)
+    class MyState:
+        a = AccountStateValue(pt.TealType.uint64)
+        b = AccountStateValue(pt.TealType.bytes)
+
+    astate = AccountState(MyState)
 
     assert astate.num_byte_slices == 1
     assert astate.num_uints == 1
 
-    statevals["c"] = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
+    class MyBigState(MyState):
+        c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
+
     with pytest.raises(Exception):
-        AccountState(statevals)
+        AccountState(MyBigState)

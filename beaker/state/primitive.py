@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import copy
-from typing import cast
+from typing import cast, Literal
 
 from pyteal import (
     Expr,
@@ -32,6 +32,8 @@ __all__ = [
     "identity_key_gen",
 ]
 
+from beaker.state._abc import ApplicationStateStorage, AccountStateStorage
+
 
 class StateValue(Expr):
     """Base Class for state values
@@ -48,7 +50,7 @@ class StateValue(Expr):
 
     def __init__(
         self,
-        stack_type: TealType,
+        stack_type: Literal[TealType.bytes, TealType.uint64],
         key: Expr | None = None,
         default: Expr | None = None,
         static: bool = False,
@@ -143,7 +145,7 @@ class StateValue(Expr):
         """deletes the key from state, if the value is static it will be a compile time error"""
 
 
-class ApplicationStateValue(StateValue):
+class ApplicationStateValue(StateValue, ApplicationStateStorage):
     """Allows storage of state values for an application (global state)
 
     Attributes:
@@ -153,6 +155,23 @@ class ApplicationStateValue(StateValue):
         static: Boolean flag to denote that this state value can only be set once and not deleted.
         descr: Description of the state value to provide some information to clients
     """
+
+    def initialize(self) -> Expr | None:
+        if not (self.static or (self.static and self.default is not None)):
+            return self.set_default()
+        return None
+
+    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
+        return [self.str_key()]
+
+    def num_keys(self) -> int:
+        return 1
+
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return self.stack_type
+
+    def description(self) -> str | None:
+        return self.descr
 
     def __str__(self) -> str:
         return f"ApplicationStateValue {self.key}"
@@ -218,7 +237,7 @@ class ApplicationStateValue(StateValue):
         return App.globalDel(self.key)
 
 
-class AccountStateValue(StateValue):
+class AccountStateValue(StateValue, AccountStateStorage):
     """Allows storage of keyed values for an account opted into an application (local state)
 
     Attributes:
@@ -231,7 +250,7 @@ class AccountStateValue(StateValue):
 
     def __init__(
         self,
-        stack_type: TealType,
+        stack_type: Literal[TealType.bytes, TealType.uint64],
         key: Expr | None = None,
         default: Expr | None = None,
         static: bool = False,
@@ -239,6 +258,23 @@ class AccountStateValue(StateValue):
     ):
         super().__init__(stack_type, key, default, static, descr)
         self.acct: Expr = Txn.sender()
+
+    def initialize(self, acct: Expr) -> Expr | None:
+        if not (self.static or (self.static and self.default is not None)):
+            return self[acct].set_default()
+        return None
+
+    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
+        return [self.str_key()]
+
+    def num_keys(self) -> int:
+        return 1
+
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return self.stack_type
+
+    def description(self) -> str | None:
+        return self.descr
 
     def __str__(self) -> str:
         return f"AccountStateValue {self.acct} {self.key}"

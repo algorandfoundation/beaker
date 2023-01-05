@@ -23,6 +23,7 @@ from pyteal import (
     Concat,
     TxnType,
     Sqrt,
+    Subroutine,
 )
 
 from beaker import (
@@ -32,7 +33,6 @@ from beaker import (
     Authorize,
     external,
     create,
-    internal,
 )
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
@@ -166,13 +166,13 @@ class ConstantProductAMM(Application):
             self.asset_a.set(a_asset.asset_id()),
             self.asset_b.set(b_asset.asset_id()),
             self.pool_token.set(
-                self.do_create_pool_token(
+                do_create_pool_token(
                     self.asset_a,
                     self.asset_b,
                 ),
             ),
-            self.do_opt_in(self.asset_a),
-            self.do_opt_in(self.asset_b),
+            do_opt_in(self.asset_a),
+            do_opt_in(self.asset_b),
             output.set(self.pool_token),
         )
 
@@ -276,11 +276,11 @@ class ConstantProductAMM(Application):
                     ),
                     # This is the first time we've been called
                     # we use a different formula to mint tokens
-                    self.tokens_to_mint_initial(
+                    tokens_to_mint_initial(
                         a_xfer.get().asset_amount(), b_xfer.get().asset_amount()
                     ),
                     # Normal mint
-                    self.tokens_to_mint(
+                    tokens_to_mint(
                         self.total_supply - pool_bal.value(),
                         a_bal.value() - a_xfer.get().asset_amount(),
                         b_bal.value() - b_xfer.get().asset_amount(),
@@ -294,8 +294,8 @@ class ConstantProductAMM(Application):
                 comment=ConstantProductAMMErrors.SendAmountTooLow,
             ),
             # mint tokens
-            self.do_axfer(Txn.sender(), self.pool_token, to_mint.load()),
-            self.ratio.set(self.compute_ratio()),
+            do_axfer(Txn.sender(), self.pool_token, to_mint.load()),
+            self.ratio.set(compute_ratio()),
         )
 
     @external
@@ -364,32 +364,32 @@ class ConstantProductAMM(Application):
                 self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
             ),
             (a_amt := ScratchVar()).store(
-                self.tokens_to_burn(
+                tokens_to_burn(
                     issued.load(),
                     a_bal.value(),
                     pool_xfer.get().asset_amount(),
                 )
             ),
             (b_amt := ScratchVar()).store(
-                self.tokens_to_burn(
+                tokens_to_burn(
                     issued.load(),
                     b_bal.value(),
                     pool_xfer.get().asset_amount(),
                 )
             ),
             # Send back commensurate amt of a
-            self.do_axfer(
+            do_axfer(
                 Txn.sender(),
                 self.asset_a,
                 a_amt.load(),
             ),
             # Send back commensurate amt of b
-            self.do_axfer(
+            do_axfer(
                 Txn.sender(),
                 self.asset_b,
                 b_amt.load(),
             ),
-            self.ratio.set(self.compute_ratio()),
+            self.ratio.set(compute_ratio()),
         )
 
     @external
@@ -451,7 +451,7 @@ class ConstantProductAMM(Application):
                 out_sup.hasValue(),
             ),
             (to_swap := ScratchVar()).store(
-                self.tokens_to_swap(
+                tokens_to_swap(
                     swap_xfer.get().asset_amount(),
                     in_sup.value() - swap_xfer.get().asset_amount(),
                     out_sup.value(),
@@ -461,125 +461,133 @@ class ConstantProductAMM(Application):
                 to_swap.load() > Int(0),
                 comment=ConstantProductAMMErrors.SendAmountTooLow,
             ),
-            self.do_axfer(
+            do_axfer(
                 Txn.sender(),
                 out_id,
                 to_swap.load(),
             ),
-            self.ratio.set(self.compute_ratio()),
+            self.ratio.set(compute_ratio()),
         )
 
-    ##############
-    # Mathy methods
-    ##############
 
-    # Notes:
-    #   1) During arithmetic operations, depending on the inputs, these methods may overflow
-    #   the max uint64 value. This will cause the program to immediately terminate.
-    #
-    #   Care should be taken to fully understand the limitations of these functions and if
-    #   required should be swapped out for the appropriate byte math operations.
-    #
-    #   2) When doing division, any remainder is truncated from the result.
-    #
-    #   Care should be taken  to ensure that _when_ the truncation happens,
-    #   it does so in favor of the contract. This is a subtle security issue that,
-    #   if mishandled, could cause the balance of the contract to be drained.
+amm_app = ConstantProductAMM()
 
-    @internal(TealType.uint64)
-    def tokens_to_mint(self, issued, a_supply, b_supply, a_amount, b_amount):
-        return Seq(
-            (a_rat := ScratchVar()).store(
-                WideRatio([a_amount, self.scale], [a_supply])
-            ),
-            (b_rat := ScratchVar()).store(
-                WideRatio([b_amount, self.scale], [b_supply])
-            ),
-            WideRatio(
-                [If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued],
-                [self.scale],
-            ),
-        )
+##############
+# Mathy methods
+##############
 
-    @internal(TealType.uint64)
-    def tokens_to_mint_initial(self, a_amount, b_amount):
-        return Sqrt(a_amount * b_amount) - self.scale
+# Notes:
+#   1) During arithmetic operations, depending on the inputs, these methods may overflow
+#   the max uint64 value. This will cause the program to immediately terminate.
+#
+#   Care should be taken to fully understand the limitations of these functions and if
+#   required should be swapped out for the appropriate byte math operations.
+#
+#   2) When doing division, any remainder is truncated from the result.
+#
+#   Care should be taken  to ensure that _when_ the truncation happens,
+#   it does so in favor of the contract. This is a subtle security issue that,
+#   if mishandled, could cause the balance of the contract to be drained.
 
-    @internal(TealType.uint64)
-    def tokens_to_burn(self, issued, supply, amount):
-        return WideRatio([supply, amount], [issued])
 
-    @internal(TealType.uint64)
-    def tokens_to_swap(self, in_amount, in_supply, out_supply):
-        factor = self.scale - self.fee
-        return WideRatio(
-            [in_amount, factor, out_supply],
-            [(in_supply * self.scale) + (in_amount * factor)],
-        )
+@Subroutine(TealType.uint64)
+def tokens_to_mint(issued, a_supply, b_supply, a_amount, b_amount):
+    return Seq(
+        (a_rat := ScratchVar()).store(WideRatio([a_amount, amm_app.scale], [a_supply])),
+        (b_rat := ScratchVar()).store(WideRatio([b_amount, amm_app.scale], [b_supply])),
+        WideRatio(
+            [If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()), issued],
+            [amm_app.scale],
+        ),
+    )
 
-    ##############
-    # Utility methods for inner transactions
-    ##############
 
-    @internal(TealType.none)
-    def do_axfer(self, rx, aid, amt):
-        return InnerTxnBuilder.Execute(
+@Subroutine(TealType.uint64)
+def tokens_to_mint_initial(a_amount, b_amount):
+    return Sqrt(a_amount * b_amount) - amm_app.scale
+
+
+@Subroutine(TealType.uint64)
+def tokens_to_burn(issued, supply, amount):
+    return WideRatio([supply, amount], [issued])
+
+
+@Subroutine(TealType.uint64)
+def tokens_to_swap(in_amount, in_supply, out_supply):
+    factor = amm_app.scale - amm_app.fee
+    return WideRatio(
+        [in_amount, factor, out_supply],
+        [(in_supply * amm_app.scale) + (in_amount * factor)],
+    )
+
+
+##############
+# Utility methods for inner transactions
+##############
+
+
+@Subroutine(TealType.none)
+def do_axfer(rx, aid, amt):
+    return InnerTxnBuilder.Execute(
+        {
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.xfer_asset: aid,
+            TxnField.asset_amount: amt,
+            TxnField.asset_receiver: rx,
+            TxnField.fee: Int(0),
+        }
+    )
+
+
+@Subroutine(TealType.none)
+def do_opt_in(aid):
+    return do_axfer(amm_app.address, aid, Int(0))
+
+
+@Subroutine(TealType.uint64)
+def do_create_pool_token(a, b):
+    return Seq(
+        una := AssetParam.unitName(a),
+        unb := AssetParam.unitName(b),
+        Assert(
+            una.hasValue(),
+            unb.hasValue(),
+        ),
+        InnerTxnBuilder.Execute(
             {
-                TxnField.type_enum: TxnType.AssetTransfer,
-                TxnField.xfer_asset: aid,
-                TxnField.asset_amount: amt,
-                TxnField.asset_receiver: rx,
+                TxnField.type_enum: TxnType.AssetConfig,
+                TxnField.config_asset_name: Concat(
+                    Bytes("DPT-"), una.value(), Bytes("-"), unb.value()
+                ),
+                TxnField.config_asset_unit_name: Bytes("dpt"),
+                TxnField.config_asset_total: amm_app.total_supply,
+                TxnField.config_asset_decimals: Int(3),
+                TxnField.config_asset_manager: amm_app.address,
+                TxnField.config_asset_reserve: amm_app.address,
                 TxnField.fee: Int(0),
             }
-        )
+        ),
+        InnerTxn.created_asset_id(),
+    )
 
-    @internal(TealType.none)
-    def do_opt_in(self, aid):
-        return self.do_axfer(self.address, aid, Int(0))
 
-    @internal(TealType.uint64)
-    def do_create_pool_token(self, a, b):
-        return Seq(
-            una := AssetParam.unitName(a),
-            unb := AssetParam.unitName(b),
-            Assert(
-                una.hasValue(),
-                unb.hasValue(),
-            ),
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.AssetConfig,
-                    TxnField.config_asset_name: Concat(
-                        Bytes("DPT-"), una.value(), Bytes("-"), unb.value()
-                    ),
-                    TxnField.config_asset_unit_name: Bytes("dpt"),
-                    TxnField.config_asset_total: self.total_supply,
-                    TxnField.config_asset_decimals: Int(3),
-                    TxnField.config_asset_manager: self.address,
-                    TxnField.config_asset_reserve: self.address,
-                    TxnField.fee: Int(0),
-                }
-            ),
-            InnerTxn.created_asset_id(),
-        )
-
-    @internal(TealType.uint64)
-    def compute_ratio(self):
-        return Seq(
-            bal_a := AssetHolding.balance(
-                self.address,
-                self.asset_a,
-            ),
-            bal_b := AssetHolding.balance(
-                self.address,
-                self.asset_b,
-            ),
-            Assert(
-                bal_a.hasValue(),
-                bal_b.hasValue(),
-            ),
-            WideRatio([bal_a.value(), self.scale], [bal_b.value()]),
-        )
+@Subroutine(TealType.uint64)
+def compute_ratio():
+    return Seq(
+        bal_a := AssetHolding.balance(
+            amm_app.address,
+            amm_app.asset_a,
+        ),
+        bal_b := AssetHolding.balance(
+            amm_app.address,
+            amm_app.asset_b,
+        ),
+        Assert(
+            bal_a.hasValue(),
+            bal_b.hasValue(),
+        ),
+        WideRatio([bal_a.value(), amm_app.scale], [bal_b.value()]),
+    )
 
 
 if __name__ == "__main__":

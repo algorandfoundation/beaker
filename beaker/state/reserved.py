@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeAlias
+from typing import Callable, TypeAlias, TypeVar, Generic, Literal
 
 from pyteal import TealType, SubroutineFnWrapper, TealTypeError, Expr
 from pyteal.ast import abi
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
+from beaker.state._abc import ApplicationStateStorage, AccountStateStorage
 from beaker.state.primitive import (
     StateValue,
     ApplicationStateValue,
@@ -22,7 +23,10 @@ __all__ = [
 KeyGenerator: TypeAlias = SubroutineFnWrapper | Callable[[Expr], Expr]
 
 
-class ReservedStateValue(ABC):
+ST = TypeVar("ST", bound=StateValue)
+
+
+class ReservedStateValue(Generic[ST], ABC):
     """Base Class for ReservedStateValues
 
     Attributes:
@@ -35,7 +39,7 @@ class ReservedStateValue(ABC):
 
     def __init__(
         self,
-        stack_type: TealType,
+        stack_type: Literal[TealType.bytes, TealType.uint64],
         max_keys: int,
         key_gen: KeyGenerator | None = None,
         descr: str | None = None,
@@ -59,7 +63,7 @@ class ReservedStateValue(ABC):
             raise TealTypeError(value.type_of(), TealType.bytes)
         self._key_gen = value
 
-    def __getitem__(self, key_seed: Expr | abi.BaseType) -> StateValue:
+    def __getitem__(self, key_seed: Expr | abi.BaseType) -> ST:
         """Method to access the state value with the key seed provided"""
         key: Expr
         if isinstance(key_seed, abi.BaseType):
@@ -72,11 +76,13 @@ class ReservedStateValue(ABC):
         return self._get_state_for_key(key)
 
     @abstractmethod
-    def _get_state_for_key(self, key: Expr) -> StateValue:
+    def _get_state_for_key(self, key: Expr) -> ST:
         ...
 
 
-class ReservedApplicationStateValue(ReservedStateValue):
+class ReservedApplicationStateValue(
+    ReservedStateValue[ApplicationStateValue], ApplicationStateStorage
+):
     """Reserved Application State (global state)
 
     Used when there should be a number of reserved state fields but the keys are uncertain at build time.
@@ -88,9 +94,24 @@ class ReservedApplicationStateValue(ReservedStateValue):
         descr (str): Description of the state value to provide some information to clients
     """
 
+    def initialize(self) -> Expr | None:
+        return None
+
+    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
+        return None
+
+    def num_keys(self) -> int:
+        return self.max_keys
+
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return self.stack_type
+
+    def description(self) -> str | None:
+        return self.descr
+
     def __init__(
         self,
-        stack_type: TealType,
+        stack_type: Literal[TealType.bytes, TealType.uint64],
         max_keys: int,
         key_gen: KeyGenerator | None = None,
         descr: str | None = None,
@@ -107,7 +128,9 @@ class ReservedApplicationStateValue(ReservedStateValue):
         )
 
 
-class ReservedAccountStateValue(ReservedStateValue):
+class ReservedAccountStateValue(
+    ReservedStateValue[AccountStateValue], AccountStateStorage
+):
     """Reserved Account State (local state)
 
     Used when there should be a number of reserved state fields but the keys are uncertain at build time.
@@ -119,9 +142,24 @@ class ReservedAccountStateValue(ReservedStateValue):
         descr (str): Description of the state value to provide some information to clients
     """
 
+    def initialize(self, acct: Expr) -> Expr | None:
+        return None
+
+    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
+        return None
+
+    def num_keys(self) -> int:
+        return self.max_keys
+
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return self.stack_type
+
+    def description(self) -> str | None:
+        return self.descr
+
     def __init__(
         self,
-        stack_type: TealType,
+        stack_type: Literal[TealType.bytes, TealType.uint64],
         max_keys: int,
         key_gen: KeyGenerator | None = None,
         descr: str | None = None,
