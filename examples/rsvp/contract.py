@@ -21,10 +21,9 @@ MIN_BAL = Int(100000)
 FEE = Int(1000)
 
 
-@Subroutine(TealType.none)
 def withdraw_funds():
     """Helper method that withdraws funds in the RSVP contract"""
-    rsvp_bal = Balance(Global.current_application_id())
+    rsvp_bal = Balance(Global.current_application_address())
     return Seq(
         Assert(
             rsvp_bal > (MIN_BAL + FEE),
@@ -46,7 +45,7 @@ class EventRSVP(Application):
         descr="The price of the event. Default price is 1 Algo",
     )
 
-    rsvp_count = ApplicationStateValue(
+    rsvp = ApplicationStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
         descr="Number of people who RSVPed to the event",
@@ -76,7 +75,7 @@ class EventRSVP(Application):
                 payment.get().amount() == self.price,
             ),
             self.initialize_account_state(),
-            self.rsvp_count.increment(),
+            self.rsvp.increment(),
         )
 
     @external(authorize=Authorize.opted_in(Global.current_application_id()))
@@ -101,7 +100,7 @@ class EventRSVP(Application):
     @external(read_only=True, authorize=Authorize.only(Global.creator_address()))
     def read_rsvp(self, *, output: abi.Uint64):
         """Read amount of RSVP to the event. Only callable by Creator."""
-        return output.set(self.rsvp_count)
+        return output.set(self.rsvp)
 
     @external(read_only=True)
     def read_price(self, *, output: abi.Uint64):
@@ -126,5 +125,5 @@ def refund():
             }
         ),
         InnerTxnBuilder.Submit(),
-        rsvp.rsvp_count.decrement(),
+        rsvp.rsvp.decrement(),
     )
