@@ -98,28 +98,18 @@ class LogicSignature:
         for name in get_class_attributes(self.__class__, use_legacy_ordering=True):
             bound_attr = getattr(self, name)
             static_attr = getattr_static(self, name)
-            # Check for externals and internal methods
-            handler_config = get_handler_config(bound_attr)
 
             if isinstance(static_attr, TemplateVariable):
                 self.template_variables.append(static_attr)
 
-            elif handler_config.method_spec is not None:
+            # Check for externals and internal methods
+            handler_config = get_handler_config(bound_attr)
+            if handler_config.method_spec is not None:
                 abi_meth = ABIReturnSubroutine(static_attr)
                 if handler_config.referenced_self:
                     abi_meth.subroutine.implementation = bound_attr
 
                 self.methods[name] = abi_meth.subroutine
-
-            elif handler_config.subroutine is not None:
-                if handler_config.referenced_self:
-                    setattr(self, name, handler_config.subroutine(bound_attr))
-                else:
-                    setattr(
-                        self.__class__,
-                        name,
-                        handler_config.subroutine(static_attr),
-                    )
 
         self.compile()  # will have to be deferred if lsig contains precompiles
 

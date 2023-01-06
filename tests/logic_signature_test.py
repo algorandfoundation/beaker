@@ -119,7 +119,6 @@ def test_different_methods_logic_signature():
                 pt.Int(1),
             )
 
-        @internal(None)
         def abi_tester(self, s: pt.abi.String, *, output: pt.abi.Uint64):
             return output.set(pt.Len(s.get()))
 
@@ -131,7 +130,6 @@ def test_different_methods_logic_signature():
         def internal_scratch_tester(self, x: pt.ScratchVar, y: pt.Expr) -> pt.Expr:
             return x.load() * y
 
-        @internal
         def no_self_abi_tester(x: pt.abi.Uint64, y: pt.abi.Uint64) -> pt.Expr:  # type: ignore
             return x.get() * y.get()
 

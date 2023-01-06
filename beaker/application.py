@@ -146,7 +146,7 @@ class Application:
                     self.bare_externals[oc] = action
 
             # ABI externals
-            elif handler_config.method_spec is not None and not handler_config.internal:
+            elif handler_config.method_spec is not None:
                 # Create the ABIReturnSubroutine from the static attr
                 # but override the implementation with the bound version
                 abi_meth = ABIReturnSubroutine(
@@ -171,17 +171,6 @@ class Application:
 
                 self.methods[name] = (abi_meth, handler_config.method_config)
                 self.hints[name] = handler_config.hints()
-
-            # Internal subroutines
-            elif handler_config.subroutine is not None:
-                if handler_config.referenced_self:
-                    setattr(self, name, handler_config.subroutine(bound_attr))
-                else:
-                    setattr(
-                        self.__class__,
-                        name,
-                        handler_config.subroutine(static_attr),
-                    )
 
         self.on_create = all_creates.pop() if len(all_creates) == 1 else None
         self.on_update = all_updates.pop() if len(all_updates) == 1 else None

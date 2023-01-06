@@ -1,3 +1,4 @@
+import functools
 import inspect
 from dataclasses import asdict, dataclass, field, astuple
 from enum import Enum
@@ -147,7 +148,6 @@ class HandlerConfig:
     )
     method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
     read_only: bool = field(kw_only=True, default=False)
-    internal: bool = field(kw_only=True, default=False)
 
     def hints(self) -> "MethodHints":
         mh = MethodHints(read_only=self.read_only)
@@ -303,51 +303,56 @@ def _remove_self(fn: HandlerFunc, config: HandlerConfig) -> None:
         fn.__signature__ = newsig  # type: ignore[attr-defined]
 
 
-@overload
-def internal(return_type_or_handler: TealType | None) -> Callable[..., HandlerFunc]:
-    ...
-
-
-@overload
-def internal(return_type_or_handler: HandlerFunc) -> HandlerFunc:
-    ...
-
-
-def internal(
-    return_type_or_handler: TealType | HandlerFunc | None,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
+def internal(return_type: TealType) -> Callable[..., HandlerFunc]:
     """creates a subroutine to be called by logic internally
 
     Args:
-        return_type_or_handler: The type this method's returned Expression should evaluate to
+        return_type: The type this method's returned Expression should evaluate to
     Returns:
         The wrapped subroutine
     """
 
-    return_type: TealType
+    if not isinstance(return_type, TealType):
+        raise TypeError("return_type must be a TealType")
 
-    match return_type_or_handler:
-        case None:
-            return lambda x: x
-        case TealType():
-            return_type = return_type_or_handler
-        case _:
-            return return_type_or_handler
+    class Wrapper:
+        def __init__(self, func: HandlerFunc):
+            self._original_func = func
 
-    def _impl(f: HandlerFunc) -> HandlerFunc:
-        config = get_handler_config(f)
-        config.internal = True
-        config.subroutine = Subroutine(return_type)
+            sig = signature(self._original_func)
+            new_sig = sig.replace(parameters=list(sig.parameters.values())[1:])
+            func.__signature__ = new_sig  # type: ignore[attr-defined]
 
-        # Don't remove self for subroutine, it fails later on in pyteal
-        # during call to _validate  with invalid signature
-        sig = signature(f)
-        if "self" in sig.parameters:
-            config.referenced_self = True
-        setattr(f, _handler_config_attr, config)
-        return f
+            self._subs: dict[Any, SubroutineFnWrapper] = {}
 
-    return _impl
+        def __get__(
+            self, instance: Any, owner: type | None = None
+        ) -> SubroutineFnWrapper:
+            if instance is None:
+                raise TypeError("Cannot invoke bound method from static context")
+
+            try:
+                return self._subs[instance]
+            except KeyError:
+                pass
+
+            sub = Subroutine(return_type)(self._original_func)
+            sub.subroutine.implementation = functools.partial(
+                self._original_func, instance
+            )
+            self._subs[instance] = sub
+            return sub
+
+    def decorator(func: HandlerFunc) -> HandlerFunc:
+        sig = signature(func)
+        params = sig.parameters
+        if params:
+            first_param_name = next(iter(params))
+            if first_param_name == "self":
+                return Wrapper(func)  # type: ignore
+        return Subroutine(return_type)(func)
+
+    return decorator
 
 
 @overload

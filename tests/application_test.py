@@ -97,7 +97,6 @@ def test_internal_not_exposed():
         def doit(self, *, output: pt.abi.Bool):
             return self.do_permissioned_thing(output=output)
 
-        @internal
         def do_permissioned_thing(self, *, output: pt.abi.Bool):
             return pt.Seq((b := pt.abi.Bool()).set(pt.Int(1)), output.set(b))
 
