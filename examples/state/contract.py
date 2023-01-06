@@ -53,11 +53,11 @@ class StateExample(Application):
 
     account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
 
-    @create
+    @create(bare=True)
     def create(self):
         return self.initialize_application_state()
 
-    @opt_in
+    @opt_in(bare=True)
     def opt_in(self):
         return self.initialize_account_state()
 

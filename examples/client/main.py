@@ -27,20 +27,20 @@ class ClientExample(Application):
         stack_type=TealType.bytes, descr="what this user prefers to be called"
     )
 
-    @create
+    @create(bare=True)
     def create(self):
         return self.initialize_application_state()
 
-    @opt_in
+    @opt_in(bare=True)
     def opt_in(self):
         # Defaults to sender
         return self.initialize_account_state()
 
-    @close_out
+    @close_out(bare=True)
     def close_out(self):
         return Approve()
 
-    @delete(authorize=Authorize.only(manager))
+    @delete(authorize=Authorize.only(manager), bare=True)
     def delete(self):
         return Approve()
 

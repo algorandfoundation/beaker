@@ -15,7 +15,7 @@ from .decorators import (
     Authorize,
     external,
     internal,
-    bare_external,
+    # bare_external,
     create,
     no_op,
     update,

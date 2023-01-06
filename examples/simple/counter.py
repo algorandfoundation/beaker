@@ -16,7 +16,7 @@ class CounterApp(Application):
         descr="A counter for showing how to use application state",
     )
 
-    @create
+    @create(bare=True)
     def create(self):
         return self.initialize_application_state()
 

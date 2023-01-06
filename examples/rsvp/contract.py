@@ -88,7 +88,7 @@ class EventRSVP(Application):
         """Let event creator to withdraw all funds in the contract"""
         return withdraw_funds()
 
-    @delete(authorize=Authorize.only(Global.creator_address()))
+    @delete(authorize=Authorize.only(Global.creator_address()), bare=True)
     def delete(self):
         """Let event creator delete the contract. Withdraws remaining funds"""
         return If(Balance(self.address) > (MIN_BAL + FEE), withdraw_funds())

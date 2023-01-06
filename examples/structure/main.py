@@ -27,7 +27,7 @@ class Structer(Application):
         key_gen=identity_key_gen,
     )
 
-    @opt_in
+    @opt_in(bare=True)
     def opt_in(self):
         return self.acct_state.initialize()
 

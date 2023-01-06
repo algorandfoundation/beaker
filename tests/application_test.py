@@ -133,15 +133,15 @@ def test_method_override():
 
 def test_bare():
     class Bare(Application):
-        @create
+        @create(bare=True)
         def create():
             return pt.Approve()
 
-        @update
+        @update(bare=True)
         def update():
             return pt.Approve()
 
-        @delete
+        @delete(bare=True)
         def delete():
             return pt.Approve()
 
@@ -152,7 +152,7 @@ def test_bare():
     ), "Expected 3 bare externals: create,update,delete"
 
     class FailBare(Application):
-        @create
+        @create(bare=True)
         def wrong_name():
             return pt.Approve()
 
@@ -162,7 +162,7 @@ def test_bare():
 
 def test_mixed_bares():
     class MixedBare(Application):
-        @create
+        @create(bare=True)
         def create(self):
             return pt.Approve()
 
@@ -338,7 +338,7 @@ def test_internal():
     from beaker.decorators import internal
 
     class Internal(Application):
-        @create
+        @create(bare=True)
         def create(self):
             return pt.Seq(
                 pt.Pop(self.internal_meth()),

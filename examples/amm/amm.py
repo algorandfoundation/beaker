@@ -111,7 +111,7 @@ class ConstantProductAMM(Application):
     ##############
 
     # Call this only on create
-    @create
+    @create(bare=True)
     def create(self):
         return self.initialize_application_state()
 

@@ -23,7 +23,7 @@ class Child1(Application):
         default=Int(0),
     )
 
-    @create
+    @create(bare=True)
     def create(self):
         return Seq(
             self.initialize_application_state(),

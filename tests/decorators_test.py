@@ -224,49 +224,49 @@ def test_named_tuple():
 
 
 def test_bare():
-    @create
+    @create(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
-    @no_op
+    @no_op(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.no_op.action.subroutine.implementation == impl
 
-    @delete
+    @delete(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.delete_application.action.subroutine.implementation == impl
 
-    @update
+    @update(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.update_application.action.subroutine.implementation == impl
 
-    @opt_in
+    @opt_in(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.opt_in.action.subroutine.implementation == impl
 
-    @close_out
+    @close_out(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
     assert hc.bare_method.close_out.action.subroutine.implementation == impl
 
-    @clear_state
+    @clear_state(bare=True)
     def impl():
         return pt.Assert(pt.Int(1))
 

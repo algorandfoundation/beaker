@@ -29,7 +29,7 @@ __all__ = [
     "Authorize",
     "external",
     "internal",
-    "bare_external",
+    # "bare_external",
     "create",
     "no_op",
     "update",
@@ -153,16 +153,16 @@ class HandlerConfig:
             mh.default_arguments = self.default_arguments
 
         if self.structs:
-            mh.structs = {}
-            for arg_name, model_spec in self.structs.items():
-                mh.structs[arg_name] = {
+            mh.structs = {
+                arg_name: {
                     "name": str(model_spec.__name__),
                     "elements": [
                         (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
                         for name, typ in model_spec.__annotations__.items()
                     ],
                 }
-
+                for arg_name, model_spec in self.structs.items()
+            }
         return mh
 
     def is_create(self) -> bool:
@@ -263,7 +263,7 @@ def _replace_structs(fn: HandlerFunc, config: HandlerConfig) -> None:
     annotations = get_annotations(fn)
     for k, v in params.items():
         cls = v.annotation
-        if hasattr(v.annotation, "__origin__"):
+        if hasattr(cls, "__origin__"):
             # Generic type, not a Struct
             continue
 
@@ -509,11 +509,15 @@ def _on_completion(
     *,
     fn: HandlerFunc | None = None,
     authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     def _impl(f: HandlerFunc) -> HandlerFunc:
-        if not is_bare(f):
+        # if not is_bare(f):
+        if not bare:
             wrapper = external(method_config=method_config, authorize=authorize)
         else:
+            if not is_bare(f):
+                raise TypeError("bare methods must take no parameters")
             if authorize is not None:
                 f = _authorize(authorize)(f)
             mconfig = asdict(method_config)
@@ -531,6 +535,7 @@ def create(
     *,
     authorize: SubroutineFnWrapper | None = None,
     method_config: MethodConfig | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with its :code:`OnComplete`
         set to :code:`NoOp` call and ApplicationId == 0
@@ -554,11 +559,15 @@ def create(
             "method_config for create may not have non create call configs"
         )
 
-    return _on_completion(method_config, fn=fn, authorize=authorize)
+    return _on_completion(method_config, fn=fn, authorize=authorize, bare=bare)
 
 
 def delete(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
+    fn: HandlerFunc | None = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`DeleteApplication` call
@@ -572,12 +581,19 @@ def delete(
             set in its :code:`__handler_config__`
     """
     return _on_completion(
-        MethodConfig(delete_application=CallConfig.CALL), fn=fn, authorize=authorize
+        MethodConfig(delete_application=CallConfig.CALL),
+        fn=fn,
+        authorize=authorize,
+        bare=bare,
     )
 
 
 def update(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
+    fn: HandlerFunc | None = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`UpdateApplication` call
@@ -591,12 +607,19 @@ def update(
             set in it's :code:`__handler_config__`
     """
     return _on_completion(
-        MethodConfig(update_application=CallConfig.CALL), fn=fn, authorize=authorize
+        MethodConfig(update_application=CallConfig.CALL),
+        fn=fn,
+        authorize=authorize,
+        bare=bare,
     )
 
 
 def opt_in(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
+    fn: HandlerFunc | None = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
            :code:`OnComplete` set to :code:`OptIn` call
@@ -610,12 +633,19 @@ def opt_in(
             set in it's :code:`__handler_config__`
     """
     return _on_completion(
-        MethodConfig(opt_in=CallConfig.CALL), fn=fn, authorize=authorize
+        MethodConfig(opt_in=CallConfig.CALL),
+        fn=fn,
+        authorize=authorize,
+        bare=bare,
     )
 
 
 def clear_state(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
+    fn: HandlerFunc | None = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`ClearState` call
@@ -629,12 +659,19 @@ def clear_state(
             attributes set in it's :code:`__handler_config__`
     """
     return _on_completion(
-        MethodConfig(clear_state=CallConfig.CALL), fn=fn, authorize=authorize
+        MethodConfig(clear_state=CallConfig.CALL),
+        fn=fn,
+        authorize=authorize,
+        bare=bare,
     )
 
 
 def close_out(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
+    fn: HandlerFunc | None = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`CloseOut` call
@@ -648,12 +685,19 @@ def close_out(
             attributes set in it's :code:`__handler_config__`
     """
     return _on_completion(
-        MethodConfig(close_out=CallConfig.CALL), fn=fn, authorize=authorize
+        MethodConfig(close_out=CallConfig.CALL),
+        fn=fn,
+        authorize=authorize,
+        bare=bare,
     )
 
 
 def no_op(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
+    fn: HandlerFunc | None = None,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`NoOp` call
@@ -667,5 +711,8 @@ def no_op(
             attributes set in it's :code:`__handler_config__`
     """
     return _on_completion(
-        MethodConfig(no_op=CallConfig.CALL), fn=fn, authorize=authorize
+        MethodConfig(no_op=CallConfig.CALL),
+        fn=fn,
+        authorize=authorize,
+        bare=bare,
     )

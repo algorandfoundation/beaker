@@ -30,11 +30,11 @@ class C2CSub(bkr.Application):
     racsv = bkr.ReservedAccountStateValue(TealType.bytes, 1)
     acsv = bkr.AccountStateValue(TealType.bytes, default=Bytes("acsv"))
 
-    @bkr.create
+    @bkr.create(bare=True)
     def create(self):
         return Seq(self.initialize_application_state(), Approve())
 
-    @bkr.opt_in
+    @bkr.opt_in(bare=True)
     def opt_in(self):
         return Seq(self.initialize_account_state(), Approve())
 

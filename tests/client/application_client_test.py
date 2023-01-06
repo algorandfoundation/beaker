@@ -39,7 +39,7 @@ class App(Application):
     acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
-    @create
+    @create(bare=True)
     def create(self):
         return pt.Seq(
             self.initialize_application_state(),
@@ -47,15 +47,15 @@ class App(Application):
             pt.Approve(),
         )
 
-    @update(authorize=Authorize.only(pt.Global.creator_address()))
+    @update(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
     def update(self):
         return pt.Approve()
 
-    @delete(authorize=Authorize.only(pt.Global.creator_address()))
+    @delete(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
     def delete(self):
         return pt.Approve()
 
-    @opt_in
+    @opt_in(bare=True)
     def opt_in(self):
         return pt.Seq(
             self.initialize_account_state(),
@@ -63,11 +63,11 @@ class App(Application):
             pt.Approve(),
         )
 
-    @clear_state
+    @clear_state(bare=True)
     def clear_state(self):
         return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-    @close_out
+    @close_out(bare=True)
     def close_out(self):
         return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 

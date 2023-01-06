@@ -499,7 +499,7 @@ class Application:
 
         return self.acct_state.initialize(addr)
 
-    @create
+    @create(bare=True)
     def create(self) -> Expr:
         """create is the only handler defined by default and only approves the transaction.
 
