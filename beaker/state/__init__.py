@@ -19,6 +19,7 @@ from beaker.state.reserved import (
     ReservedApplicationStateValue,
     ReservedAccountStateValue,
 )
+from beaker.utils import get_class_attributes
 
 ST = TypeVar("ST", bound=StateStorage)
 
@@ -26,14 +27,16 @@ ST = TypeVar("ST", bound=StateStorage)
 class State(Generic[ST]):
     def __init__(self, klass: type, storage_klass: type[ST]):
         fields: dict[str, ST] = {}
-        for name in dir(klass):
-            if not name.startswith("__"):
-                value = getattr_static(klass, name, None)
-                if isinstance(value, storage_klass):
-                    fields[name] = value
+        # TODO: stop using hack, use this instead V
+        # for name in dir(klass):
+        #     if not name.startswith("__"):
+        for name in get_class_attributes(klass, use_legacy_ordering=True):
+            value = getattr_static(klass, name, None)
+            if isinstance(value, storage_klass):
+                fields[name] = value
 
         self.fields = fields
-        self.__dict__.update(fields)
+        # self.__dict__.update(fields)
 
         self.num_uints = sum(
             f.num_keys() for f in fields.values() if f.value_type() == TealType.uint64
@@ -49,11 +52,11 @@ class State(Generic[ST]):
             "declared": {
                 name: {
                     "type": _stack_type_to_string(field.value_type()),
-                    "key": keys[0],
+                    "key": field.known_keys()[0],  # type: ignore[index]
                     "descr": field.description() or "",
                 }
                 for name, field in self.fields.items()
-                if (keys := field.known_keys()) is not None and len(keys) == 1  # HACK!
+                if field.known_keys() is not None and field.num_keys() == 1  # HACK!
             },
             "reserved": {
                 name: {
@@ -62,7 +65,7 @@ class State(Generic[ST]):
                     "descr": field.description() or "",
                 }
                 for name, field in self.fields.items()
-                if (keys := field.known_keys()) is not None and len(keys) > 1  # HACK!
+                if field.known_keys() is None  # HACK!
             },
         }
 

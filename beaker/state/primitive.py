@@ -157,7 +157,7 @@ class ApplicationStateValue(StateValue, ApplicationStateStorage):
     """
 
     def initialize(self) -> Expr | None:
-        if not (self.static or (self.static and self.default is not None)):
+        if not self.static or (self.static and self.default is not None):
             return self.set_default()
         return None
 
@@ -260,7 +260,7 @@ class AccountStateValue(StateValue, AccountStateStorage):
         self.acct: Expr = Txn.sender()
 
     def initialize(self, acct: Expr) -> Expr | None:
-        if not (self.static or (self.static and self.default is not None)):
+        if not self.static or (self.static and self.default is not None):
             return self[acct].set_default()
         return None
 
