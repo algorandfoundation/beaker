@@ -3,7 +3,18 @@ import dataclasses
 import json
 from inspect import getattr_static
 from pathlib import Path
-from typing import Final, Any, cast, Optional, Callable, TypeAlias, Literal
+from typing import (
+    Final,
+    Any,
+    cast,
+    Optional,
+    Callable,
+    TypeAlias,
+    Literal,
+    ParamSpec,
+    Concatenate,
+    TypeVar,
+)
 
 from algosdk.abi import Method, Contract
 from algosdk.v2client.algod import AlgodClient
@@ -62,6 +73,10 @@ OnCompleteActionName: TypeAlias = Literal[
     "update_application",
     "delete_application",
 ]
+
+Self = TypeVar("Self", bound="Application")
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class Application:
@@ -258,6 +273,14 @@ class Application:
                 read_only=read_only,
             )
         )
+
+    def implement(
+        self: Self,
+        blueprint: Callable[Concatenate[Self, P], T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> T:
+        return blueprint(self, *args, **kwargs)
 
     def register_bare_external(
         self,

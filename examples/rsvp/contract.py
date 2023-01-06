@@ -108,22 +108,26 @@ class EventRSVP(Application):
         return output.set(self.price)
 
 
+def refund_protocol(app: EventRSVP, *, fee: Int) -> EventRSVP:
+    @app.bare_external(close_out=CallConfig.CALL)
+    @app.bare_external(clear_state=CallConfig.CALL)
+    def refund():
+        """Refunds event payment to guests"""
+        return Seq(
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.SetFields(
+                {
+                    TxnField.type_enum: TxnType.Payment,
+                    TxnField.receiver: Txn.sender(),
+                    TxnField.amount: app.price - fee,
+                }
+            ),
+            InnerTxnBuilder.Submit(),
+            app.rsvp.decrement(),
+        )
+
+    return app
+
+
 rsvp = EventRSVP()
-
-
-@rsvp.bare_external(close_out=CallConfig.CALL)
-@rsvp.bare_external(clear_state=CallConfig.CALL)
-def refund():
-    """Refunds event payment to guests"""
-    return Seq(
-        InnerTxnBuilder.Begin(),
-        InnerTxnBuilder.SetFields(
-            {
-                TxnField.type_enum: TxnType.Payment,
-                TxnField.receiver: Txn.sender(),
-                TxnField.amount: rsvp.price - FEE,
-            }
-        ),
-        InnerTxnBuilder.Submit(),
-        rsvp.rsvp.decrement(),
-    )
+rsvp = rsvp.implement(refund_protocol, fee=FEE)
