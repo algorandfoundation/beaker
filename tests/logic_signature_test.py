@@ -143,7 +143,7 @@ def test_different_methods_logic_signature():
     check_lsig_output_stability(lsig)
 
     assert len(lsig.template_variables) == 0
-    assert len(lsig.methods) == 2
+    assert len(lsig.methods) == 0
     assert len(lsig.program) > 0
 
     # Should not fail

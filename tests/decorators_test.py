@@ -34,7 +34,7 @@ def test_handler_config():
     del config_dict["method_spec"]
 
     for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
+        assert not v, f"Expected {k} to be unset/empty"
 
     ###
 
@@ -53,7 +53,7 @@ def test_handler_config():
     del config_dict["read_only"]
 
     for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
+        assert not v, f"Expected {k} to be unset/empty"
 
     ###
 
@@ -68,7 +68,7 @@ def test_handler_config():
     assert hc.method_spec is not None, "Expected abi method to be created"
     del config_dict["method_spec"]
     for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
+        assert not v, f"Expected {k} to be unset/empty"
 
     ###
 
@@ -90,7 +90,7 @@ def test_handler_config():
     del config_dict["method_config"]
 
     for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
+        assert not v, f"Expected {k} to be unset/empty"
 
 
 def test_authorize():

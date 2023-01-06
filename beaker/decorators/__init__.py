@@ -1,6 +1,7 @@
+import inspect
 from dataclasses import asdict, dataclass, field, astuple
 from enum import Enum
-from inspect import get_annotations, signature, Parameter
+from inspect import signature, Parameter
 from typing import Optional, Callable, Final, cast, Any, TypeVar, overload, TypedDict
 from types import FunctionType
 from algosdk.abi import Method
@@ -137,7 +138,9 @@ class HandlerConfig:
     bare_method: Optional[BareCallActions] = field(kw_only=True, default=None)
 
     referenced_self: bool = field(kw_only=True, default=False)
-    structs: Optional[dict[str, abi.NamedTuple]] = field(kw_only=True, default=None)
+    structs: Optional[dict[str, type[abi.NamedTuple]]] = field(
+        kw_only=True, default=None
+    )
 
     default_arguments: Optional[dict[str, DefaultArgument]] = field(
         kw_only=True, default=None
@@ -255,29 +258,13 @@ class MethodHints:
         return d
 
 
-def _replace_structs(fn: HandlerFunc, config: HandlerConfig) -> None:
-    sig = signature(fn)
-    params = sig.parameters.copy()
-
-    replaced = {}
-    annotations = get_annotations(fn)
-    for k, v in params.items():
-        cls = v.annotation
-        if hasattr(cls, "__origin__"):
-            # Generic type, not a Struct
-            continue
-
-        if issubclass(cls, abi.NamedTuple):
-            params[k] = v.replace(annotation=cls().type_spec().annotation_type())
-            annotations[k] = cls().type_spec().annotation_type()
-            replaced[k] = cls
-
-    if replaced:
-        config.structs = replaced
-
-    newsig = sig.replace(parameters=list(params.values()))
-    fn.__signature__ = newsig  # type: ignore[attr-defined]
-    fn.__annotations__ = annotations
+def _capture_structs(fn: HandlerFunc, config: HandlerConfig) -> None:
+    params = signature(fn).parameters
+    config.structs = {
+        k: v.annotation
+        for k, v in params.items()
+        if inspect.isclass(v.annotation) and issubclass(v.annotation, abi.NamedTuple)
+    }
 
 
 def _capture_defaults(fn: HandlerFunc, config: HandlerConfig) -> None:
@@ -337,36 +324,28 @@ def internal(
         The wrapped subroutine
     """
 
-    fn: Optional[HandlerFunc] = None
-    return_type: Optional[TealType] = None
+    return_type: TealType
 
     match return_type_or_handler:
         case None:
-            pass
+            return lambda x: x
         case TealType():
             return_type = return_type_or_handler
         case _:
-            fn = return_type_or_handler
+            return return_type_or_handler
 
     def _impl(f: HandlerFunc) -> HandlerFunc:
         config = get_handler_config(f)
         config.internal = True
-        if return_type is None:
-            _remove_self(f, config)
-            config.method_spec = ABIReturnSubroutine(f).method_spec()
-        else:
-            config.subroutine = Subroutine(return_type)
+        config.subroutine = Subroutine(return_type)
 
-            # Don't remove self for subroutine, it fails later on in pyteal
-            # during call to _validate  with invalid signature
-            sig = signature(f)
-            if "self" in sig.parameters:
-                config.referenced_self = True
+        # Don't remove self for subroutine, it fails later on in pyteal
+        # during call to _validate  with invalid signature
+        sig = signature(f)
+        if "self" in sig.parameters:
+            config.referenced_self = True
         setattr(f, _handler_config_attr, config)
         return f
-
-    if fn is not None:
-        return _impl(fn)
 
     return _impl
 
@@ -427,7 +406,7 @@ def external(
         config = get_handler_config(f)
         _remove_self(f, config)
         _capture_defaults(f, config)
-        _replace_structs(f, config)
+        _capture_structs(f, config)
 
         if authorize is not None:
             f = _authorize(authorize)(f)
