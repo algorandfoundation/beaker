@@ -303,7 +303,43 @@ def _remove_self(fn: HandlerFunc, config: HandlerConfig) -> None:
         fn.__signature__ = newsig  # type: ignore[attr-defined]
 
 
-def internal(return_type: TealType) -> Callable[..., HandlerFunc]:
+class InternalInstanceWrapper:
+    def __init__(self, func: HandlerFunc, return_type: TealType):
+        self._func = func
+        self._return_type = return_type
+        self._subs: dict[object, SubroutineFnWrapper] = {}
+
+    def __get__(
+        self, instance: object, owner: type | None = None
+    ) -> SubroutineFnWrapper:
+        if instance is None:
+            raise TypeError("Cannot invoke bound method from static context")
+
+        try:
+            return self._subs[instance]
+        except KeyError:
+            pass
+
+        # create bound method
+        bound = functools.partial(self._func, instance)
+        # copy all attrs, but remove the fact that it's wrapped
+        # (so that inspect methods doesn't try the original method)
+        bound = functools.update_wrapper(bound, self._func)
+        bound.__dict__.pop("__wrapped__")
+        # copy annotations (except self if present)
+        annotations = inspect.get_annotations(self._func)
+        annotations.pop("self", None)
+        bound.__annotations__ = annotations
+        # finally, construct the subroutine
+        sub = Subroutine(self._return_type)(bound)
+
+        self._subs[instance] = sub
+        return sub
+
+
+def internal(
+    return_type: TealType,
+) -> Callable[..., HandlerFunc | InternalInstanceWrapper]:
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -315,41 +351,13 @@ def internal(return_type: TealType) -> Callable[..., HandlerFunc]:
     if not isinstance(return_type, TealType):
         raise TypeError("return_type must be a TealType")
 
-    class Wrapper:
-        def __init__(self, func: HandlerFunc):
-            self._original_func = func
-
-            sig = signature(self._original_func)
-            new_sig = sig.replace(parameters=list(sig.parameters.values())[1:])
-            func.__signature__ = new_sig  # type: ignore[attr-defined]
-
-            self._subs: dict[Any, SubroutineFnWrapper] = {}
-
-        def __get__(
-            self, instance: Any, owner: type | None = None
-        ) -> SubroutineFnWrapper:
-            if instance is None:
-                raise TypeError("Cannot invoke bound method from static context")
-
-            try:
-                return self._subs[instance]
-            except KeyError:
-                pass
-
-            sub = Subroutine(return_type)(self._original_func)
-            sub.subroutine.implementation = functools.partial(
-                self._original_func, instance
-            )
-            self._subs[instance] = sub
-            return sub
-
-    def decorator(func: HandlerFunc) -> HandlerFunc:
+    def decorator(func: HandlerFunc) -> HandlerFunc | InternalInstanceWrapper:
         sig = signature(func)
         params = sig.parameters
         if params:
             first_param_name = next(iter(params))
             if first_param_name == "self":
-                return Wrapper(func)  # type: ignore
+                return InternalInstanceWrapper(func=func, return_type=return_type)
         return Subroutine(return_type)(func)
 
     return decorator
@@ -496,7 +504,6 @@ def _on_completion(
     bare: bool = False,
 ) -> HandlerFunc | Callable[..., HandlerFunc]:
     def _impl(f: HandlerFunc) -> HandlerFunc:
-        # if not is_bare(f):
         if not bare:
             wrapper = external(method_config=method_config, authorize=authorize)
         else:
