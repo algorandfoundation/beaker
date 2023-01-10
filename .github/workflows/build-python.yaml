@@ -35,7 +35,7 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           files: ./coverage.xml
-          verbose: true
+
 
       - name: stop sandbox
         run: docker compose down
