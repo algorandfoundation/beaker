@@ -1,10 +1,6 @@
 name: Pull Request and master validation
 
-on:
-  pull_request:
-  push:
-    branches:
-      - master
+on: [pull_request]
 
 jobs:
   check:

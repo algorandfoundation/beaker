@@ -1,13 +1,6 @@
 name: Build and Test Python
 
-on:
-  workflow_call:
-    inputs:
-      coverageComment:
-        description: "Whether to add a comment on test coverage, default is false"
-        required: false
-        type: boolean
-        default: false # disabled for now        
+on: [workflow_call]
 
 jobs:
   build-python:
@@ -37,14 +30,12 @@ jobs:
       - name: pytest + coverage
         run: |
           set -o pipefail
-          poetry run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=beaker | tee pytest-coverage.txt
+          poetry run pytest --cov-report xml --cov=beaker
 
-      - name: pytest coverage comment
-        if: inputs.coverageComment
-        uses: MishaKav/pytest-coverage-comment@main
+      - uses: codecov/codecov-action@v3
         with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
+          files: ./coverage.xml
+          verbose: true
 
       - name: stop sandbox
         run: docker compose down

@@ -74,7 +74,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Continuous Deployment - Beta (non-prod)
-        if: steps.get_branch.outputs.branch == 'master' && inputs.production_release
+        if: steps.get_branch.outputs.branch == 'master' && !inputs.production_release
         run: |
           poetry run semantic-release \
             -v DEBUG \
