@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass, field, replace, astuple
 from enum import Enum
 from functools import wraps
 from inspect import get_annotations, signature, Parameter
-from typing import Optional, Callable, Final, cast, Any, TypeVar
+from typing import Optional, Callable, Final, cast, Any, TypeVar, overload
 from types import FunctionType
 from algosdk.abi import Method
 from pyteal import (
@@ -436,8 +436,9 @@ def internal(
     return _impl  # type: ignore
 
 
+@overload
 def external(
-    fn: HandlerFunc | None = None,
+    func: HandlerFunc,
     /,
     *,
     name: str | None = None,
@@ -445,12 +446,35 @@ def external(
     method_config: MethodConfig | None = None,
     read_only: bool = False,
 ) -> HandlerFunc:
+    ...
+
+
+@overload
+def external(
+    *,
+    name: str | None = None,
+    authorize: SubroutineFnWrapper | None = None,
+    method_config: MethodConfig | None = None,
+    read_only: bool = False,
+) -> Callable[[HandlerFunc], HandlerFunc]:
+    ...
+
+
+def external(
+    func: HandlerFunc | None = None,
+    /,
+    *,
+    name: str | None = None,
+    authorize: SubroutineFnWrapper | None = None,
+    method_config: MethodConfig | None = None,
+    read_only: bool = False,
+) -> HandlerFunc | Callable[[HandlerFunc], HandlerFunc]:
 
     """
     Add the method decorated to be handled as an ABI method for the Application
 
     Args:
-        fn: The function being wrapped.
+        func: The function being wrapped.
         name: Name of ABI method. If not set, name of the python method will be used.
             Useful for method overriding.
         authorize: a subroutine with input of ``Txn.sender()`` and output uint64
@@ -482,10 +506,10 @@ def external(
 
         return fn
 
-    if fn is None:
+    if func is None:
         return _impl  # type: ignore
 
-    return _impl(fn)
+    return _impl(func)
 
 
 def bare_external(
