@@ -1,6 +1,7 @@
 import base64
 import dataclasses
 import json
+from functools import partialmethod, partial
 from inspect import getattr_static
 from pathlib import Path
 from typing import (
@@ -184,75 +185,16 @@ class Application:
         self.acct_state = AccountState(klass=self.__class__)
         self.app_state = ApplicationState(klass=self.__class__)
 
-    def bare_external(
-        self,
-        no_op: CallConfig | None = None,
-        opt_in: CallConfig | None = None,
-        clear_state: CallConfig | None = None,
-        delete_application: CallConfig | None = None,
-        update_application: CallConfig | None = None,
-        close_out: CallConfig | None = None,
-    ) -> Callable[
-        [HandlerFunc | SubroutineFnWrapper], HandlerFunc | SubroutineFnWrapper
-    ]:
-        """Add method to be handled by specific bare :code:`OnComplete` actions.
-
-        Args:
-            no_op: CallConfig to handle a `NoOp`
-            opt_in: CallConfig to handle an `OptIn`
-            clear_state: CallConfig to handle a `ClearState`
-            delete_application: CallConfig to handle a `DeleteApplication`
-            update_application: CallConfig to handle a `UpdateApplication`
-            close_out: CallConfig to handle a `CloseOut`
-
-        Returns:
-            The original method with changes made to its signature and attributes set
-            in it's :code:`__handler_config__`
-
-        """
-
-        kwargs: dict[OnCompleteActionName, CallConfig | None] = {
-            "no_op": no_op,
-            "opt_in": opt_in,
-            "clear_state": clear_state,
-            "delete_application": delete_application,
-            "update_application": update_application,
-            "close_out": close_out,
-        }
-
-        def _impl(
-            fun_or_sub: HandlerFunc | SubroutineFnWrapper,
-        ) -> HandlerFunc | SubroutineFnWrapper:
-            if isinstance(fun_or_sub, SubroutineFnWrapper):
-                sub = fun_or_sub
-            else:
-                sub = SubroutineFnWrapper(fun_or_sub, return_type=TealType.none)
-
-            if sub.subroutine.argument_count():
-                raise TypeError("Bare externals must take no method arguments")
-
-            for action_name, call_config in kwargs.items():
-                if call_config is not None and call_config != CallConfig.NEVER:
-                    current_action = self.bare_externals.get(action_name)
-                    if current_action is not None:
-                        raise BareOverwriteError(action_name)
-                    self.bare_externals[action_name] = OnCompleteAction(
-                        action=sub, call_config=call_config
-                    )
-
-            return fun_or_sub
-
-        return _impl
-
     def register_abi_external(
         self,
-        fn: HandlerFunc,
+        fn: HandlerFunc | SubroutineFnWrapper,
         *,
         for_action: OnCompleteActionName,
         call_config: CallConfig,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         read_only: bool = False,
+        override: bool = False,
     ):
         self._abi_externals.setdefault(fn, []).append(
             ABIExternalMetadata(
@@ -263,14 +205,6 @@ class Application:
             )
         )
 
-    def implement(
-        self: Self,
-        blueprint: Callable[Concatenate[Self, P], T],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        return blueprint(self, *args, **kwargs)
-
     def register_bare_external(
         self,
         fn_or_sub: HandlerFunc | SubroutineFnWrapper,
@@ -279,11 +213,16 @@ class Application:
         call_config: CallConfig,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
+        override: bool = False,
     ):
         if call_config == CallConfig.NEVER:
             raise ValueError("???")
-        if for_action in self.bare_externals:
-            raise BareOverwriteError(for_action)
+        if override:
+            if for_action not in self.bare_externals:
+                raise ValueError("override=True, but nothing to override")
+        else:
+            if for_action in self.bare_externals:
+                raise BareOverwriteError(for_action)
         if isinstance(fn_or_sub, SubroutineFnWrapper):
             sub = fn_or_sub
             if authorize is not None:
@@ -308,26 +247,31 @@ class Application:
 
     def external(
         self,
-        fn: HandlerFunc | None = None,
+        fn: HandlerFunc | SubroutineFnWrapper | None = None,
         /,
         *,
+        method_config: MethodConfig
+        | dict[OnCompleteActionName, CallConfig]
+        | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        method_config: MethodConfig | None = None,
-        read_only: bool = False,
         bare: bool = False,
+        read_only: bool = False,
+        override: bool = False,
     ) -> HandlerFunc | Callable[..., HandlerFunc]:
         """
         Add the method decorated to be handled as an ABI method for the Application
 
         Args:
             fn: The function being wrapped.
+            method_config:  <TODO>
             name: Name of ABI method. If not set, name of the python method will be used.
                 Useful for method overriding.
             authorize: a subroutine with input of ``Txn.sender()`` and output uint64
                 interpreted as allowed if the output>0.
-            method_config:  <TODO>
+            bare:
             read_only: Mark a method as callable with no fee using dryrun or simulate
+            override:
 
         Returns:
             The original method with additional elements set in it's
@@ -335,46 +279,121 @@ class Application:
         """
 
         actions: dict[OnCompleteActionName, CallConfig]
-        if method_config is None:
-            if bare:
-                raise ValueError("bare required method_config")
-            else:
-                actions = {"no_op": CallConfig.CALL}
-        else:
-            actions = {
-                cast(OnCompleteActionName, key): value
-                for key, value in method_config.__dict__.items()
-                if value != CallConfig.NEVER
-            }
-
-        if bare and read_only:
-            raise ValueError("read_only has no effect on bare methods")
-
-        def _impl(f: HandlerFunc) -> HandlerFunc:
-            for for_action, call_config in actions.items():
+        match method_config:
+            case None:
                 if bare:
-                    self.register_abi_external(
-                        f,
-                        for_action=for_action,
-                        call_config=call_config,
-                        name=name,
-                        authorize=authorize,
-                        read_only=read_only,
-                    )
+                    raise ValueError("bare requires method_config")
                 else:
-                    self.register_bare_external(
-                        f,
-                        for_action=for_action,
-                        call_config=call_config,
-                        name=name,
-                        authorize=authorize,
-                    )
+                    actions = {"no_op": CallConfig.CALL}
+            case MethodConfig():
+                actions = {
+                    cast(OnCompleteActionName, key): value
+                    for key, value in method_config.__dict__.items()
+                    if value != CallConfig.NEVER
+                }
+            case _:
+                actions = method_config
+
+        if bare:
+            if read_only:
+                raise ValueError("read_only has no effect on bare methods")
+            register = partial(
+                self.register_bare_external,
+                name=name,
+                authorize=authorize,
+                override=override,
+            )
+        else:
+            register = partial(
+                self.register_abi_external,
+                name=name,
+                authorize=authorize,
+                read_only=read_only,
+                override=override,
+            )
+
+        def _impl(
+            f: HandlerFunc | SubroutineFnWrapper,
+        ) -> HandlerFunc | SubroutineFnWrapper:
+            for for_action, call_config in actions.items():
+                register(f, for_action=for_action, call_config=call_config)
             return f
 
         if fn is None:
             return _impl
 
         return _impl(fn)
+
+    def create_(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        action: OnCompleteActionName = "no_op",
+        allow_call: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool = False,
+        read_only: bool = False,
+        override: bool = False,
+    ) -> HandlerFunc | Callable[..., HandlerFunc]:
+        return self.external(
+            fn,
+            method_config={action: CallConfig.ALL if allow_call else CallConfig.CREATE},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+
+    def _named_external(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        action: OnCompleteActionName,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool = False,
+        read_only: bool = False,
+        override: bool = False,
+    ) -> HandlerFunc | Callable[..., HandlerFunc]:
+        if allow_call and allow_create:
+            call_config = CallConfig.ALL
+        elif allow_call:
+            call_config = CallConfig.CALL
+        elif allow_create:
+            call_config = CallConfig.CREATE
+        else:
+            raise ValueError("Require one of allow_call or allow_create to be True")
+        return self.external(
+            fn,
+            method_config={action: call_config},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+
+    # TODO: expand all these - will be more verbose but likely play better with type hints
+    delete = partialmethod(_named_external, action="delete")
+    update = partialmethod(_named_external, action="update")
+    opt_in = partialmethod(_named_external, action="opt_in")
+    clear_state = partialmethod(_named_external, action="clear_state")
+    close_out = partialmethod(_named_external, action="close_out")
+    no_op = partialmethod(_named_external, action="no_op")
+
+    def implement(
+        self: Self,
+        blueprint: Callable[Concatenate[Self, P], T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> T:
+        return blueprint(self, *args, **kwargs)
 
     def compile(self, client: Optional[AlgodClient] = None) -> tuple[str, str]:
         """Fully compile the application to TEAL

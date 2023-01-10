@@ -109,8 +109,8 @@ class EventRSVP(Application):
 
 
 def refund_protocol(app: EventRSVP, *, fee: Int) -> EventRSVP:
-    @app.bare_external(close_out=CallConfig.CALL)
-    @app.bare_external(clear_state=CallConfig.CALL)
+    @app.close_out(bare=True)
+    @app.clear_state(bare=True)
     def refund():
         """Refunds event payment to guests"""
         return Seq(
