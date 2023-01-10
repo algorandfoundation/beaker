@@ -1,3 +1,4 @@
+import warnings
 from base64 import b64decode
 import copy
 from typing import Any, cast
@@ -582,14 +583,12 @@ class ApplicationClient:
         for method_arg in method.args:
             name = method_arg.name
             if name in kwargs:
-                argument = kwargs[name]
-                if type(argument) is dict:
+                argument = kwargs.pop(name)
+                if isinstance(argument, dict):
                     if hints.structs is None or name not in hints.structs:
                         raise Exception(f"Name {name} name in struct hints")
 
-                    elems: list[tuple[str, str]] = cast(
-                        list[tuple[str, str]], hints.structs[name]["elements"]
-                    )
+                    elems = cast(list[tuple[str, str]], hints.structs[name]["elements"])
 
                     argument = [
                         argument[field_name] for field_name, field_type in elems
@@ -605,7 +604,8 @@ class ApplicationClient:
                     args.append(self.resolve(default_arg))
             else:
                 raise Exception(f"Unspecified argument: {name}")
-
+        if kwargs:
+            warnings.warn(f"Unused arguments specified: {', '.join(kwargs)}")
         atc.add_method_call(
             self.app_id,
             method,
