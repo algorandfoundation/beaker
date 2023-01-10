@@ -30,12 +30,7 @@ jobs:
       - name: pytest + coverage
         run: |
           set -o pipefail
-          poetry run pytest --cov-report xml --cov=beaker
-
-      - uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage.xml
-          verbose: true
+          poetry run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=beaker
 
       - name: stop sandbox
         run: docker compose down
