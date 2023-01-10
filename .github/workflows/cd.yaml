@@ -81,7 +81,7 @@ jobs:
             --prerelease \
             --define=branch=master \
             publish
-          gh release edit --prerelease "v$(poetry run semantic-release print-version --current)"
+          gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
