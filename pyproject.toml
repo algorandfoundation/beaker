@@ -53,3 +53,4 @@ upload_to_repository = false
 tag_commit = true
 branch = "master"
 commit_message = "{version}\n\nskip-checks: true"
+tag_format = "{version}"
