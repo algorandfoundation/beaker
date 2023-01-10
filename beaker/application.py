@@ -252,7 +252,7 @@ class Application:
         if self.approval_program is not None and self.clear_program is not None:
             return self.approval_program, self.clear_program
 
-        if len(self.precompiles) > 0:
+        if len(self.precompiles) > 0 and client is not None:
             # make sure all the precompiles are available
             for precompile in self.precompiles.values():
                 precompile.compile(client)  # type: ignore
