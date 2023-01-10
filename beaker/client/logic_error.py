@@ -51,8 +51,6 @@ class LogicException(Exception):
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"
 
     def trace(self, lines: int = 5) -> str:
-        if self.line_no is None:
-            self.line_no = 0
         program_lines = copy(self.lines)
         program_lines[self.line_no] += "\t\t<-- Error"
         lines_before = max(0, self.line_no - lines)

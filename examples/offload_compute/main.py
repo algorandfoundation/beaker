@@ -4,7 +4,7 @@ from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
-from algosdk.transaction import *
+from algosdk.future.transaction import *
 
 from pyteal import *
 from beaker import *

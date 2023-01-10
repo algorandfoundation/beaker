@@ -3,7 +3,7 @@ from copy import copy
 from nacl.signing import SigningKey
 
 from algosdk.encoding import decode_address
-from algosdk import transaction
+from algosdk.future import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
