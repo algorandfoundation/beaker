@@ -22,7 +22,7 @@ from pyteal import (
 )
 from algosdk.v2client.algod import AlgodClient
 from algosdk.source_map import SourceMap
-from algosdk.transaction import LogicSigAccount
+from algosdk.future.transaction import LogicSigAccount
 from algosdk.constants import APP_PAGE_MAX_SIZE
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
@@ -127,7 +127,7 @@ class Precompile:
         self.binary = Bytes(self._binary)
         for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
-            tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1  # type: ignore[index]
+            tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
         def _hash_program(data: bytes) -> bytes:
             """compute the hash"""
@@ -380,8 +380,6 @@ class LSigPrecompile:
 
         It should only be used for non templated Precompiles.
         """
-        if self.logic._binary is None:
-            raise ValueError("Cannot provide a signer for Lsig with no binary")
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
 
 
@@ -401,7 +399,7 @@ def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssert
         if line != "assert":
             continue
 
-        pc = src_map.get_pcs_for_line(idx)[0]  # type: ignore [index]
+        pc = src_map.get_pcs_for_line(idx)[0]
 
         # TODO: this will be wrong for multiline comments
         line_before = program_lines[idx - 1]

@@ -10,7 +10,7 @@ from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
     abi,
 )
-from algosdk import transaction
+from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
 from beaker import client, sandbox, testing, consts, decorators
