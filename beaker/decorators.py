@@ -32,6 +32,7 @@ from pyteal import (
 from beaker.state import AccountStateValue, ApplicationStateValue
 
 HandlerFunc = Callable[..., Expr]
+DecoratorFunc = Callable[[HandlerFunc], HandlerFunc]
 
 _handler_config_attr: Final[str] = "__handler_config__"
 
@@ -456,7 +457,7 @@ def external(
     authorize: SubroutineFnWrapper | None = None,
     method_config: MethodConfig | None = None,
     read_only: bool = False,
-) -> Callable[[HandlerFunc], HandlerFunc]:
+) -> DecoratorFunc:
     ...
 
 
@@ -468,7 +469,7 @@ def external(
     authorize: SubroutineFnWrapper | None = None,
     method_config: MethodConfig | None = None,
     read_only: bool = False,
-) -> HandlerFunc | Callable[[HandlerFunc], HandlerFunc]:
+) -> HandlerFunc | DecoratorFunc:
 
     """
     Add the method decorated to be handled as an ABI method for the Application
@@ -507,7 +508,7 @@ def external(
         return fn
 
     if func is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(func)
 
@@ -578,13 +579,33 @@ def is_bare(fn: HandlerFunc) -> bool:
     )
 
 
+@overload
+def create(
+    fn: HandlerFunc,
+    /,
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    method_config: Optional[MethodConfig] | None = None,
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def create(
+    *,
+    authorize: SubroutineFnWrapper | None = None,
+    method_config: Optional[MethodConfig] | None = None,
+) -> DecoratorFunc:
+    ...
+
+
 def create(
     fn: HandlerFunc | None = None,
     /,
     *,
     authorize: SubroutineFnWrapper | None = None,
     method_config: Optional[MethodConfig] | None = None,
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with its :code:`OnComplete`
         set to :code:`NoOp` call and ApplicationId == 0
 
@@ -614,17 +635,29 @@ def create(
         else:
             return external(method_config=MethodConfig(**mconfig), authorize=authorize)(
                 fn
-            )  # type: ignore
+            )
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
 
 
+@overload
+def delete(
+    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def delete(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+    ...
+
+
 def delete(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`DeleteApplication` call
 
@@ -646,19 +679,29 @@ def delete(
             return external(
                 method_config=MethodConfig(delete_application=CallConfig.CALL),
                 authorize=authorize,
-            )(
-                fn
-            )  # type: ignore
+            )(fn)
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
 
 
+@overload
+def update(
+    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def update(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+    ...
+
+
 def update(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`UpdateApplication` call
 
@@ -680,19 +723,29 @@ def update(
             return external(
                 method_config=MethodConfig(update_application=CallConfig.CALL),
                 authorize=authorize,
-            )(
-                fn
-            )  # type: ignore
+            )(fn)
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
 
 
+@overload
+def opt_in(
+    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def opt_in(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+    ...
+
+
 def opt_in(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with it's
            :code:`OnComplete` set to :code:`OptIn` call
 
@@ -713,19 +766,29 @@ def opt_in(
         else:
             return external(
                 method_config=MethodConfig(opt_in=CallConfig.CALL), authorize=authorize
-            )(
-                fn
-            )  # type: ignore
+            )(fn)
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
 
 
+@overload
+def clear_state(
+    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def clear_state(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+    ...
+
+
 def clear_state(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with it'ws
         :code:`OnComplete` set to :code:`ClearState` call
 
@@ -747,19 +810,29 @@ def clear_state(
             return external(
                 method_config=MethodConfig(clear_state=CallConfig.CALL),
                 authorize=authorize,
-            )(
-                fn
-            )  # type: ignore
+            )(fn)
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
 
 
+@overload
+def close_out(
+    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def close_out(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+    ...
+
+
 def close_out(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with it's
         :code:`OnComplete` set to :code:`CloseOut` call
 
@@ -781,19 +854,29 @@ def close_out(
             return external(
                 method_config=MethodConfig(close_out=CallConfig.CALL),
                 authorize=authorize,
-            )(
-                fn
-            )  # type: ignore
+            )(fn)
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
 
 
+@overload
+def no_op(
+    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def no_op(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+    ...
+
+
 def no_op(
     fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with
         it's :code:`OnComplete` set to :code:`NoOp` call
 
@@ -814,11 +897,9 @@ def no_op(
         else:
             return external(
                 method_config=MethodConfig(no_op=CallConfig.CALL), authorize=authorize
-            )(
-                fn
-            )  # type: ignore
+            )(fn)
 
     if fn is None:
-        return _impl  # type: ignore
+        return _impl
 
     return _impl(fn)
