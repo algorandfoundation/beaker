@@ -42,20 +42,20 @@ class LocalBlob(Blob):
         """
 
         @Subroutine(TealType.none)
-        def _impl(acct):
+        def _impl(acct: Expr) -> Expr:
             return Seq(
                 *[App.localPut(acct, Bytes(bk), EMPTY_PAGE) for bk in self.byte_keys]
             )
 
         return _impl(acct)
 
-    def get_byte(self, idx, acct: Expr = Txn.sender()):
+    def get_byte(self, idx: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         Get a single byte from local storage of an account by index
         """
 
         @Subroutine(TealType.uint64)
-        def _impl(acct, idx):
+        def _impl(acct: Expr, idx: Expr) -> Expr:
             return GetByte(
                 App.localGet(acct, self._key(self._key_idx(idx))),
                 self._offset_for_idx(idx),
@@ -63,13 +63,13 @@ class LocalBlob(Blob):
 
         return _impl(acct, idx)
 
-    def set_byte(self, idx, byte, acct: Expr = Txn.sender()):
+    def set_byte(self, idx: Expr, byte: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         Set a single byte from local storage of an account by index
         """
 
         @Subroutine(TealType.none)
-        def _impl(acct, idx, byte):
+        def _impl(acct: Expr, idx: Expr, byte: Expr) -> Expr:
             return Seq(
                 (key := ScratchVar()).store(self._key(self._key_idx(idx))),
                 App.localPut(
@@ -83,13 +83,13 @@ class LocalBlob(Blob):
 
         return _impl(acct, idx, byte)
 
-    def read(self, bstart, bend, acct: Expr = Txn.sender()) -> Expr:
+    def read(self, bstart: Expr, bend: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         read bytes between bstart and bend from local storage of an account by index
         """
 
         @Subroutine(TealType.bytes)
-        def _impl(acct, bstart, bend):
+        def _impl(acct: Expr, bstart: Expr, bend: Expr) -> Expr:
             start_key_idx = self._key_idx(bstart)
             start_offset = self._offset_for_idx(bstart)
 
@@ -137,13 +137,13 @@ class LocalBlob(Blob):
 
         return _impl(acct, bstart, bend)
 
-    def write(self, bstart, buff, acct: Expr = Txn.sender()) -> Expr:
+    def write(self, bstart: Expr, buff: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         write bytes between bstart and len(buff) to local storage of an account
         """
 
         @Subroutine(TealType.none)
-        def _impl(acct, bstart, buff):
+        def _impl(acct: Expr, bstart: Expr, buff: Expr) -> Expr:
 
             start_key_idx = self._key_idx(bstart)
             start_offset = self._offset_for_idx(bstart)

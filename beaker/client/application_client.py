@@ -1,6 +1,6 @@
 from base64 import b64decode
 import copy
-from typing import Any, cast, Optional
+from typing import Any, cast
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -13,6 +13,7 @@ from algosdk.atomic_transaction_composer import (
     ABI_RETURN_HASH,
     TransactionWithSigner,
     abi,
+    AtomicTransactionResponse,
 )
 from algosdk.future import transaction
 from algosdk.logic import get_application_address
@@ -28,7 +29,7 @@ from beaker.decorators import (
     DefaultArgumentClass,
 )
 from beaker.client.state_decode import decode_state
-from beaker.client.logic_error import LogicException
+from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.precompile import AppPrecompile, ProgramAssertion
 
 
@@ -38,9 +39,9 @@ class ApplicationClient:
         client: AlgodClient,
         app: Application,
         app_id: int = 0,
-        signer: TransactionSigner = None,
-        sender: str = None,
-        suggested_params: transaction.SuggestedParams = None,
+        signer: TransactionSigner | None = None,
+        sender: str | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
     ):
         self.client = client
         self.app = app
@@ -52,13 +53,15 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval_binary: Optional[bytes] = None
-        self.approval_src_map: Optional[SourceMap] = None
-        self.approval_asserts: Optional[dict[int, ProgramAssertion]] = None
+        self.approval_program: str | None = self.app.approval_program
+        self.approval_binary: bytes | None = None
+        self.approval_src_map: SourceMap | None = None
+        self.approval_asserts: dict[int, ProgramAssertion] | None = None
 
-        self.clear_binary: Optional[bytes] = None
-        self.clear_src_map: Optional[SourceMap] = None
-        self.clear_asserts: Optional[dict[int, ProgramAssertion]] = None
+        self.clear_program: str | None = self.app.clear_program
+        self.clear_binary: bytes | None = None
+        self.clear_src_map: SourceMap | None = None
+        self.clear_asserts: dict[int, ProgramAssertion] | None = None
 
         self.suggested_params = suggested_params
 
@@ -83,22 +86,24 @@ class ApplicationClient:
         compiled_app = AppPrecompile(self.app)
         compiled_app.compile(self.client)
 
+        self.approval_program = compiled_app.approval._program
         self.approval_binary = compiled_app.approval._binary
         self.approval_src_map = compiled_app.approval._map
         self.approval_asserts = compiled_app.approval._asserts
 
+        self.clear_program = compiled_app.clear._program
         self.clear_binary = compiled_app.clear._binary
         self.clear_src_map = compiled_app.clear._map
         self.clear_asserts = compiled_app.clear._asserts
 
     def create(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        extra_pages: int = None,
+        extra_pages: int | None = None,
         **kwargs,
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
@@ -150,13 +155,7 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            create_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        create_result = self._execute_atc(atc)
 
         create_txid = create_result.tx_ids[0]
 
@@ -171,10 +170,10 @@ class ApplicationClient:
 
     def update(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
 
@@ -215,22 +214,16 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            update_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        update_result = self._execute_atc(atc)
 
         return update_result.tx_ids[0]
 
     def opt_in(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
@@ -266,22 +259,16 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            opt_in_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        opt_in_result = self._execute_atc(atc)
 
         return opt_in_result.tx_ids[0]
 
     def close_out(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
@@ -317,22 +304,16 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            close_out_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        close_out_result = self._execute_atc(atc)
 
         return close_out_result.tx_ids[0]
 
     def clear_state(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
 
@@ -375,10 +356,10 @@ class ApplicationClient:
 
     def delete(
         self,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        args: list[Any] = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        args: list[Any] | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         **kwargs,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
@@ -414,18 +395,15 @@ class ApplicationClient:
                 )
             )
 
-        try:
-            delete_result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        delete_result = self._execute_atc(atc)
 
         return delete_result.tx_ids[0]
 
     def prepare(
-        self, signer: TransactionSigner = None, sender: str = None, **kwargs
+        self,
+        signer: TransactionSigner | None = None,
+        sender: str | None = None,
+        **kwargs,
     ) -> "ApplicationClient":
 
         """makes a copy of the current ApplicationClient and the fields passed"""
@@ -439,23 +417,23 @@ class ApplicationClient:
     def call(
         self,
         method: abi.Method | HandlerFunc,
-        sender: str = None,
+        sender: str | None = None,
         signer: TransactionSigner = None,
-        suggested_params: transaction.SuggestedParams = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        local_schema: transaction.StateSchema = None,
-        global_schema: transaction.StateSchema = None,
-        approval_program: bytes = None,
-        clear_program: bytes = None,
-        extra_pages: int = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
-        boxes: list[tuple[int, bytes]] = None,
-        note: bytes = None,
-        lease: bytes = None,
-        rekey_to: str = None,
-        atc: AtomicTransactionComposer = None,
+        local_schema: transaction.StateSchema | None = None,
+        global_schema: transaction.StateSchema | None = None,
+        approval_program: bytes | None = None,
+        clear_program: bytes | None = None,
+        extra_pages: int | None = None,
+        accounts: list[str] | None = None,
+        foreign_apps: list[int] | None = None,
+        foreign_assets: list[int] | None = None,
+        boxes: list[tuple[int, bytes]] | None = None,
+        note: bytes | None = None,
+        lease: bytes | None = None,
+        rekey_to: str | None = None,
+        atc: AtomicTransactionComposer | None = None,
         **kwargs,
     ) -> ABIResult:
 
@@ -500,13 +478,7 @@ class ApplicationClient:
             )
             return method_results.pop()
 
-        try:
-            result = atc.execute(self.client, 4)
-        except Exception as e:
-            if "logic" in str(e):
-                raise self.wrap_approval_exception(e)
-            else:
-                raise e
+        result = self._execute_atc(atc)
 
         return result.abi_results.pop()
 
@@ -576,22 +548,22 @@ class ApplicationClient:
         self,
         atc: AtomicTransactionComposer,
         method: abi.Method | HandlerFunc,
-        sender: str = None,
-        signer: TransactionSigner = None,
-        suggested_params: transaction.SuggestedParams = None,
+        sender: str | None = None,
+        signer: TransactionSigner | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        local_schema: transaction.StateSchema = None,
-        global_schema: transaction.StateSchema = None,
-        approval_program: bytes = None,
-        clear_program: bytes = None,
-        extra_pages: int = None,
-        accounts: list[str] = None,
-        foreign_apps: list[int] = None,
-        foreign_assets: list[int] = None,
-        boxes: list[tuple[int, bytes]] = None,
-        note: bytes = None,
-        lease: bytes = None,
-        rekey_to: str = None,
+        local_schema: transaction.StateSchema | None = None,
+        global_schema: transaction.StateSchema | None = None,
+        approval_program: bytes | None = None,
+        clear_program: bytes | None = None,
+        extra_pages: int | None = None,
+        accounts: list[str] | None = None,
+        foreign_apps: list[int] | None = None,
+        foreign_assets: list[int] | None = None,
+        boxes: list[tuple[int, bytes]] | None = None,
+        note: bytes | None = None,
+        lease: bytes | None = None,
+        rekey_to: str | None = None,
         **kwargs,
     ):
 
@@ -664,7 +636,7 @@ class ApplicationClient:
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 
-    def fund(self, amt: int, addr: str = None) -> str:
+    def fund(self, amt: int, addr: str | None = None) -> str:
         """convenience method to pay the address passed, defaults to paying the app address for this client from the current signer"""
         sender = self.get_sender()
         signer = self.get_signer()
@@ -695,7 +667,7 @@ class ApplicationClient:
         )
 
     def get_account_state(
-        self, account: str = None, raw: bool = False
+        self, account: str | None = None, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
         """gets the local state info for the app id set and the account specified"""
@@ -753,7 +725,7 @@ class ApplicationClient:
 
     def get_suggested_params(
         self,
-        sp: transaction.SuggestedParams = None,
+        sp: transaction.SuggestedParams | None = None,
     ) -> transaction.SuggestedParams:
 
         if sp is not None:
@@ -764,13 +736,26 @@ class ApplicationClient:
 
         return self.client.suggested_params()
 
-    def wrap_approval_exception(self, e: Exception) -> Exception:
-        if self.app.approval_program is None or self.approval_src_map is None:
-            return e
+    def _execute_atc(
+        self, atc: AtomicTransactionComposer, wait_rounds: int = 4
+    ) -> AtomicTransactionResponse:
+        try:
+            return atc.execute(self.client, wait_rounds=wait_rounds)
+        except Exception as ex:
+            if (src_map := self.approval_src_map) and (
+                program := self.approval_program
+            ):
+                logic_error_data = parse_logic_error(str(ex))
+                if logic_error_data is not None:
+                    raise LogicException(
+                        logic_error=ex,
+                        program=program,
+                        map=src_map,
+                        **logic_error_data,
+                    ) from ex
+            raise ex
 
-        return LogicException(e, self.app.approval_program, self.approval_src_map)
-
-    def get_signer(self, signer: TransactionSigner = None) -> TransactionSigner:
+    def get_signer(self, signer: TransactionSigner | None = None) -> TransactionSigner:
         if signer is not None:
             return signer
 
@@ -779,7 +764,9 @@ class ApplicationClient:
 
         raise Exception("No signer provided")
 
-    def get_sender(self, sender: str = None, signer: TransactionSigner = None) -> str:
+    def get_sender(
+        self, sender: str | None = None, signer: TransactionSigner | None = None
+    ) -> str:
         if sender is not None:
             return sender
 

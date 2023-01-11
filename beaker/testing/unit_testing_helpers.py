@@ -32,7 +32,7 @@ class UnitTestingApp(Application):
     An instance of this class is passed to assert_output to check the return value against what you expect.
     """
 
-    def __init__(self, expr_to_test: pt.Expr = None):
+    def __init__(self, expr_to_test: pt.Expr | None = None):
         self.expr = expr_to_test
         super().__init__()
 
@@ -109,10 +109,7 @@ def assert_output(
                 for x in range(opups):
                     app_client.add_method_call(atc, app.opup, note=str(x).encode())
 
-                try:
-                    results = atc.execute(algod_client, 2)
-                except Exception as e:
-                    raise app_client.wrap_approval_exception(e)
+                results = app_client._execute_atc(atc, wait_rounds=2)
 
                 assert results.abi_results[0].return_value == output
             else:

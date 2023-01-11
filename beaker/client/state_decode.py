@@ -13,7 +13,7 @@ def str_or_hex(v: bytes) -> str:
 
 
 def decode_state(
-    state: list[dict[str, Any]], raw=False
+    state: list[dict[str, Any]], raw: bool = False
 ) -> dict[str | bytes, bytes | str | int | None]:
 
     decoded_state: dict[str | bytes, bytes | str | int | None] = {}

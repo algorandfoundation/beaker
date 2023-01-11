@@ -87,6 +87,20 @@ def test_single_external():
         sh.contract.get_method_by_name("made up")
 
 
+def test_internal_not_exposed():
+    class SingleInternal(Application):
+        @external
+        def doit(self, *, output: pt.abi.Bool):
+            return self.do_permissioned_thing(output=output)
+
+        @internal
+        def do_permissioned_thing(self, *, output: pt.abi.Bool):
+            return pt.Seq((b := pt.abi.Bool()).set(pt.Int(1)), output.set(b))
+
+    si = SingleInternal()
+    assert len(si.methods) == 1, "Expected a single external"
+
+
 def test_method_override():
     class MethodOverride(Application):
         @external(name="handle")
