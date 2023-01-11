@@ -395,9 +395,23 @@ def _remove_self(fn: HandlerFunc) -> HandlerFunc:
     return fn
 
 
+@overload
+def internal(
+    return_type_or_handler: HandlerFunc,
+) -> HandlerFunc:
+    ...
+
+
+@overload
+def internal(
+    return_type_or_handler: TealType,
+) -> DecoratorFunc:
+    ...
+
+
 def internal(
     return_type_or_handler: TealType | HandlerFunc,
-) -> HandlerFunc:
+) -> HandlerFunc | DecoratorFunc:
     """creates a subroutine to be called by logic internally
 
     Args:
@@ -434,7 +448,7 @@ def internal(
     if fn is not None:
         return _impl(fn)
 
-    return _impl  # type: ignore
+    return _impl
 
 
 @overload
