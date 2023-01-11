@@ -10,5 +10,5 @@ echo "Building dist files"
 poetry build
 
 echo "Uploading to pypi"
-poetry publish
+poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
 
