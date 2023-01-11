@@ -3,7 +3,7 @@ from beaker.sandbox import get_algod_client, get_accounts
 
 # Leet hax, ignore
 if __name__ == "__main__":
-    from contract import StateExample
+    from contract import StateExample  # type: ignore
 else:
     from .contract import StateExample
 
@@ -21,7 +21,8 @@ def demo():
     app_client = ApplicationClient(client, StateExample(), signer=acct.signer)
     app_id, app_address, transaction_id = app_client.create()
     print(
-        f"DEPLOYED: App ID: {app_id} Address: {app_address} Transaction ID: {transaction_id}"
+        f"DEPLOYED: App ID: {app_id} Address: {app_address} "
+        + f"Transaction ID: {transaction_id}"
     )
 
     app_client.opt_in()

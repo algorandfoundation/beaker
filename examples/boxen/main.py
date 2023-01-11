@@ -1,13 +1,12 @@
 from algosdk.abi import ABIType
 from algosdk.encoding import encode_address, decode_address
 from algosdk.atomic_transaction_composer import TransactionWithSigner
-from algosdk.future.transaction import *
+from algosdk.future.transaction import AssetOptInTxn, PaymentTxn
 
-from pyteal import *
-from beaker import *
+from beaker import client, consts, sandbox
 
 if __name__ == "__main__":
-    from application import AppMember, MembershipRecord, MembershipClub
+    from application import AppMember, MembershipRecord, MembershipClub  # type: ignore
 else:
     from .application import AppMember, MembershipRecord, MembershipClub
 

@@ -1,9 +1,9 @@
 import json
 from algosdk.abi import ABIType
-from beaker import *
+from beaker import client, sandbox
 
 if __name__ == "__main__":
-    from contract import OracleDataCache
+    from contract import OracleDataCache  # type: ignore
 else:
     from .contract import OracleDataCache
 

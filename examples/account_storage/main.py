@@ -2,9 +2,34 @@ import random
 import string
 from typing import cast
 import algosdk.future.transaction as txns
-from algosdk.atomic_transaction_composer import *
-from pyteal import *
-from beaker import *
+from algosdk.atomic_transaction_composer import (
+    LogicSigTransactionSigner,
+    AtomicTransactionComposer,
+)
+from pyteal import (
+    Approve,
+    Assert,
+    GetBit,
+    Int,
+    Not,
+    ScratchVar,
+    Seq,
+    SetBit,
+    TealType,
+    Txn,
+    abi,
+)
+from beaker import (
+    AccountStateBlob,
+    Application,
+    LogicSignature,
+    TemplateVariable,
+    client,
+    consts,
+    external,
+    opt_in,
+    sandbox,
+)
 from beaker.precompile import LSigPrecompile
 
 # Simple logic sig, will approve _any_ transaction
@@ -54,7 +79,8 @@ class DiskHungry(Application):
     @external
     def flip_bit(self, nonce_acct: abi.Account, bit_idx: abi.Uint32):
         """
-        Allows caller to flip a bit at a given index for some account that has already opted in
+        Allows caller to flip a bit at a given index for some
+        account that has already opted in
         """
 
         return Seq(
@@ -102,7 +128,8 @@ def demo():
         lsig_signer: LogicSigTransactionSigner = app.tmpl_acct.template_signer(nonce)
 
         print(
-            f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"
+            f"Creating templated lsig with nonce {nonce} "
+            + f"and address {lsig_signer.lsig.address()}"
         )
 
         # Create the account and opt it into the app, also rekeys it to the app address
