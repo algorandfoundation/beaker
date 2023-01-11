@@ -176,7 +176,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.lib.storage.ListElement.has_return">
-<span class="sig-name descname"><span class="pre">has_return</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/lib/storage/_list.html#ListElement.has_return"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.ListElement.has_return" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">has_return</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/beaker/lib/storage/_list.html#ListElement.has_return"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.ListElement.has_return" title="Permalink to this definition"></a></dt>
 <dd><p>Check if this expression always returns from the current subroutine or program.</p>
 </dd></dl>
 
@@ -204,7 +204,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.lib.storage.ListElement.type_of">
-<span class="sig-name descname"><span class="pre">type_of</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/lib/storage/_list.html#ListElement.type_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.ListElement.type_of" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">type_of</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TealType</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/_list.html#ListElement.type_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.ListElement.type_of" title="Permalink to this definition"></a></dt>
 <dd><p>Get the return type of this expression.</p>
 </dd></dl>
 
@@ -305,7 +305,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;create membership token and receive initial seed payment&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;create membership token and receive initial seed payment&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">Assert</span><span class="p">(</span>
                 <span class="n">seed</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">receiver</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>

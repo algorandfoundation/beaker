@@ -122,22 +122,22 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add a and b, return the result&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a and b, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Multiply a and b, return the result&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Multiply a and b, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">*</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">sub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Subtract b from a, return the result&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Subtract b from a, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">-</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">div</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Divide a by b, return the result&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Divide a by b, return the result&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">/</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -234,7 +234,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;increment the counter&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;increment the counter&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
             <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
@@ -242,7 +242,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">decrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;decrement the counter&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;decrement the counter&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">-</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
             <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
@@ -270,7 +270,7 @@ The constructor may also be passed an app_id directly if one is already deployed
 
 
 <span class="k">class</span> <span class="nc">ExpensiveApp</span><span class="p">(</span><span class="n">OpUp</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Do expensive work to demonstrate inheriting from OpUp&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Do expensive work to demonstrate inheriting from OpUp&quot;&quot;&quot;</span>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">hash_it</span><span class="p">(</span>
@@ -318,7 +318,7 @@ Upon finding a resolvable it will look up the state value, call the method. The 
 <p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example above, the <code class="docutils literal notranslate"><span class="pre">ExpensiveApp</span></code> inherits from the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> app. The <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> app contains an <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> for the target app we’d like to call
 when we make opup requests.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TargetApp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Simple app that allows the creator to call `opup` in order to increase its opcode budget&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple app that allows the creator to call `opup` in order to increase its opcode budget&quot;&quot;&quot;</span>
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">opup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -326,7 +326,7 @@ when we make opup requests.</p>
 
 
 <span class="k">class</span> <span class="nc">OpUp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;OpUp creates a &quot;target&quot; application to make opup calls against in order to increase our opcode budget.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpUp creates a &quot;target&quot; application to make opup calls against in order to increase our opcode budget.&quot;&quot;&quot;</span>
 
     <span class="c1">#: The app to be created to receiver opup requests</span>
     <span class="n">target</span><span class="p">:</span> <span class="n">AppPrecompile</span> <span class="o">=</span> <span class="n">AppPrecompile</span><span class="p">(</span><span class="n">TargetApp</span><span class="p">())</span>
@@ -338,7 +338,7 @@ when we make opup requests.</p>
 for the target Application as a <code class="docutils literal notranslate"><span class="pre">Bytes</span></code> Expression.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="nd">@internal</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">create_opup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;internal method to create the target application&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;internal method to create the target application&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Begin</span><span class="p">(),</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">SetFields</span><span class="p">(</span>

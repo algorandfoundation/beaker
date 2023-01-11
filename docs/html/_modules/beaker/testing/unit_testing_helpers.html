@@ -93,7 +93,7 @@
 
 <div class="viewcode-block" id="UnitTestingApp"><a class="viewcode-back" href="../../../testing.html#beaker.testing.UnitTestingApp">[docs]</a><span class="k">class</span> <span class="nc">UnitTestingApp</span><span class="p">(</span><span class="n">Application</span><span class="p">):</span>
 
-    <span class="sd">&quot;&quot;&quot;Base unit testable application.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base unit testable application.</span>
 
 <span class="sd">    There are 2 ways to use this class</span>
 
@@ -109,7 +109,7 @@
 <span class="sd">    An instance of this class is passed to assert_output to check the return value against what you expect.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_to_test</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_to_test</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">expr_to_test</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
@@ -148,7 +148,7 @@
     <span class="n">outputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="n">opups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates and calls the UnitTestingApp passed and compares the return value with the expected output</span>
 
 <span class="sd">    :param app: An instance of a UnitTestingApp to make call against its `unit_test` method</span>
@@ -186,10 +186,7 @@
                 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">opups</span><span class="p">):</span>
                     <span class="n">app_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span><span class="n">atc</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">opup</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
 
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">results</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algod_client</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">app_client</span><span class="o">.</span><span class="n">wrap_approval_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="n">results</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">_execute_atc</span><span class="p">(</span><span class="n">atc</span><span class="p">,</span> <span class="n">wait_rounds</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
                 <span class="k">assert</span> <span class="n">results</span><span class="o">.</span><span class="n">abi_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">return_value</span> <span class="o">==</span> <span class="n">output</span>
             <span class="k">else</span><span class="p">:</span>

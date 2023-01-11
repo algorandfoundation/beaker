@@ -92,13 +92,15 @@
     <span class="n">Reject</span><span class="p">,</span>
     <span class="n">Mode</span><span class="p">,</span>
     <span class="n">ScratchVar</span><span class="p">,</span>
+    <span class="n">TealBlock</span><span class="p">,</span>
+    <span class="n">TealSimpleBlock</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">get_handler_config</span>
 <span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">AppPrecompile</span><span class="p">,</span> <span class="n">LSigPrecompile</span>
 
 
 <div class="viewcode-block" id="TemplateVariable"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.TemplateVariable">[docs]</a><span class="k">class</span> <span class="nc">TemplateVariable</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A Template Variable to be used as an attribute on LogicSignatures that</span>
 <span class="sd">    need some hardcoded well defined behavior.</span>
 
@@ -106,8 +108,8 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;initialize the TemplateVariable and the scratch var it is stored in&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;initialize the TemplateVariable and the scratch var it is stored in&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="n">stack_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span> <span class="s2">&quot;Must be bytes or uint&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">=</span> <span class="n">stack_type</span>
@@ -115,7 +117,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
 <div class="viewcode-block" id="TemplateVariable.get_name"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.TemplateVariable.get_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;returns the name of the template variable that should be present in the output TEAL&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns the name of the template variable that should be present in the output TEAL&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">TealInputError</span><span class="p">(</span>
             <span class="s2">&quot;Name undefined in template variable&quot;</span>
         <span class="p">)</span>
@@ -124,15 +126,15 @@
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(TemplateVariable </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__teal__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">CompileOptions</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__teal__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">CompileOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TealBlock</span><span class="p">,</span> <span class="n">TealSimpleBlock</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scratch</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">__teal__</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">has_return</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">has_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TealType</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span>
 
     <span class="k">def</span> <span class="nf">_init_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
@@ -142,7 +144,7 @@
 
 
 <div class="viewcode-block" id="LogicSignature"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.LogicSignature">[docs]</a><span class="k">class</span> <span class="nc">LogicSignature</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    LogicSignature allows the definition of a logic signature program.</span>
 
 <span class="sd">    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes</span>
@@ -152,7 +154,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MAX_TEAL_VERSION</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;initialize the logic signature and identify relevant attributes&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;initialize the logic signature and identify relevant attributes&quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span> <span class="o">=</span> <span class="n">version</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">program</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -223,8 +225,8 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">program</span>
 
-<div class="viewcode-block" id="LogicSignature.evaluate"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.LogicSignature.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="LogicSignature.evaluate"><a class="viewcode-back" href="../../lsig.html#beaker.logic_signature.LogicSignature.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        evaluate is the main entry point to the logic of the lsig.</span>
 
 <span class="sd">        Override this method to handle arbitrary logic.</span>

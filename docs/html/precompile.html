@@ -122,18 +122,26 @@ should be fully compiled prior to constructing its own program.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.AppPrecompile.compile">
-<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#AppPrecompile.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.AppPrecompile.compile" title="Permalink to this definition"></a></dt>
-<dd><p>fully compile this app precompile by recursively compiling children depth first</p>
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/beaker/precompile.html#AppPrecompile.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.AppPrecompile.compile" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>fully compile this app precompile by recursively</dt><dd><p>compiling children depth first</p>
+</dd>
+</dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Must be called (even indirectly) prior to using the <code class="docutils literal notranslate"><span class="pre">approval</span></code> and <code class="docutils literal notranslate"><span class="pre">clear</span></code> fields</p>
+<dl class="simple">
+<dt>Must be called (even indirectly) prior to using</dt><dd><p>the <code class="docutils literal notranslate"><span class="pre">approval</span></code> and <code class="docutils literal notranslate"><span class="pre">clear</span></code> fields</p>
+</dd>
+</dl>
 </div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.AppPrecompile.get_create_config">
 <span class="sig-name descname"><span class="pre">get_create_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">pyteal.TxnField</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pyteal.Expr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">pyteal.Expr</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#AppPrecompile.get_create_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.AppPrecompile.get_create_config" title="Permalink to this definition"></a></dt>
-<dd><p>get a dictionary of the fields and values that should be set when creating this application that can be passed directly to the InnerTxnBuilder.Execute method</p>
+<dd><p>get a dictionary of the fields and values that should be set when
+creating this application that can be passed directly to
+the InnerTxnBuilder.Execute method</p>
 </dd></dl>
 
 </dd></dl>
@@ -145,11 +153,11 @@ should be fully compiled prior to constructing its own program.</p>
 should be fully compiled prior to constructing its own program.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.compile">
-<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.compile" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.compile" title="Permalink to this definition"></a></dt>
 <dd><p>fully compile this lsig precompile by recursively compiling children depth first</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Must be called (even indirectly) prior to using the <code class="docutils literal notranslate"><span class="pre">approval</span></code> and <code class="docutils literal notranslate"><span class="pre">clear</span></code> fields</p>
+<p>Must be called (even indirectly) prior to using the <code class="docutils literal notranslate"><span class="pre">logic</span></code> field</p>
 </div>
 </dd></dl>
 
@@ -175,7 +183,7 @@ an ApplicationClient or AtomicTransactionComposer.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.LSigPrecompile.template_signer">
-<span class="sig-name descname"><span class="pre">template_signer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LogicSigTransactionSigner</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.template_signer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.template_signer" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">template_signer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.11)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LogicSigTransactionSigner</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#LSigPrecompile.template_signer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.LSigPrecompile.template_signer" title="Permalink to this definition"></a></dt>
 <dd><p>Get the Signer object for a populated version of the template contract</p>
 </dd></dl>
 
@@ -188,24 +196,32 @@ an ApplicationClient or AtomicTransactionComposer.</p>
 and LSigPrecompile for Applications and Logic Signature programs, respectively.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile.assemble">
-<span class="sig-name descname"><span class="pre">assemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.assemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.assemble" title="Permalink to this definition"></a></dt>
-<dd><p>Fully compile the program source to binary and generate a source map for matching pc to line number</p>
+<span class="sig-name descname"><span class="pre">assemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.assemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.assemble" title="Permalink to this definition"></a></dt>
+<dd><p>Fully compile the program source to binary and generate a
+source map for matching pc to line number</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile.hash">
 <span class="sig-name descname"><span class="pre">hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.hash" title="Permalink to this definition"></a></dt>
-<dd><p>hash returns an expression for this Precompile.  It will fail if any template_values are set.</p>
+<dd><dl class="simple">
+<dt>hash returns an expression for this Precompile.</dt><dd><p>It will fail if any template_values are set.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>page_idx</strong> (<em>optional</em>) – If the application has multiple pages, the index of the page can be specified to get the program hash for that page.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>page_idx</strong> (<em>optional</em>) – If the application has multiple pages,</p></li>
+<li><p><strong>hash</strong> (<em>the index of the page can be specified to get the program</em>) – </p></li>
+<li><p><strong>page.</strong> (<em>for that</em>) – </p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.precompile.Precompile.populate_template">
-<span class="sig-name descname"><span class="pre">populate_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.11)"><span class="pre">bytes</span></a></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.populate_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.populate_template" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">populate_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.11)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.11)"><span class="pre">bytes</span></a></span></span><a class="reference internal" href="_modules/beaker/precompile.html#Precompile.populate_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.Precompile.populate_template" title="Permalink to this definition"></a></dt>
 <dd><p>populate_template returns the bytes resulting from patching the set of
 arguments passed into the blank binary</p>
 <p>The args passed should be of the same type and in the same order as the
@@ -320,7 +336,7 @@ hash given some set of values that should be included in the logic itself</p>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">increment_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Increment the counter global state.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the counter global state.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">increment</span><span class="p">(),</span>
             <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">get</span><span class="p">()),</span>
@@ -341,7 +357,7 @@ hash given some set of values that should be included in the logic itself</p>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">create_child_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
                 <span class="p">{</span>
@@ -356,7 +372,7 @@ hash given some set of values that should be included in the logic itself</p>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">create_child_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
                 <span class="p">{</span>
@@ -375,7 +391,7 @@ hash given some set of values that should be included in the logic itself</p>
 
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">create_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create a new parent app.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new parent app.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
                 <span class="p">{</span>

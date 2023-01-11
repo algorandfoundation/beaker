@@ -91,7 +91,7 @@
 
 
 <div class="viewcode-block" id="Mapping"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.Mapping">[docs]</a><span class="k">class</span> <span class="nc">Mapping</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Mapping provides an abstraction to store some typed data in a box keyed with a typed key&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mapping provides an abstraction to store some typed data in a box keyed with a typed key&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -99,7 +99,7 @@
         <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">],</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Initialize a Mapping object with details about storage</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Mapping object with details about storage</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_type: The type that will be used for the key. This type *MUST* encode to a byte string of &lt; 64 bytes or it will fail at runtime.</span>
@@ -131,11 +131,13 @@
             <span class="k">case</span> <span class="n">Expr</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">MapElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix_key</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span><span class="p">)</span></div>
+                <span class="k">return</span> <span class="n">MapElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix_key</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span><span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">Expr</span> <span class="o">|</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MapElement"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.MapElement">[docs]</a><span class="k">class</span> <span class="nc">MapElement</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Container type for a specific box key and type&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container type for a specific box key and type&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">]):</span>
         <span class="k">assert</span> <span class="n">key</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealTypeError</span><span class="p">(</span>
@@ -146,11 +148,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span> <span class="o">=</span> <span class="n">value_type</span>
 
 <div class="viewcode-block" id="MapElement.exists"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.MapElement.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;check to see if a box with this key exists.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;check to see if a box with this key exists.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">maybe</span> <span class="o">:=</span> <span class="n">BoxGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">),</span> <span class="n">maybe</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="MapElement.store_into"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.MapElement.store_into">[docs]</a>    <span class="k">def</span> <span class="nf">store_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;decode the bytes from this box into an abi type.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;decode the bytes from this box into an abi type.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            val: An instance of the type to be populated with the bytes from the box</span>
@@ -158,11 +160,11 @@
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="MapElement.get"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.MapElement.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;get the bytes from this box.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;get the bytes from this box.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">maybe</span> <span class="o">:=</span> <span class="n">BoxGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">),</span> <span class="n">Assert</span><span class="p">(</span><span class="n">maybe</span><span class="o">.</span><span class="n">hasValue</span><span class="p">()),</span> <span class="n">maybe</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="MapElement.set"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.MapElement.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span> <span class="o">|</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;overwrites the contents of the box with the provided value.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;overwrites the contents of the box with the provided value.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            val: An instance of the type or an Expr that evaluates to bytes</span>
@@ -183,7 +185,7 @@
                 <span class="k">return</span> <span class="n">BoxPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="MapElement.delete"><a class="viewcode-back" href="../../../../boxes.html#beaker.lib.storage.MapElement.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;delete the box at this key&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;delete the box at this key&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">BoxDelete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div></div>
 </pre></div>
 
