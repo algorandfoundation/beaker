@@ -1,5 +1,6 @@
 # Unreleased
 
+<!--next-version-placeholder-->
 
 # 0.4.1
 
