@@ -79,6 +79,7 @@ jobs:
             --define=version_source="commit" \
             --define=branch=master \
             --define=upload_to_repository=true \
+            --define=patch_without_tag=true \
             publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
