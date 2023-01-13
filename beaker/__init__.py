@@ -25,7 +25,7 @@ from .decorators import (
     clear_state,
 )
 from .logic_signature import LogicSignature
-from .precompile import Precompile, AppPrecompile, LSigPrecompile
+from .precompile import Program, AppPrecompile, LSigPrecompile
 
 from . import client
 from . import sandbox

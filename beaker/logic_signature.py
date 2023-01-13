@@ -121,6 +121,3 @@ class LogicSignature:
     @property
     def template_variables(self) -> list[RuntimeTemplateVariable]:
         return list(self._rtt_vars.values())
-
-    def compile(self) -> str:
-        return self.program

@@ -1,6 +1,5 @@
 import pytest
 import pyteal as pt
-from algosdk import encoding
 
 from beaker.application import Application
 from beaker.decorators import external
@@ -178,8 +177,6 @@ def test_nested_precompile():
     assert oa.child.clear._program is not None
     assert oa.lsig.logic._program is not None
 
-    assert len(oa.lsig.logic._template_values) == 0
-
     assert oa.child.approval._binary is None
     assert oa.child.clear._binary is None
     assert oa.lsig.logic._binary is None
@@ -252,12 +249,11 @@ def test_extra_page_population():
     assert app_precompile.clear.program_pages is not None
     recovered_approval_binary = b""
     for approval_page in app_precompile.approval.program_pages:
-        assert len(approval_page._hash_digest) == 32
-        recovered_approval_binary += approval_page._binary
+        recovered_approval_binary += bytes.fromhex(approval_page.byte_str)
 
     recovered_clear_binary = b""
     for clear_page in app_precompile.clear.program_pages:
-        recovered_clear_binary += clear_page._binary
+        recovered_clear_binary += bytes.fromhex(clear_page.byte_str)
 
     assert recovered_approval_binary == app_precompile.approval._binary
     assert recovered_clear_binary == app_precompile.clear._binary
@@ -276,25 +272,15 @@ def _check_app_precompiles(app_precompile: AppPrecompile):
     assert app_precompile.approval.binary.byte_str != b""
     assert app_precompile.approval._map is not None
     assert app_precompile.approval._program_hash is not None
-    assert app_precompile.approval._template_values == []
 
     assert len(app_precompile.approval.program_pages) > 0
-    if len(app_precompile.approval.program_pages) == 1:
-        assert app_precompile.approval.program_pages[
-            0
-        ]._hash_digest == encoding.decode_address(app_precompile.approval._program_hash)
 
     assert app_precompile.clear._program != ""
     assert app_precompile.clear._binary is not None
     assert app_precompile.clear.binary.byte_str != b""
     assert app_precompile.clear._map is not None
     assert app_precompile.clear._program_hash is not None
-    assert app_precompile.clear._template_values == []
     assert len(app_precompile.clear.program_pages) > 0
-    if len(app_precompile.clear.program_pages) == 1:
-        assert app_precompile.clear.program_pages[
-            0
-        ]._hash_digest == encoding.decode_address(app_precompile.clear._program_hash)
 
 
 def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
@@ -306,3 +292,5 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
     assert len(lsig_precompile.logic._template_values) == len(
         lsig_precompile.lsig.template_variables
     )
+    if not lsig_precompile.lsig.template_variables:
+        assert lsig_precompile.logic.hash()

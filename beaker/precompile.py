@@ -59,47 +59,54 @@ class PrecompileTemplateValue:
     pc: int = 0
 
 
-@dataclass
-class ProgramPage:
-    #: index of the program page
-    index: int = field(kw_only=True, init=True)
-    #: binary of the page
-    _binary: bytes = field(kw_only=True, init=True)
-    #: bytes of the page as pyteal Bytes
-    binary: Bytes = field(init=False)
-    #: hash of the page in native bytes
-    _hash_digest: bytes = field(kw_only=True, init=True)
-    #: hash of the page as pyteal Addr
-    hash_digest: Bytes = field(init=False)
-
-    def __post_init__(self) -> None:
-        self.binary = Bytes(self._binary)
-        self.hash_digest = Bytes(self._hash_digest)
-
-
-class Precompile:
+class Program:
     """
     Precompile takes a TEAL program and handles its compilation. Used by AppPrecompile
     and LSigPrecompile for Applications and Logic Signature programs, respectively.
     """
 
+    def __init__(self, program: str):
+        self._program = program
+        self._binary: bytes | None = None
+        self._program_hash: str | None = None
+        self._map: SourceMap | None = None
+        self._asserts: dict[int, ProgramAssertion] | None = None
+
+    @property
+    def binary(self) -> Bytes:
+        return Bytes(self._binary or "")
+
+    def assemble(self, client: AlgodClient) -> None:
+        """
+        Fully compile the program source to binary and generate a
+        source map for matching pc to line number
+        """
+        result = client.compile(self._program, source_map=True)
+        self._binary = base64.b64decode(result["result"])
+        self._program_hash = result["hash"]
+        self._map = SourceMap(result["sourcemap"])
+        self._asserts = _gather_asserts(self._program, self._map)
+
+
+class AppProgram(Program):
+    @property
+    def program_pages(self) -> list[Expr]:
+        assert self._binary is not None
+        return [
+            Bytes(self._binary[i : i + APP_PAGE_MAX_SIZE])
+            for i in range(0, len(self._binary), APP_PAGE_MAX_SIZE)
+        ]
+
+
+class LSigProgram(Program):
     def __init__(
         self,
         program: str,
         *,
         runtime_template_variables: List["RuntimeTemplateVariable"] | None = None,
     ):
-        self._binary: bytes | None = None
-        self._program_hash: str | None = None
-        self._map: SourceMap | None = None
-        self.program_pages: list[ProgramPage] = []
-        self._asserts: dict[int, ProgramAssertion] | None = None
-        self.binary = Bytes("")
-
         self._template_values: list[PrecompileTemplateValue] = []
-        if not runtime_template_variables:
-            self._program = program
-        else:
+        if runtime_template_variables:
             lines = program.splitlines()
             # Replace the teal program TMPL_* template variables with
             # the 0 value for the given type and save the list of TemplateValues
@@ -117,57 +124,29 @@ class Precompile:
                 )
                 self._template_values.append(tv)
 
-            self._program = "\n".join(lines)
+            program = "\n".join(lines)
+
+        super().__init__(program=program)
 
     def assemble(self, client: AlgodClient) -> None:
-        """
-        Fully compile the program source to binary and generate a
-        source map for matching pc to line number
-        """
-        result = client.compile(self._program, source_map=True)
-        self._binary = base64.b64decode(result["result"])
-        self._program_hash = result["hash"]
+        super().assemble(client)
+        assert self._map is not None
 
-        self._map = SourceMap(result["sourcemap"])
-
-        self._asserts = _gather_asserts(self._program, self._map)
-
-        self.binary = Bytes(self._binary)
         for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
 
-        def _hash_program(data: bytes) -> bytes:
-            """compute the hash"""
-            chksum = SHA512.new(truncate="256")
-            chksum.update(PROGRAM_DOMAIN_SEPARATOR.encode() + data)
-            return chksum.digest()
-
-        self.program_pages = [
-            ProgramPage(
-                index=i,
-                _binary=self._binary[i : i + APP_PAGE_MAX_SIZE],
-                _hash_digest=_hash_program(self._binary[i : i + APP_PAGE_MAX_SIZE]),
-            )
-            for i in range(0, len(self._binary), APP_PAGE_MAX_SIZE)
-        ]
-
-    def hash(self, page_idx: int = 0) -> Expr:
+    def hash(self) -> Expr:
         """hash returns an expression for this Precompile.
-                It will fail if any template_values are set.
-
-        Args:
-            page_idx(optional): If the application has multiple pages,
-            the index of the page can be specified to get the program hash
-            for that page.
-
+        It will fail if any template_values are set.
         """
         assert self._binary is not None
-        assert len(self._template_values) == 0
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
 
-        return self.program_pages[page_idx].hash_digest
+        chksum = SHA512.new(truncate="256")
+        chksum.update(PROGRAM_DOMAIN_SEPARATOR.encode() + self._binary)
+        return Bytes(chksum.digest())
 
     def populate_template(self, *args: str | bytes | int) -> bytes:
         """
@@ -183,7 +162,7 @@ class Precompile:
         assert len(args) == len(self._template_values)
 
         # Get a copy of the binary so we can work on it in place
-        populated_binary = list(self._binary).copy()
+        populated_binary = list(self._binary)
         # Any time we add bytes, we need to update the offset so the rest
         # of the pc values can be updated to account for the difference
         offset = 0
@@ -293,11 +272,11 @@ class AppPrecompile:
 
     def __init__(self, app: "Application"):
         #: The App to be used and compiled before it's parent
-        self.app: "Application" = app
+        self.app = app
         #: The App's approval program as a Precompile
-        self.approval: Precompile = Precompile("")
+        self.approval = AppProgram("")
         #: The App's clear program as a Precompile
-        self.clear: Precompile = Precompile("")
+        self.clear = AppProgram("")
 
     def compile(self, client: AlgodClient) -> None:
         """fully compile this app precompile by recursively
@@ -313,12 +292,10 @@ class AppPrecompile:
         # at this point, we should have all the dependant logic built
         # so we can compile the app teal
         approval, clear = self.app.compile(client)
-        self.approval = Precompile(approval)
-        self.clear = Precompile(clear)
-        if self.approval._binary is None:
-            self.approval.assemble(client)
-        if self.clear._binary is None:
-            self.clear.assemble(client)
+        self.approval = AppProgram(approval)
+        self.clear = AppProgram(clear)
+        self.approval.assemble(client)
+        self.clear.assemble(client)
 
     def get_create_config(self) -> dict[TxnField, Expr | list[Expr]]:
         """get a dictionary of the fields and values that should be set when
@@ -333,12 +310,8 @@ class AppPrecompile:
             TxnField.local_num_uints: Int(self.app.acct_state.num_uints),
             TxnField.global_num_byte_slices: Int(self.app.app_state.num_byte_slices),
             TxnField.global_num_uints: Int(self.app.app_state.num_uints),
-            TxnField.approval_program_pages: [
-                page.binary for page in self.approval.program_pages
-            ],
-            TxnField.clear_state_program_pages: [
-                page.binary for page in self.clear.program_pages
-            ],
+            TxnField.approval_program_pages: self.approval.program_pages,
+            TxnField.clear_state_program_pages: self.clear.program_pages,
             TxnField.extra_program_pages: Int(
                 num_extra_program_pages(self.approval._binary, self.clear._binary)
             ),
@@ -356,7 +329,9 @@ class LSigPrecompile:
         self.lsig: "LogicSignature" = lsig
 
         #: The LogicSignature's logic as a Precompile
-        self.logic: Precompile = Precompile("")
+        self.logic = LSigProgram(
+            lsig.program, runtime_template_variables=lsig.template_variables
+        )
 
     def compile(self, client: AlgodClient) -> None:
         """
@@ -365,14 +340,7 @@ class LSigPrecompile:
         Note:
             Must be called (even indirectly) prior to using the ``logic`` field
         """
-        # at this point, we should have all the dependant logic built
-        # so we can compile the lsig teal
-        self.logic = Precompile(
-            self.lsig.compile(), runtime_template_variables=self.lsig.template_variables
-        )
-
-        if self.logic._binary is None:
-            self.logic.assemble(client)
+        self.logic.assemble(client)
 
     def template_signer(self, *args: str | bytes | int) -> LogicSigTransactionSigner:
         """Get the Signer object for a populated version of the template contract"""

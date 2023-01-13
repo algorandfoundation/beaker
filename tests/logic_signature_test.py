@@ -4,14 +4,12 @@ from beaker.logic_signature import LogicSignature
 
 def test_simple_logic_signature():
     lsig = LogicSignature(evaluate=pt.Reject())
-    program = lsig.compile()
-    assert program
+    assert lsig.program
 
 
 def test_evaluate_logic_signature():
     lsig = LogicSignature(evaluate=pt.Approve())
-    program = lsig.compile()
-    assert program
+    assert lsig.program
 
 
 def test_handler_logic_signature():
