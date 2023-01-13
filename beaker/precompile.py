@@ -1,5 +1,6 @@
 import base64
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import TYPE_CHECKING, List
 from pyteal import (
     Seq,
@@ -32,9 +33,6 @@ if TYPE_CHECKING:
     from beaker.logic_signature import LogicSignature, RuntimeTemplateVariable
 
 
-#: The prefix for template variables that should be substituted
-TMPL_PREFIX = "TMPL_"
-
 #: The opcode that should be present just before the byte template variable
 PUSH_BYTES = "pushbytes"
 #: The opcode that should be present just before the uint64 template variable
@@ -65,35 +63,39 @@ class Program:
     """
 
     def __init__(self, program: str):
-        self._program = program
-        self._binary: bytes | None = None
-        self._program_hash: str | None = None
-        self._map: SourceMap | None = None
-        self._asserts: dict[int, ProgramAssertion] | None = None
-
-    @property
-    def binary(self) -> Bytes:
-        return Bytes(self._binary or "")
+        self.teal = program
+        self.raw_binary: bytes | None = None
+        self.binary_hash: str | None = None
+        self.source_map: SourceMap | None = None
 
     def assemble(self, client: AlgodClient) -> None:
         """
         Fully compile the program source to binary and generate a
         source map for matching pc to line number
         """
-        result = client.compile(self._program, source_map=True)
-        self._binary = base64.b64decode(result["result"])
-        self._program_hash = result["hash"]
-        self._map = SourceMap(result["sourcemap"])
-        self._asserts = _gather_asserts(self._program, self._map)
+        result = client.compile(self.teal, source_map=True)
+        self.raw_binary = base64.b64decode(result["result"])
+        self.binary_hash = result["hash"]
+        self.source_map = SourceMap(result["sourcemap"])
+
+    @cached_property
+    def binary(self) -> Bytes:
+        assert self.raw_binary
+        return Bytes(self.raw_binary)
+
+    @cached_property
+    def assertions(self) -> dict[int, "ProgramAssertion"]:
+        assert self.source_map is not None
+        return _gather_asserts(self.teal, self.source_map)
 
 
 class AppProgram(Program):
     @property
     def program_pages(self) -> list[Expr]:
-        assert self._binary is not None
+        assert self.raw_binary is not None
         return [
-            Bytes(self._binary[i : i + APP_PAGE_MAX_SIZE])
-            for i in range(0, len(self._binary), APP_PAGE_MAX_SIZE)
+            Bytes(self.raw_binary[i : i + APP_PAGE_MAX_SIZE])
+            for i in range(0, len(self.raw_binary), APP_PAGE_MAX_SIZE)
         ]
 
 
@@ -129,22 +131,22 @@ class LSigProgram(Program):
 
     def assemble(self, client: AlgodClient) -> None:
         super().assemble(client)
-        assert self._map is not None
+        assert self.source_map is not None
 
         for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
-            tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
+            tv.pc = self.source_map.get_pcs_for_line(tv.line)[0] + 1
 
     def hash(self) -> Expr:
         """hash returns an expression for this Precompile.
         It will fail if any template_values are set.
         """
-        if self._program_hash is None:
+        if self.binary_hash is None:
             raise TealInputError("No address defined for precompile")
 
         from algosdk.encoding import decode_address
 
-        return Bytes(decode_address(self._program_hash))
+        return Bytes(decode_address(self.binary_hash))
 
     def populate_template(self, *args: str | bytes | int) -> bytes:
         """
@@ -155,12 +157,12 @@ class LSigProgram(Program):
         template values declared.
         """
 
-        assert self._binary is not None
+        assert self.raw_binary is not None
         assert len(self._template_values) > 0
         assert len(args) == len(self._template_values)
 
         # Get a copy of the binary so we can work on it in place
-        populated_binary = list(self._binary)
+        populated_binary = list(self.raw_binary)
         # Any time we add bytes, we need to update the offset so the rest
         # of the pc values can be updated to account for the difference
         offset = 0
@@ -207,7 +209,7 @@ class LSigProgram(Program):
         # it should produce an identical output in terms of populated binary.
         # This function just reproduces the same effects in pyteal
 
-        assert self.binary is not None
+        assert self.raw_binary is not None
         assert len(self._template_values)
         assert len(args) == len(self._template_values)
 
@@ -300,8 +302,8 @@ class AppPrecompile:
         creating this application that can be passed directly to
         the InnerTxnBuilder.Execute method
         """
-        assert self.approval._binary is not None
-        assert self.clear._binary is not None
+        assert self.approval.raw_binary is not None
+        assert self.clear.raw_binary is not None
         return {
             TxnField.type_enum: TxnType.ApplicationCall,
             TxnField.local_num_byte_slices: Int(self.app.acct_state.num_byte_slices),
@@ -311,7 +313,7 @@ class AppPrecompile:
             TxnField.approval_program_pages: self.approval.program_pages,
             TxnField.clear_state_program_pages: self.clear.program_pages,
             TxnField.extra_program_pages: Int(
-                num_extra_program_pages(self.approval._binary, self.clear._binary)
+                num_extra_program_pages(self.approval.raw_binary, self.clear.raw_binary)
             ),
         }
 
@@ -353,7 +355,7 @@ class LSigPrecompile:
 
         It should only be used for non templated Precompiles.
         """
-        return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
+        return LogicSigTransactionSigner(LogicSigAccount(self.logic.raw_binary))
 
 
 @dataclass
@@ -368,7 +370,7 @@ def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssert
     program_lines = program.split("\n")
     for idx, line in enumerate(program_lines):
         # Take only the first chunk before spaces
-        line = line.split(" ").pop()
+        line, *_ = line.split(" ")
         if line != "assert":
             continue
 

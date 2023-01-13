@@ -86,15 +86,15 @@ class ApplicationClient:
         compiled_app = AppPrecompile(self.app)
         compiled_app.compile(self.client)
 
-        self.approval_program = compiled_app.approval._program
-        self.approval_binary = compiled_app.approval._binary
-        self.approval_src_map = compiled_app.approval._map
-        self.approval_asserts = compiled_app.approval._asserts
+        self.approval_program = compiled_app.approval.teal
+        self.approval_binary = compiled_app.approval.raw_binary
+        self.approval_src_map = compiled_app.approval.source_map
+        self.approval_asserts = compiled_app.approval.assertions
 
-        self.clear_program = compiled_app.clear._program
-        self.clear_binary = compiled_app.clear._binary
-        self.clear_src_map = compiled_app.clear._map
-        self.clear_asserts = compiled_app.clear._asserts
+        self.clear_program = compiled_app.clear.teal
+        self.clear_binary = compiled_app.clear.raw_binary
+        self.clear_src_map = compiled_app.clear.source_map
+        self.clear_asserts = compiled_app.clear.assertions
 
     def create(
         self,
