@@ -357,12 +357,9 @@ class LSigPrecompile:
         Note:
             Must be called (even indirectly) prior to using the ``logic`` field
         """
-        for p in self.lsig.precompiles.values():
-            p.compile(client)
-
         # at this point, we should have all the dependant logic built
         # so we can compile the lsig teal
-        self.logic = Precompile(self.lsig.compile(client))
+        self.logic = Precompile(self.lsig.compile())
 
         if self.logic._binary is None:
             self.logic.assemble(client)

@@ -11,11 +11,12 @@ from beaker.precompile import LSigPrecompile
 # Used to expand our apps available state by
 # creating unique account that will do whatever we need.
 # In this case, we need it to opt in and rekey to the app address
-class KeySig(LogicSignature):
-    nonce = TemplateVariable(TealType.bytes)
-
-    def evaluate(self):
-        return Approve()
+def KeySig(version: int) -> LogicSignature:
+    return LogicSignature(
+        evaluate=lambda: Approve(),
+        runtime_template_variables={"nonce": TealType.bytes},
+        teal_version=version,
+    )
 
 
 # App that needs lots of storage so we use the local storage of

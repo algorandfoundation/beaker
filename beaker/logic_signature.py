@@ -1,6 +1,6 @@
-from inspect import getattr_static
-from typing import Optional
-from algosdk.v2client.algod import AlgodClient
+import inspect
+from typing import Callable
+
 from pyteal import (
     CompileOptions,
     TealInputError,
@@ -8,21 +8,16 @@ from pyteal import (
     Tmpl,
     Expr,
     MAX_TEAL_VERSION,
-    SubroutineDefinition,
-    ABIReturnSubroutine,
     Seq,
     compileTeal,
-    Reject,
     Mode,
     ScratchVar,
     TealBlock,
     TealSimpleBlock,
 )
-from beaker.decorators import get_handler_config
-from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
-class TemplateVariable(Expr):
+class RuntimeTemplateVariable(Expr):
     """
     A Template Variable to be used as an attribute on LogicSignatures that
     need some hardcoded well defined behavior.
@@ -31,9 +26,11 @@ class TemplateVariable(Expr):
 
     """
 
-    def __init__(self, stack_type: TealType, name: str | None = None):
+    def __init__(self, stack_type: TealType, name: str):
         """initialize the TemplateVariable and the scratch var it is stored in"""
         assert stack_type in [TealType.bytes, TealType.uint64], "Must be bytes or uint"
+
+        super().__init__()
 
         self.stack_type = stack_type
         self.scratch = ScratchVar(stack_type)
@@ -76,83 +73,55 @@ class LogicSignature:
     to call the necessary logic.
     """
 
-    def __init__(self, version: int = MAX_TEAL_VERSION):
+    def __init__(
+        self,
+        evaluate: Callable[..., Expr] | Expr,
+        *,
+        runtime_template_variables: dict[str, TealType] | None = None,
+        teal_version: int = MAX_TEAL_VERSION,
+    ):
         """initialize the logic signature and identify relevant attributes"""
+        self._runtime_template_variables = runtime_template_variables or {}
 
-        self.teal_version = version
-        self.program: Optional[str] = None
+        forward_args: list[str]
+        if not callable(evaluate):
+            forward_args = []
+        else:
+            params = inspect.signature(evaluate).parameters
+            if not (params.keys() <= self._runtime_template_variables.keys()):
+                raise ValueError(
+                    "Logic signature methods should take no arguments, unless using runtime templates"
+                )
+            forward_args = list(params.keys())
 
-        # Get initial list of all attrs declared
-        initial_attrs = {
-            m: (getattr(self, m), getattr_static(self, m))
-            for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
-            if not m.startswith("__")
+        self._rtt_vars = {
+            name: RuntimeTemplateVariable(stack_type=stack_type, name=name)
+            for name, stack_type in self._runtime_template_variables.items()
         }
 
-        # Make sure we preserve the ordering of declaration
-        ordering = [
-            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
-        ]
-        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
+        def func(*args: Expr) -> Expr:
+            if not callable(evaluate):
+                return evaluate
+            else:
+                return evaluate(*args)
 
-        self.methods: dict[str, SubroutineDefinition] = {}
-
-        self.template_variables: list[TemplateVariable] = []
-        self.precompiles: dict[
-            str, LSigPrecompile | AppPrecompile
-        ] = {}  # dummy for now
-
-        for name, (bound_attr, static_attr) in self.attrs.items():
-
-            # Check for externals and internal methods
-            handler_config = get_handler_config(bound_attr)
-
-            if isinstance(static_attr, TemplateVariable):
-                if static_attr.name is None:
-                    static_attr.name = name
-                self.template_variables.append(static_attr)
-
-            elif handler_config.method_spec is not None:
-                abi_meth = ABIReturnSubroutine(static_attr)
-                if handler_config.referenced_self:
-                    abi_meth.subroutine.implementation = bound_attr
-
-                self.methods[name] = abi_meth.subroutine
-
-            elif handler_config.subroutine is not None:
-                if handler_config.referenced_self:
-                    setattr(self, name, handler_config.subroutine(bound_attr))
-                else:
-                    setattr(
-                        self.__class__,
-                        name,
-                        handler_config.subroutine(static_attr),
-                    )
-
-        self.compile()  # will have to be deferred if lsig contains precompiles
-
-    def compile(self, client: Optional[AlgodClient] = None) -> str:
-        if self.program is not None:
-            return self.program
-
-        template_expressions: list[Expr] = [
-            tv._init_expr() for tv in self.template_variables
-        ]
-
+        if not self._rtt_vars:
+            logic = func()
+        else:
+            logic = Seq(
+                *[tv._init_expr() for tv in self._rtt_vars.values()],
+                func(*[self._rtt_vars[name] for name in forward_args]),
+            )
         self.program = compileTeal(
-            Seq(*template_expressions, self.evaluate()),
+            logic,
             mode=Mode.Signature,
-            version=self.teal_version,
+            version=teal_version,
             assembleConstants=True,
         )
 
+    @property
+    def template_variables(self) -> list[RuntimeTemplateVariable]:
+        return list(self._rtt_vars.values())
+
+    def compile(self) -> str:
         return self.program
-
-    def evaluate(self) -> Expr:
-        """
-        evaluate is the main entry point to the logic of the lsig.
-
-        Override this method to handle arbitrary logic.
-
-        """
-        return Reject()

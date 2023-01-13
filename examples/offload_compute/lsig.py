@@ -7,7 +7,7 @@ HashValue = abi.StaticBytes[Literal[32]]
 Signature = abi.StaticBytes[Literal[65]]
 
 
-class EthEcdsaVerify(LogicSignature):
+def EthEcdsaVerify(version: int) -> LogicSignature:
     """
     This Lsig has a single method  `eth_ecdsa_validate` that takes two application arguments:
       hash, signature
@@ -16,7 +16,7 @@ class EthEcdsaVerify(LogicSignature):
     (65-byte signatures only)
     """
 
-    def evaluate(self):
+    def evaluate():
         return Seq(
             Assert(
                 # Don't let it be rekeyed
@@ -28,11 +28,11 @@ class EthEcdsaVerify(LogicSignature):
                 # Make sure I have the args I expect [method_selector, hash_value, signature]
                 Txn.application_args.length() == Int(3),
             ),
-            self.eth_ecdsa_validate(Txn.application_args[1], Txn.application_args[2]),
+            eth_ecdsa_validate(Txn.application_args[1], Txn.application_args[2]),
         )
 
-    @internal(TealType.uint64)
-    def eth_ecdsa_validate(self, hash_value: Expr, signature: Expr) -> Expr:
+    @Subroutine(TealType.uint64)
+    def eth_ecdsa_validate(hash_value: Expr, signature: Expr) -> Expr:
         """
         Return a 1/0 for valid signature given hash
 
@@ -80,3 +80,5 @@ class EthEcdsaVerify(LogicSignature):
                 EcdsaRecover(EcdsaCurve.Secp256k1, hash_value, v, r, s),
             ),
         )
+
+    return LogicSignature(evaluate, teal_version=version)

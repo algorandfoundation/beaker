@@ -8,13 +8,14 @@ from pyteal import (
     TealType,
     TxnField,
     TxnType,
+    Reject,
 )
 from beaker import *
 from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
-class LSig(LogicSignature):
-    pass
+def LSig() -> LogicSignature:
+    return LogicSignature(evaluate=Reject())
 
 
 class Child1(Application):

@@ -18,20 +18,25 @@ Signature = abi.StaticBytes[Literal[64]]
 
 
 class App(Application):
-    class SigChecker(LogicSignature):
+    @staticmethod
+    def SigChecker() -> LogicSignature:
         # Simple program to check an ed25519 signature given a message and signature
-        user_addr = TemplateVariable(stack_type=TealType.bytes)
 
-        def evaluate(self):
+        def evaluate(user_addr: Expr) -> Expr:
             return Seq(
                 # Borrow the msg and sig from the abi call arguments
                 # TODO: this kinda stinks, what do?
                 (msg := abi.String()).decode(Txn.application_args[2]),
                 (sig := abi.make(Signature)).decode(Txn.application_args[3]),
                 # Assert that the sig matches
-                Assert(Ed25519Verify_Bare(msg.get(), sig.get(), self.user_addr)),
+                Assert(Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
                 Int(1),
             )
+
+        return LogicSignature(
+            evaluate=evaluate,
+            runtime_template_variables={"user_addr": TealType.bytes},
+        )
 
     sig_checker = LSigPrecompile(SigChecker())
 

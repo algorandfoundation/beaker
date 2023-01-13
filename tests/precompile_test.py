@@ -6,7 +6,7 @@ from beaker.application import Application
 from beaker.decorators import external
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.logic_signature import LogicSignature, TemplateVariable
+from beaker.logic_signature import LogicSignature
 from beaker.precompile import (
     AppPrecompile,
     LSigPrecompile,
@@ -15,11 +15,13 @@ from beaker.precompile import (
 
 
 def test_precompile_basic():
-    class App(Application):
-        class Lsig(LogicSignature):
-            def evaluate(self):
-                return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
+    def Lsig(version: int) -> LogicSignature:
+        def evaluate():
+            return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
+        return LogicSignature(evaluate, teal_version=version)
+
+    class App(Application):
         pc = LSigPrecompile(Lsig(version=6))
 
         @external
@@ -50,11 +52,12 @@ TMPL_BYTE_VALS = [
 
 @pytest.mark.parametrize("tmpl_val", TMPL_BYTE_VALS)
 def test_templated_bytes(tmpl_val: str):
-    class Lsig(LogicSignature):
-        tv = TemplateVariable(pt.TealType.bytes)
-
-        def evaluate(self):
-            return pt.Seq(pt.Assert(pt.Len(self.tv)), pt.Int(1))
+    def Lsig(version: int) -> LogicSignature:
+        return LogicSignature(
+            lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
+            runtime_template_variables={"tv": pt.TealType.bytes},
+            teal_version=version,
+        )
 
     class App(Application):
         pc = LSigPrecompile(Lsig(version=6))
@@ -94,11 +97,15 @@ TMPL_INT_VALS = [(10), (1000), (int(2.9e9))]
 
 @pytest.mark.parametrize("tmpl_val", TMPL_INT_VALS)
 def test_templated_ints(tmpl_val: int):
-    class Lsig(LogicSignature):
-        tv = TemplateVariable(pt.TealType.uint64)
+    def Lsig(version: int) -> LogicSignature:
+        def evaluate(tv: pt.Expr) -> pt.Seq:
+            return pt.Seq(pt.Assert(tv), pt.Int(1))
 
-        def evaluate(self):
-            return pt.Seq(pt.Assert(self.tv), pt.Int(1))
+        return LogicSignature(
+            evaluate,
+            runtime_template_variables={"tv": pt.TealType.uint64},
+            teal_version=version,
+        )
 
     class App(Application):
         pc = LSigPrecompile(Lsig(version=6))
@@ -129,11 +136,14 @@ def test_templated_ints(tmpl_val: int):
     )
 
 
-class InnerLsig(LogicSignature):
-    nonce = TemplateVariable(pt.TealType.bytes)
-
-    def evaluate(self):
+def InnerLsig() -> LogicSignature:
+    def evaluate():
         return pt.Approve()
+
+    return LogicSignature(
+        evaluate(),
+        runtime_template_variables={"nonce": pt.TealType.bytes},
+    )
 
 
 class InnerApp(Application):
@@ -288,13 +298,6 @@ def _check_app_precompiles(app_precompile: AppPrecompile):
 
 
 def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
-    for _, p in lsig_precompile.lsig.precompiles.items():
-        match p:
-            case LSigPrecompile():
-                _check_lsig_precompiles(p)
-            case AppPrecompile():
-                _check_app_precompiles(p)
-
     assert lsig_precompile.logic._program != ""
     assert lsig_precompile.logic._binary is not None
     assert lsig_precompile.logic.binary.byte_str != b""
