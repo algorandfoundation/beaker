@@ -1,5 +1,4 @@
 import base64
-from Cryptodome.Hash import SHA512
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List
 from pyteal import (
@@ -140,13 +139,12 @@ class LSigProgram(Program):
         """hash returns an expression for this Precompile.
         It will fail if any template_values are set.
         """
-        assert self._binary is not None
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
 
-        chksum = SHA512.new(truncate="256")
-        chksum.update(PROGRAM_DOMAIN_SEPARATOR.encode() + self._binary)
-        return Bytes(chksum.digest())
+        from algosdk.encoding import decode_address
+
+        return Bytes(decode_address(self._program_hash))
 
     def populate_template(self, *args: str | bytes | int) -> bytes:
         """
