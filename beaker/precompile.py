@@ -1,7 +1,7 @@
 import base64
 from Cryptodome.Hash import SHA512
 from dataclasses import dataclass, field
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from pyteal import (
     Seq,
     Bytes,
@@ -30,7 +30,7 @@ from beaker.lib.strings import encode_uvarint
 
 if TYPE_CHECKING:
     from beaker.application import Application
-    from beaker.logic_signature import LogicSignature
+    from beaker.logic_signature import LogicSignature, RuntimeTemplateVariable
 
 
 #: The prefix for template variables that should be substituted
@@ -83,33 +83,41 @@ class Precompile:
     and LSigPrecompile for Applications and Logic Signature programs, respectively.
     """
 
-    _program: str = ""
-    _binary: Optional[bytes] = None
-    _program_hash: Optional[str] = None
-    _map: Optional[SourceMap] = None
-    _template_values: list[PrecompileTemplateValue] = []
-    program_pages: list[ProgramPage]
-    binary: Bytes = Bytes("")
+    def __init__(
+        self,
+        program: str,
+        *,
+        runtime_template_variables: List["RuntimeTemplateVariable"] | None = None,
+    ):
+        self._binary: bytes | None = None
+        self._program_hash: str | None = None
+        self._map: SourceMap | None = None
+        self.program_pages: list[ProgramPage] = []
+        self._asserts: dict[int, ProgramAssertion] | None = None
+        self.binary = Bytes("")
 
-    def __init__(self, program: str):
-        self._program = program
-        lines = self._program.splitlines()
-        template_values: list[PrecompileTemplateValue] = []
-        # Replace the teal program TMPL_* template variables with
-        # the 0 value for the given type and save the list of TemplateValues
-        for idx, line in enumerate(lines):
-            if TMPL_PREFIX in line:
-                op, name, _, _ = line.split(" ")
-                tv = PrecompileTemplateValue(
-                    name=name[len(TMPL_PREFIX) :], is_bytes=op == PUSH_BYTES, line=idx
+        self._template_values: list[PrecompileTemplateValue] = []
+        if not runtime_template_variables:
+            self._program = program
+        else:
+            lines = program.splitlines()
+            # Replace the teal program TMPL_* template variables with
+            # the 0 value for the given type and save the list of TemplateValues
+            for rtt_var in runtime_template_variables:
+                token = rtt_var.token
+                is_bytes = rtt_var.type_of() == TealType.bytes
+                op = PUSH_BYTES if is_bytes else PUSH_INT
+                statement = f"{op} {token} // {token}"
+                idx = lines.index(statement)
+                lines[idx] = lines[idx].replace(
+                    token, ZERO_BYTES if is_bytes else ZERO_INT, 1
                 )
-                lines[idx] = line.replace(name, ZERO_BYTES if tv.is_bytes else ZERO_INT)
-                template_values.append(tv)
+                tv = PrecompileTemplateValue(
+                    name=rtt_var.name, is_bytes=is_bytes, line=idx
+                )
+                self._template_values.append(tv)
 
-        program = "\n".join(lines)
-
-        self._program = program
-        self._template_values = template_values
+            self._program = "\n".join(lines)
 
     def assemble(self, client: AlgodClient) -> None:
         """
@@ -359,7 +367,9 @@ class LSigPrecompile:
         """
         # at this point, we should have all the dependant logic built
         # so we can compile the lsig teal
-        self.logic = Precompile(self.lsig.compile())
+        self.logic = Precompile(
+            self.lsig.compile(), runtime_template_variables=self.lsig.template_variables
+        )
 
         if self.logic._binary is None:
             self.logic.assemble(client)

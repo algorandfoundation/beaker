@@ -3,7 +3,6 @@ from typing import Callable
 
 from pyteal import (
     CompileOptions,
-    TealInputError,
     TealType,
     Tmpl,
     Expr,
@@ -36,11 +35,9 @@ class RuntimeTemplateVariable(Expr):
         self.scratch = ScratchVar(stack_type)
         self.name = name
 
-    def get_name(self) -> str:
+    @property
+    def token(self) -> str:
         """returns the name of the template variable that should be present in the output TEAL"""
-        assert self.name is not None, TealInputError(
-            "Name undefined in template variable"
-        )
         return f"TMPL_{self.name.upper()}"
 
     def __str__(self) -> str:
@@ -59,8 +56,10 @@ class RuntimeTemplateVariable(Expr):
 
     def _init_expr(self) -> Expr:
         if self.stack_type is TealType.bytes:
-            return self.scratch.store(Tmpl.Bytes(self.get_name()))
-        return self.scratch.store(Tmpl.Int(self.get_name()))
+            tmpl = Tmpl.Bytes(self.token)
+        else:
+            tmpl = Tmpl.Int(self.token)
+        return self.scratch.store(tmpl)
 
 
 class LogicSignature:
