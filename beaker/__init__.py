@@ -24,7 +24,7 @@ from .decorators import (
     close_out,
     clear_state,
 )
-from .logic_signature import LogicSignature
+from .logic_signature import LogicSignature, LogicSignatureTemplate
 from .precompile import Program, AppPrecompile, LSigPrecompile
 
 from . import client

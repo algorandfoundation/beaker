@@ -1,14 +1,14 @@
 import pyteal as pt
-from beaker.logic_signature import LogicSignature
+from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 
 
 def test_simple_logic_signature():
-    lsig = LogicSignature(evaluate=pt.Reject())
+    lsig = LogicSignature(pt.Reject())
     assert lsig.program
 
 
 def test_evaluate_logic_signature():
-    lsig = LogicSignature(evaluate=pt.Approve())
+    lsig = LogicSignature(pt.Approve())
     assert lsig.program
 
 
@@ -24,24 +24,20 @@ def test_handler_logic_signature():
             pt.Int(1),
         )
 
-    def Lsig():
-        return LogicSignature(evaluate)
+    lsig = LogicSignature(evaluate)
 
-    lsig = Lsig()
-
-    assert len(lsig.template_variables) == 0
     assert len(lsig.program) > 0
 
 
 def test_templated_logic_signature():
-    def Lsig() -> LogicSignature:
+    def Lsig() -> LogicSignatureTemplate:
         def evaluate(pubkey: pt.Expr):
             return pt.Seq(
                 pt.Assert(pt.Len(pubkey)),
                 pt.Int(1),
             )
 
-        return LogicSignature(
+        return LogicSignatureTemplate(
             evaluate, runtime_template_variables={"pubkey": pt.TealType.bytes}
         )
 
@@ -89,13 +85,12 @@ def test_different_methods_logic_signature():
 
     lsig = Lsig()
 
-    assert len(lsig.template_variables) == 0
     assert len(lsig.program) > 0
 
 
 def test_lsig_template_ordering():
-    def Lsig() -> LogicSignature:
-        return LogicSignature(
+    def Lsig() -> LogicSignatureTemplate:
+        return LogicSignatureTemplate(
             pt.Approve(),
             runtime_template_variables={
                 "f": pt.TealType.uint64,

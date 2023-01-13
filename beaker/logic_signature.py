@@ -74,45 +74,65 @@ class LogicSignature:
 
     def __init__(
         self,
-        evaluate: Callable[..., Expr] | Expr,
+        expr_or_func: Callable[[], Expr] | Expr,
         *,
-        runtime_template_variables: dict[str, TealType] | None = None,
+        teal_version: int = MAX_TEAL_VERSION,
+    ):
+        logic: Expr
+        if callable(expr_or_func):
+            logic = expr_or_func()
+        else:
+            logic = expr_or_func
+
+        self.program = compileTeal(
+            logic,
+            mode=Mode.Signature,
+            version=teal_version,
+            assembleConstants=True,
+        )
+
+
+class LogicSignatureTemplate:
+    """
+    LogicSignature allows the definition of a logic signature program.
+
+    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
+
+    The `evaluate` method is the entry point to the application and must be overridden in any subclass
+    to call the necessary logic.
+    """
+
+    def __init__(
+        self,
+        expr_or_func: Callable[..., Expr] | Expr,
+        *,
+        runtime_template_variables: dict[str, TealType],
         teal_version: int = MAX_TEAL_VERSION,
     ):
         """initialize the logic signature and identify relevant attributes"""
-        self._runtime_template_variables = runtime_template_variables or {}
 
-        forward_args: list[str]
-        if not callable(evaluate):
-            forward_args = []
+        self._rtt_vars = {
+            name: RuntimeTemplateVariable(stack_type=stack_type, name=name)
+            for name, stack_type in runtime_template_variables.items()
+        }
+
+        logic: Expr
+        if not callable(expr_or_func):
+            logic = expr_or_func
         else:
-            params = inspect.signature(evaluate).parameters
-            if not (params.keys() <= self._runtime_template_variables.keys()):
+            params = inspect.signature(expr_or_func).parameters
+            if not (params.keys() <= runtime_template_variables.keys()):
                 raise ValueError(
                     "Logic signature methods should take no arguments, unless using runtime templates"
                 )
             forward_args = list(params.keys())
+            logic = expr_or_func(*[self._rtt_vars[name] for name in forward_args])
 
-        self._rtt_vars = {
-            name: RuntimeTemplateVariable(stack_type=stack_type, name=name)
-            for name, stack_type in self._runtime_template_variables.items()
-        }
-
-        def func(*args: Expr) -> Expr:
-            if not callable(evaluate):
-                return evaluate
-            else:
-                return evaluate(*args)
-
-        if not self._rtt_vars:
-            logic = func()
-        else:
-            logic = Seq(
-                *[tv._init_expr() for tv in self._rtt_vars.values()],
-                func(*[self._rtt_vars[name] for name in forward_args]),
-            )
         self.program = compileTeal(
-            logic,
+            Seq(
+                *[tv._init_expr() for tv in self._rtt_vars.values()],
+                logic,
+            ),
             mode=Mode.Signature,
             version=teal_version,
             assembleConstants=True,

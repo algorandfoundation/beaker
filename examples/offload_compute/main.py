@@ -43,27 +43,16 @@ def demo():
     acct = sandbox.get_accounts().pop()
 
     # Create app client
-    app_client = client.ApplicationClient(
-        algod_client, EthChecker(), signer=acct.signer
-    )
-
-    # shouldn't have an approval program yet, since
-    # the number of precompiles is > 0
-    assert app_client.app.approval_program is None
-
-    # This will first compile the precompiles, then compile the approval program
-    # with the precompiles in place
-    # not required to call manually since create/update will also do this
-    # if necessary
-    app_client.build()
+    app = EthChecker()
+    app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
 
     # Now we should have the approval program available
-    assert app_client.app.approval_program is not None
+    assert app_client.approval_program is not None
 
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_signer = cast(EthChecker, app_client.app).verifier.signer()
+    lsig_signer = app.verifier.signer()
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()

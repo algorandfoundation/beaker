@@ -14,7 +14,8 @@ from algosdk.future import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
 from beaker import client, sandbox, testing, consts, decorators
-from beaker.client.application_client import ApplicationClient, ProgramAssertion
+from beaker.precompile import ProgramAssertion
+from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from tests.conftest import check_application_artifacts_output_stability
 
@@ -252,7 +253,7 @@ def build_swap_transaction(
     app_client: ApplicationClient,
     assets: tuple[int, int],
     swap_amt: int,
-    swap_asset: int = None,
+    swap_asset: int | None = None,
 ):
     app_addr, addr, signer = (
         app_client.app_addr,

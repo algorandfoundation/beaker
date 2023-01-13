@@ -5,15 +5,16 @@ import algosdk.future.transaction as txns
 from algosdk.atomic_transaction_composer import *
 from pyteal import *
 from beaker import *
-from beaker.precompile import LSigPrecompile
+from beaker.precompile import LSigTemplatePrecompile
+
 
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
 # creating unique account that will do whatever we need.
 # In this case, we need it to opt in and rekey to the app address
-def KeySig(version: int) -> LogicSignature:
-    return LogicSignature(
-        evaluate=lambda: Approve(),
+def KeySig(version: int) -> LogicSignatureTemplate:
+    return LogicSignatureTemplate(
+        lambda: Approve(),
         runtime_template_variables={"nonce": TealType.bytes},
         teal_version=version,
     )
@@ -29,7 +30,7 @@ class DiskHungry(Application):
 
     # Signal to beaker that this should be compiled
     # prior to compiling the main application
-    tmpl_acct = LSigPrecompile(KeySig(version=6))
+    tmpl_acct = LSigTemplatePrecompile(KeySig(version=6))
 
     # Add account during opt in  by checking the sender against the address
     # we expect given the precompile && nonce

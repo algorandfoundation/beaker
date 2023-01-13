@@ -30,7 +30,11 @@ from beaker.lib.strings import encode_uvarint
 
 if TYPE_CHECKING:
     from beaker.application import Application
-    from beaker.logic_signature import LogicSignature, RuntimeTemplateVariable
+    from beaker.logic_signature import (
+        LogicSignature,
+        RuntimeTemplateVariable,
+        LogicSignatureTemplate,
+    )
 
 
 #: The opcode that should be present just before the byte template variable
@@ -335,6 +339,38 @@ class LSigPrecompile:
         self.lsig: "LogicSignature" = lsig
 
         #: The LogicSignature's logic as a Precompile
+        self.logic = LSigProgram(lsig.program)
+
+    def compile(self, client: AlgodClient) -> None:
+        """
+        fully compile this lsig precompile by recursively compiling children depth first
+
+        Note:
+            Must be called (even indirectly) prior to using the ``logic`` field
+        """
+        self.logic.assemble(client)
+
+    def signer(self) -> LogicSigTransactionSigner:
+        """
+        signer returns a LogicSigTransactionSigner to be used with
+        an ApplicationClient or AtomicTransactionComposer.
+
+        It should only be used for non templated Precompiles.
+        """
+        return LogicSigTransactionSigner(LogicSigAccount(self.logic.raw_binary))
+
+
+class LSigTemplatePrecompile:
+    """
+    LSigPrecompile allows a smart contract to signal that some child Logic Signature
+    should be fully compiled prior to constructing its own program.
+    """
+
+    def __init__(self, lsig: "LogicSignatureTemplate"):
+        #: the LogicSignature to be used and compiled before it's parent
+        self.lsig = lsig
+
+        #: The LogicSignature's logic as a Precompile
         self.logic = LSigProgram(
             lsig.program, runtime_template_variables=lsig.template_variables
         )
@@ -353,15 +389,6 @@ class LSigPrecompile:
         return LogicSigTransactionSigner(
             LogicSigAccount(self.logic.populate_template(**kwargs))
         )
-
-    def signer(self) -> LogicSigTransactionSigner:
-        """
-        signer returns a LogicSigTransactionSigner to be used with
-        an ApplicationClient or AtomicTransactionComposer.
-
-        It should only be used for non templated Precompiles.
-        """
-        return LogicSigTransactionSigner(LogicSigAccount(self.logic.raw_binary))
 
 
 @dataclass

@@ -5,10 +5,11 @@ from beaker.application import Application
 from beaker.decorators import external
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.logic_signature import LogicSignature
+from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
     AppPrecompile,
     LSigPrecompile,
+    LSigTemplatePrecompile,
     py_encode_uvarint,
 )
 
@@ -28,17 +29,15 @@ def test_precompile_basic():
             return pt.Assert(pt.Txn.sender() == self.pc.logic.hash())
 
     app = App()
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
-
     assert app.approval_program is None
     assert app.clear_program is None
     assert app.pc.logic.binary_hash is None
 
-    ac.build()
+    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
-    assert app.approval_program is not None
-    assert app.clear_program is not None
-    assert app.pc.logic.binary_hash is not None
+    assert ac.approval_program is not None
+    assert ac.clear_program is not None
+    assert ac._app.pc.logic.binary_hash is not None
 
 
 TMPL_BYTE_VALS = [
@@ -51,15 +50,15 @@ TMPL_BYTE_VALS = [
 
 @pytest.mark.parametrize("tmpl_val", TMPL_BYTE_VALS)
 def test_templated_bytes(tmpl_val: str):
-    def Lsig(version: int) -> LogicSignature:
-        return LogicSignature(
+    def Lsig(version: int) -> LogicSignatureTemplate:
+        return LogicSignatureTemplate(
             lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
             runtime_template_variables={"tv": pt.TealType.bytes},
             teal_version=version,
         )
 
     class App(Application):
-        pc = LSigPrecompile(Lsig(version=6))
+        pc = LSigTemplatePrecompile(Lsig(version=6))
 
         @external
         def check_it(self) -> pt.Expr:
@@ -68,17 +67,16 @@ def test_templated_bytes(tmpl_val: str):
             )
 
     app = App()
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
     assert app.pc.logic.binary_hash is None
 
-    ac.build()
+    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
-    assert app.approval_program is not None
-    assert app.clear_program is not None
-    assert app.pc.logic.binary_hash is not None
+    assert ac.approval_program is not None
+    assert ac.clear_program is not None
+    assert ac._app.pc.logic.binary_hash is not None
 
     populated_teal = app.pc.logic.populate_template(tv=tmpl_val)
 
@@ -96,18 +94,18 @@ TMPL_INT_VALS = [(10), (1000), (int(2.9e9))]
 
 @pytest.mark.parametrize("tmpl_val", TMPL_INT_VALS)
 def test_templated_ints(tmpl_val: int):
-    def Lsig(version: int) -> LogicSignature:
+    def Lsig(version: int) -> LogicSignatureTemplate:
         def evaluate(tv: pt.Expr) -> pt.Seq:
             return pt.Seq(pt.Assert(tv), pt.Int(1))
 
-        return LogicSignature(
+        return LogicSignatureTemplate(
             evaluate,
             runtime_template_variables={"tv": pt.TealType.uint64},
             teal_version=version,
         )
 
     class App(Application):
-        pc = LSigPrecompile(Lsig(version=6))
+        pc = LSigTemplatePrecompile(Lsig(version=6))
 
         @external
         def check_it(self) -> pt.Expr:
@@ -116,17 +114,16 @@ def test_templated_ints(tmpl_val: int):
             )
 
     app = App()
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
     assert app.pc.logic.binary_hash is None
 
-    ac.build()
+    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
-    assert app.approval_program is not None
-    assert app.clear_program is not None
-    assert app.pc.logic.binary_hash is not None
+    assert ac.approval_program is not None
+    assert ac.clear_program is not None
+    assert ac._app.pc.logic.binary_hash is not None
 
     populated_teal = app.pc.logic.populate_template(tv=tmpl_val)
 
@@ -135,11 +132,11 @@ def test_templated_ints(tmpl_val: int):
     )
 
 
-def InnerLsig() -> LogicSignature:
+def InnerLsig() -> LogicSignatureTemplate:
     def evaluate():
         return pt.Approve()
 
-    return LogicSignature(
+    return LogicSignatureTemplate(
         evaluate(),
         runtime_template_variables={"nonce": pt.TealType.bytes},
     )
@@ -151,7 +148,7 @@ class InnerApp(Application):
 
 class OuterApp(Application):
     child: AppPrecompile = AppPrecompile(InnerApp())
-    lsig: LSigPrecompile = LSigPrecompile(InnerLsig())
+    lsig: LSigPrecompile = LSigTemplatePrecompile(InnerLsig())
 
     @external
     def doit(self, nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
@@ -186,7 +183,8 @@ def test_nested_precompile():
     ac = ApplicationClient(
         client=get_algod_client(), app=oa, signer=get_accounts().pop().signer
     )
-    ac.build()
+
+    assert ac.approval_binary
 
     assert oa.child.approval.raw_binary is not None
     assert oa.child.clear.raw_binary is not None
@@ -291,8 +289,9 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
     assert lsig_precompile.logic.binary.byte_str != b""
     assert lsig_precompile.logic.source_map is not None
     assert lsig_precompile.logic.binary_hash is not None
-    assert len(lsig_precompile.logic._template_values) == len(
-        lsig_precompile.lsig.template_variables
-    )
-    if not lsig_precompile.lsig.template_variables:
+    if isinstance(lsig_precompile.lsig, LogicSignatureTemplate):
+        assert len(lsig_precompile.logic._template_values) == len(
+            lsig_precompile.lsig.template_variables
+        )
+    else:
         assert lsig_precompile.logic.hash()

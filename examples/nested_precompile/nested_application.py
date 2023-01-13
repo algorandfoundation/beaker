@@ -15,7 +15,7 @@ from beaker.precompile import AppPrecompile, LSigPrecompile
 
 
 def LSig() -> LogicSignature:
-    return LogicSignature(evaluate=Reject())
+    return LogicSignature(Reject())
 
 
 class Child1(Application):

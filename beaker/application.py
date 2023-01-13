@@ -39,7 +39,7 @@ from beaker.state import (
     prefix_key_gen,
 )
 from beaker.errors import BareOverwriteError
-from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker.precompile import AppPrecompile, LSigPrecompile, LSigTemplatePrecompile
 from beaker.lib.storage import List
 
 
@@ -101,7 +101,9 @@ class Application:
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
-        self.precompiles: dict[str, AppPrecompile | LSigPrecompile] = {}
+        self.precompiles: dict[
+            str, AppPrecompile | LSigPrecompile | LSigTemplatePrecompile
+        ] = {}
 
         acct_vals: dict[
             str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
@@ -142,7 +144,7 @@ class Application:
                     app_vals[name] = bound_attr
 
                 # Precompiles
-                case LSigPrecompile() | AppPrecompile():
+                case LSigPrecompile() | AppPrecompile() | LSigTemplatePrecompile():
                     self.precompiles[name] = bound_attr
 
                 # Boxes

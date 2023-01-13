@@ -12,14 +12,14 @@ from algosdk.atomic_transaction_composer import (
 from typing import Literal
 from pyteal import *
 from beaker import *
-from beaker.precompile import LSigPrecompile
+from beaker.precompile import LSigTemplatePrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
 
 
 class App(Application):
     @staticmethod
-    def SigChecker() -> LogicSignature:
+    def SigChecker() -> LogicSignatureTemplate:
         # Simple program to check an ed25519 signature given a message and signature
 
         def evaluate(user_addr: Expr) -> Expr:
@@ -33,12 +33,12 @@ class App(Application):
                 Int(1),
             )
 
-        return LogicSignature(
-            evaluate=evaluate,
+        return LogicSignatureTemplate(
+            evaluate,
             runtime_template_variables={"user_addr": TealType.bytes},
         )
 
-    sig_checker = LSigPrecompile(SigChecker())
+    sig_checker = LSigTemplatePrecompile(SigChecker())
 
     @external
     def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
