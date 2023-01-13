@@ -44,7 +44,7 @@ class Child2(Application):
 
     @external(read_only=True)
     def get_lsig_addr(self, *, output: abi.Address):
-        return output.set(self.lsig.logic.hash())
+        return output.set(self.lsig.logic.address())
 
 
 class Parent(Application):

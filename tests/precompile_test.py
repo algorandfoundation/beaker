@@ -26,7 +26,7 @@ def test_precompile_basic():
 
         @external
         def check_it(self):
-            return pt.Assert(pt.Txn.sender() == self.pc.logic.hash())
+            return pt.Assert(pt.Txn.sender() == self.pc.logic.address())
 
     app = App()
     assert app.approval_program is None
@@ -63,7 +63,7 @@ def test_templated_bytes(tmpl_val: str):
         @external
         def check_it(self) -> pt.Expr:
             return pt.Assert(
-                pt.Txn.sender() == self.pc.logic.template_hash(tv=pt.Bytes(tmpl_val))
+                pt.Txn.sender() == self.pc.logic.template_address(tv=pt.Bytes(tmpl_val))
             )
 
     app = App()
@@ -110,7 +110,7 @@ def test_templated_ints(tmpl_val: int):
         @external
         def check_it(self) -> pt.Expr:
             return pt.Assert(
-                pt.Txn.sender() == self.pc.logic.template_hash(tv=pt.Int(tmpl_val))
+                pt.Txn.sender() == self.pc.logic.template_address(tv=pt.Int(tmpl_val))
             )
 
     app = App()
@@ -154,7 +154,7 @@ class OuterApp(Application):
     def doit(self, nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
         return pt.Seq(
             pt.Assert(
-                pt.Txn.sender() == self.lsig.logic.template_hash(nonce=nonce.get())
+                pt.Txn.sender() == self.lsig.logic.template_address(nonce=nonce.get())
             ),
             pt.InnerTxnBuilder.Execute(
                 {
@@ -294,4 +294,4 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
             lsig_precompile.lsig.template_variables
         )
     else:
-        assert lsig_precompile.logic.hash()
+        assert lsig_precompile.logic.address()

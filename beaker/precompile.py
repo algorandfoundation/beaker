@@ -19,6 +19,7 @@ from pyteal import (
     Sha512_256,
     TxnField,
     TxnType,
+    Addr,
 )
 from algosdk.v2client.algod import AlgodClient
 from algosdk.source_map import SourceMap
@@ -141,16 +142,25 @@ class LSigProgram(Program):
             # +1 to acount for the pushbytes/pushint op
             tv.pc = self.source_map.get_pcs_for_line(tv.line)[0] + 1
 
-    def hash(self) -> Expr:
+    def address(self) -> Expr:
         """hash returns an expression for this Precompile.
         It will fail if any template_values are set.
         """
         if self.binary_hash is None:
             raise TealInputError("No address defined for precompile")
 
-        from algosdk.encoding import decode_address
+        return Addr(self.binary_hash)
 
-        return Bytes(decode_address(self.binary_hash))
+    def template_address(self, **kwargs: Expr) -> Expr:
+        """
+        returns an expression that will generate the expected
+        hash given some set of values that should be included in the logic itself
+        """
+        return Sha512_256(
+            Concat(
+                Bytes(PROGRAM_DOMAIN_SEPARATOR), self._populate_template_expr(**kwargs)
+            )
+        )
 
     def populate_template(self, **kwargs: str | bytes | int) -> bytes:
         """
@@ -202,7 +212,7 @@ class LSigProgram(Program):
 
         return bytes(populated_binary)
 
-    def populate_template_expr(self, **kwargs: Expr) -> Expr:
+    def _populate_template_expr(self, **kwargs: Expr) -> Expr:
         """
         populate_template_expr returns the Expr that will patch a
         blank binary given a set of arguments.
@@ -261,17 +271,6 @@ class LSigProgram(Program):
             return Seq(*populate_program)
 
         return populate_template_program()
-
-    def template_hash(self, **kwargs: Expr) -> Expr:
-        """
-        returns an expression that will generate the expected
-        hash given some set of values that should be included in the logic itself
-        """
-        return Sha512_256(
-            Concat(
-                Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(**kwargs)
-            )
-        )
 
 
 class AppPrecompile:

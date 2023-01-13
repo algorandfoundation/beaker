@@ -44,7 +44,7 @@ class App(Application):
     def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
         return Assert(
             Txn.sender()
-            == self.sig_checker.logic.template_hash(user_addr=signer_address.get())
+            == self.sig_checker.logic.template_address(user_addr=signer_address.get())
         )
 
 
