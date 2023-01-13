@@ -22,7 +22,7 @@ from pyteal import (
 )
 from algosdk.v2client.algod import AlgodClient
 from algosdk.source_map import SourceMap
-from algosdk.future.transaction import LogicSigAccount
+from algosdk.transaction import LogicSigAccount
 from algosdk.constants import APP_PAGE_MAX_SIZE
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages

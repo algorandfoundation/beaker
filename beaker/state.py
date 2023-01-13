@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import Callable, Mapping, cast, Any, Optional
-from algosdk.future.transaction import StateSchema
+from algosdk.transaction import StateSchema
 from pyteal import (
     abi,
     SubroutineFnWrapper,

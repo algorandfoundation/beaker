@@ -1,7 +1,7 @@
 import random
 import string
 from typing import cast
-import algosdk.future.transaction as txns
+import algosdk.transaction as txns
 from algosdk.atomic_transaction_composer import *
 from pyteal import *
 from beaker import *

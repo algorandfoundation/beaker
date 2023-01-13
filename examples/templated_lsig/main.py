@@ -2,8 +2,8 @@ import base64
 from copy import copy
 from nacl.signing import SigningKey
 
+from algosdk import transaction
 from algosdk.encoding import decode_address
-from algosdk.future import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
