@@ -148,7 +148,7 @@ class LSigProgram(Program):
 
         return Bytes(decode_address(self.binary_hash))
 
-    def populate_template(self, *args: str | bytes | int) -> bytes:
+    def populate_template(self, **kwargs: str | bytes | int) -> bytes:
         """
         populate_template returns the bytes resulting from patching the set of
         arguments passed into the blank binary
@@ -159,7 +159,9 @@ class LSigProgram(Program):
 
         assert self.raw_binary is not None
         assert len(self._template_values) > 0
-        assert len(args) == len(self._template_values)
+        assert len(kwargs) == len(self._template_values)
+        args = [kwargs.pop(tv.name) for tv in self._template_values]
+        assert not kwargs
 
         # Get a copy of the binary so we can work on it in place
         populated_binary = list(self.raw_binary)
@@ -196,7 +198,7 @@ class LSigProgram(Program):
 
         return bytes(populated_binary)
 
-    def populate_template_expr(self, *args: Expr) -> Expr:
+    def populate_template_expr(self, **kwargs: Expr) -> Expr:
         """
         populate_template_expr returns the Expr that will patch a
         blank binary given a set of arguments.
@@ -211,7 +213,9 @@ class LSigProgram(Program):
 
         assert self.raw_binary is not None
         assert len(self._template_values)
-        assert len(args) == len(self._template_values)
+        assert len(kwargs) == len(self._template_values)
+        args = [kwargs.pop(tv.name) for tv in self._template_values]
+        assert not kwargs
 
         populate_program: list[Expr] = [
             (last_pos := ScratchVar(TealType.uint64)).store(Int(0)),
@@ -254,13 +258,15 @@ class LSigProgram(Program):
 
         return populate_template_program()
 
-    def template_hash(self, *args) -> Expr:  # type: ignore
+    def template_hash(self, **kwargs: Expr) -> Expr:
         """
         returns an expression that will generate the expected
         hash given some set of values that should be included in the logic itself
         """
         return Sha512_256(
-            Concat(Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(*args))
+            Concat(
+                Bytes(PROGRAM_DOMAIN_SEPARATOR), self.populate_template_expr(**kwargs)
+            )
         )
 
 
@@ -342,10 +348,10 @@ class LSigPrecompile:
         """
         self.logic.assemble(client)
 
-    def template_signer(self, *args: str | bytes | int) -> LogicSigTransactionSigner:
+    def template_signer(self, **kwargs: str | bytes | int) -> LogicSigTransactionSigner:
         """Get the Signer object for a populated version of the template contract"""
         return LogicSigTransactionSigner(
-            LogicSigAccount(self.logic.populate_template(*args))
+            LogicSigAccount(self.logic.populate_template(**kwargs))
         )
 
     def signer(self) -> LogicSigTransactionSigner:

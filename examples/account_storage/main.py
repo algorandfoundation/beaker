@@ -38,7 +38,7 @@ class DiskHungry(Application):
         return Seq(
             Assert(
                 # Make sure the opt-in'er is our lsig
-                Txn.sender() == self.tmpl_acct.logic.template_hash(nonce.get()),
+                Txn.sender() == self.tmpl_acct.logic.template_hash(nonce=nonce.get()),
                 # and that its being rekeyed to us
                 Txn.rekey_to() == self.address,
             ),
@@ -100,7 +100,9 @@ def demo():
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
         nonce: str = get_nonce()
-        lsig_signer: LogicSigTransactionSigner = app.tmpl_acct.template_signer(nonce)
+        lsig_signer: LogicSigTransactionSigner = app.tmpl_acct.template_signer(
+            nonce=nonce
+        )
 
         print(
             f"Creating templated lsig with nonce {nonce} and address {lsig_signer.lsig.address()}"

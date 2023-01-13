@@ -43,7 +43,8 @@ class App(Application):
     @external
     def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
         return Assert(
-            Txn.sender() == self.sig_checker.logic.template_hash(signer_address.get())
+            Txn.sender()
+            == self.sig_checker.logic.template_hash(user_addr=signer_address.get())
         )
 
 
@@ -70,7 +71,9 @@ def demo():
     #     f.write(app.sig_checker.populate_template(decode_address(acct.address)))
 
     # Get the signer for the lsig from its populated precompile
-    lsig_signer = app.sig_checker.template_signer(decode_address(acct.address))
+    lsig_signer = app.sig_checker.template_signer(
+        user_addr=decode_address(acct.address)
+    )
     # Prepare a new client so it can sign calls
     lsig_client = app_client.prepare(signer=lsig_signer)
 

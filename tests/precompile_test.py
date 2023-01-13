@@ -62,9 +62,9 @@ def test_templated_bytes(tmpl_val: str):
         pc = LSigPrecompile(Lsig(version=6))
 
         @external
-        def check_it(self):
+        def check_it(self) -> pt.Expr:
             return pt.Assert(
-                pt.Txn.sender() == self.pc.logic.template_hash(pt.Bytes(tmpl_val))
+                pt.Txn.sender() == self.pc.logic.template_hash(tv=pt.Bytes(tmpl_val))
             )
 
     app = App()
@@ -80,7 +80,7 @@ def test_templated_bytes(tmpl_val: str):
     assert app.clear_program is not None
     assert app.pc.logic.binary_hash is not None
 
-    populated_teal = app.pc.logic.populate_template(tmpl_val)
+    populated_teal = app.pc.logic.populate_template(tv=tmpl_val)
 
     vlen = len(tmpl_val)
     if type(tmpl_val) is str:
@@ -110,9 +110,9 @@ def test_templated_ints(tmpl_val: int):
         pc = LSigPrecompile(Lsig(version=6))
 
         @external
-        def check_it(self):
+        def check_it(self) -> pt.Expr:
             return pt.Assert(
-                pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(tmpl_val))
+                pt.Txn.sender() == self.pc.logic.template_hash(tv=pt.Int(tmpl_val))
             )
 
     app = App()
@@ -128,7 +128,7 @@ def test_templated_ints(tmpl_val: int):
     assert app.clear_program is not None
     assert app.pc.logic.binary_hash is not None
 
-    populated_teal = app.pc.logic.populate_template(tmpl_val)
+    populated_teal = app.pc.logic.populate_template(tv=tmpl_val)
 
     assert len(populated_teal) == len(app.pc.logic.raw_binary) + (
         len(py_encode_uvarint(tmpl_val)) - 1
@@ -156,7 +156,9 @@ class OuterApp(Application):
     @external
     def doit(self, nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
         return pt.Seq(
-            pt.Assert(pt.Txn.sender() == self.lsig.logic.template_hash(nonce.get())),
+            pt.Assert(
+                pt.Txn.sender() == self.lsig.logic.template_hash(nonce=nonce.get())
+            ),
             pt.InnerTxnBuilder.Execute(
                 {
                     pt.TxnField.type_enum: pt.TxnType.ApplicationCall,
