@@ -1,10 +1,10 @@
 """Module containing helper functions for testing PyTeal Utils."""
-from typing import Any
+from typing import Any, TypeVar
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 import pyteal as pt
 from beaker import client, sandbox
-from beaker import Application, external, delete, update, opt_in, close_out
+from beaker import Application
 from beaker.application import State
 
 algod_client = None
@@ -15,7 +15,16 @@ def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
 
 
-class UnitTestingApp(Application):
+TState = TypeVar("TState", bound=State)
+
+
+class NoState(State):
+    pass
+
+
+def UnitTestingApp(
+    state: State = NoState(), expr_to_test: pt.Expr | None = None
+) -> Application:
 
     """Base unit testable application.
 
@@ -33,41 +42,47 @@ class UnitTestingApp(Application):
     An instance of this class is passed to assert_output to check the return value against what you expect.
     """
 
-    def __init__(self, state: State | None = None, expr_to_test: pt.Expr | None = None):
-        super().__init__(state=state)
-        self.expr = expr_to_test
+    app = Application(state=state, unconditional_create_approval=False)
 
-    @delete
-    def delete(self):
+    @app.create
+    def create() -> pt.Expr:
         return pt.Approve()
 
-    @update
-    def update(self):
+    @app.delete(bare=True)
+    def delete() -> pt.Expr:
         return pt.Approve()
 
-    @opt_in
-    def opt_in(self):
-        return self.acct_state.initialize()
-
-    @close_out
-    def close_out(self):
+    @app.update(bare=True)
+    def update() -> pt.Expr:
         return pt.Approve()
 
-    @external
-    def opup(self):
+    @app.opt_in(bare=True)
+    def opt_in() -> pt.Expr:
+        return app.acct_state.initialize()
+
+    @app.close_out(bare=True)
+    def close_out() -> pt.Expr:
         return pt.Approve()
 
-    @external
-    def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
-        if self.expr is None:
+    @app.external
+    def opup() -> pt.Expr:
+        return pt.Approve()
+
+    @app.external
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
+        if expr_to_test is None:
             raise Exception(
                 "Expression undefined. Either set the expr to test on init or override unit_test method"
             )
-        return pt.Seq((s := pt.abi.String()).set(self.expr), output.decode(s.encode()))
+        return pt.Seq(
+            (s := pt.abi.String()).set(expr_to_test), output.decode(s.encode())
+        )
+
+    return app
 
 
 def assert_output(
-    app: UnitTestingApp,
+    app: Application,
     inputs: list[dict[str, Any]],
     outputs: list[Any],
     opups: int = 0,
@@ -106,15 +121,17 @@ def assert_output(
             if opups > 0:
                 atc = AtomicTransactionComposer()
 
-                app_client.add_method_call(atc, app.unit_test, **input)
+                app_client.add_method_call(atc, app.methods.unit_test, **input)
                 for x in range(opups):
-                    app_client.add_method_call(atc, app.opup, note=str(x).encode())
+                    app_client.add_method_call(
+                        atc, app.methods.opup, note=str(x).encode()
+                    )
 
                 results = app_client._execute_atc(atc, wait_rounds=2)
 
                 assert results.abi_results[0].return_value == output
             else:
-                result = app_client.call(app.unit_test, **input)
+                result = app_client.call(app.methods.unit_test, **input)
                 assert result.return_value == output
     except Exception as e:
         raise e

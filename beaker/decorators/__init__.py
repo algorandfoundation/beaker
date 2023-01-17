@@ -1,55 +1,31 @@
-import functools
 import inspect
-from dataclasses import asdict, dataclass, field, astuple
+from dataclasses import dataclass, field
 from enum import Enum
 from inspect import signature, Parameter
-from typing import Optional, Callable, Final, cast, Any, TypeVar, overload, TypedDict
 from types import FunctionType
+from typing import Optional, Callable, cast, Any, TypedDict
+
 from algosdk.abi import Method
 from pyteal import (
     abi,
-    ABIReturnSubroutine,
     BareCallActions,
-    CallConfig,
     Expr,
     Int,
     MethodConfig,
-    OnCompleteAction,
     Subroutine,
-    SubroutineFnWrapper,
-    TealInputError,
-    TealType,
     TealTypeError,
     Bytes,
+    ABIReturnSubroutine,
 )
 
 from beaker.decorators.authorize import _authorize, Authorize
-
 from beaker.state import AccountStateValue, ApplicationStateValue
 
 __all__ = [
     "Authorize",
-    "external",
-    "internal",
-    # "bare_external",
-    "create",
-    "no_op",
-    "update",
-    "delete",
-    "opt_in",
-    "close_out",
-    "clear_state",
-    "ABIExternalMetadata",
 ]
 
 HandlerFunc = Callable[..., Expr]
-
-_handler_config_attr: Final[str] = "__handler_config__"
-
-
-CheckExpr = Callable[..., Expr]
-ABIType = TypeVar("ABIType", bound=abi.BaseType)
-
 
 DefaultArgumentType = Expr | HandlerFunc | int | bytes | str
 
@@ -88,13 +64,12 @@ class DefaultArgument:
                 self.resolvable_class = DefaultArgumentClass.Constant
 
             # FunctionType
-            case _:
-                # Fall through, if its not got a valid handler config, raise error
-                hc = get_handler_config(cast(HandlerFunc, resolver))
-                if hc.method_spec is None or not hc.read_only:
+            case ABIReturnSubroutine() as fn:
+                if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
-
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
+            case _:
+                raise TealTypeError(self.resolver, DefaultArgumentType)
 
     def resolve_hint(self) -> Any:
         match self.resolver:
@@ -110,24 +85,15 @@ class DefaultArgument:
                 return self.resolver
 
             # FunctionType
-            case _:
-                # Fall through, if its not got a valid handler config, raise error
-                hc = get_handler_config(cast(HandlerFunc, self.resolver))
-                if hc.method_spec is None or not hc.read_only:
+            case ABIReturnSubroutine() as fn:
+                if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
-
-                return hc.method_spec.dictify()
+                return fn.method_spec.dictify()
+            case _:
+                raise TealTypeError(self.resolver, DefaultArgumentType)
 
     def dictify(self) -> dict[str, Any]:
         return {"source": self.resolvable_class.value, "data": self.resolve_hint()}
-
-
-@dataclass
-class ABIExternalMetadata:
-    method_config: MethodConfig = field(kw_only=True)
-    name_override: str | None = field(kw_only=True, default=None)
-    read_only: bool = field(kw_only=True, default=False)
-    authorize: SubroutineFnWrapper | None = field(kw_only=True, default=None)
 
 
 @dataclass
@@ -167,53 +133,6 @@ class HandlerConfig:
                 for arg_name, model_spec in self.structs.items()
             }
         return mh
-
-    def is_create(self) -> bool:
-        return self.method_config is not None and any(
-            (
-                cc == CallConfig.CREATE or cc == CallConfig.ALL
-                for cc in astuple(self.method_config)
-            )
-        )
-
-    def is_update(self) -> bool:
-        return (
-            self.method_config is not None
-            and self.method_config.update_application != CallConfig.NEVER
-        )
-
-    def is_delete(self) -> bool:
-        return (
-            self.method_config is not None
-            and self.method_config.delete_application != CallConfig.NEVER
-        )
-
-    def is_opt_in(self) -> bool:
-        return (
-            self.method_config is not None
-            and self.method_config.opt_in != CallConfig.NEVER
-        )
-
-    def is_clear_state(self) -> bool:
-        return (
-            self.method_config is not None
-            and self.method_config.clear_state != CallConfig.NEVER
-        )
-
-    def is_close_out(self) -> bool:
-        return (
-            self.method_config is not None
-            and self.method_config.close_out != CallConfig.NEVER
-        )
-
-
-def get_handler_config(fn: HandlerFunc) -> HandlerConfig:
-    try:
-        config = getattr(fn, _handler_config_attr)
-    except AttributeError:
-        return HandlerConfig()
-    else:
-        return cast(HandlerConfig, config)
 
 
 class StructArgDict(TypedDict):
@@ -277,423 +196,3 @@ def _capture_structs_and_defaults(fn: HandlerFunc, config: HandlerConfig) -> Non
         # Fix function sig/annotations
         newsig = sig.replace(parameters=list(params.values()))
         fn.__signature__ = newsig  # type: ignore[attr-defined]
-
-
-def _remove_self(fn: HandlerFunc, config: HandlerConfig) -> None:
-    sig = signature(fn)
-    params = sig.parameters.copy()
-
-    try:
-        del params["self"]
-    except KeyError:
-        pass
-    else:
-        # Flag that this method did have a `self` argument
-        config.referenced_self = True
-        newsig = sig.replace(parameters=list(params.values()))
-        fn.__signature__ = newsig  # type: ignore[attr-defined]
-
-
-class InternalInstanceWrapper:
-    def __init__(self, func: HandlerFunc, return_type: TealType):
-        self._func = func
-        self._return_type = return_type
-        self._subs: dict[object, SubroutineFnWrapper] = {}
-
-    def __get__(
-        self, instance: object, owner: type | None = None
-    ) -> SubroutineFnWrapper:
-        if instance is None:
-            raise TypeError("Cannot invoke bound method from static context")
-
-        try:
-            return self._subs[instance]
-        except KeyError:
-            pass
-
-        # create bound method
-        bound = functools.partial(self._func, instance)
-        # copy all attrs, but remove the fact that it's wrapped
-        # (so that inspect methods doesn't try the original method)
-        bound = functools.update_wrapper(bound, self._func)
-        bound.__dict__.pop("__wrapped__")
-        # copy annotations (except self if present)
-        annotations = inspect.get_annotations(self._func)
-        annotations.pop("self", None)
-        bound.__annotations__ = annotations
-        # finally, construct the subroutine
-        sub = Subroutine(self._return_type)(bound)
-
-        self._subs[instance] = sub
-        return sub
-
-
-def internal(
-    return_type: TealType,
-) -> Callable[..., HandlerFunc | InternalInstanceWrapper]:
-    """creates a subroutine to be called by logic internally
-
-    Args:
-        return_type: The type this method's returned Expression should evaluate to
-    Returns:
-        The wrapped subroutine
-    """
-
-    if not isinstance(return_type, TealType):
-        raise TypeError("return_type must be a TealType")
-
-    def decorator(func: HandlerFunc) -> HandlerFunc | InternalInstanceWrapper:
-        sig = signature(func)
-        params = sig.parameters
-        if params:
-            first_param_name = next(iter(params))
-            if first_param_name == "self":
-                return InternalInstanceWrapper(func=func, return_type=return_type)
-        return Subroutine(return_type)(func)
-
-    return decorator
-
-
-@overload
-def external(
-    fn: HandlerFunc,
-    /,
-    *,
-    name: str | None = None,
-    authorize: SubroutineFnWrapper | None = None,
-    method_config: MethodConfig | None = None,
-    read_only: bool = False,
-) -> HandlerFunc:
-    ...
-
-
-@overload
-def external(
-    *,
-    name: str | None = None,
-    authorize: SubroutineFnWrapper | None = None,
-    method_config: MethodConfig | None = None,
-    read_only: bool = False,
-) -> Callable[..., HandlerFunc]:
-    ...
-
-
-def external(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    name: str | None = None,
-    authorize: SubroutineFnWrapper | None = None,
-    method_config: MethodConfig | None = None,
-    read_only: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-
-    """
-    Add the method decorated to be handled as an ABI method for the Application
-
-    Args:
-        fn: The function being wrapped.
-        name: Name of ABI method. If not set, name of the python method will be used.
-            Useful for method overriding.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
-            interpreted as allowed if the output>0.
-        method_config:  A subroutine that should take a single argument (Txn.sender())
-            and evaluate to 1/0 depending on the app call transaction sender.
-        read_only: Mark a method as callable with no fee using dryrun or simulate
-
-    Returns:
-        The original method with additional elements set in it's
-        :code:`__handler_config__` attribute
-    """
-
-    def _impl(f: HandlerFunc) -> HandlerFunc:
-        config = get_handler_config(f)
-        _remove_self(f, config)
-        _capture_structs_and_defaults(f, config)
-
-        if authorize is not None:
-            f = _authorize(authorize)(f)
-
-        config.method_config = method_config
-        config.read_only = read_only
-        config.method_spec = ABIReturnSubroutine(f, overriding_name=name).method_spec()
-        setattr(f, _handler_config_attr, config)
-
-        return f
-
-    if fn is None:
-        return _impl
-
-    return _impl(fn)
-
-
-def bare_external(
-    no_op: CallConfig | None = None,
-    opt_in: CallConfig | None = None,
-    clear_state: CallConfig | None = None,
-    delete_application: CallConfig | None = None,
-    update_application: CallConfig | None = None,
-    close_out: CallConfig | None = None,
-) -> Callable[..., HandlerFunc]:
-    """Add method to be handled by specific bare :code:`OnComplete` actions.
-
-    Args:
-        no_op: CallConfig to handle a `NoOp`
-        opt_in: CallConfig to handle an `OptIn`
-        clear_state: CallConfig to handle a `ClearState`
-        delete_application: CallConfig to handle a `DeleteApplication`
-        update_application: CallConfig to handle a `UpdateApplication`
-        close_out: CallConfig to handle a `CloseOut`
-
-    Returns:
-        The original method with changes made to its signature and attributes set
-        in it's :code:`__handler_config__`
-
-    """
-
-    def _impl(fun: HandlerFunc) -> HandlerFunc:
-        config = get_handler_config(fun)
-        _remove_self(fun, config)
-
-        sub = SubroutineFnWrapper(fun, return_type=TealType.none)
-
-        def to_action(cc: CallConfig | None) -> OnCompleteAction:
-            return (
-                OnCompleteAction(action=sub, call_config=cc)
-                if (cc is not None and cc is not CallConfig.NEVER)
-                else OnCompleteAction.never()
-            )
-
-        config.bare_method = BareCallActions(
-            no_op=to_action(no_op),
-            delete_application=to_action(delete_application),
-            update_application=to_action(update_application),
-            opt_in=to_action(opt_in),
-            close_out=to_action(close_out),
-            clear_state=to_action(clear_state),
-        )
-        setattr(fun, _handler_config_attr, config)
-
-        return fun
-
-    return _impl
-
-
-def is_bare(fn: HandlerFunc) -> bool:
-    sig = signature(fn)
-    return len(sig.parameters) == 0 or (
-        len(sig.parameters) == 1 and "self" in sig.parameters
-    )
-
-
-def _on_completion(
-    method_config: MethodConfig,
-    *,
-    fn: HandlerFunc | None = None,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    def _impl(f: HandlerFunc) -> HandlerFunc:
-        if not bare:
-            wrapper = external(method_config=method_config, authorize=authorize)
-        else:
-            if not is_bare(f):
-                raise TypeError("bare methods must take no parameters")
-            if authorize is not None:
-                f = _authorize(authorize)(f)
-            mconfig = asdict(method_config)
-            wrapper = bare_external(**mconfig)
-        return wrapper(f)
-
-    if fn is None:
-        return _impl
-    return _impl(fn)
-
-
-def create(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    method_config: MethodConfig | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with its :code:`OnComplete`
-        set to :code:`NoOp` call and ApplicationId == 0
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
-            interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and attributes set
-        in it's `__handler_config__`
-    """
-
-    if method_config is None:
-        method_config = MethodConfig(no_op=CallConfig.CREATE)
-    elif not all(
-        cc == CallConfig.CREATE or cc == CallConfig.ALL
-        for cc in asdict(method_config).values()
-    ):
-        raise TealInputError(
-            "method_config for create may not have non create call configs"
-        )
-
-    return _on_completion(method_config, fn=fn, authorize=authorize, bare=bare)
-
-
-def delete(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with it's
-        :code:`OnComplete` set to :code:`DeleteApplication` call
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
-            interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and attributes
-            set in its :code:`__handler_config__`
-    """
-    return _on_completion(
-        MethodConfig(delete_application=CallConfig.CALL),
-        fn=fn,
-        authorize=authorize,
-        bare=bare,
-    )
-
-
-def update(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with it's
-        :code:`OnComplete` set to :code:`UpdateApplication` call
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
-            interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and attributes
-            set in it's :code:`__handler_config__`
-    """
-    return _on_completion(
-        MethodConfig(update_application=CallConfig.CALL),
-        fn=fn,
-        authorize=authorize,
-        bare=bare,
-    )
-
-
-def opt_in(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with it's
-           :code:`OnComplete` set to :code:`OptIn` call
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output
-            uint64 interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and attributes
-            set in it's :code:`__handler_config__`
-    """
-    return _on_completion(
-        MethodConfig(opt_in=CallConfig.CALL),
-        fn=fn,
-        authorize=authorize,
-        bare=bare,
-    )
-
-
-def clear_state(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with it's
-        :code:`OnComplete` set to :code:`ClearState` call
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
-            interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and
-            attributes set in it's :code:`__handler_config__`
-    """
-    return _on_completion(
-        MethodConfig(clear_state=CallConfig.CALL),
-        fn=fn,
-        authorize=authorize,
-        bare=bare,
-    )
-
-
-def close_out(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with it's
-        :code:`OnComplete` set to :code:`CloseOut` call
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of :code:`Txn.sender()` and output uint64
-            interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and
-            attributes set in it's :code:`__handler_config__`
-    """
-    return _on_completion(
-        MethodConfig(close_out=CallConfig.CALL),
-        fn=fn,
-        authorize=authorize,
-        bare=bare,
-    )
-
-
-def no_op(
-    fn: HandlerFunc | None = None,
-    /,
-    *,
-    authorize: SubroutineFnWrapper | None = None,
-    bare: bool = False,
-) -> HandlerFunc | Callable[..., HandlerFunc]:
-    """set method to be handled by an application call with it's
-        :code:`OnComplete` set to :code:`NoOp` call
-
-    Args:
-        fn: The method to be wrapped.
-        authorize: a subroutine with input of :code:`Txn.sender()` and output
-            uint64 interpreted as allowed if the output>0.
-    Returns:
-        The original method with changes made to its signature and
-            attributes set in it's :code:`__handler_config__`
-    """
-    return _on_completion(
-        MethodConfig(no_op=CallConfig.CALL),
-        fn=fn,
-        authorize=authorize,
-        bare=bare,
-    )

@@ -1,6 +1,5 @@
 from inspect import getattr_static
-from typing import Optional
-from algosdk.v2client.algod import AlgodClient
+
 from pyteal import (
     CompileOptions,
     TealInputError,
@@ -8,8 +7,6 @@ from pyteal import (
     Tmpl,
     Expr,
     MAX_TEAL_VERSION,
-    SubroutineDefinition,
-    ABIReturnSubroutine,
     Seq,
     compileTeal,
     Reject,
@@ -18,8 +15,7 @@ from pyteal import (
     TealBlock,
     TealSimpleBlock,
 )
-from beaker.decorators import get_handler_config
-from beaker.precompile import AppPrecompile, LSigPrecompile
+
 from beaker.utils import get_class_attributes
 
 
@@ -84,38 +80,11 @@ class LogicSignature:
 
     def __init__(self, version: int = MAX_TEAL_VERSION):
         """initialize the logic signature and identify relevant attributes"""
-
-        self.teal_version = version
-        self.program: Optional[str] = None
-
-        self.methods: dict[str, SubroutineDefinition] = {}
-
         self.template_variables: list[TemplateVariable] = []
-        self.precompiles: dict[
-            str, LSigPrecompile | AppPrecompile
-        ] = {}  # dummy for now
-
         for name in get_class_attributes(self.__class__, use_legacy_ordering=True):
-            bound_attr = getattr(self, name)
             static_attr = getattr_static(self, name)
-
             if isinstance(static_attr, TemplateVariable):
                 self.template_variables.append(static_attr)
-
-            # Check for externals and internal methods
-            handler_config = get_handler_config(bound_attr)
-            if handler_config.method_spec is not None:
-                abi_meth = ABIReturnSubroutine(static_attr)
-                if handler_config.referenced_self:
-                    abi_meth.subroutine.implementation = bound_attr
-
-                self.methods[name] = abi_meth.subroutine
-
-        self.compile()  # will have to be deferred if lsig contains precompiles
-
-    def compile(self, client: Optional[AlgodClient] = None) -> str:
-        if self.program is not None:
-            return self.program
 
         template_expressions: list[Expr] = [
             tv._init_expr() for tv in self.template_variables
@@ -124,11 +93,9 @@ class LogicSignature:
         self.program = compileTeal(
             Seq(*template_expressions, self.evaluate()),
             mode=Mode.Signature,
-            version=self.teal_version,
+            version=version,
             assembleConstants=True,
         )
-
-        return self.program
 
     def evaluate(self) -> Expr:
         """
