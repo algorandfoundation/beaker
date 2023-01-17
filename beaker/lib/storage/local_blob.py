@@ -1,4 +1,3 @@
-from typing import Optional
 from pyteal import (
     Txn,
     App,
@@ -19,8 +18,9 @@ from pyteal import (
     Substring,
     TealType,
 )
-from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
+
 from beaker.consts import MAX_LOCAL_STATE
+from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
 
 
 class LocalBlob(Blob):
@@ -30,8 +30,10 @@ class LocalBlob(Blob):
     The `zero` method must be called on an account on opt in and the schema of the local storage should be 16 bytes
     """
 
-    def __init__(self, /, *, keys: Optional[int | list[int]] = None):
-        super().__init__(MAX_LOCAL_STATE, keys=keys)
+    def __init__(self, *, keys: int | list[int] | None = None):
+        if keys is None:
+            keys = MAX_LOCAL_STATE
+        super().__init__(keys=keys)
 
     def zero(self, acct: Expr = Txn.sender()) -> Expr:
         """

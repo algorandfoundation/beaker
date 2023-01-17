@@ -1,4 +1,3 @@
-from typing import Optional
 from pyteal import (
     App,
     Bytes,
@@ -19,14 +18,16 @@ from pyteal import (
     TealType,
 )
 
+from beaker.consts import MAX_GLOBAL_STATE
 from beaker.lib.inline import InlineAssembly
 from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
-from beaker.consts import MAX_GLOBAL_STATE
 
 
 class GlobalBlob(Blob):
-    def __init__(self, /, *, keys: Optional[int | list[int]] = None):
-        super().__init__(MAX_GLOBAL_STATE, keys=keys)
+    def __init__(self, *, keys: int | list[int] | None = None):
+        if keys is None:
+            keys = MAX_GLOBAL_STATE
+        super().__init__(keys=keys)
 
     def zero(self) -> Expr:
         """

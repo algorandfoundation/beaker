@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Optional, Literal
+from typing import Literal
 
 from pyteal import Expr, Txn, TealType
 
@@ -69,9 +69,7 @@ class StateBlob(ABC):
 
 
 class AccountStateBlob(AccountStateStorage, StateBlob):
-    def __init__(
-        self, keys: Optional[int | list[int]] = None, descr: str | None = None
-    ):
+    def __init__(self, keys: int | list[int] | None = None, descr: str | None = None):
         self.blob = LocalBlob(keys=keys)
         self.acct: Expr = Txn.sender()
         self.descr = descr
@@ -110,9 +108,7 @@ class AccountStateBlob(AccountStateStorage, StateBlob):
 
 
 class ApplicationStateBlob(ApplicationStateStorage, StateBlob):
-    def __init__(
-        self, keys: Optional[int | list[int]] = None, descr: str | None = None
-    ):
+    def __init__(self, keys: int | list[int] | None = None, descr: str | None = None):
         self.blob = GlobalBlob(keys=keys)
         self.descr = descr
 

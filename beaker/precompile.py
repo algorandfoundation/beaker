@@ -299,7 +299,7 @@ class AppPrecompile:
             Must be called (even indirectly) prior to using
                 the ``approval`` and ``clear`` fields
         """
-        for p in self.app.precompiles.values():
+        for p in self.app.precompiles:
             p.compile(client)
 
         # at this point, we should have all the dependant logic built

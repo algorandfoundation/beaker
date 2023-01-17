@@ -5,6 +5,7 @@ from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 import pyteal as pt
 from beaker import client, sandbox
 from beaker import Application, external, delete, update, opt_in, close_out
+from beaker.application import State
 
 algod_client = None
 sandbox_accounts = None
@@ -32,9 +33,9 @@ class UnitTestingApp(Application):
     An instance of this class is passed to assert_output to check the return value against what you expect.
     """
 
-    def __init__(self, expr_to_test: pt.Expr | None = None):
+    def __init__(self, state: State | None = None, expr_to_test: pt.Expr | None = None):
+        super().__init__(state=state)
         self.expr = expr_to_test
-        super().__init__()
 
     @delete
     def delete(self):

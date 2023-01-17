@@ -169,13 +169,10 @@ class HandlerConfig:
         return mh
 
     def is_create(self) -> bool:
-        if self.method_config is None:
-            return False
-
-        return any(
-            map(
-                lambda cc: cc == CallConfig.CREATE or cc == CallConfig.ALL,
-                astuple(self.method_config),
+        return self.method_config is not None and any(
+            (
+                cc == CallConfig.CREATE or cc == CallConfig.ALL
+                for cc in astuple(self.method_config)
             )
         )
 
@@ -258,31 +255,25 @@ class MethodHints:
         return d
 
 
-def _capture_structs(fn: HandlerFunc, config: HandlerConfig) -> None:
-    params = signature(fn).parameters
-    config.structs = {
-        k: v.annotation
-        for k, v in params.items()
-        if inspect.isclass(v.annotation) and issubclass(v.annotation, abi.NamedTuple)
-    }
-
-
-def _capture_defaults(fn: HandlerFunc, config: HandlerConfig) -> None:
+def _capture_structs_and_defaults(fn: HandlerFunc, config: HandlerConfig) -> None:
     sig = signature(fn)
     params = sig.parameters.copy()
 
-    default_args: dict[str, DefaultArgument] = {}
+    config.structs = {}
+    config.default_arguments = {}
 
-    for k, v in params.items():
-        match v.default:
+    for name, param in params.items():
+        match param.default:
             case Expr() | int() | str() | bytes() | FunctionType():
-                default_args[k] = DefaultArgument(v.default)
-                params[k] = v.replace(default=Parameter.empty)
+                config.default_arguments[name] = DefaultArgument(param.default)
+                params[name] = param.replace(default=Parameter.empty)
+        if inspect.isclass(param.annotation) and issubclass(
+            param.annotation, abi.NamedTuple
+        ):
+            config.structs[name] = param.annotation
 
-    if default_args:
-        # Update handler config
-        config.default_arguments = default_args
-
+    if config.default_arguments:
+        # TODO: is this strictly required?
         # Fix function sig/annotations
         newsig = sig.replace(parameters=list(params.values()))
         fn.__signature__ = newsig  # type: ignore[attr-defined]
@@ -418,8 +409,7 @@ def external(
     def _impl(f: HandlerFunc) -> HandlerFunc:
         config = get_handler_config(f)
         _remove_self(f, config)
-        _capture_defaults(f, config)
-        _capture_structs(f, config)
+        _capture_structs_and_defaults(f, config)
 
         if authorize is not None:
             f = _authorize(authorize)(f)

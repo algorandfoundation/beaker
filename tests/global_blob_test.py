@@ -34,6 +34,7 @@ def test_global_blob_write_read():
             return pt.Seq(
                 self.blob.zero(),
                 self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+                self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
                 (s := pt.abi.String()).set(self.blob.read(pt.Int(32), pt.Int(40))),
                 output.decode(s.encode()),
             )

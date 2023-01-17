@@ -52,7 +52,7 @@ def test_empty_application():
         == 0
     ), "Expected no schema"
 
-    assert len(ea.bare_externals.keys()) == len(
+    assert len(ea._bare_externals.keys()) == len(
         EXPECTED_BARE_HANDLERS
     ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
@@ -147,7 +147,7 @@ def test_bare():
     bh = Bare()
 
     assert (
-        len(bh.bare_externals) == 3
+        len(bh._bare_externals) == 3
     ), "Expected 3 bare externals: create,update,delete"
 
     class FailBare(Application):
@@ -170,7 +170,7 @@ def test_mixed_bares():
             return pt.Assert(pt.Len(s.get()))
 
     mb = MixedBare()
-    assert len(mb.bare_externals) == 1
+    assert len(mb._bare_externals) == 1
     assert len(mb.methods) == 1
 
 
@@ -202,7 +202,7 @@ def test_bare_external():
 
     be = BareExternal()
     be.compile()
-    assert len(be.bare_externals) == 0, "Should have no bare externals"
+    assert len(be._bare_externals) == 0, "Should have no bare externals"
     assert (
         len(be.contract.methods) == 6
     ), "should have create, optin, closeout, clearstate, update, delete"
