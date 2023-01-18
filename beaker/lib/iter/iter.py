@@ -1,7 +1,7 @@
 from pyteal import Expr, For, Int, ScratchVar, Subroutine, TealType
 
 
-def iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:
+def Iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:  # noqa: N802
     """Iterate provides a convenience method for calling a method n times
 
     Args:

@@ -1,14 +1,14 @@
 import pyteal as pt
 from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
-from beaker.lib.iter import iterate
+from beaker.lib.iter import Iterate
 
 
 def test_iterate():
     ut = UnitTestingApp(
         pt.Seq(
             (buff := pt.ScratchVar()).store(pt.Bytes("")),
-            iterate(buff.store(pt.Concat(buff.load(), pt.Bytes("a"))), pt.Int(10)),
+            Iterate(buff.store(pt.Concat(buff.load(), pt.Bytes("a"))), pt.Int(10)),
             buff.load(),
         )
     )
@@ -28,7 +28,7 @@ def test_iterate_with_closure():
     ut = UnitTestingApp(
         pt.Seq(
             buff.store(pt.Bytes("")),
-            iterate(concat_thing(), pt.Int(10), i),
+            Iterate(concat_thing(), pt.Int(10), i),
             buff.load(),
         )
     )

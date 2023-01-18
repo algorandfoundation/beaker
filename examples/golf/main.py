@@ -32,7 +32,7 @@ from beaker import (
     internal,
     sandbox,
 )
-from beaker.lib.math import max
+from beaker.lib.math import Max
 
 
 class SortedIntegers(Application):
@@ -110,7 +110,7 @@ class SortedIntegers(Application):
             .ElseIf(midval.load() > val)
             .Then(
                 self.binary_search(
-                    val, arr, start, max(Int(1), mididx.load()) - Int(1)
+                    val, arr, start, Max(Int(1), mididx.load()) - Int(1)
                 ),
             )
             .Else(mididx.load()),
