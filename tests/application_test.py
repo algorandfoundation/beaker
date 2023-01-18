@@ -1,5 +1,6 @@
 import pytest
 from typing import Final, cast
+from warnings import catch_warnings
 from dataclasses import asdict
 from Cryptodome.Hash import SHA512
 import pyteal as pt
@@ -64,10 +65,28 @@ def test_teal_version():
     class EmptyApp(Application):
         pass
 
-    ea = EmptyApp(version=4)
+    ea = EmptyApp(teal_version=4)
 
     assert ea.teal_version == 4, "Expected teal v4"
     assert ea.approval_program.split("\n")[0] == "#pragma version 4"
+
+
+def test_version_deprecation():
+    class EmptyApp(Application):
+        pass
+
+    with catch_warnings(record=True) as warnings:
+        assert len(warnings) == 0
+
+        ea = EmptyApp(version=4)
+
+        assert len(warnings) == 1
+        assert (
+            str(warnings[0].message)
+            == "version is deprecated, please use teal_version instead"
+        )
+        assert ea.teal_version == 4, "Expected teal v4"
+        assert ea.approval_program.split("\n")[0] == "#pragma version 4"
 
 
 def test_single_external():

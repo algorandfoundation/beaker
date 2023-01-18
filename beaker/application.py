@@ -1,6 +1,7 @@
 import base64
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
+from warnings import warn
 from algosdk.v2client.algod import AlgodClient
 from algosdk.abi import Method
 from pyteal import (
@@ -69,9 +70,19 @@ class Application:
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
 
-    def __init__(self, version: int = MAX_TEAL_VERSION):
+    def __init__(
+        self, teal_version: int = MAX_TEAL_VERSION, version: int | None = None
+    ):
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
-        self.teal_version = version
+        if version is not None:
+            warn(
+                "version is deprecated, please use teal_version instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.teal_version = version
+        else:
+            self.teal_version = teal_version
 
         # Get initial list of all attrs declared
         initial_attrs = {
