@@ -41,8 +41,8 @@ half_uint = Int(_half_uint)
 
 
 @Subroutine(TealType.uint64)
-def odd(x):
-    """odd returns 1 if x is odd
+def Odd(x):  # noqa: N802
+    """Odd returns 1 if x is odd
 
     Args:
         x: uint64 to evaluate
@@ -55,8 +55,8 @@ def odd(x):
 
 
 @Subroutine(TealType.uint64)
-def even(x):
-    """even returns 1 if x is even
+def Even(x):  # noqa: N802
+    """Even returns 1 if x is even
 
     Args:
         x: uint64 to evaluate
@@ -66,23 +66,23 @@ def even(x):
 
 
     """
-    return Not(odd(x))
+    return Not(Odd(x))
 
 
 @Subroutine(TealType.uint64)
-def max(a, b) -> Expr:
-    """max returns the max of 2 integers"""
+def Max(a, b) -> Expr:  # noqa: N802
+    """Max returns the max of 2 integers"""
     return If(a > b, a, b)
 
 
 @Subroutine(TealType.uint64)
-def min(a, b) -> Expr:
-    """min returns the min of 2 integers"""
+def Min(a, b) -> Expr:  # noqa: N802
+    """Min returns the min of 2 integers"""
     return If(a < b, a, b)
 
 
 @Subroutine(TealType.uint64)
-def saturate(n, upper_limit, lower_limit) -> Expr:
+def Saturate(n, upper_limit, lower_limit) -> Expr:  # noqa: N802
     """Produces an output that is the value of n bounded to the upper and lower
     saturation values. The upper and lower limits are specified by the
     parameters upper_limit and lower_limit."""
@@ -96,7 +96,7 @@ def saturate(n, upper_limit, lower_limit) -> Expr:
 
 
 @Subroutine(TealType.uint64)
-def div_ceil(a, b) -> Expr:
+def DivCeil(a, b) -> Expr:  # noqa: N802
     """Returns the result of division rounded up to the next integer
 
     Args:
@@ -112,7 +112,7 @@ def div_ceil(a, b) -> Expr:
 
 
 @Subroutine(TealType.uint64)
-def pow10(x) -> Expr:
+def Pow10(x) -> Expr:  # noqa: N802
     """
     Returns 10^x, useful for things like total supply of an asset
 
@@ -121,8 +121,8 @@ def pow10(x) -> Expr:
 
 
 @Subroutine(TealType.uint64)
-def factorial(x):
-    """factorial returns x! = x * x-1 * x-2 * ...,
+def Factorial(x):  # noqa: N802
+    """Factorial returns x! = x * x-1 * x-2 * ...,
     for a 64bit integer, the max possible value is maxes out at 20
 
     Args:
@@ -132,12 +132,12 @@ def factorial(x):
         uint64 representing the factorial of the argument passed
 
     """
-    return If(x == Int(1), x, x * factorial(x - Int(1)))
+    return If(x == Int(1), x, x * Factorial(x - Int(1)))
 
 
 @Subroutine(TealType.bytes)
-def wide_factorial(x):
-    """factorial returns x! = x * x-1 * x-2 * ...,
+def WideFactorial(x):  # noqa: N802
+    """WideFactorial returns x! = x * x-1 * x-2 * ...,
 
     Args:
         x: bytes to evaluate as an integer
@@ -147,13 +147,13 @@ def wide_factorial(x):
 
     """
     return If(
-        BitLen(x) == Int(1), x, BytesMul(x, wide_factorial(BytesMinus(x, Itob(Int(1)))))
+        BitLen(x) == Int(1), x, BytesMul(x, WideFactorial(BytesMinus(x, Itob(Int(1)))))
     )
 
 
 @Subroutine(TealType.bytes)
-def wide_power(x, n):
-    """wide_power returns the result of x^n evaluated using expw and combining the hi/low uint64s into a byte string
+def WidePower(x, n):  # noqa: N802
+    """WidePower returns the result of x^n evaluated using expw and combining the hi/low uint64s into a byte string
 
     Args:
         x: uint64 base for evaluation
@@ -163,11 +163,11 @@ def wide_power(x, n):
         bytes representing the high and low bytes of a wide power evaluation
 
     """
-    return Seq(InlineAssembly("expw", x, n), stack_to_wide())
+    return Seq(InlineAssembly("expw", x, n), StackToWide())
 
 
-def exponential(x, n):
-    """exponential approximates e**x for n iterations
+def Exponential(x, n):  # noqa: N802
+    """Exponential approximates e**x for n iterations
 
     TODO: currently this is scaled to 1000 first then scaled back. A better implementation should include the use of ufixed in abi types
 
@@ -188,11 +188,11 @@ def exponential(x, n):
             BytesAdd(_scale, BytesMul(x, _scale)),
             BytesAdd(
                 _impl(x, BytesDiv(f, Itob(n)), n - Int(1)),
-                BytesDiv(BytesMul(_scale, wide_power(bytes_to_int(x), n)), f),
+                BytesDiv(BytesMul(_scale, WidePower(BytesToInt(x), n)), f),
             ),
         )
 
-    return bytes_to_int(BytesDiv(_impl(Itob(x), wide_factorial(Itob(n)), n), _scale))
+    return BytesToInt(BytesDiv(_impl(Itob(x), WideFactorial(Itob(n)), n), _scale))
 
 
 # @Subroutine(TealType.uint64)
@@ -241,13 +241,13 @@ def exponential(x, n):
 
 
 @Subroutine(TealType.uint64)
-def bytes_to_int(x):
+def BytesToInt(x):  # noqa: N802
     return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
 
 
 @Subroutine(TealType.bytes)
-def stack_to_wide():
-    """stack_to_wide returns the combination of the high and low integers returned from a wide math operation as bytes"""
+def StackToWide():  # noqa: N802
+    """StackToWide returns the combination of the high and low integers returned from a wide math operation as bytes"""
     h = ScratchSlot()
     l = ScratchSlot()
     return Seq(

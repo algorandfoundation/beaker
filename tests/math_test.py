@@ -12,7 +12,7 @@ def test_even():
     class EvenTester(UnitTestingApp):
         @bkr.external
         def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Bool):
-            return output.set(math.even(num.get()))
+            return output.set(math.Even(num.get()))
 
     num = 5
     inputs = [num, num - 1]
@@ -24,7 +24,7 @@ def test_odd():
     class OddTester(UnitTestingApp):
         @bkr.external
         def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Bool):
-            return output.set(math.odd(num.get()))
+            return output.set(math.Odd(num.get()))
 
     num = 5
     inputs = [num, num - 1]
@@ -37,7 +37,7 @@ def test_pow10():
     class Pow10Tester(UnitTestingApp):
         @bkr.external
         def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Uint64):
-            return output.set(math.pow10(num.get()))
+            return output.set(math.Pow10(num.get()))
 
     num = 3
     inputs = [num]
@@ -52,7 +52,7 @@ def test_min():
         def unit_test(
             self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
         ):
-            return output.set(math.min(a.get(), b.get()))
+            return output.set(math.Min(a.get(), b.get()))
 
     inputs = [(100, 10)]
     output = [min(a, b) for a, b in inputs]
@@ -66,7 +66,7 @@ def test_max():
         def unit_test(
             self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
         ):
-            return output.set(math.max(a.get(), b.get()))
+            return output.set(math.Max(a.get(), b.get()))
 
     inputs = [(100, 10)]
     output = [max(a, b) for a, b in inputs]
@@ -80,7 +80,7 @@ def test_div_ceil():
         def unit_test(
             self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
         ):
-            return output.set(math.div_ceil(a.get(), b.get()))
+            return output.set(math.DivCeil(a.get(), b.get()))
 
     inputs = [(100, 3)]
     output = [pymath.ceil(a / b) for a, b in inputs]
@@ -99,7 +99,7 @@ def test_saturate():
             *,
             output: pt.abi.Uint64
         ):
-            return output.set(math.saturate(a.get(), b.get(), c.get()))
+            return output.set(math.Saturate(a.get(), b.get(), c.get()))
 
     inputs = [(50, 100, 20), (15, 100, 20), (150, 100, 20)]
     output = [max(min(b, a), c) for a, b, c in inputs]
@@ -113,7 +113,7 @@ def test_wide_factorial():
     class WideFactorialTester(UnitTestingApp):
         @bkr.external
         def unit_test(self, num: pt.abi.Uint64, *, output: pt.abi.Uint64):
-            return output.set(pt.Btoi(math.wide_factorial(num.encode())))
+            return output.set(pt.Btoi(math.WideFactorial(num.encode())))
 
     num = 5
     inputs = [num]
@@ -127,7 +127,7 @@ def test_exponential():
         def unit_test(
             self, num: pt.abi.Uint64, iters: pt.abi.Uint64, *, output: pt.abi.Uint64
         ):
-            return output.set(math.exponential(num.get(), iters.get()))
+            return output.set(math.Exponential(num.get(), iters.get()))
 
     num = 10
     iters = 30

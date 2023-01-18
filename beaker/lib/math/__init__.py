@@ -1,3 +1,3 @@
-from .math import even, odd, saturate, max, min
-from .math import div_ceil, pow10, wide_power, factorial
-from .math import exponential, wide_factorial
+from .math import Even, Odd, Saturate, Max, Min
+from .math import DivCeil, Pow10, WidePower, Factorial
+from .math import Exponential, WideFactorial
