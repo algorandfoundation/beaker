@@ -7,7 +7,7 @@ import pyteal as pt
 from beaker import client, sandbox
 from beaker import Application, external, delete, update, opt_in, close_out
 
-algod_client: AlgodClient = None
+algod_client: AlgodClient | None = None
 sandbox_accounts: list[sandbox.SandboxAccount] | None = None
 
 
