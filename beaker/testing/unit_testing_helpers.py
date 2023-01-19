@@ -15,13 +15,13 @@ def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
 
 
-TState = TypeVar("TState")
+TState = TypeVar("TState", bound=State)
 
 
 @overload
 def UnitTestingApp(
     expr_to_test: pt.Expr | None = None,
-) -> Application[None]:
+) -> Application[State]:
     ...
 
 
@@ -55,12 +55,10 @@ def UnitTestingApp(
 
     An instance of this class is passed to assert_output to check the return value against what you expect.
     """
-
-    app = Application(state=state, unconditional_create_approval=False)
-
-    @app.create
-    def create() -> pt.Expr:
-        return pt.Approve()
+    if state is None:
+        app = Application()
+    else:
+        app = Application(state=state)
 
     @app.delete
     def delete() -> pt.Expr:

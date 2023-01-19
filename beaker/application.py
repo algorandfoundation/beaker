@@ -96,8 +96,9 @@ class State:
     pass
 
 
-TState = TypeVar("TState")
-_EMPTY_STATE = State()
+TState = TypeVar("TState", bound=State)
+
+_EMTPY_STATE = State()
 
 
 class Methods:
@@ -120,9 +121,28 @@ class Application(Generic[TState]):
     It should be subclassed to provide basic behavior to a custom application.
     """
 
+    @overload
+    def __init__(
+        self: "Application[State]",
+        *,
+        version: int = MAX_TEAL_VERSION,
+        unconditional_create_approval: bool = True,
+    ):
+        ...
+
+    @overload
+    def __init__(
+        self: "Application[TState]",
+        state: TState,
+        *,
+        version: int = MAX_TEAL_VERSION,
+        unconditional_create_approval: bool = True,
+    ):
+        ...
+
     def __init__(
         self,
-        state: TState = cast(TState, _EMPTY_STATE),
+        state: TState = _EMTPY_STATE,  # type: ignore
         *,
         version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
