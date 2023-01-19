@@ -247,7 +247,6 @@ def bytes_to_int(x):
     return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
 
 
-@Subroutine(TealType.bytes)
 def stack_to_wide():
     """stack_to_wide returns the combination of the high and low integers returned from a wide math operation as bytes"""
     h = ScratchSlot()
