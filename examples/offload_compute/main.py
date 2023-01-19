@@ -6,12 +6,12 @@ from algosdk.atomic_transaction_composer import (
 )
 from algosdk.transaction import *
 
-from pyteal import *
-from beaker import *
+from pyteal import Assert, Seq, Txn, abi
+from beaker import Application, client, consts, external, sandbox
 from beaker.precompile import LSigPrecompile
 
 if __name__ == "__main__":
-    from lsig import EthEcdsaVerify, HashValue, Signature
+    from lsig import EthEcdsaVerify, HashValue, Signature  # type: ignore
 else:
     from .lsig import EthEcdsaVerify, HashValue, Signature
 
@@ -87,7 +87,10 @@ def demo():
     sp_no_fee = algod_client.suggested_params()
     sp_no_fee.flat_fee = True
     # V0
-    hex_signature = "5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be8921b"
+    hex_signature = (
+        "5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f"
+        + "3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be8921b"
+    )
     signature = bytes.fromhex(hex_signature)
     atc = lsig_client.add_method_call(
         atc,
@@ -98,7 +101,10 @@ def demo():
     )
 
     # V1
-    hex_signature = "331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e01c"
+    hex_signature = (
+        "331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff"
+        + "48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e01c"
+    )
     signature = bytes.fromhex(hex_signature)
     atc = lsig_client.add_method_call(
         atc,

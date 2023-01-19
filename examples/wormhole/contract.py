@@ -1,9 +1,9 @@
 from typing import Final
-from pyteal import *
-from beaker import *
+from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
+from beaker import ReservedApplicationStateValue, external
 
 if __name__ == "__main__":
-    from wormhole import ContractTransferVAA, WormholeTransfer
+    from wormhole import ContractTransferVAA, WormholeTransfer  # type: ignore
 else:
     from .wormhole import ContractTransferVAA, WormholeTransfer
 
