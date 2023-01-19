@@ -283,6 +283,16 @@ class Application:
             optimize=OptimizeOptions(scratch_slots=True, frame_pointers=False),
         )
 
+        # // stack_to_wide
+        # stacktowide_4:
+        # proto 0 1
+        # store 3
+        # itob
+        # load 3
+        # itob
+        # concat
+        # retsub
+
         return self.approval_program, self.clear_program
 
     def application_spec(self) -> dict[str, Any]:

@@ -122,12 +122,14 @@ def test_wide_factorial():
 
 
 def test_exponential():
-    class WideFactorialTester(UnitTestingApp):
+    class WideExponentialTester(UnitTestingApp):
         @bkr.external
         def unit_test(
             self, num: pt.abi.Uint64, iters: pt.abi.Uint64, *, output: pt.abi.Uint64
         ):
             return output.set(math.exponential(num.get(), iters.get()))
+
+    print(WideExponentialTester().approval_program)
 
     num = 10
     iters = 30
@@ -135,7 +137,7 @@ def test_exponential():
     output = [int(pymath.exp(num)) for num, _ in inputs]
 
     assert_output(
-        WideFactorialTester(),
+        WideExponentialTester(),
         [{"num": num, "iters": iters} for num, iters in inputs],
         output,
         opups=15,

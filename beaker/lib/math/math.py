@@ -6,6 +6,7 @@ from pyteal import (
     BytesDiv,
     BytesMinus,
     BytesMul,
+    Bytes,
     Btoi,
     Concat,
     Exp,
@@ -191,9 +192,10 @@ def exponential(x, n):
         uint64 that is the result of raising e**x
 
     """
-    _scale = Itob(Int(1000))
+    _scale = 1000
+    scale = Bytes(_scale.to_bytes(8, "big"))
     return bytes_to_int(
-        BytesDiv(exponential_impl(Itob(x), wide_factorial(Itob(n)), n, _scale), _scale)
+        BytesDiv(exponential_impl(Itob(x), wide_factorial(Itob(n)), n, scale), scale)
     )
 
 
@@ -249,7 +251,10 @@ def bytes_to_int(x):
 
 @Subroutine(TealType.bytes)
 def stack_to_wide():
-    """stack_to_wide returns the combination of the high and low integers returned from a wide math operation as bytes"""
+    """
+    stack_to_wide returns the combination of the high and low integers returned
+    from a wide math operation as bytes
+    """
     h = ScratchSlot()
     l = ScratchSlot()
     return Seq(
