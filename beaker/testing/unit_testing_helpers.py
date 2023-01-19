@@ -75,7 +75,9 @@ def unit_test_app_blueprint(
 
 class UnitTestingApp(Application):
     def __init__(
-        self, expr_to_test: pt.Expr | None, version: int = pt.MAX_TEAL_VERSION
+        self,
+        expr_to_test: pt.Expr | None = None,
+        version: int = pt.MAX_TEAL_VERSION,
     ):
         super().__init__(version=version)
         unit_test_app_blueprint(self, expr_to_test)

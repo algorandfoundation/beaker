@@ -2,7 +2,6 @@ import pytest
 import pyteal as pt
 from beaker.lib.storage.mapping import Mapping, MapElement
 from beaker.application import Application
-from beaker.decorators import external
 
 
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
@@ -56,12 +55,15 @@ def test_mapping():
 
 def test_app_mapping():
     class T(Application):
-        m = Mapping(pt.abi.Address, pt.abi.Uint64)
+        def __init__(self):
+            super().__init__()
 
-        @external
-        def thing(self, name: pt.abi.Address, *, output: pt.abi.Uint64):
-            return self.m[name].store_into(output)
+            m = Mapping(pt.abi.Address, pt.abi.Uint64)
+
+            @self.external
+            def thing(name: pt.abi.Address, *, output: pt.abi.Uint64):
+                return m[name].store_into(output)
 
     t = T()
     t.compile()
-    assert len(t.approval_program) > 0
+    assert t.approval_program
