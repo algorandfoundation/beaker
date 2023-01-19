@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import pyteal as pt
 from algosdk import encoding
@@ -11,6 +13,8 @@ from beaker.precompile import (
     LSigPrecompile,
     py_encode_uvarint,
 )
+
+from tests.conftest import check_application_artifacts_output_stability
 
 
 def test_precompile_basic() -> None:
@@ -54,35 +58,32 @@ def test_templated_bytes(tmpl_val: str):
         def evaluate(self):
             return pt.Seq(pt.Assert(pt.Len(self.tv)), pt.Int(1))
 
-    class App(Application):
-        pc = LSigPrecompile(Lsig(version=6))
+    app = Application()
+    pc = app.precompile(Lsig(version=6))
 
-        @external
-        def check_it(self):
-            return pt.Assert(
-                pt.Txn.sender() == self.pc.logic.template_hash(pt.Bytes(tmpl_val))
-            )
+    @app.external
+    def check_it():
+        return pt.Assert(pt.Txn.sender() == pc.logic.template_hash(pt.Bytes(tmpl_val)))
 
-    app = App()
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.logic._program_hash is None
+    assert pc.logic._program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.logic._program_hash is not None
+    assert pc.logic._program_hash is not None
 
-    populated_teal = app.pc.logic.populate_template(tmpl_val)
+    populated_teal = pc.logic.populate_template(tmpl_val)
 
     vlen = len(tmpl_val)
     if type(tmpl_val) is str:
         vlen = len(tmpl_val.encode("utf-8"))
 
-    assert len(populated_teal) == len(app.pc.logic._binary) + vlen + (
+    assert len(populated_teal) == len(pc.logic._binary) + vlen + (
         len(py_encode_uvarint(vlen)) - 1
     )
 
@@ -98,31 +99,28 @@ def test_templated_ints(tmpl_val: int):
         def evaluate(self):
             return pt.Seq(pt.Assert(self.tv), pt.Int(1))
 
-    class App(Application):
-        pc = LSigPrecompile(Lsig(version=6))
+    app = Application()
+    pc = app.precompile(Lsig(version=6))
 
-        @external
-        def check_it(self):
-            return pt.Assert(
-                pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(tmpl_val))
-            )
+    @app.external
+    def check_it():
+        return pt.Assert(pt.Txn.sender() == pc.logic.template_hash(pt.Int(tmpl_val)))
 
-    app = App()
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.logic._program_hash is None
+    assert pc.logic._program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.logic._program_hash is not None
+    assert pc.logic._program_hash is not None
 
-    populated_teal = app.pc.logic.populate_template(tmpl_val)
+    populated_teal = pc.logic.populate_template(tmpl_val)
 
-    assert len(populated_teal) == len(app.pc.logic._binary) + (
+    assert len(populated_teal) == len(pc.logic._binary) + (
         len(py_encode_uvarint(tmpl_val)) - 1
     )
 
@@ -141,49 +139,32 @@ class InnerApp(Application):
 def OuterApp() -> Application:
     app = Application()
 
-    child: AppPrecompile = AppPrecompile(InnerApp())
-    lsig: LSigPrecompile = LSigPrecompile(InnerLsig())
+    child = app.precompile(InnerApp())
+    lsig = app.precompile(InnerLsig())
 
-    @external
-    def doit(self, nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
+    @app.external
+    def doit(nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
         return pt.Seq(
-            pt.Assert(pt.Txn.sender() == self.lsig.logic.template_hash(nonce.get())),
+            pt.Assert(pt.Txn.sender() == lsig.logic.template_hash(nonce.get())),
             pt.InnerTxnBuilder.Execute(
                 {
                     pt.TxnField.type_enum: pt.TxnType.ApplicationCall,
-                    pt.TxnField.approval_program: self.child.approval.binary,
-                    pt.TxnField.clear_state_program: self.child.clear.binary,
+                    pt.TxnField.approval_program: child.approval.binary,
+                    pt.TxnField.clear_state_program: child.clear.binary,
                     pt.TxnField.fee: pt.Int(0),
                 }
             ),
             output.set(pt.InnerTxn.created_application_id()),
         )
 
+    return app
+
 
 def test_nested_precompile():
     oa = OuterApp()
-
-    # Nothing is available until we build out the app and all its precompiles
-    assert oa.child.approval._program is not None
-    assert oa.child.clear._program is not None
-    assert oa.lsig.logic._program is not None
-
-    assert len(oa.lsig.logic._template_values) == 0
-
-    assert oa.child.approval._binary is None
-    assert oa.child.clear._binary is None
-    assert oa.lsig.logic._binary is None
-
-    ac = ApplicationClient(
-        client=get_algod_client(), app=oa, signer=get_accounts().pop().signer
+    check_application_artifacts_output_stability(
+        oa, output_dir=Path(__file__).parent / "artifacts" / "nested_precompile"
     )
-    ac.build()
-
-    assert oa.child.approval._binary is not None
-    assert oa.child.clear._binary is not None
-    assert oa.lsig.logic._binary is not None
-
-    assert len(oa.lsig.logic._template_values) == 1
 
 
 def test_build_recursive():
@@ -193,13 +174,17 @@ def test_build_recursive():
     _check_app_precompiles(pc)
 
 
-class LargeApp(Application):
-    longBytes = 4092 * b"A"
-    longBytes2 = 2048 * b"A"
+def LargeApp() -> Application:
+    long_bytes = 4092 * b"A"
+    long_bytes2 = 2048 * b"A"
 
-    @external
-    def compare_big_byte_strings(self):
-        return pt.Assert(pt.Bytes(self.longBytes) != pt.Bytes(self.longBytes2))
+    app = Application()
+
+    @app.external
+    def compare_big_byte_strings():
+        return pt.Assert(pt.Bytes(long_bytes) != pt.Bytes(long_bytes2))
+
+    return app
 
 
 def test_large_app_create():
@@ -254,12 +239,10 @@ def test_extra_page_population():
 
 
 def _check_app_precompiles(app_precompile: AppPrecompile):
-    for _, p in app_precompile.app.precompiles.items():
-        match p:
-            case LSigPrecompile():
-                _check_lsig_precompiles(p)
-            case AppPrecompile():
-                _check_app_precompiles(p)
+    for app_pc in app_precompile.app.app_precompiles:
+        _check_app_precompiles(app_pc)
+    for lsig_pc in app_precompile.app.lsig_precompiles:
+        _check_lsig_precompiles(lsig_pc)
 
     assert app_precompile.approval._program != ""
     assert app_precompile.approval._binary is not None

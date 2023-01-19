@@ -1,0 +1,161 @@
+#pragma version 8
+intcblock 0 1 128 255
+bytecblock 0x 0x0880003500810143
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l4
+txna ApplicationArgs 0
+pushbytes 0xf6dfa56f // "doit(byte[])uint64"
+==
+bnz main_l3
+err
+main_l3:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+callsub doit_1
+store 0
+pushbytes 0x151f7c75 // 0x151f7c75
+load 0
+itob
+concat
+log
+intc_1 // 1
+return
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l6
+err
+main_l6:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+intc_1 // 1
+return
+
+// doit
+doit_1:
+store 1
+txn Sender
+pushbytes 0x50726f6772616d // "Program"
+callsub populatetemplateprogram_3
+concat
+sha512_256
+==
+assert
+itxn_begin
+pushint 6 // appl
+itxn_field TypeEnum
+pushbytes 0x0820020001311b2212400001003119221240000100311822124488000223432343 // 0x0820020001311b2212400001003119221240000100311822124488000223432343
+itxn_field ApprovalProgram
+pushbytes 0x08810043 // 0x08810043
+itxn_field ClearStateProgram
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+itxn CreatedApplicationID
+retsub
+
+// encode_uvarint_impl
+encodeuvarintimpl_2:
+store 7
+store 6
+load 7
+load 6
+intc_2 // 128
+>=
+bnz encodeuvarintimpl_2_l2
+load 6
+intc_3 // 255
+&
+itob
+extract 7 1
+b encodeuvarintimpl_2_l3
+encodeuvarintimpl_2_l2:
+load 6
+pushint 7 // 7
+shr
+load 6
+intc_3 // 255
+&
+intc_2 // 128
+|
+itob
+extract 7 1
+load 6
+load 7
+uncover 3
+uncover 3
+callsub encodeuvarintimpl_2
+cover 2
+store 7
+store 6
+encodeuvarintimpl_2_l3:
+concat
+retsub
+
+// populate_template_program
+populatetemplateprogram_3:
+intc_0 // 0
+store 2
+intc_0 // 0
+store 3
+bytec_0 // ""
+store 4
+bytec_0 // ""
+store 5
+load 1
+extract 2 0
+len
+bytec_0 // ""
+callsub encodeuvarintimpl_2
+load 1
+extract 2 0
+concat
+store 4
+load 5
+bytec_1 // 0x0880003500810143
+load 2
+pushint 2 // 2
+substring3
+concat
+load 4
+concat
+store 5
+load 3
+load 4
+len
++
+intc_1 // 1
+-
+store 3
+pushint 2 // 2
+intc_1 // 1
++
+store 2
+load 5
+bytec_1 // 0x0880003500810143
+load 2
+dig 1
+len
+substring3
+concat
+store 5
+load 5
+retsub

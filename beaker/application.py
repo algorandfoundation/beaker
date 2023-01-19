@@ -3,7 +3,6 @@ import dataclasses
 import inspect
 import itertools
 import json
-import typing
 from pathlib import Path
 from typing import (
     Any,
@@ -17,6 +16,7 @@ from typing import (
     TypeVar,
     overload,
     Generic,
+    Iterable,
 )
 
 from algosdk.abi import Method, Contract
@@ -45,11 +45,9 @@ from beaker.decorators import (
     HandlerConfig,
 )
 from beaker.errors import BareOverwriteError
+from beaker.logic_signature import LogicSignature
 from beaker.precompile import AppPrecompile, LSigPrecompile
 from beaker.state import AccountState, ApplicationState
-
-if typing.TYPE_CHECKING:
-    from beaker.logic_signature import LogicSignature
 
 
 def get_method_spec(fn: Any) -> Method:
@@ -115,16 +113,16 @@ class Methods:
 
 
 class Application(Generic[TState]):
-    """Application contains logic to detect State Variables, Bare methods
-    ABI Methods and internal subroutines.
-
-    It should be subclassed to provide basic behavior to a custom application.
+    """
+    <TODO>
     """
 
     @overload
     def __init__(
         self: "Application[State]",
         *,
+        name: str,
+        descr: str | None = None,
         version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
     ):
@@ -133,8 +131,10 @@ class Application(Generic[TState]):
     @overload
     def __init__(
         self: "Application[TState]",
-        state: TState,
         *,
+        state: TState,
+        name: str,
+        descr: str | None = None,
         version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
     ):
@@ -142,12 +142,16 @@ class Application(Generic[TState]):
 
     def __init__(
         self,
-        state: TState = cast(TState, _EMTPY_STATE),
         *,
+        state: TState = cast(TState, _EMTPY_STATE),
+        name: str,
+        descr: str | None = None,
         version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
     ) -> None:
-        """Initialize the Application, finding all the custom attributes and initializing the Router"""
+        """<TODO>"""
+        self.name = name
+        self.descr = descr
         self.teal_version = version
         self._state = state
         self._compiled: CompiledApplication | None = None
@@ -190,12 +194,15 @@ class Application(Generic[TState]):
 
     @property
     def precompiles(self) -> list[AppPrecompile | LSigPrecompile]:
-        return list(
-            itertools.chain(
-                self._app_precompiles.values(),
-                self._lsig_precompiles.values(),
-            )
-        )
+        return list(itertools.chain(self.app_precompiles, self.lsig_precompiles))
+
+    @property
+    def app_precompiles(self) -> Iterable[AppPrecompile]:
+        return self._app_precompiles.values()
+
+    @property
+    def lsig_precompiles(self) -> Iterable[LSigPrecompile]:
+        return self._lsig_precompiles.values()
 
     @property
     def hints(self) -> dict[str, MethodHints]:
@@ -319,7 +326,7 @@ class Application(Generic[TState]):
             sig = inspect.signature(func)
             nonlocal bare
             if bare is None:
-                bare = bool(sig.parameters)
+                bare = not sig.parameters
 
             if bare and read_only:
                 raise ValueError("read_only has no effect on bare methods")
@@ -841,9 +848,9 @@ class Application(Generic[TState]):
 
             bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
             router = Router(
-                name=self.__class__.__name__,
+                name=self.name,
                 bare_calls=BareCallActions(**bare_call_kwargs),
-                descr=self.__doc__,
+                descr=self.descr,
             )
 
             # Add method externals
@@ -1007,7 +1014,7 @@ class CompiledApplication:
         Args:
             directory: path to the directory where the artifacts should be written
         """
-        directory.mkdir(exist_ok=True)
+        directory.mkdir(exist_ok=True, parents=True)
 
         (directory / "approval.teal").write_text(self.approval_program)
         (directory / "clear.teal").write_text(self.clear_program)

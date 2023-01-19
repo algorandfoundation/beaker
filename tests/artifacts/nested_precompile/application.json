@@ -1,0 +1,36 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMSAxMjggMjU1CmJ5dGVjYmxvY2sgMHggMHgwODgwMDAzNTAwODEwMTQzCnR4biBOdW1BcHBBcmdzCmludGNfMCAvLyAwCj09CmJueiBtYWluX2w0CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4ZjZkZmE1NmYgLy8gImRvaXQoYnl0ZVtdKXVpbnQ2NCIKPT0KYm56IG1haW5fbDMKZXJyCm1haW5fbDM6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKY2FsbHN1YiBkb2l0XzEKc3RvcmUgMApwdXNoYnl0ZXMgMHgxNTFmN2M3NSAvLyAweDE1MWY3Yzc1CmxvYWQgMAppdG9iCmNvbmNhdApsb2cKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDQ6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KYm56IG1haW5fbDYKZXJyCm1haW5fbDY6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydApjYWxsc3ViIGNyZWF0ZV8wCmludGNfMSAvLyAxCnJldHVybgoKLy8gY3JlYXRlCmNyZWF0ZV8wOgppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGRvaXQKZG9pdF8xOgpzdG9yZSAxCnR4biBTZW5kZXIKcHVzaGJ5dGVzIDB4NTA3MjZmNjc3MjYxNmQgLy8gIlByb2dyYW0iCmNhbGxzdWIgcG9wdWxhdGV0ZW1wbGF0ZXByb2dyYW1fMwpjb25jYXQKc2hhNTEyXzI1Ngo9PQphc3NlcnQKaXR4bl9iZWdpbgpwdXNoaW50IDYgLy8gYXBwbAppdHhuX2ZpZWxkIFR5cGVFbnVtCnB1c2hieXRlcyAweDA4MjAwMjAwMDEzMTFiMjIxMjQwMDAwMTAwMzExOTIyMTI0MDAwMDEwMDMxMTgyMjEyNDQ4ODAwMDIyMzQzMjM0MyAvLyAweDA4MjAwMjAwMDEzMTFiMjIxMjQwMDAwMTAwMzExOTIyMTI0MDAwMDEwMDMxMTgyMjEyNDQ4ODAwMDIyMzQzMjM0MwppdHhuX2ZpZWxkIEFwcHJvdmFsUHJvZ3JhbQpwdXNoYnl0ZXMgMHgwODgxMDA0MyAvLyAweDA4ODEwMDQzCml0eG5fZmllbGQgQ2xlYXJTdGF0ZVByb2dyYW0KaW50Y18wIC8vIDAKaXR4bl9maWVsZCBGZWUKaXR4bl9zdWJtaXQKaXR4biBDcmVhdGVkQXBwbGljYXRpb25JRApyZXRzdWIKCi8vIGVuY29kZV91dmFyaW50X2ltcGwKZW5jb2RldXZhcmludGltcGxfMjoKc3RvcmUgNwpzdG9yZSA2CmxvYWQgNwpsb2FkIDYKaW50Y18yIC8vIDEyOAo+PQpibnogZW5jb2RldXZhcmludGltcGxfMl9sMgpsb2FkIDYKaW50Y18zIC8vIDI1NQomCml0b2IKZXh0cmFjdCA3IDEKYiBlbmNvZGV1dmFyaW50aW1wbF8yX2wzCmVuY29kZXV2YXJpbnRpbXBsXzJfbDI6CmxvYWQgNgpwdXNoaW50IDcgLy8gNwpzaHIKbG9hZCA2CmludGNfMyAvLyAyNTUKJgppbnRjXzIgLy8gMTI4CnwKaXRvYgpleHRyYWN0IDcgMQpsb2FkIDYKbG9hZCA3CnVuY292ZXIgMwp1bmNvdmVyIDMKY2FsbHN1YiBlbmNvZGV1dmFyaW50aW1wbF8yCmNvdmVyIDIKc3RvcmUgNwpzdG9yZSA2CmVuY29kZXV2YXJpbnRpbXBsXzJfbDM6CmNvbmNhdApyZXRzdWIKCi8vIHBvcHVsYXRlX3RlbXBsYXRlX3Byb2dyYW0KcG9wdWxhdGV0ZW1wbGF0ZXByb2dyYW1fMzoKaW50Y18wIC8vIDAKc3RvcmUgMgppbnRjXzAgLy8gMApzdG9yZSAzCmJ5dGVjXzAgLy8gIiIKc3RvcmUgNApieXRlY18wIC8vICIiCnN0b3JlIDUKbG9hZCAxCmV4dHJhY3QgMiAwCmxlbgpieXRlY18wIC8vICIiCmNhbGxzdWIgZW5jb2RldXZhcmludGltcGxfMgpsb2FkIDEKZXh0cmFjdCAyIDAKY29uY2F0CnN0b3JlIDQKbG9hZCA1CmJ5dGVjXzEgLy8gMHgwODgwMDAzNTAwODEwMTQzCmxvYWQgMgpwdXNoaW50IDIgLy8gMgpzdWJzdHJpbmczCmNvbmNhdApsb2FkIDQKY29uY2F0CnN0b3JlIDUKbG9hZCAzCmxvYWQgNApsZW4KKwppbnRjXzEgLy8gMQotCnN0b3JlIDMKcHVzaGludCAyIC8vIDIKaW50Y18xIC8vIDEKKwpzdG9yZSAyCmxvYWQgNQpieXRlY18xIC8vIDB4MDg4MDAwMzUwMDgxMDE0Mwpsb2FkIDIKZGlnIDEKbGVuCnN1YnN0cmluZzMKY29uY2F0CnN0b3JlIDUKbG9hZCA1CnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "Application",
+        "methods": [
+            {
+                "name": "doit",
+                "args": [
+                    {
+                        "type": "byte[]",
+                        "name": "nonce"
+                    }
+                ],
+                "returns": {
+                    "type": "uint64"
+                }
+            }
+        ],
+        "networks": {},
+        "desc": "Application contains logic to detect State Variables, Bare methods\n    ABI Methods and internal subroutines.\n\n    It should be subclassed to provide basic behavior to a custom application.\n    "
+    }
+}
