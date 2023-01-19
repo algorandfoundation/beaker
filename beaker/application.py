@@ -103,10 +103,13 @@ class Methods:
     __slots__ = ("_methods",)
 
     def __init__(self, methods: dict[str, Method] | None = None):
-        self._methods = methods or {}
+        self._methods: dict[str, Method] = methods or {}
 
-    def __getattribute__(self, item: str) -> Method | None:
-        return self._methods.get(item)
+    def __getattr__(self, item: str) -> Method:
+        try:
+            return self._methods[item]
+        except KeyError as ex:
+            raise AttributeError(f"Unknown method: {item}") from ex
 
 
 class Application(Generic[TState]):

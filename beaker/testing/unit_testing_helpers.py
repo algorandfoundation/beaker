@@ -23,7 +23,8 @@ class NoState(State):
 
 
 def UnitTestingApp(
-    state: State = NoState(), expr_to_test: pt.Expr | None = None
+    expr_to_test: pt.Expr | None = None,
+    state: State = NoState(),
 ) -> Application:
 
     """Base unit testable application.
