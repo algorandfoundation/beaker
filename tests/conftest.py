@@ -68,7 +68,6 @@ def check_application_artifacts_output_stability(
 
 
 def check_lsig_output_stability(lsig: LogicSignature) -> None:
-    lsig.compile()
     assert lsig.program is not None
 
     lsig_class = lsig.__class__

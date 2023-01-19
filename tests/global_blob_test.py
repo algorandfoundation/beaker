@@ -1,6 +1,7 @@
 import pytest
 import pyteal as pt
 import beaker as bkr
+from beaker.application import State
 
 from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 
@@ -8,23 +9,24 @@ from beaker.lib.storage.global_blob import GlobalBlob
 from beaker.lib.storage.blob import blob_page_size
 
 
-class GlobalBlobTest(UnitTestingApp):
+class GlobalBlobState(State):
     lb = bkr.ReservedApplicationStateValue(pt.TealType.bytes, max_keys=64)
     blob = GlobalBlob()
 
 
 def test_global_blob_zero():
-    class LBZero(GlobalBlobTest):
-        @bkr.external
-        def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
-            return pt.Seq(
-                self.blob.zero(),
-                (s := pt.abi.String()).set(self.blob.read(pt.Int(0), pt.Int(64))),
-                output.decode(s.encode()),
-            )
+    app = UnitTestingApp(state=GlobalBlobState())
+
+    @app.external()
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+        return pt.Seq(
+            app.state.blob.zero(),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(0), pt.Int(64))),
+            output.decode(s.encode()),
+        )
 
     expected = list(bytes(64))
-    assert_output(LBZero(), [], [expected], opups=1)
+    assert_output(app, [], [expected], opups=1)
 
 
 def test_global_blob_write_read():

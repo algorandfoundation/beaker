@@ -1,5 +1,5 @@
 """Module containing helper functions for testing PyTeal Utils."""
-from typing import Any, TypeVar
+from typing import Any, TypeVar, overload, cast
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 import pyteal as pt
@@ -15,17 +15,30 @@ def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
 
 
-TState = TypeVar("TState", bound=State)
+TState = TypeVar("TState")
 
 
-class NoState(State):
-    pass
+@overload
+def UnitTestingApp(
+    expr_to_test: pt.Expr | None = None,
+) -> Application[None]:
+    ...
+
+
+@overload
+def UnitTestingApp(
+    expr_to_test: pt.Expr | None = None,
+    *,
+    state: TState,
+) -> Application[TState]:
+    ...
 
 
 def UnitTestingApp(
     expr_to_test: pt.Expr | None = None,
-    state: State = NoState(),
-) -> Application:
+    *,
+    state: TState | None = None,
+) -> Application[TState]:
 
     """Base unit testable application.
 
@@ -69,17 +82,17 @@ def UnitTestingApp(
     def opup() -> pt.Expr:
         return pt.Approve()
 
-    @app.external
-    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
-        if expr_to_test is None:
-            raise Exception(
-                "Expression undefined. Either set the expr to test on init or override unit_test method"
-            )
-        return pt.Seq(
-            (s := pt.abi.String()).set(expr_to_test), output.decode(s.encode())
-        )
+    if expr_to_test is not None:
+        test_expr = expr_to_test
 
-    return app
+        @app.external
+        def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
+
+            return pt.Seq(
+                (s := pt.abi.String()).set(test_expr), output.decode(s.encode())
+            )
+
+    return cast(Application[TState], app)
 
 
 def assert_output(
@@ -105,6 +118,13 @@ def assert_output(
     if sandbox_accounts is None:
         sandbox_accounts = sandbox.get_accounts()
 
+    try:
+        unit_test_method = app.methods.unit_test
+    except AttributeError:
+        raise Exception(
+            "Expression undefined. Either pass the expr to test or implement unit_test method"
+        )
+
     app_client = client.ApplicationClient(
         algod_client, app, signer=sandbox_accounts[0].signer
     )
@@ -122,7 +142,7 @@ def assert_output(
             if opups > 0:
                 atc = AtomicTransactionComposer()
 
-                app_client.add_method_call(atc, app.methods.unit_test, **input)
+                app_client.add_method_call(atc, unit_test_method, **input)
                 for x in range(opups):
                     app_client.add_method_call(
                         atc, app.methods.opup, note=str(x).encode()
@@ -132,7 +152,7 @@ def assert_output(
 
                 assert results.abi_results[0].return_value == output
             else:
-                result = app_client.call(app.methods.unit_test, **input)
+                result = app_client.call(unit_test_method, **input)
                 assert result.return_value == output
     except Exception as e:
         raise e

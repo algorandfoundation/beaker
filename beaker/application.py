@@ -96,7 +96,8 @@ class State:
     pass
 
 
-TState = TypeVar("TState", bound=State)
+TState = TypeVar("TState")
+_EMPTY_STATE = State()
 
 
 class Methods:
@@ -121,13 +122,14 @@ class Application(Generic[TState]):
 
     def __init__(
         self,
-        state: TState,
-        teal_version: int = MAX_TEAL_VERSION,
+        state: TState = cast(TState, _EMPTY_STATE),
+        *,
+        version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
-    ):
+    ) -> None:
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
-        self.teal_version = teal_version
-        self._state = state
+        self.teal_version = version
+        self._state: TState = state
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}

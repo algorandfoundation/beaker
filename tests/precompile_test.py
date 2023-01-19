@@ -3,7 +3,6 @@ import pyteal as pt
 from algosdk import encoding
 
 from beaker.application import Application
-from beaker.decorators import external
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.logic_signature import LogicSignature, TemplateVariable
@@ -14,30 +13,29 @@ from beaker.precompile import (
 )
 
 
-def test_precompile_basic():
-    class App(Application):
-        class Lsig(LogicSignature):
-            def evaluate(self):
-                return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
+def test_precompile_basic() -> None:
+    class Lsig(LogicSignature):
+        def evaluate(self):
+            return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
-        pc = LSigPrecompile(Lsig(version=6))
+    app = Application()
+    pc = app.precompile(Lsig(version=6))
 
-        @external
-        def check_it(self):
-            return pt.Assert(pt.Txn.sender() == self.pc.logic.hash())
+    @app.external
+    def check_it():
+        return pt.Assert(pt.Txn.sender() == pc.logic.hash())
 
-    app = App()
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert app.pc.logic._program_hash is None
+    assert pc.logic._program_hash is None
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
-    assert app.pc.logic._program_hash is not None
+    assert pc.logic._program_hash is not None
 
 
 TMPL_BYTE_VALS = [
@@ -140,7 +138,9 @@ class InnerApp(Application):
     pass
 
 
-class OuterApp(Application):
+def OuterApp() -> Application:
+    app = Application()
+
     child: AppPrecompile = AppPrecompile(InnerApp())
     lsig: LSigPrecompile = LSigPrecompile(InnerLsig())
 
