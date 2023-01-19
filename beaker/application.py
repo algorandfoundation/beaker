@@ -15,7 +15,6 @@ from typing import (
     Concatenate,
     TypeVar,
     overload,
-    Generic,
     Iterable,
 )
 
@@ -90,15 +89,6 @@ DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
-class State:
-    pass
-
-
-TState = TypeVar("TState", bound=State)
-
-_EMTPY_STATE = State()
-
-
 class Methods:
     __slots__ = ("_methods",)
 
@@ -112,55 +102,22 @@ class Methods:
             raise AttributeError(f"Unknown method: {item}") from ex
 
 
-class Application(Generic[TState]):
-    """
-    <TODO>
-    """
-
-    @overload
-    def __init__(
-        self: "Application[State]",
-        *,
-        name: str,
-        descr: str | None = None,
-        version: int = MAX_TEAL_VERSION,
-        unconditional_create_approval: bool = True,
-    ):
-        ...
-
-    @overload
-    def __init__(
-        self: "Application[TState]",
-        *,
-        state: TState,
-        name: str,
-        descr: str | None = None,
-        version: int = MAX_TEAL_VERSION,
-        unconditional_create_approval: bool = True,
-    ):
-        ...
-
+class Application:
     def __init__(
         self,
         *,
-        state: TState = cast(TState, _EMTPY_STATE),
-        name: str,
-        descr: str | None = None,
         version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
     ) -> None:
         """<TODO>"""
-        self.name = name
-        self.descr = descr
         self.teal_version = version
-        self._state = state
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self.acct_state = AccountState(klass=state.__class__)
-        self.app_state = ApplicationState(klass=state.__class__)
+        self.acct_state = AccountState(klass=self.__class__)
+        self.app_state = ApplicationState(klass=self.__class__)
         self.methods = Methods()
 
         if unconditional_create_approval:
@@ -168,10 +125,6 @@ class Application(Generic[TState]):
             @self.create
             def create() -> Expr:
                 return Approve()
-
-    @property
-    def state(self) -> TState:
-        return self._state
 
     @overload
     def precompile(self, value: "Application", /) -> AppPrecompile:
@@ -848,9 +801,9 @@ class Application(Generic[TState]):
 
             bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
             router = Router(
-                name=self.name,
+                name=self.__class__.__name__,
                 bare_calls=BareCallActions(**bare_call_kwargs),
-                descr=self.descr,
+                descr=self.__doc__,
             )
 
             # Add method externals

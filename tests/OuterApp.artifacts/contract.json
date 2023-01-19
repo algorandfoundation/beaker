@@ -1,5 +1,5 @@
 {
-    "name": "Application",
+    "name": "OuterApp",
     "methods": [
         {
             "name": "doit",
@@ -14,6 +14,5 @@
             }
         }
     ],
-    "networks": {},
-    "desc": "Application contains logic to detect State Variables, Bare methods\n    ABI Methods and internal subroutines.\n\n    It should be subclassed to provide basic behavior to a custom application.\n    "
+    "networks": {}
 }

@@ -1,11 +1,11 @@
 """Module containing helper functions for testing PyTeal Utils."""
-from typing import Any, TypeVar, overload, cast
-from algosdk.atomic_transaction_composer import AtomicTransactionComposer
+from typing import Any, TypeVar
 
 import pyteal as pt
-from beaker import client, sandbox
+from algosdk.atomic_transaction_composer import AtomicTransactionComposer
+
 from beaker import Application
-from beaker.application import State
+from beaker import client, sandbox
 
 algod_client = None
 sandbox_accounts = None
@@ -15,30 +15,14 @@ def returned_int_as_bytes(i: int, bits: int = 64):
     return list(i.to_bytes(bits // 8, "big"))
 
 
-TState = TypeVar("TState", bound=State)
+TApp = TypeVar("TApp", bound=Application)
 
 
-@overload
-def UnitTestingApp(
+def unit_test_app_blueprint(
+    app: TApp,
+    /,
     expr_to_test: pt.Expr | None = None,
-) -> Application[State]:
-    ...
-
-
-@overload
-def UnitTestingApp(
-    expr_to_test: pt.Expr | None = None,
-    *,
-    state: TState,
-) -> Application[TState]:
-    ...
-
-
-def UnitTestingApp(
-    expr_to_test: pt.Expr | None = None,
-    *,
-    state: TState | None = None,
-) -> Application[TState]:
+) -> TApp:
 
     """Base unit testable application.
 
@@ -55,10 +39,6 @@ def UnitTestingApp(
 
     An instance of this class is passed to assert_output to check the return value against what you expect.
     """
-    if state is None:
-        app = Application()
-    else:
-        app = Application(state=state)
 
     @app.delete
     def delete() -> pt.Expr:
@@ -90,7 +70,15 @@ def UnitTestingApp(
                 (s := pt.abi.String()).set(test_expr), output.decode(s.encode())
             )
 
-    return cast(Application[TState], app)
+    return app
+
+
+class UnitTestingApp(Application):
+    def __init__(
+        self, expr_to_test: pt.Expr | None, version: int = pt.MAX_TEAL_VERSION
+    ):
+        super().__init__(version=version)
+        unit_test_app_blueprint(self, expr_to_test)
 
 
 def assert_output(

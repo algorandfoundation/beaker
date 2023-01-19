@@ -136,35 +136,31 @@ class InnerApp(Application):
     pass
 
 
-def OuterApp() -> Application:
-    app = Application()
+class OuterApp(Application):
+    def __init__(self):
+        super().__init__()
+        child = self.precompile(InnerApp())
+        lsig = self.precompile(InnerLsig())
 
-    child = app.precompile(InnerApp())
-    lsig = app.precompile(InnerLsig())
-
-    @app.external
-    def doit(nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
-        return pt.Seq(
-            pt.Assert(pt.Txn.sender() == lsig.logic.template_hash(nonce.get())),
-            pt.InnerTxnBuilder.Execute(
-                {
-                    pt.TxnField.type_enum: pt.TxnType.ApplicationCall,
-                    pt.TxnField.approval_program: child.approval.binary,
-                    pt.TxnField.clear_state_program: child.clear.binary,
-                    pt.TxnField.fee: pt.Int(0),
-                }
-            ),
-            output.set(pt.InnerTxn.created_application_id()),
-        )
-
-    return app
+        @self.external
+        def doit(nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
+            return pt.Seq(
+                pt.Assert(pt.Txn.sender() == lsig.logic.template_hash(nonce.get())),
+                pt.InnerTxnBuilder.Execute(
+                    {
+                        pt.TxnField.type_enum: pt.TxnType.ApplicationCall,
+                        pt.TxnField.approval_program: child.approval.binary,
+                        pt.TxnField.clear_state_program: child.clear.binary,
+                        pt.TxnField.fee: pt.Int(0),
+                    }
+                ),
+                output.set(pt.InnerTxn.created_application_id()),
+            )
 
 
 def test_nested_precompile():
     oa = OuterApp()
-    check_application_artifacts_output_stability(
-        oa, output_dir=Path(__file__).parent / "artifacts" / "nested_precompile"
-    )
+    check_application_artifacts_output_stability(oa)
 
 
 def test_build_recursive():
@@ -189,21 +185,24 @@ def LargeApp() -> Application:
 
 def test_large_app_create():
     class LargeAppDeployer(Application):
-        large_app = AppPrecompile(LargeApp())
+        def __init__(self):
+            super().__init__()
+            self.large_app = self.precompile(LargeApp())
 
-        @external
-        def deploy_large_app(self, *, output: pt.abi.Uint64):
-            return pt.Seq(
-                pt.InnerTxnBuilder.Execute(self.large_app.get_create_config()),
-                output.set(pt.InnerTxn.application_id()),
-            )
+            @self.external
+            def deploy_large_app(*, output: pt.abi.Uint64):
+                return pt.Seq(
+                    pt.InnerTxnBuilder.Execute(self.large_app.get_create_config()),
+                    output.set(pt.InnerTxn.application_id()),
+                )
 
     acct = get_accounts().pop()
-    ac = ApplicationClient(get_algod_client(), LargeAppDeployer(), signer=acct.signer)
+    app = LargeAppDeployer()
+    ac = ApplicationClient(get_algod_client(), app, signer=acct.signer)
 
     ac.create()
     ac.fund(1_000_000)
-    result = ac.call(LargeAppDeployer.deploy_large_app)
+    result = ac.call(app.methods.deploy_large_app)
     print(result.return_value)
 
 
@@ -271,13 +270,6 @@ def _check_app_precompiles(app_precompile: AppPrecompile):
 
 
 def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
-    for _, p in lsig_precompile.lsig.precompiles.items():
-        match p:
-            case LSigPrecompile():
-                _check_lsig_precompiles(p)
-            case AppPrecompile():
-                _check_app_precompiles(p)
-
     assert lsig_precompile.logic._program != ""
     assert lsig_precompile.logic._binary is not None
     assert lsig_precompile.logic.binary.byte_str != b""
