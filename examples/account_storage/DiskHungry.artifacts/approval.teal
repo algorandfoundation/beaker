@@ -66,12 +66,13 @@ return
 
 // create
 create_0:
+proto 0 0
 intc_2 // 1
 return
 
 // add_account
 addaccount_1:
-store 2
+proto 1 0
 txn Sender
 pushbytes 0x50726f6772616d // "Program"
 callsub populatetemplateprogram_4
@@ -89,203 +90,195 @@ retsub
 
 // flip_bit
 flipbit_2:
-store 11
-store 10
-load 10
+proto 2 0
+frame_dig -2
 txnas Accounts
-load 11
+frame_dig -1
 intc_3 // 8
 /
 callsub impl_6
-store 12
-load 12
-load 11
+store 6
+load 6
+frame_dig -1
 intc_3 // 8
 %
-load 12
-load 11
+load 6
+frame_dig -1
 intc_3 // 8
 %
 getbit
 !
 setbit
-store 12
-load 10
+store 6
+frame_dig -2
 txnas Accounts
-load 11
+frame_dig -1
 intc_3 // 8
 /
-load 12
+load 6
 callsub impl_7
 retsub
 
 // encode_uvarint_impl
 encodeuvarintimpl_3:
-store 8
-store 7
-load 8
-load 7
+proto 2 1
+frame_dig -1
+frame_dig -2
 intc 4 // 128
 >=
 bnz encodeuvarintimpl_3_l2
-load 7
+frame_dig -2
 intc 5 // 255
 &
 itob
 extract 7 1
 b encodeuvarintimpl_3_l3
 encodeuvarintimpl_3_l2:
-load 7
+frame_dig -2
 pushint 7 // 7
 shr
-load 7
+frame_dig -2
 intc 5 // 255
 &
 intc 4 // 128
 |
 itob
 extract 7 1
-load 7
-load 8
-uncover 3
-uncover 3
 callsub encodeuvarintimpl_3
-cover 2
-store 8
-store 7
 encodeuvarintimpl_3_l3:
 concat
 retsub
 
 // populate_template_program
 populatetemplateprogram_4:
+proto 0 1
+intc_1 // 0
+store 2
 intc_1 // 0
 store 3
-intc_1 // 0
+bytec_0 // ""
 store 4
 bytec_0 // ""
 store 5
-bytec_0 // ""
-store 6
-load 2
+frame_dig -1
 extract 2 0
 len
 bytec_0 // ""
 callsub encodeuvarintimpl_3
-load 2
+frame_dig -1
 extract 2 0
 concat
-store 5
-load 6
+store 4
+load 5
 bytec_1 // 0x0680003500810143
-load 3
+load 2
 pushint 2 // 2
 substring3
 concat
-load 5
-concat
-store 6
 load 4
-load 5
+concat
+store 5
+load 3
+load 4
 len
 +
 intc_2 // 1
 -
-store 4
+store 3
 pushint 2 // 2
 intc_2 // 1
 +
-store 3
-load 6
+store 2
+load 5
 bytec_1 // 0x0680003500810143
-load 3
+load 2
 dig 1
 len
 substring3
 concat
-store 6
-load 6
+store 5
+load 5
 retsub
 
 // _impl
 impl_5:
-store 9
-load 9
+proto 1 0
+frame_dig -1
 pushbytes 0x00 // 0x00
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x01 // 0x01
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x02 // 0x02
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x03 // 0x03
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x04 // 0x04
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x05 // 0x05
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x06 // 0x06
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x07 // 0x07
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x08 // 0x08
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x09 // 0x09
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x0a // 0x0a
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x0b // 0x0b
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x0c // 0x0c
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x0d // 0x0d
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x0e // 0x0e
 intc_0 // 127
 bzero
 app_local_put
-load 9
+frame_dig -1
 pushbytes 0x0f // 0x0f
 intc_0 // 127
 bzero
@@ -294,15 +287,16 @@ retsub
 
 // _impl
 impl_6:
-store 13
+proto 2 1
+frame_dig -2
 bytec_2 // 0x000102030405060708090a0b0c0d0e0f
-load 13
+frame_dig -1
 intc_0 // 127
 /
 intc_2 // 1
 extract3
 app_local_get
-load 13
+frame_dig -1
 intc_0 // 127
 %
 getbyte
@@ -310,25 +304,23 @@ retsub
 
 // _impl
 impl_7:
-store 16
-store 15
-store 14
+proto 3 0
 bytec_2 // 0x000102030405060708090a0b0c0d0e0f
-load 15
+frame_dig -2
 intc_0 // 127
 /
 intc_2 // 1
 extract3
-store 17
-load 14
-load 17
-load 14
-load 17
+store 7
+frame_dig -3
+load 7
+frame_dig -3
+load 7
 app_local_get
-load 15
+frame_dig -2
 intc_0 // 127
 %
-load 16
+frame_dig -1
 setbyte
 app_local_put
 retsub
