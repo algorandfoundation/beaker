@@ -1,6 +1,7 @@
-import pytest
 import pyteal as pt
+import pytest
 
+from beaker import Application
 from beaker.decorators import DefaultArgument, Authorize
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
@@ -262,39 +263,57 @@ def test_bare():
     assert hc.bare_method.clear_state.action.subroutine.implementation == impl
 
 
-def test_resolvable():
-    from beaker.state import (
-        AccountStateValue,
-        ApplicationStateValue,
-        ReservedAccountStateValue,
-        ReservedApplicationStateValue,
-    )
+def test_account_state_resolvable():
+    from beaker.state import AccountStateValue
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = DefaultArgument(x)
     assert r.resolvable_class == "local-state"
 
+
+def test_reserved_account_state_resolvable():
+    from beaker.state import ReservedAccountStateValue
+
     x = ReservedAccountStateValue(pt.TealType.uint64, max_keys=1)
     r = DefaultArgument(x[pt.Bytes("x")])
     assert r.resolvable_class == "local-state"
+
+
+def test_application_state_resolvable():
+    from beaker.state import ApplicationStateValue
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = DefaultArgument(x)
     assert r.resolvable_class == "global-state"
 
+
+def test_reserved_application_state_resolvable():
+    from beaker.state import (
+        ReservedApplicationStateValue,
+    )
+
     x = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=1)
     r = DefaultArgument(x[pt.Bytes("x")])
     assert r.resolvable_class == "global-state"
 
-    @external(read_only=True)
+
+def test_abi_method_resolvable():
+    app = Application()
+
+    @app.external(read_only=True)
     def x():
         return pt.Assert(pt.Int(1))
 
+    assert isinstance(x, pt.ABIReturnSubroutine)
     r = DefaultArgument(x)
     assert r.resolvable_class == "abi-method"
 
+
+def test_bytes_constant_resolvable():
     r = DefaultArgument(pt.Bytes("1"))
     assert r.resolvable_class == "constant"
 
+
+def test_int_constant_resolvable():
     r = DefaultArgument(pt.Int(1))
     assert r.resolvable_class == "constant"

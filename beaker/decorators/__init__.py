@@ -2,8 +2,7 @@ import inspect
 from dataclasses import dataclass, field
 from enum import Enum
 from inspect import signature, Parameter
-from types import FunctionType
-from typing import Optional, Callable, cast, Any, TypedDict
+from typing import Optional, Callable, Any, TypedDict
 
 from algosdk.abi import Method
 from pyteal import (
@@ -27,7 +26,7 @@ __all__ = [
 
 HandlerFunc = Callable[..., Expr]
 
-DefaultArgumentType = Expr | HandlerFunc | int | bytes | str
+DefaultArgumentType = Expr | ABIReturnSubroutine | int | bytes | str
 
 
 class DefaultArgumentClass(str, Enum):
@@ -88,7 +87,7 @@ class DefaultArgument:
             case ABIReturnSubroutine() as fn:
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
-                return fn.method_spec.dictify()
+                return fn.method_spec().dictify()
             case _:
                 raise TealTypeError(self.resolver, DefaultArgumentType)
 
@@ -183,7 +182,7 @@ def _capture_structs_and_defaults(fn: HandlerFunc, config: HandlerConfig) -> Non
 
     for name, param in params.items():
         match param.default:
-            case Expr() | int() | str() | bytes() | FunctionType():
+            case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
                 config.default_arguments[name] = DefaultArgument(param.default)
                 params[name] = param.replace(default=Parameter.empty)
         if inspect.isclass(param.annotation) and issubclass(
