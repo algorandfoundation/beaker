@@ -4,10 +4,8 @@ import inspect
 import itertools
 import json
 import typing
-from functools import partialmethod
 from pathlib import Path
 from typing import (
-    Union,
     Any,
     cast,
     Optional,
@@ -90,10 +88,8 @@ class ABIExternal:
     hints: MethodHints
 
 
-DecoratorResultType: TypeAlias = Union[SubroutineFnWrapper, ABIReturnSubroutine]
+DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
-
-DecoratorReturnType: TypeAlias = Union[DecoratorResultType, DecoratorFuncType]
 
 
 class State:
@@ -242,13 +238,12 @@ class Application(Generic[TState]):
         bare: bool | None = False,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> ABIReturnSubroutine | SubroutineFnWrapper:
+    ) -> DecoratorResultType:
         ...
 
     @overload
     def external(
         self,
-        fn: None = None,
         /,
         *,
         method_config: MethodConfig
@@ -259,7 +254,7 @@ class Application(Generic[TState]):
         bare: bool | None = False,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> Callable[[HandlerFunc], ABIReturnSubroutine | SubroutineFnWrapper]:
+    ) -> DecoratorFuncType:
         ...
 
     def external(
@@ -275,7 +270,7 @@ class Application(Generic[TState]):
         bare: bool | None = False,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorReturnType:
+    ) -> DecoratorResultType | DecoratorFuncType:
         """
         Add the method decorated to be handled as an ABI method for the Application
 
@@ -352,28 +347,8 @@ class Application(Generic[TState]):
 
         return decorator(fn)
 
-    @overload
     def _shortcut_external(
         self,
-        fn: HandlerFunc,
-        /,
-        *,
-        action: OnCompleteActionName,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = False,
-    ) -> DecoratorResultType:
-        ...
-
-    @overload
-    def _shortcut_external(
-        self,
-        fn: None = None,
-        /,
         *,
         action: OnCompleteActionName,
         allow_call: bool = True,
@@ -384,22 +359,6 @@ class Application(Generic[TState]):
         read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
-        ...
-
-    def _shortcut_external(
-        self,
-        fn: HandlerFunc | None = None,
-        /,
-        *,
-        action: OnCompleteActionName,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = False,
-    ) -> DecoratorReturnType:
         if allow_call and allow_create:
             call_config = CallConfig.ALL
         elif allow_call:
@@ -409,7 +368,6 @@ class Application(Generic[TState]):
         else:
             raise ValueError("Require one of allow_call or allow_create to be True")
         return self.external(
-            fn,
             method_config={action: call_config},
             name=name,
             authorize=authorize,
@@ -436,7 +394,7 @@ class Application(Generic[TState]):
     @overload
     def create(
         self,
-        fn: HandlerFunc | None = None,
+        fn: None = None,
         /,
         *,
         allow_call: bool = False,
@@ -459,9 +417,8 @@ class Application(Generic[TState]):
         bare: bool | None = None,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorReturnType:
-        return self._shortcut_external(
-            fn,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
             action="no_op",
             allow_call=allow_call,
             allow_create=True,
@@ -471,14 +428,343 @@ class Application(Generic[TState]):
             read_only=read_only,
             override=override,
         )
+        return decorator if fn is None else decorator(fn)
 
-    # TODO: expand all these - will be more verbose but likely play better with type hints
-    delete = partialmethod(_shortcut_external, action="delete")
-    update = partialmethod(_shortcut_external, action="update")
-    opt_in = partialmethod(_shortcut_external, action="opt_in")
-    clear_state = partialmethod(_shortcut_external, action="clear_state")
-    close_out = partialmethod(_shortcut_external, action="close_out")
-    no_op = partialmethod(_shortcut_external, action="no_op")
+    @overload
+    def delete(
+        self,
+        fn: HandlerFunc,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorFuncType:
+        ...
+
+    def delete(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
+            action="delete_application",
+            allow_call=allow_call,
+            allow_create=allow_create,
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def update(
+        self,
+        fn: HandlerFunc,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorFuncType:
+        ...
+
+    def update(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
+            action="update_application",
+            allow_call=allow_call,
+            allow_create=allow_create,
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def opt_in(
+        self,
+        fn: HandlerFunc,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorFuncType:
+        ...
+
+    def opt_in(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
+            action="opt_in",
+            allow_call=allow_call,
+            allow_create=allow_create,
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def clear_state(
+        self,
+        fn: HandlerFunc,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def clear_state(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorFuncType:
+        ...
+
+    def clear_state(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
+            action="clear_state",
+            allow_call=allow_call,
+            allow_create=allow_create,
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def close_out(
+        self,
+        fn: HandlerFunc,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorFuncType:
+        ...
+
+    def close_out(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
+            action="close_out",
+            allow_call=allow_call,
+            allow_create=allow_create,
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def no_op(
+        self,
+        fn: HandlerFunc,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorFuncType:
+        ...
+
+    def no_op(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = None,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self._shortcut_external(
+            action="no_op",
+            allow_call=allow_call,
+            allow_create=allow_create,
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
 
     @property
     def on_create(self) -> Method | None:

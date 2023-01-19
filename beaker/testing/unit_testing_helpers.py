@@ -48,19 +48,19 @@ def UnitTestingApp(
     def create() -> pt.Expr:
         return pt.Approve()
 
-    @app.delete(bare=True)
+    @app.delete
     def delete() -> pt.Expr:
         return pt.Approve()
 
-    @app.update(bare=True)
+    @app.update
     def update() -> pt.Expr:
         return pt.Approve()
 
-    @app.opt_in(bare=True)
+    @app.opt_in
     def opt_in() -> pt.Expr:
         return app.acct_state.initialize()
 
-    @app.close_out(bare=True)
+    @app.close_out
     def close_out() -> pt.Expr:
         return pt.Approve()
 
