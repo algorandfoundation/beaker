@@ -1,7 +1,6 @@
 import pyteal as pt
 from beaker.lib.storage import List
 from beaker.application import Application
-from beaker.decorators import external
 
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
 
@@ -42,14 +41,17 @@ def test_list_app():
     class T(Application):
         l = List(pt.abi.Uint64, 100)
 
-        @external
-        def get(self, idx: pt.abi.Uint16, *, output: pt.abi.Uint64):
-            return self.l[idx.get()].store_into(output)
+        def __init__(self):
+            super().__init__()
 
-        @external
-        def set(self, idx: pt.abi.Uint16, val: pt.abi.Uint64):
-            return self.l[idx.get()].set(val)
+            @self.external
+            def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64):
+                return self.l[idx.get()].store_into(output)
+
+            @self.external
+            def set(idx: pt.abi.Uint16, val: pt.abi.Uint64):
+                return self.l[idx.get()].set(val)
 
     t = T()
     t.compile()
-    assert len(t.approval_program) > 0
+    assert t.approval_program
