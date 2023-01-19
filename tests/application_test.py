@@ -19,18 +19,7 @@ from beaker.application import (
     get_method_signature,
     get_method_spec,
 )
-from beaker.decorators import (
-    DefaultArgumentClass,
-    external,
-    get_handler_config,
-    internal,
-    create,
-    opt_in,
-    clear_state,
-    close_out,
-    update,
-    delete,
-)
+from beaker.decorators import DefaultArgumentClass
 from tests.conftest import check_application_artifacts_output_stability
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)

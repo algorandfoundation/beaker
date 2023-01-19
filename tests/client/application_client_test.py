@@ -13,17 +13,7 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
 )
 
-from beaker.decorators import (
-    Authorize,
-    DefaultArgument,
-    create,
-    external,
-    update,
-    clear_state,
-    close_out,
-    delete,
-    opt_in,
-)
+from beaker.decorators import Authorize, DefaultArgument
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, get_method_selector
 from beaker.state import ApplicationStateValue, AccountStateValue
@@ -39,45 +29,48 @@ class App(Application):
     acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
-    @create(bare=True)
-    def create(self):
-        return pt.Seq(
-            self.initialize_application_state(),
-            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
-            pt.Approve(),
-        )
+    def __init__(self):
+        super().__init__(unconditional_create_approval=False)
 
-    @update(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
-    def update(self):
-        return pt.Approve()
+        @self.create(bare=True)
+        def create():
+            return pt.Seq(
+                self.initialize_application_state(),
+                pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+                pt.Approve(),
+            )
 
-    @delete(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
-    def delete(self):
-        return pt.Approve()
+        @self.update(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
+        def update():
+            return pt.Approve()
 
-    @opt_in(bare=True)
-    def opt_in(self):
-        return pt.Seq(
-            self.initialize_account_state(),
-            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
-            pt.Approve(),
-        )
+        @self.delete(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
+        def delete():
+            return pt.Approve()
 
-    @clear_state(bare=True)
-    def clear_state(self):
-        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+        @self.opt_in(bare=True)
+        def opt_in():
+            return pt.Seq(
+                self.initialize_account_state(),
+                pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+                pt.Approve(),
+            )
 
-    @close_out(bare=True)
-    def close_out(self):
-        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+        @self.clear_state(bare=True)
+        def clear_state():
+            return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-    @external
-    def add(self, a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
-        return output.set(a.get() + b.get())
+        @self.close_out(bare=True)
+        def close_out():
+            return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-    @external(read_only=True)
-    def dummy(self, *, output: pt.abi.String):
-        return output.set("deadbeef")
+        @self.external
+        def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+            return output.set(a.get() + b.get())
+
+        @self.external(read_only=True)
+        def dummy(*, output: pt.abi.String):
+            return output.set("deadbeef")
 
 
 SandboxAccounts = list[tuple[str, str, AccountTransactionSigner]]
