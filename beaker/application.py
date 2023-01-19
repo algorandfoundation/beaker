@@ -149,7 +149,7 @@ class Application(Generic[TState]):
     ) -> None:
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
-        self._state: TState = state
+        self._state = state
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}
