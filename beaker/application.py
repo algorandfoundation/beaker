@@ -142,7 +142,7 @@ class Application(Generic[TState]):
 
     def __init__(
         self,
-        state: TState = _EMTPY_STATE,  # type: ignore
+        state: TState = cast(TState, _EMTPY_STATE),
         *,
         version: int = MAX_TEAL_VERSION,
         unconditional_create_approval: bool = True,
