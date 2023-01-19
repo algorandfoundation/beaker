@@ -80,7 +80,6 @@ return
 
 // create
 create_0:
-proto 0 0
 bytec_0 // "asv"
 bytec_0 // "asv"
 app_global_put
@@ -89,7 +88,6 @@ return
 
 // opt_in
 optin_1:
-proto 0 0
 txn Sender
 bytec_1 // "acsv"
 bytec_1 // "acsv"
@@ -99,11 +97,11 @@ return
 
 // opt_in_to_asset
 optintoasset_2:
-proto 1 0
+store 2
 itxn_begin
 intc_2 // axfer
 itxn_field TypeEnum
-frame_dig -1
+load 2
 txnas Assets
 itxn_field XferAsset
 global CurrentApplicationAddress
@@ -117,21 +115,22 @@ retsub
 
 // return_asset
 returnasset_3:
-proto 2 0
+store 4
+store 3
 itxn_begin
 intc_2 // axfer
 itxn_field TypeEnum
-frame_dig -2
+load 3
 txnas Assets
 itxn_field XferAsset
-frame_dig -1
+load 4
 txnas Accounts
 itxn_field AssetReceiver
 intc_0 // 0
 itxn_field Fee
 intc_0 // 0
 itxn_field AssetAmount
-frame_dig -1
+load 4
 txnas Accounts
 itxn_field AssetCloseTo
 itxn_submit

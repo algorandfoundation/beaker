@@ -280,7 +280,7 @@ class Application:
         ) = self.router.compile_program(
             version=self.teal_version,
             assemble_constants=True,
-            optimize=OptimizeOptions(scratch_slots=True),
+            optimize=OptimizeOptions(scratch_slots=True, frame_pointers=False),
         )
 
         return self.approval_program, self.clear_program

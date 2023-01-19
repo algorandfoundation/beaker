@@ -38,23 +38,23 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 14
+store 23
 txna ApplicationArgs 2
 intc_0 // 0
 getbyte
-store 15
+store 24
 txn GroupIndex
 intc_1 // 1
 -
-store 13
-load 13
+store 22
+load 22
 gtxns TypeEnum
 intc_3 // axfer
 ==
 assert
-load 13
-load 14
-load 15
+load 22
+load 23
+load 24
 callsub swap_7
 intc_1 // 1
 return
@@ -70,28 +70,28 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 10
+store 19
 txna ApplicationArgs 2
 intc_0 // 0
 getbyte
-store 11
+store 20
 txna ApplicationArgs 3
 intc_0 // 0
 getbyte
-store 12
+store 21
 txn GroupIndex
 intc_1 // 1
 -
-store 9
-load 9
+store 18
+load 18
 gtxns TypeEnum
 intc_3 // axfer
 ==
 assert
-load 9
-load 10
-load 11
-load 12
+load 18
+load 19
+load 20
+load 21
 callsub burn_6
 intc_1 // 1
 return
@@ -107,20 +107,20 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 6
+store 15
 txna ApplicationArgs 2
 intc_0 // 0
 getbyte
-store 7
+store 16
 txna ApplicationArgs 3
 intc_0 // 0
 getbyte
-store 8
+store 17
 txn GroupIndex
 pushint 2 // 2
 -
-store 4
-load 4
+store 13
+load 13
 gtxns TypeEnum
 intc_3 // axfer
 ==
@@ -128,17 +128,17 @@ assert
 txn GroupIndex
 intc_1 // 1
 -
-store 5
-load 5
+store 14
+load 14
 gtxns TypeEnum
 intc_3 // axfer
 ==
 assert
-load 4
-load 5
-load 6
-load 7
-load 8
+load 13
+load 14
+load 15
+load 16
+load 17
 callsub mint_5
 intc_1 // 1
 return
@@ -212,7 +212,6 @@ return
 
 // create
 create_0:
-proto 0 0
 bytec_3 // "g"
 global CreatorAddress
 app_global_put
@@ -223,8 +222,6 @@ retsub
 
 // auth_only
 authonly_1:
-proto 1 1
-frame_dig -1
 bytec_3 // "g"
 app_global_get
 ==
@@ -232,8 +229,6 @@ retsub
 
 // auth_only
 authonly_2:
-proto 1 1
-frame_dig -1
 bytec_3 // "g"
 app_global_get
 ==
@@ -241,21 +236,22 @@ retsub
 
 // set_governor
 setgovernor_3:
-proto 1 0
+store 25
 txn Sender
 callsub authonly_1
 // unauthorized
 assert
 bytec_3 // "g"
-frame_dig -1
+load 25
 txnas Accounts
 app_global_put
 retsub
 
 // bootstrap
 bootstrap_4:
-proto 3 1
-intc_0 // 0
+store 6
+store 5
+store 4
 txn Sender
 callsub authonly_2
 // unauthorized
@@ -265,21 +261,21 @@ pushint 2 // 2
 ==
 // group size not 2
 assert
-frame_dig -3
+load 4
 gtxns Receiver
 global CurrentApplicationAddress
 ==
 // receiver not app address
 assert
-frame_dig -3
+load 4
 gtxns Amount
 pushint 300000 // 300000
 >=
 // amount minimum not met
 assert
-frame_dig -2
+load 5
 txnas Assets
-frame_dig -1
+load 6
 txnas Assets
 <
 // asset a or asset b incorrect
@@ -287,33 +283,33 @@ assert
 intc_0 // 0
 bytec_0 // "a"
 app_global_get_ex
-store 17
-store 16
-load 17
+store 8
+store 7
+load 8
 !
 assert
 bytec_0 // "a"
-frame_dig -2
+load 5
 txnas Assets
 app_global_put
 intc_0 // 0
 bytec_1 // "b"
 app_global_get_ex
-store 19
-store 18
-load 19
+store 10
+store 9
+load 10
 !
 assert
 bytec_1 // "b"
-frame_dig -1
+load 6
 txnas Assets
 app_global_put
 intc_0 // 0
 bytec_2 // "p"
 app_global_get_ex
-store 21
-store 20
-load 21
+store 12
+store 11
+load 12
 !
 assert
 bytec_2 // "p"
@@ -331,139 +327,142 @@ app_global_get
 callsub dooptin_13
 bytec_2 // "p"
 app_global_get
-frame_bury 0
 retsub
 
 // mint
 mint_5:
-proto 5 0
-frame_dig -2
+store 39
+store 38
+store 37
+store 36
+store 35
+load 38
 txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
 // asset a incorrect
 assert
-frame_dig -1
+load 39
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
 // asset b incorrect
 assert
-frame_dig -3
+load 37
 txnas Assets
 bytec_2 // "p"
 app_global_get
 ==
 // asset pool incorrect
 assert
-frame_dig -5
+load 35
 gtxns Sender
 txn Sender
 ==
-frame_dig -4
+load 36
 gtxns Sender
 txn Sender
 ==
 &&
 // invalid sender
 assert
-frame_dig -5
+load 35
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 // receiver not app address
 assert
-frame_dig -5
+load 35
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
 // asset a incorrect
 assert
-frame_dig -5
+load 35
 gtxns AssetAmount
 intc_0 // 0
 >
 // amount minimum not met
 assert
-frame_dig -4
+load 36
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 // receiver not app address
 assert
-frame_dig -4
+load 36
 gtxns XferAsset
 bytec_1 // "b"
 app_global_get
 ==
 // asset b incorrect
 assert
-frame_dig -4
+load 36
 gtxns AssetAmount
 intc_0 // 0
 >
 // amount minimum not met
 assert
 global CurrentApplicationAddress
-frame_dig -3
+load 37
 asset_holding_get AssetBalance
-store 27
-store 26
+store 41
+store 40
 global CurrentApplicationAddress
-frame_dig -2
+load 38
 asset_holding_get AssetBalance
-store 29
-store 28
+store 43
+store 42
 global CurrentApplicationAddress
-frame_dig -1
+load 39
 asset_holding_get AssetBalance
-store 31
-store 30
-load 27
+store 45
+store 44
+load 41
 assert
-load 29
+load 43
 assert
-load 31
+load 45
 assert
-load 28
-frame_dig -5
+load 42
+load 35
 gtxns AssetAmount
 ==
-load 30
-frame_dig -4
+load 44
+load 36
 gtxns AssetAmount
 ==
 &&
 bnz mint_5_l2
 intc 4 // 10000000000
-load 26
+load 40
 -
-load 28
-frame_dig -5
+load 42
+load 35
 gtxns AssetAmount
 -
-load 30
-frame_dig -4
+load 44
+load 36
 gtxns AssetAmount
 -
-frame_dig -5
+load 35
 gtxns AssetAmount
-frame_dig -4
+load 36
 gtxns AssetAmount
 callsub tokenstomint_8
 b mint_5_l3
 mint_5_l2:
-frame_dig -5
+load 35
 gtxns AssetAmount
-frame_dig -4
+load 36
 gtxns AssetAmount
 callsub tokenstomintinitial_9
 mint_5_l3:
-store 32
-load 32
+store 46
+load 46
 intc_0 // 0
 >
 // outgoing amount too low
@@ -471,7 +470,7 @@ assert
 txn Sender
 bytec_2 // "p"
 app_global_get
-load 32
+load 46
 callsub doaxfer_12
 bytec 4 // "r"
 callsub computeratio_15
@@ -480,102 +479,105 @@ retsub
 
 // burn
 burn_6:
-proto 4 0
-frame_dig -3
+store 61
+store 60
+store 59
+store 58
+load 59
 txnas Assets
 bytec_2 // "p"
 app_global_get
 ==
 // asset pool incorrect
 assert
-frame_dig -2
+load 60
 txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
 // asset a incorrect
 assert
-frame_dig -1
+load 61
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
 // asset b incorrect
 assert
-frame_dig -4
+load 58
 gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 // receiver not app address
 assert
-frame_dig -4
+load 58
 gtxns AssetAmount
 intc_0 // 0
 >
 // amount minimum not met
 assert
-frame_dig -4
+load 58
 gtxns XferAsset
 bytec_2 // "p"
 app_global_get
 ==
 // asset pool incorrect
 assert
-frame_dig -4
+load 58
 gtxns Sender
 txn Sender
 ==
 // invalid sender
 assert
 global CurrentApplicationAddress
-frame_dig -3
+load 59
 asset_holding_get AssetBalance
-store 40
-store 39
+store 63
+store 62
 global CurrentApplicationAddress
-frame_dig -2
+load 60
 asset_holding_get AssetBalance
-store 42
-store 41
+store 65
+store 64
 global CurrentApplicationAddress
-frame_dig -1
+load 61
 asset_holding_get AssetBalance
-store 44
-store 43
-load 40
+store 67
+store 66
+load 63
 assert
-load 42
+load 65
 assert
-load 44
+load 67
 assert
 intc 4 // 10000000000
-load 39
-frame_dig -4
+load 62
+load 58
 gtxns AssetAmount
 -
 -
-store 45
-load 45
-load 41
-frame_dig -4
+store 68
+load 68
+load 64
+load 58
 gtxns AssetAmount
 callsub tokenstoburn_10
-store 46
-load 45
-load 43
-frame_dig -4
+store 69
+load 68
+load 66
+load 58
 gtxns AssetAmount
 callsub tokenstoburn_10
-store 47
+store 70
 txn Sender
 bytec_0 // "a"
 app_global_get
-load 46
+load 69
 callsub doaxfer_12
 txn Sender
 bytec_1 // "b"
 app_global_get
-load 47
+load 70
 callsub doaxfer_12
 bytec 4 // "r"
 callsub computeratio_15
@@ -584,27 +586,29 @@ retsub
 
 // swap
 swap_7:
-proto 3 0
-frame_dig -2
+store 76
+store 75
+store 74
+load 75
 txnas Assets
 bytec_0 // "a"
 app_global_get
 ==
 // asset a incorrect
 assert
-frame_dig -1
+load 76
 txnas Assets
 bytec_1 // "b"
 app_global_get
 ==
 // asset b incorrect
 assert
-frame_dig -3
+load 74
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
-frame_dig -3
+load 74
 gtxns XferAsset
 bytec_1 // "b"
 app_global_get
@@ -612,26 +616,26 @@ app_global_get
 ||
 // asset a or asset b incorrect
 assert
-frame_dig -3
+load 74
 gtxns AssetAmount
 intc_0 // 0
 >
 // amount minimum not met
 assert
-frame_dig -3
+load 74
 gtxns Sender
 txn Sender
 ==
 // invalid sender
 assert
 global CurrentApplicationAddress
-frame_dig -3
+load 74
 gtxns XferAsset
 asset_holding_get AssetBalance
-store 49
-store 48
+store 78
+store 77
 global CurrentApplicationAddress
-frame_dig -3
+load 74
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
@@ -641,28 +645,28 @@ bytec_0 // "a"
 app_global_get
 swap_7_l2:
 asset_holding_get AssetBalance
-store 51
-store 50
-load 49
+store 80
+store 79
+load 78
 assert
-load 51
+load 80
 assert
-frame_dig -3
+load 74
 gtxns AssetAmount
-load 48
-frame_dig -3
+load 77
+load 74
 gtxns AssetAmount
 -
-load 50
+load 79
 callsub tokenstoswap_11
-store 52
-load 52
+store 81
+load 81
 intc_0 // 0
 >
 // outgoing amount too low
 assert
 txn Sender
-frame_dig -3
+load 74
 gtxns XferAsset
 bytec_0 // "a"
 app_global_get
@@ -680,7 +684,7 @@ bytec_1 // "b"
 app_global_get
 b swap_7_l2
 swap_7_l6:
-load 52
+load 81
 callsub doaxfer_12
 bytec 4 // "r"
 callsub computeratio_15
@@ -689,41 +693,45 @@ retsub
 
 // tokens_to_mint
 tokenstomint_8:
-proto 5 1
-frame_dig -2
+store 51
+store 50
+store 49
+store 48
+store 47
+load 50
 intc_2 // 1000
 mulw
 intc_0 // 0
-frame_dig -4
+load 48
 divmodw
 pop
 pop
 swap
 !
 assert
-store 33
-frame_dig -1
+store 52
+load 51
 intc_2 // 1000
 mulw
 intc_0 // 0
-frame_dig -3
+load 49
 divmodw
 pop
 pop
 swap
 !
 assert
-store 34
-load 33
-load 34
+store 53
+load 52
+load 53
 <
 bnz tokenstomint_8_l2
-load 34
+load 53
 b tokenstomint_8_l3
 tokenstomint_8_l2:
-load 33
+load 52
 tokenstomint_8_l3:
-frame_dig -5
+load 47
 mulw
 intc_0 // 0
 intc_2 // 1000
@@ -737,9 +745,6 @@ retsub
 
 // tokens_to_mint_initial
 tokenstomintinitial_9:
-proto 2 1
-frame_dig -2
-frame_dig -1
 *
 sqrt
 intc_2 // 1000
@@ -748,12 +753,14 @@ retsub
 
 // tokens_to_burn
 tokenstoburn_10:
-proto 3 1
-frame_dig -2
-frame_dig -1
+store 73
+store 72
+store 71
+load 72
+load 73
 mulw
 intc_0 // 0
-frame_dig -3
+load 71
 divmodw
 pop
 pop
@@ -764,13 +771,15 @@ retsub
 
 // tokens_to_swap
 tokenstoswap_11:
-proto 3 1
-frame_dig -3
+store 84
+store 83
+store 82
+load 82
 intc_2 // 1000
 pushint 5 // 5
 -
 mulw
-frame_dig -1
+load 84
 uncover 2
 dig 1
 *
@@ -780,10 +789,10 @@ cover 2
 +
 swap
 intc_0 // 0
-frame_dig -2
+load 83
 intc_2 // 1000
 *
-frame_dig -3
+load 82
 intc_2 // 1000
 pushint 5 // 5
 -
@@ -799,15 +808,17 @@ retsub
 
 // do_axfer
 doaxfer_12:
-proto 3 0
+store 29
+store 28
+store 27
 itxn_begin
 intc_3 // axfer
 itxn_field TypeEnum
-frame_dig -2
+load 28
 itxn_field XferAsset
-frame_dig -1
+load 29
 itxn_field AssetAmount
-frame_dig -3
+load 27
 itxn_field AssetReceiver
 intc_0 // 0
 itxn_field Fee
@@ -816,37 +827,36 @@ retsub
 
 // do_opt_in
 dooptin_13:
-proto 1 0
+store 26
 global CurrentApplicationAddress
-frame_dig -1
+load 26
 intc_0 // 0
 callsub doaxfer_12
 retsub
 
 // do_create_pool_token
 docreatepooltoken_14:
-proto 2 1
-frame_dig -2
+store 30
 asset_params_get AssetUnitName
-store 23
-store 22
-frame_dig -1
+store 32
+store 31
+load 30
 asset_params_get AssetUnitName
-store 25
-store 24
-load 23
+store 34
+store 33
+load 32
 assert
-load 25
+load 34
 assert
 itxn_begin
 pushint 3 // acfg
 itxn_field TypeEnum
 pushbytes 0x4450542d // "DPT-"
-load 22
+load 31
 concat
 pushbytes 0x2d // "-"
 concat
-load 24
+load 33
 concat
 itxn_field ConfigAssetName
 pushbytes 0x647074 // "dpt"
@@ -867,28 +877,27 @@ retsub
 
 // compute_ratio
 computeratio_15:
-proto 0 1
 global CurrentApplicationAddress
 bytec_0 // "a"
 app_global_get
 asset_holding_get AssetBalance
-store 36
-store 35
+store 55
+store 54
 global CurrentApplicationAddress
 bytec_1 // "b"
 app_global_get
 asset_holding_get AssetBalance
-store 38
-store 37
-load 36
+store 57
+store 56
+load 55
 assert
-load 38
+load 57
 assert
-load 35
+load 54
 intc_2 // 1000
 mulw
 intc_0 // 0
-load 37
+load 56
 divmodw
 pop
 pop

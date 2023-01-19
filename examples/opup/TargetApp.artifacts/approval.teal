@@ -38,21 +38,17 @@ return
 
 // create
 create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // auth_only
 authonly_1:
-proto 1 1
-frame_dig -1
 global CreatorAddress
 ==
 retsub
 
 // opup
 opup_2:
-proto 0 0
 txn Sender
 callsub authonly_1
 // unauthorized

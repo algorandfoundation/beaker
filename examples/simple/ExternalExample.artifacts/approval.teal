@@ -26,8 +26,4 @@ return
 
 // create
 create_0:
-proto 1 1
-pushbytes 0x // ""
-frame_dig -1
-frame_bury 0
 retsub

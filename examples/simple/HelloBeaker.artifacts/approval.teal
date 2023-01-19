@@ -44,24 +44,23 @@ return
 
 // create
 create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // hello
 hello_1:
-proto 1 1
-pushbytes 0x // ""
+store 1
 pushbytes 0x48656c6c6f2c20 // "Hello, "
-frame_dig -1
+load 1
 extract 2 0
 concat
-frame_bury 0
-frame_dig 0
+store 2
+load 2
 len
 itob
 extract 6 0
-frame_dig 0
+load 2
 concat
-frame_bury 0
+store 2
+load 2
 retsub

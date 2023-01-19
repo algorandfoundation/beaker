@@ -166,6 +166,18 @@ def wide_power(x, n):
     return Seq(InlineAssembly("expw", x, n), stack_to_wide())
 
 
+@Subroutine(TealType.bytes)
+def exponential_impl(x, f, n, _scale):
+    return If(
+        n == Int(1),
+        BytesAdd(_scale, BytesMul(x, _scale)),
+        BytesAdd(
+            exponential_impl(x, BytesDiv(f, Itob(n)), n - Int(1), _scale),
+            BytesDiv(BytesMul(_scale, wide_power(bytes_to_int(x), n)), f),
+        ),
+    )
+
+
 def exponential(x, n):
     """exponential approximates e**x for n iterations
 
@@ -180,19 +192,9 @@ def exponential(x, n):
 
     """
     _scale = Itob(Int(1000))
-
-    @Subroutine(TealType.bytes)
-    def _impl(x, f, n):
-        return If(
-            n == Int(1),
-            BytesAdd(_scale, BytesMul(x, _scale)),
-            BytesAdd(
-                _impl(x, BytesDiv(f, Itob(n)), n - Int(1)),
-                BytesDiv(BytesMul(_scale, wide_power(bytes_to_int(x), n)), f),
-            ),
-        )
-
-    return bytes_to_int(BytesDiv(_impl(Itob(x), wide_factorial(Itob(n)), n), _scale))
+    return bytes_to_int(
+        BytesDiv(exponential_impl(Itob(x), wide_factorial(Itob(n)), n, _scale), _scale)
+    )
 
 
 # @Subroutine(TealType.uint64)

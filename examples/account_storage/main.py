@@ -53,7 +53,7 @@ class DiskHungry(Application):
 
     # Signal to beaker that this should be compiled
     # prior to compiling the main application
-    tmpl_acct = LSigPrecompile(KeySig(version=6))
+    tmpl_acct = LSigPrecompile(KeySig(version=8))
 
     # Add account during opt in  by checking the sender against the address
     # we expect given the precompile && nonce
