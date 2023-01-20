@@ -75,7 +75,7 @@ intc_1 // 0
 !=
 &&
 assert
-callsub withdrawexternal_8
+callsub withdrawexternal_5
 intc_0 // 1
 return
 main_l11:
@@ -87,7 +87,7 @@ intc_1 // 0
 !=
 &&
 assert
-callsub checkin_7
+callsub checkin_3
 intc_0 // 1
 return
 main_l12:
@@ -109,7 +109,7 @@ intc_0 // pay
 ==
 assert
 load 0
-callsub dorsvp_6
+callsub dorsvp_1
 intc_0 // 1
 return
 main_l13:
@@ -123,7 +123,7 @@ intc_1 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub create_5
+callsub create_0
 intc_0 // 1
 return
 main_l14:
@@ -141,7 +141,7 @@ txn ApplicationID
 intc_1 // 0
 !=
 assert
-callsub delete_3
+callsub delete_7
 intc_0 // 1
 return
 main_l18:
@@ -153,68 +153,8 @@ callsub refund_11
 intc_0 // 1
 return
 
-// auth_opted_in
-authoptedin_0:
-global CurrentApplicationID
-app_opted_in
-retsub
-
-// auth_only
-authonly_1:
-global CreatorAddress
-==
-retsub
-
-// auth_only
-authonly_2:
-global CreatorAddress
-==
-retsub
-
-// delete
-delete_3:
-txn Sender
-callsub authonly_2
-// unauthorized
-assert
-global CurrentApplicationAddress
-balance
-intc_3 // 100000
-intc_2 // 1000
-+
->
-bz delete_3_l2
-global CurrentApplicationAddress
-balance
-intc_3 // 100000
-intc_2 // 1000
-+
->
-assert
-itxn_begin
-intc_0 // pay
-itxn_field TypeEnum
-txn Sender
-itxn_field Receiver
-global CurrentApplicationAddress
-balance
-intc_3 // 100000
-intc_2 // 1000
-+
--
-itxn_field Amount
-itxn_submit
-delete_3_l2:
-retsub
-
-// auth_only
-authonly_4:
-global CreatorAddress
-==
-retsub
-
 // create
-create_5:
+create_0:
 store 3
 bytec_1 // "price"
 pushint 1000000 // 1000000
@@ -228,7 +168,7 @@ app_global_put
 retsub
 
 // do_rsvp
-dorsvp_6:
+dorsvp_1:
 store 4
 global GroupSize
 pushint 2 // 2
@@ -257,10 +197,20 @@ intc_0 // 1
 app_global_put
 retsub
 
+// auth_opted_in
+authoptedin_2:
+global CurrentApplicationID
+app_opted_in
+retsub
+
 // check_in
-checkin_7:
+checkin_3:
 txn Sender
-callsub authoptedin_0
+callsub authoptedin_2
+// unauthorized
+assert
+txn Sender
+callsub authoptedin_2
 // unauthorized
 assert
 txn Sender
@@ -269,10 +219,20 @@ intc_0 // 1
 app_local_put
 retsub
 
+// auth_only
+authonly_4:
+global CreatorAddress
+==
+retsub
+
 // withdraw_external
-withdrawexternal_8:
+withdrawexternal_5:
 txn Sender
-callsub authonly_1
+callsub authonly_4
+// unauthorized
+assert
+txn Sender
+callsub authonly_4
 // unauthorized
 assert
 global CurrentApplicationAddress
@@ -297,10 +257,62 @@ itxn_field Amount
 itxn_submit
 retsub
 
+// auth_only
+authonly_6:
+global CreatorAddress
+==
+retsub
+
+// delete
+delete_7:
+txn Sender
+callsub authonly_6
+// unauthorized
+assert
+global CurrentApplicationAddress
+balance
+intc_3 // 100000
+intc_2 // 1000
++
+>
+bz delete_7_l2
+global CurrentApplicationAddress
+balance
+intc_3 // 100000
+intc_2 // 1000
++
+>
+assert
+itxn_begin
+intc_0 // pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+global CurrentApplicationAddress
+balance
+intc_3 // 100000
+intc_2 // 1000
++
+-
+itxn_field Amount
+itxn_submit
+delete_7_l2:
+retsub
+
+// auth_only
+authonly_8:
+global CreatorAddress
+==
+retsub
+
 // read_rsvp
 readrsvp_9:
 txn Sender
-callsub authonly_4
+callsub authonly_8
+// unauthorized
+assert
+txn Sender
+callsub authonly_8
 // unauthorized
 assert
 bytec_0 // "rsvp"

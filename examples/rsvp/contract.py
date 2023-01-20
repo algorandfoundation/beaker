@@ -3,10 +3,6 @@ from beaker import (
     Application,
     ApplicationStateValue,
     AccountStateValue,
-    create,
-    opt_in,
-    external,
-    delete,
     Authorize,
 )
 
@@ -57,77 +53,86 @@ class EventRSVP(Application):
         descr="0 = not checked in, 1 = checked in",
     )
 
-    @create
-    def create(self, event_price: abi.Uint64):
-        """Deploys the contract and initialze the app states"""
-        return Seq(
-            self.initialize_application_state(),
-            self.price.set(event_price.get()),
-        )
-
-    @opt_in
-    def do_rsvp(self, payment: abi.PaymentTransaction):
-        """Let txn sender rsvp to the event by opting into the contract"""
-        return Seq(
-            Assert(
-                Global.group_size() == Int(2),
-                payment.get().receiver() == self.address,
-                payment.get().amount() == self.price,
-            ),
-            self.initialize_account_state(),
-            self.rsvp.increment(),
-        )
-
-    @external(authorize=Authorize.opted_in(Global.current_application_id()))
-    def check_in(self):
-        """If the Sender RSVPed, check-in the Sender"""
-        return self.checked_in.set(Int(1))
-
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def withdraw_external(self):
-        """Let event creator to withdraw all funds in the contract"""
-        return withdraw_funds()
-
-    @delete(authorize=Authorize.only(Global.creator_address()), bare=True)
-    def delete(self):
-        """Let event creator delete the contract. Withdraws remaining funds"""
-        return If(Balance(self.address) > (MIN_BAL + FEE), withdraw_funds())
-
-    ################
-    # Read Methods #
-    ################
-
-    @external(read_only=True, authorize=Authorize.only(Global.creator_address()))
-    def read_rsvp(self, *, output: abi.Uint64):
-        """Read amount of RSVP to the event. Only callable by Creator."""
-        return output.set(self.rsvp)
-
-    @external(read_only=True)
-    def read_price(self, *, output: abi.Uint64):
-        """Read amount of RSVP to the event. Only callable by Creator."""
-        return output.set(self.price)
-
-
-def refund_protocol(app: EventRSVP, *, fee: Int) -> EventRSVP:
-    @app.close_out(bare=True)
-    @app.clear_state(bare=True)
-    def refund():
-        """Refunds event payment to guests"""
-        return Seq(
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.SetFields(
-                {
-                    TxnField.type_enum: TxnType.Payment,
-                    TxnField.receiver: Txn.sender(),
-                    TxnField.amount: app.price - fee,
-                }
-            ),
-            InnerTxnBuilder.Submit(),
-            app.rsvp.decrement(),
-        )
-
-    return app
-
 
 rsvp = EventRSVP()
-rsvp = rsvp.implement(refund_protocol, fee=FEE)
+
+
+@rsvp.create
+def create(event_price: abi.Uint64):
+    """Deploys the contract and initialze the app states"""
+    return Seq(
+        rsvp.initialize_application_state(),
+        rsvp.price.set(event_price.get()),
+    )
+
+
+@rsvp.opt_in
+def do_rsvp(payment: abi.PaymentTransaction):
+    """Let txn sender rsvp to the event by opting into the contract"""
+    return Seq(
+        Assert(
+            Global.group_size() == Int(2),
+            payment.get().receiver() == Global.current_application_address(),
+            payment.get().amount() == rsvp.price,
+        ),
+        rsvp.initialize_account_state(),
+        rsvp.rsvp.increment(),
+    )
+
+
+@rsvp.external(authorize=Authorize.opted_in(Global.current_application_id()))
+def check_in():
+    """If the Sender RSVPed, check-in the Sender"""
+    return rsvp.checked_in.set(Int(1))
+
+
+@rsvp.external(authorize=Authorize.only(Global.creator_address()))
+def withdraw_external():
+    """Let event creator to withdraw all funds in the contract"""
+    return withdraw_funds()
+
+
+@rsvp.delete(authorize=Authorize.only(Global.creator_address()))
+def delete():
+    """Let event creator delete the contract. Withdraws remaining funds"""
+    return If(
+        Balance(Global.current_application_address()) > (MIN_BAL + FEE),
+        withdraw_funds(),
+    )
+
+
+################
+# Read Methods #
+################
+
+
+@rsvp.external(read_only=True, authorize=Authorize.only(Global.creator_address()))
+def read_rsvp(*, output: abi.Uint64):
+    """Read amount of RSVP to the event. Only callable by Creator."""
+    return output.set(rsvp.rsvp)
+
+
+@rsvp.external(read_only=True)
+def read_price(*, output: abi.Uint64):
+    """Read amount of RSVP to the event. Only callable by Creator."""
+    return output.set(rsvp.price)
+
+
+@rsvp.external(
+    method_config={"clear_state": CallConfig.CALL, "close_out": CallConfig.CALL},
+    bare=True,
+)
+def refund():
+    """Refunds event payment to guests"""
+    return Seq(
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields(
+            {
+                TxnField.type_enum: TxnType.Payment,
+                TxnField.receiver: Txn.sender(),
+                TxnField.amount: rsvp.price - FEE,
+            }
+        ),
+        InnerTxnBuilder.Submit(),
+        rsvp.rsvp.decrement(),
+    )
