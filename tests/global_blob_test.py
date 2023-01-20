@@ -108,3 +108,26 @@ def test_global_blob_set_past_end():
 
     with pytest.raises(bkr.client.LogicException):
         assert_output(LB(), [], expected, opups=1)
+
+
+def test_global_blob_single_subroutine():
+    class LB(GlobalBlobTest):
+        @bkr.external
+        def unit_test(self, *, output: pt.abi.DynamicArray[pt.abi.Byte]):
+            return pt.Seq(
+                self.blob.zero(),
+                self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+                self.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+                # Call read multiple times, in an earlier ver
+                pt.Pop(self.blob.read(pt.Int(32), pt.Int(40))),
+                pt.Pop(self.blob.read(pt.Int(32), pt.Int(40))),
+                (s := pt.abi.String()).set(self.blob.read(pt.Int(32), pt.Int(40))),
+                output.decode(s.encode()),
+            )
+
+    program = LB().approval_program
+    assert program.count("write_impl") == 1
+    assert program.count("read_impl") == 1
+
+    expected = list(b"deadbeef")
+    assert_output(LB(), [], [expected], opups=1)
