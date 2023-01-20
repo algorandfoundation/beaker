@@ -264,10 +264,7 @@ class Precompile:
             buff.load(),
         ]
 
-        def populate_template_program() -> Expr:
-            return Seq(*populate_program)
-
-        return populate_template_program()
+        return Seq(*populate_program)
 
     def template_hash(self, *args) -> Expr:  # type: ignore
         """
