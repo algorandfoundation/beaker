@@ -107,7 +107,6 @@ class Application:
         self,
         *,
         version: int = MAX_TEAL_VERSION,
-        unconditional_create_approval: bool = True,
     ) -> None:
         """<TODO>"""
         self.teal_version = version
@@ -120,11 +119,9 @@ class Application:
         self.app_state = ApplicationState(klass=self.__class__)
         self.methods = Methods()
 
-        if unconditional_create_approval:
-
-            @self.create
-            def create() -> Expr:
-                return Approve()
+    def unconditional_create_approval(self: Self) -> Self:
+        self.create(lambda: Approve(), name="create", bare=True)
+        return self
 
     @overload
     def precompile(self, value: "Application", /) -> AppPrecompile:
@@ -800,6 +797,25 @@ class Application:
                 precompile.compile(client)
 
             bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
+            # if self.auto_default_create:
+            #     any_create = any(
+            #         x.call_config & CallConfig.CREATE for x in bare_call_kwargs.values()
+            #     ) or any(
+            #         cc & CallConfig.CREATE
+            #         for abi in self._abi_externals.values()
+            #         for cc in abi.actions.values()
+            #     )
+            #     if not any_create:
+            #         if "no_op" in bare_call_kwargs:
+            #             raise ValueError(
+            #                 "default create not implemented, already a bare no_op method"
+            #             )
+            #         bare_call_kwargs["no_op"] = OnCompleteAction(
+            #             action=SubroutineFnWrapper(
+            #                 lambda: Approve(), return_type=TealType.none, name="create"
+            #             ),
+            #             call_config=CallConfig.CREATE,
+            #         )
             router = Router(
                 name=self.__class__.__name__,
                 bare_calls=BareCallActions(**bare_call_kwargs),

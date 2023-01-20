@@ -29,8 +29,8 @@ class App(Application):
     acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
-    def __init__(self):
-        super().__init__(unconditional_create_approval=False)
+    def __init__(self, version: int = pt.MAX_TEAL_VERSION):
+        super().__init__(version=version)
 
         @self.create(bare=True)
         def create():
@@ -190,7 +190,7 @@ def test_compile():
     ac = ApplicationClient(client, app)
 
     # TODO add precompiles
-
+    assert ac.app.approval_program
     approval_program, _, approval_map = ac.compile(
         ac.app.approval_program, source_map=True
     )
@@ -200,6 +200,7 @@ def test_compile():
     assert approval_map.version == 3, "Should have valid source map with version 3"
     assert len(approval_map.pc_to_line) > 0, "Should have valid mapping"
 
+    assert ac.app.clear_program
     clear_program, _, clear_map = ac.compile(ac.app.clear_program, source_map=True)
     assert len(clear_program) > 0, "Should have a valid clear program"
     assert clear_program[0] == version, "First byte should be the version we set"
@@ -452,7 +453,7 @@ def test_call(sb_accts: SandboxAccounts):
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    result = ac.call(app.add, a=1, b=1)
+    result = ac.call(app.methods.add, a=1, b=1)
     assert result.return_value == 2
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
@@ -492,7 +493,7 @@ def test_add_method_call(sb_accts: SandboxAccounts):
     app_id, _, _ = ac.create()
 
     atc = AtomicTransactionComposer()
-    ac.add_method_call(atc, app.add, a=1, b=1)
+    ac.add_method_call(atc, app.methods.add, a=1, b=1)
     atc_result = atc.execute(client, 4)
     result = atc_result.abi_results[0]
 
@@ -558,17 +559,21 @@ def test_resolve(sb_accts: SandboxAccounts):
     assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == b"test"
     assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
     assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == b"test"
-    assert ac.resolve(DefaultArgument(app.dummy)) == "deadbeef"
+    assert ac.resolve(DefaultArgument(app.methods.dummy)) == "deadbeef"
 
 
 def test_override_app_create(sb_accts: SandboxAccounts):
     class SpecialCreate(Application):
-        @create
-        def create(self, x: pt.abi.Uint64, *, output: pt.abi.Uint64):
-            return output.set(x.get())
+        pass
 
     sc = SpecialCreate()
-    assert sc.on_create == SpecialCreate.create
+
+    @sc.create
+    def create(x: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(x.get())
+
+    sc.compile()
+    assert sc.on_create
 
     _, _, signer = sb_accts[0]
 
