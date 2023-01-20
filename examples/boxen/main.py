@@ -1,7 +1,7 @@
 from algosdk.abi import ABIType
 from algosdk.encoding import encode_address, decode_address
 from algosdk.atomic_transaction_composer import TransactionWithSigner
-from algosdk.future.transaction import AssetOptInTxn, PaymentTxn
+from algosdk.transaction import *
 
 from beaker import client, consts, sandbox
 

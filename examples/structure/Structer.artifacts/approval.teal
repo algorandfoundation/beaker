@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 1
-bytecblock 0x00 0x151f7c75
+bytecblock 0x00 0x 0x151f7c75
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -31,9 +31,9 @@ txna ApplicationArgs 1
 intc_0 // 0
 getbyte
 callsub increasequantity_4
-store 4
-bytec_1 // 0x151f7c75
-load 4
+store 3
+bytec_2 // 0x151f7c75
+load 3
 concat
 log
 intc_1 // 1
@@ -52,7 +52,7 @@ intc_0 // 0
 getbyte
 callsub readitem_3
 store 2
-bytec_1 // 0x151f7c75
+bytec_2 // 0x151f7c75
 load 2
 concat
 log
@@ -107,83 +107,101 @@ return
 
 // create
 create_0:
+proto 0 0
 intc_1 // 1
 return
 
 // opt_in
 optin_1:
+proto 0 0
 retsub
 
 // place_order
 placeorder_2:
-store 10
-store 9
+proto 2 0
 txn Sender
 bytec_0 // 0x00
 intc_0 // 0
-load 9
+frame_dig -2
 setbyte
-load 10
+frame_dig -1
 app_local_put
 retsub
 
 // read_item
 readitem_3:
-store 3
+proto 1 1
+bytec_1 // ""
 txn Sender
 bytec_0 // 0x00
 intc_0 // 0
-load 3
+frame_dig -1
 setbyte
 app_local_get
+frame_bury 0
 retsub
 
 // increase_quantity
 increasequantity_4:
-store 5
+proto 1 1
+bytec_1 // ""
+dup
+intc_0 // 0
+bytec_1 // ""
+intc_0 // 0
+dup
+bytec_1 // ""
+dup
 txn Sender
 bytec_0 // 0x00
 intc_0 // 0
-load 5
+frame_dig -1
 setbyte
 app_local_get
-store 6
-load 6
+frame_bury 1
+frame_dig 1
 pushint 2 // 2
 extract_uint16
-store 7
-load 7
+frame_bury 2
+frame_dig 2
 intc_1 // 1
 +
-store 7
-load 7
+frame_bury 2
+frame_dig 2
 pushint 65536 // 65536
 <
 assert
-load 6
-load 6
+frame_dig 1
+frame_dig 1
 intc_0 // 0
 extract_uint16
 dig 1
 len
 substring3
-store 8
+frame_bury 3
+frame_dig 3
+frame_bury 7
+frame_dig 7
+frame_bury 6
 pushint 4 // 4
+frame_bury 4
+frame_dig 4
 itob
 extract 6 0
-load 7
+frame_dig 2
 itob
 extract 6 0
 concat
-load 8
+frame_dig 6
 concat
-store 6
+frame_bury 1
 txn Sender
 bytec_0 // 0x00
 intc_0 // 0
-load 5
+frame_dig -1
 setbyte
-load 6
+frame_dig 1
 app_local_put
-load 6
+frame_dig 1
+frame_bury 0
 retsub

@@ -7,7 +7,6 @@ from pyteal import (
     BytesMinus,
     BytesMul,
     Btoi,
-    Concat,
     Exp,
     Expr,
     ExtractUint64,
@@ -17,8 +16,6 @@ from pyteal import (
     Len,
     Not,
     Return,
-    ScratchSlot,
-    Seq,
     Subroutine,
     TealType,
 )
@@ -163,7 +160,21 @@ def wide_power(x, n):
         bytes representing the high and low bytes of a wide power evaluation
 
     """
-    return Seq(InlineAssembly("expw", x, n), stack_to_wide())
+    return InlineAssembly(
+        "expw; itob; swap; itob; swap; concat", x, n, type=TealType.bytes
+    )
+
+
+@Subroutine(TealType.bytes)
+def exponential_impl(x, f, n, _scale):
+    return If(
+        n == Int(1),
+        BytesAdd(_scale, BytesMul(x, _scale)),
+        BytesAdd(
+            exponential_impl(x, BytesDiv(f, Itob(n)), n - Int(1), _scale),
+            BytesDiv(BytesMul(_scale, wide_power(bytes_to_int(x), n)), f),
+        ),
+    )
 
 
 def exponential(x, n):
@@ -180,19 +191,9 @@ def exponential(x, n):
 
     """
     _scale = Itob(Int(1000))
-
-    @Subroutine(TealType.bytes)
-    def _impl(x, f, n):
-        return If(
-            n == Int(1),
-            BytesAdd(_scale, BytesMul(x, _scale)),
-            BytesAdd(
-                _impl(x, BytesDiv(f, Itob(n)), n - Int(1)),
-                BytesDiv(BytesMul(_scale, wide_power(bytes_to_int(x), n)), f),
-            ),
-        )
-
-    return bytes_to_int(BytesDiv(_impl(Itob(x), wide_factorial(Itob(n)), n), _scale))
+    return bytes_to_int(
+        BytesDiv(exponential_impl(Itob(x), wide_factorial(Itob(n)), n, _scale), _scale)
+    )
 
 
 # @Subroutine(TealType.uint64)
@@ -243,15 +244,3 @@ def exponential(x, n):
 @Subroutine(TealType.uint64)
 def bytes_to_int(x):
     return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
-
-
-@Subroutine(TealType.bytes)
-def stack_to_wide():
-    """stack_to_wide returns the combination of the high and low integers returned from a wide math operation as bytes"""
-    h = ScratchSlot()
-    l = ScratchSlot()
-    return Seq(
-        l.store(),
-        h.store(),  # Take the low and high ints off the stack and combine them
-        Concat(Itob(h.load()), Itob(l.load())),
-    )
