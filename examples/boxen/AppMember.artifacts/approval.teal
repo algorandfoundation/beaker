@@ -85,36 +85,37 @@ return
 
 // create
 create_0:
+proto 0 0
 intc_1 // 1
 return
 
 // auth_only
 authonly_1:
+proto 1 1
+frame_dig -1
 global CreatorAddress
 ==
 retsub
 
 // bootstrap
 bootstrap_2:
-store 7
-store 6
-store 5
+proto 3 0
 txn Sender
 callsub authonly_1
 // unauthorized
 assert
 bytec_0 // "club_app_id"
-load 6
+frame_dig -2
 txnas Applications
 app_global_put
 pushbytes 0x6d656d626572736869705f746f6b656e // "membership_token"
-load 7
+frame_dig -1
 txnas Assets
 app_global_put
 itxn_begin
 pushint 4 // axfer
 itxn_field TypeEnum
-load 7
+frame_dig -1
 txnas Assets
 itxn_field XferAsset
 intc_0 // 0
@@ -128,15 +129,14 @@ retsub
 
 // get_affirmation
 getaffirmation_3:
-store 9
-store 8
+proto 2 0
 itxn_begin
 pushint 6 // appl
 itxn_field TypeEnum
 bytec_0 // "club_app_id"
 app_global_get
 itxn_field ApplicationID
-load 8
+frame_dig -2
 txnas Assets
 itxn_field Assets
 pushbytes 0xd11a5d4f // "get_affirmation(asset)byte[64]"

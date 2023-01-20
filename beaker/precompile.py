@@ -15,7 +15,6 @@ from pyteal import (
     Len,
     Substring,
     Suffix,
-    Subroutine,
     Sha512_256,
     TxnField,
     TxnType,
@@ -265,7 +264,6 @@ class Precompile:
             buff.load(),
         ]
 
-        @Subroutine(TealType.bytes)
         def populate_template_program() -> Expr:
             return Seq(*populate_program)
 

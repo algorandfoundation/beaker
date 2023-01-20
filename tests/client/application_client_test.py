@@ -190,7 +190,7 @@ def test_app_prepare(sb_accts: SandboxAccounts):
 
 
 def test_compile():
-    version = 5
+    version = 8
     app = App(version=version)
     client = get_algod_client()
     ac = ApplicationClient(client, app)
