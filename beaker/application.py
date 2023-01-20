@@ -189,6 +189,7 @@ class Application:
                 raise ValueError(
                     "override=False, but method with matching signature already registered"
                 )
+        # TODO: this replaces references when trying to overload
         self.methods._methods[method.name()] = method.method_spec()
         self._abi_externals[method_sig] = ABIExternal(
             actions=actions,

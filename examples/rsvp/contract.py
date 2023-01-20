@@ -137,3 +137,75 @@ def refund():
         InnerTxnBuilder.Submit(),
         rsvp.rsvp.decrement(),
     )
+
+
+#
+# # ^^ untouchable
+# # rsvp.on_complete_actions = []
+# #
+# # to_remove = rsvp.on_complete_actions[0]
+# # rsvp.remove_on_complete(to_remove)
+# def foobar(app: Application) -> Expr:
+#     return Int(1)
+#
+#
+# class Arc420App(Application):
+#     @external
+#     def foobar(self) -> Expr:
+#         return foobar(None)
+#
+#     @external(name="foobar")
+#     def blah(self, i: Expr) -> Expr:
+#         return i
+#
+#
+# class MyApp(Arc420App):
+#     @delete
+#     def foobar(self) -> Expr:
+#         return super().foobar() + Int(2)
+#
+#     @exernal(name="foobar")
+#     def foasdfasdf(self) -> Expr:
+#         return Bytes(b"")
+#
+#
+#
+#
+def implements_arc420(app: Application, num: int) -> Application:
+    @app.external()
+    def foobar() -> Expr:
+        return Int(num)
+
+    @app.external(name="foobar")
+    def foobar2(i: Expr) -> Expr:
+        return i + Int(num)
+
+    return app
+
+
+#
+my_arc420 = Application()
+my_arc420.implement(implements_arc420, num=2)
+
+my_arc420.methods.foobar
+#
+# # @rsvp.external(
+# #     bare=True, override=True, method_config={"delete_application": CallConfig.CALL}
+# # )
+# # @rsvp.delete(override=True)
+# my_arc420.
+# @my_arc420.methods.foobar(abi.Uint64, abi.Uint64, returns=abi.U).override()
+# #@my_arc420.methods["foobar(uint64)uint64"].override
+# @my_arc420.external(name="foobar")
+# def something_new(i: abi.Uint64):
+#     x = foobar(rsvp)
+#     pass
+#
+#
+# # Needs:
+# # .) overloading
+# # .) overriding by name
+# # .) overriding by ABI method signature
+# # .) for bare methods, overriding by OnCompleteAction
+# # .) reference to closures
+# # .) call original implementation (maybe just export the method?)
