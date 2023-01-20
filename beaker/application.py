@@ -107,6 +107,11 @@ class Application:
         self,
         *,
         version: int = MAX_TEAL_VERSION,
+        # TODO
+        # name: str,
+        # default_approve_create: bool = True, # what to name this? how does it work? why am I here?
+        # descr: str | None,
+        # state: TState # how to make this generic but also default to empty?!?!!?
     ) -> None:
         """<TODO>"""
         self.teal_version = version
@@ -119,9 +124,15 @@ class Application:
         self.app_state = ApplicationState(klass=self.__class__)
         self.methods = Methods()
 
-    def unconditional_create_approval(self: Self) -> Self:
-        self.create(lambda: Approve(), name="create", bare=True)
-        return self
+        # if default_approve_create:
+        #
+        #     @self.create
+        #     def create():
+        #         return Approve()
+
+    # def unconditional_create_approval(self: Self) -> Self:
+    #     self.create(lambda: Approve(), name="create", bare=True)
+    #     return self
 
     @overload
     def precompile(self, value: "Application", /) -> AppPrecompile:
