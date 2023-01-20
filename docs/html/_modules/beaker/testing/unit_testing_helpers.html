@@ -78,13 +78,14 @@
 <span></span><span class="sd">&quot;&quot;&quot;Module containing helper functions for testing PyTeal Utils.&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AtomicTransactionComposer</span>
+<span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 
 <span class="kn">import</span> <span class="nn">pyteal</span> <span class="k">as</span> <span class="nn">pt</span>
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">client</span><span class="p">,</span> <span class="n">sandbox</span>
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">external</span><span class="p">,</span> <span class="n">delete</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">opt_in</span><span class="p">,</span> <span class="n">close_out</span>
 
-<span class="n">algod_client</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="n">sandbox_accounts</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">algod_client</span><span class="p">:</span> <span class="n">AlgodClient</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">sandbox_accounts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">sandbox</span><span class="o">.</span><span class="n">SandboxAccount</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span> <span class="nf">returned_int_as_bytes</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
@@ -99,14 +100,17 @@
 
 
 <span class="sd">    1) Initialize with a single Expr that returns bytes</span>
-<span class="sd">        The bytes output from the Expr are returned from the abi method ``unit_test()[]byte``</span>
+<span class="sd">        The bytes output from the Expr are returned from</span>
+<span class="sd">        the abi method ``unit_test()[]byte``</span>
 
 <span class="sd">    2) Subclass UnitTestingApp and override `unit_test`</span>
-<span class="sd">        Any inputs or output may be specified but you&#39;re responsible for encoding the incoming</span>
-<span class="sd">        arguments as a dict with keys matching the argument names of the custom `unit_test` method</span>
+<span class="sd">        Any inputs or output may be specified but you&#39;re</span>
+<span class="sd">        responsible for encoding the incoming arguments as a</span>
+<span class="sd">        dict with keys matching the argument names of the custom `unit_test` method</span>
 
 
-<span class="sd">    An instance of this class is passed to assert_output to check the return value against what you expect.</span>
+<span class="sd">    An instance of this class is passed to assert_output to check</span>
+<span class="sd">    the return value against what you expect.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr_to_test</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -137,7 +141,8 @@
     <span class="k">def</span> <span class="nf">unit_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">DynamicArray</span><span class="p">[</span><span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Byte</span><span class="p">]):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                <span class="s2">&quot;Expression undefined. Either set the expr to test on init or override unit_test method&quot;</span>
+                <span class="s2">&quot;Expression undefined. Either set the expr to &quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;test on init or override unit_test method&quot;</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">((</span><span class="n">s</span> <span class="o">:=</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">),</span> <span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span></div>
 
@@ -149,12 +154,18 @@
     <span class="n">opups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Creates and calls the UnitTestingApp passed and compares the return value with the expected output</span>
+<span class="sd">    Creates and calls the UnitTestingApp passed and compares the</span>
+<span class="sd">    return value with the expected output</span>
 
-<span class="sd">    :param app: An instance of a UnitTestingApp to make call against its `unit_test` method</span>
-<span class="sd">    :param inputs: A list of dicts where each entry contains keys matching the input args for the `unit_test` method  and values corresponding to the type expected by the method</span>
-<span class="sd">    :param outputs: A list of outputs to compare against the return value of the output of the `unit_test` method</span>
-<span class="sd">    :param opups: A number of additional app call transactions to make to increase our budget</span>
+<span class="sd">    :param app: An instance of a UnitTestingApp to make call</span>
+<span class="sd">        against its `unit_test` method</span>
+<span class="sd">    :param inputs: A list of dicts where each entry contains keys</span>
+<span class="sd">        matching the input args for the `unit_test` method  and values</span>
+<span class="sd">        corresponding to the type expected by the method</span>
+<span class="sd">    :param outputs: A list of outputs to compare against the return</span>
+<span class="sd">        value of the output of the `unit_test` method</span>
+<span class="sd">    :param opups: A number of additional app call transactions to</span>
+<span class="sd">        make to increase our budget</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># TODO: make these avail in a pytest session context? pass them in directly?</span>

@@ -92,14 +92,13 @@
     <span class="n">Len</span><span class="p">,</span>
     <span class="n">Substring</span><span class="p">,</span>
     <span class="n">Suffix</span><span class="p">,</span>
-    <span class="n">Subroutine</span><span class="p">,</span>
     <span class="n">Sha512_256</span><span class="p">,</span>
     <span class="n">TxnField</span><span class="p">,</span>
     <span class="n">TxnType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 <span class="kn">from</span> <span class="nn">algosdk.source_map</span> <span class="kn">import</span> <span class="n">SourceMap</span>
-<span class="kn">from</span> <span class="nn">algosdk.future.transaction</span> <span class="kn">import</span> <span class="n">LogicSigAccount</span>
+<span class="kn">from</span> <span class="nn">algosdk.transaction</span> <span class="kn">import</span> <span class="n">LogicSigAccount</span>
 <span class="kn">from</span> <span class="nn">algosdk.constants</span> <span class="kn">import</span> <span class="n">APP_PAGE_MAX_SIZE</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">LogicSigTransactionSigner</span>
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">PROGRAM_DOMAIN_SEPARATOR</span><span class="p">,</span> <span class="n">num_extra_program_pages</span>
@@ -204,7 +203,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_binary</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_template_values</span><span class="p">:</span>
             <span class="c1"># +1 to acount for the pushbytes/pushint op</span>
-            <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">pcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">tv</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tv</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="n">pcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
 
         <span class="k">def</span> <span class="nf">_hash_program</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;compute the hash&quot;&quot;&quot;</span>
@@ -338,11 +341,7 @@
             <span class="n">buff</span><span class="o">.</span><span class="n">load</span><span class="p">(),</span>
         <span class="p">]</span>
 
-        <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">populate_template_program</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="o">*</span><span class="n">populate_program</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">populate_template_program</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="o">*</span><span class="n">populate_program</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Precompile.template_hash"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.Precompile.template_hash">[docs]</a>    <span class="k">def</span> <span class="nf">template_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -457,6 +456,8 @@
 
 <span class="sd">        It should only be used for non templated Precompiles.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">_binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot get signer until the program is compiled&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">LogicSigTransactionSigner</span><span class="p">(</span><span class="n">LogicSigAccount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logic</span><span class="o">.</span><span class="n">_binary</span><span class="p">))</span></div></div>
 
 
@@ -476,7 +477,11 @@
         <span class="k">if</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">&quot;assert&quot;</span><span class="p">:</span>
             <span class="k">continue</span>
 
-        <span class="n">pc</span> <span class="o">=</span> <span class="n">src_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">idx</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pcs</span> <span class="o">=</span> <span class="n">src_map</span><span class="o">.</span><span class="n">get_pcs_for_line</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pc</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pc</span> <span class="o">=</span> <span class="n">pcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="c1"># TODO: this will be wrong for multiline comments</span>
         <span class="n">line_before</span> <span class="o">=</span> <span class="n">program_lines</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>

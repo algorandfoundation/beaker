@@ -40,7 +40,7 @@ Examples
 Using Precompile for offloading compute 
 
 .. literalinclude:: ../../examples/offload_compute/main.py
-    :lines: 18-39
+    :lines: 19-39
 
 
 .. _sub_app_example:
