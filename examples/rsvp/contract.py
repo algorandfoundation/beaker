@@ -17,6 +17,7 @@ MIN_BAL = Int(100000)
 FEE = Int(1000)
 
 
+@Subroutine(TealType.none)
 def withdraw_funds():
     """Helper method that withdraws funds in the RSVP contract"""
     rsvp_bal = Balance(Global.current_application_address())
