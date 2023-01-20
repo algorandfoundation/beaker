@@ -1,5 +1,4 @@
 import copy
-
 import itertools
 import pytest
 import typing
@@ -107,6 +106,17 @@ def creator_app_client(creator_acct: AcctInfo) -> client.ApplicationClient:
     return app_client
 
 
+def get_app_client_details(
+    app_client: client.ApplicationClient,
+) -> tuple[str, str, AccountTransactionSigner]:
+    app_addr, addr, signer = (
+        app_client.app_addr,
+        app_client.sender,
+        app_client.signer,
+    )
+    return (app_addr, addr, signer)  # type: ignore
+
+
 def test_app_create(creator_app_client: client.ApplicationClient):
     creator_app_client.create()
     app_state = creator_app_client.get_application_state()
@@ -124,7 +134,8 @@ def minimum_fee_for_txn_count(
     """
     Configures transaction fee _without_ considering network congestion.
 
-    Since the function does not account for network congestion, do _not_ use the function as-is in a production use-case.
+    Since the function does not account for network congestion, do _not_ use the
+    function as-is in a production use-case.
     """
     s = copy.deepcopy(sp)
     s.flat_fee = True
@@ -134,14 +145,18 @@ def minimum_fee_for_txn_count(
 
 def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     """
-    Verifies the app's algo balance is not unexpectedly drained during app interaction (e.g. paying inner transaction fees).
+    Verifies the app's algo balance is not unexpectedly drained during
+    app interaction (e.g. paying inner transaction fees).
 
-    Due to the presence of rewards, the assertion tolerates actual > expected for small positive differences.
+    Due to the presence of rewards, the assertion tolerates actual > expected
+    for small positive differences.
     """
-    xs = testing.get_balances(c.client, [c.app_addr])
-    assert c.app_addr in xs
-    assert 0 in xs[c.app_addr]
-    actual_algos = xs[c.app_addr][0]
+    app_addr, _, _ = get_app_client_details(c)
+
+    xs = testing.get_balances(c.client, [app_addr])
+    assert app_addr in xs
+    assert 0 in xs[app_addr]
+    actual_algos = xs[app_addr][0]
 
     # Before accounting for rewards, confirm algos were not drained.
     assert actual_algos >= expected_algos
@@ -162,11 +177,7 @@ def build_boostrap_transaction(
     app_client: client.ApplicationClient, assets: tuple[int, int]
 ) -> dict[str, typing.Any]:
 
-    app_addr, addr, signer = (
-        app_client.app_addr,
-        app_client.sender,
-        app_client.signer,
-    )
+    app_addr, addr, signer = get_app_client_details(app_client)
 
     asset_a, asset_b = assets
     sp = app_client.client.suggested_params()
@@ -195,11 +206,7 @@ def build_mint_transaction(
     b_amount: int,
 ):
 
-    app_addr, addr, signer = (
-        app_client.app_addr,
-        app_client.sender,
-        app_client.signer,
-    )
+    app_addr, addr, signer = get_app_client_details(app_client)
 
     a_asset, b_asset = assets
     sp = app_client.get_suggested_params()
@@ -227,11 +234,7 @@ def build_burn_transaction(
     burn_amt: int,
 ):
 
-    app_addr, addr, signer = (
-        app_client.app_addr,
-        app_client.sender,
-        app_client.signer,
-    )
+    app_addr, addr, signer = get_app_client_details(app_client)
 
     sp = app_client.get_suggested_params()
     a_asset, b_asset = assets
@@ -254,11 +257,7 @@ def build_swap_transaction(
     swap_amt: int,
     swap_asset: int = None,
 ):
-    app_addr, addr, signer = (
-        app_client.app_addr,
-        app_client.sender,
-        app_client.signer,
-    )
+    app_addr, addr, signer = get_app_client_details(app_client)
 
     sp = app_client.get_suggested_params()
     a_asset, b_asset = assets
@@ -280,7 +279,7 @@ def build_swap_transaction(
 def test_app_set_governor(
     creator_app_client: client.ApplicationClient, user_acct: AcctInfo
 ):
-    creator_addr, _ = creator_app_client.sender, creator_app_client.app_addr
+    _, creator_addr, _ = get_app_client_details(creator_app_client)
 
     user_addr, _, user_signer = user_acct
 
@@ -351,15 +350,10 @@ def test_app_bootstrap(
 
 
 def test_app_fund(creator_app_client: ApplicationClient):
-    app_addr, addr, signer = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-        creator_app_client.signer,
-    )
+    app_addr, addr, signer = get_app_client_details(creator_app_client)
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
-    assert addr
     _opt_in_to_token(addr, signer, pool_asset)
 
     balance_accts = [app_addr, addr]
@@ -391,14 +385,10 @@ def test_app_fund(creator_app_client: ApplicationClient):
 
 
 def test_mint(creator_app_client: ApplicationClient):
-    app_addr, addr = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-    )
+    app_addr, addr, _ = get_app_client_details(creator_app_client)
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
-    assert addr
     balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
 
     ratio_before = _get_ratio_from_state(creator_app_client)
@@ -442,11 +432,7 @@ def test_mint(creator_app_client: ApplicationClient):
 
 
 def test_burn(creator_app_client: ApplicationClient):
-    app_addr, addr = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-    )
-
+    app_addr, addr, _ = get_app_client_details(creator_app_client)
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
     assert addr
@@ -491,14 +477,10 @@ def test_burn(creator_app_client: ApplicationClient):
 
 
 def test_swap(creator_app_client: ApplicationClient):
-    app_addr, addr = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-    )
+    app_addr, addr, _ = get_app_client_details(creator_app_client)
 
     _, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
-    assert addr
     balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
 
     swap_amt = balances_before[addr][a_asset] // 10
@@ -562,14 +544,10 @@ def _assert_cases(
     ) -> list[AssertTestCase]:
         return [(a, m, txn, client) for a, txn in xs]
 
-    fake_addr, fake_pk, fake_signer = user_acct
+    fake_addr, _, fake_signer = user_acct
     fake_client = creator_app_client.prepare(signer=fake_signer, sender=fake_addr)
 
-    app_addr, addr, signer = (
-        creator_app_client.app_addr,
-        creator_app_client.sender,
-        creator_app_client.signer,
-    )
+    _, addr, signer = get_app_client_details(creator_app_client)
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
     assets = (a_asset, b_asset)
@@ -592,25 +570,25 @@ def _assert_cases(
     def wrong_receiver(
         d: dict[str, TransactionWithSigner], key: str
     ) -> dict[str, TransactionWithSigner]:
-        d[key].txn.receiver = addr
+        typing.cast(transaction.AssetTransferTxn, d[key].txn).receiver = addr
         return d
 
     def override_pay_amount(
         d: dict[str, TransactionWithSigner], key: str, amt: int
     ) -> dict[str, TransactionWithSigner]:
-        d[key].txn.amt = amt
+        typing.cast(transaction.PaymentTxn, d[key].txn).amt = amt
         return d
 
     def override_axfer_amount(
         d: dict[str, TransactionWithSigner], key: str, amt: int
     ) -> dict[str, TransactionWithSigner]:
-        d[key].txn.amount = amt
+        typing.cast(transaction.AssetTransferTxn, d[key].txn).amount = amt
         return d
 
     def override_axfer_asset(
         d: dict[str, TransactionWithSigner], key: str, override: int
     ) -> dict[str, TransactionWithSigner]:
-        d[key].txn.index = override
+        typing.cast(transaction.AssetTransferTxn, d[key].txn).index = override
         return d
 
     def set_governor_cases():
@@ -840,10 +818,13 @@ def test_approval_assert_coverage(
     """
     Confirms `test_approval_asserts` exercises all app approval asserts.
 
-    If `test_approval_asserts` passes and this test fails, it implies some asserts are _not_ tested.
+    If `test_approval_asserts` passes and this test fails, it implies
+    some asserts are _not_ tested.
     """
 
-    all_asserts: dict[int, ProgramAssertion] = creator_app_client.approval_asserts  # type: ignore[assignment]
+    all_asserts: dict[
+        int, ProgramAssertion
+    ] = creator_app_client.approval_asserts  # type: ignore[assignment]
 
     for msg, method, kwargs, app_client in all_assert_cases:
         with pytest.raises(LogicException, match=msg):
