@@ -204,8 +204,67 @@ my_arc420.methods.foobar
 #
 # # Needs:
 # # .) overloading (additional signature, same name)
+
+
+@rsvp.external(name="add")
+def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+    ...
+
+
+@rsvp.external(name="add")
+def add3(a: abi.Uint64, b: abi.Uint64, c: abi.Uint64, *, output: abi.Uint64) -> Expr:
+    ...
+
+
 # # .) replacing (new signature)
+# replace add3 with add4
+add = rsvp.methods.add.abi(abi.Uint64, abi.Uint64, abi.Uint64, output=abi.Uint64)
+add.delete(delete)
+
+
+@rsvp.external(name="add")
+def add4(
+    a: abi.Uint64, b: abi.Uint64, c: abi.Uint64, d: abi.Uint64, *, output: abi.Uint64
+) -> Expr:
+    ...
+
+
 # # .) overriding (existing signature)
+# override add3
+@rsvp.external(name="add", override=True)
+def new_add3(
+    a: abi.Uint64, b: abi.Uint64, c: abi.Uint64, *, output: abi.Uint64
+) -> Expr:
+    ...
+
+
 # # .) for bare methods, overriding by OnCompleteAction
+
+
+@rsvp.delete(override=True)
+def new_delete() -> Expr:
+    ...
+
+
+# example: replace bare method with signature
+magic = rsvp.method.<name>
+# if more than 1 with <name>:
+magic = rsvp.methods.<name>.bare
+# OR
+magic = rsvp.method.<name>.abi(<method spec>)
+
+# using magic 🪄
+magic.delete()
+magic(<..>) # returns Expr? replacemnt for super().<name>(...)
+client.call(magic, **kwargs)
+
+
+
+
+@rsvp.delete()
+def new_delete(x: abi.String) -> Expr:
+    ...
+
+
 # # .) reference to closures
 # # .) call original implementation (maybe just export the method?)
