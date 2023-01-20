@@ -1,4 +1,6 @@
 from base64 import b64decode
+
+# import msgpack  # type: ignore
 import copy
 from typing import Any, cast, Optional
 
@@ -28,6 +30,8 @@ from beaker.decorators import (
     DefaultArgument,
     DefaultArgumentClass,
 )
+
+# from beaker.client.simulate import SimulationResponse
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.precompile import AppPrecompile, ProgramAssertion
@@ -473,16 +477,25 @@ class ApplicationClient:
 
         # If its a read-only method, use dryrun (TODO: swap with simulate later?)
         if hints.read_only:
-            dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())
-            dr_result = self.client.dryrun(dr_req)
-            method_results = self._parse_result(
-                {0: method}, dr_result["txns"], atc.tx_ids
-            )
+            method_results = self._dryrun(method, atc)
             return method_results.pop()
 
         result = self._execute_atc(atc)
 
         return result.abi_results.pop()
+
+    def _dryrun(
+        self, method: abi.Method, atc: AtomicTransactionComposer
+    ) -> list[ABIResult]:
+        dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())
+        dr_result = self.client.dryrun(dr_req)
+        method_results = self._parse_result({0: method}, dr_result["txns"], atc.tx_ids)
+        return method_results
+
+    # def _simulate(self, method: abi.Method, atc: AtomicTransactionComposer)->list[ABIResult]:
+    #    result = self.client.simulate_transactions(atc.gather_signatures())
+    #    sim_result = SimulationResponse.undictify(msgpack.unpackb(result, raw=False))
+    #    self._parse_result({0:method}, )
 
     # TEMPORARY, use SDK one when available
     def _parse_result(
