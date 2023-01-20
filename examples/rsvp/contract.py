@@ -203,9 +203,9 @@ my_arc420.methods.foobar
 #
 #
 # # Needs:
-# # .) overloading
-# # .) overriding by name
-# # .) overriding by ABI method signature
+# # .) overloading (additional signature, same name)
+# # .) replacing (new signature)
+# # .) overriding (existing signature)
 # # .) for bare methods, overriding by OnCompleteAction
 # # .) reference to closures
 # # .) call original implementation (maybe just export the method?)

@@ -784,6 +784,10 @@ class Application:
     def on_delete(self) -> Method | None:
         return self._compiled and self._compiled.on_delete
 
+    # TODO: implement unconditional_create_approval blue-print
+    # TODO: delete function for "override" where signature doesn't match
+    #       ^ as part of this but also it's own thing: app.methods.foobar(..., returns=...)
+
     def implement(
         self: Self,
         blueprint: Callable[Concatenate[Self, P], T],
