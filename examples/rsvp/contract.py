@@ -247,17 +247,30 @@ def new_delete() -> Expr:
 
 
 # example: replace bare method with signature
-magic = rsvp.method.<name>
-# if more than 1 with <name>:
-magic = rsvp.methods.<name>.bare
-# OR
-magic = rsvp.method.<name>.abi(<method spec>)
+magic = rsvp.bare_method.named(<name>) # throws if multiple matches
+magic = rsvp.bare_method.for_action(<action>)
+
+.signature()
+
+magic = rsvp.get_abi_method(<name>, ...) # throws if multiple matches when you try and do something with it
+magic = rsvp.abi_method.<name>(abi.Uint64, abi.Uint64, output=abi.Uint64)
+
+# if more than 1 bare with <name>:
+# if more than 1 aib with <name>:
+magic = rsvp.abi_method.<name>.abi(<method spec>)
 
 # using magic 🪄
-magic.delete()
+magic.delete()  # deletes all named
+magic.signature(...).delete()
+
 magic(<..>) # returns Expr? replacemnt for super().<name>(...)
 client.call(magic, **kwargs)
 
+
+client.call("add", x, )
+
+
+app.abi_method.create(abi.Uint64)(x)
 
 
 

@@ -92,10 +92,12 @@ DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 class Methods:
     __slots__ = ("_methods",)
 
-    def __init__(self, methods: dict[str, Method] | None = None):
-        self._methods: dict[str, Method] = methods or {}
+    def __init__(self, methods: dict[str, list[ABIReturnSubroutine]] | None = None):
+        self._methods: dict[str, list[ABIReturnSubroutine]] = methods or {}
 
-    def __getattr__(self, item: str) -> Method:
+    def __getattr__(
+        self, item: str
+    ) -> ABIReturnSubroutine | ABIReturnSubroutineTypeSelector:
         try:
             return self._methods[item]
         except KeyError as ex:
@@ -196,6 +198,11 @@ class Application:
             method=method,
             hints=hints,
         )
+
+    def get_abi_method(
+        self, name: str, *types: type, output: type | None = None
+    ) -> ABIReturnSubroutine:
+        ...
 
     def register_bare_external(
         self,
@@ -1009,3 +1016,14 @@ class CompiledApplication:
         (directory / "application.json").write_text(
             json.dumps(self.application_spec, indent=4)
         )
+
+
+TApp = TypeVar("TApp", bound=Application)
+
+
+def unconditional_create_approval(app: TApp) -> TApp:
+    @app.create
+    def create() -> Expr:
+        return Approve()
+
+    return app
