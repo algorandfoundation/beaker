@@ -1,6 +1,20 @@
 from typing import Literal
-from pyteal import *
-from beaker import *
+from pyteal import (
+    Assert,
+    Expr,
+    Global,
+    InnerTxn,
+    InnerTxnBuilder,
+    Int,
+    Pop,
+    Seq,
+    Suffix,
+    TealType,
+    TxnField,
+    TxnType,
+    abi,
+)
+from beaker import Application, ApplicationStateValue, Authorize, consts, external
 
 from beaker.application import get_method_signature
 from beaker.lib.storage import Mapping, List
@@ -49,8 +63,10 @@ class MembershipClub(Application):
     ####
     # Box abstractions
 
-    # A Mapping will create a new box for every unique key, taking a data type for key and value
-    # Only static types can provide information about the max size (and min balance required).
+    # A Mapping will create a new box for every unique key,
+    # taking a data type for key and value
+    # Only static types can provide information about the max
+    # size (and min balance required).
     membership_records = Mapping(abi.Address, MembershipRecord)
 
     # A Listing is a simple list, initialized with some _static_ data type and a length
@@ -124,7 +140,9 @@ class MembershipClub(Application):
 
     @external(authorize=Authorize.only(Global.creator_address()))
     def add_member(
-        self, new_member: abi.Account, membership_token: abi.Asset = membership_token
+        self,
+        new_member: abi.Account,
+        membership_token: abi.Asset = membership_token,  # type: ignore[assignment]
     ):
         return Seq(
             (role := abi.Uint8()).set(Int(0)),
@@ -132,7 +150,7 @@ class MembershipClub(Application):
             (mr := MembershipRecord()).set(role, voted),
             self.membership_records[new_member.address()].set(mr),
             InnerTxnBuilder.Execute(
-                clawback_axfer(
+                clawback_axfer(  # type: ignore
                     self.membership_token,
                     Int(1),
                     new_member.address(),
@@ -151,13 +169,16 @@ class MembershipClub(Application):
         self,
         idx: abi.Uint16,
         affirmation: Affirmation,
-        membership_token: abi.Asset = membership_token,
+        membership_token: abi.Asset = membership_token,  # type: ignore[assignment]
     ):
         return self.affirmations[idx.get()].set(affirmation)
 
     @external(authorize=Authorize.holds_token(membership_token))
     def get_affirmation(
-        self, membership_token: abi.Asset = membership_token, *, output: Affirmation
+        self,
+        membership_token: abi.Asset = membership_token,  # type: ignore[assignment]
+        *,
+        output: Affirmation,
     ):
         return output.set(
             self.affirmations[Global.round() % self.affirmations.elements]
@@ -184,7 +205,7 @@ class AppMember(Application):
             self.membership_token.set(membership_token.asset_id()),
             # Opt in to membership token
             InnerTxnBuilder.Execute(
-                axfer(membership_token.asset_id(), Int(0), self.address)
+                axfer(membership_token.asset_id(), Int(0), self.address)  # type: ignore
                 | {TxnField.fee: Int(0)},
             ),
         )
@@ -192,8 +213,8 @@ class AppMember(Application):
     @external
     def get_affirmation(
         self,
-        member_token: abi.Asset = membership_token,
-        club_app: abi.Application = club_app_id,
+        member_token: abi.Asset = membership_token,  # type: ignore[assignment]
+        club_app: abi.Application = club_app_id,  # type: ignore[assignment]
     ):
         return Seq(
             InnerTxnBuilder.ExecuteMethodCall(

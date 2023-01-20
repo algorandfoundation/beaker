@@ -69,9 +69,16 @@ class Application:
     address: Final[Expr] = Global.current_application_address()
     id: Final[Expr] = Global.current_application_id()
 
-    def __init__(self, version: int = MAX_TEAL_VERSION):
+    def __init__(
+        self,
+        version: int = MAX_TEAL_VERSION,
+        optimize_options: OptimizeOptions = OptimizeOptions(
+            scratch_slots=True, frame_pointers=True
+        ),
+    ):
         """Initialize the Application, finding all the custom attributes and initializing the Router"""
         self.teal_version = version
+        self.optimize_options = optimize_options
 
         # Get initial list of all attrs declared
         initial_attrs = {
@@ -280,7 +287,7 @@ class Application:
         ) = self.router.compile_program(
             version=self.teal_version,
             assemble_constants=True,
-            optimize=OptimizeOptions(scratch_slots=True),
+            optimize=self.optimize_options,
         )
 
         return self.approval_program, self.clear_program

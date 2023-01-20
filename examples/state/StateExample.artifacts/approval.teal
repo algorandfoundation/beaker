@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 127 1
-bytecblock 0x151f7c75 0x6465636c617265645f6170705f76616c7565 0x6465636c617265645f6163636f756e745f76616c7565 0x00 0x000102 0x000102030405060708090a0b0c0d0e0f 0x
+bytecblock 0x151f7c75 0x 0x00 0x6465636c617265645f6170705f76616c7565 0x6465636c617265645f6163636f756e745f76616c7565 0x000102030405060708090a0b0c0d0e0f 0x000102
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -70,10 +70,10 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub getreservedaccountstateval_18
-store 18
+callsub getreservedaccountstateval_22
+store 29
 bytec_0 // 0x151f7c75
-load 18
+load 29
 concat
 log
 intc_2 // 1
@@ -90,12 +90,12 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 16
+store 27
 txna ApplicationArgs 2
-store 17
-load 16
-load 17
-callsub setreservedaccountstateval_17
+store 28
+load 27
+load 28
+callsub setreservedaccountstateval_21
 intc_2 // 1
 return
 main_l17:
@@ -107,10 +107,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getaccountstateval_16
-store 15
+callsub getaccountstateval_20
+store 26
 bytec_0 // 0x151f7c75
-load 15
+load 26
 itob
 concat
 log
@@ -127,7 +127,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub incraccountstateval_15
+callsub incraccountstateval_19
 intc_2 // 1
 return
 main_l19:
@@ -141,7 +141,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub setaccountstateval_14
+callsub setaccountstateval_18
 intc_2 // 1
 return
 main_l20:
@@ -156,10 +156,10 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub getreservedappstateval_13
-store 13
+callsub getreservedappstateval_17
+store 25
 bytec_0 // 0x151f7c75
-load 13
+load 25
 itob
 concat
 log
@@ -177,13 +177,13 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 11
+store 23
 txna ApplicationArgs 2
 btoi
-store 12
-load 11
-load 12
-callsub setreservedappstateval_12
+store 24
+load 23
+load 24
+callsub setreservedappstateval_16
 intc_2 // 1
 return
 main_l22:
@@ -195,10 +195,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getappstateval_11
-store 9
+callsub getappstateval_15
+store 22
 bytec_0 // 0x151f7c75
-load 9
+load 22
 concat
 log
 intc_2 // 1
@@ -213,7 +213,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub setappstateval_10
+callsub setappstateval_14
 intc_2 // 1
 return
 main_l24:
@@ -225,10 +225,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readappblob_9
-store 7
+callsub readappblob_13
+store 21
 bytec_0 // 0x151f7c75
-load 7
+load 21
 concat
 log
 intc_2 // 1
@@ -243,7 +243,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub writeappblob_8
+callsub writeappblob_12
 intc_2 // 1
 return
 main_l26:
@@ -255,10 +255,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readacctblob_7
-store 5
+callsub readacctblob_11
+store 20
 bytec_0 // 0x151f7c75
-load 5
+load 20
 concat
 log
 intc_2 // 1
@@ -273,7 +273,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub writeacctblob_6
+callsub writeacctblob_10
 intc_2 // 1
 return
 main_l28:
@@ -291,7 +291,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub optin_1
+callsub optin_7
 intc_2 // 1
 return
 main_l32:
@@ -299,54 +299,13 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
+callsub create_6
 intc_2 // 1
 return
 
-// create
-create_0:
-intc_0 // 0
-bytec_1 // "declared_app_value"
-app_global_get_ex
-store 3
-store 2
-load 3
-!
-assert
-bytec_1 // "declared_app_value"
-pushbytes 0x41206465636c617265642073746174652076616c756520746861742069732070726f74656374656420776974682074686520607374617469636020666c6167 // "A declared state value that is protected with the `static` flag"
-app_global_put
-callsub zeroimpl_4
-retsub
-
-// opt_in
-optin_1:
-txn Sender
-bytec_2 // "declared_account_value"
-intc_2 // 1
-app_local_put
-txn Sender
-callsub impl_5
-retsub
-
-// prefix_key_gen
-prefixkeygen_2:
-store 0
-pushbytes 0x72657365727665645f6170705f76616c7565 // "reserved_app_value"
-load 0
-concat
-retsub
-
-// prefix_key_gen
-prefixkeygen_3:
-store 1
-pushbytes 0x72657365727665645f6163636f756e745f76616c7565 // "reserved_account_value"
-load 1
-concat
-retsub
-
 // zero_impl
-zeroimpl_4:
+zeroimpl_0:
+proto 0 0
 intc_1 // 127
 bzero
 pushint 16 // 16
@@ -356,7 +315,7 @@ pushint 16 // 16
         -               // ["00"*page_size, key-1]
         dup2            // ["00"*page_size, key, "00"*page_size, key]
         itob            // ["00"*page_size, key, "00"*page_size, itob(key)]
-        extract 7 1     // ["00"*page_size, key, "00"*page_size, itob(key)[-1]] get the last byte of the int
+        extract 7 1     // ["00"*page_size, key, "00"*page_size, itob(key)[-1]]
         swap            // ["00"*page_size, key, itob(key)[-1], "00"*page_size]
         app_global_put  // ["00"*page_size, key]  (removes top 2 elements)
         dup             // ["00"*page_size, key-1, key-1]
@@ -368,563 +327,607 @@ pushint 16 // 16
             
 retsub
 
-// _impl
-impl_5:
-store 4
-load 4
-bytec_3 // 0x00
+// read_impl
+readimpl_1:
+proto 2 1
+bytec_1 // ""
+store 17
+frame_dig -2
+intc_1 // 127
+/
+store 16
+readimpl_1_l1:
+load 16
+frame_dig -1
+intc_1 // 127
+/
+<=
+bz readimpl_1_l9
+load 16
+frame_dig -2
+intc_1 // 127
+/
+==
+bnz readimpl_1_l8
+intc_0 // 0
+readimpl_1_l4:
+store 18
+load 16
+frame_dig -1
+intc_1 // 127
+/
+==
+bnz readimpl_1_l7
+intc_1 // 127
+readimpl_1_l6:
+store 19
+load 17
+bytec 5 // 0x000102030405060708090a0b0c0d0e0f
+load 16
+intc_2 // 1
+extract3
+app_global_get
+load 18
+load 19
+substring3
+concat
+store 17
+load 16
+intc_2 // 1
++
+store 16
+b readimpl_1_l1
+readimpl_1_l7:
+frame_dig -1
+intc_1 // 127
+%
+b readimpl_1_l6
+readimpl_1_l8:
+frame_dig -2
+intc_1 // 127
+%
+b readimpl_1_l4
+readimpl_1_l9:
+load 17
+retsub
+
+// write_impl
+writeimpl_2:
+proto 2 0
+intc_0 // 0
+store 14
+frame_dig -2
+intc_1 // 127
+/
+store 11
+writeimpl_2_l1:
+load 11
+frame_dig -2
+frame_dig -1
+len
++
+intc_1 // 127
+/
+<=
+bz writeimpl_2_l12
+load 11
+frame_dig -2
+intc_1 // 127
+/
+==
+bnz writeimpl_2_l11
+intc_0 // 0
+writeimpl_2_l4:
+store 12
+load 11
+frame_dig -2
+frame_dig -1
+len
++
+intc_1 // 127
+/
+==
+bnz writeimpl_2_l10
+intc_1 // 127
+writeimpl_2_l6:
+store 13
+bytec 5 // 0x000102030405060708090a0b0c0d0e0f
+load 11
+intc_2 // 1
+extract3
+load 13
+intc_1 // 127
+!=
+load 12
+intc_0 // 0
+!=
+||
+bnz writeimpl_2_l9
+intc_1 // 127
+store 15
+frame_dig -1
+load 14
+intc_1 // 127
+extract3
+writeimpl_2_l8:
+app_global_put
+load 14
+load 15
++
+store 14
+load 11
+intc_2 // 1
++
+store 11
+b writeimpl_2_l1
+writeimpl_2_l9:
+load 13
+load 12
+-
+store 15
+bytec 5 // 0x000102030405060708090a0b0c0d0e0f
+load 11
+intc_2 // 1
+extract3
+app_global_get
+intc_0 // 0
+load 12
+substring3
+frame_dig -1
+load 14
+load 15
+extract3
+concat
+bytec 5 // 0x000102030405060708090a0b0c0d0e0f
+load 11
+intc_2 // 1
+extract3
+app_global_get
+load 13
+intc_1 // 127
+substring3
+concat
+b writeimpl_2_l8
+writeimpl_2_l10:
+frame_dig -2
+frame_dig -1
+len
++
+intc_1 // 127
+%
+b writeimpl_2_l6
+writeimpl_2_l11:
+frame_dig -2
+intc_1 // 127
+%
+b writeimpl_2_l4
+writeimpl_2_l12:
+retsub
+
+// zero_impl
+zeroimpl_3:
+proto 1 0
+frame_dig -1
+bytec_2 // 0x00
 intc_1 // 127
 bzero
 app_local_put
-load 4
+frame_dig -1
 pushbytes 0x01 // 0x01
 intc_1 // 127
 bzero
 app_local_put
-load 4
+frame_dig -1
 pushbytes 0x02 // 0x02
 intc_1 // 127
 bzero
 app_local_put
 retsub
 
+// read_impl
+readimpl_4:
+proto 3 1
+bytec_1 // ""
+store 8
+frame_dig -2
+intc_1 // 127
+/
+store 7
+readimpl_4_l1:
+load 7
+frame_dig -1
+intc_1 // 127
+/
+<=
+bz readimpl_4_l9
+load 7
+frame_dig -2
+intc_1 // 127
+/
+==
+bnz readimpl_4_l8
+intc_0 // 0
+readimpl_4_l4:
+store 9
+load 7
+frame_dig -1
+intc_1 // 127
+/
+==
+bnz readimpl_4_l7
+intc_1 // 127
+readimpl_4_l6:
+store 10
+load 8
+frame_dig -3
+bytec 6 // 0x000102
+load 7
+intc_2 // 1
+extract3
+app_local_get
+load 9
+load 10
+substring3
+concat
+store 8
+load 7
+intc_2 // 1
++
+store 7
+b readimpl_4_l1
+readimpl_4_l7:
+frame_dig -1
+intc_1 // 127
+%
+b readimpl_4_l6
+readimpl_4_l8:
+frame_dig -2
+intc_1 // 127
+%
+b readimpl_4_l4
+readimpl_4_l9:
+load 8
+retsub
+
+// write_impl
+writeimpl_5:
+proto 3 0
+intc_0 // 0
+store 5
+frame_dig -2
+intc_1 // 127
+/
+store 2
+writeimpl_5_l1:
+load 2
+frame_dig -2
+frame_dig -1
+len
++
+intc_1 // 127
+/
+<=
+bz writeimpl_5_l12
+load 2
+frame_dig -2
+intc_1 // 127
+/
+==
+bnz writeimpl_5_l11
+intc_0 // 0
+writeimpl_5_l4:
+store 3
+load 2
+frame_dig -2
+frame_dig -1
+len
++
+intc_1 // 127
+/
+==
+bnz writeimpl_5_l10
+intc_1 // 127
+writeimpl_5_l6:
+store 4
+frame_dig -3
+bytec 6 // 0x000102
+load 2
+intc_2 // 1
+extract3
+load 4
+intc_1 // 127
+!=
+load 3
+intc_0 // 0
+!=
+||
+bnz writeimpl_5_l9
+intc_1 // 127
+store 6
+frame_dig -1
+load 5
+intc_1 // 127
+extract3
+writeimpl_5_l8:
+app_local_put
+load 5
+load 6
++
+store 5
+load 2
+intc_2 // 1
++
+store 2
+b writeimpl_5_l1
+writeimpl_5_l9:
+load 4
+load 3
+-
+store 6
+frame_dig -3
+bytec 6 // 0x000102
+load 2
+intc_2 // 1
+extract3
+app_local_get
+intc_0 // 0
+load 3
+substring3
+frame_dig -1
+load 5
+load 6
+extract3
+concat
+frame_dig -3
+bytec 6 // 0x000102
+load 2
+intc_2 // 1
+extract3
+app_local_get
+load 4
+intc_1 // 127
+substring3
+concat
+b writeimpl_5_l8
+writeimpl_5_l10:
+frame_dig -2
+frame_dig -1
+len
++
+intc_1 // 127
+%
+b writeimpl_5_l6
+writeimpl_5_l11:
+frame_dig -2
+intc_1 // 127
+%
+b writeimpl_5_l4
+writeimpl_5_l12:
+retsub
+
+// create
+create_6:
+proto 0 0
+intc_0 // 0
+bytec_3 // "declared_app_value"
+app_global_get_ex
+store 1
+store 0
+load 1
+!
+assert
+bytec_3 // "declared_app_value"
+pushbytes 0x41206465636c617265642073746174652076616c756520746861742069732070726f74656374656420776974682074686520607374617469636020666c6167 // "A declared state value that is protected with the `static` flag"
+app_global_put
+callsub zeroimpl_0
+retsub
+
+// opt_in
+optin_7:
+proto 0 0
+txn Sender
+bytec 4 // "declared_account_value"
+intc_2 // 1
+app_local_put
+txn Sender
+callsub zeroimpl_3
+retsub
+
+// prefix_key_gen
+prefixkeygen_8:
+proto 1 1
+pushbytes 0x72657365727665645f6170705f76616c7565 // "reserved_app_value"
+frame_dig -1
+concat
+retsub
+
+// prefix_key_gen
+prefixkeygen_9:
+proto 1 1
+pushbytes 0x72657365727665645f6163636f756e745f76616c7565 // "reserved_account_value"
+frame_dig -1
+concat
+retsub
+
 // write_acct_blob
-writeacctblob_6:
-store 21
+writeacctblob_10:
+proto 1 0
 txn Sender
 intc_0 // 0
-load 21
+frame_dig -1
 extract 2 0
-callsub impl_21
+callsub writeimpl_5
 retsub
 
 // read_acct_blob
-readacctblob_7:
+readacctblob_11:
+proto 0 1
+bytec_1 // ""
 txn Sender
 intc_0 // 0
 pushint 381 // 381
 intc_2 // 1
 -
-callsub impl_19
-store 6
-load 6
+callsub readimpl_4
+frame_bury 0
+frame_dig 0
 len
 itob
 extract 6 0
-load 6
+frame_dig 0
 concat
-store 6
-load 6
+frame_bury 0
 retsub
 
 // write_app_blob
-writeappblob_8:
-store 37
+writeappblob_12:
+proto 1 0
 intc_0 // 0
-load 37
+frame_dig -1
 extract 2 0
-callsub writeimpl_22
+callsub writeimpl_2
 retsub
 
 // read_app_blob
-readappblob_9:
+readappblob_13:
+proto 0 1
+bytec_1 // ""
 intc_0 // 0
 pushint 2032 // 2032
 intc_2 // 1
 -
-callsub readimpl_20
-store 8
-load 8
+callsub readimpl_1
+frame_bury 0
+frame_dig 0
 len
 itob
 extract 6 0
-load 8
+frame_dig 0
 concat
-store 8
-load 8
+frame_bury 0
 retsub
 
 // set_app_state_val
-setappstateval_10:
-store 51
+setappstateval_14:
+proto 1 0
 intc_0 // 0
-bytec_1 // "declared_app_value"
+bytec_3 // "declared_app_value"
 app_global_get_ex
-store 53
-store 52
-load 53
+store 31
+store 30
+load 31
 !
 assert
-bytec_1 // "declared_app_value"
-load 51
+bytec_3 // "declared_app_value"
+frame_dig -1
 extract 2 0
 app_global_put
 retsub
 
 // get_app_state_val
-getappstateval_11:
-bytec_1 // "declared_app_value"
+getappstateval_15:
+proto 0 1
+bytec_1 // ""
+bytec_3 // "declared_app_value"
 app_global_get
-store 10
-load 10
+frame_bury 0
+frame_dig 0
 len
 itob
 extract 6 0
-load 10
+frame_dig 0
 concat
-store 10
-load 10
+frame_bury 0
 retsub
 
 // set_reserved_app_state_val
-setreservedappstateval_12:
-store 55
-store 54
-bytec_3 // 0x00
+setreservedappstateval_16:
+proto 2 0
+bytec_2 // 0x00
 intc_0 // 0
-load 54
+frame_dig -2
 setbyte
-callsub prefixkeygen_2
-load 55
+callsub prefixkeygen_8
+frame_dig -1
 app_global_put
 retsub
 
 // get_reserved_app_state_val
-getreservedappstateval_13:
-store 14
-bytec_3 // 0x00
+getreservedappstateval_17:
+proto 1 1
 intc_0 // 0
-load 14
+bytec_2 // 0x00
+intc_0 // 0
+frame_dig -1
 setbyte
-callsub prefixkeygen_2
+callsub prefixkeygen_8
 app_global_get
+frame_bury 0
 retsub
 
 // set_account_state_val
-setaccountstateval_14:
-store 56
+setaccountstateval_18:
+proto 1 0
 txn Sender
-bytec_2 // "declared_account_value"
-load 56
+bytec 4 // "declared_account_value"
+frame_dig -1
 app_local_put
 retsub
 
 // incr_account_state_val
-incraccountstateval_15:
-store 57
+incraccountstateval_19:
+proto 1 0
 txn Sender
-bytec_2 // "declared_account_value"
+bytec 4 // "declared_account_value"
 txn Sender
-bytec_2 // "declared_account_value"
+bytec 4 // "declared_account_value"
 app_local_get
-load 57
+frame_dig -1
 +
 app_local_put
 retsub
 
 // get_account_state_val
-getaccountstateval_16:
+getaccountstateval_20:
+proto 0 1
+intc_0 // 0
 txn Sender
-bytec_2 // "declared_account_value"
+bytec 4 // "declared_account_value"
 app_local_get
+frame_bury 0
 retsub
 
 // set_reserved_account_state_val
-setreservedaccountstateval_17:
-store 59
-store 58
+setreservedaccountstateval_21:
+proto 2 0
 txn Sender
-bytec_3 // 0x00
+bytec_2 // 0x00
 intc_0 // 0
-load 58
+frame_dig -2
 setbyte
-callsub prefixkeygen_3
-load 59
+callsub prefixkeygen_9
+frame_dig -1
 extract 2 0
 app_local_put
 retsub
 
 // get_reserved_account_state_val
-getreservedaccountstateval_18:
-store 19
+getreservedaccountstateval_22:
+proto 1 1
+bytec_1 // ""
 txn Sender
-bytec_3 // 0x00
+bytec_2 // 0x00
 intc_0 // 0
-load 19
+frame_dig -1
 setbyte
-callsub prefixkeygen_3
+callsub prefixkeygen_9
 app_local_get
-store 20
-load 20
+frame_bury 0
+frame_dig 0
 len
 itob
 extract 6 0
-load 20
+frame_dig 0
 concat
-store 20
-load 20
-retsub
-
-// _impl
-impl_19:
-store 32
-store 31
-store 30
-bytec 6 // ""
-store 34
-load 31
-intc_1 // 127
-/
-store 33
-impl_19_l1:
-load 33
-load 32
-intc_1 // 127
-/
-<=
-bz impl_19_l9
-load 33
-load 31
-intc_1 // 127
-/
-==
-bnz impl_19_l8
-intc_0 // 0
-impl_19_l4:
-store 35
-load 33
-load 32
-intc_1 // 127
-/
-==
-bnz impl_19_l7
-intc_1 // 127
-impl_19_l6:
-store 36
-load 34
-load 30
-bytec 4 // 0x000102
-load 33
-intc_2 // 1
-extract3
-app_local_get
-load 35
-load 36
-substring3
-concat
-store 34
-load 33
-intc_2 // 1
-+
-store 33
-b impl_19_l1
-impl_19_l7:
-load 32
-intc_1 // 127
-%
-b impl_19_l6
-impl_19_l8:
-load 31
-intc_1 // 127
-%
-b impl_19_l4
-impl_19_l9:
-load 34
-retsub
-
-// read_impl
-readimpl_20:
-store 46
-store 45
-bytec 6 // ""
-store 48
-load 45
-intc_1 // 127
-/
-store 47
-readimpl_20_l1:
-load 47
-load 46
-intc_1 // 127
-/
-<=
-bz readimpl_20_l9
-load 47
-load 45
-intc_1 // 127
-/
-==
-bnz readimpl_20_l8
-intc_0 // 0
-readimpl_20_l4:
-store 49
-load 47
-load 46
-intc_1 // 127
-/
-==
-bnz readimpl_20_l7
-intc_1 // 127
-readimpl_20_l6:
-store 50
-load 48
-bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 47
-intc_2 // 1
-extract3
-app_global_get
-load 49
-load 50
-substring3
-concat
-store 48
-load 47
-intc_2 // 1
-+
-store 47
-b readimpl_20_l1
-readimpl_20_l7:
-load 46
-intc_1 // 127
-%
-b readimpl_20_l6
-readimpl_20_l8:
-load 45
-intc_1 // 127
-%
-b readimpl_20_l4
-readimpl_20_l9:
-load 48
-retsub
-
-// _impl
-impl_21:
-store 24
-store 23
-store 22
-intc_0 // 0
-store 28
-load 23
-intc_1 // 127
-/
-store 25
-impl_21_l1:
-load 25
-load 23
-load 24
-len
-+
-intc_1 // 127
-/
-<=
-bz impl_21_l12
-load 25
-load 23
-intc_1 // 127
-/
-==
-bnz impl_21_l11
-intc_0 // 0
-impl_21_l4:
-store 26
-load 25
-load 23
-load 24
-len
-+
-intc_1 // 127
-/
-==
-bnz impl_21_l10
-intc_1 // 127
-impl_21_l6:
-store 27
-load 22
-bytec 4 // 0x000102
-load 25
-intc_2 // 1
-extract3
-load 27
-intc_1 // 127
-!=
-load 26
-intc_0 // 0
-!=
-||
-bnz impl_21_l9
-intc_1 // 127
-store 29
-load 24
-load 28
-intc_1 // 127
-extract3
-impl_21_l8:
-app_local_put
-load 28
-load 29
-+
-store 28
-load 25
-intc_2 // 1
-+
-store 25
-b impl_21_l1
-impl_21_l9:
-load 27
-load 26
--
-store 29
-load 22
-bytec 4 // 0x000102
-load 25
-intc_2 // 1
-extract3
-app_local_get
-intc_0 // 0
-load 26
-substring3
-load 24
-load 28
-load 29
-extract3
-concat
-load 22
-bytec 4 // 0x000102
-load 25
-intc_2 // 1
-extract3
-app_local_get
-load 27
-intc_1 // 127
-substring3
-concat
-b impl_21_l8
-impl_21_l10:
-load 23
-load 24
-len
-+
-intc_1 // 127
-%
-b impl_21_l6
-impl_21_l11:
-load 23
-intc_1 // 127
-%
-b impl_21_l4
-impl_21_l12:
-retsub
-
-// write_impl
-writeimpl_22:
-store 39
-store 38
-intc_0 // 0
-store 43
-load 38
-intc_1 // 127
-/
-store 40
-writeimpl_22_l1:
-load 40
-load 38
-load 39
-len
-+
-intc_1 // 127
-/
-<=
-bz writeimpl_22_l12
-load 40
-load 38
-intc_1 // 127
-/
-==
-bnz writeimpl_22_l11
-intc_0 // 0
-writeimpl_22_l4:
-store 41
-load 40
-load 38
-load 39
-len
-+
-intc_1 // 127
-/
-==
-bnz writeimpl_22_l10
-intc_1 // 127
-writeimpl_22_l6:
-store 42
-bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 40
-intc_2 // 1
-extract3
-load 42
-intc_1 // 127
-!=
-load 41
-intc_0 // 0
-!=
-||
-bnz writeimpl_22_l9
-intc_1 // 127
-store 44
-load 39
-load 43
-intc_1 // 127
-extract3
-writeimpl_22_l8:
-app_global_put
-load 43
-load 44
-+
-store 43
-load 40
-intc_2 // 1
-+
-store 40
-b writeimpl_22_l1
-writeimpl_22_l9:
-load 42
-load 41
--
-store 44
-bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 40
-intc_2 // 1
-extract3
-app_global_get
-intc_0 // 0
-load 41
-substring3
-load 39
-load 43
-load 44
-extract3
-concat
-bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 40
-intc_2 // 1
-extract3
-app_global_get
-load 42
-intc_1 // 127
-substring3
-concat
-b writeimpl_22_l8
-writeimpl_22_l10:
-load 38
-load 39
-len
-+
-intc_1 // 127
-%
-b writeimpl_22_l6
-writeimpl_22_l11:
-load 38
-intc_1 // 127
-%
-b writeimpl_22_l4
-writeimpl_22_l12:
+frame_bury 0
 retsub

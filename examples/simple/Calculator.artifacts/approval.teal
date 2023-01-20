@@ -143,25 +143,46 @@ return
 
 // create
 create_0:
+proto 0 0
 intc_1 // 1
 return
 
 // add
 add_1:
+proto 2 1
+intc_0 // 0
+frame_dig -2
+frame_dig -1
 +
+frame_bury 0
 retsub
 
 // mul
 mul_2:
+proto 2 1
+intc_0 // 0
+frame_dig -2
+frame_dig -1
 *
+frame_bury 0
 retsub
 
 // sub
 sub_3:
+proto 2 1
+intc_0 // 0
+frame_dig -2
+frame_dig -1
 -
+frame_bury 0
 retsub
 
 // div
 div_4:
+proto 2 1
+intc_0 // 0
+frame_dig -2
+frame_dig -1
 /
+frame_bury 0
 retsub
