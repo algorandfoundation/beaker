@@ -4,7 +4,7 @@ from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
-from algosdk.future.transaction import PaymentTxn
+from algosdk.transaction import *
 
 from pyteal import Assert, Seq, Txn, abi
 from beaker import Application, client, consts, external, sandbox

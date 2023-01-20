@@ -2,7 +2,7 @@ from hashlib import sha256
 from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
-from algosdk.future import transaction
+from algosdk import transaction
 
 from beaker.client import ApplicationClient
 from beaker.consts import milli_algo

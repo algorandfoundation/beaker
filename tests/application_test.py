@@ -64,10 +64,10 @@ def test_teal_version():
     class EmptyApp(Application):
         pass
 
-    ea = EmptyApp(version=4)
+    ea = EmptyApp(version=8)
 
-    assert ea.teal_version == 4, "Expected teal v4"
-    assert ea.approval_program.split("\n")[0] == "#pragma version 4"
+    assert ea.teal_version == 8, "Expected teal v8"
+    assert ea.approval_program.split("\n")[0] == "#pragma version 8"
 
 
 def test_single_external():
