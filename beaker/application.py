@@ -89,19 +89,27 @@ DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
+class MethodProxy:
+    def __init__(
+        self, name: str, func: HandlerFunc, method: ABIReturnSubroutine | None
+    ):
+        self._name = name
+        self._func = func
+        self._method = method
+
+    def delete(self) -> None:
+        ...
+
+
 class Methods:
-    __slots__ = ("_methods",)
+    def __init__(self) -> None:
+        self._methods: dict[str, MethodProxy] = {}
 
-    def __init__(self, methods: dict[str, list[ABIReturnSubroutine]] | None = None):
-        self._methods: dict[str, list[ABIReturnSubroutine]] = methods or {}
-
-    def __getattr__(
-        self, item: str
-    ) -> ABIReturnSubroutine | ABIReturnSubroutineTypeSelector:
+    def __getattr__(self, name: str) -> MethodProxy:
         try:
-            return self._methods[item]
+            return self._methods[name]
         except KeyError as ex:
-            raise AttributeError(f"Unknown method: {item}") from ex
+            raise AttributeError(f"Unknown method: {name}") from ex
 
 
 class Application:
@@ -111,7 +119,6 @@ class Application:
         version: int = MAX_TEAL_VERSION,
         # TODO
         # name: str,
-        # default_approve_create: bool = True, # what to name this? how does it work? why am I here?
         # descr: str | None,
         # state: TState # how to make this generic but also default to empty?!?!!?
     ) -> None:
@@ -125,16 +132,6 @@ class Application:
         self.acct_state = AccountState(klass=self.__class__)
         self.app_state = ApplicationState(klass=self.__class__)
         self.methods = Methods()
-
-        # if default_approve_create:
-        #
-        #     @self.create
-        #     def create():
-        #         return Approve()
-
-    # def unconditional_create_approval(self: Self) -> Self:
-    #     self.create(lambda: Approve(), name="create", bare=True)
-    #     return self
 
     @overload
     def precompile(self, value: "Application", /) -> AppPrecompile:
@@ -198,11 +195,6 @@ class Application:
             method=method,
             hints=hints,
         )
-
-    def get_abi_method(
-        self, name: str, *types: type, output: type | None = None
-    ) -> ABIReturnSubroutine:
-        ...
 
     def register_bare_external(
         self,

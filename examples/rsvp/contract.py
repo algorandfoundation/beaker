@@ -247,6 +247,12 @@ def new_delete() -> Expr:
 
 
 # example: replace bare method with signature
+magic = rsvp.methods.python_func_name
+
+magic.delete() # add this
+magic(...) # current
+magic.method_spec() # use this instead of beaker.application.get_method_spec()
+
 magic = rsvp.bare_method.named(<name>) # throws if multiple matches
 magic = rsvp.bare_method.for_action(<action>)
 
