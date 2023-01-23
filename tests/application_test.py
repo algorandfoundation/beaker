@@ -663,13 +663,14 @@ def test_abi_method_details():
 
 
 def test_multi_optin():
-    class Test(Application):
-        @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
-        def opt1(self, txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
-            return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
+    test = Application()
 
-        @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
-        def opt2(self, txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
-            return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
+    @test.external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    def opt1(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
+        return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
-    Test()
+    @test.external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    def opt2(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
+        return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
+
+    test.compile()

@@ -82,10 +82,7 @@ def test_handler_config():
         assert not v, f"Expected {k} to be unset/empty"
 
 
-def test_authorize():
-
-    cmt = "unauthorized"
-
+def test_authorize_only():
     auth_only = Authorize.only(pt.Global.creator_address())
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
@@ -94,17 +91,26 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    @external(authorize=auth_only)
-    def creator_only():
+
+def test_external_authorize():
+    app = Application()
+    cmt = "unauthorized"
+    auth_only = Authorize.only(pt.Global.creator_address())
+
+    @app.external(authorize=auth_only)
+    def creator_only() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
-    actual = creator_only().__teal__(options)
+    actual = creator_only.subroutine.implementation().__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_authorize_holds_token():
 
     with pytest.raises(pt.TealTypeError):
         Authorize.only(pt.Int(1))
@@ -122,8 +128,15 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    @external(authorize=auth_holds_token)
-    def holds_token_only():
+
+def test_external_authorize_holds_token():
+    cmt = "unauthorized"
+    app = Application()
+    asset_id = pt.Int(123)
+    auth_holds_token = Authorize.holds_token(asset_id)
+
+    @app.external(authorize=auth_holds_token)
+    def holds_token_only() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(
@@ -131,10 +144,13 @@ def test_authorize():
     )
 
     expected = expr.__teal__(options)
-    actual = holds_token_only().__teal__(options)
+    actual = holds_token_only.subroutine.implementation().__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_authorize_opted_in():
 
     with pytest.raises(pt.TealTypeError):
         Authorize.holds_token(pt.Bytes("abc"))
@@ -150,28 +166,39 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    @external(authorize=auth_opted_in)
-    def opted_in_only():
+
+def test_external_authorize_opted_in():
+    app = Application()
+    cmt = "unauthorized"
+    app_id = pt.Int(123)
+    auth_opted_in = Authorize.opted_in(app_id)
+
+    @app.external(authorize=auth_opted_in)
+    def opted_in_only() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
-    actual = opted_in_only().__teal__(options)
+    actual = opted_in_only.subroutine.implementation().__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    # Bare handler
 
-    @delete(authorize=auth_only)
-    def deleter():
+def test_authorize_bare_handler():
+    app = Application()
+    cmt = "unauthorized"
+    auth_only = Authorize.only(pt.Global.creator_address())
+
+    @app.delete(authorize=auth_only)
+    def deleter() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
-    actual = deleter().__teal__(options)
+    actual = deleter.subroutine.implementation().__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
@@ -184,7 +211,7 @@ def test_authorize():
         def thing(a, b):
             return pt.Int(1)
 
-        @external(authorize=thing)
+        @app.external(authorize=thing)
         def other_thing():
             pass
 
@@ -194,7 +221,7 @@ def test_authorize():
         def thing(x):
             return pt.Bytes("fail")
 
-        @external(authorize=thing)
+        @app.external(authorize=thing)
         def other_other_thing():
             pass
 
@@ -204,12 +231,23 @@ def test_named_tuple():
         item: pt.abi.Field[pt.abi.String]
         count: pt.abi.Field[pt.abi.Uint64]
 
-    @external
-    def thing(o: Order):
-        pass
+    app = Application()
 
-    hc = get_handler_config(thing)
-    assert hc.structs["o"] is Order
+    @app.external
+    def thing(o: Order) -> pt.Expr:
+        return pt.Approve()
+
+    app.compile()
+    hints = app.hints
+    assert hints is not None
+    thing_hints = hints.get("thing")
+    assert thing_hints is not None
+    assert thing_hints.structs is not None
+    o_hint = thing_hints.structs.get("o")
+    assert o_hint == {
+        "name": "Order",
+        "elements": [("item", "string"), ("count", "uint64")],
+    }
 
 
 def test_bare():

@@ -1,3 +1,4 @@
+import inspect
 from dataclasses import dataclass, field
 from enum import Enum
 from inspect import signature, Parameter
@@ -173,7 +174,9 @@ def capture_method_hints(fn: HandlerFunc, read_only: bool) -> MethodHints:
             ):
                 mh.default_arguments[name] = DefaultArgument(param.default)
                 params[name] = param.replace(default=Parameter.empty)
-        if isinstance(param.annotation, abi.NamedTuple):
+        if inspect.isclass(param.annotation) and issubclass(
+            param.annotation, abi.NamedTuple
+        ):
             mh.structs[name] = {
                 "name": str(param.annotation.__name__),
                 "elements": [

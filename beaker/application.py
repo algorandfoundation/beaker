@@ -102,6 +102,9 @@ class Methods:
         except KeyError as ex:
             raise AttributeError(f"Unknown method: {name}") from ex
 
+    def __len__(self) -> int:
+        return len(self._methods)
+
 
 class Application:
     def __init__(
