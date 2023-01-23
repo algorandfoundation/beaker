@@ -91,14 +91,25 @@ DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 class MethodProxy:
     def __init__(
-        self, name: str, func: HandlerFunc, method: ABIReturnSubroutine | None
+        self,
+        method: SubroutineFnWrapper | ABIReturnSubroutine,
+        *,
+        deregister: Callable[["MethodProxy"], None],
     ):
-        self._name = name
-        self._func = func
         self._method = method
+        self._deregister = deregister
 
-    def delete(self) -> None:
-        ...
+    def __call__(self, *args, **kwargs) -> Expr:
+        return self._method.subroutine.implementation(*args, **kwargs)
+
+    def deregister(self) -> None:
+        self._deregister(self)
+
+    def method_spec(self) -> Method | None:
+        try:
+            return self._method.method_spec()  # type: ignore[union-attr]
+        except AttributeError:
+            return None
 
 
 class Methods:
@@ -172,6 +183,7 @@ class Application:
         self,
         method: ABIReturnSubroutine,
         *,
+        python_func_name: str,
         actions: dict[OnCompleteActionName, CallConfig],
         hints: MethodHints,
         override: bool | None,
@@ -188,34 +200,60 @@ class Application:
                 raise ValueError(
                     "override=False, but method with matching signature already registered"
                 )
-        # TODO: this replaces references when trying to overload
-        self.methods._methods[method.name()] = method.method_spec()
+
         self._abi_externals[method_sig] = ABIExternal(
             actions=actions,
             method=method,
             hints=hints,
         )
+        self.methods._methods[python_func_name] = MethodProxy(
+            method, deregister=self._unregister_abi_external
+        )
+
+    def _unregister_abi_external(self, proxy: MethodProxy) -> None:
+        self._abi_externals = {
+            msig: abi_external
+            for msig, abi_external in self._abi_externals.items()
+            if abi_external.method is not proxy._method
+        }
+        self.methods._methods = {
+            name: p for name, p in self.methods._methods.items() if p is not proxy
+        }
 
     def register_bare_external(
         self,
         sub: SubroutineFnWrapper,
         *,
-        for_action: OnCompleteActionName,
-        call_config: CallConfig,
+        python_func_name: str,
+        actions: dict[OnCompleteActionName, CallConfig],
         override: bool | None,
     ) -> None:
-        if call_config == CallConfig.NEVER:
-            raise ValueError("???")
-        if override is True:
-            if for_action not in self._bare_externals:
-                raise ValueError("override=True, but nothing to override")
-        elif override is False:
-            if for_action in self._bare_externals:
-                raise BareOverwriteError(for_action)
+        for for_action, call_config in actions.items():
+            if call_config == CallConfig.NEVER:
+                raise ValueError("???")
+            if override is True:
+                if for_action not in self._bare_externals:
+                    raise ValueError("override=True, but nothing to override")
+            elif override is False:
+                if for_action in self._bare_externals:
+                    raise BareOverwriteError(for_action)
 
-        self._bare_externals[for_action] = OnCompleteAction(
-            action=sub, call_config=call_config
+            self._bare_externals[for_action] = OnCompleteAction(
+                action=sub, call_config=call_config
+            )
+        self.methods._methods[python_func_name] = MethodProxy(
+            sub, deregister=self._unregister_bare_external
         )
+
+    def _unregister_bare_external(self, proxy: MethodProxy) -> None:
+        self._bare_externals = {
+            for_action: bare_external
+            for for_action, bare_external in self._bare_externals.items()
+            if bare_external.action is not proxy._method
+        }
+        self.methods._methods = {
+            name: p for name, p in self.methods._methods.items() if p is not proxy
+        }
 
     @overload
     def external(
@@ -284,6 +322,7 @@ class Application:
         """
 
         def decorator(func: HandlerFunc) -> SubroutineFnWrapper | ABIReturnSubroutine:
+            python_func_name = func.__name__
             sig = inspect.signature(func)
             nonlocal bare
             if bare is None:
@@ -314,13 +353,13 @@ class Application:
                 sub = SubroutineFnWrapper(func, return_type=TealType.none, name=name)
                 if sub.subroutine.argument_count():
                     raise TypeError("Bare externals must take no method arguments")
-                for for_action, call_config in actions.items():
-                    self.register_bare_external(
-                        sub,
-                        for_action=for_action,
-                        call_config=call_config,
-                        override=override,
-                    )
+
+                self.register_bare_external(
+                    sub,
+                    python_func_name=python_func_name,
+                    actions=actions,
+                    override=override,
+                )
                 return sub
             else:
                 if authorize is not None:
@@ -330,8 +369,13 @@ class Application:
                 conf = HandlerConfig(read_only=read_only)
                 _capture_structs_and_defaults(func, conf)
                 hints = conf.hints()
+
                 self.register_abi_external(
-                    method, actions=actions, hints=hints, override=override
+                    method,
+                    python_func_name=python_func_name,
+                    actions=actions,
+                    hints=hints,
+                    override=override,
                 )
                 return method
 
@@ -783,10 +827,6 @@ class Application:
     def on_delete(self) -> Method | None:
         return self._compiled and self._compiled.on_delete
 
-    # TODO: implement unconditional_create_approval blue-print
-    # TODO: delete function for "override" where signature doesn't match
-    #       ^ as part of this but also it's own thing: app.methods.foobar(..., returns=...)
-
     def implement(
         self: Self,
         blueprint: Callable[Concatenate[Self, P], T],
@@ -812,25 +852,6 @@ class Application:
                 precompile.compile(client)
 
             bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
-            # if self.auto_default_create:
-            #     any_create = any(
-            #         x.call_config & CallConfig.CREATE for x in bare_call_kwargs.values()
-            #     ) or any(
-            #         cc & CallConfig.CREATE
-            #         for abi in self._abi_externals.values()
-            #         for cc in abi.actions.values()
-            #     )
-            #     if not any_create:
-            #         if "no_op" in bare_call_kwargs:
-            #             raise ValueError(
-            #                 "default create not implemented, already a bare no_op method"
-            #             )
-            #         bare_call_kwargs["no_op"] = OnCompleteAction(
-            #             action=SubroutineFnWrapper(
-            #                 lambda: Approve(), return_type=TealType.none, name="create"
-            #             ),
-            #             call_config=CallConfig.CREATE,
-            #         )
             router = Router(
                 name=self.__class__.__name__,
                 bare_calls=BareCallActions(**bare_call_kwargs),
@@ -838,6 +859,7 @@ class Application:
             )
 
             # Add method externals
+            # TODO: remove this backwards-compat code
             all_creates = []
             all_updates = []
             all_deletes = []
