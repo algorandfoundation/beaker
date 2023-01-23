@@ -146,9 +146,16 @@
     <span class="n">address</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">Expr</span><span class="p">]</span> <span class="o">=</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">()</span>
     <span class="nb">id</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="n">Expr</span><span class="p">]</span> <span class="o">=</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_id</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MAX_TEAL_VERSION</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MAX_TEAL_VERSION</span><span class="p">,</span>
+        <span class="n">optimize_options</span><span class="p">:</span> <span class="n">OptimizeOptions</span> <span class="o">=</span> <span class="n">OptimizeOptions</span><span class="p">(</span>
+            <span class="n">scratch_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frame_pointers</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Application, finding all the custom attributes and initializing the Router&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_options</span> <span class="o">=</span> <span class="n">optimize_options</span>
 
         <span class="c1"># Get initial list of all attrs declared</span>
         <span class="n">initial_attrs</span> <span class="o">=</span> <span class="p">{</span>
@@ -357,7 +364,7 @@
         <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">router</span><span class="o">.</span><span class="n">compile_program</span><span class="p">(</span>
             <span class="n">version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span><span class="p">,</span>
             <span class="n">assemble_constants</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">optimize</span><span class="o">=</span><span class="n">OptimizeOptions</span><span class="p">(</span><span class="n">scratch_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">optimize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimize_options</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span></div>

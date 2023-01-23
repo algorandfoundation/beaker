@@ -2,14 +2,14 @@ from hashlib import sha256
 from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
-from algosdk.future import transaction
+from algosdk import transaction
 
 from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_algod_client, get_accounts
 
 if __name__ == "__main__":
-    from contract import ExpensiveApp
+    from contract import ExpensiveApp  # type: ignore
 else:
     from .contract import ExpensiveApp
 

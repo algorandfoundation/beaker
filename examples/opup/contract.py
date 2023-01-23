@@ -4,7 +4,7 @@ from beaker import sandbox
 from beaker.decorators import external
 
 if __name__ == "__main__":
-    from op_up import OpUp
+    from op_up import OpUp  # type: ignore
 else:
     from .op_up import OpUp
 

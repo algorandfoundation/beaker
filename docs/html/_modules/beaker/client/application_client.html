@@ -77,7 +77,7 @@
   <h1>Source code for beaker.client.application_client</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">algosdk.account</span> <span class="kn">import</span> <span class="n">address_from_private_key</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
@@ -92,7 +92,7 @@
     <span class="n">abi</span><span class="p">,</span>
     <span class="n">AtomicTransactionResponse</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">algosdk.future</span> <span class="kn">import</span> <span class="n">transaction</span>
+<span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">algosdk.logic</span> <span class="kn">import</span> <span class="n">get_application_address</span>
 <span class="kn">from</span> <span class="nn">algosdk.source_map</span> <span class="kn">import</span> <span class="n">SourceMap</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
@@ -144,7 +144,7 @@
 
     <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">teal</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source_map</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">SourceMap</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceMap</span><span class="p">]]:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">teal</span><span class="p">,</span> <span class="n">source_map</span><span class="o">=</span><span class="n">source_map</span><span class="p">)</span>
         <span class="n">src_map</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">source_map</span><span class="p">:</span>
@@ -495,7 +495,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span> <span class="o">|</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_complete</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span> <span class="o">=</span> <span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">NoOpOC</span><span class="p">,</span>
         <span class="n">local_schema</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">StateSchema</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -545,6 +545,8 @@
             <span class="n">boxes</span><span class="o">=</span><span class="n">boxes</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">atc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;ATC none?&quot;</span><span class="p">)</span>
 
         <span class="c1"># If its a read-only method, use dryrun (TODO: swap with simulate later?)</span>
         <span class="k">if</span> <span class="n">hints</span><span class="o">.</span><span class="n">read_only</span><span class="p">:</span>
@@ -569,7 +571,7 @@
         <span class="n">method_results</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tx_info</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">txns</span><span class="p">):</span>
 
-            <span class="n">raw_value</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">raw_value</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span>
             <span class="n">return_value</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">decode_error</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -604,7 +606,12 @@
                     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;no logs&quot;</span><span class="p">)</span>
 
                 <span class="n">raw_value</span> <span class="o">=</span> <span class="n">result_bytes</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
-                <span class="n">return_value</span> <span class="o">=</span> <span class="n">methods</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">returns</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">raw_value</span><span class="p">)</span>
+                <span class="n">abi_return_type</span> <span class="o">=</span> <span class="n">methods</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">returns</span><span class="o">.</span><span class="n">type</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">abi_return_type</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">ABIType</span><span class="p">):</span>
+                    <span class="n">return_value</span> <span class="o">=</span> <span class="n">abi_return_type</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">raw_value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">return_value</span> <span class="o">=</span> <span class="n">raw_value</span>
+
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">decode_error</span> <span class="o">=</span> <span class="n">e</span>
 
@@ -710,6 +717,9 @@
     <span class="k">def</span> <span class="nf">add_transaction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">atc</span><span class="p">:</span> <span class="n">AtomicTransactionComposer</span><span class="p">,</span> <span class="n">txn</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">Transaction</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AtomicTransactionComposer</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No signer available&quot;</span><span class="p">)</span>
+
         <span class="n">atc</span><span class="o">.</span><span class="n">add_transaction</span><span class="p">(</span><span class="n">TransactionWithSigner</span><span class="p">(</span><span class="n">txn</span><span class="o">=</span><span class="n">txn</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">signer</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">atc</span>
 

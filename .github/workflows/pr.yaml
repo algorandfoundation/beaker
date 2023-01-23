@@ -1,0 +1,13 @@
+name: Pull Request and master validation
+
+on: [pull_request]
+
+jobs:
+  check:
+    name: Check Python
+    uses: ./.github/workflows/check-python.yaml
+
+  build:
+    name: Build and Test Python
+    needs: check
+    uses: ./.github/workflows/build-python.yaml

@@ -214,8 +214,22 @@
 <section id="full-example">
 <span id="box-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Assert</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">Global</span><span class="p">,</span>
+    <span class="n">InnerTxn</span><span class="p">,</span>
+    <span class="n">InnerTxnBuilder</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">Pop</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">Suffix</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TxnField</span><span class="p">,</span>
+    <span class="n">TxnType</span><span class="p">,</span>
+    <span class="n">abi</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">ApplicationStateValue</span><span class="p">,</span> <span class="n">Authorize</span><span class="p">,</span> <span class="n">consts</span><span class="p">,</span> <span class="n">external</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">get_method_signature</span>
 <span class="kn">from</span> <span class="nn">beaker.lib.storage</span> <span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">List</span>
@@ -264,8 +278,10 @@
     <span class="c1">####</span>
     <span class="c1"># Box abstractions</span>
 
-    <span class="c1"># A Mapping will create a new box for every unique key, taking a data type for key and value</span>
-    <span class="c1"># Only static types can provide information about the max size (and min balance required).</span>
+    <span class="c1"># A Mapping will create a new box for every unique key,</span>
+    <span class="c1"># taking a data type for key and value</span>
+    <span class="c1"># Only static types can provide information about the max</span>
+    <span class="c1"># size (and min balance required).</span>
     <span class="n">membership_records</span> <span class="o">=</span> <span class="n">Mapping</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="n">MembershipRecord</span><span class="p">)</span>
 
     <span class="c1"># A Listing is a simple list, initialized with some _static_ data type and a length</span>
@@ -339,7 +355,9 @@
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
     <span class="k">def</span> <span class="nf">add_member</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">new_member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Account</span><span class="p">,</span> <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">new_member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Account</span><span class="p">,</span>
+        <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="p">(</span><span class="n">role</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
@@ -347,7 +365,7 @@
             <span class="p">(</span><span class="n">mr</span> <span class="o">:=</span> <span class="n">MembershipRecord</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">voted</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">new_member</span><span class="o">.</span><span class="n">address</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mr</span><span class="p">),</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
-                <span class="n">clawback_axfer</span><span class="p">(</span>
+                <span class="n">clawback_axfer</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">membership_token</span><span class="p">,</span>
                     <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
                     <span class="n">new_member</span><span class="o">.</span><span class="n">address</span><span class="p">(),</span>
@@ -366,13 +384,16 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">idx</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint16</span><span class="p">,</span>
         <span class="n">affirmation</span><span class="p">:</span> <span class="n">Affirmation</span><span class="p">,</span>
-        <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span>
+        <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">affirmations</span><span class="p">[</span><span class="n">idx</span><span class="o">.</span><span class="n">get</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">affirmation</span><span class="p">)</span>
 
     <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">holds_token</span><span class="p">(</span><span class="n">membership_token</span><span class="p">))</span>
     <span class="k">def</span> <span class="nf">get_affirmation</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Affirmation</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">output</span><span class="p">:</span> <span class="n">Affirmation</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">affirmations</span><span class="p">[</span><span class="n">Global</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">affirmations</span><span class="o">.</span><span class="n">elements</span><span class="p">]</span>
@@ -399,7 +420,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">membership_token</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">membership_token</span><span class="o">.</span><span class="n">asset_id</span><span class="p">()),</span>
             <span class="c1"># Opt in to membership token</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
-                <span class="n">axfer</span><span class="p">(</span><span class="n">membership_token</span><span class="o">.</span><span class="n">asset_id</span><span class="p">(),</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+                <span class="n">axfer</span><span class="p">(</span><span class="n">membership_token</span><span class="o">.</span><span class="n">asset_id</span><span class="p">(),</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="o">|</span> <span class="p">{</span><span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)},</span>
             <span class="p">),</span>
         <span class="p">)</span>
@@ -407,8 +428,8 @@
     <span class="nd">@external</span>
     <span class="k">def</span> <span class="nf">get_affirmation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">member_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span>
-        <span class="n">club_app</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Application</span> <span class="o">=</span> <span class="n">club_app_id</span><span class="p">,</span>
+        <span class="n">member_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">club_app</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Application</span> <span class="o">=</span> <span class="n">club_app_id</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
             <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">ExecuteMethodCall</span><span class="p">(</span>

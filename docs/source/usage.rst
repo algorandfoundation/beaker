@@ -126,7 +126,7 @@ Inheritance
 What about extending our Application with some other functionality?
 
 .. literalinclude:: ../../examples/opup/contract.py
-    :lines: 4-29
+    :lines: 12-37
 
 Here we subclassed the ``OpUp`` contract which provides functionality to create a new Application on chain and store its app id for subsequent calls to increase budget.
 
@@ -171,7 +171,7 @@ In the ``OpUp`` example above, the ``ExpensiveApp`` inherits from the ``OpUp`` a
 when we make opup requests.
 
 .. literalinclude:: ../../examples/opup/op_up.py
-    :lines: 28-41
+    :lines: 36-49
 
 The inclusion of a ``Precompile`` prevents building the TEAL until its been fully compiled to assembled binary but we can still reference it in our Application.
 
@@ -179,7 +179,7 @@ The ``OpUp`` Application defines a method to create the target application by re
 for the target Application as a ``Bytes`` Expression.
 
 .. literalinclude:: ../../examples/opup/op_up.py
-    :lines: 59-74
+    :lines: 59-75 
 
 Another situations where a ``Precompile`` is useful is when validating the logic of a LogicSignature.
 
@@ -191,7 +191,7 @@ In the ``offload_compute`` example, we check to make sure that the hash of the s
 Additionally, if the LogicSignature has one or more ``TemplateVariables`` specified, the ``template_hash`` function may be used by passing arguments that should be populated into the templated ``LogicSignature``.
 
 .. literalinclude:: ../../examples/templated_lsig/main.py
-    :lines: 38-43 
+    :lines: 46-50
 
 
 

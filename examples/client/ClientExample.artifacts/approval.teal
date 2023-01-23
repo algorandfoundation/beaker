@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 1
-bytecblock 0x6d616e61676572 0x6e69636b6e616d65
+bytecblock 0x6d616e61676572 0x6e69636b6e616d65 0x
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -114,6 +114,7 @@ return
 
 // create
 create_0:
+proto 0 0
 bytec_0 // "manager"
 global CreatorAddress
 app_global_put
@@ -121,19 +122,23 @@ retsub
 
 // opt_in
 optin_1:
+proto 0 0
 txn Sender
 bytec_1 // "nickname"
-pushbytes 0x // ""
+bytec_2 // ""
 app_local_put
 retsub
 
 // close_out
 closeout_2:
+proto 0 0
 intc_1 // 1
 return
 
 // auth_only
 authonly_3:
+proto 1 1
+frame_dig -1
 bytec_0 // "manager"
 app_global_get
 ==
@@ -141,6 +146,7 @@ retsub
 
 // delete
 delete_4:
+proto 0 0
 txn Sender
 callsub authonly_3
 // unauthorized
@@ -150,6 +156,8 @@ return
 
 // auth_only
 authonly_5:
+proto 1 1
+frame_dig -1
 bytec_0 // "manager"
 app_global_get
 ==
@@ -157,38 +165,39 @@ retsub
 
 // set_manager
 setmanager_6:
-store 2
+proto 1 0
 txn Sender
 callsub authonly_5
 // unauthorized
 assert
 bytec_0 // "manager"
-load 2
+frame_dig -1
 app_global_put
 retsub
 
 // set_nick
 setnick_7:
-store 3
+proto 1 0
 txn Sender
 bytec_1 // "nickname"
-load 3
+frame_dig -1
 extract 2 0
 app_local_put
 retsub
 
 // get_nick
 getnick_8:
+proto 0 1
+bytec_2 // ""
 txn Sender
 bytec_1 // "nickname"
 app_local_get
-store 1
-load 1
+frame_bury 0
+frame_dig 0
 len
 itob
 extract 6 0
-load 1
+frame_dig 0
 concat
-store 1
-load 1
+frame_bury 0
 retsub

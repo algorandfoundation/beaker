@@ -3,15 +3,23 @@ from copy import copy
 from nacl.signing import SigningKey
 
 from algosdk.encoding import decode_address
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
 
 from typing import Literal
-from pyteal import *
-from beaker import *
+from pyteal import Assert, Ed25519Verify_Bare, Int, Seq, TealType, Txn, abi
+from beaker import (
+    Application,
+    LogicSignature,
+    TemplateVariable,
+    client,
+    consts,
+    external,
+    sandbox,
+)
 from beaker.precompile import LSigPrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
@@ -44,7 +52,7 @@ class App(Application):
 
 def sign_msg(msg: str, sk: str) -> bytes:
     """utility function for signing arbitrary data"""
-    pk: list[bytes] = list(base64.b64decode(sk))
+    pk: list[int] = list(base64.b64decode(sk))
     return SigningKey(bytes(pk[:32])).sign(msg.encode()).signature
 
 
