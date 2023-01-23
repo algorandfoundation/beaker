@@ -33,16 +33,16 @@ from pyteal import (
     Approve,
     CallConfig,
     TealType,
+    MethodConfig,
 )
 
 from beaker.decorators import (
     MethodHints,
-    MethodConfig,
     HandlerFunc,
-    _authorize,
-    _capture_structs_and_defaults,
-    HandlerConfig,
+    MethodProxy,
+    capture_method_hints,
 )
+from beaker.decorators.authorize import _authorize
 from beaker.errors import BareOverwriteError
 from beaker.logic_signature import LogicSignature
 from beaker.precompile import AppPrecompile, LSigPrecompile
@@ -50,6 +50,9 @@ from beaker.state import AccountState, ApplicationState
 
 
 def get_method_spec(fn: Any) -> Method:
+    if isinstance(fn, MethodProxy):
+        fn = fn._method
+
     if isinstance(fn, ABIReturnSubroutine):
         return fn.method_spec()
 
@@ -89,29 +92,6 @@ DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
-class MethodProxy:
-    def __init__(
-        self,
-        method: SubroutineFnWrapper | ABIReturnSubroutine,
-        *,
-        deregister: Callable[["MethodProxy"], None],
-    ):
-        self._method = method
-        self._deregister = deregister
-
-    def __call__(self, *args, **kwargs) -> Expr:
-        return self._method.subroutine.implementation(*args, **kwargs)
-
-    def deregister(self) -> None:
-        self._deregister(self)
-
-    def method_spec(self) -> Method | None:
-        try:
-            return self._method.method_spec()  # type: ignore[union-attr]
-        except AttributeError:
-            return None
-
-
 class Methods:
     def __init__(self) -> None:
         self._methods: dict[str, MethodProxy] = {}
@@ -125,13 +105,14 @@ class Methods:
 
 class Application:
     def __init__(
-        self,
+        self: Self,
         *,
         version: int = MAX_TEAL_VERSION,
         # TODO
         # name: str,
         # descr: str | None,
         # state: TState # how to make this generic but also default to empty?!?!!?
+        implement_default_create: bool = True,  # for backwards compat, TODO maybe remove
     ) -> None:
         """<TODO>"""
         self.teal_version = version
@@ -143,6 +124,9 @@ class Application:
         self.acct_state = AccountState(klass=self.__class__)
         self.app_state = ApplicationState(klass=self.__class__)
         self.methods = Methods()
+
+        if implement_default_create:
+            self.implement(unconditional_create_approval)
 
     @overload
     def precompile(self, value: "Application", /) -> AppPrecompile:
@@ -362,13 +346,9 @@ class Application:
                 )
                 return sub
             else:
-                if authorize is not None:
-                    func = _authorize(authorize)(func)
                 method = ABIReturnSubroutine(func, overriding_name=name)
                 method._read_only = read_only  # type: ignore[attr-defined]
-                conf = HandlerConfig(read_only=read_only)
-                _capture_structs_and_defaults(func, conf)
-                hints = conf.hints()
+                hints = capture_method_hints(func, read_only=read_only)
 
                 self.register_abi_external(
                     method,

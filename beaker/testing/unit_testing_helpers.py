@@ -4,8 +4,7 @@ from typing import Any, TypeVar
 import pyteal as pt
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
-from beaker import Application
-from beaker import client, sandbox
+from beaker import Application, client, sandbox
 
 algod_client = None
 sandbox_accounts = None
@@ -75,12 +74,12 @@ def unit_test_app_blueprint(
 
 class UnitTestingApp(Application):
     def __init__(
-        self,
+        self: TApp,
         expr_to_test: pt.Expr | None = None,
         version: int = pt.MAX_TEAL_VERSION,
     ):
         super().__init__(version=version)
-        unit_test_app_blueprint(self, expr_to_test)
+        self.implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
 
 
 def assert_output(

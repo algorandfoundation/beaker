@@ -1,32 +1,49 @@
-import inspect
 from dataclasses import dataclass, field
 from enum import Enum
 from inspect import signature, Parameter
-from typing import Optional, Callable, Any, TypedDict
+from typing import Callable, Any, TypedDict
 
 from algosdk.abi import Method
 from pyteal import (
     abi,
-    BareCallActions,
     Expr,
     Int,
-    MethodConfig,
-    Subroutine,
     TealTypeError,
     Bytes,
     ABIReturnSubroutine,
+    SubroutineFnWrapper,
+    ScratchVar,
 )
 
 from beaker.decorators.authorize import _authorize, Authorize
 from beaker.state import AccountStateValue, ApplicationStateValue
 
-__all__ = [
-    "Authorize",
-]
-
 HandlerFunc = Callable[..., Expr]
 
-DefaultArgumentType = Expr | ABIReturnSubroutine | int | bytes | str
+
+class MethodProxy:
+    def __init__(
+        self,
+        method: SubroutineFnWrapper | ABIReturnSubroutine,
+        *,
+        deregister: Callable[["MethodProxy"], None],
+    ):
+        self._method = method
+        self._deregister = deregister
+
+    def __call__(
+        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any
+    ) -> Expr | abi.ReturnedValue:
+        return self._method(*args, **kwargs)
+
+    def deregister(self) -> None:
+        self._deregister(self)
+
+    def method_spec(self) -> Method | None:
+        try:
+            return self._method.method_spec()  # type: ignore[union-attr]
+        except AttributeError:
+            return None
 
 
 class DefaultArgumentClass(str, Enum):
@@ -34,6 +51,9 @@ class DefaultArgumentClass(str, Enum):
     LocalState = "local-state"
     GlobalState = "global-state"
     Constant = "constant"
+
+
+DefaultArgumentType = Expr | ABIReturnSubroutine | MethodProxy | int | bytes | str
 
 
 class DefaultArgument:
@@ -63,7 +83,9 @@ class DefaultArgument:
                 self.resolvable_class = DefaultArgumentClass.Constant
 
             # FunctionType
-            case ABIReturnSubroutine() as fn:
+            case (ABIReturnSubroutine() as fn) | MethodProxy(
+                _method=ABIReturnSubroutine() as fn
+            ):
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
@@ -84,7 +106,9 @@ class DefaultArgument:
                 return self.resolver
 
             # FunctionType
-            case ABIReturnSubroutine() as fn:
+            case (ABIReturnSubroutine() as fn) | MethodProxy(
+                _method=ABIReturnSubroutine() as fn
+            ):
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
                 return fn.method_spec().dictify()
@@ -93,45 +117,6 @@ class DefaultArgument:
 
     def dictify(self) -> dict[str, Any]:
         return {"source": self.resolvable_class.value, "data": self.resolve_hint()}
-
-
-@dataclass
-class HandlerConfig:
-    """HandlerConfig contains all the extra bits of info about a given ABI method"""
-
-    method_spec: Optional[Method] = field(kw_only=True, default=None)
-    subroutine: Optional[Subroutine] = field(kw_only=True, default=None)
-    bare_method: Optional[BareCallActions] = field(kw_only=True, default=None)
-
-    referenced_self: bool = field(kw_only=True, default=False)
-    structs: Optional[dict[str, type[abi.NamedTuple]]] = field(
-        kw_only=True, default=None
-    )
-
-    default_arguments: Optional[dict[str, DefaultArgument]] = field(
-        kw_only=True, default=None
-    )
-    method_config: Optional[MethodConfig] = field(kw_only=True, default=None)
-    read_only: bool = field(kw_only=True, default=False)
-
-    def hints(self) -> "MethodHints":
-        mh = MethodHints(read_only=self.read_only)
-
-        if self.default_arguments:
-            mh.default_arguments = self.default_arguments
-
-        if self.structs:
-            mh.structs = {
-                arg_name: {
-                    "name": str(model_spec.__name__),
-                    "elements": [
-                        (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
-                        for name, typ in model_spec.__annotations__.items()
-                    ],
-                }
-                for arg_name, model_spec in self.structs.items()
-            }
-        return mh
 
 
 class StructArgDict(TypedDict):
@@ -173,25 +158,38 @@ class MethodHints:
         return d
 
 
-def _capture_structs_and_defaults(fn: HandlerFunc, config: HandlerConfig) -> None:
+def capture_method_hints(fn: HandlerFunc, read_only: bool) -> MethodHints:
     sig = signature(fn)
     params = sig.parameters.copy()
 
-    config.structs = {}
-    config.default_arguments = {}
+    mh = MethodHints(read_only=read_only, default_arguments={}, structs={})
+    assert mh.default_arguments is not None
+    assert mh.structs is not None
 
     for name, param in params.items():
         match param.default:
-            case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
-                config.default_arguments[name] = DefaultArgument(param.default)
+            case Expr() | int() | str() | bytes() | ABIReturnSubroutine() | MethodProxy(
+                _method=ABIReturnSubroutine()
+            ):
+                mh.default_arguments[name] = DefaultArgument(param.default)
                 params[name] = param.replace(default=Parameter.empty)
-        if inspect.isclass(param.annotation) and issubclass(
-            param.annotation, abi.NamedTuple
-        ):
-            config.structs[name] = param.annotation
+        if isinstance(param.annotation, abi.NamedTuple):
+            mh.structs[name] = {
+                "name": str(param.annotation.__name__),
+                "elements": [
+                    (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
+                    for name, typ in param.annotation.__annotations__.items()
+                ],
+            }
 
-    if config.default_arguments:
+    # TODO: remove hax
+    mh.default_arguments = mh.default_arguments or None
+    mh.structs = mh.structs or None
+
+    if mh.default_arguments:
         # TODO: is this strictly required?
         # Fix function sig/annotations
         newsig = sig.replace(parameters=list(params.values()))
         fn.__signature__ = newsig  # type: ignore[attr-defined]
+
+    return mh
