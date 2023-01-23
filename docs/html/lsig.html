@@ -122,15 +122,23 @@ need some hardcoded well defined behavior.</p>
 <span class="kn">from</span> <span class="nn">nacl.signing</span> <span class="kn">import</span> <span class="n">SigningKey</span>
 
 <span class="kn">from</span> <span class="nn">algosdk.encoding</span> <span class="kn">import</span> <span class="n">decode_address</span>
-<span class="kn">from</span> <span class="nn">algosdk.future</span> <span class="kn">import</span> <span class="n">transaction</span>
+<span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
     <span class="n">TransactionWithSigner</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Assert</span><span class="p">,</span> <span class="n">Ed25519Verify_Bare</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Txn</span><span class="p">,</span> <span class="n">abi</span>
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Application</span><span class="p">,</span>
+    <span class="n">LogicSignature</span><span class="p">,</span>
+    <span class="n">TemplateVariable</span><span class="p">,</span>
+    <span class="n">client</span><span class="p">,</span>
+    <span class="n">consts</span><span class="p">,</span>
+    <span class="n">external</span><span class="p">,</span>
+    <span class="n">sandbox</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">LSigPrecompile</span>
 
 <span class="n">Signature</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
@@ -163,7 +171,7 @@ need some hardcoded well defined behavior.</p>
 
 <span class="k">def</span> <span class="nf">sign_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sk</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;utility function for signing arbitrary data&quot;&quot;&quot;</span>
-    <span class="n">pk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">sk</span><span class="p">))</span>
+    <span class="n">pk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">sk</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">SigningKey</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">pk</span><span class="p">[:</span><span class="mi">32</span><span class="p">]))</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">signature</span>
 
 

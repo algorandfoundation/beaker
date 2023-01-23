@@ -103,7 +103,8 @@
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SandboxAccount</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;gets all the accounts in the sandbox kmd, defaults to the `unencrypted-default-wallet` created on private networks automatically&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;gets all the accounts in the sandbox kmd, defaults</span>
+<span class="sd">    to the `unencrypted-default-wallet` created on private networks automatically&quot;&quot;&quot;</span>
 
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
     <span class="n">wallets</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">list_wallets</span><span class="p">()</span>
