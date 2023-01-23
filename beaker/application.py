@@ -59,11 +59,11 @@ def get_method_spec(fn: Any) -> Method:
     raise Exception("Expected argument to be an ABI method")
 
 
-def get_method_signature(fn: HandlerFunc) -> str:
+def get_method_signature(fn: Any) -> str:
     return get_method_spec(fn).get_signature()
 
 
-def get_method_selector(fn: HandlerFunc) -> bytes:
+def get_method_selector(fn: Any) -> bytes:
     return get_method_spec(fn).get_selector()
 
 
@@ -785,27 +785,27 @@ class Application:
 
     @property
     def on_create(self) -> Method | None:
-        return self._compiled and self._compiled.on_create
+        return self._compiled.on_create if self._compiled is not None else None
 
     @property
     def on_update(self) -> Method | None:
-        return self._compiled and self._compiled.on_update
+        return self._compiled.on_update if self._compiled is not None else None
 
     @property
     def on_opt_in(self) -> Method | None:
-        return self._compiled and self._compiled.on_opt_in
+        return self._compiled.on_opt_in if self._compiled is not None else None
 
     @property
     def on_close_out(self) -> Method | None:
-        return self._compiled and self._compiled.on_close_out
+        return self._compiled.on_close_out if self._compiled is not None else None
 
     @property
     def on_clear_state(self) -> Method | None:
-        return self._compiled and self._compiled.on_clear_state
+        return self._compiled.on_clear_state if self._compiled is not None else None
 
     @property
     def on_delete(self) -> Method | None:
-        return self._compiled and self._compiled.on_delete
+        return self._compiled.on_delete if self._compiled is not None else None
 
     def implement(
         self: Self,
@@ -878,9 +878,9 @@ class Application:
                 "on_close_out": all_close_outs.pop()
                 if len(all_close_outs) == 1
                 else None,
-                "on_clear_state": (
-                    all_clear_states.pop() if len(all_clear_states) == 1 else None,
-                ),
+                "on_clear_state": all_clear_states.pop()
+                if len(all_clear_states) == 1
+                else None,
             }
             # Compile approval and clear programs
             approval_program, clear_program, contract = router.compile_program(

@@ -30,7 +30,7 @@ class App(Application):
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
     def __init__(self, version: int = pt.MAX_TEAL_VERSION):
-        super().__init__(version=version)
+        super().__init__(version=version, implement_default_create=False)
 
         @self.create(bare=True)
         def create():
@@ -458,7 +458,7 @@ def test_call(sb_accts: SandboxAccounts):
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = get_method_selector(app.add)  # type: ignore
+    ms = get_method_selector(app.methods.add)
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
@@ -501,7 +501,7 @@ def test_add_method_call(sb_accts: SandboxAccounts):
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = get_method_selector(app.add)  # type: ignore
+    ms = get_method_selector(app.methods.add)
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
