@@ -16,7 +16,7 @@ def demo():
         # Get sandbox algod client
         client=sandbox.get_algod_client(),
         # Instantiate app with the program version (default is MAX_TEAL_VERSION)
-        app=HelloBeaker(version=6),
+        app=HelloBeaker(version=8),
         # Get acct from sandbox and pass the signer
         signer=sandbox.get_accounts().pop().signer,
     )

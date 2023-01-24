@@ -45,7 +45,8 @@ class LogicException(Exception):
         self.lines = program.split("\n")
 
         self.txid, self.msg, self.pc = txid, msg, pc
-        self.line_no = self.map.get_line_for_pc(self.pc)
+        line = self.map.get_line_for_pc(self.pc)
+        self.line_no = line if line is not None else 0
 
     def __str__(self) -> str:
         return f"Txn {self.txid} had error '{self.msg}' at PC {self.pc} and Source Line {self.line_no}: \n\n\t{self.trace()}"

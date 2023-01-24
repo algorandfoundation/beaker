@@ -7,7 +7,6 @@ from pyteal import (
     BytesMinus,
     BytesMul,
     Btoi,
-    Concat,
     Exp,
     Expr,
     ExtractUint64,
@@ -17,8 +16,6 @@ from pyteal import (
     Len,
     Not,
     Return,
-    ScratchSlot,
-    Seq,
     Subroutine,
     TealType,
 )
@@ -163,7 +160,21 @@ def WidePower(x, n):  # noqa: N802
         bytes representing the high and low bytes of a wide power evaluation
 
     """
-    return Seq(InlineAssembly("expw", x, n), StackToWide())
+    return InlineAssembly(
+        "expw; itob; swap; itob; swap; concat", x, n, type=TealType.bytes
+    )
+
+
+@Subroutine(TealType.bytes)
+def exponential_impl(x, f, n, _scale):
+    return If(
+        n == Int(1),
+        BytesAdd(_scale, BytesMul(x, _scale)),
+        BytesAdd(
+            exponential_impl(x, BytesDiv(f, Itob(n)), n - Int(1), _scale),
+            BytesDiv(BytesMul(_scale, WidePower(BytesToInt(x), n)), f),
+        ),
+    )
 
 
 def Exponential(x, n):  # noqa: N802
@@ -180,19 +191,9 @@ def Exponential(x, n):  # noqa: N802
 
     """
     _scale = Itob(Int(1000))
-
-    @Subroutine(TealType.bytes)
-    def _impl(x, f, n):
-        return If(
-            n == Int(1),
-            BytesAdd(_scale, BytesMul(x, _scale)),
-            BytesAdd(
-                _impl(x, BytesDiv(f, Itob(n)), n - Int(1)),
-                BytesDiv(BytesMul(_scale, WidePower(BytesToInt(x), n)), f),
-            ),
-        )
-
-    return BytesToInt(BytesDiv(_impl(Itob(x), WideFactorial(Itob(n)), n), _scale))
+    return BytesToInt(
+        BytesDiv(exponential_impl(Itob(x), WideFactorial(Itob(n)), n, _scale), _scale)
+    )
 
 
 # @Subroutine(TealType.uint64)
@@ -243,15 +244,3 @@ def Exponential(x, n):  # noqa: N802
 @Subroutine(TealType.uint64)
 def BytesToInt(x):  # noqa: N802
     return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
-
-
-@Subroutine(TealType.bytes)
-def StackToWide():  # noqa: N802
-    """StackToWide returns the combination of the high and low integers returned from a wide math operation as bytes"""
-    h = ScratchSlot()
-    l = ScratchSlot()
-    return Seq(
-        l.store(),
-        h.store(),  # Take the low and high ints off the stack and combine them
-        Concat(Itob(h.load()), Itob(l.load())),
-    )

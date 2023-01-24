@@ -120,34 +120,34 @@ def Rest(s, n):  # noqa: N802
     return Substring(s, n, Len(s))
 
 
+@Subroutine(TealType.bytes)
+def encode_uvarint_impl(val, b):
+    buff = ScratchVar()
+    return Seq(
+        buff.store(b),
+        Concat(
+            buff.load(),
+            If(
+                val >= Int(128),
+                encode_uvarint_impl(
+                    val >> Int(7),
+                    Extract(Itob((val & Int(255)) | Int(128)), Int(7), Int(1)),
+                ),
+                Extract(Itob(val & Int(255)), Int(7), Int(1)),
+            ),
+        ),
+    )
+
+
 def EncodeUvariant(val):  # noqa: N802
     """
     Returns the uvarint encoding of an integer
 
     Useful in the case that the bytecode for a contract is being populated, since
     integers in a contract are uvarint encoded
+
+    This subroutine is recursive, the first call should include
+    the integer to be encoded and an empty bytestring
+
     """
-
-    @Subroutine(TealType.bytes)
-    def encode_uvarint_impl(val, b):
-        """
-        This subroutine is recursive, the first call should include
-        the integer to be encoded and an empty bytestring
-        """
-        buff = ScratchVar()
-        return Seq(
-            buff.store(b),
-            Concat(
-                buff.load(),
-                If(
-                    val >= Int(128),
-                    encode_uvarint_impl(
-                        val >> Int(7),
-                        Extract(Itob((val & Int(255)) | Int(128)), Int(7), Int(1)),
-                    ),
-                    Extract(Itob(val & Int(255)), Int(7), Int(1)),
-                ),
-            ),
-        )
-
     return encode_uvarint_impl(val, Bytes(""))
