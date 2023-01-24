@@ -25,7 +25,7 @@ from algosdk.transaction import LogicSigAccount
 from algosdk.constants import APP_PAGE_MAX_SIZE
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
-from beaker.lib.strings import EncodeUvariant
+from beaker.lib.strings import EncodeUVarInt
 
 if TYPE_CHECKING:
     from beaker.application import Application
@@ -240,9 +240,9 @@ class Precompile:
             # Add expressions to encode the values and insert
             # them into the working buffer
             populate_program += [
-                curr_val.store(Concat(EncodeUvariant(Len(args[idx])), args[idx]))
+                curr_val.store(Concat(EncodeUVarInt(Len(args[idx])), args[idx]))
                 if tv.is_bytes
-                else curr_val.store(EncodeUvariant(args[idx])),
+                else curr_val.store(EncodeUVarInt(args[idx])),
                 buff.store(
                     Concat(
                         buff.load(),

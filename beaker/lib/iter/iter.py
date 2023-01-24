@@ -1,4 +1,4 @@
-from pyteal import Expr, For, Int, ScratchVar, Subroutine, TealType
+from pyteal import Expr, For, Int, ScratchVar
 
 
 def Iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:  # noqa: N802
@@ -13,11 +13,7 @@ def Iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:  # noqa: N
         A Subroutine expression to be passed directly into an Expr tree
     """
 
-    @Subroutine(TealType.none)
-    def _impl() -> Expr:
-        init = i.store(Int(0))
-        cond = i.load() < n
-        iter = i.store(i.load() + Int(1))
-        return For(init, cond, iter).Do(sub)
-
-    return _impl()
+    init = i.store(Int(0))
+    cond = i.load() < n
+    iter = i.store(i.load() + Int(1))
+    return For(init, cond, iter).Do(sub)

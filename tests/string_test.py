@@ -8,7 +8,7 @@ from beaker.testing import (
     returned_int_as_bytes,
 )
 
-from beaker.lib.strings import Atoi, EncodeUvariant, Head, Itoa, Prefix, Suffix, Tail
+from beaker.lib.strings import Atoi, EncodeUVarInt, Head, Itoa, Prefix, Suffix, Tail
 
 
 def test_atoi():
@@ -80,6 +80,6 @@ def test_prefix_past_length():
 
 
 def test_encode_uvarint():
-    ut = UnitTestingApp(EncodeUvariant(pt.Int(500)))
+    ut = UnitTestingApp(EncodeUVarInt(pt.Int(500)))
     output = [[244, 3]]
     assert_output(ut, [], output)
