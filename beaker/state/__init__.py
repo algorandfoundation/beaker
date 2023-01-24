@@ -1,7 +1,7 @@
 from inspect import getattr_static
 from typing import Any, Generic, TypeVar
 
-from algosdk.future.transaction import StateSchema
+from algosdk.transaction import StateSchema
 from pyteal import TealType, Expr, Seq, Txn
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE

@@ -9,8 +9,8 @@ return
 
 // checked
 checked_0:
-store 1
-load 1
+proto 1 1
+frame_dig -1
 extract 2 0
 len
 pushint 0 // 0

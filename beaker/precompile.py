@@ -15,18 +15,17 @@ from pyteal import (
     Len,
     Substring,
     Suffix,
-    Subroutine,
     Sha512_256,
     TxnField,
     TxnType,
 )
 from algosdk.v2client.algod import AlgodClient
 from algosdk.source_map import SourceMap
-from algosdk.future.transaction import LogicSigAccount
+from algosdk.transaction import LogicSigAccount
 from algosdk.constants import APP_PAGE_MAX_SIZE
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
-from beaker.lib.strings import EncodeUvariant
+from beaker.lib.strings import EncodeUVarInt
 
 if TYPE_CHECKING:
     from beaker.application import Application
@@ -127,7 +126,11 @@ class Precompile:
         self.binary = Bytes(self._binary)
         for tv in self._template_values:
             # +1 to acount for the pushbytes/pushint op
-            tv.pc = self._map.get_pcs_for_line(tv.line)[0] + 1
+            pcs = self._map.get_pcs_for_line(tv.line)
+            if pcs is None:
+                tv.pc = 0
+            else:
+                tv.pc = pcs[0] + 1
 
         def _hash_program(data: bytes) -> bytes:
             """compute the hash"""
@@ -237,9 +240,9 @@ class Precompile:
             # Add expressions to encode the values and insert
             # them into the working buffer
             populate_program += [
-                curr_val.store(Concat(EncodeUvariant(Len(args[idx])), args[idx]))
+                curr_val.store(Concat(EncodeUVarInt(Len(args[idx])), args[idx]))
                 if tv.is_bytes
-                else curr_val.store(EncodeUvariant(args[idx])),
+                else curr_val.store(EncodeUVarInt(args[idx])),
                 buff.store(
                     Concat(
                         buff.load(),
@@ -261,11 +264,7 @@ class Precompile:
             buff.load(),
         ]
 
-        @Subroutine(TealType.bytes)
-        def populate_template_program() -> Expr:
-            return Seq(*populate_program)
-
-        return populate_template_program()
+        return Seq(*populate_program)
 
     def template_hash(self, *args) -> Expr:  # type: ignore
         """
@@ -377,6 +376,8 @@ class LSigPrecompile:
 
         It should only be used for non templated Precompiles.
         """
+        if self.logic._binary is None:
+            raise Exception("Cannot get signer until the program is compiled")
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
 
 
@@ -396,7 +397,11 @@ def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssert
         if line != "assert":
             continue
 
-        pc = src_map.get_pcs_for_line(idx)[0]
+        pcs = src_map.get_pcs_for_line(idx)
+        if pcs is None:
+            pc = 0
+        else:
+            pc = pcs[0]
 
         # TODO: this will be wrong for multiline comments
         line_before = program_lines[idx - 1]

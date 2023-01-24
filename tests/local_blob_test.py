@@ -112,3 +112,24 @@ def test_local_blob_set_past_end():
 
     with pytest.raises(bkr.client.LogicException):
         assert_output(app, [], expected)
+
+
+def test_local_blob_single_subroutine():
+    app = LocalBlobTest()
+    @app.external
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+        return pt.Seq(
+            app.blob.zero(),
+            app.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            app.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            pt.Pop(app.blob.read(pt.Int(32), pt.Int(40))),
+            (s := pt.abi.String()).set(app.blob.read(pt.Int(32), pt.Int(40))),
+            output.decode(s.encode()),
+        )
+    app.compile()
+    program = app.approval_program
+    assert program.count("write_impl") == 1
+    assert program.count("read_impl") == 1
+
+    expected = list(b"deadbeef")
+    assert_output(app, [], [expected])

@@ -29,7 +29,7 @@ ascii_zero = Int(_ascii_zero)
 ascii_nine = Int(_ascii_nine)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="ascii_to_int")
 def AsciiToInt(arg):  # noqa: N802
     """AsciiToInt converts the integer representing a character in ascii to the actual integer it represents
 
@@ -43,13 +43,13 @@ def AsciiToInt(arg):  # noqa: N802
     return Seq(Assert(arg >= ascii_zero), Assert(arg <= ascii_nine), arg - ascii_zero)
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="int_to_ascii")
 def IntToAscii(arg):  # noqa: N802
     """int_to_ascii converts an integer to the ascii byte that represents it"""
     return Extract(Bytes("0123456789"), arg, Int(1))
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="atoi")
 def Atoi(a):  # noqa: N802
     """Atoi converts a byte string representing a number to the integer value it represents"""
     return If(
@@ -60,7 +60,7 @@ def Atoi(a):  # noqa: N802
     )
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="itoa")
 def Itoa(i):  # noqa: N802
     """Itoa converts an integer to the ascii byte string it represents"""
     return If(
@@ -73,7 +73,7 @@ def Itoa(i):  # noqa: N802
     )
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="witoa")
 def Witoa(i):  # noqa: N802
     """Witoa converts a byte string interpreted as an integer to the ascii byte string it represents"""
     return If(
@@ -90,64 +90,61 @@ def Witoa(i):  # noqa: N802
     )
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="head")
 def Head(s):  # noqa: N802
     """Head gets the first byte from a bytestring, returns as bytes"""
     return Extract(s, Int(0), Int(1))
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="tail")
 def Tail(s):  # noqa: N802
     """Tail returns the string with the first character removed"""
     return Substring(s, Int(1), Len(s))
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="suffix")
 def Suffix(s, n):  # noqa: N802
     """Suffix returns the last n bytes of a given byte string"""
     return Substring(s, Len(s) - n, Len(s))
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="prefix")
 def Prefix(s, n):  # noqa: N802
     """Prefix returns the first n bytes of a given byte string"""
     return Substring(s, Int(0), n)
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="rest")
 def Rest(s, n):  # noqa: N802
     """Rest returns the remaining bytes after the first n bytes of a given byte string"""
     return Substring(s, n, Len(s))
 
 
-def EncodeUvariant(val):  # noqa: N802
+@Subroutine(TealType.bytes)
+def encode_uvarint_impl(val, b):
+    buff = ScratchVar()
+    return Seq(
+        buff.store(b),
+        Concat(
+            buff.load(),
+            If(
+                val >= Int(128),
+                encode_uvarint_impl(
+                    val >> Int(7),
+                    Extract(Itob((val & Int(255)) | Int(128)), Int(7), Int(1)),
+                ),
+                Extract(Itob(val & Int(255)), Int(7), Int(1)),
+            ),
+        ),
+    )
+
+
+def EncodeUVarInt(val):  # noqa: N802
     """
     Returns the uvarint encoding of an integer
 
     Useful in the case that the bytecode for a contract is being populated, since
     integers in a contract are uvarint encoded
     """
-
-    @Subroutine(TealType.bytes)
-    def encode_uvarint_impl(val, b):
-        """
-        This subroutine is recursive, the first call should include
-        the integer to be encoded and an empty bytestring
-        """
-        buff = ScratchVar()
-        return Seq(
-            buff.store(b),
-            Concat(
-                buff.load(),
-                If(
-                    val >= Int(128),
-                    encode_uvarint_impl(
-                        val >> Int(7),
-                        Extract(Itob((val & Int(255)) | Int(128)), Int(7), Int(1)),
-                    ),
-                    Extract(Itob(val & Int(255)), Int(7), Int(1)),
-                ),
-            ),
-        )
 
     return encode_uvarint_impl(val, Bytes(""))

@@ -23,19 +23,19 @@ return
 
 // internal_tester
 internaltester_0:
-store 4
-store 3
-load 3
-load 4
+proto 2 1
+frame_dig -2
+frame_dig -1
 *
 retsub
 
 // internal_scratch_tester
 internalscratchtester_1:
-store 6
-store 5
-load 5
+proto 2 1
+frame_dig -2
+store 3
+load 3
 loads
-load 6
+frame_dig -1
 *
 retsub

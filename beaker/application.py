@@ -107,10 +107,14 @@ class Methods:
 
 
 class Application:
+
     def __init__(
         self: Self,
         *,
         version: int = MAX_TEAL_VERSION,
+        optimize_options: OptimizeOptions = OptimizeOptions(
+            scratch_slots=True, frame_pointers=True
+        ),
         # TODO
         # name: str,
         # descr: str | None,
@@ -119,6 +123,7 @@ class Application:
     ) -> None:
         """<TODO>"""
         self.teal_version = version
+        self.optimize_options = optimize_options
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}

@@ -212,6 +212,7 @@ return
 
 // create
 create_0:
+proto 0 0
 bytec_3 // "g"
 global CreatorAddress
 app_global_put
@@ -222,6 +223,8 @@ retsub
 
 // auth_only
 authonly_1:
+proto 1 1
+frame_dig -1
 bytec_3 // "g"
 app_global_get
 ==
@@ -229,6 +232,8 @@ retsub
 
 // auth_only
 authonly_2:
+proto 1 1
+frame_dig -1
 bytec_3 // "g"
 app_global_get
 ==
@@ -542,6 +547,7 @@ app_global_get
 callsub dooptin_8
 bytec_2 // "p"
 app_global_get
+frame_bury 0
 retsub
 
 // mint

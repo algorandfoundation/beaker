@@ -29,14 +29,17 @@ def unit_test_app_blueprint(
 
 
     1) Initialize with a single Expr that returns bytes
-        The bytes output from the Expr are returned from the abi method ``unit_test()[]byte``
+        The bytes output from the Expr are returned from
+        the abi method ``unit_test()[]byte``
 
     2) Subclass UnitTestingApp and override `unit_test`
-        Any inputs or output may be specified but you're responsible for encoding the incoming
-        arguments as a dict with keys matching the argument names of the custom `unit_test` method
+        Any inputs or output may be specified but you're
+        responsible for encoding the incoming arguments as a
+        dict with keys matching the argument names of the custom `unit_test` method
 
 
-    An instance of this class is passed to assert_output to check the return value against what you expect.
+    An instance of this class is passed to assert_output to check
+    the return value against what you expect.
     """
 
     @app.delete
@@ -89,12 +92,18 @@ def assert_output(
     opups: int = 0,
 ):
     """
-    Creates and calls the UnitTestingApp passed and compares the return value with the expected output
+    Creates and calls the UnitTestingApp passed and compares the
+    return value with the expected output
 
-    :param app: An instance of a UnitTestingApp to make call against its `unit_test` method
-    :param inputs: A list of dicts where each entry contains keys matching the input args for the `unit_test` method  and values corresponding to the type expected by the method
-    :param outputs: A list of outputs to compare against the return value of the output of the `unit_test` method
-    :param opups: A number of additional app call transactions to make to increase our budget
+    :param app: An instance of a UnitTestingApp to make call
+        against its `unit_test` method
+    :param inputs: A list of dicts where each entry contains keys
+        matching the input args for the `unit_test` method  and values
+        corresponding to the type expected by the method
+    :param outputs: A list of outputs to compare against the return
+        value of the output of the `unit_test` method
+    :param opups: A number of additional app call transactions to
+        make to increase our budget
 
     """
     # TODO: make these avail in a pytest session context? pass them in directly?

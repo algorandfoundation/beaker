@@ -1,7 +1,7 @@
 import warnings
 from base64 import b64decode
 import copy
-from typing import Any, cast
+from typing import Any, cast, Optional
 
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
@@ -16,7 +16,7 @@ from algosdk.atomic_transaction_composer import (
     abi,
     AtomicTransactionResponse,
 )
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
@@ -68,7 +68,7 @@ class ApplicationClient:
 
     def compile(
         self, teal: str, source_map: bool = False
-    ) -> tuple[bytes, str, SourceMap]:
+    ) -> tuple[bytes, str, Optional[SourceMap]]:
         result = self.client.compile(teal, source_map=source_map)
         src_map = None
         if source_map:
@@ -419,7 +419,7 @@ class ApplicationClient:
         self,
         method: abi.Method | HandlerFunc,
         sender: str | None = None,
-        signer: TransactionSigner = None,
+        signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         local_schema: transaction.StateSchema | None = None,
@@ -469,6 +469,8 @@ class ApplicationClient:
             boxes=boxes,
             **kwargs,
         )
+        if atc is None:
+            raise Exception("ATC none?")
 
         # If its a read-only method, use dryrun (TODO: swap with simulate later?)
         if hints.read_only:
@@ -493,7 +495,7 @@ class ApplicationClient:
         method_results = []
         for i, tx_info in enumerate(txns):
 
-            raw_value = None
+            raw_value = b""
             return_value = None
             decode_error = None
 
@@ -528,7 +530,12 @@ class ApplicationClient:
                     raise Exception("no logs")
 
                 raw_value = result_bytes[4:]
-                return_value = methods[i].returns.type.decode(raw_value)
+                abi_return_type = methods[i].returns.type
+                if isinstance(abi_return_type, abi.ABIType):
+                    return_value = abi_return_type.decode(raw_value)
+                else:
+                    return_value = raw_value
+
             except Exception as e:
                 decode_error = e
 
@@ -633,6 +640,9 @@ class ApplicationClient:
     def add_transaction(
         self, atc: AtomicTransactionComposer, txn: transaction.Transaction
     ) -> AtomicTransactionComposer:
+        if self.signer is None:
+            raise Exception("No signer available")
+
         atc.add_transaction(TransactionWithSigner(txn=txn, signer=self.signer))
         return atc
 

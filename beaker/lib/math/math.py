@@ -6,8 +6,8 @@ from pyteal import (
     BytesDiv,
     BytesMinus,
     BytesMul,
-    Btoi,
     Concat,
+    Btoi,
     Exp,
     Expr,
     ExtractUint64,
@@ -40,7 +40,7 @@ max_uint = Int(_max_uint)
 half_uint = Int(_half_uint)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="odd")
 def Odd(x):  # noqa: N802
     """Odd returns 1 if x is odd
 
@@ -54,7 +54,7 @@ def Odd(x):  # noqa: N802
     return x & Int(1)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="even")
 def Even(x):  # noqa: N802
     """Even returns 1 if x is even
 
@@ -69,19 +69,19 @@ def Even(x):  # noqa: N802
     return Not(Odd(x))
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="max")
 def Max(a, b) -> Expr:  # noqa: N802
     """Max returns the max of 2 integers"""
     return If(a > b, a, b)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="min")
 def Min(a, b) -> Expr:  # noqa: N802
     """Min returns the min of 2 integers"""
     return If(a < b, a, b)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="saturate")
 def Saturate(n, upper_limit, lower_limit) -> Expr:  # noqa: N802
     """Produces an output that is the value of n bounded to the upper and lower
     saturation values. The upper and lower limits are specified by the
@@ -95,7 +95,7 @@ def Saturate(n, upper_limit, lower_limit) -> Expr:  # noqa: N802
     )
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="div_ceil")
 def DivCeil(a, b) -> Expr:  # noqa: N802
     """Returns the result of division rounded up to the next integer
 
@@ -111,7 +111,7 @@ def DivCeil(a, b) -> Expr:  # noqa: N802
     return If(a % b > Int(0), q + Int(1), q)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="pow10")
 def Pow10(x) -> Expr:  # noqa: N802
     """
     Returns 10^x, useful for things like total supply of an asset
@@ -120,7 +120,7 @@ def Pow10(x) -> Expr:  # noqa: N802
     return Exp(Int(10), x)
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="factorial")
 def Factorial(x):  # noqa: N802
     """Factorial returns x! = x * x-1 * x-2 * ...,
     for a 64bit integer, the max possible value is maxes out at 20
@@ -135,7 +135,7 @@ def Factorial(x):  # noqa: N802
     return If(x == Int(1), x, x * Factorial(x - Int(1)))
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="wide_factorial")
 def WideFactorial(x):  # noqa: N802
     """WideFactorial returns x! = x * x-1 * x-2 * ...,
 
@@ -151,7 +151,7 @@ def WideFactorial(x):  # noqa: N802
     )
 
 
-@Subroutine(TealType.bytes)
+@Subroutine(TealType.bytes, name="wide_power")
 def WidePower(x, n):  # noqa: N802
     """WidePower returns the result of x^n evaluated using expw and combining the hi/low uint64s into a byte string
 
@@ -163,7 +163,21 @@ def WidePower(x, n):  # noqa: N802
         bytes representing the high and low bytes of a wide power evaluation
 
     """
-    return Seq(InlineAssembly("expw", x, n), StackToWide())
+    return InlineAssembly(
+        "expw; itob; swap; itob; swap; concat", x, n, type=TealType.bytes
+    )
+
+
+@Subroutine(TealType.bytes, name="exponential")
+def _exponential_impl(x, f, n, scale_):
+    return If(
+        n == Int(1),
+        BytesAdd(scale_, BytesMul(x, scale_)),
+        BytesAdd(
+            _exponential_impl(x, BytesDiv(f, Itob(n)), n - Int(1), scale_),
+            BytesDiv(BytesMul(scale_, WidePower(BytesToInt(x), n)), f),
+        ),
+    )
 
 
 def Exponential(x, n):  # noqa: N802
@@ -179,20 +193,10 @@ def Exponential(x, n):  # noqa: N802
         uint64 that is the result of raising e**x
 
     """
-    _scale = Itob(Int(1000))
-
-    @Subroutine(TealType.bytes)
-    def _impl(x, f, n):
-        return If(
-            n == Int(1),
-            BytesAdd(_scale, BytesMul(x, _scale)),
-            BytesAdd(
-                _impl(x, BytesDiv(f, Itob(n)), n - Int(1)),
-                BytesDiv(BytesMul(_scale, WidePower(BytesToInt(x), n)), f),
-            ),
-        )
-
-    return BytesToInt(BytesDiv(_impl(Itob(x), WideFactorial(Itob(n)), n), _scale))
+    scale_ = Itob(Int(1000))
+    return BytesToInt(
+        BytesDiv(_exponential_impl(Itob(x), WideFactorial(Itob(n)), n, scale_), scale_)
+    )
 
 
 # @Subroutine(TealType.uint64)
@@ -240,7 +244,7 @@ def Exponential(x, n):  # noqa: N802
 #    return (log2(x) * scale) / log2_10
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.uint64, name="bytes_to_int")
 def BytesToInt(x):  # noqa: N802
     return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
 

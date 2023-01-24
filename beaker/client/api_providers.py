@@ -82,10 +82,12 @@ class PureStake(APIProvider):
     def algod(self, token: str = "") -> AlgodClient:
         algod_client = super().algod()
         algod_client.headers = {self.token_header: token}
+        return algod_client
 
     def indexer(self, token: str = "") -> IndexerClient:
-        indexer_client = super().algod()
+        indexer_client = super().indexer()
         indexer_client.headers = {self.token_header: token}
+        return indexer_client
 
 
 class Sandbox(APIProvider):

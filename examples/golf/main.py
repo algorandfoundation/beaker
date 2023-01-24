@@ -54,7 +54,8 @@ class SortedIntegers(Application):
             self.elements.increment(),
             Log(Itob(Global.opcode_budget())),
             output.decode(
-                # Prepend the bytes with the number of elements as a uint16, according to ABI spec
+                # Prepend the bytes with the number of elements as a uint16,
+                # according to ABI spec
                 Concat(
                     Suffix(Itob(Int(10)), Int(6)),
                     App.box_extract(self.BoxName, Int(0), Int(8) * Int(10)),

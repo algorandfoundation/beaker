@@ -5,7 +5,7 @@ from base64 import b64decode, b64encode
 
 from algosdk.account import generate_account
 from algosdk.logic import get_application_address
-from algosdk.future.transaction import Multisig, LogicSigAccount, OnComplete
+from algosdk.transaction import Multisig, LogicSigAccount, OnComplete
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     AccountTransactionSigner,
@@ -183,7 +183,7 @@ def test_app_prepare(sb_accts: SandboxAccounts):
 
 
 def test_compile():
-    version = 5
+    version = 8
     app = App(version=version)
     client = get_algod_client()
     app.compile(client)
