@@ -72,13 +72,13 @@ class HashMap:
             page_offset : page_offset + self.element_size
         ] = val
 
-        # bump slots used
-        self.slots_occupied += 1
-
         # TODO: We cant go over the number of slots available
         # in our storage backing without doing something
         # like adding more pages
-        assert self.slots_occupied <= self.max_slots
+        assert self.slots_occupied < self.max_slots
+
+        # bump slots used
+        self.slots_occupied += 1
 
         # return start index for value
         return bytes_occupied
@@ -108,6 +108,8 @@ class HashMap:
         # TODO:
         #  just appending should break at max elems per bucket size
         #  what do? make it a linked list?
+        assert len(self.buckets[bucket_key]) < self._elements_per_bucket * 8
+
         self.buckets[bucket_key] += itob(new_offset)
 
     def get(self, key: int) -> bytearray:
