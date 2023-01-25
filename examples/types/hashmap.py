@@ -37,6 +37,8 @@ class HashMap:
         #### Mutable properties #####
 
         # Track how much of the storage has been written to
+        # TODO: this is increment _only_ until we add some kind
+        # of compression/consolidation
         self.slots_occupied = 0
 
         # each bucket has a list of starting offsets that act as pointers
@@ -158,3 +160,14 @@ class HashMap:
             print(f"Bucket {bucket_key}")
             for idx, offset in enumerate(self._get_offsets(bucket_key)):
                 print(f"\t {idx} => {offset}")
+
+        for slot in range(0, self.max_slots):
+            global_offset = slot * self.element_size
+            page = self._page(global_offset)
+            page_offset = self._idx(global_offset)
+            record = self.storage[page][page_offset : page_offset + self.element_size]
+            if btoi(record) > 0:
+                print(
+                    f"Record found in slot {slot} with "
+                    f"key {btoi(record[0:8])} and value {btoi(record[8:])}"
+                )
