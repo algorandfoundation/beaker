@@ -57,6 +57,13 @@ class HashMap:
     def _idx(self, offset: int) -> int:
         return offset % MAX_PAGE_BYTES
 
+    def _get_offsets(self, bucket_key: int) -> list[int]:
+        offsets = []
+        bucket_record_offsets = self.buckets[bucket_key]
+        for idx in range(0, len(bucket_record_offsets) // 8):
+            offsets.append(btoi(bucket_record_offsets[idx * 8 : (idx + 1) * 8]))
+        return offsets
+
     def _alloc(self, val: bytearray) -> int:
         bytes_occupied = self.slots_occupied * self.element_size
         # overwrite whatever is there
@@ -78,11 +85,10 @@ class HashMap:
 
     def put(self, key: int, val: bytearray):
         tupled_val = itob(key) + val
-        bucket_key = self._hash(key)
-        bucket_record_offsets = self.buckets[bucket_key]
 
-        for idx in range(0, len(bucket_record_offsets) // 8):
-            offset = btoi(bucket_record_offsets[idx * 8 : (idx + 1) * 8])
+        bucket_key = self._hash(key)
+        bucket_record_offsets = self._get_offsets(bucket_key)
+        for offset in bucket_record_offsets:
             page = self._page(offset)
             page_offset = self._idx(offset)
             record_bytes = self.storage[page][
@@ -102,17 +108,12 @@ class HashMap:
         # TODO:
         #  just appending should break at max elems per bucket size
         #  what do? make it a linked list?
-        print(f"Writing to bucket: {bucket_key} with offset {new_offset}")
         self.buckets[bucket_key] += itob(new_offset)
 
     def get(self, key: int) -> bytearray:
         bucket_key = self._hash(key)
-        bucket_record_offsets = self.buckets[bucket_key]
-        print(f"Getting key: {key} (bucket: {bucket_key})")
-
-        for idx in range(0, len(bucket_record_offsets) // 8):
-            offset = btoi(bucket_record_offsets[idx * 8 : (idx + 1) * 8])
-
+        bucket_record_offsets = self._get_offsets(bucket_key)
+        for offset in bucket_record_offsets:
             page = self._page(offset)
             page_offset = self._idx(offset)
             record_bytes = self.storage[page][
@@ -125,10 +126,8 @@ class HashMap:
 
     def delete(self, key: int):
         bucket_key = self._hash(key)
-        bucket_record_offsets = self.buckets[bucket_key]
-        for idx in range(0, len(bucket_record_offsets) // 8):
-            offset = btoi(bucket_record_offsets[idx * 8 : (idx + 1) * 8])
-
+        bucket_record_offsets = self._get_offsets(bucket_key)
+        for idx, offset in enumerate(bucket_record_offsets):
             page = self._page(offset)
             page_offset = self._idx(offset)
             record_bytes = self.storage[page][
@@ -136,22 +135,24 @@ class HashMap:
             ]
 
             if btoi(record_bytes[0:8]) == key:
+                # wipe element from storage
                 self.storage[page][
                     page_offset : page_offset + self.element_size
                 ] = bytearray(bytes(self.element_size))
 
-                print(f"TODO: need to remove {offset} at {idx} from buckets ")
+                # remove pointer from bucket
+                self.buckets[bucket_key] = (
+                    self.buckets[bucket_key][: idx * 8]
+                    + self.buckets[bucket_key][(idx + 1) * 8 :]
+                )
+                # bail, we're done
                 return
 
         raise KeyError(f"No key: {key}")
 
     def print_debug(self):
-        print(f"Slots used: {self.slots_occupied}")
-        print(f"Max Slots: {self.max_slots}")
-        print(f"Num buckets: {len(self.buckets)}")
-
-        for bucket_idx, bucket in enumerate(self.buckets):
-            print(f"Bucket {bucket_idx}")
-            for idx in range(0, len(bucket) // 8):
-                offset = btoi(bucket[idx * 8 : (idx + 1) * 8])
+        print(f"Slots: {self.slots_occupied} of {self.max_slots} used")
+        for bucket_key in range(0, len(self.buckets)):
+            print(f"Bucket {bucket_key}")
+            for idx, offset in enumerate(self._get_offsets(bucket_key)):
                 print(f"\t {idx} => {offset}")
