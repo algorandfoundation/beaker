@@ -13,11 +13,30 @@ def btoi(b: bytearray) -> int:
 
 
 class HashMap:
-    """ """
+    """
+    hashmap implements a v simple map of key (hardcoded to uint64) to
+    value (only tested with Uint64)
+
+    for a key lookup:
+        1) "hash" the key (here implemented as key % num buckets)
+        2) get all the elements in the bucket (as pointers to offsets in storage)
+        3) iterate over bucket elements and compare `key` from stored tuple
+        4) on key match, do work
+            get) just return val
+            put) overwrite the value part in storage
+            delete) wipe the tuple from storage, wipe the pointer from bucket
+
+    Notes:
+        - no compression of slots, so many write/delete will exhaust slots
+        - if a key would map to a `full` bucket, its a hard error
+        - if no slots left its a hard error
+
+    """
 
     def __init__(self, element_type: type[pt.abi.BaseType]):
 
-        # Not going to take the full 2 pages
+        # each page is a contiguous byte array
+        # stored on stack or in a scratch var
         self._pages: Final[int] = 2
         # use uint64 as key
         self._key_size: Final[int] = 8
@@ -44,9 +63,8 @@ class HashMap:
 
         #### Mutable properties #####
 
+        # TODO: this is increment _only_ until we add some kind of compression
         # Track how much of the storage has been written to
-        # TODO: this is increment _only_ until we add some kind
-        # of compression/consolidation
         self.slots_occupied = 0
 
         # each bucket has a list of starting offsets that act as pointers
@@ -122,7 +140,7 @@ class HashMap:
         new_offset = self._alloc(tupled_val)
 
         # TODO:
-        #  just appending should break at max elems per bucket size
+        #  just appending will break at max elems per bucket size
         #  what do? make it a linked list?
         assert (
             len(self.buckets[bucket_key])
