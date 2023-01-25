@@ -6,11 +6,13 @@ from hashmap import HashMap, itob, btoi
 def test_hm_put_max():
     hm = HashMap(pt.abi.Uint64)
 
-    for key in range(10):
-        val = key + 123
+    for key in range(hm.max_slots):
+        val = 123 + key
         hm.put(key, itob(val))
         got = btoi(hm.get(key))
         assert val == got
+
+    hm.print_debug()
 
 
 def test_hm_put_get():
