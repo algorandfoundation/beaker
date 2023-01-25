@@ -23,7 +23,11 @@ class HashMap:
         self._key_size: Final[int] = 8
         # use uint64 as offset
         self._offset_size: Final[int] = 8
-        # we can split pages up for fewer ops, need to experiment?
+
+        # TODO: need to experiment with this number
+        #   - fewer elements per bucket -> less iteration when we get the bucket
+        #   - more elements per bucket -> less risk of unresolvable hash collision
+        # number of elements we need to iterate over when a key maps to a set of items
         self._elements_per_bucket: Final[int] = 8
 
         # Figure out how the storage will break out
@@ -181,6 +185,7 @@ class HashMap:
             record = self.storage[page][page_offset : page_offset + self.element_size]
             if btoi(record) > 0:
                 print(
-                    f"Record found in slot {slot} with "
-                    f"key {btoi(record[0:self._key_size])} and value {btoi(record[:self._key_size:])}"
+                    f"Record found in slot {slot}: "
+                    f"key={btoi(record[0:self._key_size])} "
+                    f"value={btoi(record[:self._key_size:])}"
                 )
