@@ -17,6 +17,9 @@ class HashMap:
     hashmap implements a v simple map of key (hardcoded to uint64) to
     value (only tested with Uint64)
 
+    the bucket/storage backing are implemented as `bytearray`s so it is
+    conceptually easier to map to pyteal/avm
+
     for a key lookup:
         1) "hash" the key (here implemented as key % num buckets)
         2) get all the elements in the bucket (as pointers to offsets in storage)
