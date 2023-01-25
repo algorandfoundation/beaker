@@ -23,9 +23,9 @@ class HashMap:
     for a key lookup:
         1) "hash" the key (here implemented as key % num buckets)
         2) get all the elements in the bucket (as pointers to offsets in storage)
-        3) iterate over bucket elements, looking up (key,value) in storage
-        4) compare `key` from stored tuple
-        5) on key match, do work
+        3) iterate over bucket elements, looking up (key,value) by offset in storage
+        4) compare `key` from stored tuple to the one we're looking up
+        5) if key match, do work
             get) just return val
             put) overwrite the value part in storage
             delete) wipe the tuple from storage, wipe the pointer from bucket
