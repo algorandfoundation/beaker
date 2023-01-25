@@ -43,17 +43,6 @@ class HashMap:
     def _hash(self, key: int) -> int:
         return key % self.buckets
 
-    # def _some_hash(self, key: int)->int:
-    #    # n should be large prime??
-    #    self.a = 1000
-    #    self.b = 10000000
-    #    self.n = 7919
-    #    return (self.a*key + self.b) % self.n
-
-    # def _some_other_hash(self, key: int)->int:
-    #    self.n = 7919
-    #    return self.z * key // self.n
-
     def _page(self, offset: int) -> int:
         return offset // MAX_PAGE_BYTES
 
@@ -62,39 +51,46 @@ class HashMap:
 
     def _alloc(self, val: bytearray) -> int:
         bytes_occupied = self.slots_occupied * self.element_size
+        # overwrite whatever is there
         page_offset = self._idx(bytes_occupied)
         self.storage[self._page(bytes_occupied)][
             page_offset : page_offset + self.element_size
         ] = val
+        # bump slots used
         self.slots_occupied += 1
+        # return start index for value
         return bytes_occupied
 
     def put(self, key: int, val: bytearray):
         tupled_val = itob(key) + val
-
         bucket_key = self._hash(key)
         bucket_record_offsets = self.pointers[bucket_key]
 
-        # TODO: skip if all 0s?
         for offset in bucket_record_offsets:
             page = self._page(offset)
             page_offset = self._idx(offset)
             record_bytes = self.storage[page][
                 page_offset : page_offset + self.element_size
             ]
+
+            # if key matches, we found it, overwrite
             if btoi(record_bytes[0:8]) == key:
-                print("matching key")
-                self.storage[page][page_offset:] = tupled_val
-                # no need to update the bucket
+                self.storage[page][
+                    page_offset : page_offset + self.element_size
+                ] = tupled_val
                 return
 
+        # TODO: just appending should break at max elems per bucket size
+        #  what do? make it a linked list?
+
+        # alloc new storage and save the offset
+        # to the end of our bucket
         new_offset = self._alloc(tupled_val)
         self.pointers[bucket_key] += itob(new_offset)
 
     def get(self, key: int) -> bytearray:
         bucket_key = self._hash(key)
         bucket_record_offsets = self.pointers[bucket_key]
-
         for offset in bucket_record_offsets:
             page = self._page(offset)
             page_offset = self._idx(offset)
