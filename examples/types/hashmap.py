@@ -34,13 +34,12 @@ class HashMap:
         - no compression of slots, so many write/delete will exhaust slots
         - if a key would map to a `full` bucket, its a hard error
         - if no slots left its a hard error
-
     """
 
     def __init__(self, element_type: type[pt.abi.BaseType]):
 
-        # each page is a contiguous byte array
-        # stored on stack or in a scratch var
+        # each page is a contiguous byte array of size MAX_PAGE_BYTES
+        # pages are stored on stack or in a scratch var
         self._pages: Final[int] = 2
         # use uint64 as key
         self._key_size: Final[int] = 8
