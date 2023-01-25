@@ -1,8 +1,8 @@
 from typing import Final
 import pyteal as pt
 
-# MAX_PAGE_BYTES = 1024 * 4
-MAX_PAGE_BYTES = 32
+MAX_PAGE_BYTES = 1024 * 4
+# MAX_PAGE_BYTES = 32
 
 
 def itob(i: int) -> bytearray:
@@ -87,12 +87,12 @@ class HashMap:
                 ] = tupled_val
                 return
 
-        # TODO: just appending should break at max elems per bucket size
-        #  what do? make it a linked list?
-
-        # alloc new storage and save the offset
-        # to the end of our bucket
+        # alloc new storage and save the offset we wrote to
         new_offset = self._alloc(tupled_val)
+
+        # TODO:
+        #  just appending should break at max elems per bucket size
+        #  what do? make it a linked list?
         self.pointers[bucket_key] += itob(new_offset)
 
     def get(self, key: int) -> bytearray:
@@ -109,10 +109,22 @@ class HashMap:
 
         raise KeyError(f"No key: {key}")
 
+    def delete(self, key: int):
+        bucket_key = self._hash(key)
+        bucket_record_offsets = self.pointers[bucket_key]
+        for idx, offset in enumerate(bucket_record_offsets):
+            page = self._page(offset)
+            page_offset = self._idx(offset)
+            record_bytes = self.storage[page][
+                page_offset : page_offset + self.element_size
+            ]
 
-if __name__ == "__main__":
-    hm = HashMap(pt.abi.Uint64)
-    val = 123
-    hm.put(10, itob(val))
-    got = btoi(hm.get(10))
-    assert val == got
+            if btoi(record_bytes[0:8]) == key:
+                self.storage[page][
+                    page_offset : page_offset + self.element_size
+                ] = bytearray(bytes(self.element_size))
+
+                print(f"TODO: need to remove {offset} at {idx} from buckets ")
+                return
+
+        raise KeyError(f"No key: {key}")
