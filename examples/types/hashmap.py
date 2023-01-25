@@ -1,5 +1,7 @@
+from typing import Final
 import pyteal as pt
 
+# MAX_PAGE_BYTES = 1024 * 4
 MAX_PAGE_BYTES = 32
 
 
@@ -14,30 +16,35 @@ def btoi(b: bytearray) -> int:
 class HashMap:
     def __init__(self, element_type: type[pt.abi.BaseType]):
 
-        self.key_size = 8  # uint64 bytes
-        self.element_value_size = pt.abi.size_of(element_type)
-        self.element_size = self.element_value_size + self.key_size
-
-        self.elements_per_page = MAX_PAGE_BYTES // self.element_size
-
         # Not going to take the full 2 pages
-        self.pages = 2
+        self._pages: Final[int] = 2
+        # use uint64 as key
+        self._key_size: Final[int] = 8
+        # we can split pages up for fewer ops, need to experiment?
+        self._elements_per_bucket: Final[int] = 1
 
-        # Actual storage, offsets pointed to by pointers
-        self.storage: list[bytearray] = [bytearray([0] * MAX_PAGE_BYTES)] * self.pages
+        # Figure out how the storage will break out
+        self.element_value_size: Final[int] = pt.abi.size_of(element_type)
+        self.element_size: Final[int] = self.element_value_size + self._key_size
+        self.elements_per_page: Final[int] = MAX_PAGE_BYTES // self.element_size
 
-        # we can split pages up for fewer ops,
-        # need to experiment?
-        self.elements_per_bucket = 1
-        self.buckets = (
-            self.pages
-            * MAX_PAGE_BYTES
-            // (self.elements_per_bucket * self.element_size)
-        )
+        # The max number of element slots we can use
+        self.num_slots: Final[int] = (self._pages * MAX_PAGE_BYTES) // self.element_size
 
-        # pointers is a list of buckets, each bucket has a list of starting offsets in our storage backing
+        # Split the number slots into buckets
+        # each bucket holds {_elements_per_bucket} elements
+        self.buckets: Final[int] = self.num_slots // self._elements_per_bucket
+
+        #### Mutable properties
+
+        # pointers is a list of buckets, each bucket has a list of starting offsets
+        # in our storage backing
         self.pointers: list[bytearray] = [bytearray()] * self.buckets
 
+        # Actual storage, offsets pointed to by pointers
+        self.storage: list[bytearray] = [bytearray([0] * MAX_PAGE_BYTES)] * self._pages
+
+        # Track how much of the storage has been written to
         self.slots_occupied = 0
 
     def _hash(self, key: int) -> int:
