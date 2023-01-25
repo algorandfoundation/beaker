@@ -4,8 +4,8 @@ import pyteal as pt
 MAX_PAGE_BYTES = 1024 * 4
 
 
-def itob(i: int) -> bytearray:
-    return bytearray(i.to_bytes(8, "big"))
+def itob(i: int, size: int) -> bytearray:
+    return bytearray(i.to_bytes(size, "big"))
 
 
 def btoi(b: bytearray) -> int:
@@ -13,12 +13,16 @@ def btoi(b: bytearray) -> int:
 
 
 class HashMap:
+    """ """
+
     def __init__(self, element_type: type[pt.abi.BaseType]):
 
         # Not going to take the full 2 pages
         self._pages: Final[int] = 2
         # use uint64 as key
         self._key_size: Final[int] = 8
+        # use uint64 as offset
+        self._offset_size: Final[int] = 8
         # we can split pages up for fewer ops, need to experiment?
         self._elements_per_bucket: Final[int] = 8
 
@@ -62,8 +66,14 @@ class HashMap:
     def _get_offsets(self, bucket_key: int) -> list[int]:
         offsets = []
         bucket_record_offsets = self.buckets[bucket_key]
-        for idx in range(0, len(bucket_record_offsets) // 8):
-            offsets.append(btoi(bucket_record_offsets[idx * 8 : (idx + 1) * 8]))
+        for idx in range(0, len(bucket_record_offsets) // self._offset_size):
+            offsets.append(
+                btoi(
+                    bucket_record_offsets[
+                        idx * self._offset_size : (idx + 1) * self._offset_size
+                    ]
+                )
+            )
         return offsets
 
     def _alloc(self, val: bytearray) -> int:
@@ -86,7 +96,7 @@ class HashMap:
         return bytes_occupied
 
     def put(self, key: int, val: bytearray):
-        tupled_val = itob(key) + val
+        tupled_val = itob(key, self._key_size) + val
 
         bucket_key = self._hash(key)
         bucket_record_offsets = self._get_offsets(bucket_key)
@@ -98,7 +108,7 @@ class HashMap:
             ]
 
             # if key matches, we found it, overwrite
-            if btoi(record_bytes[0:8]) == key:
+            if btoi(record_bytes[0 : self._key_size]) == key:
                 self.storage[page][
                     page_offset : page_offset + self.element_size
                 ] = tupled_val
@@ -110,9 +120,12 @@ class HashMap:
         # TODO:
         #  just appending should break at max elems per bucket size
         #  what do? make it a linked list?
-        assert len(self.buckets[bucket_key]) < self._elements_per_bucket * 8
+        assert (
+            len(self.buckets[bucket_key])
+            < self._elements_per_bucket * self._offset_size
+        )
 
-        self.buckets[bucket_key] += itob(new_offset)
+        self.buckets[bucket_key] += itob(new_offset, self._offset_size)
 
     def get(self, key: int) -> bytearray:
         bucket_key = self._hash(key)
@@ -123,8 +136,8 @@ class HashMap:
             record_bytes = self.storage[page][
                 page_offset : page_offset + self.element_size
             ]
-            if btoi(record_bytes[0:8]) == key:
-                return record_bytes[8:]
+            if btoi(record_bytes[0 : self._key_size]) == key:
+                return record_bytes[self._key_size :]
 
         raise KeyError(f"No key: {key}")
 
@@ -138,7 +151,7 @@ class HashMap:
                 page_offset : page_offset + self.element_size
             ]
 
-            if btoi(record_bytes[0:8]) == key:
+            if btoi(record_bytes[0 : self._key_size]) == key:
                 # wipe element from storage
                 self.storage[page][
                     page_offset : page_offset + self.element_size
@@ -146,8 +159,8 @@ class HashMap:
 
                 # remove pointer from bucket
                 self.buckets[bucket_key] = (
-                    self.buckets[bucket_key][: idx * 8]
-                    + self.buckets[bucket_key][(idx + 1) * 8 :]
+                    self.buckets[bucket_key][: idx * self._offset_size]
+                    + self.buckets[bucket_key][(idx + 1) * self._offset_size :]
                 )
                 # bail, we're done
                 return
@@ -169,5 +182,5 @@ class HashMap:
             if btoi(record) > 0:
                 print(
                     f"Record found in slot {slot} with "
-                    f"key {btoi(record[0:8])} and value {btoi(record[8:])}"
+                    f"key {btoi(record[0:self._key_size])} and value {btoi(record[:self._key_size:])}"
                 )

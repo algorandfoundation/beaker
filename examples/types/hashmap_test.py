@@ -8,7 +8,7 @@ def test_hm_put_max():
 
     for key in range(hm.max_slots):
         val = 123 + key
-        hm.put(key, itob(val))
+        hm.put(key, itob(val, hm.element_value_size))
         got = btoi(hm.get(key))
         assert val == got
 
@@ -19,11 +19,11 @@ def test_hm_put_get():
     hm = HashMap(pt.abi.Uint64)
 
     val = 123
-    hm.put(10, itob(val))
+    hm.put(10, itob(val, hm.element_value_size))
     got = btoi(hm.get(10))
     assert val == got
 
-    hm.put(10, itob(val + 1))
+    hm.put(10, itob(val + 1, hm._key_size))
     got = btoi(hm.get(10))
     assert val + 1 == got
 
@@ -32,7 +32,7 @@ def test_hm_delete():
     hm = HashMap(pt.abi.Uint64)
 
     val = 123
-    hm.put(10, itob(val))
+    hm.put(10, itob(val, hm.element_value_size))
     got = btoi(hm.get(10))
     assert val == got
 
