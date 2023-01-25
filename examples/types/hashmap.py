@@ -81,7 +81,8 @@ class HashMap:
         bucket_key = self._hash(key)
         bucket_record_offsets = self.buckets[bucket_key]
 
-        for offset in bucket_record_offsets:
+        for idx in range(0, len(bucket_record_offsets) // 8):
+            offset = btoi(bucket_record_offsets[idx * 8 : (idx + 1) * 8])
             page = self._page(offset)
             page_offset = self._idx(offset)
             record_bytes = self.storage[page][
