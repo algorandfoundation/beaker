@@ -130,6 +130,8 @@ class HandlerConfig:
     read_only: bool = field(kw_only=True, default=False)
     internal: bool = field(kw_only=True, default=False)
 
+    clear_state: Optional[SubroutineFnWrapper] = field(kw_only=True, default=None)
+
     def hints(self) -> "MethodHints":
         mh: dict[str, Any] = {"read_only": self.read_only}
 
@@ -185,10 +187,7 @@ class HandlerConfig:
         )
 
     def is_clear_state(self) -> bool:
-        return (
-            self.method_config is not None
-            and self.method_config.clear_state != CallConfig.NEVER
-        )
+        return self.clear_state is not None
 
     def is_close_out(self) -> bool:
         return (
@@ -530,7 +529,6 @@ def external(
 def bare_external(
     no_op: CallConfig | None = None,
     opt_in: CallConfig | None = None,
-    clear_state: CallConfig | None = None,
     delete_application: CallConfig | None = None,
     update_application: CallConfig | None = None,
     close_out: CallConfig | None = None,
@@ -540,7 +538,6 @@ def bare_external(
     Args:
         no_op: CallConfig to handle a `NoOp`
         opt_in: CallConfig to handle an `OptIn`
-        clear_state: CallConfig to handle a `ClearState`
         delete_application: CallConfig to handle a `DeleteApplication`
         update_application: CallConfig to handle a `UpdateApplication`
         close_out: CallConfig to handle a `CloseOut`
@@ -573,9 +570,6 @@ def bare_external(
             else OnCompleteAction.never(),
             close_out=OnCompleteAction(action=fn, call_config=close_out)
             if close_out is not None
-            else OnCompleteAction.never(),
-            clear_state=OnCompleteAction(action=fn, call_config=clear_state)
-            if clear_state is not None
             else OnCompleteAction.never(),
         )
 
@@ -808,23 +802,26 @@ def clear_state(
 
     Args:
         fn: The method to be wrapped.
-        authorize: a subroutine with input of ``Txn.sender()`` and output uint64
-            interpreted as allowed if the output>0.
+        authorize: Must be set to None.
     Returns:
         The original method with changes made to its signature and
             attributes set in it's :code:`__handler_config__`
     """
+    if authorize is not None:
+        raise ValueError(
+            "authorize must not be used with clear_state, because anyone can clear state"
+        )
 
-    def _impl(fn: HandlerFunc) -> HandlerFunc:
-        if is_bare(fn):
-            if authorize is not None:
-                fn = _authorize(authorize)(fn)
-            return bare_external(clear_state=CallConfig.CALL)(fn)
+    def _impl(fun: HandlerFunc) -> HandlerFunc:
+        if is_bare(fun):
+            fun = _remove_self(fun)
+            fn = Subroutine(TealType.none)(fun)
+            set_handler_config(fun, clear_state=fn)
+            return fun
         else:
-            return external(
-                method_config=MethodConfig(clear_state=CallConfig.CALL),
-                authorize=authorize,
-            )(fn)
+            raise ValueError(
+                "clear_state cannot be expected to receive any arguments during runtime"
+            )
 
     if fn is None:
         return _impl

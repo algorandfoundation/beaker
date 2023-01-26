@@ -266,12 +266,15 @@ def test_bare():
     hc = get_handler_config(impl)
     assert hc.bare_method.close_out.action.subroutine.implementation == impl
 
+
+def test_clear_state():
     @clear_state
     def impl():
         return pt.Assert(pt.Int(1))
 
     hc = get_handler_config(impl)
-    assert hc.bare_method.clear_state.action.subroutine.implementation == impl
+    assert hc.method_config is None
+    assert hc.clear_state.subroutine.implementation == impl
 
 
 def test_resolvable():

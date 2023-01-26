@@ -103,10 +103,10 @@ class Application:
         all_deletes = []
         all_opt_ins = []
         all_close_outs = []
-        all_clear_states = []
 
         self.hints: dict[str, MethodHints] = {}
         self.bare_externals: dict[str, OnCompleteAction] = {}
+        self.bare_clear_state: Optional[HandlerFunc] = None
         self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
         self.precompiles: dict[str, AppPrecompile | LSigPrecompile] = {}
 
@@ -187,7 +187,13 @@ class Application:
                             )
                         action.action.subroutine.implementation = bound_attr
 
+                    assert oc != "clear_state"
                     self.bare_externals[oc] = action
+
+            # Clear state
+            elif handler_config.clear_state is not None:
+                handler_config.clear_state.subroutine.implementation = bound_attr
+                self.bare_clear_state = static_attr
 
             # ABI externals
             elif handler_config.method_spec is not None and not handler_config.internal:
@@ -210,8 +216,6 @@ class Application:
                     all_deletes.append(static_attr)
                 if handler_config.is_opt_in():
                     all_opt_ins.append(static_attr)
-                if handler_config.is_clear_state():
-                    all_clear_states.append(static_attr)
                 if handler_config.is_close_out():
                     all_close_outs.append(static_attr)
 
@@ -229,13 +233,20 @@ class Application:
                         handler_config.subroutine(static_attr),
                     )
 
-        self.on_create = all_creates.pop() if len(all_creates) == 1 else None
-        self.on_update = all_updates.pop() if len(all_updates) == 1 else None
-        self.on_delete = all_deletes.pop() if len(all_deletes) == 1 else None
-        self.on_opt_in = all_opt_ins.pop() if len(all_opt_ins) == 1 else None
-        self.on_close_out = all_close_outs.pop() if len(all_close_outs) == 1 else None
-        self.on_clear_state = (
-            all_clear_states.pop() if len(all_clear_states) == 1 else None
+        self.on_create: Optional[HandlerFunc] = (
+            all_creates.pop() if len(all_creates) == 1 else None
+        )
+        self.on_update: Optional[HandlerFunc] = (
+            all_updates.pop() if len(all_updates) == 1 else None
+        )
+        self.on_delete: Optional[HandlerFunc] = (
+            all_deletes.pop() if len(all_deletes) == 1 else None
+        )
+        self.on_opt_in: Optional[HandlerFunc] = (
+            all_opt_ins.pop() if len(all_opt_ins) == 1 else None
+        )
+        self.on_close_out: Optional[HandlerFunc] = (
+            all_close_outs.pop() if len(all_close_outs) == 1 else None
         )
 
         self.acct_state = AccountState(acct_vals)
@@ -264,10 +275,16 @@ class Application:
             for precompile in self.precompiles.values():
                 precompile.compile(client)  # type: ignore
 
+        cs_ast = (
+            get_handler_config(self.bare_clear_state).clear_state
+            if self.bare_clear_state
+            else None
+        )
         self.router = Router(
             name=self.__class__.__name__,
             bare_calls=BareCallActions(**self.bare_externals),
             descr=self.__doc__,
+            clear_state=cs_ast,
         )
 
         # Add method externals
