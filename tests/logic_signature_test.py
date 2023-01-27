@@ -1,4 +1,3 @@
-import pytest
 import pyteal as pt
 from beaker.logic_signature import LogicSignature, TemplateVariable
 from tests.conftest import check_lsig_output_stability
@@ -73,7 +72,7 @@ def test_templated_logic_signature():
     assert lsig.pubkey.get_name() == "TMPL_PUBKEY"
 
     actual = lsig.pubkey._init_expr()
-    expected = pt.ScratchStore(pt.Int(1), pt.Tmpl.Bytes("TMPL_PUBKEY"))
+    expected = pt.ScratchStore(None, pt.Tmpl.Bytes("TMPL_PUBKEY"), pt.Int(1))
 
     with pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected

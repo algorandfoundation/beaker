@@ -7,79 +7,19 @@ from beaker.decorators import DefaultArgument, Authorize
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
-def test_handler_config():
-    @external
-    def handleable():
-        pass
+def test_external_read_only():
+    app = Application()
 
-    hc = get_handler_config(handleable)
+    @app.external(read_only=True)
+    def handleable() -> pt.Expr:
+        return pt.Approve()
 
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    meth = hc.method_spec
-    assert len(meth.args) == 0, "Expected no args"
-    assert meth.name == "handleable", "Expected name to match"
+    assert isinstance(handleable, pt.ABIReturnSubroutine)
+    assert "handleable" in app.abi_methods
 
-    config_dict = hc.__dict__
-    del config_dict["method_spec"]
+    app.compile()
 
-    for k, v in config_dict.items():
-        assert not v, f"Expected {k} to be unset/empty"
-
-    ###
-
-    @external(read_only=True)
-    def handleable():
-        pass
-
-    hc = get_handler_config(handleable)
-
-    config_dict = hc.__dict__
-
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    del config_dict["method_spec"]
-
-    assert hc.read_only is True, "Expected read_only to be true"
-    del config_dict["read_only"]
-
-    for k, v in config_dict.items():
-        assert not v, f"Expected {k} to be unset/empty"
-
-    ###
-
-    @external(authorize=Authorize.only(pt.Global.creator_address()))
-    def handleable():
-        pass
-
-    hc = get_handler_config(handleable)
-
-    config_dict = hc.__dict__
-
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    del config_dict["method_spec"]
-    for k, v in config_dict.items():
-        assert not v, f"Expected {k} to be unset/empty"
-
-    ###
-
-    @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
-    def handleable():
-        pass
-
-    hc = get_handler_config(handleable)
-
-    config_dict = hc.__dict__
-
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    del config_dict["method_spec"]
-
-    assert hc.method_config is not None, "Expected method config to be set"
-    assert (
-        hc.method_config.opt_in == pt.CallConfig.CALL
-    ), "Expected method config opt in to be set to call"
-    del config_dict["method_config"]
-
-    for k, v in config_dict.items():
-        assert not v, f"Expected {k} to be unset/empty"
+    assert app.application_spec()["hints"]["handleable"].get("read_only") is True
 
 
 def test_authorize_only():
@@ -251,54 +191,65 @@ def test_named_tuple():
 
 
 def test_bare():
-    @create(bare=True)
-    def impl():
+    app = Application(implement_default_create=False)
+
+    @app.create
+    def create() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.no_op.action.subroutine.implementation == impl
+    assert isinstance(create, pt.SubroutineFnWrapper)
+    assert "create" in app.bare_methods
 
-    @no_op(bare=True)
-    def impl():
+    app.deregister_bare_method(create)
+
+    @app.no_op
+    def no_op() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.no_op.action.subroutine.implementation == impl
+    assert isinstance(no_op, pt.SubroutineFnWrapper)
+    assert "no_op" in app.bare_methods
 
-    @delete(bare=True)
-    def impl():
+    @app.delete
+    def delete() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.delete_application.action.subroutine.implementation == impl
+    assert isinstance(delete, pt.SubroutineFnWrapper)
+    assert "delete" in app.bare_methods
 
-    @update(bare=True)
-    def impl():
+    @app.update
+    def update() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.update_application.action.subroutine.implementation == impl
+    assert isinstance(update, pt.SubroutineFnWrapper)
+    assert "update" in app.bare_methods
 
-    @opt_in(bare=True)
-    def impl():
+    @app.opt_in
+    def opt_in() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.opt_in.action.subroutine.implementation == impl
+    assert isinstance(opt_in, pt.SubroutineFnWrapper)
+    assert "opt_in" in app.bare_methods
 
-    @close_out(bare=True)
-    def impl():
+    @app.close_out
+    def close_out() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.close_out.action.subroutine.implementation == impl
+    assert isinstance(close_out, pt.SubroutineFnWrapper)
+    assert "close_out" in app.bare_methods
 
-    @clear_state(bare=True)
-    def impl():
+    @app.clear_state
+    def clear_state() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.clear_state.action.subroutine.implementation == impl
+    assert isinstance(clear_state, pt.SubroutineFnWrapper)
+    assert "clear_state" in app.bare_methods
+
+    @app.external(bare=True, method_config={"no_op": pt.CallConfig.ALL}, override=True)
+    def external() -> pt.Expr:
+        return pt.Approve()
+
+    assert isinstance(external, pt.SubroutineFnWrapper)
+    assert "external" in app.bare_methods
 
 
 def test_account_state_resolvable():

@@ -42,7 +42,6 @@ from beaker.decorators import (
     capture_method_hints,
 )
 from beaker.decorators.authorize import _authorize
-from beaker.errors import BareOverwriteError
 from beaker.logic_signature import LogicSignature
 from beaker.precompile import AppPrecompile, LSigPrecompile
 from beaker.state import AccountState, ApplicationState
@@ -196,7 +195,9 @@ class Application:
                     raise ValueError("override=True, but nothing to override")
             elif override is False:
                 if for_action in self._bare_externals:
-                    raise BareOverwriteError(for_action)
+                    raise ValueError(
+                        f"override=False, but bare external for {for_action} already exists."
+                    )
 
             self._bare_externals[for_action] = OnCompleteAction(
                 action=sub, call_config=call_config
@@ -425,7 +426,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
 
@@ -440,7 +441,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
         decorator = self._shortcut_external(
             action="delete_application",
@@ -473,7 +474,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
 
@@ -488,7 +489,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
         decorator = self._shortcut_external(
             action="update_application",
@@ -521,7 +522,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
 
@@ -536,7 +537,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
         decorator = self._shortcut_external(
             action="opt_in",
@@ -569,7 +570,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
 
@@ -584,7 +585,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
         decorator = self._shortcut_external(
             action="clear_state",
@@ -617,7 +618,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
 
@@ -632,7 +633,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
         decorator = self._shortcut_external(
             action="close_out",
@@ -665,7 +666,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
 
@@ -680,7 +681,7 @@ class Application:
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
         read_only: bool = False,
-        override: bool | None = None,
+        override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
         decorator = self._shortcut_external(
             action="no_op",
