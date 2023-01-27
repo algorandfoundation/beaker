@@ -1,4 +1,4 @@
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
@@ -44,7 +44,7 @@ def demo():
     sp.flat_fee = True
     sp.fee = consts.milli_algo * 4
     result = app_client.call(
-        amm_app.bootstrap,
+        "bootstrap",
         seed=ptxn,
         a_asset=asset_a,
         b_asset=asset_b,
@@ -76,7 +76,7 @@ def demo():
     ###
     print("Funding")
     app_client.call(
-        amm_app.mint,
+        "mint",
         a_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 10000, asset_a),
             signer=signer,
@@ -94,7 +94,7 @@ def demo():
     ###
     print("Minting")
     app_client.call(
-        amm_app.mint,
+        "mint",
         a_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100000, asset_a),
             signer=signer,
@@ -112,7 +112,7 @@ def demo():
     ###
     print("Swapping A for B")
     app_client.call(
-        amm_app.swap,
+        "swap",
         swap_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
             signer=signer,
@@ -125,7 +125,7 @@ def demo():
     ###
     print("Swapping B for A")
     app_client.call(
-        amm_app.swap,
+        "swap",
         swap_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
             signer=signer,
@@ -138,7 +138,7 @@ def demo():
     ###
     print("Burning")
     app_client.call(
-        amm_app.burn,
+        "burn",
         pool_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),
             signer=signer,

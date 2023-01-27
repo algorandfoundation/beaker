@@ -18,6 +18,7 @@ from pyteal import (
     TealType,
     Txn,
     abi,
+    Global,
 )
 from beaker import (
     AccountStateBlob,
@@ -26,11 +27,8 @@ from beaker import (
     TemplateVariable,
     client,
     consts,
-    external,
-    opt_in,
     sandbox,
 )
-from beaker.precompile import LSigPrecompile
 
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
@@ -51,68 +49,69 @@ class DiskHungry(Application):
     # Reserve all 16 keys for the blob in local state
     data = AccountStateBlob(keys=16)
 
-    # Signal to beaker that this should be compiled
-    # prior to compiling the main application
-    tmpl_acct = LSigPrecompile(KeySig(version=8))
 
-    # Add account during opt in  by checking the sender against the address
-    # we expect given the precompile && nonce
-    @opt_in
-    def add_account(self, nonce: abi.DynamicBytes):
-        return Seq(
-            Assert(
-                # Make sure the opt-in'er is our lsig
-                Txn.sender() == self.tmpl_acct.logic.template_hash(nonce.get()),
-                # and that its being rekeyed to us
-                Txn.rekey_to() == self.address,
-            ),
-            self.initialize_account_state(),
-        )
+disk_hungry = DiskHungry(version=8)
 
-    # Inline these
-    def byte_idx(self, bit_idx) -> Int:
-        return bit_idx / Int(8)
+# Signal to beaker that this should be compiled
+# prior to compiling the main application
+tmpl_acct = disk_hungry.precompile(KeySig(version=8))
 
-    def bit_in_byte_idx(self, bit_idx) -> Int:
-        return bit_idx % Int(8)
+# Add account during opt in  by checking the sender against the address
+# we expect given the precompile && nonce
+@disk_hungry.opt_in
+def add_account(nonce: abi.DynamicBytes):
+    return Seq(
+        Assert(
+            # Make sure the opt-in'er is our lsig
+            Txn.sender() == tmpl_acct.logic.template_hash(nonce.get()),
+            # and that its being rekeyed to us
+            Txn.rekey_to() == Global.current_application_address(),
+        ),
+        disk_hungry.initialize_account_state(),
+    )
 
-    @external
-    def flip_bit(self, nonce_acct: abi.Account, bit_idx: abi.Uint32):
-        """
-        Allows caller to flip a bit at a given index for some
-        account that has already opted in
-        """
 
-        return Seq(
-            # Read byte
-            (byte := ScratchVar()).store(
-                self.data[nonce_acct.address()].read_byte(self.byte_idx(bit_idx.get()))
-            ),
-            # Flip bit
-            byte.store(
-                SetBit(
-                    byte.load(),
-                    self.bit_in_byte_idx(bit_idx.get()),
-                    Not(GetBit(byte.load(), self.bit_in_byte_idx(bit_idx.get()))),
-                )
-            ),
-            # Write byte
-            self.data[nonce_acct.address()].write_byte(
-                self.byte_idx(bit_idx.get()), byte.load()
-            ),
-        )
+# Inline these
+def byte_idx(bit_idx) -> Int:
+    return bit_idx / Int(8)
+
+
+def bit_in_byte_idx(bit_idx) -> Int:
+    return bit_idx % Int(8)
+
+
+@disk_hungry.external
+def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
+    """
+    Allows caller to flip a bit at a given index for some
+    account that has already opted in
+    """
+
+    return Seq(
+        # Read byte
+        (byte := ScratchVar()).store(
+            disk_hungry.data[nonce_acct.address()].read_byte(byte_idx(bit_idx.get()))
+        ),
+        # Flip bit
+        byte.store(
+            SetBit(
+                byte.load(),
+                bit_in_byte_idx(bit_idx.get()),
+                Not(GetBit(byte.load(), bit_in_byte_idx(bit_idx.get()))),
+            )
+        ),
+        # Write byte
+        disk_hungry.data[nonce_acct.address()].write_byte(
+            byte_idx(bit_idx.get()), byte.load()
+        ),
+    )
 
 
 def demo():
-
-    # Instantiate our app, since we're using a precompile we want this instance
-    # to access the precompiled lsig
-    app = DiskHungry()
-
     # Create app client
     app_client = client.ApplicationClient(
         client=sandbox.get_algod_client(),
-        app=app,
+        app=disk_hungry,
         signer=sandbox.get_accounts().pop().signer,
     )
 
@@ -124,8 +123,8 @@ def demo():
     for _ in range(10):
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
-        nonce: str = get_nonce()
-        lsig_signer: LogicSigTransactionSigner = app.tmpl_acct.template_signer(nonce)
+        nonce = get_nonce()
+        lsig_signer: LogicSigTransactionSigner = tmpl_acct.template_signer(nonce)
 
         print(
             f"Creating templated lsig with nonce {nonce} "
@@ -139,31 +138,29 @@ def demo():
 
         # Max is 8 (bits per byte) * 127 (bytes per key) * 16 (max keys) == 16256
         idx: int = 16255
-        app_client.call(
-            DiskHungry.flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx
-        )
+        app_client.call(flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx)
 
         # Get the full state for the lsig we used to store this bit
-        acct_state: dict[bytes, bytes] = app_client.get_account_state(
-            lsig_signer.lsig.address(), raw=True
-        )
+        acct_state = app_client.get_account_state(lsig_signer.lsig.address(), raw=True)
 
         # Make sure the blob is in the right order
-        blob: bytes = b"".join([acct_state[x.to_bytes(1, "big")] for x in range(16)])
+        blob = b"".join(
+            [cast(bytes, acct_state[x.to_bytes(1, "big")]) for x in range(16)]
+        )
 
         # Did the expected byte have the expected integer value?
         assert int(blob[idx // 8]) == 2 ** (idx % 8)
         print(f"bit set correctly at index {idx}")
 
 
-def get_nonce(n: int = 10) -> bytes:
-    return ("".join(random.choice(string.ascii_uppercase) for _ in range(n))).encode()
+def get_nonce(n: int = 10) -> str:
+    return "".join(random.choice(string.ascii_uppercase) for _ in range(n))
 
 
 def create_and_opt_in_account(
     user_client: client.ApplicationClient,
     lsig_client: client.ApplicationClient,
-    nonce: bytes,
+    nonce: str,
 ):
     sp = user_client.get_suggested_params()
     lsig_address = cast(LogicSigTransactionSigner, lsig_client.signer).lsig.address()
@@ -183,9 +180,9 @@ def create_and_opt_in_account(
     # Add opt in method call on behalf of lsig
     lsig_client.add_method_call(
         atc,
-        DiskHungry.add_account,
+        disk_hungry.abi_methods["add_account"],
         suggested_params=sp,
-        nonce=nonce,
+        nonce=nonce.encode(),
         rekey_to=lsig_client.app_addr,
         on_complete=txns.OnComplete.OptInOC,
     )

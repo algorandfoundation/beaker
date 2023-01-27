@@ -91,42 +91,36 @@ class MethodHints:
     """MethodHints provides hints to the caller about how to call the method"""
 
     #: hint to indicate this method can be called through Dryrun
-    read_only: bool = field(kw_only=True, default=False)
+    read_only: bool = field(default=False)
     #: hint to provide names for tuple argument indices
     #: method_name=>param_name=>{name:str, elements:[str,str]}
-    structs: dict[str, StructArgDict] | None = field(kw_only=True, default=None)
+    structs: dict[str, StructArgDict] = field(default_factory=dict)
     #: defaults
-    default_arguments: dict[str, DefaultArgument] | None = field(
-        kw_only=True, default=None
-    )
+    default_arguments: dict[str, DefaultArgument] = field(default_factory=dict)
 
     def empty(self) -> bool:
-        return (
-            self.structs is None
-            and self.default_arguments is None
-            and not self.read_only
-        )
+        return not self.dictify()
 
     def dictify(self) -> dict[str, Any]:
         d: dict[str, Any] = {}
         if self.read_only:
             d["read_only"] = True
-        if self.default_arguments is not None:
+        if self.default_arguments:
             d["default_arguments"] = {
                 k: v.dictify() for k, v in self.default_arguments.items()
             }
-        if self.structs is not None:
+        if self.structs:
             d["structs"] = self.structs
         return d
 
 
-def capture_method_hints(fn: HandlerFunc, read_only: bool) -> MethodHints:
+def capture_method_hints_and_remove_defaults(
+    fn: HandlerFunc, read_only: bool
+) -> MethodHints:
     sig = signature(fn)
     params = sig.parameters.copy()
 
-    mh = MethodHints(read_only=read_only, default_arguments={}, structs={})
-    assert mh.default_arguments is not None
-    assert mh.structs is not None
+    mh = MethodHints(read_only=read_only)
 
     for name, param in params.items():
         match param.default:
@@ -144,12 +138,7 @@ def capture_method_hints(fn: HandlerFunc, read_only: bool) -> MethodHints:
                 ],
             }
 
-    # TODO: remove hax
-    mh.default_arguments = mh.default_arguments or None
-    mh.structs = mh.structs or None
-
     if mh.default_arguments:
-        # TODO: is this strictly required?
         # Fix function sig/annotations
         newsig = sig.replace(parameters=list(params.values()))
         fn.__signature__ = newsig  # type: ignore[attr-defined]

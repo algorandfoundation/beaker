@@ -12,7 +12,9 @@ from algosdk.atomic_transaction_composer import (
 from algosdk import transaction
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
-from beaker import client, sandbox, testing, consts, decorators
+import pyteal
+
+from beaker import client, sandbox, testing, consts
 from beaker.client.application_client import ApplicationClient, ProgramAssertion
 from beaker.client.logic_error import LogicException
 from tests.conftest import check_application_artifacts_output_stability
@@ -29,7 +31,7 @@ TOTAL_ASSET_TOKENS = 10000000000
 AcctInfo = tuple[str, str, AccountTransactionSigner]
 AssertTestCase = tuple[
     str,
-    abi.Method | decorators.HandlerFunc,
+    abi.Method | pyteal.ABIReturnSubroutine | str,
     dict[str, typing.Any],
     client.ApplicationClient,
 ]
@@ -255,7 +257,7 @@ def build_swap_transaction(
     app_client: ApplicationClient,
     assets: tuple[int, int],
     swap_amt: int,
-    swap_asset: int = None,
+    swap_asset: int | None = None,
 ):
     app_addr, addr, signer = get_app_client_details(app_client)
 
@@ -292,7 +294,7 @@ def test_app_set_governor(
 
     # Set the new gov
     creator_app_client.call(
-        ConstantProductAMM.set_governor,
+        "set_governor",
         **build_set_governor_transaction(user_addr),
     )
 
@@ -302,7 +304,7 @@ def test_app_set_governor(
     user_client = creator_app_client.prepare(signer=user_signer)
     # Return state to old gov
     user_client.call(
-        ConstantProductAMM.set_governor,
+        "set_governor",
         **build_set_governor_transaction(creator_addr),
     )
 
@@ -321,7 +323,7 @@ def test_app_bootstrap(
 
     # Bootstrap to create pool token and set global state
     result = creator_app_client.call(
-        ConstantProductAMM.bootstrap,
+        "bootstrap",
         **build_boostrap_transaction(creator_app_client, assets),
     )
 
@@ -363,7 +365,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
     b_amount = 3000
 
     creator_app_client.call(
-        ConstantProductAMM.mint,
+        "mint",
         **build_mint_transaction(
             creator_app_client, (a_asset, b_asset), pool_asset, a_amount, b_amount
         ),
@@ -397,7 +399,7 @@ def test_mint(creator_app_client: ApplicationClient):
     b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
 
     creator_app_client.call(
-        ConstantProductAMM.mint,
+        "mint",
         **build_mint_transaction(
             creator_app_client, (a_asset, b_asset), pool_asset, a_amount, b_amount
         ),
@@ -441,7 +443,7 @@ def test_burn(creator_app_client: ApplicationClient):
     burn_amt = balances_before[addr][pool_asset] // 10
 
     creator_app_client.call(
-        ConstantProductAMM.burn,
+        "burn",
         **build_burn_transaction(
             creator_app_client, (a_asset, b_asset), pool_asset, burn_amt
         ),
@@ -485,7 +487,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     swap_amt = balances_before[addr][a_asset] // 10
     creator_app_client.call(
-        ConstantProductAMM.swap,
+        "swap",
         **build_swap_transaction(creator_app_client, (a_asset, b_asset), swap_amt),
     )
 
@@ -538,7 +540,7 @@ def _assert_cases(
     user_acct: AcctInfo,
 ) -> list[AssertTestCase]:
     def cases(
-        m: abi.Method | decorators.HandlerFunc,
+        m: abi.Method | pyteal.ABIReturnSubroutine | str,
         xs: list[tuple[str, dict[str, typing.Any]]],
         client: client.ApplicationClient = creator_app_client,
     ) -> list[AssertTestCase]:
@@ -596,7 +598,7 @@ def _assert_cases(
             return build_set_governor_transaction(new_governor=new_gov)
 
         return cases(
-            ConstantProductAMM.set_governor,
+            "set_governor",
             [("unauthorized", set_governor(addr))],
             fake_client,
         )
@@ -609,7 +611,7 @@ def _assert_cases(
             return build_boostrap_transaction(app_client, assets)
 
         return cases(
-            ConstantProductAMM.bootstrap,
+            "bootstrap",
             [
                 (ConstantProductAMMErrors.GroupSizeNot2, add_txn(bootstrap(), "atc")),
                 (
@@ -625,9 +627,7 @@ def _assert_cases(
                     bootstrap(assets=(b_asset, b_asset)),
                 ),
             ],
-        ) + cases(
-            ConstantProductAMM.bootstrap, [("unauthorized", bootstrap())], fake_client
-        )
+        ) + cases("bootstrap", [("unauthorized", bootstrap())], fake_client)
 
     def mint_cases():
         a_amt = 100000
@@ -645,7 +645,7 @@ def _assert_cases(
             )
 
         well_formed_mint = cases(
-            ConstantProductAMM.mint,
+            "mint",
             [
                 (
                     ConstantProductAMMErrors.AssetAIncorrect,
@@ -661,7 +661,7 @@ def _assert_cases(
                 ),
             ],
         ) + cases(
-            ConstantProductAMM.mint,
+            "mint",
             [(ConstantProductAMMErrors.SenderInvalid, mint())],
             fake_client,
         )
@@ -693,9 +693,9 @@ def _assert_cases(
                 ),
             ]
 
-        valid_asset_a_xfer = cases(ConstantProductAMM.mint, valid_asset_xfer("a_xfer"))
+        valid_asset_a_xfer = cases("mint", valid_asset_xfer("a_xfer"))
 
-        valid_asset_b_xfer = cases(ConstantProductAMM.mint, valid_asset_xfer("b_xfer"))
+        valid_asset_b_xfer = cases("mint", valid_asset_xfer("b_xfer"))
 
         return well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer
 
@@ -709,7 +709,7 @@ def _assert_cases(
             return build_burn_transaction(app_client, assets, pool_asset, burn_amt)
 
         well_formed_burn = cases(
-            ConstantProductAMM.burn,
+            "burn",
             [
                 (ConstantProductAMMErrors.AssetPoolIncorrect, burn(pool_asset=a_asset)),
                 (
@@ -724,7 +724,7 @@ def _assert_cases(
         )
 
         valid_pool_xfer = cases(
-            ConstantProductAMM.burn,
+            "burn",
             [
                 (
                     ConstantProductAMMErrors.ReceiverNotAppAddr,
@@ -737,7 +737,7 @@ def _assert_cases(
                 ),
             ],
         ) + cases(
-            ConstantProductAMM.burn,
+            "burn",
             [(ConstantProductAMMErrors.SenderInvalid, burn())],
             fake_client,
         )
@@ -754,7 +754,7 @@ def _assert_cases(
             return build_swap_transaction(app_client, assets, swap_amt, swap_asset)
 
         well_formed_swap = cases(
-            ConstantProductAMM.swap,
+            "swap",
             [
                 (
                     ConstantProductAMMErrors.AssetAIncorrect,
@@ -768,7 +768,7 @@ def _assert_cases(
         )
 
         valid_swap_xfer = cases(
-            ConstantProductAMM.swap,
+            "swap",
             [
                 (ConstantProductAMMErrors.AmountLessThanMinimum, swap(swap_amt=0)),
                 (
@@ -781,7 +781,7 @@ def _assert_cases(
                 ),
             ],
         ) + cases(
-            ConstantProductAMM.swap,
+            "swap",
             [(ConstantProductAMMErrors.SenderInvalid, swap())],
             fake_client,
         )

@@ -39,7 +39,7 @@ from pyteal import (
 from beaker.decorators import (
     MethodHints,
     HandlerFunc,
-    capture_method_hints,
+    capture_method_hints_and_remove_defaults,
 )
 from beaker.decorators.authorize import _authorize
 from beaker.logic_signature import LogicSignature
@@ -314,9 +314,11 @@ class Application:
                 )
                 return sub
             else:
+                hints = capture_method_hints_and_remove_defaults(
+                    func, read_only=read_only
+                )
                 method = ABIReturnSubroutine(func, overriding_name=name)
-                method._read_only = read_only  # type: ignore[attr-defined]
-                hints = capture_method_hints(func, read_only=read_only)
+                setattr(method, "_read_only", read_only)
 
                 self.register_abi_external(
                     method,

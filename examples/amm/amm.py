@@ -31,8 +31,6 @@ from beaker import (
     ApplicationStateValue,
     Application,
     Authorize,
-    external,
-    create,
 )
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
@@ -110,364 +108,366 @@ class ConstantProductAMM(Application):
     # Administrative Actions
     ##############
 
-    # Call this only on create
-    @create(bare=True)
-    def create(self):
-        return self.initialize_application_state()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
-    # Only the account set in app_state.governor may call this method
-    @external(authorize=Authorize.only(governor))
-    def set_governor(self, new_governor: abi.Account):
-        """sets the governor of the contract, may only be called by the current governor"""
-        return self.governor.set(new_governor.address())
+        self.address = Global.current_application_address()
 
-    # Only the account set in app_state.governor may call this method
-    @external(authorize=Authorize.only(governor))
-    def bootstrap(
-        self,
-        seed: abi.PaymentTransaction,
-        a_asset: abi.Asset,
-        b_asset: abi.Asset,
-        *,
-        output: abi.Uint64,
-    ):
-        """bootstraps the contract by opting into the assets and creating the pool token.
+        # Call this only on create
+        @self.create(override=None)
+        def create():
+            return self.initialize_application_state()
 
-        Note this method will fail if it is attempted more than once on the same contract since the assets and pool token
-        application state values are marked as static and cannot be overridden.
+        # Only the account set in app_state.governor may call this method
+        @self.external(authorize=Authorize.only(self.governor))
+        def set_governor(new_governor: abi.Account):
+            """sets the governor of the contract, may only be called by the current governor"""
+            return self.governor.set(new_governor.address())
 
-        Args:
-            seed: Initial Payment transaction to the app account so it can opt in to assets and create pool token.
-            a_asset: One of the two assets this pool should allow swapping between.
-            b_asset: The other of the two assets this pool should allow swapping between.
+        # Only the account set in app_state.governor may call this method
+        @self.external(authorize=Authorize.only(self.governor))
+        def bootstrap(
+            seed: abi.PaymentTransaction,
+            a_asset: abi.Asset,
+            b_asset: abi.Asset,
+            *,
+            output: abi.Uint64,
+        ):
+            """bootstraps the contract by opting into the assets and creating the pool token.
 
-        Returns:
-            The asset id of the pool token created.
-        """
+            Note this method will fail if it is attempted more than once on the same contract since the assets and pool token
+            application state values are marked as static and cannot be overridden.
 
-        well_formed_bootstrap = [
-            (Global.group_size() == Int(2), ConstantProductAMMErrors.GroupSizeNot2),
-            (
-                seed.get().receiver() == self.address,
-                ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ),
-            (
-                seed.get().amount() >= consts.Algos(0.3),
-                ConstantProductAMMErrors.AmountLessThanMinimum,
-            ),
-            (
-                a_asset.asset_id() < b_asset.asset_id(),
-                ConstantProductAMMErrors.AssetIdsIncorrect,
-            ),
-        ]
+            Args:
+                seed: Initial Payment transaction to the app account so it can opt in to assets and create pool token.
+                a_asset: One of the two assets this pool should allow swapping between.
+                b_asset: The other of the two assets this pool should allow swapping between.
 
-        return Seq(
-            *commented_assert(well_formed_bootstrap),
-            self.asset_a.set(a_asset.asset_id()),
-            self.asset_b.set(b_asset.asset_id()),
-            self.pool_token.set(
-                do_create_pool_token(
-                    self.asset_a,
-                    self.asset_b,
+            Returns:
+                The asset id of the pool token created.
+            """
+
+            well_formed_bootstrap = [
+                (Global.group_size() == Int(2), ConstantProductAMMErrors.GroupSizeNot2),
+                (
+                    seed.get().receiver() == self.address,
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
                 ),
-            ),
-            do_opt_in(self.asset_a),
-            do_opt_in(self.asset_b),
-            output.set(self.pool_token),
-        )
-
-    ##############
-    # AMM specific methods for mint/burn/swap
-    ##############
-
-    @external
-    def mint(
-        self,
-        a_xfer: abi.AssetTransferTransaction,
-        b_xfer: abi.AssetTransferTransaction,
-        pool_asset: abi.Asset = pool_token,  # type: ignore[assignment]
-        a_asset: abi.Asset = asset_a,  # type: ignore[assignment]
-        b_asset: abi.Asset = asset_b,  # type: ignore[assignment]
-    ):
-        """mint pool tokens given some amount of asset A and asset B.
-
-        Given some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with
-        the pools current balance and circulating supply of pool tokens.
-
-        Args:
-            a_xfer: Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens.
-            b_xfer: Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens.
-            pool_asset: The asset ID of the pool token so that we may distribute it.
-            a_asset: The asset ID of the Asset A so that we may inspect our balance.
-            b_asset: The asset ID of the Asset B so that we may inspect our balance.
-        """
-
-        well_formed_mint = [
-            (
-                a_asset.asset_id() == self.asset_a,
-                ConstantProductAMMErrors.AssetAIncorrect,
-            ),
-            (
-                b_asset.asset_id() == self.asset_b,
-                ConstantProductAMMErrors.AssetBIncorrect,
-            ),
-            (
-                pool_asset.asset_id() == self.pool_token,
-                ConstantProductAMMErrors.AssetPoolIncorrect,
-            ),
-            (
-                And(
-                    a_xfer.get().sender() == Txn.sender(),
-                    b_xfer.get().sender() == Txn.sender(),
+                (
+                    seed.get().amount() >= consts.Algos(0.3),
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
                 ),
-                ConstantProductAMMErrors.SenderInvalid,
-            ),
-        ]
+                (
+                    a_asset.asset_id() < b_asset.asset_id(),
+                    ConstantProductAMMErrors.AssetIdsIncorrect,
+                ),
+            ]
 
-        valid_asset_a_xfer = [
-            (
-                a_xfer.get().asset_receiver() == self.address,
-                ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ),
-            (
-                a_xfer.get().xfer_asset() == self.asset_a,
-                ConstantProductAMMErrors.AssetAIncorrect,
-            ),
-            (
-                a_xfer.get().asset_amount() > Int(0),
-                ConstantProductAMMErrors.AmountLessThanMinimum,
-            ),
-        ]
+            return Seq(
+                *commented_assert(well_formed_bootstrap),
+                self.asset_a.set(a_asset.asset_id()),
+                self.asset_b.set(b_asset.asset_id()),
+                self.pool_token.set(
+                    do_create_pool_token(
+                        self.asset_a,
+                        self.asset_b,
+                    ),
+                ),
+                do_opt_in(self.asset_a),
+                do_opt_in(self.asset_b),
+                output.set(self.pool_token),
+            )
 
-        valid_asset_b_xfer = [
-            (
-                b_xfer.get().asset_receiver() == self.address,
-                ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ),
-            (
-                b_xfer.get().xfer_asset() == self.asset_b,
-                ConstantProductAMMErrors.AssetBIncorrect,
-            ),
-            (
-                b_xfer.get().asset_amount() > Int(0),
-                ConstantProductAMMErrors.AmountLessThanMinimum,
-            ),
-        ]
+        ##############
+        # AMM specific methods for mint/burn/swap
+        ##############
 
-        return Seq(
-            # Check that the transaction is constructed correctly
-            *commented_assert(
-                well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer
-            ),
-            # Check that we have these things
-            pool_bal := pool_asset.holding(self.address).balance(),
-            a_bal := a_asset.holding(self.address).balance(),
-            b_bal := b_asset.holding(self.address).balance(),
-            Assert(
-                pool_bal.hasValue(),
-                a_bal.hasValue(),
-                b_bal.hasValue(),
-            ),
-            (to_mint := ScratchVar()).store(
-                If(
+        @self.external
+        def mint(
+            a_xfer: abi.AssetTransferTransaction,
+            b_xfer: abi.AssetTransferTransaction,
+            pool_asset: abi.Asset = self.pool_token,  # type: ignore[assignment]
+            a_asset: abi.Asset = self.asset_a,  # type: ignore[assignment]
+            b_asset: abi.Asset = self.asset_b,  # type: ignore[assignment]
+        ):
+            """mint pool tokens given some amount of asset A and asset B.
+
+            Given some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with
+            the pools current balance and circulating supply of pool tokens.
+
+            Args:
+                a_xfer: Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens.
+                b_xfer: Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens.
+                pool_asset: The asset ID of the pool token so that we may distribute it.
+                a_asset: The asset ID of the Asset A so that we may inspect our balance.
+                b_asset: The asset ID of the Asset B so that we may inspect our balance.
+            """
+
+            well_formed_mint = [
+                (
+                    a_asset.asset_id() == self.asset_a,
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                ),
+                (
+                    b_asset.asset_id() == self.asset_b,
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                ),
+                (
+                    pool_asset.asset_id() == self.pool_token,
+                    ConstantProductAMMErrors.AssetPoolIncorrect,
+                ),
+                (
                     And(
-                        a_bal.value() == a_xfer.get().asset_amount(),
-                        b_bal.value() == b_xfer.get().asset_amount(),
+                        a_xfer.get().sender() == Txn.sender(),
+                        b_xfer.get().sender() == Txn.sender(),
                     ),
-                    # This is the first time we've been called
-                    # we use a different formula to mint tokens
-                    tokens_to_mint_initial(
-                        a_xfer.get().asset_amount(), b_xfer.get().asset_amount()
-                    ),
-                    # Normal mint
-                    tokens_to_mint(
-                        self.total_supply - pool_bal.value(),
-                        a_bal.value() - a_xfer.get().asset_amount(),
-                        b_bal.value() - b_xfer.get().asset_amount(),
-                        a_xfer.get().asset_amount(),
-                        b_xfer.get().asset_amount(),
-                    ),
-                )
-            ),
-            Assert(
-                to_mint.load() > Int(0),
-                comment=ConstantProductAMMErrors.SendAmountTooLow,
-            ),
-            # mint tokens
-            do_axfer(Txn.sender(), self.pool_token, to_mint.load()),
-            self.ratio.set(compute_ratio()),
-        )
-
-    @external
-    def burn(
-        self,
-        pool_xfer: abi.AssetTransferTransaction,
-        pool_asset: abi.Asset = pool_token,  # type: ignore[assignment]
-        a_asset: abi.Asset = asset_a,  # type: ignore[assignment]
-        b_asset: abi.Asset = asset_b,  # type: ignore[assignment]
-    ):
-        """burn pool tokens to get back some amount of asset A and asset B
-
-        Args:
-            pool_xfer: Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem
-            pool_asset: Asset ID of the pool token so we may inspect balance.
-            a_asset: Asset ID of Asset A so we may inspect balance and distribute it
-            b_asset: Asset ID of Asset B so we may inspect balance and distribute it
-        """
-
-        well_formed_burn = [
-            (
-                pool_asset.asset_id() == self.pool_token,
-                ConstantProductAMMErrors.AssetPoolIncorrect,
-            ),
-            (
-                a_asset.asset_id() == self.asset_a,
-                ConstantProductAMMErrors.AssetAIncorrect,
-            ),
-            (
-                b_asset.asset_id() == self.asset_b,
-                ConstantProductAMMErrors.AssetBIncorrect,
-            ),
-        ]
-
-        valid_pool_xfer = [
-            (
-                pool_xfer.get().asset_receiver() == self.address,
-                ConstantProductAMMErrors.ReceiverNotAppAddr,
-            ),
-            (
-                pool_xfer.get().asset_amount() > Int(0),
-                ConstantProductAMMErrors.AmountLessThanMinimum,
-            ),
-            (
-                pool_xfer.get().xfer_asset() == self.pool_token,
-                ConstantProductAMMErrors.AssetPoolIncorrect,
-            ),
-            (
-                pool_xfer.get().sender() == Txn.sender(),
-                ConstantProductAMMErrors.SenderInvalid,
-            ),
-        ]
-
-        return Seq(
-            *commented_assert(well_formed_burn + valid_pool_xfer),
-            pool_bal := pool_asset.holding(self.address).balance(),
-            a_bal := a_asset.holding(self.address).balance(),
-            b_bal := b_asset.holding(self.address).balance(),
-            Assert(
-                pool_bal.hasValue(),
-                a_bal.hasValue(),
-                b_bal.hasValue(),
-            ),
-            # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
-            (issued := ScratchVar()).store(
-                self.total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
-            ),
-            (a_amt := ScratchVar()).store(
-                tokens_to_burn(
-                    issued.load(),
-                    a_bal.value(),
-                    pool_xfer.get().asset_amount(),
-                )
-            ),
-            (b_amt := ScratchVar()).store(
-                tokens_to_burn(
-                    issued.load(),
-                    b_bal.value(),
-                    pool_xfer.get().asset_amount(),
-                )
-            ),
-            # Send back commensurate amt of a
-            do_axfer(
-                Txn.sender(),
-                self.asset_a,
-                a_amt.load(),
-            ),
-            # Send back commensurate amt of b
-            do_axfer(
-                Txn.sender(),
-                self.asset_b,
-                b_amt.load(),
-            ),
-            self.ratio.set(compute_ratio()),
-        )
-
-    @external
-    def swap(
-        self,
-        swap_xfer: abi.AssetTransferTransaction,
-        a_asset: abi.Asset = asset_a,  # type: ignore[assignment]
-        b_asset: abi.Asset = asset_b,  # type: ignore[assignment]
-    ):
-        """Swap some amount of either asset A or asset B for the other
-
-        Args:
-            swap_xfer: Asset Transfer Transaction of either Asset A or Asset B
-            a_asset: Asset ID of asset A so we may inspect balance and possibly transfer it
-            b_asset: Asset ID of asset B so we may inspect balance and possibly transfer it
-        """
-        well_formed_swap = [
-            (
-                a_asset.asset_id() == self.asset_a,
-                ConstantProductAMMErrors.AssetAIncorrect,
-            ),
-            (
-                b_asset.asset_id() == self.asset_b,
-                ConstantProductAMMErrors.AssetBIncorrect,
-            ),
-        ]
-
-        valid_swap_xfer = [
-            (
-                Or(
-                    swap_xfer.get().xfer_asset() == self.asset_a,
-                    swap_xfer.get().xfer_asset() == self.asset_b,
+                    ConstantProductAMMErrors.SenderInvalid,
                 ),
-                ConstantProductAMMErrors.AssetIdsIncorrect,
-            ),
-            (
-                swap_xfer.get().asset_amount() > Int(0),
-                ConstantProductAMMErrors.AmountLessThanMinimum,
-            ),
-            (
-                swap_xfer.get().sender() == Txn.sender(),
-                ConstantProductAMMErrors.SenderInvalid,
-            ),
-        ]
+            ]
 
-        out_id = If(
-            swap_xfer.get().xfer_asset() == self.asset_a,
-            self.asset_b,
-            self.asset_a,
-        )
-        in_id = swap_xfer.get().xfer_asset()
+            valid_asset_a_xfer = [
+                (
+                    a_xfer.get().asset_receiver() == self.address,
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
+                ),
+                (
+                    a_xfer.get().xfer_asset() == self.asset_a,
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                ),
+                (
+                    a_xfer.get().asset_amount() > Int(0),
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
+                ),
+            ]
 
-        return Seq(
-            *commented_assert(well_formed_swap + valid_swap_xfer),
-            in_sup := AssetHolding.balance(self.address, in_id),
-            out_sup := AssetHolding.balance(self.address, out_id),
-            Assert(
-                in_sup.hasValue(),
-                out_sup.hasValue(),
-            ),
-            (to_swap := ScratchVar()).store(
-                tokens_to_swap(
-                    swap_xfer.get().asset_amount(),
-                    in_sup.value() - swap_xfer.get().asset_amount(),
-                    out_sup.value(),
-                )
-            ),
-            Assert(
-                to_swap.load() > Int(0),
-                comment=ConstantProductAMMErrors.SendAmountTooLow,
-            ),
-            do_axfer(
-                Txn.sender(),
-                out_id,
-                to_swap.load(),
-            ),
-            self.ratio.set(compute_ratio()),
-        )
+            valid_asset_b_xfer = [
+                (
+                    b_xfer.get().asset_receiver() == self.address,
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
+                ),
+                (
+                    b_xfer.get().xfer_asset() == self.asset_b,
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                ),
+                (
+                    b_xfer.get().asset_amount() > Int(0),
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
+                ),
+            ]
+
+            return Seq(
+                # Check that the transaction is constructed correctly
+                *commented_assert(
+                    well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer
+                ),
+                # Check that we have these things
+                pool_bal := pool_asset.holding(self.address).balance(),
+                a_bal := a_asset.holding(self.address).balance(),
+                b_bal := b_asset.holding(self.address).balance(),
+                Assert(
+                    pool_bal.hasValue(),
+                    a_bal.hasValue(),
+                    b_bal.hasValue(),
+                ),
+                (to_mint := ScratchVar()).store(
+                    If(
+                        And(
+                            a_bal.value() == a_xfer.get().asset_amount(),
+                            b_bal.value() == b_xfer.get().asset_amount(),
+                        ),
+                        # This is the first time we've been called
+                        # we use a different formula to mint tokens
+                        tokens_to_mint_initial(
+                            a_xfer.get().asset_amount(), b_xfer.get().asset_amount()
+                        ),
+                        # Normal mint
+                        tokens_to_mint(
+                            self.total_supply - pool_bal.value(),
+                            a_bal.value() - a_xfer.get().asset_amount(),
+                            b_bal.value() - b_xfer.get().asset_amount(),
+                            a_xfer.get().asset_amount(),
+                            b_xfer.get().asset_amount(),
+                        ),
+                    )
+                ),
+                Assert(
+                    to_mint.load() > Int(0),
+                    comment=ConstantProductAMMErrors.SendAmountTooLow,
+                ),
+                # mint tokens
+                do_axfer(Txn.sender(), self.pool_token, to_mint.load()),
+                self.ratio.set(compute_ratio()),
+            )
+
+        @self.external
+        def burn(
+            pool_xfer: abi.AssetTransferTransaction,
+            pool_asset: abi.Asset = self.pool_token,  # type: ignore[assignment]
+            a_asset: abi.Asset = self.asset_a,  # type: ignore[assignment]
+            b_asset: abi.Asset = self.asset_b,  # type: ignore[assignment]
+        ):
+            """burn pool tokens to get back some amount of asset A and asset B
+
+            Args:
+                pool_xfer: Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem
+                pool_asset: Asset ID of the pool token so we may inspect balance.
+                a_asset: Asset ID of Asset A so we may inspect balance and distribute it
+                b_asset: Asset ID of Asset B so we may inspect balance and distribute it
+            """
+
+            well_formed_burn = [
+                (
+                    pool_asset.asset_id() == self.pool_token,
+                    ConstantProductAMMErrors.AssetPoolIncorrect,
+                ),
+                (
+                    a_asset.asset_id() == self.asset_a,
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                ),
+                (
+                    b_asset.asset_id() == self.asset_b,
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                ),
+            ]
+
+            valid_pool_xfer = [
+                (
+                    pool_xfer.get().asset_receiver() == self.address,
+                    ConstantProductAMMErrors.ReceiverNotAppAddr,
+                ),
+                (
+                    pool_xfer.get().asset_amount() > Int(0),
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
+                ),
+                (
+                    pool_xfer.get().xfer_asset() == self.pool_token,
+                    ConstantProductAMMErrors.AssetPoolIncorrect,
+                ),
+                (
+                    pool_xfer.get().sender() == Txn.sender(),
+                    ConstantProductAMMErrors.SenderInvalid,
+                ),
+            ]
+
+            return Seq(
+                *commented_assert(well_formed_burn + valid_pool_xfer),
+                pool_bal := pool_asset.holding(self.address).balance(),
+                a_bal := a_asset.holding(self.address).balance(),
+                b_bal := b_asset.holding(self.address).balance(),
+                Assert(
+                    pool_bal.hasValue(),
+                    a_bal.hasValue(),
+                    b_bal.hasValue(),
+                ),
+                # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
+                (issued := ScratchVar()).store(
+                    self.total_supply
+                    - (pool_bal.value() - pool_xfer.get().asset_amount())
+                ),
+                (a_amt := ScratchVar()).store(
+                    tokens_to_burn(
+                        issued.load(),
+                        a_bal.value(),
+                        pool_xfer.get().asset_amount(),
+                    )
+                ),
+                (b_amt := ScratchVar()).store(
+                    tokens_to_burn(
+                        issued.load(),
+                        b_bal.value(),
+                        pool_xfer.get().asset_amount(),
+                    )
+                ),
+                # Send back commensurate amt of a
+                do_axfer(
+                    Txn.sender(),
+                    self.asset_a,
+                    a_amt.load(),
+                ),
+                # Send back commensurate amt of b
+                do_axfer(
+                    Txn.sender(),
+                    self.asset_b,
+                    b_amt.load(),
+                ),
+                self.ratio.set(compute_ratio()),
+            )
+
+        @self.external
+        def swap(
+            swap_xfer: abi.AssetTransferTransaction,
+            a_asset: abi.Asset = self.asset_a,  # type: ignore[assignment]
+            b_asset: abi.Asset = self.asset_b,  # type: ignore[assignment]
+        ):
+            """Swap some amount of either asset A or asset B for the other
+
+            Args:
+                swap_xfer: Asset Transfer Transaction of either Asset A or Asset B
+                a_asset: Asset ID of asset A so we may inspect balance and possibly transfer it
+                b_asset: Asset ID of asset B so we may inspect balance and possibly transfer it
+            """
+            well_formed_swap = [
+                (
+                    a_asset.asset_id() == self.asset_a,
+                    ConstantProductAMMErrors.AssetAIncorrect,
+                ),
+                (
+                    b_asset.asset_id() == self.asset_b,
+                    ConstantProductAMMErrors.AssetBIncorrect,
+                ),
+            ]
+
+            valid_swap_xfer = [
+                (
+                    Or(
+                        swap_xfer.get().xfer_asset() == self.asset_a,
+                        swap_xfer.get().xfer_asset() == self.asset_b,
+                    ),
+                    ConstantProductAMMErrors.AssetIdsIncorrect,
+                ),
+                (
+                    swap_xfer.get().asset_amount() > Int(0),
+                    ConstantProductAMMErrors.AmountLessThanMinimum,
+                ),
+                (
+                    swap_xfer.get().sender() == Txn.sender(),
+                    ConstantProductAMMErrors.SenderInvalid,
+                ),
+            ]
+
+            out_id = If(
+                swap_xfer.get().xfer_asset() == self.asset_a,
+                self.asset_b,
+                self.asset_a,
+            )
+            in_id = swap_xfer.get().xfer_asset()
+
+            return Seq(
+                *commented_assert(well_formed_swap + valid_swap_xfer),
+                in_sup := AssetHolding.balance(self.address, in_id),
+                out_sup := AssetHolding.balance(self.address, out_id),
+                Assert(
+                    in_sup.hasValue(),
+                    out_sup.hasValue(),
+                ),
+                (to_swap := ScratchVar()).store(
+                    tokens_to_swap(
+                        swap_xfer.get().asset_amount(),
+                        in_sup.value() - swap_xfer.get().asset_amount(),
+                        out_sup.value(),
+                    )
+                ),
+                Assert(
+                    to_swap.load() > Int(0),
+                    comment=ConstantProductAMMErrors.SendAmountTooLow,
+                ),
+                do_axfer(
+                    Txn.sender(),
+                    out_id,
+                    to_swap.load(),
+                ),
+                self.ratio.set(compute_ratio()),
+            )
 
 
 amm_app = ConstantProductAMM()
