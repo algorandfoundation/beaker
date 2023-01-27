@@ -783,34 +783,25 @@ def opt_in(
 
 
 @overload
-def clear_state(
-    fn: HandlerFunc, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc:
+def clear_state(fn: HandlerFunc, /) -> HandlerFunc:
     ...
 
 
 @overload
-def clear_state(*, authorize: SubroutineFnWrapper | None = None) -> DecoratorFunc:
+def clear_state() -> DecoratorFunc:
     ...
 
 
-def clear_state(
-    fn: HandlerFunc | None = None, /, *, authorize: SubroutineFnWrapper | None = None
-) -> HandlerFunc | DecoratorFunc:
+def clear_state(fn: HandlerFunc | None = None, /) -> HandlerFunc | DecoratorFunc:
     """set method to be handled by an application call with it'ws
         :code:`OnComplete` set to :code:`ClearState` call
 
     Args:
         fn: The method to be wrapped.
-        authorize: Must be set to None.
     Returns:
         The original method with changes made to its signature and
             attributes set in it's :code:`__handler_config__`
     """
-    if authorize is not None:
-        raise ValueError(
-            "authorize must not be used with clear_state, because anyone can clear state"
-        )
 
     def _impl(fun: HandlerFunc) -> HandlerFunc:
         if is_bare(fun):

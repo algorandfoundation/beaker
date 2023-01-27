@@ -187,12 +187,14 @@ class Application:
                             )
                         action.action.subroutine.implementation = bound_attr
 
-                    assert oc != "clear_state"
                     self.bare_externals[oc] = action
 
             # Clear state
             elif handler_config.clear_state is not None:
-                handler_config.clear_state.subroutine.implementation = bound_attr
+                if self.bare_clear_state is not None:
+                    raise BareOverwriteError("clear_state")
+                if handler_config.referenced_self:
+                    handler_config.clear_state.subroutine.implementation = bound_attr
                 self.bare_clear_state = static_attr
 
             # ABI externals
