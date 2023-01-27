@@ -40,9 +40,11 @@ def test_get_client():
     kmd_client = get_client()
     assert kmd_client.kmd_address == DEFAULT_KMD_ADDRESS
     assert kmd_client.kmd_token == DEFAULT_KMD_TOKEN
+    kmd_client.list_wallets()
 
 
 def test_get_sandbox_default_wallet():
     sandbox_default_wallet = get_sandbox_default_wallet()
     assert sandbox_default_wallet.name == DEFAULT_KMD_WALLET_NAME
     assert sandbox_default_wallet.pswd == DEFAULT_KMD_WALLET_PASSWORD
+    sandbox_default_wallet.list_keys()
