@@ -183,10 +183,6 @@ def test_bare_external():
         def close_out(self, s: pt.abi.String):
             return pt.Assert(pt.Len(s.get()))
 
-        @clear_state
-        def clear_state(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
-
         @update
         def update(self, s: pt.abi.String):
             return pt.Assert(pt.Len(s.get()))
@@ -195,11 +191,15 @@ def test_bare_external():
         def delete(self, s: pt.abi.String):
             return pt.Assert(pt.Len(s.get()))
 
+        @clear_state
+        def clear_state(self):
+            return pt.Assert(pt.Txn.application_args.length())
+
     be = BareExternal()
     assert len(be.bare_externals) == 0, "Should have no bare externals"
     assert (
-        len(be.contract.methods) == 6
-    ), "should have create, optin, closeout, clearstate, update, delete"
+        len(be.contract.methods) == 5
+    ), "should have create, optin, closeout, update, delete"
 
     hc = get_handler_config(BareExternal.create)
     assert hc.method_config is not None
@@ -222,13 +222,6 @@ def test_bare_external():
     del confs["close_out"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
-    hc = get_handler_config(BareExternal.clear_state)
-    assert hc.method_config is not None
-    confs = asdict(hc.method_config)
-    assert confs["clear_state"] == pt.CallConfig.CALL
-    del confs["clear_state"]
-    assert all([c == pt.CallConfig.NEVER for c in confs.values()])
-
     hc = get_handler_config(BareExternal.update)
     assert hc.method_config is not None
     confs = asdict(hc.method_config)
@@ -242,6 +235,33 @@ def test_bare_external():
     assert confs["delete_application"] == pt.CallConfig.CALL
     del confs["delete_application"]
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
+
+
+def test_clear_state_cannot_have_parameters():
+    with pytest.raises(
+        ValueError,
+        match="clear_state cannot be expected to receive any arguments during runtime",
+    ):
+
+        class ClearStateApp(Application):
+            @clear_state
+            def clear_state(self, s: pt.abi.String):
+                return pt.Assert(pt.Len(s.get()))
+
+
+def test_clear_state_is_not_bare_nor_abi():
+    class ClearStateApp(Application):
+        @create
+        def create(self, s: pt.abi.String):
+            return pt.Assert(pt.Len(s.get()))
+
+        @clear_state
+        def clear_state(self):
+            return pt.Assert(pt.Txn.application_args.length())
+
+    csa = ClearStateApp()
+    assert len(csa.bare_externals) == 0
+    assert len(csa.contract.methods) == 1
 
 
 def test_subclass_application():

@@ -324,31 +324,18 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        if self.app.on_clear_state is not None:
-            self.add_method_call(
-                atc,
-                self.app.on_clear_state,
-                on_complete=transaction.OnComplete.ClearStateOC,
-                sender=sender,
-                suggested_params=sp,
-                index=self.app_id,
-                app_args=args,
+        atc.add_transaction(
+            TransactionWithSigner(
+                txn=transaction.ApplicationClearStateTxn(
+                    sender=sender,
+                    sp=sp,
+                    index=self.app_id,
+                    app_args=args,
+                    **kwargs,
+                ),
                 signer=signer,
-                **kwargs,
             )
-        else:
-            atc.add_transaction(
-                TransactionWithSigner(
-                    txn=transaction.ApplicationClearStateTxn(
-                        sender=sender,
-                        sp=sp,
-                        index=self.app_id,
-                        app_args=args,
-                        **kwargs,
-                    ),
-                    signer=signer,
-                )
-            )
+        )
 
         clear_state_result = atc.execute(self.client, 4)
 
