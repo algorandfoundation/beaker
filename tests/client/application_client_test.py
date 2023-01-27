@@ -65,7 +65,7 @@ class App(Application):
 
     @clear_state
     def clear_state(self):
-        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+        return self.app_state_val_int.increment()
 
     @close_out
     def close_out(self):
@@ -433,6 +433,7 @@ def test_clear_state(sb_accts: SandboxAccounts):
     new_ac = ac.prepare(signer=new_signer)
     new_ac.opt_in()
 
+    old_app_state = new_ac.get_application_state()
     tx_id = new_ac.clear_state()
     result_tx = client.pending_transaction_info(tx_id)
     expect_dict(
@@ -448,6 +449,8 @@ def test_clear_state(sb_accts: SandboxAccounts):
             },
         },
     )
+    new_app_state = new_ac.get_application_state()
+    assert new_app_state["app_state_val_int"] == old_app_state["app_state_val_int"] + 1
 
 
 def test_call(sb_accts: SandboxAccounts):
