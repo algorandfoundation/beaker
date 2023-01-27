@@ -207,6 +207,8 @@
     <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">internal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
+    <span class="n">clear_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SubroutineFnWrapper</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">hints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MethodHints&quot;</span><span class="p">:</span>
         <span class="n">mh</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;read_only&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span><span class="p">}</span>
 
@@ -262,10 +264,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">is_clear_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_config</span><span class="o">.</span><span class="n">clear_state</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">is_close_out</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -607,7 +606,6 @@
 <div class="viewcode-block" id="bare_external"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.bare_external">[docs]</a><span class="k">def</span> <span class="nf">bare_external</span><span class="p">(</span>
     <span class="n">no_op</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">opt_in</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">clear_state</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">delete_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">update_application</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">close_out</span><span class="p">:</span> <span class="n">CallConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -617,7 +615,6 @@
 <span class="sd">    Args:</span>
 <span class="sd">        no_op: CallConfig to handle a `NoOp`</span>
 <span class="sd">        opt_in: CallConfig to handle an `OptIn`</span>
-<span class="sd">        clear_state: CallConfig to handle a `ClearState`</span>
 <span class="sd">        delete_application: CallConfig to handle a `DeleteApplication`</span>
 <span class="sd">        update_application: CallConfig to handle a `UpdateApplication`</span>
 <span class="sd">        close_out: CallConfig to handle a `CloseOut`</span>
@@ -650,9 +647,6 @@
             <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
             <span class="n">close_out</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">close_out</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">close_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
-            <span class="n">clear_state</span><span class="o">=</span><span class="n">OnCompleteAction</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">call_config</span><span class="o">=</span><span class="n">clear_state</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">clear_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="n">OnCompleteAction</span><span class="o">.</span><span class="n">never</span><span class="p">(),</span>
         <span class="p">)</span>
 
@@ -866,42 +860,36 @@
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
-    <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
     <span class="o">...</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFunc</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">clear_state</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">DecoratorFunc</span><span class="p">:</span>
     <span class="o">...</span>
 
 
-<div class="viewcode-block" id="clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.clear_state">[docs]</a><span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
-    <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span> <span class="o">|</span> <span class="n">DecoratorFunc</span><span class="p">:</span>
+<div class="viewcode-block" id="clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.clear_state">[docs]</a><span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span> <span class="o">|</span> <span class="n">DecoratorFunc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;set method to be handled by an application call with it&#39;ws</span>
 <span class="sd">        :code:`OnComplete` set to :code:`ClearState` call</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn: The method to be wrapped.</span>
-<span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64</span>
-<span class="sd">            interpreted as allowed if the output&gt;0.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        The original method with changes made to its signature and</span>
 <span class="sd">            attributes set in it&#39;s :code:`__handler_config__`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">fn</span> <span class="o">=</span> <span class="n">_authorize</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">bare_external</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandlerFunc</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_bare</span><span class="p">(</span><span class="n">fun</span><span class="p">):</span>
+            <span class="n">fun</span> <span class="o">=</span> <span class="n">_remove_self</span><span class="p">(</span><span class="n">fun</span><span class="p">)</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)(</span><span class="n">fun</span><span class="p">)</span>
+            <span class="n">set_handler_config</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">clear_state</span><span class="o">=</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fun</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">external</span><span class="p">(</span>
-                <span class="n">method_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="n">clear_state</span><span class="o">=</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">),</span>
-                <span class="n">authorize</span><span class="o">=</span><span class="n">authorize</span><span class="p">,</span>
-            <span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;clear_state cannot be expected to receive any arguments during runtime&quot;</span>
+            <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_impl</span>

@@ -401,31 +401,18 @@
         <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">signer</span><span class="p">)</span>
 
         <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">on_clear_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
-                <span class="n">atc</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">on_clear_state</span><span class="p">,</span>
-                <span class="n">on_complete</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">ClearStateOC</span><span class="p">,</span>
-                <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
-                <span class="n">suggested_params</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
-                <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">atc</span><span class="o">.</span><span class="n">add_transaction</span><span class="p">(</span>
+            <span class="n">TransactionWithSigner</span><span class="p">(</span>
+                <span class="n">txn</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">ApplicationClearStateTxn</span><span class="p">(</span>
+                    <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
+                    <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
+                    <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
+                    <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">),</span>
                 <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">atc</span><span class="o">.</span><span class="n">add_transaction</span><span class="p">(</span>
-                <span class="n">TransactionWithSigner</span><span class="p">(</span>
-                    <span class="n">txn</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">ApplicationClearStateTxn</span><span class="p">(</span>
-                        <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
-                        <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
-                        <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                        <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-                        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="n">clear_state_result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 
