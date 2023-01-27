@@ -39,7 +39,6 @@ from pyteal import (
 from beaker.decorators import (
     MethodHints,
     HandlerFunc,
-    MethodProxy,
     capture_method_hints,
 )
 from beaker.decorators.authorize import _authorize
@@ -47,24 +46,7 @@ from beaker.errors import BareOverwriteError
 from beaker.logic_signature import LogicSignature
 from beaker.precompile import AppPrecompile, LSigPrecompile
 from beaker.state import AccountState, ApplicationState
-
-
-def get_method_spec(fn: Any) -> Method:
-    if isinstance(fn, MethodProxy):
-        fn = fn._method
-
-    if isinstance(fn, ABIReturnSubroutine):
-        return fn.method_spec()
-
-    raise Exception("Expected argument to be an ABI method")
-
-
-def get_method_signature(fn: Any) -> str:
-    return get_method_spec(fn).get_signature()
-
-
-def get_method_selector(fn: Any) -> bytes:
-    return get_method_spec(fn).get_selector()
+from beaker.utils import remove_first_match
 
 
 OnCompleteActionName: TypeAlias = Literal[
@@ -92,22 +74,7 @@ DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
-class Methods:
-    def __init__(self) -> None:
-        self._methods: dict[str, MethodProxy] = {}
-
-    def __getattr__(self, name: str) -> MethodProxy:
-        try:
-            return self._methods[name]
-        except KeyError as ex:
-            raise AttributeError(f"Unknown method: {name}") from ex
-
-    def __len__(self) -> int:
-        return len(self._methods)
-
-
 class Application:
-
     def __init__(
         self: Self,
         *,
@@ -131,7 +98,8 @@ class Application:
         self._abi_externals: dict[str, ABIExternal] = {}
         self.acct_state = AccountState(klass=self.__class__)
         self.app_state = ApplicationState(klass=self.__class__)
-        self.methods = Methods()
+        self.bare_methods: dict[str, SubroutineFnWrapper] = {}
+        self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
         if implement_default_create:
             self.implement(unconditional_create_approval)
@@ -198,19 +166,19 @@ class Application:
             method=method,
             hints=hints,
         )
-        self.methods._methods[python_func_name] = MethodProxy(
-            method, deregister=self._unregister_abi_external
-        )
+        self.abi_methods[python_func_name] = method
 
-    def _unregister_abi_external(self, proxy: MethodProxy) -> None:
-        self._abi_externals = {
-            msig: abi_external
-            for msig, abi_external in self._abi_externals.items()
-            if abi_external.method is not proxy._method
-        }
-        self.methods._methods = {
-            name: p for name, p in self.methods._methods.items() if p is not proxy
-        }
+    def deregister_abi_method(
+        self,
+        name_or_reference: str | ABIReturnSubroutine,
+        /,
+    ) -> None:
+        if isinstance(name_or_reference, str):
+            method = self.abi_methods.pop(name_or_reference)
+        else:
+            method = name_or_reference
+            remove_first_match(self.abi_methods, lambda _, v: v is method)
+        remove_first_match(self._abi_externals, lambda _, v: v.method is method)
 
     def register_bare_external(
         self,
@@ -233,19 +201,19 @@ class Application:
             self._bare_externals[for_action] = OnCompleteAction(
                 action=sub, call_config=call_config
             )
-        self.methods._methods[python_func_name] = MethodProxy(
-            sub, deregister=self._unregister_bare_external
-        )
+        self.bare_methods[python_func_name] = sub
 
-    def _unregister_bare_external(self, proxy: MethodProxy) -> None:
-        self._bare_externals = {
-            for_action: bare_external
-            for for_action, bare_external in self._bare_externals.items()
-            if bare_external.action is not proxy._method
-        }
-        self.methods._methods = {
-            name: p for name, p in self.methods._methods.items() if p is not proxy
-        }
+    def deregister_bare_method(
+        self,
+        name_or_reference: str | SubroutineFnWrapper,
+        /,
+    ) -> None:
+        if isinstance(name_or_reference, str):
+            method = self.bare_methods.pop(name_or_reference)
+        else:
+            method = name_or_reference
+            remove_first_match(self.bare_methods, lambda _, v: v is method)
+        remove_first_match(self._bare_externals, lambda _, v: v.action is method)
 
     @overload
     def external(
@@ -835,9 +803,13 @@ class Application:
 
         if self._compiled is None:
 
-            # make sure all the precompiles are available
-            for precompile in self.precompiles:
-                precompile.compile(client)
+            if self.precompiles:
+                if client is None:
+                    raise ValueError("client is not optional if there are precompiles")
+
+                # make sure all the precompiles are available
+                for precompile in self.precompiles:
+                    precompile.compile(client)
 
             bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
             router = Router(
@@ -866,17 +838,17 @@ class Application:
                     cc1 == CallConfig.CREATE or cc1 == CallConfig.ALL
                     for cc1 in dataclasses.astuple(method_config)
                 ):
-                    all_creates.append(abi_external.method)
+                    all_creates.append(abi_external.method.method_spec())
                 if method_config.update_application != CallConfig.NEVER:
-                    all_updates.append(abi_external.method)
+                    all_updates.append(abi_external.method.method_spec())
                 if method_config.delete_application != CallConfig.NEVER:
-                    all_deletes.append(abi_external.method)
+                    all_deletes.append(abi_external.method.method_spec())
                 if method_config.opt_in != CallConfig.NEVER:
-                    all_opt_ins.append(abi_external.method)
+                    all_opt_ins.append(abi_external.method.method_spec())
                 if method_config.clear_state != CallConfig.NEVER:
-                    all_clear_states.append(abi_external.method)
+                    all_clear_states.append(abi_external.method.method_spec())
                 if method_config.close_out != CallConfig.NEVER:
-                    all_close_outs.append(abi_external.method)
+                    all_close_outs.append(abi_external.method.method_spec())
 
             kwargs: dict[str, Method | None] = {
                 "on_create": all_creates.pop() if len(all_creates) == 1 else None,

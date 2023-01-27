@@ -1,4 +1,4 @@
-from .application import Application, get_method_spec
+from .application import Application
 from .state import (
     AccountState,
     ApplicationState,

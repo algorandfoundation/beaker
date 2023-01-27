@@ -115,8 +115,8 @@ def assert_output(
         sandbox_accounts = sandbox.get_accounts()
 
     try:
-        unit_test_method = app.methods.unit_test
-    except AttributeError:
+        unit_test_method = app.abi_methods["unit_test"]
+    except KeyError:
         raise Exception(
             "Expression undefined. Either pass the expr to test or implement unit_test method"
         )
@@ -141,7 +141,7 @@ def assert_output(
                 app_client.add_method_call(atc, unit_test_method, **input)
                 for x in range(opups):
                     app_client.add_method_call(
-                        atc, app.methods.opup, note=str(x).encode()
+                        atc, app.abi_methods["opup"], note=str(x).encode()
                     )
 
                 results = app_client._execute_atc(atc, wait_rounds=2)

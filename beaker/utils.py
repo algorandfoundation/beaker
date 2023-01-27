@@ -1,3 +1,6 @@
+from typing import TypeVar, Callable, MutableMapping
+
+
 def get_class_attributes(cls: type, use_legacy_ordering: bool = False) -> list[str]:
     """Get all class attribute names include names of ancestors, preserving declaration order"""
     if not use_legacy_ordering:
@@ -21,3 +24,16 @@ def get_class_attributes(cls: type, use_legacy_ordering: bool = False) -> list[s
     # unique-ify values, preserving order
     attr_names = list(dict.fromkeys(attr_names))
     return attr_names
+
+
+TKey = TypeVar("TKey")
+TValue = TypeVar("TValue")
+
+
+def remove_first_match(
+    m: MutableMapping[TKey, TValue], predicate: Callable[[TKey, TValue], bool]
+) -> None:
+    for k, v in m.items():
+        if predicate(k, v):
+            del m[k]
+            break

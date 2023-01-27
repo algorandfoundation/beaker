@@ -4,47 +4,12 @@ from enum import Enum
 from inspect import signature, Parameter
 from typing import Callable, Any, TypedDict
 
-from algosdk.abi import Method
-from pyteal import (
-    abi,
-    Expr,
-    Int,
-    TealTypeError,
-    Bytes,
-    ABIReturnSubroutine,
-    SubroutineFnWrapper,
-    ScratchVar,
-)
+from pyteal import abi, Expr, Int, TealTypeError, Bytes, ABIReturnSubroutine
 
 from beaker.decorators.authorize import _authorize, Authorize
 from beaker.state import AccountStateValue, ApplicationStateValue
 
 HandlerFunc = Callable[..., Expr]
-
-
-class MethodProxy:
-    def __init__(
-        self,
-        method: SubroutineFnWrapper | ABIReturnSubroutine,
-        *,
-        deregister: Callable[["MethodProxy"], None],
-    ):
-        self._method = method
-        self._deregister = deregister
-
-    def __call__(
-        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any
-    ) -> Expr | abi.ReturnedValue:
-        return self._method(*args, **kwargs)
-
-    def deregister(self) -> None:
-        self._deregister(self)
-
-    def method_spec(self) -> Method | None:
-        try:
-            return self._method.method_spec()  # type: ignore[union-attr]
-        except AttributeError:
-            return None
 
 
 class DefaultArgumentClass(str, Enum):
@@ -54,7 +19,7 @@ class DefaultArgumentClass(str, Enum):
     Constant = "constant"
 
 
-DefaultArgumentType = Expr | ABIReturnSubroutine | MethodProxy | int | bytes | str
+DefaultArgumentType = Expr | ABIReturnSubroutine | int | bytes | str
 
 
 class DefaultArgument:
@@ -84,9 +49,7 @@ class DefaultArgument:
                 self.resolvable_class = DefaultArgumentClass.Constant
 
             # FunctionType
-            case (ABIReturnSubroutine() as fn) | MethodProxy(
-                _method=ABIReturnSubroutine() as fn
-            ):
+            case ABIReturnSubroutine() as fn:
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
@@ -107,9 +70,7 @@ class DefaultArgument:
                 return self.resolver
 
             # FunctionType
-            case (ABIReturnSubroutine() as fn) | MethodProxy(
-                _method=ABIReturnSubroutine() as fn
-            ):
+            case ABIReturnSubroutine() as fn:
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
                 return fn.method_spec().dictify()
@@ -169,9 +130,7 @@ def capture_method_hints(fn: HandlerFunc, read_only: bool) -> MethodHints:
 
     for name, param in params.items():
         match param.default:
-            case Expr() | int() | str() | bytes() | ABIReturnSubroutine() | MethodProxy(
-                _method=ABIReturnSubroutine()
-            ):
+            case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
                 mh.default_arguments[name] = DefaultArgument(param.default)
                 params[name] = param.replace(default=Parameter.empty)
         if inspect.isclass(param.annotation) and issubclass(

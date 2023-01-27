@@ -20,15 +20,11 @@ from algosdk import transaction
 from algosdk.logic import get_application_address
 from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
+from pyteal import ABIReturnSubroutine
 
-from beaker.application import Application, get_method_spec
+from beaker.application import Application
 from beaker.consts import num_extra_program_pages
-from beaker.decorators import (
-    HandlerFunc,
-    MethodHints,
-    DefaultArgument,
-    DefaultArgumentClass,
-)
+from beaker.decorators import MethodHints, DefaultArgument, DefaultArgumentClass
 from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.precompile import AppPrecompile, ProgramAssertion
@@ -417,7 +413,7 @@ class ApplicationClient:
 
     def call(
         self,
-        method: abi.Method | HandlerFunc,
+        method: abi.Method | ABIReturnSubroutine,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
@@ -440,8 +436,8 @@ class ApplicationClient:
 
         """Handles calling the application"""
 
-        if not isinstance(method, abi.Method):
-            method = get_method_spec(method)
+        if isinstance(method, ABIReturnSubroutine):
+            method = method.method_spec()
 
         hints = self.method_hints(method.name)
 
@@ -555,7 +551,7 @@ class ApplicationClient:
     def add_method_call(
         self,
         atc: AtomicTransactionComposer,
-        method: abi.Method | HandlerFunc,
+        method: abi.Method | ABIReturnSubroutine,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
@@ -581,8 +577,8 @@ class ApplicationClient:
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
-        if not isinstance(method, abi.Method):
-            method = get_method_spec(method)
+        if isinstance(method, ABIReturnSubroutine):
+            method = method.method_spec()
 
         hints = self.method_hints(method.name)
 
