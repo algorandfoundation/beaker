@@ -3,7 +3,7 @@ from base64 import b64decode
 
 
 def str_or_hex(v: bytes) -> str:
-    decoded: str = ""
+    decoded: str
     try:
         decoded = v.decode("utf-8")
     except Exception:

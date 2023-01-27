@@ -3,6 +3,7 @@ from base64 import b64decode
 import copy
 from typing import Any, cast, Optional
 
+import algosdk
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
@@ -426,7 +427,7 @@ class ApplicationClient:
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
-        boxes: list[tuple[int, bytes]] | None = None,
+        boxes: list[tuple[int, bytes | bytearray | str | int]] | None = None,
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
@@ -567,7 +568,7 @@ class ApplicationClient:
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
-        boxes: list[tuple[int, bytes]] | None = None,
+        boxes: list[tuple[int, bytes | bytearray | str | int]] | None = None,
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
@@ -612,6 +613,12 @@ class ApplicationClient:
                 raise Exception(f"Unspecified argument: {name}")
         if kwargs:
             warnings.warn(f"Unused arguments specified: {', '.join(kwargs)}")
+        if boxes is not None:
+            encoded_boxes = [
+                (id_, algosdk.encoding.encode_as_bytes(name)) for id_, name in boxes
+            ]
+        else:
+            encoded_boxes = None
         atc.add_method_call(
             self.app_id,
             method,
@@ -628,7 +635,7 @@ class ApplicationClient:
             accounts=accounts,
             foreign_apps=foreign_apps,
             foreign_assets=foreign_assets,
-            boxes=boxes,
+            boxes=encoded_boxes,
             note=note,
             lease=lease,
             rekey_to=rekey_to,
@@ -667,12 +674,9 @@ class ApplicationClient:
     def get_application_state(self, raw=False) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)
-        if "params" not in app_state or "global-state" not in app_state["params"]:
-            return {}
-
         return cast(
             dict[bytes | str, bytes | str | int],
-            decode_state(app_state["params"]["global-state"], raw=raw),
+            decode_state(app_state.get("params", {}).get("global-state", {}), raw=raw),
         )
 
     def get_account_state(

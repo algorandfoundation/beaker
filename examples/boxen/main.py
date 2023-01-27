@@ -62,10 +62,10 @@ def demo():
         acct.address, sp, app_client.app_addr, MembershipClub._min_balance
     )
     result = app_client.call(
-        MembershipClub.bootstrap,
+        "bootstrap",
         seed=TransactionWithSigner(ptxn, acct.signer),
         token_name="fight club",
-        boxes=[[app_client.app_id, "affirmations"]] * 8,
+        boxes=[(app_client.app_id, "affirmations")] * 8,
     )
     membership_token = result.return_value
     print(f"Created asset id: {membership_token}")
@@ -83,18 +83,18 @@ def demo():
 
     # Add member account as member
     app_client.call(
-        MembershipClub.add_member,
+        "add_member",
         new_member=member_acct.address,
         suggested_params=sp,
-        boxes=[[app_client.app_id, decode_address(member_acct.address)]],
+        boxes=[(app_client.app_id, decode_address(member_acct.address))],
     )
     print_boxes(app_client)
 
     # read the membership record box
     result = app_client.call(
-        MembershipClub.get_membership_record,
+        "get_membership_record",
         member=member_acct.address,
-        boxes=[[app_client.app_id, decode_address(member_acct.address)]],
+        boxes=[(app_client.app_id, decode_address(member_acct.address))],
     )
     print(result.return_value)
 
@@ -102,23 +102,23 @@ def demo():
     member_client = app_client.prepare(signer=member_acct.signer)
     for idx, aff in enumerate(affirmations):
         result = member_client.call(
-            MembershipClub.set_affirmation,
+            "set_affirmation",
             idx=idx,
             affirmation=aff.ljust(64, " ").encode(),
-            boxes=[[app_client.app_id, "affirmations"]],
+            boxes=[(app_client.app_id, "affirmations")],
         )
 
     # Get the affirmation from the app, passing box ref holding affirmations
     result = member_client.call(
-        MembershipClub.get_affirmation,
-        boxes=[[app_client.app_id, "affirmations"]],
+        "get_affirmation",
+        boxes=[(app_client.app_id, "affirmations")],
     )
     print(bytes(result.return_value).decode("utf-8").strip())
 
     # Remove the member we'd just added
     app_client.call(
-        MembershipClub.remove_member,
-        boxes=[[app_client.app_id, decode_address(member_acct.address)]],
+        "remove_member",
+        boxes=[(app_client.app_id, decode_address(member_acct.address))],
         member=member_acct.address,
     )
     print_boxes(app_client)
@@ -140,8 +140,9 @@ def demo():
     sp.flat_fee = True
     sp.fee = 2000
     ptxn = PaymentTxn(app_client.sender, sp, app_member_addr, consts.algo * 1)
+    assert app_client.signer is not None
     app_member_client.call(
-        AppMember.bootstrap,
+        "bootstrap",
         seed=TransactionWithSigner(ptxn, app_client.signer),
         app_id=app_client.app_id,
         membership_token=membership_token,
@@ -149,15 +150,15 @@ def demo():
 
     # Add app to club using the member_club client
     app_client.call(
-        MembershipClub.add_member,
+        "add_member",
         new_member=app_member_addr,
         suggested_params=sp,
-        boxes=[[app_client.app_id, decode_address(app_member_addr)]],
+        boxes=[(app_client.app_id, decode_address(app_member_addr))],
     )
 
     # Call method to get a new affirmation
     app_member_client.call(
-        AppMember.get_affirmation, boxes=[[app_client.app_id, "affirmations"]]
+        "get_affirmation", boxes=[(app_client.app_id, "affirmations")]
     )
 
     # Read the affirmation out of the AppMembers app state

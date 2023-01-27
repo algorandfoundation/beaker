@@ -130,6 +130,8 @@ retsub
 // get_affirmation
 getaffirmation_3:
 proto 2 0
+pushbytes 0x // ""
+dupn 2
 itxn_begin
 pushint 6 // appl
 itxn_field TypeEnum
