@@ -15,7 +15,7 @@ from algosdk.atomic_transaction_composer import (
 
 from beaker.decorators import Authorize, DefaultArgument
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, get_method_selector
+from beaker.application import Application
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
@@ -197,14 +197,18 @@ def test_compile():
 
     assert len(approval_program) > 0, "Should have a valid approval program"
     assert approval_program[0] == version, "First byte should be the version we set"
-    assert approval_map.version == 3, "Should have valid source map with version 3"
+    assert (
+        approval_map and approval_map.version == 3
+    ), "Should have valid source map with version 3"
     assert len(approval_map.pc_to_line) > 0, "Should have valid mapping"
 
     assert ac.app.clear_program
     clear_program, _, clear_map = ac.compile(ac.app.clear_program, source_map=True)
     assert len(clear_program) > 0, "Should have a valid clear program"
     assert clear_program[0] == version, "First byte should be the version we set"
-    assert clear_map.version == 3, "Should have valid source map with version 3"
+    assert (
+        clear_map and clear_map.version == 3
+    ), "Should have valid source map with version 3"
     assert len(clear_map.pc_to_line) > 0, "Should have valid mapping"
 
 
@@ -453,12 +457,13 @@ def test_call(sb_accts: SandboxAccounts):
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
-    result = ac.call(app.methods.add, a=1, b=1)
+    method_add = app.abi_methods["add"]
+    result = ac.call(method_add, a=1, b=1)
     assert result.return_value == 2
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = get_method_selector(app.methods.add)
+    ms = method_add.method_spec().get_selector()
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
@@ -492,8 +497,9 @@ def test_add_method_call(sb_accts: SandboxAccounts):
     ac = ApplicationClient(client, app, signer=signer)
     app_id, _, _ = ac.create()
 
+    method_add = app.abi_methods["add"]
     atc = AtomicTransactionComposer()
-    ac.add_method_call(atc, app.methods.add, a=1, b=1)
+    ac.add_method_call(atc, method_add, a=1, b=1)
     atc_result = atc.execute(client, 4)
     result = atc_result.abi_results[0]
 
@@ -501,7 +507,7 @@ def test_add_method_call(sb_accts: SandboxAccounts):
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = get_method_selector(app.methods.add)
+    ms = method_add.method_spec().get_selector()
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
@@ -559,7 +565,7 @@ def test_resolve(sb_accts: SandboxAccounts):
     assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == b"test"
     assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
     assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == b"test"
-    assert ac.resolve(DefaultArgument(app.methods.dummy)) == "deadbeef"
+    assert ac.resolve(DefaultArgument(app.abi_methods["dummy"])) == "deadbeef"
 
 
 def test_override_app_create(sb_accts: SandboxAccounts):

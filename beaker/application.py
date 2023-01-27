@@ -220,16 +220,7 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        method_config: MethodConfig
-        | dict[OnCompleteActionName, CallConfig]
-        | None = None,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = False,
-        read_only: bool = False,
-        override: bool | None = False,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
     @overload
@@ -374,20 +365,12 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = False,
     ) -> DecoratorResultType:
         ...
 
     @overload
     def create(
         self,
-        fn: None = None,
         /,
         *,
         allow_call: bool = False,
@@ -428,14 +411,6 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = None,
     ) -> DecoratorResultType:
         ...
 
@@ -484,14 +459,6 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = None,
     ) -> DecoratorResultType:
         ...
 
@@ -540,14 +507,6 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = None,
     ) -> DecoratorResultType:
         ...
 
@@ -596,14 +555,6 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = None,
     ) -> DecoratorResultType:
         ...
 
@@ -652,14 +603,6 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = None,
     ) -> DecoratorResultType:
         ...
 
@@ -708,14 +651,6 @@ class Application:
         self,
         fn: HandlerFunc,
         /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = None,
     ) -> DecoratorResultType:
         ...
 

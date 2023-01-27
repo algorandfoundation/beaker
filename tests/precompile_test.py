@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 import pyteal as pt
 from algosdk import encoding
@@ -185,24 +183,25 @@ def LargeApp() -> Application:
 
 def test_large_app_create():
     class LargeAppDeployer(Application):
-        def __init__(self):
-            super().__init__()
-            self.large_app = self.precompile(LargeApp())
+        pass
 
-            @self.external
-            def deploy_large_app(*, output: pt.abi.Uint64):
-                return pt.Seq(
-                    pt.InnerTxnBuilder.Execute(self.large_app.get_create_config()),
-                    output.set(pt.InnerTxn.application_id()),
-                )
+    app = LargeAppDeployer()
+    large_app = app.precompile(LargeApp())
+
+    @app.external
+    def deploy_large_app(*, output: pt.abi.Uint64) -> pt.Expr:
+        return pt.Seq(
+            pt.InnerTxnBuilder.Execute(large_app.get_create_config()),
+            output.set(pt.InnerTxn.application_id()),
+        )
 
     acct = get_accounts().pop()
-    app = LargeAppDeployer()
+
     ac = ApplicationClient(get_algod_client(), app, signer=acct.signer)
 
     ac.create()
     ac.fund(1_000_000)
-    result = ac.call(app.methods.deploy_large_app)
+    result = ac.call(method=deploy_large_app)
     print(result.return_value)
 
 
