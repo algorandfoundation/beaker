@@ -14,10 +14,7 @@ from beaker.state import (
 
 from beaker.errors import BareOverwriteError
 from beaker.application import (
-    Application,
-    get_method_selector,
-    get_method_signature,
-    get_method_spec,
+    Application
 )
 from beaker.decorators import DefaultArgumentClass
 from tests.conftest import check_application_artifacts_output_stability
@@ -41,7 +38,7 @@ def test_empty_application():
         == 0
     ), "Expected no schema"
 
-    assert len(ea._bare_externals.keys()) == len(
+    assert len(ea.bare_methods) == len(
         EXPECTED_BARE_HANDLERS
     ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
     assert (
@@ -62,138 +59,131 @@ def test_teal_version():
     assert ea.approval_program.split("\n")[0] == "#pragma version 8"
 
 
+class NoCreateApp(Application):
+
+    def __init__(self):
+        super().__init__(implement_default_create=False)
+
+
 def test_single_external():
-    class Singleexternal(Application):
-        @external
-        def handle():
-            return pt.Assert(pt.Int(1))
+    app = Application()
+    @app.external
+    def handle():
+        return pt.Assert(pt.Int(1))
 
-    sh = Singleexternal()
-    sh.compile()
+    app.compile()
 
-    assert len(sh.methods) == 1, "Expected a single external"
-    assert sh.contract.get_method_by_name("handle") == get_method_spec(
-        sh.handle
-    ), "Expected contract method to match method spec"
+    assert len(app.abi_methods) == 1, "Expected a single external"
+    assert app.contract.get_method_by_name("handle") == (
+        app.abi_methods['handle'].method_spec()), "Expected contract method to match method spec"
 
     with pytest.raises(Exception):
-        sh.contract.get_method_by_name("made up")
+        app.contract.get_method_by_name("made up")
 
 
 def test_internal_not_exposed():
     class SingleInternal(Application):
-        @external
-        def doit(self, *, output: pt.abi.Bool):
-            return self.do_permissioned_thing(output=output)
+        pass
 
-        def do_permissioned_thing(self, *, output: pt.abi.Bool):
-            return pt.Seq((b := pt.abi.Bool()).set(pt.Int(1)), output.set(b))
+    app = SingleInternal()
+    @app.external
+    def doit(*, output: pt.abi.Bool):
+        return do_permissioned_thing(output=output)
 
-    si = SingleInternal()
-    check_application_artifacts_output_stability(si)
-    assert len(si.methods) == 1, "Expected a single external"
+    def do_permissioned_thing(*, output: pt.abi.Bool):
+        return pt.Seq((b := pt.abi.Bool()).set(pt.Int(1)), output.set(b))
+
+    assert len(app.abi_methods) == 1, "Expected a single external"
 
 
 def test_method_override():
-    class MethodOverride(Application):
-        @external(name="handle")
-        def handle_algo(self, txn: PaymentTransaction):
-            return pt.Approve()
+    app = Application()
 
-        @external(name="handle")
-        def handle_asa(self, txn: AssetTransferTransaction):
-            return pt.Approve()
+    @app.external(name="handle")
+    def handle_algo(txn: PaymentTransaction):
+        return pt.Approve()
 
-    mo = MethodOverride()
-    mo.compile()
+    @app.external(name="handle")
+    def handle_asa(txn: AssetTransferTransaction):
+        return pt.Approve()
 
-    assert len(mo.methods) == 2, "Expected two externals"
-    assert mo.methods["handle_algo"]
-    assert mo.methods["handle_asa"]
+    app.compile()
+
+    assert app.abi_methods == {"handle_algo": handle_algo, "handle_asa": handle_asa}
 
     overlapping_methods = [
-        method for method in mo.contract.methods if method.name == "handle"
+        method for method in app.contract.methods if method.name == "handle"
     ]
-    assert len(overlapping_methods) == 2
-    assert get_method_spec(mo.handle_algo) in overlapping_methods
-    assert get_method_spec(mo.handle_asa) in overlapping_methods
-
+    assert overlapping_methods == [handle_algo.method_spec(), handle_asa.method_spec()]
 
 def test_bare():
-    class Bare(Application):
-        @create(bare=True)
-        def create():
-            return pt.Approve()
+    app = NoCreateApp()
+    @app.create(bare=True)
+    def create():
+        return pt.Approve()
 
-        @update(bare=True)
-        def update():
-            return pt.Approve()
+    @app.update(bare=True)
+    def update():
+        return pt.Approve()
 
-        @delete(bare=True)
-        def delete():
-            return pt.Approve()
-
-    bh = Bare()
+    @app.delete(bare=True)
+    def delete():
+        return pt.Approve()
 
     assert (
-        len(bh._bare_externals) == 3
+        len(app.bare_methods) == 3
     ), "Expected 3 bare externals: create,update,delete"
-
-    class FailBare(Application):
-        @create(bare=True)
-        def wrong_name():
-            return pt.Approve()
-
-    with pytest.raises(BareOverwriteError):
-        bh = FailBare()
 
 
 def test_mixed_bares():
-    class MixedBare(Application):
-        @create(bare=True)
-        def create(self):
-            return pt.Approve()
+    class MixedBare(NoCreateApp):
+        pass
+    app = MixedBare()
 
-        @opt_in
-        def opt_in(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    @app.create(bare=True)
+    def create():
+        return pt.Approve()
 
-    mb = MixedBare()
-    assert len(mb._bare_externals) == 1
-    assert len(mb.methods) == 1
+    @app.opt_in
+    def opt_in(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
+
+    assert len(app.bare_methods) == 1
+    assert len(app.abi_methods) == 1
 
 
 def test_bare_external():
-    class BareExternal(Application):
-        @create
-        def create(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    class BareExternal(NoCreateApp):
+        pass
+    app = BareExternal()
+    @app.create
+    def create(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
 
-        @opt_in
-        def opt_in(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    @app.opt_in
+    def opt_in(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
 
-        @close_out
-        def close_out(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    @app.close_out
+    def close_out(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
 
-        @clear_state
-        def clear_state(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    @app.clear_state
+    def clear_state(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
 
-        @update
-        def update(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    @app.update
+    def update(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
 
-        @delete
-        def delete(self, s: pt.abi.String):
-            return pt.Assert(pt.Len(s.get()))
+    @app.delete
+    def delete(s: pt.abi.String):
+        return pt.Assert(pt.Len(s.get()))
 
-    be = BareExternal()
-    be.compile()
-    assert len(be._bare_externals) == 0, "Should have no bare externals"
+    app.compile()
+    assert len(app.bare_methods) == 0, "Should have no bare externals"
     assert (
-        len(be.contract.methods) == 6
+        len(app.contract.methods) == 6
     ), "should have create, optin, closeout, clearstate, update, delete"
 
     hc = get_handler_config(BareExternal.create)
