@@ -2,14 +2,13 @@ import pytest
 
 from beaker import Application
 from tests.conftest import check_application_artifacts_output_stability
-from examples.c2c.main import demo, C2CMain, C2CSub
+from examples.c2c.main import demo, main_app, sub_app
 
 
 def test_demo():
     demo()
 
 
-@pytest.mark.parametrize("app_class", [C2CMain, C2CSub])
-def test_output_stability(app_class: type[Application]):
-    app = app_class()
+@pytest.mark.parametrize("app", [sub_app, main_app])
+def test_output_stability(app: Application):
     check_application_artifacts_output_stability(app)
