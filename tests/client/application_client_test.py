@@ -1,6 +1,6 @@
 import pytest
 import pyteal as pt
-from typing import Any
+from typing import Any, cast
 from base64 import b64decode, b64encode
 
 from algosdk.account import generate_account
@@ -450,7 +450,10 @@ def test_clear_state(sb_accts: SandboxAccounts):
         },
     )
     new_app_state = new_ac.get_application_state()
-    assert new_app_state["app_state_val_int"] == old_app_state["app_state_val_int"] + 1
+    assert (
+        new_app_state["app_state_val_int"]
+        == cast(int, old_app_state["app_state_val_int"]) + 1
+    )
 
 
 def test_call(sb_accts: SandboxAccounts):
