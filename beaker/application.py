@@ -150,16 +150,22 @@ class Application:
         if any(cc == CallConfig.NEVER for cc in actions.values()):
             raise ValueError("???")
         method_sig = method.method_signature()
-        if override is True:
-            if method_sig not in self._abi_externals:
+        existing_method = None
+        try:
+            existing_method = self._abi_externals[method_sig]
+        except KeyError:
+            if override is True:
                 raise ValueError("override=True, but nothing to override")
-            # TODO: should we warn if call config differs?
-        elif override is False:
-            if method_sig in self._abi_externals:
+        if existing_method is not None:
+            if override is False:
                 raise ValueError(
                     "override=False, but method with matching signature already registered"
                 )
-
+            # TODO: should we warn if call config differs?
+            existing_method_python_name = cast(
+                ABIReturnSubroutine, existing_method.method
+            ).subroutine.implementation.__name__
+            del self.abi_methods[existing_method_python_name]
         self._abi_externals[method_sig] = ABIExternal(
             actions=actions,
             method=method,
@@ -190,14 +196,23 @@ class Application:
         for for_action, call_config in actions.items():
             if call_config == CallConfig.NEVER:
                 raise ValueError("???")
-            if override is True:
-                if for_action not in self._bare_externals:
+            existing_action = None
+            try:
+                existing_action = self._bare_externals[for_action]
+            except KeyError:
+                if override is True:
                     raise ValueError("override=True, but nothing to override")
-            elif override is False:
-                if for_action in self._bare_externals:
+
+            if existing_action is not None:
+                if override is False:
                     raise ValueError(
                         f"override=False, but bare external for {for_action} already exists."
                     )
+                existing_sub = cast(SubroutineFnWrapper, existing_action.action)
+                existing_sub_python_name = (
+                    existing_sub.subroutine.implementation.__name__
+                )
+                del self.bare_methods[existing_sub_python_name]
 
             self._bare_externals[for_action] = OnCompleteAction(
                 action=sub, call_config=call_config

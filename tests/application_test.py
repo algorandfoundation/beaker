@@ -5,6 +5,7 @@ from Cryptodome.Hash import SHA512
 import pyteal as pt
 from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
+import beaker
 from beaker.state import (
     ReservedApplicationStateValue,
     ApplicationStateValue,
@@ -12,10 +13,7 @@ from beaker.state import (
     ReservedAccountStateValue,
 )
 
-from beaker.errors import BareOverwriteError
-from beaker.application import (
-    Application
-)
+from beaker.application import Application, MethodConfig
 from beaker.decorators import DefaultArgumentClass
 from tests.conftest import check_application_artifacts_output_stability
 
@@ -60,13 +58,13 @@ def test_teal_version():
 
 
 class NoCreateApp(Application):
-
     def __init__(self):
         super().__init__(implement_default_create=False)
 
 
 def test_single_external():
     app = Application()
+
     @app.external
     def handle():
         return pt.Assert(pt.Int(1))
@@ -75,7 +73,8 @@ def test_single_external():
 
     assert len(app.abi_methods) == 1, "Expected a single external"
     assert app.contract.get_method_by_name("handle") == (
-        app.abi_methods['handle'].method_spec()), "Expected contract method to match method spec"
+        app.abi_methods["handle"].method_spec()
+    ), "Expected contract method to match method spec"
 
     with pytest.raises(Exception):
         app.contract.get_method_by_name("made up")
@@ -86,6 +85,7 @@ def test_internal_not_exposed():
         pass
 
     app = SingleInternal()
+
     @app.external
     def doit(*, output: pt.abi.Bool):
         return do_permissioned_thing(output=output)
@@ -116,8 +116,10 @@ def test_method_override():
     ]
     assert overlapping_methods == [handle_algo.method_spec(), handle_asa.method_spec()]
 
+
 def test_bare():
     app = NoCreateApp()
+
     @app.create(bare=True)
     def create():
         return pt.Approve()
@@ -130,14 +132,13 @@ def test_bare():
     def delete():
         return pt.Approve()
 
-    assert (
-        len(app.bare_methods) == 3
-    ), "Expected 3 bare externals: create,update,delete"
+    assert len(app.bare_methods) == 3, "Expected 3 bare externals: create,update,delete"
 
 
 def test_mixed_bares():
     class MixedBare(NoCreateApp):
         pass
+
     app = MixedBare()
 
     @app.create(bare=True)
@@ -155,7 +156,9 @@ def test_mixed_bares():
 def test_bare_external():
     class BareExternal(NoCreateApp):
         pass
+
     app = BareExternal()
+
     @app.create
     def create(s: pt.abi.String):
         return pt.Assert(pt.Len(s.get()))
@@ -229,33 +232,120 @@ def test_bare_external():
     assert all([c == pt.CallConfig.NEVER for c in confs.values()])
 
 
-def test_subclass_application():
-    class SuperClass(Application):
-        @external
+def test_application_external_override_true():
+    app = Application()
+
+    @app.external()
+    def handle():
+        return pt.Assert(pt.Int(1))
+
+    @app.external(override=True, name="handle")
+    def handle_2():
+        return pt.Assert(pt.Int(2))
+
+    app.compile()
+    assert list(app.abi_methods) == ["handle_2"]
+    assert (
+        app.contract.get_method_by_name("handle") == handle_2.method_spec(),
+        "Expected contract method to match method spec",
+    )
+
+
+def test_application_external_override_false():
+    app = Application()
+
+    @app.external
+    def handle():
+        return pt.Assert(pt.Int(1))
+
+    with pytest.raises(ValueError):
+
+        @app.external(override=False, name="handle")
+        def handle_2():
+            return pt.Assert(pt.Int(2))
+
+
+@pytest.mark.parametrize("create_existing_handle", [True, False])
+def test_application_external_override_none(create_existing_handle: bool):
+    app = Application()
+
+    if create_existing_handle:
+
+        @app.external
         def handle():
             return pt.Assert(pt.Int(1))
 
-    class SubClass(SuperClass):
-        pass
+    @app.external(override=None, name="handle")
+    def handle_2():
+        return pt.Assert(pt.Int(2))
 
-    sc = SubClass()
-    sc.compile()
-    assert len(sc.methods) == 1, "Expected single method"
-    assert sc.contract.get_method_by_name("handle") == get_method_spec(
-        sc.handle
+    app.compile()
+    assert (
+        app.contract.get_method_by_name("handle") == handle_2.method_spec()
     ), "Expected contract method to match method spec"
+    assert list(app.abi_methods) == ["handle_2"]
 
-    class OverrideSubClass(SuperClass):
-        @external
+
+def test_application_bare_override_true():
+    app = NoCreateApp()
+
+    @app.external(bare=True, method_config=MethodConfig(opt_in=pt.CallConfig.CALL))
+    def handle():
+        return pt.Assert(pt.Int(1))
+
+    @app.external(
+        bare=True,
+        method_config=MethodConfig(opt_in=pt.CallConfig.CALL),
+        override=True,
+        name="handle",
+    )
+    def handle_2():
+        return pt.Assert(pt.Int(1))
+
+    app.compile()
+    assert list(app.bare_methods) == ["handle_2"]
+
+
+def test_application_bare_override_false():
+    app = NoCreateApp()
+
+    @app.external(bare=True, method_config=MethodConfig(opt_in=pt.CallConfig.CALL))
+    def handle():
+        return pt.Assert(pt.Int(1))
+
+    with pytest.raises(ValueError):
+
+        @app.external(
+            bare=True,
+            method_config=MethodConfig(opt_in=pt.CallConfig.CALL),
+            override=False,
+            name="handle",
+        )
+        def handle_2():
+            return pt.Assert(pt.Int(1))
+
+
+@pytest.mark.parametrize("create_existing_handle", [True, False])
+def test_application_bare_override_none(create_existing_handle: bool):
+    app = NoCreateApp()
+
+    if create_existing_handle:
+
+        @app.external(bare=True, method_config=MethodConfig(opt_in=pt.CallConfig.CALL))
         def handle():
-            return pt.Assert(pt.Int(2))
+            return pt.Assert(pt.Int(1))
 
-    osc = OverrideSubClass()
-    osc.compile()
-    assert len(osc.methods) == 1, "Expected single method"
-    assert osc.contract.get_method_by_name("handle") == get_method_spec(
-        osc.handle
-    ), "Expected contract method to match method spec"
+    @app.external(
+        bare=True,
+        method_config=MethodConfig(opt_in=pt.CallConfig.CALL),
+        override=None,
+        name="handle",
+    )
+    def handle_2():
+        return pt.Assert(pt.Int(1))
+
+    app.compile()
+    assert list(app.bare_methods) == ["handle_2"]
 
 
 def test_app_state():
