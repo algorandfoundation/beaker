@@ -60,19 +60,18 @@ callsub create_1
 intc_1 // 1
 return
 
-// Max
-Max_0:
-store 12
-store 11
-load 11
-load 12
+// max
+max_0:
+proto 2 1
+frame_dig -2
+frame_dig -1
 >
-bnz Max_0_l2
-load 12
-b Max_0_l3
-Max_0_l2:
-load 11
-Max_0_l3:
+bnz max_0_l2
+frame_dig -1
+b max_0_l3
+max_0_l2:
+frame_dig -2
+max_0_l3:
 retsub
 
 // create
@@ -191,8 +190,8 @@ frame_dig -4
 frame_dig -3
 frame_dig -2
 intc_1 // 1
-load 9
-callsub Max_0
+load 4
+callsub max_0
 intc_1 // 1
 -
 load 4

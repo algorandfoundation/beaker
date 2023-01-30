@@ -1,9 +1,33 @@
 import base64
 import random
 from typing import Final
-from algosdk import *
-from pyteal import *
-from beaker import *
+
+from algosdk import v2client
+from pyteal import (
+    App,
+    Or,
+    Return,
+    Subroutine,
+    Log,
+    abi,
+    Extract,
+    TealType,
+    Int,
+    Global,
+    Concat,
+    Bytes,
+    ExtractUint64,
+    Assert,
+    ScratchVar,
+    Suffix,
+    Expr,
+    Itob,
+    If,
+    Seq,
+)
+
+
+from beaker import Application, ApplicationStateValue, sandbox, client, consts
 from beaker.lib.math import Max
 
 
@@ -14,97 +38,101 @@ class SortedIntegers(Application):
         descr="The number of elements in the array",
     )
 
-    _box_name = "sorted_ints"
-    _box_size = 1024 * 4
-    _max_ints = _box_size // 8
 
-    BoxName = Bytes(_box_name)
-    BoxSize = Int(_box_size)
-    MaxInts = Int(_max_ints)
+_box_name = "sorted_ints"
+_box_size = 1024 * 4
+_max_ints = _box_size // 8
 
-    @external
-    def add_int(self, val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
-        return Seq(
-            array_contents := App.box_get(self.BoxName),
-            Assert(Or(Int(0), Int(1))),
-            # figure out the correct index
-            # Write the new array with the contents
-            (idx := ScratchVar()).store(
-                If(
-                    self.elements == Int(0),
-                    Int(0),
-                    self.binary_search(
-                        val.get(),
-                        array_contents.value(),
-                        Int(0),
-                        self.elements - Int(1),
-                    )
-                    * Int(8),
-                )
-            ),
-            App.box_put(
-                self.BoxName,
-                # Take the bytes that would fit in the box
-                self.insert_element(
-                    array_contents.value(),
-                    val.encode(),
-                    idx.load(),
-                ),
-            ),
-            self.elements.increment(),
-            Log(Itob(Global.opcode_budget())),
-            output.decode(
-                # Prepend the bytes with the number of elements as a uint16,
-                # according to ABI spec
-                Concat(
-                    Suffix(Itob(Int(10)), Int(6)),
-                    App.box_extract(self.BoxName, Int(0), Int(8) * Int(10)),
-                )
-            ),
-        )
+BoxName = Bytes(_box_name)
+BoxSize = Int(_box_size)
+MaxInts = Int(_max_ints)
 
-    @internal(TealType.uint64)
-    def binary_search(self, val: Expr, arr: Expr, start: Expr, end: Expr) -> Expr:
-        return Seq(
-            If(start > end, Return(start)),
+sorted_ints_app = SortedIntegers(version=8)
+
+
+@sorted_ints_app.external
+def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
+    return Seq(
+        array_contents := App.box_get(BoxName),
+        Assert(Or(Int(0), Int(1))),
+        # figure out the correct index
+        # Write the new array with the contents
+        (idx := ScratchVar()).store(
             If(
-                start == end,
-                Return(
-                    start + If(self.lookup_element(arr, start) > val, Int(0), Int(1))
-                ),
+                sorted_ints_app.elements == Int(0),
+                Int(0),
+                binary_search(
+                    val.get(),
+                    array_contents.value(),
+                    Int(0),
+                    sorted_ints_app.elements - Int(1),
+                )
+                * Int(8),
+            )
+        ),
+        App.box_put(
+            BoxName,
+            # Take the bytes that would fit in the box
+            insert_element(
+                array_contents.value(),
+                val.encode(),
+                idx.load(),
             ),
-            (mididx := ScratchVar()).store((start + end) / Int(2)),
-            (midval := ScratchVar()).store(self.lookup_element(arr, mididx.load())),
-            If(midval.load() < val)
-            .Then(
-                self.binary_search(val, arr, mididx.load() + Int(1), end),
+        ),
+        sorted_ints_app.elements.increment(),
+        Log(Itob(Global.opcode_budget())),
+        output.decode(
+            # Prepend the bytes with the number of elements as a uint16,
+            # according to ABI spec
+            Concat(
+                Suffix(Itob(Int(10)), Int(6)),
+                App.box_extract(BoxName, Int(0), Int(8) * Int(10)),
             )
-            .ElseIf(midval.load() > val)
-            .Then(
-                self.binary_search(
-                    val, arr, start, Max(Int(1), mididx.load()) - Int(1)
-                ),
-            )
-            .Else(mididx.load()),
-        )
+        ),
+    )
 
-    def lookup_element(self, buff: Expr, idx: Expr):
-        return ExtractUint64(buff, idx * Int(8))
 
-    def insert_element(self, buff: Expr, new_val: Expr, pos: Expr):
-        return Concat(
-            Extract(buff, Int(0), pos),
-            new_val,
-            # extract from pos -> max len of box leaving off
-            Extract(buff, pos, (self.BoxSize - pos) - Int(8)),
+@Subroutine(TealType.uint64)
+def binary_search(val: Expr, arr: Expr, start: Expr, end: Expr) -> Expr:
+    return Seq(
+        If(start > end, Return(start)),
+        If(
+            start == end,
+            Return(start + If(lookup_element(arr, start) > val, Int(0), Int(1))),
+        ),
+        (mididx := ScratchVar()).store((start + end) / Int(2)),
+        (midval := ScratchVar()).store(lookup_element(arr, mididx.load())),
+        If(midval.load() < val)
+        .Then(
+            binary_search(val, arr, mididx.load() + Int(1), end),
         )
+        .ElseIf(midval.load() > val)
+        .Then(
+            binary_search(val, arr, start, Max(Int(1), mididx.load()) - Int(1)),
+        )
+        .Else(mididx.load()),
+    )
 
-    @external
-    def box_create_test(self):
-        return Seq(
-            Assert(App.box_create(self.BoxName, self.BoxSize)),
-            self.elements.set(Int(0)),
-        )
+
+def lookup_element(buff: Expr, idx: Expr):
+    return ExtractUint64(buff, idx * Int(8))
+
+
+def insert_element(buff: Expr, new_val: Expr, pos: Expr):
+    return Concat(
+        Extract(buff, Int(0), pos),
+        new_val,
+        # extract from pos -> max len of box leaving off
+        Extract(buff, pos, (BoxSize - pos) - Int(8)),
+    )
+
+
+@sorted_ints_app.external
+def box_create_test():
+    return Seq(
+        Assert(App.box_create(BoxName, BoxSize)),
+        sorted_ints_app.elements.set(Int(0)),
+    )
 
 
 #
@@ -132,7 +160,7 @@ def get_box(app_id: int, name: bytes, client: v2client.algod.AlgodClient) -> lis
 def demo():
     acct = sandbox.get_accounts().pop()
 
-    app = SortedIntegers(version=8)
+    app = sorted_ints_app
     app.dump("./artifacts")
 
     app_client = client.ApplicationClient(
@@ -145,11 +173,11 @@ def demo():
     print(f"AppID: {app_client.app_id}  AppAddr: {app_client.app_addr}")
 
     # Create 4 box refs since we need to touch 4k
-    boxes = [[app_client.app_id, app._box_name]] * 4
+    boxes = [(app_client.app_id, _box_name)] * 4
 
     # Make App Create box
     result = app_client.call(
-        SortedIntegers.box_create_test,
+        box_create_test,
         boxes=boxes,
     )
 
@@ -162,7 +190,7 @@ def demo():
             print(f"Iteration {idx}: {n}")
 
         result = app_client.call(
-            SortedIntegers.add_int,
+            add_int,
             val=n,
             boxes=boxes,
         )
@@ -172,7 +200,7 @@ def demo():
     print(f"Budget left after each insert: {budgets}")
 
     # Get contents of box
-    box = get_box(app_client.app_id, app._box_name.encode(), app_client.client)
+    box = get_box(app_client.app_id, _box_name.encode(), app_client.client)
     # Make sure its sorted
     assert box == sorted(box)
 

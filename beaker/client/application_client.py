@@ -1,7 +1,7 @@
 import warnings
 from base64 import b64decode
 import copy
-from typing import Any, cast, Optional
+from typing import Any, cast, Optional, Sequence
 
 import algosdk
 from algosdk.account import address_from_private_key
@@ -427,7 +427,7 @@ class ApplicationClient:
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
-        boxes: list[tuple[int, bytes | bytearray | str | int]] | None = None,
+        boxes: Sequence[tuple[int, bytes | bytearray | str | int]] | None = None,
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
@@ -568,7 +568,7 @@ class ApplicationClient:
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
-        boxes: list[tuple[int, bytes | bytearray | str | int]] | None = None,
+        boxes: Sequence[tuple[int, bytes | bytearray | str | int]] | None = None,
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
@@ -614,6 +614,7 @@ class ApplicationClient:
         if kwargs:
             warnings.warn(f"Unused arguments specified: {', '.join(kwargs)}")
         if boxes is not None:
+            # TODO: algosdk actually does this, but it's type hints say otherwise...
             encoded_boxes = [
                 (id_, algosdk.encoding.encode_as_bytes(name)) for id_, name in boxes
             ]
