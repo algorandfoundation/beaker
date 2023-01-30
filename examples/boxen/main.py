@@ -163,7 +163,9 @@ def demo():
 
     # Read the affirmation out of the AppMembers app state
     app_state = app_member_client.get_application_state()
-    print(f"Last affirmation received by app member: {app_state['last_affirmation']}")
+    last_affirmation = app_state["last_affirmation"]
+    assert not isinstance(last_affirmation, bytes)
+    print(f"Last affirmation received by app member: {last_affirmation}")
 
 
 if __name__ == "__main__":
