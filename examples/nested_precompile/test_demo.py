@@ -1,6 +1,6 @@
 from tests.conftest import check_application_artifacts_output_stability
 from .main import demo
-from .nested_application import Grandparent
+from .nested_application import grand_parent_app
 
 
 def test_demo():
@@ -8,5 +8,4 @@ def test_demo():
 
 
 def test_output_stability():
-    app = Grandparent()
-    check_application_artifacts_output_stability(app)
+    check_application_artifacts_output_stability(grand_parent_app)

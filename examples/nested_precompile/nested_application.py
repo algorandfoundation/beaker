@@ -8,9 +8,9 @@ from pyteal import (
     TealType,
     TxnField,
     TxnType,
+    Expr,
 )
-from beaker import *
-from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker import ApplicationStateValue, Application, LogicSignature
 
 
 class LSig(LogicSignature):
@@ -23,77 +23,108 @@ class Child1(Application):
         default=Int(0),
     )
 
-    @create(bare=True)
-    def create(self):
-        return Seq(
-            self.initialize_application_state(),
-        )
 
-    @external
-    def increment_counter(self, *, output: abi.Uint64):
-        """Increment the counter global state."""
-        return Seq(
-            self.counter.increment(),
-            output.set(self.counter.get()),
-        )
+child1_app = Child1(implement_default_create=False)
+
+
+@child1_app.create
+def create() -> Expr:
+    return Seq(
+        child1_app.initialize_application_state(),
+    )
+
+
+@child1_app.external
+def increment_counter(*, output: abi.Uint64) -> Expr:
+    """Increment the counter global state."""
+    return Seq(
+        child1_app.counter.increment(),
+        output.set(child1_app.counter.get()),
+    )
 
 
 class Child2(Application):
-    lsig: LSigPrecompile = LSigPrecompile(LSig())
+    pass
 
-    @external(read_only=True)
-    def get_lsig_addr(self, *, output: abi.Address):
-        return output.set(self.lsig.logic.hash())
+
+child2_app = Child2()
+lsig = LSig()
+
+lsig_pc = child2_app.precompile(lsig)
+
+
+@child2_app.external(read_only=True)
+def get_lsig_addr(*, output: abi.Address) -> Expr:
+    return output.set(lsig_pc.logic.hash())
 
 
 class Parent(Application):
-    child_1: AppPrecompile = AppPrecompile(Child1())
-    child_2: AppPrecompile = AppPrecompile(Child2())
+    pass
 
-    @external
-    def create_child_1(self, *, output: abi.Uint64):
-        """Create a new child app."""
-        return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.child_1.approval.binary,
-                    TxnField.clear_state_program: self.child_1.clear.binary,
-                    TxnField.global_num_uints: Int(1),
-                }
-            ),
-            output.set(InnerTxn.created_application_id()),
-        )
 
-    @external
-    def create_child_2(self, *, output: abi.Uint64):
-        """Create a new child app."""
-        return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.child_2.approval.binary,
-                    TxnField.clear_state_program: self.child_2.clear.binary,
-                    TxnField.global_num_uints: Int(1),
-                }
-            ),
-            output.set(InnerTxn.created_application_id()),
-        )
+parent_app = Parent()
+
+
+child_1_pc = parent_app.precompile(child1_app)
+
+
+@parent_app.external
+def create_child_1(*, output: abi.Uint64) -> Expr:
+    """Create a new child app."""
+
+    return Seq(
+        InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.ApplicationCall,
+                TxnField.approval_program: child_1_pc.approval.binary,
+                TxnField.clear_state_program: child_1_pc.clear.binary,
+                TxnField.global_num_uints: Int(1),
+            }
+        ),
+        output.set(InnerTxn.created_application_id()),
+    )
+
+
+child_2_pc = parent_app.precompile(child2_app)
+
+
+@parent_app.external
+def create_child_2(*, output: abi.Uint64) -> Expr:
+    """Create a new child app."""
+
+    return Seq(
+        InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.ApplicationCall,
+                TxnField.approval_program: child_2_pc.approval.binary,
+                TxnField.clear_state_program: child_2_pc.clear.binary,
+                TxnField.global_num_uints: Int(1),
+            }
+        ),
+        output.set(InnerTxn.created_application_id()),
+    )
 
 
 class Grandparent(Application):
-    parent: AppPrecompile = AppPrecompile(Parent())
+    pass
 
-    @external
-    def create_parent(self, *, output: abi.Uint64):
-        """Create a new parent app."""
-        return Seq(
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: self.parent.approval.binary,
-                    TxnField.clear_state_program: self.parent.clear.binary,
-                }
-            ),
-            output.set(InnerTxn.created_application_id()),
-        )
+
+grand_parent_app = Grandparent()
+
+parent_app_pc = grand_parent_app.precompile(parent_app)
+
+
+@grand_parent_app.external
+def create_parent(*, output: abi.Uint64) -> Expr:
+    """Create a new parent app."""
+
+    return Seq(
+        InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.ApplicationCall,
+                TxnField.approval_program: parent_app_pc.approval.binary,
+                TxnField.clear_state_program: parent_app_pc.clear.binary,
+            }
+        ),
+        output.set(InnerTxn.created_application_id()),
+    )
