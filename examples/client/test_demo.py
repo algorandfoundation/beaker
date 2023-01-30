@@ -1,4 +1,4 @@
-from examples.client.main import demo, ClientExample
+from examples.client.main import demo, my_app
 from tests.conftest import check_application_artifacts_output_stability
 
 
@@ -7,5 +7,4 @@ def test_demo():
 
 
 def test_output_stability():
-    app = ClientExample()
-    check_application_artifacts_output_stability(app)
+    check_application_artifacts_output_stability(my_app)
