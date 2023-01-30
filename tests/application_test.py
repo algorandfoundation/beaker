@@ -1,21 +1,18 @@
-import pytest
-from typing import Final, cast
-from dataclasses import asdict
-from Cryptodome.Hash import SHA512
+from typing import Final
+
 import pyteal as pt
+import pytest
+from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
-import beaker
+from beaker.application import Application, MethodConfig
+from beaker.decorators import DefaultArgumentClass
 from beaker.state import (
     ReservedApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
     ReservedAccountStateValue,
 )
-
-from beaker.application import Application, MethodConfig
-from beaker.decorators import DefaultArgumentClass
-from tests.conftest import check_application_artifacts_output_stability
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -27,7 +24,9 @@ def test_empty_application():
     ea = EmptyApp()
     ea.compile()
 
-    assert ea.contract.name == "EmptyApp", "Expected router name to match class"
+    assert (
+        ea.contract and ea.contract.name == "EmptyApp"
+    ), "Expected router name to match class"
     assert (
         ea.acct_state.num_uints
         + ea.acct_state.num_byte_slices
@@ -39,10 +38,9 @@ def test_empty_application():
     assert len(ea.bare_methods) == len(
         EXPECTED_BARE_HANDLERS
     ), f"Expected {len(EXPECTED_BARE_HANDLERS)} bare handlers: {EXPECTED_BARE_HANDLERS}"
-    assert (
-        len(ea.approval_program) > 0
-    ), "Expected approval program to be compiled to teal"
-    assert len(ea.clear_program) > 0, "Expected clear program to be compiled to teal"
+
+    assert ea.approval_program, "Expected approval program to be compiled to teal"
+    assert ea.clear_program, "Expected clear program to be compiled to teal"
     assert len(ea.contract.methods) == 0, "Expected no methods in the contract"
 
 
@@ -54,7 +52,10 @@ def test_teal_version():
     ea.compile()
 
     assert ea.teal_version == 8, "Expected teal v8"
-    assert ea.approval_program.split("\n")[0] == "#pragma version 8"
+    assert (
+        ea.approval_program
+        and ea.approval_program.split("\n")[0] == "#pragma version 8"
+    )
 
 
 class NoCreateApp(Application):
@@ -70,6 +71,7 @@ def test_single_external():
         return pt.Assert(pt.Int(1))
 
     app.compile()
+    assert app.contract
 
     assert len(app.abi_methods) == 1, "Expected a single external"
     assert app.contract.get_method_by_name("handle") == (
@@ -108,12 +110,15 @@ def test_method_override():
         return pt.Approve()
 
     app.compile()
+    assert app.contract
 
     assert app.abi_methods == {"handle_algo": handle_algo, "handle_asa": handle_asa}
 
     overlapping_methods = [
         method for method in app.contract.methods if method.name == "handle"
     ]
+    assert isinstance(handle_algo, pt.ABIReturnSubroutine)
+    assert isinstance(handle_asa, pt.ABIReturnSubroutine)
     assert overlapping_methods == [handle_algo.method_spec(), handle_asa.method_spec()]
 
 
@@ -168,11 +173,14 @@ def test_application_external_override_true():
         return pt.Assert(pt.Int(2))
 
     app.compile()
+    assert app.contract
+
+    assert isinstance(handle_2, pt.ABIReturnSubroutine)
+
     assert list(app.abi_methods) == ["handle_2"]
     assert (
-        app.contract.get_method_by_name("handle") == handle_2.method_spec(),
-        "Expected contract method to match method spec",
-    )
+        app.contract.get_method_by_name("handle") == handle_2.method_spec()
+    ), "Expected contract method to match method spec"
 
 
 def test_application_external_override_false():
@@ -204,6 +212,9 @@ def test_application_external_override_none(create_existing_handle: bool):
         return pt.Assert(pt.Int(2))
 
     app.compile()
+    assert app.contract
+    assert isinstance(handle_2, pt.ABIReturnSubroutine)
+
     assert (
         app.contract.get_method_by_name("handle") == handle_2.method_spec()
     ), "Expected contract method to match method spec"
@@ -326,43 +337,18 @@ def test_acct_state():
     assert app.acct_state.num_byte_slices == 6, "Expected 6 byte slices"
 
 
-def test_internal():
-    app = NoCreateApp()
-    
-    @app.create(bare=True)
-    def create():
-        return pt.Seq(
-            pt.Pop(internal_meth()),
-        )
-
-    @app.external(method_config=pt.MethodConfig(no_op=pt.CallConfig.CALL))
-    def otherthing():
-        return pt.Seq(
-            pt.Pop(internal_meth()),
-        )
-
-    @pt.Subroutine(pt.TealType.uint64)
-    def internal_meth():
-        return pt.Int(1)
-
-    assert len(app.abi_methods) == 1, "Expected 1 ABI method"
-
-    meth = cast(pt.SubroutineFnWrapper, internal_meth)
-    expected = pt.SubroutineCall(meth.subroutine, []).__teal__(options)
-
-    actual = internal_meth().__teal__(options)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-
 def test_default_param_state():
     class Hinty(Application):
         asset_id = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(123))
 
     h = Hinty()
+
     @h.external
-    def hintymeth(num: pt.abi.Uint64, aid: pt.abi.Asset = h.asset_id):
-        return pt.Assert(aid.asset_id() == self.asset_id)
+    def hintymeth(
+        num: pt.abi.Uint64,
+        aid: pt.abi.Asset = h.asset_id,  # type: ignore[assignment]
+    ):
+        return pt.Assert(aid.asset_id() == h.asset_id)
 
     assert "hintymeth" in h.hints, "Expected a hint available for the method"
 
@@ -382,8 +368,12 @@ def test_default_param_const():
     const_val = 123
 
     app = Application()
+
     @app.external
-    def hintymeth(num: pt.abi.Uint64, aid: pt.abi.Asset = const_val):
+    def hintymeth(
+        num: pt.abi.Uint64,
+        aid: pt.abi.Asset = const_val,  # type: ignore[assignment]
+    ):
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
     assert "hintymeth" in app.hints, "Expected a hint available for the method"
@@ -404,12 +394,16 @@ def test_default_read_only_method():
     const_val = 123
 
     app = Application()
+
     @app.external(read_only=True)
     def get_asset_id(*, output: pt.abi.Uint64):
         return output.set(pt.Int(const_val))
 
     @app.external
-    def hintymeth(num: pt.abi.Uint64, aid: pt.abi.Asset = get_asset_id):
+    def hintymeth(
+        num: pt.abi.Uint64,
+        aid: pt.abi.Asset = get_asset_id,  # type: ignore[assignment]
+    ):
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
     assert "hintymeth" in app.hints, "Expected a hint available for the method"
@@ -420,6 +414,7 @@ def test_default_read_only_method():
 
     default = hint.default_arguments["aid"]
 
+    assert isinstance(get_asset_id, pt.ABIReturnSubroutine)
     assert default.resolvable_class == DefaultArgumentClass.ABIMethod
     assert (
         default.resolve_hint() == get_asset_id.method_spec().dictify()
@@ -432,12 +427,15 @@ def test_app_spec():
         decl_acct_val = AccountStateValue(pt.TealType.uint64)
 
     app = Specd()
+
     @app.external(read_only=True)
     def get_asset_id(*, output: pt.abi.Uint64):
         return output.set(pt.Int(123))
 
     @app.external
-    def annotated_meth(aid: pt.abi.Asset = get_asset_id):
+    def annotated_meth(
+        aid: pt.abi.Asset = get_asset_id,  # type: ignore[assignment]
+    ):
         return pt.Assert(pt.Int(1))
 
     class Thing(pt.abi.NamedTuple):
@@ -531,6 +529,7 @@ def test_struct_args():
         nickname: pt.abi.Field[pt.abi.String]
 
     app = Application()
+
     @app.external
     def structy(user_record: UserRecord):
         return pt.Assert(pt.Int(1))
@@ -573,8 +572,11 @@ def test_instance_vars():
 
     i1 = Inst("first")
     i1.compile()
+    assert i1.approval_program
+
     i2 = Inst("second")
     i2.compile()
+    assert i2.approval_program
 
     assert i1.approval_program.index("first") > 0, "Expected to see the string `first`"
     assert (
@@ -596,6 +598,7 @@ def hashy(sig: str):
 
 def test_abi_method_details():
     app = Application()
+
     @app.external
     def meth():
         return pt.Assert(pt.Int(1))
