@@ -11,6 +11,7 @@ from pyteal import (
     Expr,
 )
 from beaker import ApplicationStateValue, Application, LogicSignature
+from beaker.application import this_app
 
 
 class LSig(LogicSignature):
@@ -111,20 +112,22 @@ class Grandparent(Application):
 
 grand_parent_app = Grandparent()
 
-parent_app_pc = grand_parent_app.precompile(parent_app)
+
+# parent_app_pc = grand_parent_app.precompile(parent_app)
 
 
 @grand_parent_app.external
 def create_parent(*, output: abi.Uint64) -> Expr:
     """Create a new parent app."""
-
+    parent_app_pc = grand_parent_app.precompile(parent_app)
     return Seq(
         InnerTxnBuilder.Execute(
-            {
-                TxnField.type_enum: TxnType.ApplicationCall,
-                TxnField.approval_program: parent_app_pc.approval.binary,
-                TxnField.clear_state_program: parent_app_pc.clear.binary,
-            }
+            parent_app_pc.get_create_config()
+            # {
+            #     TxnField.type_enum: TxnType.ApplicationCall,
+            #     TxnField.approval_program: parent_app_pc.approval.binary,
+            #     TxnField.clear_state_program: parent_app_pc.clear.binary,
+            # }
         ),
         output.set(InnerTxn.created_application_id()),
     )

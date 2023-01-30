@@ -3,6 +3,8 @@ import dataclasses
 import inspect
 import itertools
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from typing import (
     Any,
@@ -73,6 +75,53 @@ DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
+@dataclasses.dataclass(frozen=True)
+class CompileContext:
+    app: "Application" = dataclasses.field(kw_only=True)
+    client: AlgodClient | None
+
+
+_ctx: ContextVar[CompileContext] = ContextVar("beaker.compile_context")
+
+
+def this_app() -> "Application":
+    return _ctx.get().app
+
+
+@contextmanager
+def _set_ctx(app: "Application", client: AlgodClient | None = None):
+    if client is None:
+        curr = _ctx.get(default=None)
+        if curr is not None:
+            client = curr.client
+    token = _ctx.set(CompileContext(app=app, client=client))
+    try:
+        yield
+    finally:
+        _ctx.reset(token)
+
+
+@overload
+def precompiled(value: "Application", /) -> AppPrecompile:
+    ...
+
+
+@overload
+def precompiled(value: "LogicSignature", /) -> LSigPrecompile:
+    ...
+
+
+def precompiled(
+    value: "Application | LogicSignature",
+    /,
+) -> AppPrecompile | LSigPrecompile:
+    try:
+        ctx = _ctx.get()
+    except LookupError:
+        raise LookupError("beaker.precompiled(...) should be called inside a function")
+    return ctx.app.precompiled(value)
+
+
 class Application:
     def __init__(
         self: Self,
@@ -104,23 +153,40 @@ class Application:
             self.implement(unconditional_create_approval)
 
     @overload
-    def precompile(self, value: "Application", /) -> AppPrecompile:
+    def precompiled(self, value: "Application", /) -> AppPrecompile:
         ...
 
     @overload
-    def precompile(self, value: "LogicSignature", /) -> LSigPrecompile:
+    def precompiled(self, value: "LogicSignature", /) -> LSigPrecompile:
         ...
 
-    def precompile(
-        self, value: "Application | LogicSignature", /, *, _: None = None
+    def precompiled(
+        self,
+        value: "Application | LogicSignature",
+        /,
     ) -> AppPrecompile | LSigPrecompile:
+        try:
+            ctx = _ctx.get()
+        except LookupError:
+            raise LookupError("precompiled(...) should be called inside a function")
+        if ctx.app is not self:
+            raise ValueError("precompiled() used in another apps context")
+        if ctx.client is None:
+            raise ValueError(
+                "beaker.precompiled(...) requires use of a client when calling Application.compile(...)"
+            )
         match value:
             case Application() as app:
-                return self._app_precompiles.setdefault(app, AppPrecompile(app))
+                # TODO: check recursion?
+                return self._app_precompiles.setdefault(
+                    app, AppPrecompile(app, ctx.client)
+                )
             case LogicSignature() as lsig:
-                return self._lsig_precompiles.setdefault(lsig, LSigPrecompile(lsig))
+                return self._lsig_precompiles.setdefault(
+                    lsig, LSigPrecompile(lsig, ctx.client)
+                )
             case _:
-                raise TypeError()
+                raise TypeError("TODO write error message")
 
     @property
     def precompiles(self) -> list[AppPrecompile | LSigPrecompile]:
@@ -743,97 +809,91 @@ class Application:
         """
 
         if self._compiled is None:
-
-            if self.precompiles:
-                if client is None:
-                    raise ValueError("client is not optional if there are precompiles")
-
-                # make sure all the precompiles are available
-                for precompile in self.precompiles:
-                    precompile.compile(client)
-
-            bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
-            router = Router(
-                name=self.__class__.__name__,
-                bare_calls=BareCallActions(**bare_call_kwargs),
-                descr=self.__doc__,
-            )
-
-            # Add method externals
-            # TODO: remove this backwards-compat code
-            all_creates = []
-            all_updates = []
-            all_deletes = []
-            all_opt_ins = []
-            all_close_outs = []
-            all_clear_states = []
-            for abi_external in self._abi_externals.values():
-                method_config = MethodConfig(
-                    **{str(a): cc for a, cc in abi_external.actions.items()}
+            with _set_ctx(app=self, client=client):
+                bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
+                router = Router(
+                    name=self.__class__.__name__,
+                    bare_calls=BareCallActions(**bare_call_kwargs),
+                    descr=self.__doc__,
                 )
-                router.add_method_handler(
-                    method_call=abi_external.method,
-                    method_config=method_config,
+
+                # Add method externals
+                # TODO: remove this backwards-compat code
+                all_creates = []
+                all_updates = []
+                all_deletes = []
+                all_opt_ins = []
+                all_close_outs = []
+                all_clear_states = []
+                for abi_external in self._abi_externals.values():
+                    method_config = MethodConfig(
+                        **{str(a): cc for a, cc in abi_external.actions.items()}
+                    )
+                    router.add_method_handler(
+                        method_call=abi_external.method,
+                        method_config=method_config,
+                    )
+                    if any(
+                        cc1 == CallConfig.CREATE or cc1 == CallConfig.ALL
+                        for cc1 in dataclasses.astuple(method_config)
+                    ):
+                        all_creates.append(abi_external.method.method_spec())
+                    if method_config.update_application != CallConfig.NEVER:
+                        all_updates.append(abi_external.method.method_spec())
+                    if method_config.delete_application != CallConfig.NEVER:
+                        all_deletes.append(abi_external.method.method_spec())
+                    if method_config.opt_in != CallConfig.NEVER:
+                        all_opt_ins.append(abi_external.method.method_spec())
+                    if method_config.clear_state != CallConfig.NEVER:
+                        all_clear_states.append(abi_external.method.method_spec())
+                    if method_config.close_out != CallConfig.NEVER:
+                        all_close_outs.append(abi_external.method.method_spec())
+
+                kwargs: dict[str, Method | None] = {
+                    "on_create": all_creates.pop() if len(all_creates) == 1 else None,
+                    "on_update": all_updates.pop() if len(all_updates) == 1 else None,
+                    "on_delete": all_deletes.pop() if len(all_deletes) == 1 else None,
+                    "on_opt_in": all_opt_ins.pop() if len(all_opt_ins) == 1 else None,
+                    "on_close_out": all_close_outs.pop()
+                    if len(all_close_outs) == 1
+                    else None,
+                    "on_clear_state": all_clear_states.pop()
+                    if len(all_clear_states) == 1
+                    else None,
+                }
+                # Compile approval and clear programs
+                approval_program, clear_program, contract = router.compile_program(
+                    version=self.teal_version,
+                    assemble_constants=True,
+                    optimize=OptimizeOptions(scratch_slots=True),
                 )
-                if any(
-                    cc1 == CallConfig.CREATE or cc1 == CallConfig.ALL
-                    for cc1 in dataclasses.astuple(method_config)
-                ):
-                    all_creates.append(abi_external.method.method_spec())
-                if method_config.update_application != CallConfig.NEVER:
-                    all_updates.append(abi_external.method.method_spec())
-                if method_config.delete_application != CallConfig.NEVER:
-                    all_deletes.append(abi_external.method.method_spec())
-                if method_config.opt_in != CallConfig.NEVER:
-                    all_opt_ins.append(abi_external.method.method_spec())
-                if method_config.clear_state != CallConfig.NEVER:
-                    all_clear_states.append(abi_external.method.method_spec())
-                if method_config.close_out != CallConfig.NEVER:
-                    all_close_outs.append(abi_external.method.method_spec())
 
-            kwargs: dict[str, Method | None] = {
-                "on_create": all_creates.pop() if len(all_creates) == 1 else None,
-                "on_update": all_updates.pop() if len(all_updates) == 1 else None,
-                "on_delete": all_deletes.pop() if len(all_deletes) == 1 else None,
-                "on_opt_in": all_opt_ins.pop() if len(all_opt_ins) == 1 else None,
-                "on_close_out": all_close_outs.pop()
-                if len(all_close_outs) == 1
-                else None,
-                "on_clear_state": all_clear_states.pop()
-                if len(all_clear_states) == 1
-                else None,
-            }
-            # Compile approval and clear programs
-            approval_program, clear_program, contract = router.compile_program(
-                version=self.teal_version,
-                assemble_constants=True,
-                optimize=OptimizeOptions(scratch_slots=True),
-            )
+                application_spec = {
+                    "hints": {
+                        k: v.dictify() for k, v in self.hints.items() if not v.empty()
+                    },
+                    "source": {
+                        "approval": base64.b64encode(approval_program.encode()).decode(
+                            "utf8"
+                        ),
+                        "clear": base64.b64encode(clear_program.encode()).decode(
+                            "utf8"
+                        ),
+                    },
+                    "schema": {
+                        "local": self.acct_state.dictify(),
+                        "global": self.app_state.dictify(),
+                    },
+                    "contract": contract.dictify(),
+                }
 
-            application_spec = {
-                "hints": {
-                    k: v.dictify() for k, v in self.hints.items() if not v.empty()
-                },
-                "source": {
-                    "approval": base64.b64encode(approval_program.encode()).decode(
-                        "utf8"
-                    ),
-                    "clear": base64.b64encode(clear_program.encode()).decode("utf8"),
-                },
-                "schema": {
-                    "local": self.acct_state.dictify(),
-                    "global": self.app_state.dictify(),
-                },
-                "contract": contract.dictify(),
-            }
-
-            self._compiled = CompiledApplication(
-                approval_program=approval_program,
-                clear_program=clear_program,
-                contract=contract,
-                application_spec=application_spec,
-                **kwargs,
-            )
+                self._compiled = CompiledApplication(
+                    approval_program=approval_program,
+                    clear_program=clear_program,
+                    contract=contract,
+                    application_spec=application_spec,
+                    **kwargs,
+                )
 
         return self._compiled.approval_program, self._compiled.clear_program
 
@@ -890,13 +950,7 @@ class Application:
             directory (optional): str path to the directory where the artifacts should be written
             client (optional): AlgodClient to be passed to any precompiles
         """
-        if self._compiled is None:
-            if self.precompiles and client is None:
-                raise ValueError(
-                    "Approval program empty, if you have precompiles, pass an Algod client to build the precompiles"
-                )
-            self.compile(client)
-
+        self.compile(client)
         assert self._compiled is not None
         self._compiled.dump(Path(directory))
 

@@ -21,22 +21,25 @@ def test_precompile_basic() -> None:
             return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
     app = Application()
-    pc = app.precompile(Lsig(version=6))
+    # pc = app.precompile(Lsig(version=6))
 
     @app.external
     def check_it():
-        return pt.Assert(pt.Txn.sender() == pc.logic.hash())
+        lsig_pc = app.precompiled(Lsig(version=6))
+        return pt.Assert(pt.Txn.sender() == lsig_pc.logic.hash())
 
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert pc.logic._program_hash is None
+    assert list(app.lsig_precompiles) == []
+    assert list(app.app_precompiles) == []
 
     ac.build()
 
     assert app.approval_program is not None
     assert app.clear_program is not None
+    pc = next(iter(app.lsig_precompiles))
     assert pc.logic._program_hash is not None
 
 

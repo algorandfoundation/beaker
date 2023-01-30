@@ -28,6 +28,7 @@ from beaker import (
     client,
     consts,
     sandbox,
+    precompiled,
 )
 
 # Simple logic sig, will approve _any_ transaction
@@ -52,14 +53,18 @@ class DiskHungry(Application):
 
 disk_hungry = DiskHungry(version=8)
 
-# Signal to beaker that this should be compiled
-# prior to compiling the main application
-tmpl_acct = disk_hungry.precompile(KeySig(version=8))
+
+key_sig = KeySig(version=8)
+
 
 # Add account during opt in  by checking the sender against the address
 # we expect given the precompile && nonce
 @disk_hungry.opt_in
 def add_account(nonce: abi.DynamicBytes):
+    # Signal to beaker that this should be compiled
+    # prior to compiling the main application
+    tmpl_acct = precompiled(key_sig)
+
     return Seq(
         Assert(
             # Make sure the opt-in'er is our lsig
@@ -124,7 +129,7 @@ def demo():
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
         nonce = get_nonce()
-        lsig_signer: LogicSigTransactionSigner = tmpl_acct.template_signer(nonce)
+        lsig_signer = next(iter(disk_hungry.lsig_precompiles)).template_signer(nonce)
 
         print(
             f"Creating templated lsig with nonce {nonce} "

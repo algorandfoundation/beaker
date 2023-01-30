@@ -81,8 +81,7 @@ class ApplicationClient:
         if self.approval_binary is not None and self.clear_binary is not None:
             return
 
-        compiled_app = AppPrecompile(self.app)
-        compiled_app.compile(self.client)
+        compiled_app = AppPrecompile(self.app, self.client)
 
         self.approval_program = compiled_app.approval._program
         self.approval_binary = compiled_app.approval._binary

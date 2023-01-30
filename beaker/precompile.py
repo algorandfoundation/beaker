@@ -282,34 +282,16 @@ class AppPrecompile:
     should be fully compiled prior to constructing its own program.
     """
 
-    def __init__(self, app: "Application"):
+    def __init__(self, app: "Application", client: AlgodClient) -> None:
         #: The App to be used and compiled before it's parent
         self.app: "Application" = app
         #: The App's approval program as a Precompile
-        self.approval: Precompile = Precompile("")
+        approval, clear = app.compile(client)
+        self.approval: Precompile = Precompile(approval)
         #: The App's clear program as a Precompile
-        self.clear: Precompile = Precompile("")
-
-    def compile(self, client: AlgodClient) -> None:
-        """fully compile this app precompile by recursively
-            compiling children depth first
-
-        Note:
-            Must be called (even indirectly) prior to using
-                the ``approval`` and ``clear`` fields
-        """
-        for p in self.app.precompiles:
-            p.compile(client)
-
-        # at this point, we should have all the dependant logic built
-        # so we can compile the app teal
-        approval, clear = self.app.compile(client)
-        self.approval = Precompile(approval)
-        self.clear = Precompile(clear)
-        if self.approval._binary is None:
-            self.approval.assemble(client)
-        if self.clear._binary is None:
-            self.clear.assemble(client)
+        self.clear: Precompile = Precompile(clear)
+        self.approval.assemble(client)
+        self.clear.assemble(client)
 
     def get_create_config(self) -> dict[TxnField, Expr | list[Expr]]:
         """get a dictionary of the fields and values that should be set when
@@ -342,26 +324,10 @@ class LSigPrecompile:
     should be fully compiled prior to constructing its own program.
     """
 
-    def __init__(self, lsig: "LogicSignature"):
-        #: the LogicSignature to be used and compiled before it's parent
+    def __init__(self, lsig: "LogicSignature", client: AlgodClient) -> None:
         self.lsig: "LogicSignature" = lsig
-
-        #: The LogicSignature's logic as a Precompile
-        self.logic: Precompile = Precompile("")
-
-    def compile(self, client: AlgodClient) -> None:
-        """
-        fully compile this lsig precompile by recursively compiling children depth first
-
-        Note:
-            Must be called (even indirectly) prior to using the ``logic`` field
-        """
-        # at this point, we should have all the dependant logic built
-        # so we can compile the lsig teal
-        self.logic = Precompile(self.lsig.program)
-
-        if self.logic._binary is None:
-            self.logic.assemble(client)
+        self.logic: Precompile = Precompile(lsig.program)
+        self.logic.assemble(client)
 
     def template_signer(self, *args: str | bytes | int) -> LogicSigTransactionSigner:
         """Get the Signer object for a populated version of the template contract"""
@@ -376,8 +342,7 @@ class LSigPrecompile:
 
         It should only be used for non templated Precompiles.
         """
-        if self.logic._binary is None:
-            raise Exception("Cannot get signer until the program is compiled")
+        assert self.logic._binary
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
 
 
