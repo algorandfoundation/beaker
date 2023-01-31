@@ -3,15 +3,15 @@ from copy import copy
 from nacl.signing import SigningKey
 
 from algosdk.encoding import decode_address
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
 
 from typing import Literal
-from pyteal import *
-from beaker import *
+from pyteal import Assert, Expr, abi, Txn, Ed25519Verify_Bare, Seq, Int, TealType
+from beaker import sandbox, client, LogicSignatureTemplate, Application, consts
 from beaker.precompile import LSigTemplatePrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
@@ -38,19 +38,25 @@ class App(Application):
             runtime_template_variables={"user_addr": TealType.bytes},
         )
 
-    sig_checker = LSigTemplatePrecompile(SigChecker())
+    sig_checker: LSigTemplatePrecompile
 
-    @external
-    def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
-        return Assert(
-            Txn.sender()
-            == self.sig_checker.logic.template_address(user_addr=signer_address.get())
-        )
+    def __init__(self):
+        super().__init__()
+
+        @self.external
+        def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
+            self.sig_checker = self.precompiled(self.SigChecker())
+            return Assert(
+                Txn.sender()
+                == self.sig_checker.logic.template_address(
+                    user_addr=signer_address.get()
+                )
+            )
 
 
 def sign_msg(msg: str, sk: str) -> bytes:
     """utility function for signing arbitrary data"""
-    pk: list[bytes] = list(base64.b64decode(sk))
+    pk = list(base64.b64decode(sk))
     return SigningKey(bytes(pk[:32])).sign(msg.encode()).signature
 
 
@@ -67,8 +73,14 @@ def demo():
     app_client.create()
 
     # Write the populated template as binary
-    # with open("tmp.teal.tok", "wb") as f:
-    #     f.write(app.sig_checker.populate_template(decode_address(acct.address)))
+    with open("tmpl.teal", "w") as f:
+        f.write(app.sig_checker.lsig.program)
+    with open("tmp.teal.tok", "wb") as f:
+        f.write(
+            app.sig_checker.logic.populate_template(
+                user_addr=decode_address(acct.address)
+            )
+        )
 
     # Get the signer for the lsig from its populated precompile
     lsig_signer = app.sig_checker.template_signer(
@@ -104,7 +116,7 @@ def demo():
     # Add the call to the `check` method to be signed by the populated template logic
     lsig_client.add_method_call(
         atc,
-        App.check,
+        "check",
         suggested_params=free_sp,
         signer_address=acct.address,
         msg=msg,
