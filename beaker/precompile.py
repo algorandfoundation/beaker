@@ -1,7 +1,13 @@
 import base64
-from Cryptodome.Hash import SHA512
 from dataclasses import dataclass, field
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
+from Cryptodome.Hash import SHA512
+from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
+from algosdk.constants import APP_PAGE_MAX_SIZE
+from algosdk.source_map import SourceMap
+from algosdk.transaction import LogicSigAccount
+from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     Seq,
     Bytes,
@@ -19,11 +25,7 @@ from pyteal import (
     TxnField,
     TxnType,
 )
-from algosdk.v2client.algod import AlgodClient
-from algosdk.source_map import SourceMap
-from algosdk.transaction import LogicSigAccount
-from algosdk.constants import APP_PAGE_MAX_SIZE
-from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
+
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
 from beaker.lib.strings import EncodeUVarInt
 
@@ -82,15 +84,15 @@ class Precompile:
     and LSigPrecompile for Applications and Logic Signature programs, respectively.
     """
 
-    _program: str = ""
-    _binary: Optional[bytes] = None
-    _program_hash: Optional[str] = None
-    _map: Optional[SourceMap] = None
-    _template_values: list[PrecompileTemplateValue] = []
-    program_pages: list[ProgramPage]
-    binary: Bytes = Bytes("")
+    # _program: str = ""
+    # _binary: Optional[bytes] = None
+    # _program_hash: Optional[str] = None
+    # _map: Optional[SourceMap] = None
+    # _template_values: list[PrecompileTemplateValue] = []
+    # program_pages: list[ProgramPage]
+    # binary: Bytes = Bytes("")
 
-    def __init__(self, program: str):
+    def __init__(self, program: str, client: AlgodClient):
         self._program = program
         lines = self._program.splitlines()
         template_values: list[PrecompileTemplateValue] = []
@@ -110,11 +112,6 @@ class Precompile:
         self._program = program
         self._template_values = template_values
 
-    def assemble(self, client: AlgodClient) -> None:
-        """
-        Fully compile the program source to binary and generate a
-        source map for matching pc to line number
-        """
         result = client.compile(self._program, source_map=True)
         self._binary = base64.b64decode(result["result"])
         self._program_hash = result["hash"]
@@ -157,7 +154,6 @@ class Precompile:
             for that page.
 
         """
-        assert self._binary is not None
         assert len(self._template_values) == 0
         if self._program_hash is None:
             raise TealInputError("No address defined for precompile")
@@ -173,7 +169,6 @@ class Precompile:
         template values declared.
         """
 
-        assert self._binary is not None
         assert len(self._template_values) > 0
         assert len(args) == len(self._template_values)
 
@@ -225,7 +220,6 @@ class Precompile:
         # it should produce an identical output in terms of populated binary.
         # This function just reproduces the same effects in pyteal
 
-        assert self.binary is not None
         assert len(self._template_values)
         assert len(args) == len(self._template_values)
 
@@ -284,14 +278,12 @@ class AppPrecompile:
 
     def __init__(self, app: "Application", client: AlgodClient) -> None:
         #: The App to be used and compiled before it's parent
-        self.app: "Application" = app
+        self.app = app
         #: The App's approval program as a Precompile
         approval, clear = app.compile(client)
-        self.approval: Precompile = Precompile(approval)
+        self.approval = Precompile(approval, client)
         #: The App's clear program as a Precompile
-        self.clear: Precompile = Precompile(clear)
-        self.approval.assemble(client)
-        self.clear.assemble(client)
+        self.clear = Precompile(clear, client)
 
     def get_create_config(self) -> dict[TxnField, Expr | list[Expr]]:
         """get a dictionary of the fields and values that should be set when
@@ -326,8 +318,7 @@ class LSigPrecompile:
 
     def __init__(self, lsig: "LogicSignature", client: AlgodClient) -> None:
         self.lsig: "LogicSignature" = lsig
-        self.logic: Precompile = Precompile(lsig.program)
-        self.logic.assemble(client)
+        self.logic: Precompile = Precompile(lsig.program, client)
 
     def template_signer(self, *args: str | bytes | int) -> LogicSigTransactionSigner:
         """Get the Signer object for a populated version of the template contract"""
@@ -342,7 +333,6 @@ class LSigPrecompile:
 
         It should only be used for non templated Precompiles.
         """
-        assert self.logic._binary
         return LogicSigTransactionSigner(LogicSigAccount(self.logic._binary))
 
 

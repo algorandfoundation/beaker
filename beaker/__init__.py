@@ -1,4 +1,4 @@
-from .application import Application, precompiled
+from .application import Application, precompiled, this_app
 from .state import (
     AccountState,
     ApplicationState,
