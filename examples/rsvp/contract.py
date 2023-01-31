@@ -119,11 +119,7 @@ def read_price(*, output: abi.Uint64):
     return output.set(rsvp.price)
 
 
-@rsvp.external(
-    method_config={"clear_state": CallConfig.CALL, "close_out": CallConfig.CALL},
-    bare=True,
-)
-def refund():
+def _do_refund() -> Expr:
     """Refunds event payment to guests"""
     return Seq(
         InnerTxnBuilder.Begin(),
@@ -137,3 +133,13 @@ def refund():
         InnerTxnBuilder.Submit(),
         rsvp.rsvp.decrement(),
     )
+
+
+@rsvp.close_out(name="refund")
+def close_out() -> Expr:
+    return _do_refund()
+
+
+@rsvp.clear_state(name="refund")
+def clear_state() -> Expr:
+    return _do_refund()

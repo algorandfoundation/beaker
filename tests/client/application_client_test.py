@@ -56,7 +56,7 @@ class App(Application):
                 pt.Approve(),
             )
 
-        @self.clear_state(bare=True)
+        @self.clear_state
         def clear_state():
             return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 

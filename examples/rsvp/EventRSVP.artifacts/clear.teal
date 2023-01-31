@@ -1,12 +1,6 @@
 #pragma version 8
 intcblock 1
 bytecblock 0x72737670
-txn NumAppArgs
-pushint 0 // 0
-==
-bnz main_l2
-err
-main_l2:
 callsub refund_0
 intc_0 // 1
 return

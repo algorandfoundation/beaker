@@ -242,7 +242,8 @@ def test_bare():
         return pt.Assert(pt.Int(1))
 
     assert isinstance(clear_state, pt.SubroutineFnWrapper)
-    assert "clear_state" in app.bare_methods
+    assert "clear_state" not in app.bare_methods
+    assert app.clear_state_method is clear_state
 
     @app.external(bare=True, method_config={"no_op": pt.CallConfig.ALL}, override=True)
     def external() -> pt.Expr:

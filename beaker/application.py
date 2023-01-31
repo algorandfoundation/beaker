@@ -37,6 +37,7 @@ from pyteal import (
     TealType,
     MethodConfig,
 )
+from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 
 from beaker.decorators import (
     MethodHints,
@@ -54,7 +55,6 @@ OnCompleteActionName: TypeAlias = Literal[
     "no_op",
     "opt_in",
     "close_out",
-    "clear_state",
     "update_application",
     "delete_application",
 ]
@@ -146,9 +146,15 @@ class Application:
         self._name = name
         self._descr = descr
         self.teal_version = version
+        if self.teal_version < FRAME_POINTERS_VERSION:
+            optimize_options = OptimizeOptions(
+                scratch_slots=optimize_options._scratch_slots, frame_pointers=False
+            )
         self.optimize_options = optimize_options
+
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
+        self.clear_state_method: SubroutineFnWrapper | None = None
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}
         self._lsig_template_precompiles: dict[
             LogicSignatureTemplate, LSigTemplatePrecompile
@@ -657,9 +663,9 @@ class Application:
     @overload
     def clear_state(
         self,
-        fn: HandlerFunc,
+        fn: Callable[[], Expr],
         /,
-    ) -> DecoratorResultType:
+    ) -> SubroutineFnWrapper:
         ...
 
     @overload
@@ -667,14 +673,9 @@ class Application:
         self,
         /,
         *,
-        allow_call: bool = True,
-        allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
+    ) -> Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
         ...
 
     def clear_state(
@@ -682,24 +683,18 @@ class Application:
         fn: HandlerFunc | None = None,
         /,
         *,
-        allow_call: bool = True,
-        allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="clear_state",
-            allow_call=allow_call,
-            allow_create=allow_create,
-            name=name,
-            authorize=authorize,
-            bare=bare,
-            read_only=read_only,
-            override=override,
-        )
+    ) -> SubroutineFnWrapper | Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
+        def decorator(fun: Callable[[], Expr]) -> SubroutineFnWrapper:
+            sub = SubroutineFnWrapper(fun, TealType.none, name=name)
+            if override is True and self.clear_state_method is None:
+                raise ValueError("override=True but no clear_state defined")
+            elif override is False and self.clear_state_method is not None:
+                raise ValueError("override=False but clear_state already defined")
+            self.clear_state_method = sub
+            return sub
+
         return decorator if fn is None else decorator(fn)
 
     @overload
@@ -815,10 +810,6 @@ class Application:
         return self._compiled.on_close_out if self._compiled is not None else None
 
     @property
-    def on_clear_state(self) -> Method | None:
-        return self._compiled.on_clear_state if self._compiled is not None else None
-
-    @property
     def on_delete(self) -> Method | None:
         return self._compiled.on_delete if self._compiled is not None else None
 
@@ -847,6 +838,7 @@ class Application:
                     name=self.name,
                     bare_calls=BareCallActions(**bare_call_kwargs),
                     descr=self.descr,
+                    clear_state=self.clear_state_method,
                 )
 
                 # Add method externals
@@ -856,7 +848,6 @@ class Application:
                 all_deletes = []
                 all_opt_ins = []
                 all_close_outs = []
-                all_clear_states = []
                 for abi_external in self._abi_externals.values():
                     method_config = MethodConfig(
                         **{str(a): cc for a, cc in abi_external.actions.items()}
@@ -876,8 +867,6 @@ class Application:
                         all_deletes.append(abi_external.method.method_spec())
                     if method_config.opt_in != CallConfig.NEVER:
                         all_opt_ins.append(abi_external.method.method_spec())
-                    if method_config.clear_state != CallConfig.NEVER:
-                        all_clear_states.append(abi_external.method.method_spec())
                     if method_config.close_out != CallConfig.NEVER:
                         all_close_outs.append(abi_external.method.method_spec())
 
@@ -888,9 +877,6 @@ class Application:
                     "on_opt_in": all_opt_ins.pop() if len(all_opt_ins) == 1 else None,
                     "on_close_out": all_close_outs.pop()
                     if len(all_close_outs) == 1
-                    else None,
-                    "on_clear_state": all_clear_states.pop()
-                    if len(all_clear_states) == 1
                     else None,
                 }
                 # Compile approval and clear programs
@@ -998,7 +984,6 @@ class CompiledApplication:
     on_update: Method | None = None
     on_opt_in: Method | None = None
     on_close_out: Method | None = None
-    on_clear_state: Method | None = None
     on_delete: Method | None = None
 
     def dump(self, directory: Path) -> None:
