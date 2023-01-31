@@ -17,26 +17,30 @@ from beaker.precompile import LSigTemplatePrecompile
 Signature = abi.StaticBytes[Literal[64]]
 
 
-class App(Application):
-    @staticmethod
-    def SigChecker() -> LogicSignatureTemplate:
-        # Simple program to check an ed25519 signature given a message and signature
+def SigChecker() -> LogicSignatureTemplate:
+    # Simple program to check an ed25519 signature given a message and signature
 
-        def evaluate(user_addr: Expr) -> Expr:
-            return Seq(
-                # Borrow the msg and sig from the abi call arguments
-                # TODO: this kinda stinks, what do?
-                (msg := abi.String()).decode(Txn.application_args[2]),
-                (sig := abi.make(Signature)).decode(Txn.application_args[3]),
-                # Assert that the sig matches
-                Assert(Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
-                Int(1),
-            )
-
-        return LogicSignatureTemplate(
-            evaluate,
-            runtime_template_variables={"user_addr": TealType.bytes},
+    def evaluate(user_addr: Expr) -> Expr:
+        return Seq(
+            # Borrow the msg and sig from the abi call arguments
+            # TODO: this kinda stinks, what do?
+            (msg := abi.String()).decode(Txn.application_args[2]),
+            (sig := abi.make(Signature)).decode(Txn.application_args[3]),
+            # Assert that the sig matches
+            Assert(Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
+            Int(1),
         )
+
+    return LogicSignatureTemplate(
+        evaluate,
+        runtime_template_variables={"user_addr": TealType.bytes},
+    )
+
+
+sig_checker = SigChecker()
+
+
+class App(Application):
 
     sig_checker: LSigTemplatePrecompile
 
@@ -45,7 +49,7 @@ class App(Application):
 
         @self.external
         def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
-            self.sig_checker = self.precompiled(self.SigChecker())
+            self.sig_checker = self.precompiled(sig_checker)
             return Assert(
                 Txn.sender()
                 == self.sig_checker.logic.template_address(
@@ -73,14 +77,14 @@ def demo():
     app_client.create()
 
     # Write the populated template as binary
-    with open("tmpl.teal", "w") as f:
-        f.write(app.sig_checker.lsig.program)
-    with open("tmp.teal.tok", "wb") as f:
-        f.write(
-            app.sig_checker.logic.populate_template(
-                user_addr=decode_address(acct.address)
-            )
-        )
+    # with open("tmpl.teal", "w") as f:
+    #     f.write(app.sig_checker.lsig.program)
+    # with open("tmp.teal.tok", "wb") as f:
+    #     f.write(
+    #         app.sig_checker.logic.populate_template(
+    #             user_addr=decode_address(acct.address)
+    #         )
+    #     )
 
     # Get the signer for the lsig from its populated precompile
     lsig_signer = app.sig_checker.template_signer(
