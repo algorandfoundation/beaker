@@ -38,7 +38,7 @@ class LocalBlob(Blob):
         super().__init__(keys=keys)
         self.init_subroutines()
 
-    def init_subroutines(self):
+    def init_subroutines(self) -> None:
         @Subroutine(TealType.none)
         def zero_impl(acct: Expr) -> Expr:
             return Seq(

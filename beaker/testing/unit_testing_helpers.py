@@ -10,7 +10,7 @@ algod_client = None
 sandbox_accounts = None
 
 
-def returned_int_as_bytes(i: int, bits: int = 64):
+def returned_int_as_bytes(i: int, bits: int = 64) -> list[int]:
     return list(i.to_bytes(bits // 8, "big"))
 
 
@@ -90,7 +90,7 @@ def assert_output(
     inputs: list[dict[str, Any]],
     outputs: list[Any],
     opups: int = 0,
-):
+) -> None:
     """
     Creates and calls the UnitTestingApp passed and compares the
     return value with the expected output

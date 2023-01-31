@@ -18,6 +18,7 @@ from typing import (
     TypeVar,
     overload,
     Iterable,
+    Iterator,
 )
 
 from algosdk.abi import Method, Contract
@@ -89,7 +90,7 @@ def this_app() -> "Application":
 
 
 @contextmanager
-def _set_ctx(app: "Application", client: AlgodClient | None = None):
+def _set_ctx(app: "Application", client: AlgodClient | None = None) -> Iterator[None]:
     if client is None:
         curr = _ctx.get(None)
         if curr is not None:

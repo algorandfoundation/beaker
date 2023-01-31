@@ -18,6 +18,7 @@ from pyteal import (
     Subroutine,
     Substring,
     TealType,
+    Expr,
 )
 
 from beaker.lib.math import Pow10
@@ -30,7 +31,7 @@ ascii_nine = Int(_ascii_nine)
 
 
 @Subroutine(TealType.uint64, name="ascii_to_int")
-def AsciiToInt(arg):  # noqa: N802
+def AsciiToInt(arg: Expr) -> Expr:  # noqa: N802
     """AsciiToInt converts the integer representing a character in ascii to the actual integer it represents
 
     Args:
@@ -44,13 +45,13 @@ def AsciiToInt(arg):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="int_to_ascii")
-def IntToAscii(arg):  # noqa: N802
+def IntToAscii(arg: Expr) -> Expr:  # noqa: N802
     """int_to_ascii converts an integer to the ascii byte that represents it"""
     return Extract(Bytes("0123456789"), arg, Int(1))
 
 
 @Subroutine(TealType.uint64, name="atoi")
-def Atoi(a):  # noqa: N802
+def Atoi(a: Expr) -> Expr:  # noqa: N802
     """Atoi converts a byte string representing a number to the integer value it represents"""
     return If(
         Len(a) > Int(0),
@@ -61,7 +62,7 @@ def Atoi(a):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="itoa")
-def Itoa(i):  # noqa: N802
+def Itoa(i: Expr) -> Expr:  # noqa: N802
     """Itoa converts an integer to the ascii byte string it represents"""
     return If(
         i == Int(0),
@@ -74,7 +75,7 @@ def Itoa(i):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="witoa")
-def Witoa(i):  # noqa: N802
+def Witoa(i: Expr) -> Expr:  # noqa: N802
     """Witoa converts a byte string interpreted as an integer to the ascii byte string it represents"""
     return If(
         BitLen(i) == Int(0),
@@ -91,37 +92,37 @@ def Witoa(i):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="head")
-def Head(s):  # noqa: N802
+def Head(s: Expr) -> Expr:  # noqa: N802
     """Head gets the first byte from a bytestring, returns as bytes"""
     return Extract(s, Int(0), Int(1))
 
 
 @Subroutine(TealType.bytes, name="tail")
-def Tail(s):  # noqa: N802
+def Tail(s: Expr) -> Expr:  # noqa: N802
     """Tail returns the string with the first character removed"""
     return Substring(s, Int(1), Len(s))
 
 
 @Subroutine(TealType.bytes, name="suffix")
-def Suffix(s, n):  # noqa: N802
+def Suffix(s: Expr, n: Expr) -> Expr:  # noqa: N802
     """Suffix returns the last n bytes of a given byte string"""
     return Substring(s, Len(s) - n, Len(s))
 
 
 @Subroutine(TealType.bytes, name="prefix")
-def Prefix(s, n):  # noqa: N802
+def Prefix(s: Expr, n: Expr) -> Expr:  # noqa: N802
     """Prefix returns the first n bytes of a given byte string"""
     return Substring(s, Int(0), n)
 
 
 @Subroutine(TealType.bytes, name="rest")
-def Rest(s, n):  # noqa: N802
+def Rest(s: Expr, n: Expr) -> Expr:  # noqa: N802
     """Rest returns the remaining bytes after the first n bytes of a given byte string"""
     return Substring(s, n, Len(s))
 
 
 @Subroutine(TealType.bytes)
-def encode_uvarint_impl(val, b):
+def encode_uvarint_impl(val: Expr, b: Expr) -> Expr:
     buff = ScratchVar()
     return Seq(
         buff.store(b),
@@ -139,7 +140,7 @@ def encode_uvarint_impl(val, b):
     )
 
 
-def EncodeUVarInt(val):  # noqa: N802
+def EncodeUVarInt(val: Expr) -> Expr:  # noqa: N802
     """
     Returns the uvarint encoding of an integer
 

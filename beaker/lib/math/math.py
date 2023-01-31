@@ -41,7 +41,7 @@ half_uint = Int(_half_uint)
 
 
 @Subroutine(TealType.uint64, name="odd")
-def Odd(x):  # noqa: N802
+def Odd(x: Expr) -> Expr:  # noqa: N802
     """Odd returns 1 if x is odd
 
     Args:
@@ -55,7 +55,7 @@ def Odd(x):  # noqa: N802
 
 
 @Subroutine(TealType.uint64, name="even")
-def Even(x):  # noqa: N802
+def Even(x: Expr) -> Expr:  # noqa: N802
     """Even returns 1 if x is even
 
     Args:
@@ -70,19 +70,19 @@ def Even(x):  # noqa: N802
 
 
 @Subroutine(TealType.uint64, name="max")
-def Max(a, b) -> Expr:  # noqa: N802
+def Max(a: Expr, b: Expr) -> Expr:  # noqa: N802
     """Max returns the max of 2 integers"""
     return If(a > b, a, b)
 
 
 @Subroutine(TealType.uint64, name="min")
-def Min(a, b) -> Expr:  # noqa: N802
+def Min(a: Expr, b: Expr) -> Expr:  # noqa: N802
     """Min returns the min of 2 integers"""
     return If(a < b, a, b)
 
 
 @Subroutine(TealType.uint64, name="saturate")
-def Saturate(n, upper_limit, lower_limit) -> Expr:  # noqa: N802
+def Saturate(n: Expr, upper_limit: Expr, lower_limit: Expr) -> Expr:  # noqa: N802
     """Produces an output that is the value of n bounded to the upper and lower
     saturation values. The upper and lower limits are specified by the
     parameters upper_limit and lower_limit."""
@@ -96,7 +96,7 @@ def Saturate(n, upper_limit, lower_limit) -> Expr:  # noqa: N802
 
 
 @Subroutine(TealType.uint64, name="div_ceil")
-def DivCeil(a, b) -> Expr:  # noqa: N802
+def DivCeil(a: Expr, b: Expr) -> Expr:  # noqa: N802
     """Returns the result of division rounded up to the next integer
 
     Args:
@@ -112,7 +112,7 @@ def DivCeil(a, b) -> Expr:  # noqa: N802
 
 
 @Subroutine(TealType.uint64, name="pow10")
-def Pow10(x) -> Expr:  # noqa: N802
+def Pow10(x: Expr) -> Expr:  # noqa: N802
     """
     Returns 10^x, useful for things like total supply of an asset
 
@@ -121,7 +121,7 @@ def Pow10(x) -> Expr:  # noqa: N802
 
 
 @Subroutine(TealType.uint64, name="factorial")
-def Factorial(x):  # noqa: N802
+def Factorial(x: Expr) -> Expr:  # noqa: N802
     """Factorial returns x! = x * x-1 * x-2 * ...,
     for a 64bit integer, the max possible value is maxes out at 20
 
@@ -136,7 +136,7 @@ def Factorial(x):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="wide_factorial")
-def WideFactorial(x):  # noqa: N802
+def WideFactorial(x: Expr) -> Expr:  # noqa: N802
     """WideFactorial returns x! = x * x-1 * x-2 * ...,
 
     Args:
@@ -152,7 +152,7 @@ def WideFactorial(x):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="wide_power")
-def WidePower(x, n):  # noqa: N802
+def WidePower(x: Expr, n: Expr) -> Expr:  # noqa: N802
     """WidePower returns the result of x^n evaluated using expw and combining the hi/low uint64s into a byte string
 
     Args:
@@ -169,7 +169,7 @@ def WidePower(x, n):  # noqa: N802
 
 
 @Subroutine(TealType.bytes, name="exponential")
-def _exponential_impl(x, f, n, scale_):
+def _exponential_impl(x: Expr, f: Expr, n: Expr, scale_: Expr) -> Expr:
     return If(
         n == Int(1),
         BytesAdd(scale_, BytesMul(x, scale_)),
@@ -180,7 +180,7 @@ def _exponential_impl(x, f, n, scale_):
     )
 
 
-def Exponential(x, n):  # noqa: N802
+def Exponential(x: Expr, n: Expr) -> Expr:  # noqa: N802
     """Exponential approximates e**x for n iterations
 
     TODO: currently this is scaled to 1000 first then scaled back. A better implementation should include the use of ufixed in abi types
@@ -245,12 +245,12 @@ def Exponential(x, n):  # noqa: N802
 
 
 @Subroutine(TealType.uint64, name="bytes_to_int")
-def BytesToInt(x):  # noqa: N802
+def BytesToInt(x: Expr) -> Expr:  # noqa: N802
     return If(Len(x) < Int(8), Btoi(x), ExtractUint64(x, Len(x) - Int(8)))
 
 
 @Subroutine(TealType.bytes)
-def StackToWide():  # noqa: N802
+def StackToWide() -> Expr:  # noqa: N802
     """StackToWide returns the combination of the high and low integers returned from a wide math operation as bytes"""
     h = ScratchSlot()
     l = ScratchSlot()

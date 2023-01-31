@@ -101,7 +101,7 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         extra_pages: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
@@ -171,7 +171,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
@@ -221,7 +221,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
 
@@ -266,7 +266,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
 
@@ -311,7 +311,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
@@ -344,7 +344,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
 
@@ -387,7 +387,7 @@ class ApplicationClient:
         self,
         signer: TransactionSigner | None = None,
         sender: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "ApplicationClient":
 
         """makes a copy of the current ApplicationClient and the fields passed"""
@@ -418,7 +418,7 @@ class ApplicationClient:
         lease: bytes | None = None,
         rekey_to: str | None = None,
         atc: AtomicTransactionComposer | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ABIResult:
 
         """Handles calling the application"""
@@ -558,8 +558,8 @@ class ApplicationClient:
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> AtomicTransactionComposer:
 
         """Adds a transaction to the AtomicTransactionComposer passed"""
 
@@ -584,7 +584,7 @@ class ApplicationClient:
                     if hints.structs is None or name not in hints.structs:
                         raise Exception(f"Name {name} name in struct hints")
 
-                    elems = cast(list[tuple[str, str]], hints.structs[name]["elements"])
+                    elems = hints.structs[name]["elements"]
 
                     argument = [
                         argument[field_name] for field_name, field_type in elems
@@ -661,7 +661,9 @@ class ApplicationClient:
         atc.execute(self.client, 4)
         return atc.tx_ids.pop()
 
-    def get_application_state(self, raw=False) -> dict[bytes | str, bytes | str | int]:
+    def get_application_state(
+        self, raw: bool = False
+    ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         app_state = self.client.application_info(self.app_id)
         return cast(
@@ -779,11 +781,11 @@ class ApplicationClient:
         signer = self.get_signer(signer)
 
         match signer:
-            case AccountTransactionSigner():  # type: ignore
+            case AccountTransactionSigner():
                 return address_from_private_key(signer.private_key)
-            case MultisigTransactionSigner():  # type: ignore
+            case MultisigTransactionSigner():
                 return signer.msig.address()
-            case LogicSigTransactionSigner():  # type: ignore
+            case LogicSigTransactionSigner():
                 return signer.lsig.address()
 
         raise Exception("No sender provided")

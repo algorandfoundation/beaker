@@ -30,7 +30,7 @@ class GlobalBlob(Blob):
         super().__init__(keys=keys)
         self.init_subroutines()
 
-    def init_subroutines(self):
+    def init_subroutines(self) -> None:
         @Subroutine(TealType.none)
         def set_byte_impl(idx: Expr, byte: Expr) -> Expr:
             return Seq(
