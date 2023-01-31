@@ -2,18 +2,6 @@
     "name": "OracleDataCache",
     "methods": [
         {
-            "name": "lookup",
-            "args": [
-                {
-                    "type": "uint64",
-                    "name": "ts"
-                }
-            ],
-            "returns": {
-                "type": "(uint64,uint64,uint64)"
-            }
-        },
-        {
             "name": "portal_transfer",
             "args": [
                 {
@@ -27,6 +15,18 @@
                 "desc": "Undefined byte array"
             },
             "desc": "portal_transfer accepts a VAA containing information about the transfer and the payload."
+        },
+        {
+            "name": "lookup",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "ts"
+                }
+            ],
+            "returns": {
+                "type": "(uint64,uint64,uint64)"
+            }
         }
     ],
     "networks": {},

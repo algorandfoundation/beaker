@@ -1,6 +1,6 @@
 from typing import Final
 from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
-from beaker import ReservedApplicationStateValue, external
+from beaker import ReservedApplicationStateValue
 
 if __name__ == "__main__":
     from wormhole import ContractTransferVAA, WormholeTransfer  # type: ignore
@@ -55,9 +55,12 @@ class OracleDataCache(WormholeTransfer):
             output.set(ctvaa.payload),
         )
 
-    @external
-    def lookup(self, ts: abi.Uint64, *, output: OracleData):
-        return output.decode(self.prices[ts].get_must())
+    def __init__(self):
+        super().__init__()
+
+        @self.external
+        def lookup(ts: abi.Uint64, *, output: OracleDataCache.OracleData) -> Expr:
+            return output.decode(self.prices[ts].get_must())
 
 
 if __name__ == "__main__":

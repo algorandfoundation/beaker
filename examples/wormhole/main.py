@@ -44,7 +44,7 @@ def demo():
         }
 
         app_client.call(
-            OracleDataCache.portal_transfer,
+            "portal_transfer",
             vaa=base_vaa + json.dumps(fauxracle_data).encode(),
         )
 

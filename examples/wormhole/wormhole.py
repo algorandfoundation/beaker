@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from beaker import Application, external
+from beaker import Application
 from pyteal import (
     Reject,
     abi,
@@ -124,24 +124,25 @@ class WormholeTransfer(Application, ABC):
     will cause this contract to have it's `portal_transfer` method called.
     """
 
-    @external
-    def portal_transfer(
-        self, vaa: abi.DynamicBytes, *, output: abi.DynamicBytes
-    ) -> Expr:
-        """portal_transfer accepts a VAA containing information about the transfer and the payload.
+    def __init__(self):
+        super().__init__()
 
-        Args:
-            vaa: VAA encoded dynamic byte array
+        @self.external
+        def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
+            """portal_transfer accepts a VAA containing information about the transfer and the payload.
 
-        Returns:
-            Undefined byte array
+            Args:
+                vaa: VAA encoded dynamic byte array
 
-        To allow a more flexible interface we publicize that we output generic bytes
-        """
-        return Seq(
-            (ctvaa := ContractTransferVAA()).decode(vaa.get()),
-            self.handle_transfer(ctvaa, output=output),
-        )
+            Returns:
+                Undefined byte array
+
+            To allow a more flexible interface we publicize that we output generic bytes
+            """
+            return Seq(
+                (ctvaa := ContractTransferVAA()).decode(vaa.get()),
+                self.handle_transfer(ctvaa, output=output),
+            )
 
     @abstractmethod
     def handle_transfer(
