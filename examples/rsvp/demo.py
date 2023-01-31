@@ -1,4 +1,4 @@
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.error import AlgodHTTPError
 from algosdk.atomic_transaction_composer import TransactionWithSigner
 
@@ -25,7 +25,7 @@ def demo():
     app_id, app_addr, txid = app_client.create(event_price=1 * consts.algo)
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    event_price = app_client.call(app.methods.read_price)
+    event_price = app_client.call("read_price")
     print(f"Event price is set to {event_price.return_value} microAlgos")
 
     # Fund the contract for minimum balance
@@ -54,13 +54,13 @@ def demo():
 
     # Check in to the event
     print("Guest 1 checking in to the Event...")
-    app_client_guest1.call(app.methods.check_in)
+    app_client_guest1.call("check_in")
     acct_state = app_client_guest1.get_account_state()
     checked_in_val = acct_state["checked_in"]
     print(f"checked_in should be 1 and the state is {checked_in_val}")
 
     # See How many RSVPed
-    result = app_client.call(app.methods.read_rsvp)
+    result = app_client.call("read_rsvp")
     print(f"The number of people RSVPed should be 1 and it is {result.return_value}\n")
 
     # Guest 2 Scenario
@@ -83,7 +83,7 @@ def demo():
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos")
 
     # See How many RSVPed
-    result = app_client.call(app.methods.read_rsvp)
+    result = app_client.call("read_rsvp")
     print(f"The number of people RSVPed should be 2 and it is {result.return_value}\n")
 
     # Cancel RSVP to the event
@@ -96,7 +96,7 @@ def demo():
         print(f"Succesfully closed_out: {e}")
 
     # See How many RSVPed
-    result = app_client.call(app.methods.read_rsvp)
+    result = app_client.call("read_rsvp")
     print(f"The number of people RSVPed should be 1 and it is {result.return_value}")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")
 
@@ -106,7 +106,7 @@ def demo():
 
     # Withdraw funds and close event RSVP
     print("Event creator withdrawing funds...")
-    app_client.call(app.methods.withdraw_external)
+    app_client.call("withdraw_external")
     print(f"Event creator successfully withdrew remaining balance.")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")
 

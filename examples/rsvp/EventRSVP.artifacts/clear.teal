@@ -13,6 +13,7 @@ return
 
 // refund
 refund_0:
+proto 0 0
 itxn_begin
 intc_0 // pay
 itxn_field TypeEnum
