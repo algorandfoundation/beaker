@@ -1,14 +1,12 @@
-from typing import Final, cast
 from Cryptodome.Hash import keccak
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
 from algosdk.transaction import *
-
 from pyteal import Assert, Seq, Txn, abi
+
 from beaker import Application, client, consts, sandbox, precompiled
-from beaker.precompile import LSigPrecompile
 
 if __name__ == "__main__":
     from lsig import EthEcdsaVerify, HashValue, Signature  # type: ignore
@@ -48,8 +46,10 @@ def demo():
     acct = sandbox.get_accounts().pop()
 
     # Create app client
-    app = EthChecker()
+    app = eth_checker
     app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
+
+    app_client.build()
 
     # Now we should have the approval program available
     assert app_client.approval_program is not None
@@ -57,7 +57,7 @@ def demo():
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_signer = app.verifier.signer()
+    lsig_signer = next(iter(eth_checker.lsig_precompiles)).signer()
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()
@@ -88,7 +88,7 @@ def demo():
     signature = bytes.fromhex(hex_signature)
     atc = lsig_client.add_method_call(
         atc,
-        EthChecker.check_eth_sig,
+        check_eth_sig,
         hash=hash,
         signature=signature,
         suggested_params=sp_no_fee,
@@ -102,15 +102,15 @@ def demo():
     signature = bytes.fromhex(hex_signature)
     atc = lsig_client.add_method_call(
         atc,
-        EthChecker.check_eth_sig,
+        check_eth_sig,
         hash=hash,
         signature=signature,
         suggested_params=sp_no_fee,
     )
 
     result = atc.execute(algod_client, 4)
-    for result in result.abi_results:
-        print(result.return_value)
+    for rv in result.abi_results:
+        print(rv.return_value)
 
 
 if __name__ == "__main__":

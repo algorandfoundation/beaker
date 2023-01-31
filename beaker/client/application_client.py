@@ -554,7 +554,7 @@ class ApplicationClient:
     def add_method_call(
         self,
         atc: AtomicTransactionComposer,
-        method: abi.Method | ABIReturnSubroutine,
+        method: abi.Method | ABIReturnSubroutine | str,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
@@ -579,6 +579,9 @@ class ApplicationClient:
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
+
+        if isinstance(method, str):
+            method = self.app.abi_methods[method]
 
         if isinstance(method, ABIReturnSubroutine):
             method = method.method_spec()
