@@ -80,6 +80,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
 <span class="kn">from</span> <span class="nn">algosdk.abi</span> <span class="kn">import</span> <span class="n">Method</span>
+<span class="kn">from</span> <span class="nn">pyteal.compiler.compiler</span> <span class="kn">import</span> <span class="n">FRAME_POINTERS_VERSION</span>
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
     <span class="n">TealInputError</span><span class="p">,</span>
@@ -153,8 +154,18 @@
             <span class="n">scratch_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frame_pointers</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">),</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Application, finding all the custom attributes and initializing the Router&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Application, finding all the custom attributes and</span>
+<span class="sd">        initializing the Router</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span> <span class="o">=</span> <span class="n">version</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teal_version</span> <span class="o">&lt;</span> <span class="n">FRAME_POINTERS_VERSION</span><span class="p">:</span>
+            <span class="n">optimize_options</span> <span class="o">=</span> <span class="n">OptimizeOptions</span><span class="p">(</span>
+                <span class="n">scratch_slots</span><span class="o">=</span><span class="n">optimize_options</span><span class="o">.</span><span class="n">_scratch_slots</span><span class="p">,</span> <span class="n">frame_pointers</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">optimize_options</span> <span class="o">=</span> <span class="n">optimize_options</span>
 
         <span class="c1"># Get initial list of all attrs declared</span>
@@ -260,7 +271,8 @@
                             <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">)</span>
                         <span class="p">):</span>
                             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">&quot;Expected Subroutine or ABIReturnSubroutine, for </span><span class="si">{</span><span class="n">oc</span><span class="si">}</span><span class="s2"> got </span><span class="si">{</span><span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span>
+                                <span class="s2">&quot;Expected Subroutine or ABIReturnSubroutine, &quot;</span>
+                                <span class="sa">f</span><span class="s2">&quot;for </span><span class="si">{</span><span class="n">oc</span><span class="si">}</span><span class="s2"> got </span><span class="si">{</span><span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="p">)</span>
                         <span class="n">action</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">bound_attr</span>
 
@@ -340,11 +352,12 @@
 <div class="viewcode-block" id="Application.compile"><a class="viewcode-back" href="../../application.html#beaker.application.Application.compile">[docs]</a>    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AlgodClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fully compile the application to TEAL</span>
 
-<span class="sd">        Note: If the application has ``Precompile`` fields, the ``client`` must be passed to</span>
-<span class="sd">        compile them into bytecode.</span>
+<span class="sd">        Note: If the application has ``Precompile`` fields, the ``client`` must be</span>
+<span class="sd">        passed to compile them into bytecode.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            client (optional): An Algod client that can be passed to ``Precompile`` to have them fully compiled.</span>
+<span class="sd">            client (optional): An Algod client that can be passed to ``Precompile``</span>
+<span class="sd">            to have them fully compiled.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span>
@@ -389,7 +402,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span></div>
 
 <div class="viewcode-block" id="Application.application_spec"><a class="viewcode-back" href="../../application.html#beaker.application.Application.application_spec">[docs]</a>    <span class="k">def</span> <span class="nf">application_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns a dictionary, helpful to provide to callers with information about the application specification&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns a dictionary, helpful to provide to callers with</span>
+<span class="sd">        information about the application specification</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear_program</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
@@ -443,13 +458,15 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;write out the artifacts generated by the application to disk</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            directory (optional): str path to the directory where the artifacts should be written</span>
+<span class="sd">            directory (optional): str path to the directory where the artifacts</span>
+<span class="sd">                should be written</span>
 <span class="sd">            client (optional): AlgodClient to be passed to any precompiles</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approval_program</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">precompiles</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                    <span class="s2">&quot;Approval program empty, if you have precompiles, pass an Algod client to build the precompiles&quot;</span>
+                    <span class="s2">&quot;Approval program empty, if you have precompiles, pass an Algod &quot;</span>
+                    <span class="s2">&quot;client to build the precompiles&quot;</span>
                 <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 

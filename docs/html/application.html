@@ -90,18 +90,22 @@ ABI Methods and internal subroutines.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.application.Application.application_spec">
 <span class="sig-name descname"><span class="pre">application_spec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.application_spec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.application_spec" title="Permalink to this definition"></a></dt>
-<dd><p>returns a dictionary, helpful to provide to callers with information about the application specification</p>
+<dd><p>returns a dictionary, helpful to provide to callers with
+information about the application specification</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.application.Application.compile">
 <span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">AlgodClient</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/beaker/application.html#Application.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.application.Application.compile" title="Permalink to this definition"></a></dt>
 <dd><p>Fully compile the application to TEAL</p>
-<p>Note: If the application has <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> fields, the <code class="docutils literal notranslate"><span class="pre">client</span></code> must be passed to
-compile them into bytecode.</p>
+<p>Note: If the application has <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> fields, the <code class="docutils literal notranslate"><span class="pre">client</span></code> must be
+passed to compile them into bytecode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>client</strong> (<em>optional</em>) – An Algod client that can be passed to <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> to have them fully compiled.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>client</strong> (<em>optional</em>) – An Algod client that can be passed to <code class="docutils literal notranslate"><span class="pre">Precompile</span></code></p></li>
+<li><p><strong>compiled.</strong> (<em>to have them fully</em>) – </p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -120,7 +124,8 @@ compile them into bytecode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>directory</strong> (<em>optional</em>) – str path to the directory where the artifacts should be written</p></li>
+<li><p><strong>directory</strong> (<em>optional</em>) – str path to the directory where the artifacts
+should be written</p></li>
 <li><p><strong>client</strong> (<em>optional</em>) – AlgodClient to be passed to any precompiles</p></li>
 </ul>
 </dd>
