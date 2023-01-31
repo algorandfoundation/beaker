@@ -161,7 +161,6 @@ def demo():
     acct = sandbox.get_accounts().pop()
 
     app = sorted_ints_app
-    app.dump("./artifacts")
 
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), app, signer=acct.signer

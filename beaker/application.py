@@ -136,12 +136,15 @@ class Application:
             scratch_slots=True, frame_pointers=True
         ),
         # TODO
-        # name: str,
-        # descr: str | None,
+        name: str | None = None,
+        descr: str | None = None,
         # state: TState # how to make this generic but also default to empty?!?!!?
+        state_class: type | None = None,
         implement_default_create: bool = True,  # for backwards compat, TODO maybe remove
     ) -> None:
         """<TODO>"""
+        self._name = name
+        self._descr = descr
         self.teal_version = version
         self.optimize_options = optimize_options
         self._compiled: CompiledApplication | None = None
@@ -152,13 +155,22 @@ class Application:
         ] = {}
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self.acct_state = AccountState(klass=self.__class__)
-        self.app_state = ApplicationState(klass=self.__class__)
+        self._state_class = state_class or self.__class__
+        self.acct_state = AccountState(klass=self._state_class)
+        self.app_state = ApplicationState(klass=self._state_class)
         self.bare_methods: dict[str, SubroutineFnWrapper] = {}
         self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
         if implement_default_create:
             self.implement(unconditional_create_approval)
+
+    @property
+    def name(self) -> str:
+        return self._name or self.__class__.__name__
+
+    @property
+    def descr(self) -> str | None:
+        return self._descr or self.__doc__
 
     @overload
     def precompiled(self, value: "Application", /) -> AppPrecompile:
@@ -215,6 +227,10 @@ class Application:
     @property
     def lsig_precompiles(self) -> Iterable[LSigPrecompile]:
         return self._lsig_precompiles.values()
+
+    @property
+    def lsig_template_precompiles(self) -> Iterable[LSigTemplatePrecompile]:
+        return self._lsig_template_precompiles.values()
 
     @property
     def hints(self) -> dict[str, MethodHints]:
@@ -828,9 +844,9 @@ class Application:
             with _set_ctx(app=self, client=client):
                 bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
                 router = Router(
-                    name=self.__class__.__name__,
+                    name=self.name,
                     bare_calls=BareCallActions(**bare_call_kwargs),
-                    descr=self.__doc__,
+                    descr=self.descr,
                 )
 
                 # Add method externals

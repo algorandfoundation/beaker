@@ -18,6 +18,7 @@ from pyteal import (
     Subroutine,
 )
 import beaker as bkr
+from beaker import precompiled
 
 algod_client = bkr.sandbox.get_algod_client()
 
@@ -79,11 +80,12 @@ class C2CMain(bkr.Application):
 main_app = C2CMain()
 
 # Create sub app to be precompiled before allowing TEAL generation
-sub_app_pc = main_app.precompile(sub_app)
 
 
 @main_app.external
 def create_sub(*, output: abi.Uint64):
+    sub_app_pc = precompiled(sub_app)
+
     return Seq(
         InnerTxnBuilder.Execute(sub_app_pc.get_create_config()),
         # return the app id of the newly created app

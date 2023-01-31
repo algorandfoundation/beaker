@@ -23,23 +23,23 @@ from pyteal import (
 from beaker import (
     AccountStateBlob,
     Application,
-    LogicSignature,
-    TemplateVariable,
     client,
     consts,
     sandbox,
     precompiled,
+    LogicSignatureTemplate,
 )
 
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
 # creating unique account that will do whatever we need.
 # In this case, we need it to opt in and rekey to the app address
-class KeySig(LogicSignature):
-    nonce = TemplateVariable(TealType.bytes)
-
-    def evaluate(self):
-        return Approve()
+def KeySig(version: int) -> LogicSignatureTemplate:
+    return LogicSignatureTemplate(
+        lambda: Approve(),
+        runtime_template_variables={"nonce": TealType.bytes},
+        teal_version=version,
+    )
 
 
 # App that needs lots of storage so we use the local storage of
@@ -52,8 +52,6 @@ class DiskHungry(Application):
 
 
 disk_hungry = DiskHungry(version=8)
-
-
 key_sig = KeySig(version=8)
 
 
@@ -68,7 +66,7 @@ def add_account(nonce: abi.DynamicBytes):
     return Seq(
         Assert(
             # Make sure the opt-in'er is our lsig
-            Txn.sender() == tmpl_acct.logic.template_hash(nonce.get()),
+            Txn.sender() == tmpl_acct.logic.template_address(nonce=nonce.get()),
             # and that its being rekeyed to us
             Txn.rekey_to() == Global.current_application_address(),
         ),
@@ -129,7 +127,9 @@ def demo():
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
         nonce = get_nonce()
-        lsig_signer = next(iter(disk_hungry.lsig_precompiles)).template_signer(nonce)
+        lsig_signer = next(iter(disk_hungry.lsig_template_precompiles)).template_signer(
+            nonce=nonce
+        )
 
         print(
             f"Creating templated lsig with nonce {nonce} "

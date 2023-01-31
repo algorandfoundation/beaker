@@ -11,7 +11,8 @@ def test_demo():
     demo()
 
 
-@pytest.mark.parametrize("app_class", [OpUp, ExpensiveApp, TargetApp])
-def test_output_stability(app_class: type[Application]):
-    app = app_class()
+@pytest.mark.parametrize(
+    "app", [OpUp(target_app=TargetApp()), ExpensiveApp(), TargetApp()]
+)
+def test_output_stability(app: Application):
     check_application_artifacts_output_stability(app)

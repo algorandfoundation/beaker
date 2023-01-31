@@ -2,6 +2,12 @@ import base64
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING, List
+
+from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
+from algosdk.constants import APP_PAGE_MAX_SIZE
+from algosdk.source_map import SourceMap
+from algosdk.transaction import LogicSigAccount
+from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     Seq,
     Bytes,
@@ -15,17 +21,12 @@ from pyteal import (
     Len,
     Substring,
     Suffix,
-    Subroutine,
     Sha512_256,
     TxnField,
     TxnType,
     Addr,
 )
-from algosdk.v2client.algod import AlgodClient
-from algosdk.source_map import SourceMap
-from algosdk.transaction import LogicSigAccount
-from algosdk.constants import APP_PAGE_MAX_SIZE
-from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
+
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
 from beaker.lib.strings import EncodeUVarInt
 
@@ -264,11 +265,7 @@ class LSigProgram(Program):
             buff.load(),
         ]
 
-        @Subroutine(TealType.bytes)
-        def populate_template_program() -> Expr:
-            return Seq(*populate_program)
-
-        return populate_template_program()
+        return Seq(*populate_program)
 
 
 class AppPrecompile:
