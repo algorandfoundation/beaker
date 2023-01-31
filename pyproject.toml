@@ -16,8 +16,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-pyteal = "~0.22.0"
+python = "^3.11"
+pyteal = {git = "https://github.com/tzaffi/pyteal", branch = "source-map-b1"}
 py-algorand-sdk = ">=2.0.0"
 
 [tool.poetry.group.dev.dependencies]
