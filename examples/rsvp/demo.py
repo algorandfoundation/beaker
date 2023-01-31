@@ -49,6 +49,7 @@ def demo():
     app_client_guest1.opt_in(payment=ptxn2)
     acct_state = app_client_guest1.get_account_state()
     checked_in_val = acct_state["checked_in"]
+    assert isinstance(checked_in_val, int)
     print(f"Only RSVPed so checked_in should be 0 and the state is {checked_in_val}")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")
 
@@ -57,6 +58,7 @@ def demo():
     app_client_guest1.call("check_in")
     acct_state = app_client_guest1.get_account_state()
     checked_in_val = acct_state["checked_in"]
+    assert isinstance(checked_in_val, int)
     print(f"checked_in should be 1 and the state is {checked_in_val}")
 
     # See How many RSVPed
@@ -79,6 +81,7 @@ def demo():
     app_client_guest2.opt_in(payment=ptxn2)
     acct_state = app_client_guest2.get_account_state()
     checked_in_val = acct_state["checked_in"]
+    assert isinstance(checked_in_val, int)
     print(f"Only RSVPed so checked_in should be 0 and the state is {checked_in_val}")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos")
 

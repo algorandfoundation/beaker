@@ -1,5 +1,6 @@
 import pytest
 import pyteal as pt
+from pyteal import Bytes
 
 from beaker.application import Application, precompiled, this_app
 from beaker.client import ApplicationClient
@@ -271,10 +272,12 @@ def test_extra_page_population():
     assert app_precompile.clear.program_pages is not None
     recovered_approval_binary = b""
     for approval_page in app_precompile.approval.program_pages:
+        assert isinstance(approval_page, Bytes)
         recovered_approval_binary += bytes.fromhex(approval_page.byte_str)
 
     recovered_clear_binary = b""
     for clear_page in app_precompile.clear.program_pages:
+        assert isinstance(clear_page, Bytes)
         recovered_clear_binary += bytes.fromhex(clear_page.byte_str)
 
     assert recovered_approval_binary == app_precompile.approval.raw_binary
