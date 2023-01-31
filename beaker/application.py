@@ -223,8 +223,16 @@ class Application:
                 raise TypeError("TODO write error message")
 
     @property
-    def precompiles(self) -> list[AppPrecompile | LSigPrecompile]:
-        return list(itertools.chain(self.app_precompiles, self.lsig_precompiles))
+    def precompiles(
+        self,
+    ) -> list[AppPrecompile | LSigPrecompile | LSigTemplatePrecompile]:
+        return list(
+            itertools.chain(
+                self.app_precompiles,
+                self.lsig_precompiles,
+                self.lsig_template_precompiles,
+            )
+        )
 
     @property
     def app_precompiles(self) -> Iterable[AppPrecompile]:
