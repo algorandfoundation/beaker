@@ -15,7 +15,8 @@ from algosdk.encoding import decode_address
 import pyteal
 
 from beaker import client, sandbox, testing, consts
-from beaker.client.application_client import ApplicationClient, ProgramAssertion
+from beaker.precompile import ProgramAssertion
+from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from tests.conftest import check_application_artifacts_output_stability
 

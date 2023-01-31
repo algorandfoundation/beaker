@@ -3,56 +3,54 @@ from copy import copy
 from nacl.signing import SigningKey
 
 from algosdk.encoding import decode_address
-from algosdk import transaction
+from algosdk.future import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
 
 from typing import Literal
-from pyteal import Assert, Ed25519Verify_Bare, Int, Seq, TealType, Txn, abi
-from beaker import (
-    Application,
-    LogicSignature,
-    TemplateVariable,
-    client,
-    consts,
-    external,
-    sandbox,
-)
-from beaker.precompile import LSigPrecompile
+from pyteal import *
+from beaker import *
+from beaker.precompile import LSigTemplatePrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
 
 
 class App(Application):
-    class SigChecker(LogicSignature):
+    @staticmethod
+    def SigChecker() -> LogicSignatureTemplate:
         # Simple program to check an ed25519 signature given a message and signature
-        user_addr = TemplateVariable(stack_type=TealType.bytes)
 
-        def evaluate(self):
+        def evaluate(user_addr: Expr) -> Expr:
             return Seq(
                 # Borrow the msg and sig from the abi call arguments
                 # TODO: this kinda stinks, what do?
                 (msg := abi.String()).decode(Txn.application_args[2]),
                 (sig := abi.make(Signature)).decode(Txn.application_args[3]),
                 # Assert that the sig matches
-                Assert(Ed25519Verify_Bare(msg.get(), sig.get(), self.user_addr)),
+                Assert(Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
                 Int(1),
             )
 
-    sig_checker = LSigPrecompile(SigChecker())
+        return LogicSignatureTemplate(
+            evaluate,
+            runtime_template_variables={"user_addr": TealType.bytes},
+        )
+
+    sig_checker = LSigTemplatePrecompile(SigChecker())
 
     @external
     def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
         return Assert(
-            Txn.sender() == self.sig_checker.logic.template_hash(signer_address.get())
+            Txn.sender()
+            == self.sig_checker.logic.template_address(user_addr=signer_address.get())
         )
 
 
 def sign_msg(msg: str, sk: str) -> bytes:
     """utility function for signing arbitrary data"""
-    pk: list[int] = list(base64.b64decode(sk))
+    pk: list[bytes] = list(base64.b64decode(sk))
     return SigningKey(bytes(pk[:32])).sign(msg.encode()).signature
 
 
@@ -73,7 +71,9 @@ def demo():
     #     f.write(app.sig_checker.populate_template(decode_address(acct.address)))
 
     # Get the signer for the lsig from its populated precompile
-    lsig_signer = app.sig_checker.template_signer(decode_address(acct.address))
+    lsig_signer = app.sig_checker.template_signer(
+        user_addr=decode_address(acct.address)
+    )
     # Prepare a new client so it can sign calls
     lsig_client = app_client.prepare(signer=lsig_signer)
 

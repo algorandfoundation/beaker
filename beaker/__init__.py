@@ -12,8 +12,8 @@ from .state import (
     identity_key_gen,
 )
 from .decorators import Authorize
-from .logic_signature import LogicSignature, TemplateVariable
-from .precompile import Precompile, AppPrecompile, LSigPrecompile
+from .logic_signature import LogicSignature, LogicSignatureTemplate
+from .precompile import Program, AppPrecompile, LSigPrecompile
 
 from . import client
 from . import sandbox

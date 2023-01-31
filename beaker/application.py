@@ -44,8 +44,8 @@ from beaker.decorators import (
     capture_method_hints_and_remove_defaults,
 )
 from beaker.decorators.authorize import _authorize
-from beaker.logic_signature import LogicSignature
-from beaker.precompile import AppPrecompile, LSigPrecompile
+from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
+from beaker.precompile import AppPrecompile, LSigPrecompile, LSigTemplatePrecompile
 from beaker.state import AccountState, ApplicationState
 from beaker.utils import remove_first_match
 
@@ -91,7 +91,7 @@ def this_app() -> "Application":
 @contextmanager
 def _set_ctx(app: "Application", client: AlgodClient | None = None):
     if client is None:
-        curr = _ctx.get(default=None)
+        curr = _ctx.get(None)
         if curr is not None:
             client = curr.client
     token = _ctx.set(CompileContext(app=app, client=client))
@@ -111,10 +111,15 @@ def precompiled(value: "LogicSignature", /) -> LSigPrecompile:
     ...
 
 
+@overload
+def precompiled(value: "LogicSignatureTemplate", /) -> LSigTemplatePrecompile:
+    ...
+
+
 def precompiled(
-    value: "Application | LogicSignature",
+    value: "Application | LogicSignature | LogicSignatureTemplate",
     /,
-) -> AppPrecompile | LSigPrecompile:
+) -> AppPrecompile | LSigPrecompile | LSigTemplatePrecompile:
     try:
         ctx = _ctx.get()
     except LookupError:
@@ -142,6 +147,9 @@ class Application:
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}
+        self._lsig_template_precompiles: dict[
+            LogicSignatureTemplate, LSigTemplatePrecompile
+        ] = {}
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
         self.acct_state = AccountState(klass=self.__class__)
@@ -160,11 +168,15 @@ class Application:
     def precompiled(self, value: "LogicSignature", /) -> LSigPrecompile:
         ...
 
+    @overload
+    def precompiled(self, value: "LogicSignatureTemplate", /) -> LSigTemplatePrecompile:
+        ...
+
     def precompiled(
         self,
-        value: "Application | LogicSignature",
+        value: "Application | LogicSignature | LogicSignatureTemplate",
         /,
-    ) -> AppPrecompile | LSigPrecompile:
+    ) -> AppPrecompile | LSigPrecompile | LSigTemplatePrecompile:
         try:
             ctx = _ctx.get()
         except LookupError:
@@ -184,6 +196,10 @@ class Application:
             case LogicSignature() as lsig:
                 return self._lsig_precompiles.setdefault(
                     lsig, LSigPrecompile(lsig, ctx.client)
+                )
+            case LogicSignatureTemplate() as lsig_template:
+                return self._lsig_template_precompiles.setdefault(
+                    lsig_template, LSigTemplatePrecompile(lsig_template, ctx.client)
                 )
             case _:
                 raise TypeError("TODO write error message")

@@ -7,7 +7,7 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.transaction import *
 
 from pyteal import Assert, Seq, Txn, abi
-from beaker import Application, client, consts, external, sandbox
+from beaker import Application, client, consts, sandbox, precompiled
 from beaker.precompile import LSigPrecompile
 
 if __name__ == "__main__":
@@ -17,25 +17,30 @@ else:
 
 
 class EthChecker(Application):
+    pass
 
+
+eth_checker = EthChecker()
+
+verify_lsig = EthEcdsaVerify(version=6)
+
+
+@eth_checker.external
+def check_eth_sig(hash: HashValue, signature: Signature, *, output: abi.String):
     # The lsig that will be responsible for validating the
     # incoming signature against the incoming hash
     # When passed to Precompile, it flags the init of the Application
     # to prevent building approval/clear programs until the precompile is
     # compiled so we have access to compiled information (its address for instance)
-    verifier: Final[LSigPrecompile] = LSigPrecompile(EthEcdsaVerify(version=6))
+    verifier = precompiled(verify_lsig)
 
-    @external
-    def check_eth_sig(
-        self, hash: HashValue, signature: Signature, *, output: abi.String
-    ):
-        return Seq(
-            # The precompiled lsig should have its address and binary available
-            # here so we can use it to make sure we've been called
-            # with the correct lsig
-            Assert(Txn.sender() == self.verifier.logic.hash()),
-            output.set("lsig validated"),
-        )
+    return Seq(
+        # The precompiled lsig should have its address and binary available
+        # here so we can use it to make sure we've been called
+        # with the correct lsig
+        Assert(Txn.sender() == verifier.logic.address()),
+        output.set("lsig validated"),
+    )
 
 
 def demo():
@@ -43,27 +48,16 @@ def demo():
     acct = sandbox.get_accounts().pop()
 
     # Create app client
-    app_client = client.ApplicationClient(
-        algod_client, EthChecker(), signer=acct.signer
-    )
-
-    # shouldn't have an approval program yet, since
-    # the number of precompiles is > 0
-    assert app_client.app.approval_program is None
-
-    # This will first compile the precompiles, then compile the approval program
-    # with the precompiles in place
-    # not required to call manually since create/update will also do this
-    # if necessary
-    app_client.build()
+    app = EthChecker()
+    app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
 
     # Now we should have the approval program available
-    assert app_client.app.approval_program is not None
+    assert app_client.approval_program is not None
 
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_signer = cast(EthChecker, app_client.app).verifier.signer()
+    lsig_signer = app.verifier.signer()
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()
