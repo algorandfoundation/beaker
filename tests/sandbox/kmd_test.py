@@ -1,8 +1,18 @@
 import pytest
-
 from algosdk.account import generate_account
 from algosdk.error import KMDHTTPError
-from beaker.sandbox.kmd import delete_account, get_accounts, add_account
+
+from beaker.sandbox.kmd import (
+    delete_account,
+    get_accounts,
+    add_account,
+    get_client,
+    DEFAULT_KMD_ADDRESS,
+    DEFAULT_KMD_TOKEN,
+    get_sandbox_default_wallet,
+    DEFAULT_KMD_WALLET_NAME,
+    DEFAULT_KMD_WALLET_PASSWORD,
+)
 
 
 def test_get_accounts():
@@ -24,3 +34,17 @@ def test_add_remove_account():
 
     with pytest.raises(KMDHTTPError):
         delete_account("lol")
+
+
+def test_get_client():
+    kmd_client = get_client()
+    assert kmd_client.kmd_address == DEFAULT_KMD_ADDRESS
+    assert kmd_client.kmd_token == DEFAULT_KMD_TOKEN
+    kmd_client.list_wallets()
+
+
+def test_get_sandbox_default_wallet():
+    sandbox_default_wallet = get_sandbox_default_wallet()
+    assert sandbox_default_wallet.name == DEFAULT_KMD_WALLET_NAME
+    assert sandbox_default_wallet.pswd == DEFAULT_KMD_WALLET_PASSWORD
+    sandbox_default_wallet.list_keys()
