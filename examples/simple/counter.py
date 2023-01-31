@@ -1,40 +1,50 @@
-from typing import Final
-
-from beaker.client import ApplicationClient, LogicException
-from beaker import sandbox
-
 from pyteal import abi, TealType, Global, Int, Seq
-from beaker.application import Application
+
+from beaker import sandbox
+from beaker.application import this_app, Application
+from beaker.client import ApplicationClient, LogicException
+from beaker.decorators import Authorize
 from beaker.state import ApplicationStateValue
-from beaker.decorators import external, create, Authorize
 
 
-class CounterApp(Application):
-
-    counter: Final[ApplicationStateValue] = ApplicationStateValue(
+class CounterState:
+    counter = ApplicationStateValue(
         stack_type=TealType.uint64,
         descr="A counter for showing how to use application state",
     )
 
-    @create(bare=True)
-    def create(self):
-        return self.initialize_application_state()
 
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def increment(self, *, output: abi.Uint64):
-        """increment the counter"""
-        return Seq(
-            self.counter.set(self.counter + Int(1)),
-            output.set(self.counter),
-        )
+class CounterApp(Application):
+    pass
 
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def decrement(self, *, output: abi.Uint64):
-        """decrement the counter"""
-        return Seq(
-            self.counter.set(self.counter - Int(1)),
-            output.set(self.counter),
-        )
+
+counter_app = CounterApp(implement_default_create=False, state_class=CounterState)
+
+
+@counter_app.create
+def create():
+    return this_app().initialize_application_state()
+
+
+AuthorizeCreatorOnly = Authorize.only(Global.creator_address())
+
+
+@counter_app.external(authorize=AuthorizeCreatorOnly)
+def increment(*, output: abi.Uint64):
+    """increment the counter"""
+    return Seq(
+        CounterState.counter.set(CounterState.counter + Int(1)),
+        output.set(CounterState.counter),
+    )
+
+
+@counter_app.external(authorize=AuthorizeCreatorOnly)
+def decrement(*, output: abi.Uint64):
+    """decrement the counter"""
+    return Seq(
+        CounterState.counter.set(CounterState.counter - Int(1)),
+        output.set(CounterState.counter),
+    )
 
 
 def demo():
@@ -44,19 +54,19 @@ def demo():
     acct = accts.pop()
 
     # Create an Application client containing both an algod client and my app
-    app_client = ApplicationClient(client, CounterApp(), signer=acct.signer)
+    app_client = ApplicationClient(client, counter_app, signer=acct.signer)
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    app_client.call(CounterApp.increment)
-    app_client.call(CounterApp.increment)
-    app_client.call(CounterApp.increment)
-    result = app_client.call(CounterApp.increment)
+    app_client.call("increment")
+    app_client.call("increment")
+    app_client.call("increment")
+    result = app_client.call("increment")
     print(f"Currrent counter value: {result.return_value}")
 
-    result = app_client.call(CounterApp.decrement)
+    result = app_client.call("decrement")
     print(f"Currrent counter value: {result.return_value}")
 
     try:
@@ -64,7 +74,7 @@ def demo():
         # since we have the auth check
         other_acct = accts.pop()
         other_client = app_client.prepare(signer=other_acct.signer)
-        other_client.call(CounterApp.increment)
+        other_client.call("increment")
     except LogicException as e:
         print("App call failed as expected.")
         print(e)

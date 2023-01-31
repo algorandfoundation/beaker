@@ -3,9 +3,12 @@ from beaker import *
 
 
 class ExternalExample(Application):
-    @create
-    def create(self, input: abi.String, *, output: abi.String):
-        return output.decode(input.encode())
+    def __init__(self):
+        super().__init__(implement_default_create=False)
+
+        @self.create
+        def create(input: abi.String, *, output: abi.String):
+            return output.decode(input.encode())
 
 
 def demo():
