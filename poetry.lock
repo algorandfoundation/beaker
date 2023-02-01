@@ -1969,7 +1969,7 @@ diagrams = ["jinja2", "railroad-diagrams"]
 [[package]]
 name = "pyteal"
 version = "0.22.0"
-description = ""
+description = "Algorand Smart Contracts in Python"
 category = "main"
 optional = false
 python-versions = ">=3.10"
@@ -1987,7 +1987,7 @@ tabulate = ">=0.9.0,<0.10.0"
 type = "git"
 url = "https://github.com/tzaffi/pyteal"
 reference = "source-map-b1"
-resolved_reference = "e8c4484ed21441c21894846c1d9f271b030ac69e"
+resolved_reference = "792168fc62d943279f18c569038b27c9ce23eeb8"
 
 [[package]]
 name = "pytest"
