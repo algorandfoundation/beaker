@@ -1987,7 +1987,7 @@ tabulate = ">=0.9.0,<0.10.0"
 type = "git"
 url = "https://github.com/tzaffi/pyteal"
 reference = "source-map-b1"
-resolved_reference = "792168fc62d943279f18c569038b27c9ce23eeb8"
+resolved_reference = "6edc25ce6ffac19cf0ba071b43e2e9a884eb476f"
 
 [[package]]
 name = "pytest"

@@ -2,7 +2,7 @@ import base64
 from inspect import getattr_static
 from typing import Final, Any, cast, Optional
 from algosdk.v2client.algod import AlgodClient
-from algosdk.abi import Method
+from algosdk.abi import Contract, Method
 from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 from pyteal import (
     SubroutineFnWrapper,
@@ -18,6 +18,7 @@ from pyteal import (
     Router,
     Bytes,
     Approve,
+    PyTealSourceMap,
 )
 
 from beaker.decorators import (
@@ -57,6 +58,57 @@ def get_method_signature(fn: HandlerFunc) -> str:
 
 def get_method_selector(fn: HandlerFunc) -> bytes:
     return get_method_spec(fn).get_selector()
+
+
+class ARTIFACTS:
+    approval_teal = "approval"
+    clear_teal = "clear"
+    contract_json = "contract"
+    application_json = "application"
+
+    @staticmethod
+    def _j(name: str) -> str:
+        return f"{name}.json"
+
+    @staticmethod
+    def _t(name: str) -> str:
+        return f"{name}.teal"
+
+    @staticmethod
+    def _at(name: str) -> str:
+        return f"{name}_annotated.teal"
+
+    @classmethod
+    def approval(cls) -> str:
+        return cls._t(cls.approval_teal)
+
+    @classmethod
+    def clear(cls) -> str:
+        return cls._t(cls.clear_teal)
+
+    @classmethod
+    def contract(cls) -> str:
+        return cls._j(cls.contract_json)
+
+    @classmethod
+    def application(cls) -> str:
+        return cls._j(cls.application_json)
+
+    @classmethod
+    def annotated_approval(cls) -> str:
+        return cls._t(f"annotated_{cls.approval_teal}")
+
+    @classmethod
+    def annotated_clear(cls) -> str:
+        return cls._t(f"annotated_{cls.clear_teal}")
+
+    @classmethod
+    def r3ptsm_approval(cls) -> str:
+        return cls._j(f"pyteal_sourcemap_{cls.approval_teal}")
+
+    @classmethod
+    def r3ptsm_clear(cls) -> str:
+        return cls._j(f"pyteal_sourcemap_{cls.clear_teal}")
 
 
 class Application:
@@ -108,6 +160,9 @@ class Application:
         # be set after init if len(precompiles)>0
         self.approval_program: Optional[str] = None
         self.clear_program: Optional[str] = None
+        self.contract: Optional[Contract] = None
+        self.approval_pt_sourcemap: Optional[PyTealSourceMap] = None
+        self.clear_pt_sourcemap: Optional[PyTealSourceMap] = None
 
         all_creates = []
         all_updates = []
@@ -311,16 +366,25 @@ class Application:
                 overriding_name=method.name(),
             )
 
-        # Compile approval and clear programs
-        (
-            self.approval_program,
-            self.clear_program,
-            self.contract,
-        ) = self.router.compile_program(
+        # RouterResults
+        res = self.router.compile(
             version=self.teal_version,
             assemble_constants=True,
             optimize=self.optimize_options,
+            approval_filename=ARTIFACTS.approval(),
+            clear_filename=ARTIFACTS.clear(),
+            with_sourcemaps=True,
+            pcs_in_sourcemap=bool(client),
+            algod_client=client,
+            annotate_teal=True,
+            annotate_teal_headers=True,
+            annotate_teal_concise=False,
         )
+        self.approval_program = res.approval_teal
+        self.clear_program = res.clear_teal
+        self.contract = res.abi_contract
+        self.approval_pt_sourcemap = res.approval_sourcemap
+        self.clear_pt_sourcemap = res.clear_sourcemap
 
         return self.approval_program, self.clear_program
 
@@ -399,20 +463,36 @@ class Application:
         if not os.path.exists(directory):
             os.mkdir(directory)
 
-        with open(os.path.join(directory, "approval.teal"), "w") as f:
+        with open(os.path.join(directory, ARTIFACTS.approval()), "w") as f:
             if self.approval_program is None:
                 raise Exception("Approval program empty")
             f.write(self.approval_program)
 
-        with open(os.path.join(directory, "clear.teal"), "w") as f:
+        with open(os.path.join(directory, ARTIFACTS.clear()), "w") as f:
             if self.clear_program is None:
                 raise Exception("Clear program empty")
             f.write(self.clear_program)
 
-        with open(os.path.join(directory, "contract.json"), "w") as f:
+        with open(os.path.join(directory, ARTIFACTS.contract()), "w") as f:
             if self.contract is None:
                 raise Exception("Contract empty")
             f.write(json.dumps(self.contract.dictify(), indent=4))
 
-        with open(os.path.join(directory, "application.json"), "w") as f:
+        with open(os.path.join(directory, ARTIFACTS.application()), "w") as f:
             f.write(json.dumps(self.application_spec(), indent=4))
+
+        with open(os.path.join(directory, ARTIFACTS.annotated_approval()), "w") as f:
+            f.write(self.approval_pt_sourcemap.annotated_teal)
+
+        with open(os.path.join(directory, ARTIFACTS.annotated_clear()), "w") as f:
+            f.write(self.clear_pt_sourcemap.annotated_teal)
+
+        with open(os.path.join(directory, ARTIFACTS.r3ptsm_approval()), "w") as f:
+            f.write(
+                json.dumps(self.approval_pt_sourcemap.r3_sourcemap.to_json(), indent=4)
+            )
+
+        with open(os.path.join(directory, ARTIFACTS.r3ptsm_clear()), "w") as f:
+            f.write(
+                json.dumps(self.clear_pt_sourcemap.r3_sourcemap.to_json(), indent=4)
+            )
