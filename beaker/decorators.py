@@ -493,8 +493,8 @@ def external(
             Useful for method overriding.
         authorize: a subroutine with input of ``Txn.sender()`` and output uint64
             interpreted as allowed if the output>0.
-        method_config:  A subroutine that should take a single argument (Txn.sender())
-            and evaluate to 1/0 depending on the app call transaction sender.
+        method_config: A PyTEAL method config that determines how this method may
+            be called. See the PyTeal docs for more information.
         read_only: Mark a method as callable with no fee using dryrun or simulate
 
     Returns:
