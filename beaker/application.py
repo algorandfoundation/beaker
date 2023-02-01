@@ -179,7 +179,7 @@ class Application:
             if handler_config.bare_method is not None:
                 actions = {
                     oc: cast(OnCompleteAction, action)
-                    for oc, action in handler_config.bare_method.__dict__.items()
+                    for oc, action in handler_config.bare_method.asdict().items()
                     if action.action is not None
                 }
 
