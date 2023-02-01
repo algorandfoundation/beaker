@@ -1990,7 +1990,7 @@ semantic-version = ">=2.9.0,<3.0.0"
 type = "git"
 url = "https://github.com/algorand/pyteal"
 reference = "asdict4BareCallActions"
-resolved_reference = "0e2c258485341adc53609e570423fafa8610d0ef"
+resolved_reference = "b3fd29f112872f83c5edbe348edd1578b2e0acaa"
 
 [[package]]
 name = "pytest"
