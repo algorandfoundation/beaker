@@ -570,8 +570,8 @@
 <span class="sd">            Useful for method overriding.</span>
 <span class="sd">        authorize: a subroutine with input of ``Txn.sender()`` and output uint64</span>
 <span class="sd">            interpreted as allowed if the output&gt;0.</span>
-<span class="sd">        method_config:  A subroutine that should take a single argument (Txn.sender())</span>
-<span class="sd">            and evaluate to 1/0 depending on the app call transaction sender.</span>
+<span class="sd">        method_config: A PyTEAL method config that determines how this method may</span>
+<span class="sd">            be called. See the PyTeal docs for more information.</span>
 <span class="sd">        read_only: Mark a method as callable with no fee using dryrun or simulate</span>
 
 <span class="sd">    Returns:</span>

@@ -111,8 +111,8 @@
 Useful for method overriding.</p></li>
 <li><p><strong>authorize</strong> – a subroutine with input of <code class="docutils literal notranslate"><span class="pre">Txn.sender()</span></code> and output uint64
 interpreted as allowed if the output&gt;0.</p></li>
-<li><p><strong>method_config</strong> – A subroutine that should take a single argument (Txn.sender())
-and evaluate to 1/0 depending on the app call transaction sender.</p></li>
+<li><p><strong>method_config</strong> – A PyTEAL method config that determines how this method may
+be called. See the PyTeal docs for more information.</p></li>
 <li><p><strong>read_only</strong> – Mark a method as callable with no fee using dryrun or simulate</p></li>
 </ul>
 </dd>
