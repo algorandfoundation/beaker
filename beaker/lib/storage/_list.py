@@ -65,7 +65,7 @@ class ListElement(Expr):
         if element_size.type_of() != TealType.uint64:
             raise TealTypeError(element_size.type_of(), TealType.uint64)
 
-        if element_size.type_of() != TealType.uint64:
+        if idx.type_of() != TealType.uint64:
             raise TealTypeError(idx.type_of(), TealType.uint64)
 
         self.name = name

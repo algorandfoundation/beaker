@@ -1,6 +1,6 @@
 Beaker
 ------
-<img align="left" src="beaker.png" margin="10px" >
+<img align="left" src="https://raw.githubusercontent.com/algorand-devrel/beaker/master/beaker.png" margin="10px" >
 
 Beaker is a smart contract development framework for [PyTeal](https://github.com/algorand/pyteal).
 
