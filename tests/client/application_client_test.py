@@ -15,7 +15,7 @@ from algosdk.atomic_transaction_composer import (
 
 from beaker.decorators import Authorize, DefaultArgument
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, CompileOptions
+from beaker.application import Application, CompilerOptions
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
@@ -31,7 +31,7 @@ class App(Application):
 
     def __init__(self, version: int = pt.MAX_PROGRAM_VERSION):
         super().__init__(
-            compile_options=CompileOptions(avm_version=version),
+            compiler_options=CompilerOptions(avm_version=version),
             implement_default_create=False,
         )
 
