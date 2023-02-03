@@ -5,7 +5,7 @@ import pytest
 from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
-from beaker.application import Application, MethodConfig
+from beaker.application import Application, CompileOptions, MethodConfig
 from beaker.decorators import DefaultArgumentClass
 from beaker.state import (
     ReservedApplicationStateValue,
@@ -44,14 +44,14 @@ def test_empty_application():
     assert len(ea.contract.methods) == 0, "Expected no methods in the contract"
 
 
-def test_teal_version():
+def test_avm_version():
     class EmptyApp(Application):
         pass
 
-    ea = EmptyApp(version=8)
+    ea = EmptyApp(compile_options=CompileOptions(avm_version=8))
     ea.compile()
 
-    assert ea.teal_version == 8, "Expected teal v8"
+    assert ea.avm_version == 8, "Expected avm v8"
     assert (
         ea.approval_program
         and ea.approval_program.split("\n")[0] == "#pragma version 8"

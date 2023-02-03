@@ -26,7 +26,7 @@ from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     SubroutineFnWrapper,
     Txn,
-    MAX_TEAL_VERSION,
+    MAX_PROGRAM_VERSION,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
@@ -50,7 +50,6 @@ from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import AppPrecompile, LSigPrecompile, LSigTemplatePrecompile
 from beaker.state import AccountState, ApplicationState
 from beaker.utils import remove_first_match
-
 
 OnCompleteActionName: TypeAlias = Literal[
     "no_op",
@@ -128,13 +127,26 @@ def precompiled(
     return ctx.app.precompiled(value)
 
 
+@dataclasses.dataclass
+class CompileOptions:
+    avm_version: int = dataclasses.field(default=MAX_PROGRAM_VERSION)
+    """avm_version: defines the #pragma version used in output"""
+    scratch_slots: bool = dataclasses.field(default=True)
+    """scratch_slots: cancel contiguous store/load operations that have no load dependencies elsewhere. 
+       Available AVM version 9
+       default=True"""
+    frame_pointers: bool = dataclasses.field(default=True)
+    """frame_pointers: employ frame pointers instead of scratch slots during compilation.
+       Available AVM version 8
+       default=True"""
+
+
 class Application:
     def __init__(
         self: Self,
         *,
-        version: int = MAX_TEAL_VERSION,
-        optimize_options: OptimizeOptions = OptimizeOptions(
-            scratch_slots=True, frame_pointers=True
+        compile_options: CompileOptions = CompileOptions(
+            avm_version=MAX_PROGRAM_VERSION, scratch_slots=True, frame_pointers=True
         ),
         # TODO
         name: str | None = None,
@@ -146,13 +158,12 @@ class Application:
         """<TODO>"""
         self._name = name
         self._descr = descr
-        self.teal_version = version
-        if self.teal_version < FRAME_POINTERS_VERSION:
-            optimize_options = OptimizeOptions(
-                scratch_slots=optimize_options._scratch_slots, frame_pointers=False
-            )
-        self.optimize_options = optimize_options
-
+        self.avm_version = compile_options.avm_version
+        self.optimize_options = OptimizeOptions(
+            scratch_slots=compile_options.scratch_slots,
+            frame_pointers=compile_options.frame_pointers
+            and self.avm_version >= FRAME_POINTERS_VERSION,
+        )
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self.clear_state_method: SubroutineFnWrapper | None = None
@@ -890,7 +901,7 @@ class Application:
                 }
                 # Compile approval and clear programs
                 approval_program, clear_program, contract = router.compile_program(
-                    version=self.teal_version,
+                    version=self.avm_version,
                     assemble_constants=True,
                     optimize=OptimizeOptions(scratch_slots=True),
                 )

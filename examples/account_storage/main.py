@@ -29,6 +29,7 @@ from beaker import (
     precompiled,
     LogicSignatureTemplate,
 )
+from beaker.application import CompileOptions
 
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
@@ -51,7 +52,7 @@ class DiskHungry(Application):
     data = AccountStateBlob(keys=16)
 
 
-disk_hungry = DiskHungry(version=8)
+disk_hungry = DiskHungry(compile_options=CompileOptions(avm_version=8))
 key_sig = KeySig(version=8)
 
 

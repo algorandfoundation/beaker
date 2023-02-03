@@ -1,12 +1,13 @@
 from pyteal import *
 from beaker import *
+from beaker.application import CompileOptions
 
 # Create a class, subclassing Application from beaker
 class HelloBeaker(Application):
     pass
 
 
-hello_app = HelloBeaker(version=8)
+hello_app = HelloBeaker(compile_options=CompileOptions(avm_version=8))
 
 
 @hello_app.external
