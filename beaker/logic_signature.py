@@ -6,7 +6,7 @@ from pyteal import (
     TealType,
     Tmpl,
     Expr,
-    MAX_TEAL_VERSION,
+    MAX_PROGRAM_VERSION,
     Seq,
     compileTeal,
     Mode,
@@ -76,7 +76,7 @@ class LogicSignature:
         self,
         expr_or_func: Callable[[], Expr] | Expr,
         *,
-        teal_version: int = MAX_TEAL_VERSION,
+        avm_version: int = MAX_PROGRAM_VERSION,
     ):
         logic: Expr
         if callable(expr_or_func):
@@ -87,7 +87,7 @@ class LogicSignature:
         self.program = compileTeal(
             logic,
             mode=Mode.Signature,
-            version=teal_version,
+            version=avm_version,
             assembleConstants=True,
         )
 
@@ -107,7 +107,7 @@ class LogicSignatureTemplate:
         expr_or_func: Callable[..., Expr] | Expr,
         *,
         runtime_template_variables: dict[str, TealType],
-        teal_version: int = MAX_TEAL_VERSION,
+        avm_version: int = MAX_PROGRAM_VERSION,
     ):
         """initialize the logic signature and identify relevant attributes"""
 
@@ -134,7 +134,7 @@ class LogicSignatureTemplate:
                 logic,
             ),
             mode=Mode.Signature,
-            version=teal_version,
+            version=avm_version,
             assembleConstants=True,
         )
 

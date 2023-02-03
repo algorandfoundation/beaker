@@ -39,7 +39,7 @@ def KeySig(version: int) -> LogicSignatureTemplate:
     return LogicSignatureTemplate(
         lambda: Approve(),
         runtime_template_variables={"nonce": TealType.bytes},
-        teal_version=version,
+        avm_version=version,
     )
 
 

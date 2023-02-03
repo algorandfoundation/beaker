@@ -81,4 +81,4 @@ def EthEcdsaVerify(version: int) -> LogicSignature:
             ),
         )
 
-    return LogicSignature(evaluate, teal_version=version)
+    return LogicSignature(evaluate, avm_version=version)
