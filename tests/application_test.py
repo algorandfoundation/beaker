@@ -5,7 +5,7 @@ import pytest
 from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
-from beaker.application import Application, CompileOptions, MethodConfig
+from beaker.application import Application, CompilerOptions, MethodConfig
 from beaker.decorators import DefaultArgumentClass
 from beaker.state import (
     ReservedApplicationStateValue,
@@ -48,7 +48,7 @@ def test_avm_version():
     class EmptyApp(Application):
         pass
 
-    ea = EmptyApp(compile_options=CompileOptions(avm_version=8))
+    ea = EmptyApp(compiler_options=CompilerOptions(avm_version=8))
     ea.compile()
 
     assert ea.avm_version == 8, "Expected avm v8"

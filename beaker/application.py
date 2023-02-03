@@ -128,7 +128,7 @@ def precompiled(
 
 
 @dataclasses.dataclass
-class CompileOptions:
+class CompilerOptions:
     avm_version: int = dataclasses.field(default=MAX_PROGRAM_VERSION)
     """avm_version: defines the #pragma version used in output"""
     scratch_slots: bool = dataclasses.field(default=True)
@@ -145,7 +145,7 @@ class Application:
     def __init__(
         self: Self,
         *,
-        compile_options: CompileOptions = CompileOptions(
+        compiler_options: CompilerOptions = CompilerOptions(
             avm_version=MAX_PROGRAM_VERSION, scratch_slots=True, frame_pointers=True
         ),
         # TODO
@@ -158,10 +158,10 @@ class Application:
         """<TODO>"""
         self._name = name
         self._descr = descr
-        self.avm_version = compile_options.avm_version
+        self.avm_version = compiler_options.avm_version
         self.optimize_options = OptimizeOptions(
-            scratch_slots=compile_options.scratch_slots,
-            frame_pointers=compile_options.frame_pointers
+            scratch_slots=compiler_options.scratch_slots,
+            frame_pointers=compiler_options.frame_pointers
             and self.avm_version >= FRAME_POINTERS_VERSION,
         )
         self._compiled: CompiledApplication | None = None

@@ -5,7 +5,7 @@ import pyteal as pt
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 from beaker import Application, client, sandbox
-from beaker.application import CompileOptions
+from beaker.application import CompilerOptions
 
 algod_client = None
 sandbox_accounts = None
@@ -82,7 +82,7 @@ class UnitTestingApp(Application):
         expr_to_test: pt.Expr | None = None,
         version: int = pt.MAX_PROGRAM_VERSION,
     ):
-        super().__init__(compile_options=CompileOptions(avm_version=version))
+        super().__init__(compiler_options=CompilerOptions(avm_version=version))
         self.implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
 
 
