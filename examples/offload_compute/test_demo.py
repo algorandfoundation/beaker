@@ -7,4 +7,4 @@ def test_demo():
 
 
 def test_output_stability():
-    check_application_artifacts_output_stability(eth_checker)
+    check_application_artifacts_output_stability(eth_checker, dir_per_test_file=False)

@@ -8,7 +8,7 @@ options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSIO
 
 
 def test_external_read_only():
-    app = Application()
+    app = Application("")
 
     @app.external(read_only=True)
     def handleable() -> pt.Expr:
@@ -33,7 +33,7 @@ def test_authorize_only():
 
 
 def test_external_authorize():
-    app = Application()
+    app = Application("")
     cmt = "unauthorized"
     auth_only = Authorize.only(pt.Global.creator_address())
 
@@ -71,7 +71,7 @@ def test_authorize_holds_token():
 
 def test_external_authorize_holds_token():
     cmt = "unauthorized"
-    app = Application()
+    app = Application("")
     asset_id = pt.Int(123)
     auth_holds_token = Authorize.holds_token(asset_id)
 
@@ -108,7 +108,7 @@ def test_authorize_opted_in():
 
 
 def test_external_authorize_opted_in():
-    app = Application()
+    app = Application("")
     cmt = "unauthorized"
     app_id = pt.Int(123)
     auth_opted_in = Authorize.opted_in(app_id)
@@ -127,7 +127,7 @@ def test_external_authorize_opted_in():
 
 
 def test_authorize_bare_handler():
-    app = Application()
+    app = Application("")
     cmt = "unauthorized"
     auth_only = Authorize.only(pt.Global.creator_address())
 
@@ -171,7 +171,7 @@ def test_named_tuple():
         item: pt.abi.Field[pt.abi.String]
         count: pt.abi.Field[pt.abi.Uint64]
 
-    app = Application()
+    app = Application("")
 
     @app.external
     def thing(o: Order) -> pt.Expr:
@@ -191,7 +191,7 @@ def test_named_tuple():
 
 
 def test_bare():
-    app = Application(implement_default_create=False)
+    app = Application("")
 
     @app.create
     def create() -> pt.Expr:
@@ -288,7 +288,7 @@ def test_reserved_application_state_resolvable():
 
 
 def test_abi_method_resolvable():
-    app = Application()
+    app = Application("")
 
     @app.external(read_only=True)
     def x():

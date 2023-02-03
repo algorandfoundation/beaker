@@ -20,21 +20,18 @@ from pyteal import (
 )
 
 from beaker.application import Application, precompiled
+from beaker.blueprints import unconditional_create_approval
 from beaker.state import ApplicationStateValue
 from beaker.consts import Algos
 from beaker.decorators import Authorize
 
 
-class PutFilesHere(Application):
-    pass
-
-
 def TargetApp() -> Application:
 
-    app = PutFilesHere(
+    app = Application(
         name="TargetApp",
         descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
-    )
+    ).implement(unconditional_create_approval)
 
     @app.external(authorize=Authorize.only(Global.creator_address()))
     def opup():
@@ -67,12 +64,12 @@ class OpUpState:
 def OpUp(
     target_app: Application, name: str | None = None, descr: str | None = None
 ) -> Application:
-    app = PutFilesHere(
+    app = Application(
         name=name or "OpUp",
         state_class=OpUpState,
         descr=descr
         or """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget.""",
-    )
+    ).implement(unconditional_create_approval)
 
     #: The minimum balance required for this class
     min_balance: Final[Expr] = Algos(0.1)

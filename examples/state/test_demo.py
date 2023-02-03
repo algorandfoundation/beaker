@@ -9,4 +9,4 @@ def test_demo():
 
 def test_output_stability():
     app = StateExample()
-    check_application_artifacts_output_stability(app)
+    check_application_artifacts_output_stability(app, dir_per_test_file=False)

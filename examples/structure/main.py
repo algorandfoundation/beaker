@@ -10,6 +10,8 @@ from beaker import (
     client,
     identity_key_gen,
     this_app,
+    unconditional_create_approval,
+    unconditional_opt_in_approval,
 )
 
 
@@ -19,7 +21,7 @@ class Order(abi.NamedTuple):
     quantity: abi.Field[abi.Uint16]
 
 
-class Structer(Application):
+class Structer:
     orders: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
@@ -27,12 +29,11 @@ class Structer(Application):
     )
 
 
-structer_app = Structer()
-
-
-@structer_app.opt_in()
-def opt_in() -> Expr:
-    return this_app().acct_state.initialize()
+structer_app = (
+    Application("Structer", state_class=Structer)
+    .implement(unconditional_create_approval)
+    .implement(unconditional_opt_in_approval, initialize_account_state=True)
+)
 
 
 @structer_app.external

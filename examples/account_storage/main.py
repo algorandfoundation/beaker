@@ -30,6 +30,8 @@ from beaker import (
     LogicSignatureTemplate,
 )
 from beaker.application import CompilerOptions
+from beaker.blueprints import unconditional_create_approval
+
 
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
@@ -47,12 +49,16 @@ def KeySig(version: int) -> LogicSignatureTemplate:
 # unique lsig accounts that have been rekeyed to the app address.
 # This allows us to use the local storage of the unique accounts
 # to get an extra 2k of storage for each account
-class DiskHungry(Application):
+class DiskHungryState:
     # Reserve all 16 keys for the blob in local state
     data = AccountStateBlob(keys=16)
 
 
-disk_hungry = DiskHungry(compiler_options=CompilerOptions(avm_version=8))
+disk_hungry = Application(
+    "DiskHungry",
+    compiler_options=CompilerOptions(avm_version=8),
+    state_class=DiskHungryState,
+).implement(unconditional_create_approval)
 key_sig = KeySig(version=8)
 
 
@@ -94,7 +100,9 @@ def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
     return Seq(
         # Read byte
         (byte := ScratchVar()).store(
-            disk_hungry.data[nonce_acct.address()].read_byte(byte_idx(bit_idx.get()))
+            DiskHungryState.data[nonce_acct.address()].read_byte(
+                byte_idx(bit_idx.get())
+            )
         ),
         # Flip bit
         byte.store(
@@ -105,7 +113,7 @@ def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
             )
         ),
         # Write byte
-        disk_hungry.data[nonce_acct.address()].write_byte(
+        DiskHungryState.data[nonce_acct.address()].write_byte(
             byte_idx(bit_idx.get()), byte.load()
         ),
     )

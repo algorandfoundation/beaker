@@ -1,11 +1,12 @@
 """Module containing helper functions for testing PyTeal Utils."""
-from typing import Any, TypeVar
+from typing import Any
 
 import pyteal as pt
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 from beaker import Application, client, sandbox
 from beaker.application import CompilerOptions
+from beaker.blueprints import unconditional_create_approval
 
 algod_client = None
 sandbox_accounts = None
@@ -15,14 +16,11 @@ def returned_int_as_bytes(i: int, bits: int = 64) -> list[int]:
     return list(i.to_bytes(bits // 8, "big"))
 
 
-TApp = TypeVar("TApp", bound=Application)
-
-
 def unit_test_app_blueprint(
-    app: TApp,
+    app: Application,
     /,
     expr_to_test: pt.Expr | None = None,
-) -> TApp:
+) -> Application:
 
     """Base unit testable application.
 
@@ -42,6 +40,8 @@ def unit_test_app_blueprint(
     An instance of this class is passed to assert_output to check
     the return value against what you expect.
     """
+
+    app = app.implement(unconditional_create_approval)
 
     @app.delete
     def delete() -> pt.Expr:
@@ -76,14 +76,17 @@ def unit_test_app_blueprint(
     return app
 
 
-class UnitTestingApp(Application):
-    def __init__(
-        self: TApp,
-        expr_to_test: pt.Expr | None = None,
-        version: int = pt.MAX_PROGRAM_VERSION,
-    ):
-        super().__init__(compiler_options=CompilerOptions(avm_version=version))
-        self.implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
+def UnitTestingApp(
+    expr_to_test: pt.Expr | None = None,
+    name: str = "UnitTestingApp",
+    version: int = pt.MAX_PROGRAM_VERSION,
+    state_class: type | None = None,
+) -> Application:
+    return Application(
+        name,
+        compiler_options=CompilerOptions(avm_version=version),
+        state_class=state_class,
+    ).implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
 
 
 def assert_output(

@@ -15,4 +15,4 @@ def test_demo():
     "app", [OpUp(target_app=TargetApp()), ExpensiveApp(), TargetApp()]
 )
 def test_output_stability(app: Application):
-    check_application_artifacts_output_stability(app)
+    check_application_artifacts_output_stability(app, dir_per_test_file=False)

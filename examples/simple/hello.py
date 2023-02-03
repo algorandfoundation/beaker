@@ -1,13 +1,10 @@
 from pyteal import Concat, Bytes, Expr, abi
-from beaker import sandbox, client, Application
+from beaker import sandbox, client, Application, unconditional_create_approval
 from beaker.application import CompilerOptions
 
-# Create a class, subclassing Application from beaker
-class HelloBeaker(Application):
-    pass
-
-
-hello_app = HelloBeaker(compiler_options=CompilerOptions(avm_version=8))
+hello_app = Application(
+    "HelloBeaker", compiler_options=CompilerOptions(avm_version=8)
+).implement(unconditional_create_approval)
 
 
 @hello_app.external

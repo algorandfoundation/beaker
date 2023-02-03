@@ -1,8 +1,9 @@
 from pyteal import *
 from beaker import *
+from beaker.testing.legacy import LegacyApplication
 
 
-class ExternalExample(Application):
+class ExternalExample(LegacyApplication):
     def __init__(self):
         super().__init__(implement_default_create=False)
 

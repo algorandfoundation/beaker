@@ -27,4 +27,4 @@ def test_hello():
     "app", [Calculator(), counter_app, hello_app, ExternalExample()]
 )
 def test_output_stability(app: Application):
-    check_application_artifacts_output_stability(app)
+    check_application_artifacts_output_stability(app, dir_per_test_file=False)

@@ -51,7 +51,11 @@ class StateExample(Application):
     account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
 
     def __init__(self):
-        super().__init__(implement_default_create=False)
+        super().__init__(
+            name=self.__class__.__qualname__,
+            descr=self.__doc__,
+            state_class=self.__class__,
+        )
 
         @self.create
         def create():

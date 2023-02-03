@@ -18,14 +18,13 @@ from pyteal import (
     Subroutine,
 )
 import beaker as bkr
+import beaker.blueprints
 from beaker import precompiled
 
 algod_client = bkr.sandbox.get_algod_client()
 
 
-class C2CSub(bkr.Application):
-    """Sub application who's only purpose is to opt into then close out of an asset"""
-
+class C2CSubState:
     rasv = bkr.ReservedApplicationStateValue(TealType.bytes, 1)
     asv = bkr.ApplicationStateValue(TealType.bytes, default=Bytes("asv"))
 
@@ -33,17 +32,21 @@ class C2CSub(bkr.Application):
     acsv = bkr.AccountStateValue(TealType.bytes, default=Bytes("acsv"))
 
 
-sub_app = C2CSub(implement_default_create=False)
+sub_app = bkr.Application(
+    "C2CSub",
+    descr="Sub application who's only purpose is to opt into then close out of an asset",
+    state_class=C2CSubState,
+)
 
 
 @sub_app.create
 def create():
-    return Seq(sub_app.initialize_application_state(), Approve())
+    return Seq(bkr.this_app().initialize_application_state(), Approve())
 
 
 @sub_app.opt_in
 def opt_in():
-    return Seq(sub_app.initialize_account_state(), Approve())
+    return Seq(bkr.this_app().initialize_account_state(), Approve())
 
 
 @sub_app.external
@@ -73,17 +76,15 @@ def return_asset(asset: abi.Asset, addr: abi.Account):
     )
 
 
-class C2CMain(bkr.Application):
-    """Main application that handles creation of the sub app and asset and calls it"""
-
-
-main_app = C2CMain()
-
-# Create sub app to be precompiled before allowing TEAL generation
+main_app = bkr.Application(
+    "C2CMain",
+    descr="Main application that handles creation of the sub app and asset and calls it",
+).implement(beaker.blueprints.unconditional_create_approval)
 
 
 @main_app.external
 def create_sub(*, output: abi.Uint64):
+    # Create sub app to be precompiled before allowing TEAL generation
     sub_app_pc = precompiled(sub_app)
 
     return Seq(
@@ -91,7 +92,7 @@ def create_sub(*, output: abi.Uint64):
         # return the app id of the newly created app
         output.set(InnerTxn.created_application_id()),
         # Try to read the global state
-        sv := C2CSub.asv.get_external(output.get()),
+        sv := C2CSubState.asv.get_external(output.get()),
         Log(sv.value()),
         # Opt in to the new app for funsies
         InnerTxnBuilder.Execute(
@@ -102,7 +103,7 @@ def create_sub(*, output: abi.Uint64):
             }
         ),
         # Try to read the local state
-        sv := C2CSub.acsv[Global.current_application_address()].get_external(
+        sv := C2CSubState.acsv[Global.current_application_address()].get_external(
             output.get()
         ),
         Log(sv.value()),

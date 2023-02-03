@@ -12,6 +12,7 @@ from algosdk.atomic_transaction_composer import (
 from typing import Literal
 from pyteal import Assert, Expr, abi, Txn, Ed25519Verify_Bare, Seq, Int, TealType
 from beaker import sandbox, client, LogicSignatureTemplate, Application, consts
+from beaker.testing.legacy import LegacyApplication
 from beaker.precompile import LSigTemplatePrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
@@ -40,13 +41,11 @@ def SigChecker() -> LogicSignatureTemplate:
 sig_checker = SigChecker()
 
 
-class App(Application):
+class App(LegacyApplication):
 
     sig_checker: LSigTemplatePrecompile
 
-    def __init__(self):
-        super().__init__()
-
+    def post_init(self) -> None:
         @self.external
         def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
             self.sig_checker = self.precompiled(sig_checker)

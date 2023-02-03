@@ -8,4 +8,4 @@ def test_demo():
 
 
 def test_output_stability():
-    check_application_artifacts_output_stability(app=rsvp)
+    check_application_artifacts_output_stability(app=rsvp, dir_per_test_file=False)

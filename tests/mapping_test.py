@@ -54,16 +54,13 @@ def test_mapping():
 
 
 def test_app_mapping():
-    class T(Application):
-        def __init__(self):
-            super().__init__()
+    t = Application("T")
 
-            m = Mapping(pt.abi.Address, pt.abi.Uint64)
+    m = Mapping(pt.abi.Address, pt.abi.Uint64)
 
-            @self.external
-            def thing(name: pt.abi.Address, *, output: pt.abi.Uint64):
-                return m[name].store_into(output)
+    @t.external
+    def thing(name: pt.abi.Address, *, output: pt.abi.Uint64):
+        return m[name].store_into(output)
 
-    t = T()
     t.compile()
     assert t.approval_program

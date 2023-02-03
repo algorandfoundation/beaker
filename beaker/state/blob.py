@@ -4,6 +4,7 @@ from typing import Literal
 
 from pyteal import Expr, Txn, TealType
 
+from beaker.consts import MAX_LOCAL_STATE, MAX_GLOBAL_STATE
 from beaker.lib.storage import LocalBlob, GlobalBlob
 
 __all__ = [
@@ -69,7 +70,9 @@ class StateBlob(ABC):
 
 
 class AccountStateBlob(AccountStateStorage, StateBlob):
-    def __init__(self, keys: int | list[int] | None = None, descr: str | None = None):
+    def __init__(
+        self, keys: int | list[int] = MAX_LOCAL_STATE, descr: str | None = None
+    ):
         self.blob = LocalBlob(keys=keys)
         self.acct: Expr = Txn.sender()
         self.descr = descr
@@ -108,7 +111,9 @@ class AccountStateBlob(AccountStateStorage, StateBlob):
 
 
 class ApplicationStateBlob(ApplicationStateStorage, StateBlob):
-    def __init__(self, keys: int | list[int] | None = None, descr: str | None = None):
+    def __init__(
+        self, keys: int | list[int] = MAX_GLOBAL_STATE, descr: str | None = None
+    ):
         self.blob = GlobalBlob(keys=keys)
         self.descr = descr
 

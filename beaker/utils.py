@@ -30,6 +30,7 @@ TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
 
 
+# TODO: move/rename this - shouldn't really be exposed
 def remove_first_match(
     m: MutableMapping[TKey, TValue], predicate: Callable[[TKey, TValue], bool]
 ) -> None:

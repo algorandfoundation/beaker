@@ -1,0 +1,30 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDFhOWRhZTcyIC8vICJoYW5kbGUoKXZvaWQiCj09CmJueiBtYWluX2wyCmVycgptYWluX2wyOgp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydApjYWxsc3ViIGhhbmRsZV8wCmludGNfMSAvLyAxCnJldHVybgoKLy8gaGFuZGxlCmhhbmRsZV8wOgpwcm90byAwIDAKaW50Y18xIC8vIDEKYXNzZXJ0CnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "SingleExternal",
+        "methods": [
+            {
+                "name": "handle",
+                "args": [],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    }
+}

@@ -8,9 +8,13 @@ from beaker.lib.storage.local_blob import LocalBlob
 from beaker.lib.storage.blob import blob_page_size
 
 
-class LocalBlobTest(UnitTestingApp):
+class LocalBlobTestState:
     lb = bkr.ReservedAccountStateValue(pt.TealType.bytes, max_keys=16)
     blob = LocalBlob(keys=[x for x in range(10) if x % 2 == 0])
+
+
+def LocalBlobTest(name: str = "LB") -> bkr.Application:
+    return UnitTestingApp(name=name, state_class=LocalBlobTestState)
 
 
 def test_local_blob_zero():
@@ -19,8 +23,10 @@ def test_local_blob_zero():
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
         return pt.Seq(
-            app.blob.zero(),
-            (s := pt.abi.String()).set(app.blob.read(pt.Int(0), pt.Int(64))),
+            LocalBlobTestState.blob.zero(),
+            (s := pt.abi.String()).set(
+                LocalBlobTestState.blob.read(pt.Int(0), pt.Int(64))
+            ),
             output.decode(s.encode()),
         )
 
@@ -34,9 +40,11 @@ def test_local_blob_write_read():
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
         return pt.Seq(
-            app.blob.zero(),
-            app.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            (s := pt.abi.String()).set(app.blob.read(pt.Int(32), pt.Int(40))),
+            LocalBlobTestState.blob.zero(),
+            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            (s := pt.abi.String()).set(
+                LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))
+            ),
             output.decode(s.encode()),
         )
 
@@ -50,9 +58,13 @@ def test_local_blob_write_read_boundary():
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
         return pt.Seq(
-            app.blob.zero(pt.Int(0)),
-            app.blob.write(pt.Int(0), pt.BytesZero(pt.Int(blob_page_size * 3))),
-            (s := pt.abi.String()).set(app.blob.read(pt.Int(32), pt.Int(40))),
+            LocalBlobTestState.blob.zero(pt.Int(0)),
+            LocalBlobTestState.blob.write(
+                pt.Int(0), pt.BytesZero(pt.Int(blob_page_size * 3))
+            ),
+            (s := pt.abi.String()).set(
+                LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))
+            ),
             output.decode(s.encode()),
         )
 
@@ -66,9 +78,13 @@ def test_local_blob_write_read_past_end():
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
         return pt.Seq(
-            app.blob.zero(),
-            app.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            (s := pt.abi.String()).set(app.blob.read(pt.Int(0), app.blob.max_bytes)),
+            LocalBlobTestState.blob.zero(),
+            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            (s := pt.abi.String()).set(
+                LocalBlobTestState.blob.read(
+                    pt.Int(0), LocalBlobTestState.blob.max_bytes
+                )
+            ),
             output.decode(s.encode()),
         )
 
@@ -86,9 +102,9 @@ def test_local_blob_set_get():
     @app.external
     def unit_test(*, output: pt.abi.Uint8):
         return pt.Seq(
-            app.blob.zero(),
-            app.blob.set_byte(pt.Int(32), pt.Int(num)),
-            output.set(app.blob.get_byte(pt.Int(32))),
+            LocalBlobTestState.blob.zero(),
+            LocalBlobTestState.blob.set_byte(pt.Int(32), pt.Int(num)),
+            output.set(LocalBlobTestState.blob.get_byte(pt.Int(32))),
         )
 
     expected = [num]
@@ -103,9 +119,11 @@ def test_local_blob_set_past_end():
     @app.external
     def unit_test(*, output: pt.abi.Uint8):
         return pt.Seq(
-            app.blob.zero(),
-            app.blob.set_byte(app.blob.max_bytes, pt.Int(num)),
-            output.set(app.blob.get_byte(pt.Int(32))),
+            LocalBlobTestState.blob.zero(),
+            LocalBlobTestState.blob.set_byte(
+                LocalBlobTestState.blob.max_bytes, pt.Int(num)
+            ),
+            output.set(LocalBlobTestState.blob.get_byte(pt.Int(32))),
         )
 
     expected = [num]
@@ -120,11 +138,13 @@ def test_local_blob_single_subroutine():
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
         return pt.Seq(
-            app.blob.zero(),
-            app.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            app.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            pt.Pop(app.blob.read(pt.Int(32), pt.Int(40))),
-            (s := pt.abi.String()).set(app.blob.read(pt.Int(32), pt.Int(40))),
+            LocalBlobTestState.blob.zero(),
+            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            pt.Pop(LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))),
+            (s := pt.abi.String()).set(
+                LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))
+            ),
             output.decode(s.encode()),
         )
 

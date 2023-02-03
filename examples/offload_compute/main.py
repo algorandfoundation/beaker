@@ -6,16 +6,19 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.transaction import *
 from pyteal import Assert, Seq, Txn, abi, Expr
 
-from beaker import Application, client, consts, sandbox, precompiled
+from beaker import (
+    Application,
+    client,
+    consts,
+    sandbox,
+    precompiled,
+    unconditional_create_approval,
+)
 
 from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
 
 
-class EthChecker(Application):
-    pass
-
-
-eth_checker = EthChecker()
+eth_checker = Application("EthChecker").implement(unconditional_create_approval)
 
 verify_lsig = EthEcdsaVerify(version=6)
 

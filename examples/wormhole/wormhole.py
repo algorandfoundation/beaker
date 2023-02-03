@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from beaker import Application
 from pyteal import (
     Reject,
     abi,
@@ -11,6 +10,8 @@ from pyteal import (
     Int,
     Suffix,
 )
+
+from beaker.testing.legacy import LegacyApplication
 
 
 def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
@@ -117,16 +118,14 @@ class ContractTransferVAA:
         return Seq(*ops)
 
 
-class WormholeTransfer(Application, ABC):
+class WormholeTransfer(LegacyApplication, ABC):
     """Wormhole Payload3 Message handler
 
     A Message transfer from another chain to Algorand  using the Wormhole protocol
     will cause this contract to have it's `portal_transfer` method called.
     """
 
-    def __init__(self):
-        super().__init__()
-
+    def post_init(self) -> None:
         @self.external
         def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
             """portal_transfer accepts a VAA containing information about the transfer and the payload.

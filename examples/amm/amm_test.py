@@ -900,4 +900,6 @@ def _addr_to_hex(addr: str) -> str:
 
 def test_output_stability():
     app = ConstantProductAMM()
-    check_application_artifacts_output_stability(app, dir_name="artifacts")
+    check_application_artifacts_output_stability(
+        app, dir_name="artifacts", dir_per_test_file=False
+    )

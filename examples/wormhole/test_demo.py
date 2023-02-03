@@ -9,4 +9,6 @@ def test_demo():
 
 def test_output_stability():
     app = OracleDataCache()
-    check_application_artifacts_output_stability(app, dir_name="spec")
+    check_application_artifacts_output_stability(
+        app, dir_name="spec", dir_per_test_file=False
+    )

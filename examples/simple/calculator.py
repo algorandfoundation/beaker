@@ -1,14 +1,12 @@
 from pyteal import abi
 
-from beaker.client import ApplicationClient
-from beaker.application import Application
 from beaker import sandbox
+from beaker.client import ApplicationClient
+from beaker.testing.legacy import LegacyApplication
 
 
-class Calculator(Application):
-    def __init__(self):
-        super().__init__()
-
+class Calculator(LegacyApplication):
+    def post_init(self) -> None:
         @self.external
         def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
             """Add a and b, return the result"""

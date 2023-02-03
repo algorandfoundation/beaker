@@ -11,6 +11,7 @@ def check_application_artifacts_output_stability(
     app: Application,
     dir_name: str | None = None,
     output_dir: Path | None = None,
+    dir_per_test_file: bool = True,
 ) -> None:
     """Test that the contract output hasn't changed for an Application, using git diff
 
@@ -23,6 +24,7 @@ def check_application_artifacts_output_stability(
         app (beaker.Application): an instantiated application to compile
         dir_name (str | None): optional name for directory, if you just want to customise the name
         output_dir (pathlib.Path | None): optional full path to place output, for full control
+        dir_per_test_file:
 
     """
     if dir_name and output_dir:
@@ -32,12 +34,19 @@ def check_application_artifacts_output_stability(
     app.compile(algod_client)
 
     if output_dir is None:
-        app_class = app.__class__
-        module_path = Path(inspect.getfile(app_class))
-        module_dir = module_path.parent
-        output_dir = module_dir / (
-            dir_name or f"{app._name or app_class.__qualname__}.artifacts"
-        )
+        if type(app) is Application:
+            caller_frame = inspect.stack()[1]
+            # caller_name = caller_frame.function
+            caller_path = Path(caller_frame.filename).resolve()
+            caller_dir = caller_path.parent
+            if dir_per_test_file:
+                caller_dir /= caller_path.stem
+            output_dir = caller_dir / (dir_name or f"{app.name}.artifacts")
+        else:
+            app_class = app.__class__
+            module_path = Path(inspect.getfile(app_class))
+            module_dir = module_path.parent
+            output_dir = module_dir / (dir_name or f"{app.name}.artifacts")
 
     output_dir_did_exist = output_dir.is_dir()
 

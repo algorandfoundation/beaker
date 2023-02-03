@@ -1,3 +1,4 @@
+import pyteal
 import pytest
 import pyteal as pt
 from typing import Any
@@ -21,7 +22,7 @@ from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
 
-class App(Application):
+class AppState(Application):
     app_state_val_int = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(1))
     app_state_val_byte = ApplicationStateValue(
         pt.TealType.bytes, default=pt.Bytes("test")
@@ -29,51 +30,55 @@ class App(Application):
     acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
-    def __init__(self, version: int = pt.MAX_PROGRAM_VERSION):
-        super().__init__(
-            compiler_options=CompilerOptions(avm_version=version),
-            implement_default_create=False,
+
+def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application:
+    app = Application(
+        "App",
+        state_class=AppState,
+        compiler_options=CompilerOptions(avm_version=version),
+    )
+
+    @app.create(bare=True)
+    def create():
+        return pt.Seq(
+            app.initialize_application_state(),
+            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+            pt.Approve(),
         )
 
-        @self.create(bare=True)
-        def create():
-            return pt.Seq(
-                self.initialize_application_state(),
-                pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
-                pt.Approve(),
-            )
+    @app.update(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
+    def update():
+        return pt.Approve()
 
-        @self.update(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
-        def update():
-            return pt.Approve()
+    @app.delete(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
+    def delete():
+        return pt.Approve()
 
-        @self.delete(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
-        def delete():
-            return pt.Approve()
+    @app.opt_in(bare=True)
+    def opt_in():
+        return pt.Seq(
+            app.initialize_account_state(),
+            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+            pt.Approve(),
+        )
 
-        @self.opt_in(bare=True)
-        def opt_in():
-            return pt.Seq(
-                self.initialize_account_state(),
-                pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
-                pt.Approve(),
-            )
+    @app.clear_state
+    def clear_state():
+        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-        @self.clear_state
-        def clear_state():
-            return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+    @app.close_out(bare=True)
+    def close_out():
+        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-        @self.close_out(bare=True)
-        def close_out():
-            return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+    @app.external
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(a.get() + b.get())
 
-        @self.external
-        def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
-            return output.set(a.get() + b.get())
+    @app.external(read_only=True)
+    def dummy(*, output: pt.abi.String):
+        return output.set("deadbeef")
 
-        @self.external(read_only=True)
-        def dummy(*, output: pt.abi.String):
-            return output.set("deadbeef")
+    return app
 
 
 SandboxAccounts = list[tuple[str, str, AccountTransactionSigner]]
@@ -564,18 +569,15 @@ def test_resolve(sb_accts: SandboxAccounts):
 
     assert ac.resolve(DefaultArgument(pt.Int(1))) == 1
     assert ac.resolve(DefaultArgument(pt.Bytes("stringy"))) == "stringy"
-    assert ac.resolve(DefaultArgument(app.app_state_val_int)) == 1
-    assert ac.resolve(DefaultArgument(app.app_state_val_byte)) == b"test"
-    assert ac.resolve(DefaultArgument(app.acct_state_val_int)) == 1
-    assert ac.resolve(DefaultArgument(app.acct_state_val_byte)) == b"test"
+    assert ac.resolve(DefaultArgument(AppState.app_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(AppState.app_state_val_byte)) == b"test"
+    assert ac.resolve(DefaultArgument(AppState.acct_state_val_int)) == 1
+    assert ac.resolve(DefaultArgument(AppState.acct_state_val_byte)) == b"test"
     assert ac.resolve(DefaultArgument(app.abi_methods["dummy"])) == "deadbeef"
 
 
 def test_override_app_create(sb_accts: SandboxAccounts):
-    class SpecialCreate(Application):
-        pass
-
-    sc = SpecialCreate()
+    sc = Application("SpecialCreate")
 
     @sc.create
     def create(x: pt.abi.Uint64, *, output: pt.abi.Uint64):

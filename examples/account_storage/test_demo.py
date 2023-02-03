@@ -7,4 +7,4 @@ def test_demo():
 
 
 def test_output_stability():
-    check_application_artifacts_output_stability(disk_hungry)
+    check_application_artifacts_output_stability(disk_hungry, dir_per_test_file=False)

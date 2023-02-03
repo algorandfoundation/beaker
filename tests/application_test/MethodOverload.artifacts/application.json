@@ -1,0 +1,47 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDEgMAp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDEyOWM5MmQ1IC8vICJoYW5kbGUocGF5KXZvaWQiCj09CmJueiBtYWluX2w0CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4MjBkNWM4NjIgLy8gImhhbmRsZShheGZlcil2b2lkIgo9PQpibnogbWFpbl9sMwplcnIKbWFpbl9sMzoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzEgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzEgLy8gMAohPQomJgphc3NlcnQKdHhuIEdyb3VwSW5kZXgKaW50Y18wIC8vIDEKLQpzdG9yZSAxCmxvYWQgMQpndHhucyBUeXBlRW51bQpwdXNoaW50IDQgLy8gYXhmZXIKPT0KYXNzZXJ0CmxvYWQgMQpjYWxsc3ViIGhhbmRsZV8xCmludGNfMCAvLyAxCnJldHVybgptYWluX2w0Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMSAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMSAvLyAwCiE9CiYmCmFzc2VydAp0eG4gR3JvdXBJbmRleAppbnRjXzAgLy8gMQotCnN0b3JlIDAKbG9hZCAwCmd0eG5zIFR5cGVFbnVtCmludGNfMCAvLyBwYXkKPT0KYXNzZXJ0CmxvYWQgMApjYWxsc3ViIGhhbmRsZV8wCmludGNfMCAvLyAxCnJldHVybgoKLy8gaGFuZGxlCmhhbmRsZV8wOgpwcm90byAxIDAKaW50Y18wIC8vIDEKcmV0dXJuCgovLyBoYW5kbGUKaGFuZGxlXzE6CnByb3RvIDEgMAppbnRjXzAgLy8gMQpyZXR1cm4=",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "MethodOverload",
+        "methods": [
+            {
+                "name": "handle",
+                "args": [
+                    {
+                        "type": "pay",
+                        "name": "txn"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "handle",
+                "args": [
+                    {
+                        "type": "axfer",
+                        "name": "txn"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    }
+}

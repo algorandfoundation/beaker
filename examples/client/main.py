@@ -8,12 +8,13 @@ from beaker import (
     client,
     sandbox,
     consts,
+    this_app,
 )
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
 
-class ClientExample(Application):
+class ClientExampleState:
     manager: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.bytes, default=Global.creator_address()
     )
@@ -23,18 +24,18 @@ class ClientExample(Application):
     )
 
 
-my_app = ClientExample(implement_default_create=False)
+my_app = Application("ClientExample", state_class=ClientExampleState)
 
 
 @my_app.create
 def create():
-    return my_app.initialize_application_state()
+    return this_app().initialize_application_state()
 
 
 @my_app.opt_in
 def opt_in():
     # Defaults to sender
-    return my_app.initialize_account_state()
+    return this_app().initialize_account_state()
 
 
 @my_app.close_out
@@ -42,24 +43,24 @@ def close_out():
     return Approve()
 
 
-@my_app.delete(authorize=Authorize.only(my_app.manager))
+@my_app.delete(authorize=Authorize.only(ClientExampleState.manager))
 def delete():
     return Approve()
 
 
-@my_app.external(authorize=Authorize.only(my_app.manager))
+@my_app.external(authorize=Authorize.only(ClientExampleState.manager))
 def set_manager(new_manager: abi.Address):
-    return my_app.manager.set(new_manager.get())
+    return ClientExampleState.manager.set(new_manager.get())
 
 
 @my_app.external
 def set_nick(nick: abi.String):
-    return my_app.nickname.set(nick.get())
+    return ClientExampleState.nickname.set(nick.get())
 
 
 @my_app.external(read_only=True)
 def get_nick(*, output: abi.String):
-    return output.set(my_app.nickname)
+    return output.set(ClientExampleState.nickname)
 
 
 def demo():
@@ -126,7 +127,7 @@ def demo():
     ## Create a new client that just sets the app id we wish to interact with
     app_client3 = ApplicationClient(
         client=sandbox.get_algod_client(),
-        app=ClientExample(),
+        app=my_app,
         signer=acct1.signer,
         app_id=app_client1.app_id,
     )

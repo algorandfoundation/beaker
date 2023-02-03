@@ -29,10 +29,11 @@ from pyteal import (
 
 from beaker import Application, ApplicationStateValue, sandbox, client, consts
 from beaker.application import CompilerOptions
+from beaker.blueprints import unconditional_create_approval
 from beaker.lib.math import Max
 
 
-class SortedIntegers(Application):
+class SortedIntegersState:
     elements: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
@@ -48,7 +49,11 @@ BoxName = Bytes(_box_name)
 BoxSize = Int(_box_size)
 MaxInts = Int(_max_ints)
 
-sorted_ints_app = SortedIntegers(compiler_options=CompilerOptions(avm_version=8))
+sorted_ints_app = Application(
+    "SortedIntegers",
+    compiler_options=CompilerOptions(avm_version=8),
+    state_class=SortedIntegersState,
+).implement(unconditional_create_approval)
 
 
 @sorted_ints_app.external
@@ -60,13 +65,13 @@ def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
         # Write the new array with the contents
         (idx := ScratchVar()).store(
             If(
-                sorted_ints_app.elements == Int(0),
+                SortedIntegersState.elements == Int(0),
                 Int(0),
                 binary_search(
                     val.get(),
                     array_contents.value(),
                     Int(0),
-                    sorted_ints_app.elements - Int(1),
+                    SortedIntegersState.elements - Int(1),
                 )
                 * Int(8),
             )
@@ -80,7 +85,7 @@ def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
                 idx.load(),
             ),
         ),
-        sorted_ints_app.elements.increment(),
+        SortedIntegersState.elements.increment(),
         Log(Itob(Global.opcode_budget())),
         output.decode(
             # Prepend the bytes with the number of elements as a uint16,
@@ -132,7 +137,7 @@ def insert_element(buff: Expr, new_val: Expr, pos: Expr):
 def box_create_test():
     return Seq(
         Assert(App.box_create(BoxName, BoxSize)),
-        sorted_ints_app.elements.set(Int(0)),
+        SortedIntegersState.elements.set(Int(0)),
     )
 
 

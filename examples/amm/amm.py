@@ -109,7 +109,9 @@ class ConstantProductAMM(Application):
     ##############
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            self.__class__.__qualname__, state_class=self.__class__, *args, **kwargs
+        )
 
         self.address = Global.current_application_address()
 

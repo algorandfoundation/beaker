@@ -39,7 +39,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readprice_12
+callsub readprice_11
 store 2
 bytec_2 // 0x151f7c75
 load 2
@@ -57,7 +57,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readrsvp_11
+callsub readrsvp_10
 store 1
 bytec_2 // 0x151f7c75
 load 1
@@ -75,7 +75,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub withdrawexternal_7
+callsub withdrawexternal_6
 intc_1 // 1
 return
 main_l11:
@@ -87,7 +87,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub checkin_5
+callsub checkin_4
 intc_1 // 1
 return
 main_l12:
@@ -109,7 +109,7 @@ intc_1 // pay
 ==
 assert
 load 0
-callsub dorsvp_3
+callsub dorsvp_2
 intc_1 // 1
 return
 main_l13:
@@ -123,45 +123,33 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub create_2
+callsub create_1
 intc_1 // 1
 return
 main_l14:
 txn OnCompletion
-intc_0 // NoOp
-==
-bnz main_l20
-txn OnCompletion
 pushint 2 // CloseOut
 ==
-bnz main_l19
+bnz main_l18
 txn OnCompletion
 pushint 5 // DeleteApplication
 ==
-bnz main_l18
+bnz main_l17
 err
+main_l17:
+txn ApplicationID
+intc_0 // 0
+!=
+assert
+callsub delete_8
+intc_1 // 1
+return
 main_l18:
 txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub delete_9
-intc_1 // 1
-return
-main_l19:
-txn ApplicationID
-intc_0 // 0
-!=
-assert
-callsub refund_13
-intc_1 // 1
-return
-main_l20:
-txn ApplicationID
-intc_0 // 0
-==
-assert
-callsub create_1
+callsub refund_12
 intc_1 // 1
 return
 
@@ -192,12 +180,6 @@ retsub
 
 // create
 create_1:
-proto 0 0
-intc_1 // 1
-return
-
-// create
-create_2:
 proto 1 0
 bytec_1 // "price"
 pushint 1000000 // 1000000
@@ -211,7 +193,7 @@ app_global_put
 retsub
 
 // do_rsvp
-dorsvp_3:
+dorsvp_2:
 proto 1 0
 global GroupSize
 pushint 2 // 2
@@ -241,7 +223,7 @@ app_global_put
 retsub
 
 // auth_opted_in
-authoptedin_4:
+authoptedin_3:
 proto 1 1
 frame_dig -1
 global CurrentApplicationID
@@ -249,10 +231,10 @@ app_opted_in
 retsub
 
 // check_in
-checkin_5:
+checkin_4:
 proto 0 0
 txn Sender
-callsub authoptedin_4
+callsub authoptedin_3
 // unauthorized
 assert
 txn Sender
@@ -262,7 +244,7 @@ app_local_put
 retsub
 
 // auth_only
-authonly_6:
+authonly_5:
 proto 1 1
 frame_dig -1
 global CreatorAddress
@@ -270,17 +252,17 @@ global CreatorAddress
 retsub
 
 // withdraw_external
-withdrawexternal_7:
+withdrawexternal_6:
 proto 0 0
 txn Sender
-callsub authonly_6
+callsub authonly_5
 // unauthorized
 assert
 callsub withdrawfunds_0
 retsub
 
 // auth_only
-authonly_8:
+authonly_7:
 proto 1 1
 frame_dig -1
 global CreatorAddress
@@ -288,10 +270,10 @@ global CreatorAddress
 retsub
 
 // delete
-delete_9:
+delete_8:
 proto 0 0
 txn Sender
-callsub authonly_8
+callsub authonly_7
 // unauthorized
 assert
 global CurrentApplicationAddress
@@ -300,13 +282,13 @@ intc_3 // 100000
 intc_2 // 1000
 +
 >
-bz delete_9_l2
+bz delete_8_l2
 callsub withdrawfunds_0
-delete_9_l2:
+delete_8_l2:
 retsub
 
 // auth_only
-authonly_10:
+authonly_9:
 proto 1 1
 frame_dig -1
 global CreatorAddress
@@ -314,11 +296,11 @@ global CreatorAddress
 retsub
 
 // read_rsvp
-readrsvp_11:
+readrsvp_10:
 proto 0 1
 intc_0 // 0
 txn Sender
-callsub authonly_10
+callsub authonly_9
 // unauthorized
 assert
 bytec_0 // "rsvp"
@@ -327,7 +309,7 @@ frame_bury 0
 retsub
 
 // read_price
-readprice_12:
+readprice_11:
 proto 0 1
 intc_0 // 0
 bytec_1 // "price"
@@ -336,7 +318,7 @@ frame_bury 0
 retsub
 
 // refund
-refund_13:
+refund_12:
 proto 0 0
 itxn_begin
 intc_1 // pay

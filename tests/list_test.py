@@ -38,20 +38,18 @@ def test_list():
 
 
 def test_list_app():
-    class T(Application):
+    class State:
         l = List(pt.abi.Uint64, 100)
 
-        def __init__(self):
-            super().__init__()
+    t = Application("T", state_class=State)
 
-            @self.external
-            def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64):
-                return self.l[idx.get()].store_into(output)
+    @t.external
+    def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64):
+        return State.l[idx.get()].store_into(output)
 
-            @self.external
-            def set(idx: pt.abi.Uint16, val: pt.abi.Uint64):
-                return self.l[idx.get()].set(val)
+    @t.external
+    def set(idx: pt.abi.Uint16, val: pt.abi.Uint64):
+        return State.l[idx.get()].set(val)
 
-    t = T()
     t.compile()
     assert t.approval_program

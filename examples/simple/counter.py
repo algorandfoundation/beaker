@@ -14,11 +14,7 @@ class CounterState:
     )
 
 
-class CounterApp(Application):
-    pass
-
-
-counter_app = CounterApp(implement_default_create=False, state_class=CounterState)
+counter_app = Application("CounterApp", state_class=CounterState)
 
 
 @counter_app.create
@@ -81,5 +77,4 @@ def demo():
 
 
 if __name__ == "__main__":
-    ca = CounterApp()
     demo()

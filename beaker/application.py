@@ -3,6 +3,7 @@ import dataclasses
 import inspect
 import itertools
 import json
+import warnings
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
@@ -33,12 +34,10 @@ from pyteal import (
     OnCompleteAction,
     OptimizeOptions,
     Router,
-    Approve,
     CallConfig,
     TealType,
     MethodConfig,
 )
-from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 
 from beaker.decorators import (
     MethodHints,
@@ -59,7 +58,6 @@ OnCompleteActionName: TypeAlias = Literal[
     "delete_application",
 ]
 
-Self = TypeVar("Self", bound="Application")
 T = TypeVar("T")
 P = ParamSpec("P")
 
@@ -127,17 +125,22 @@ def precompiled(
     return ctx.app.precompiled(value)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class CompilerOptions:
-    avm_version: int = dataclasses.field(default=MAX_PROGRAM_VERSION)
+    avm_version: int = MAX_PROGRAM_VERSION
     """avm_version: defines the #pragma version used in output"""
-    scratch_slots: bool = dataclasses.field(default=True)
+    scratch_slots: bool = True
     """scratch_slots: cancel contiguous store/load operations that have no load dependencies elsewhere. 
        default=True"""
-    frame_pointers: bool = dataclasses.field(default=True)
+    frame_pointers: bool | None = None
     """frame_pointers: employ frame pointers instead of scratch slots during compilation.
-       Available AVM version 8
-       default=True"""
+       Available and enabled by default from AVM version 8"""
+    assemble_constants: bool = True
+    """assembleConstants: When true, the compiler will produce a program with fully
+        assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
+        constants will be assembled in the most space-efficient way, so enabling this may reduce
+        the compiled program's size. Enabling this option requires a minimum AVM version of 3.
+        Defaults to True."""
 
 
 @dataclasses.dataclass
@@ -173,27 +176,19 @@ class CompiledApplication:
 
 class Application:
     def __init__(
-        self: Self,
+        self,
+        name: str,
         *,
-        compiler_options: CompilerOptions = CompilerOptions(
-            avm_version=MAX_PROGRAM_VERSION, scratch_slots=True, frame_pointers=True
-        ),
-        # TODO
-        name: str | None = None,
-        descr: str | None = None,
-        # state: TState # how to make this generic but also default to empty?!?!!?
+        # state: TState # TODO how to make this generic but also default to empty?!?!!?
         state_class: type | None = None,
-        implement_default_create: bool = True,  # for backwards compat, TODO maybe remove
+        descr: str | None = None,
+        compiler_options: CompilerOptions = CompilerOptions(),
     ) -> None:
         """<TODO>"""
-        self._name = name
-        self._descr = descr
-        self.avm_version = compiler_options.avm_version
-        self.optimize_options = OptimizeOptions(
-            scratch_slots=compiler_options.scratch_slots,
-            frame_pointers=compiler_options.frame_pointers
-            and self.avm_version >= FRAME_POINTERS_VERSION,
-        )
+        self.name = name
+        self.descr = descr
+        self.compiler_options = compiler_options
+
         self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self.clear_state_method: SubroutineFnWrapper | None = None
@@ -203,22 +198,17 @@ class Application:
         ] = {}
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self._state_class = state_class or self.__class__
+        self._state_class = state_class or type(None)
         self.acct_state = AccountState(klass=self._state_class)
         self.app_state = ApplicationState(klass=self._state_class)
         self.bare_methods: dict[str, SubroutineFnWrapper] = {}
         self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
-        if implement_default_create:
-            self.implement(unconditional_create_approval)
-
-    @property
-    def name(self) -> str:
-        return self._name or self.__class__.__name__
-
-    @property
-    def descr(self) -> str | None:
-        return self._descr or self.__doc__
+    def __init_subclass__(cls) -> None:
+        warnings.warn(
+            "Subclassing beaker.Application is deprecated, please see the migration guide at: TODO",
+            DeprecationWarning,
+        )
 
     @overload
     def precompiled(self, value: "Application", /) -> AppPrecompile:
@@ -730,7 +720,7 @@ class Application:
 
     def clear_state(
         self,
-        fn: HandlerFunc | None = None,
+        fn: Callable[[], Expr] | None = None,
         /,
         *,
         name: str | None = None,
@@ -864,8 +854,8 @@ class Application:
         return self._compiled.on_delete if self._compiled is not None else None
 
     def implement(
-        self: Self,
-        blueprint: Callable[Concatenate[Self, P], T],
+        self,
+        blueprint: Callable[Concatenate["Application", P], T],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> T:
@@ -931,9 +921,12 @@ class Application:
                 }
                 # Compile approval and clear programs
                 approval_program, clear_program, contract = router.compile_program(
-                    version=self.avm_version,
-                    assemble_constants=True,
-                    optimize=OptimizeOptions(scratch_slots=True),
+                    version=self.compiler_options.avm_version,
+                    assemble_constants=self.compiler_options.assemble_constants,
+                    optimize=OptimizeOptions(
+                        scratch_slots=self.compiler_options.scratch_slots,
+                        frame_pointers=self.compiler_options.frame_pointers,
+                    ),
                 )
 
                 application_spec = {
@@ -1021,14 +1014,3 @@ class Application:
         self.compile(client)
         assert self._compiled is not None
         self._compiled.dump(Path(directory))
-
-
-TApp = TypeVar("TApp", bound=Application)
-
-
-def unconditional_create_approval(app: TApp) -> TApp:
-    @app.create
-    def create() -> Expr:
-        return Approve()
-
-    return app

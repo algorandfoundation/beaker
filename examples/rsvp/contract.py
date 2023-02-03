@@ -1,4 +1,19 @@
-from pyteal import *
+from pyteal import (
+    TxnType,
+    Subroutine,
+    InnerTxnBuilder,
+    abi,
+    Txn,
+    Int,
+    TealType,
+    Global,
+    Assert,
+    Expr,
+    Balance,
+    If,
+    Seq,
+    TxnField,
+)
 from beaker import (
     Application,
     ApplicationStateValue,
@@ -35,7 +50,7 @@ def withdraw_funds():
     )
 
 
-class EventRSVP(Application):
+class EventRSVPState:
     price = ApplicationStateValue(
         stack_type=TealType.uint64,
         default=Int(1_000_000),
@@ -55,7 +70,7 @@ class EventRSVP(Application):
     )
 
 
-rsvp = EventRSVP()
+rsvp = Application("EventRSVP", state_class=EventRSVPState)
 
 
 @rsvp.create
@@ -63,7 +78,7 @@ def create(event_price: abi.Uint64):
     """Deploys the contract and initialze the app states"""
     return Seq(
         rsvp.initialize_application_state(),
-        rsvp.price.set(event_price.get()),
+        EventRSVPState.price.set(event_price.get()),
     )
 
 
@@ -74,17 +89,17 @@ def do_rsvp(payment: abi.PaymentTransaction):
         Assert(
             Global.group_size() == Int(2),
             payment.get().receiver() == Global.current_application_address(),
-            payment.get().amount() == rsvp.price,
+            payment.get().amount() == EventRSVPState.price,
         ),
         rsvp.initialize_account_state(),
-        rsvp.rsvp.increment(),
+        EventRSVPState.rsvp.increment(),
     )
 
 
 @rsvp.external(authorize=Authorize.opted_in(Global.current_application_id()))
 def check_in():
     """If the Sender RSVPed, check-in the Sender"""
-    return rsvp.checked_in.set(Int(1))
+    return EventRSVPState.checked_in.set(Int(1))
 
 
 @rsvp.external(authorize=Authorize.only(Global.creator_address()))
@@ -110,13 +125,13 @@ def delete():
 @rsvp.external(read_only=True, authorize=Authorize.only(Global.creator_address()))
 def read_rsvp(*, output: abi.Uint64):
     """Read amount of RSVP to the event. Only callable by Creator."""
-    return output.set(rsvp.rsvp)
+    return output.set(EventRSVPState.rsvp)
 
 
 @rsvp.external(read_only=True)
 def read_price(*, output: abi.Uint64):
     """Read amount of RSVP to the event. Only callable by Creator."""
-    return output.set(rsvp.price)
+    return output.set(EventRSVPState.price)
 
 
 def _do_refund() -> Expr:
@@ -127,11 +142,11 @@ def _do_refund() -> Expr:
             {
                 TxnField.type_enum: TxnType.Payment,
                 TxnField.receiver: Txn.sender(),
-                TxnField.amount: rsvp.price - FEE,
+                TxnField.amount: EventRSVPState.price - FEE,
             }
         ),
         InnerTxnBuilder.Submit(),
-        rsvp.rsvp.decrement(),
+        EventRSVPState.rsvp.decrement(),
     )
 
 

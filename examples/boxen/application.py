@@ -15,6 +15,7 @@ from pyteal import (
     abi,
 )
 from beaker import Application, ApplicationStateValue, Authorize, consts
+from beaker.testing.legacy import LegacyApplication
 
 from beaker.lib.storage import Mapping, List
 
@@ -61,7 +62,7 @@ def clawback_axfer(
     )
 
 
-class MembershipClub(Application):
+class MembershipClub(LegacyApplication):
     ####
     # Box abstractions
 
@@ -100,11 +101,7 @@ class MembershipClub(Application):
     MaxMembers = Int(_max_members)
     MinimumBalance = Int(_min_balance)
 
-    def __init__(self):
-        super().__init__()
-
-        self.address = Global.current_application_address()
-
+    def post_init(self) -> None:
         @self.external(authorize=Authorize.only(Global.creator_address()))
         def bootstrap(
             seed: abi.PaymentTransaction,
@@ -188,17 +185,13 @@ class MembershipClub(Application):
             )
 
 
-class AppMember(Application):
+class AppMember(LegacyApplication):
 
     membership_token = ApplicationStateValue(TealType.uint64)
     club_app_id = ApplicationStateValue(TealType.uint64)
     last_affirmation = ApplicationStateValue(TealType.bytes)
 
-    def __init__(self):
-        super().__init__()
-
-        self.address = Global.current_application_address()
-
+    def post_init(self) -> None:
         @self.external(authorize=Authorize.only(Global.creator_address()))
         def bootstrap(
             seed: abi.PaymentTransaction,
