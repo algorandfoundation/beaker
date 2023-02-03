@@ -60,5 +60,5 @@ def ExpensiveApp() -> Application:
 
 
 if __name__ == "__main__":
-    a, c = ExpensiveApp().compile(sandbox.get_algod_client())
-    print(a, c)
+    compiled = ExpensiveApp().compile(sandbox.get_algod_client())
+    print(compiled.approval_program, compiled.clear_program)

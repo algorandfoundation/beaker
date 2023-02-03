@@ -268,9 +268,9 @@ class AppPrecompile:
         self.app = app
         # at this point, we should have all the dependant logic built
         # so we can compile the app teal
-        approval, clear = app.compile(client)
-        self.approval = AppProgram(approval, client)
-        self.clear = AppProgram(clear, client)
+        compiled = app.compile(client)
+        self.approval = AppProgram(compiled.approval_program, client)
+        self.clear = AppProgram(compiled.clear_program, client)
 
     def get_create_config(self) -> dict[TxnField, Expr | list[Expr]]:
         """get a dictionary of the fields and values that should be set when
