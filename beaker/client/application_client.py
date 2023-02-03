@@ -462,6 +462,12 @@ class ApplicationClient:
         if hints.read_only:
             dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())
             dr_result = self.client.dryrun(dr_req)
+            for txn in dr_result["txns"]:
+                if "app-call-messages" in txn:
+                    if "REJECT" in txn["app-call-messages"]:
+                        msg = ", ".join(txn["app-call-messages"])
+                        raise Exception(f"Dryrun for readonly method failed: {msg}")
+
             method_results = self._parse_result(
                 {0: method}, dr_result["txns"], atc.tx_ids
             )
