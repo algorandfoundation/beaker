@@ -4,14 +4,11 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
 from algosdk.transaction import *
-from pyteal import Assert, Seq, Txn, abi
+from pyteal import Assert, Seq, Txn, abi, Expr
 
 from beaker import Application, client, consts, sandbox, precompiled
 
-if __name__ == "__main__":
-    from lsig import EthEcdsaVerify, HashValue, Signature  # type: ignore
-else:
-    from .lsig import EthEcdsaVerify, HashValue, Signature
+from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
 
 
 class EthChecker(Application):
@@ -24,7 +21,7 @@ verify_lsig = EthEcdsaVerify(version=6)
 
 
 @eth_checker.external
-def check_eth_sig(hash: HashValue, signature: Signature, *, output: abi.String):
+def check_eth_sig(hash: HashValue, signature: Signature, *, output: abi.String) -> Expr:
     # The lsig that will be responsible for validating the
     # incoming signature against the incoming hash
     # When passed to Precompile, it flags the init of the Application
@@ -36,7 +33,7 @@ def check_eth_sig(hash: HashValue, signature: Signature, *, output: abi.String):
         # The precompiled lsig should have its address and binary available
         # here so we can use it to make sure we've been called
         # with the correct lsig
-        Assert(Txn.sender() == verifier.logic.address()),
+        Assert(Txn.sender() == verifier.address()),
         output.set("lsig validated"),
     )
 

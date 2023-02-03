@@ -111,7 +111,7 @@ class LogicSignatureTemplate:
     ):
         """initialize the logic signature and identify relevant attributes"""
 
-        self._rtt_vars = {
+        self.runtime_template_variables: dict[str, RuntimeTemplateVariable] = {
             name: RuntimeTemplateVariable(stack_type=stack_type, name=name)
             for name, stack_type in runtime_template_variables.items()
         }
@@ -126,18 +126,16 @@ class LogicSignatureTemplate:
                     "Logic signature methods should take no arguments, unless using runtime templates"
                 )
             forward_args = list(params.keys())
-            logic = expr_or_func(*[self._rtt_vars[name] for name in forward_args])
+            logic = expr_or_func(
+                *[self.runtime_template_variables[name] for name in forward_args]
+            )
 
         self.program = compileTeal(
             Seq(
-                *[tv._init_expr() for tv in self._rtt_vars.values()],
+                *[tv._init_expr() for tv in self.runtime_template_variables.values()],
                 logic,
             ),
             mode=Mode.Signature,
             version=avm_version,
             assembleConstants=True,
         )
-
-    @property
-    def template_variables(self) -> list[RuntimeTemplateVariable]:
-        return list(self._rtt_vars.values())

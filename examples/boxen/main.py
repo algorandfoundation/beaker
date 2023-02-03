@@ -5,10 +5,7 @@ from algosdk.transaction import *
 
 from beaker import client, consts, sandbox
 
-if __name__ == "__main__":
-    from application import AppMember, MembershipRecord, MembershipClub  # type: ignore
-else:
-    from .application import AppMember, MembershipRecord, MembershipClub
+from examples.boxen.application import AppMember, MembershipRecord, MembershipClub
 
 
 record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))

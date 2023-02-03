@@ -51,10 +51,7 @@ class App(Application):
         def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
             self.sig_checker = self.precompiled(sig_checker)
             return Assert(
-                Txn.sender()
-                == self.sig_checker.logic.template_address(
-                    user_addr=signer_address.get()
-                )
+                Txn.sender() == self.sig_checker.address(user_addr=signer_address.get())
             )
 
 

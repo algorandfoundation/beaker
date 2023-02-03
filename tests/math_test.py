@@ -1,7 +1,6 @@
 import math as pymath
 
 import pyteal as pt
-import beaker as bkr
 
 from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
 

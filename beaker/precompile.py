@@ -1,7 +1,7 @@
 import base64
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, KeysView
 
 from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
 from algosdk.constants import APP_PAGE_MAX_SIZE
@@ -51,9 +51,13 @@ ZERO_INT = "0"
 
 
 @dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+@dataclass
 class PrecompileTemplateValue:
-    #: The name of the template variable
-    name: str = field(kw_only=True)
     #: Whether or not this variable is bytes (if false, its uint64)
     is_bytes: bool = field(kw_only=True)
     #: The line number in the source TEAL this variable is present
@@ -85,13 +89,13 @@ class Program:
         return Bytes(self.raw_binary)
 
     @cached_property
-    def assertions(self) -> dict[int, "ProgramAssertion"]:
+    def assertions(self) -> dict[int, ProgramAssertion]:
         assert self.source_map is not None
         return _gather_asserts(self.teal, self.source_map)
 
 
 class AppProgram(Program):
-    @property
+    @cached_property
     def program_pages(self) -> list[Expr]:
         assert self.raw_binary is not None
         return [
@@ -101,39 +105,42 @@ class AppProgram(Program):
 
 
 class LSigProgram(Program):
+    pass
+
+
+class LSigTemplateProgram(Program):
     def __init__(
         self,
         program: str,
         client: AlgodClient,
-        *,
-        runtime_template_variables: List["RuntimeTemplateVariable"] | None = None,
+        runtime_template_variables: List["RuntimeTemplateVariable"],
     ):
-        self._template_values: list[PrecompileTemplateValue] = []
-        if runtime_template_variables:
-            lines = program.splitlines()
-            # Replace the teal program TMPL_* template variables with
-            # the 0 value for the given type and save the list of TemplateValues
-            for rtt_var in runtime_template_variables:
-                token = rtt_var.token
-                is_bytes = rtt_var.type_of() == TealType.bytes
-                op = PUSH_BYTES if is_bytes else PUSH_INT
-                statement = f"{op} {token} // {token}"
-                idx = lines.index(statement)
-                lines[idx] = lines[idx].replace(
-                    token, ZERO_BYTES if is_bytes else ZERO_INT, 1
-                )
-                tv = PrecompileTemplateValue(
-                    name=rtt_var.name, is_bytes=is_bytes, line=idx
-                )
-                self._template_values.append(tv)
+        if not runtime_template_variables:
+            raise ValueError("empty list: runtime_template_variables")
+        self._template_values: dict[str, PrecompileTemplateValue] = {}
+        lines = program.splitlines()
+        # Replace the teal program TMPL_* template variables with
+        # the 0 value for the given type and save the list of TemplateValues
+        for rtt_var in runtime_template_variables:
+            token = rtt_var.token
+            is_bytes = rtt_var.type_of() == TealType.bytes
+            op = PUSH_BYTES if is_bytes else PUSH_INT
+            statement = f"{op} {token} // {token}"
+            idx = lines.index(statement)
+            lines[idx] = lines[idx].replace(
+                token, ZERO_BYTES if is_bytes else ZERO_INT, 1
+            )
+            self._template_values[rtt_var.name] = PrecompileTemplateValue(
+                is_bytes=is_bytes, line=idx
+            )
 
-            program = "\n".join(lines)
+        program = "\n".join(lines)
 
         super().__init__(program=program, client=client)
 
         assert self.source_map is not None
 
-        for tv in self._template_values:
+        for tv in self._template_values.values():
             # +1 to acount for the pushbytes/pushint op
             pcs = self.source_map.get_pcs_for_line(tv.line)
             if pcs is None:
@@ -141,25 +148,12 @@ class LSigProgram(Program):
             else:
                 tv.pc = pcs[0] + 1
 
-    def address(self) -> Expr:
-        """hash returns an expression for this Precompile.
-        It will fail if any template_values are set.
-        """
-        if self.binary_hash is None:
-            raise TealInputError("No address defined for precompile")
-
-        return Addr(self.binary_hash)
-
-    def template_address(self, **kwargs: Expr) -> Expr:
-        """
-        returns an expression that will generate the expected
-        hash given some set of values that should be included in the logic itself
-        """
-        return Sha512_256(
-            Concat(
-                Bytes(PROGRAM_DOMAIN_SEPARATOR), self._populate_template_expr(**kwargs)
+    def _check_kwargs(self, keys: KeysView[str]) -> None:
+        if keys != self._template_values.keys():
+            raise ValueError(
+                f"Expected arguments named: {', '.join(self._template_values.keys())} "
+                f"but got: {', '.join(keys)}"
             )
-        )
 
     def populate_template(self, **kwargs: str | bytes | int) -> bytes:
         """
@@ -171,18 +165,15 @@ class LSigProgram(Program):
         """
 
         assert self.raw_binary is not None
-        assert len(self._template_values) > 0
-        assert len(kwargs) == len(self._template_values)
-        args = [kwargs.pop(tv.name) for tv in self._template_values]
-        assert not kwargs
+        self._check_kwargs(kwargs.keys())
 
         # Get a copy of the binary so we can work on it in place
         populated_binary = list(self.raw_binary)
         # Any time we add bytes, we need to update the offset so the rest
         # of the pc values can be updated to account for the difference
         offset = 0
-        for idx, tv in enumerate(self._template_values):
-            arg: str | bytes | int = args[idx]
+        for name, tv in self._template_values.items():
+            arg = kwargs[name]
 
             if tv.is_bytes:
                 if type(arg) is int:
@@ -211,12 +202,12 @@ class LSigProgram(Program):
 
         return bytes(populated_binary)
 
-    def _populate_template_expr(self, **kwargs: Expr) -> Expr:
+    def populate_template_expr(self, **kwargs: Expr) -> Expr:
         """
         populate_template_expr returns the Expr that will patch a
         blank binary given a set of arguments.
 
-        It is called by ``template_address`` to return a Expr that
+        It is called by ``address`` to return a Expr that
         can be used to compare with a sender given some arguments.
         """
 
@@ -225,10 +216,7 @@ class LSigProgram(Program):
         # This function just reproduces the same effects in pyteal
 
         assert self.raw_binary is not None
-        assert len(self._template_values)
-        assert len(kwargs) == len(self._template_values)
-        args = [kwargs.pop(tv.name) for tv in self._template_values]
-        assert not kwargs
+        self._check_kwargs(kwargs.keys())
 
         populate_program: list[Expr] = [
             (last_pos := ScratchVar(TealType.uint64)).store(Int(0)),
@@ -237,13 +225,14 @@ class LSigProgram(Program):
             (buff := ScratchVar(TealType.bytes)).store(Bytes("")),
         ]
 
-        for idx, tv in enumerate(self._template_values):
+        for name, tv in self._template_values.items():
             # Add expressions to encode the values and insert
             # them into the working buffer
+            arg = kwargs[name]
             populate_program += [
-                curr_val.store(Concat(EncodeUVarInt(Len(args[idx])), args[idx]))
+                curr_val.store(Concat(EncodeUVarInt(Len(arg)), arg))
                 if tv.is_bytes
-                else curr_val.store(EncodeUVarInt(args[idx])),
+                else curr_val.store(EncodeUVarInt(arg)),
                 buff.store(
                     Concat(
                         buff.load(),
@@ -279,7 +268,7 @@ class AppPrecompile:
         self.app = app
         # at this point, we should have all the dependant logic built
         # so we can compile the app teal
-        approval, clear = self.app.compile(client)
+        approval, clear = app.compile(client)
         self.approval = AppProgram(approval, client)
         self.clear = AppProgram(clear, client)
 
@@ -311,8 +300,17 @@ class LSigPrecompile:
     """
 
     def __init__(self, lsig: "LogicSignature", client: AlgodClient):
-        self.lsig: "LogicSignature" = lsig
+        self.lsig = lsig
         self.logic = LSigProgram(lsig.program, client)
+
+    def address(self) -> Expr:
+        """hash returns an expression for this Precompile.
+        It will fail if any template_values are set.
+        """
+        if self.logic.binary_hash is None:
+            raise TealInputError("No address defined for precompile")
+
+        return Addr(self.logic.binary_hash)
 
     def signer(self) -> LogicSigTransactionSigner:
         """
@@ -332,8 +330,22 @@ class LSigTemplatePrecompile:
 
     def __init__(self, lsig: "LogicSignatureTemplate", client: AlgodClient):
         self.lsig = lsig
-        self.logic = LSigProgram(
-            lsig.program, client, runtime_template_variables=lsig.template_variables
+        self.logic = LSigTemplateProgram(
+            lsig.program,
+            client,
+            list(lsig.runtime_template_variables.values()),
+        )
+
+    def address(self, **kwargs: Expr) -> Expr:
+        """
+        returns an expression that will generate the expected
+        hash given some set of values that should be included in the logic itself
+        """
+        return Sha512_256(
+            Concat(
+                Bytes(PROGRAM_DOMAIN_SEPARATOR),
+                self.logic.populate_template_expr(**kwargs),
+            )
         )
 
     def template_signer(self, **kwargs: str | bytes | int) -> LogicSigTransactionSigner:
@@ -342,12 +354,6 @@ class LSigTemplatePrecompile:
         return LogicSigTransactionSigner(
             LogicSigAccount(self.logic.populate_template(**kwargs))
         )
-
-
-@dataclass
-class ProgramAssertion:
-    line: int
-    message: str
 
 
 def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:

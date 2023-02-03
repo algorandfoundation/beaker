@@ -8,10 +8,7 @@ from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_algod_client, get_accounts
 
-if __name__ == "__main__":
-    from contract import ExpensiveApp  # type: ignore
-else:
-    from .contract import ExpensiveApp
+from examples.opup.contract import ExpensiveApp
 
 
 client = get_algod_client()

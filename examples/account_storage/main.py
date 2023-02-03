@@ -67,7 +67,7 @@ def add_account(nonce: abi.DynamicBytes):
     return Seq(
         Assert(
             # Make sure the opt-in'er is our lsig
-            Txn.sender() == tmpl_acct.logic.template_address(nonce=nonce.get()),
+            Txn.sender() == tmpl_acct.address(nonce=nonce.get()),
             # and that its being rekeyed to us
             Txn.rekey_to() == Global.current_application_address(),
         ),

@@ -28,7 +28,7 @@ def test_precompile_basic():
     @app.external
     def check_it():
         lsig_pc = precompiled(lsig)
-        return pt.Assert(pt.Txn.sender() == lsig_pc.logic.address())
+        return pt.Assert(pt.Txn.sender() == lsig_pc.address())
 
     assert app.approval_program is None
     assert app.clear_program is None
@@ -69,9 +69,7 @@ def test_templated_bytes(tmpl_val: str):
     def check_it() -> pt.Expr:
         app.pc = app.precompiled(Lsig(version=6))
 
-        return pt.Assert(
-            pt.Txn.sender() == app.pc.logic.template_address(tv=pt.Bytes(tmpl_val))
-        )
+        return pt.Assert(pt.Txn.sender() == app.pc.address(tv=pt.Bytes(tmpl_val)))
 
     assert app.approval_program is None
     assert app.clear_program is None
@@ -119,9 +117,7 @@ def test_templated_ints(tmpl_val: int):
     def check_it() -> pt.Expr:
         self = this_app()
         self.pc = pc = self.precompiled(Lsig(version=6))  # type: ignore[attr-defined]
-        return pt.Assert(
-            pt.Txn.sender() == pc.logic.template_address(tv=pt.Int(tmpl_val))
-        )
+        return pt.Assert(pt.Txn.sender() == pc.address(tv=pt.Int(tmpl_val)))
 
     assert app.approval_program is None
     assert app.clear_program is None
@@ -167,9 +163,7 @@ class OuterApp(Application):
             self.child = child = self.precompiled(InnerApp())
             self.lsig = lsig = self.precompiled(InnerLsig())
             return pt.Seq(
-                pt.Assert(
-                    pt.Txn.sender() == lsig.logic.template_address(nonce=nonce.get())
-                ),
+                pt.Assert(pt.Txn.sender() == lsig.address(nonce=nonce.get())),
                 pt.InnerTxnBuilder.Execute(
                     {
                         pt.TxnField.type_enum: pt.TxnType.ApplicationCall,
@@ -316,12 +310,7 @@ def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
     assert lsig_precompile.logic.binary.byte_str != b""
     assert lsig_precompile.logic.source_map is not None
     assert lsig_precompile.logic.binary_hash is not None
-    if isinstance(lsig_precompile.lsig, LogicSignatureTemplate):
-        assert len(lsig_precompile.logic._template_values) == len(
-            lsig_precompile.lsig.template_variables
-        )
-    else:
-        assert lsig_precompile.logic.address()
+    assert lsig_precompile.address()
 
 
 def _check_lsig_template_precompiles(lsig_precompile: LSigTemplatePrecompile):
@@ -330,9 +319,7 @@ def _check_lsig_template_precompiles(lsig_precompile: LSigTemplatePrecompile):
     assert lsig_precompile.logic.binary.byte_str != b""
     assert lsig_precompile.logic.source_map is not None
     assert lsig_precompile.logic.binary_hash is not None
-    if isinstance(lsig_precompile.lsig, LogicSignatureTemplate):
-        assert len(lsig_precompile.logic._template_values) == len(
-            lsig_precompile.lsig.template_variables
-        )
-    else:
-        assert lsig_precompile.logic.address()
+    assert (
+        lsig_precompile.logic._template_values.keys()
+        == lsig_precompile.lsig.runtime_template_variables.keys()
+    )

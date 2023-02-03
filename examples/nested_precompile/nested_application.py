@@ -57,7 +57,7 @@ lsig = LogicSignature(Approve())
 @child2_app.external(read_only=True)
 def get_lsig_addr(*, output: abi.Address) -> Expr:
     lsig_pc = precompiled(lsig)
-    return output.set(lsig_pc.logic.address())
+    return output.set(lsig_pc.address())
 
 
 parent_app = PutFilesHere(name="Parent")

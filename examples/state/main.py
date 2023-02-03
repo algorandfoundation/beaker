@@ -1,11 +1,7 @@
 from beaker.client import ApplicationClient, LogicException
 from beaker.sandbox import get_algod_client, get_accounts
 
-# Leet hax, ignore
-if __name__ == "__main__":
-    from contract import StateExample  # type: ignore
-else:
-    from .contract import StateExample
+from examples.state.contract import StateExample
 
 
 def demo():

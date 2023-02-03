@@ -43,7 +43,7 @@ def test_templated_logic_signature():
 
     lsig = Lsig()
 
-    assert len(lsig.template_variables) == 1
+    assert len(lsig.runtime_template_variables) == 1
     assert len(lsig.program) > 0
 
     assert "pushbytes TMPL_PUBKEY" in lsig.program
@@ -103,5 +103,5 @@ def test_lsig_template_ordering():
     expected = ["f", "a", "b", "c"]
 
     l = Lsig()
-    for idx, tv in enumerate(l.template_variables):
+    for idx, tv in enumerate(l.runtime_template_variables.values()):
         assert tv.name == expected[idx]

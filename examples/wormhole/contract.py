@@ -2,10 +2,7 @@ from typing import Final
 from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
 from beaker import ReservedApplicationStateValue
 
-if __name__ == "__main__":
-    from wormhole import ContractTransferVAA, WormholeTransfer  # type: ignore
-else:
-    from .wormhole import ContractTransferVAA, WormholeTransfer
+from examples.wormhole.wormhole import ContractTransferVAA, WormholeTransfer
 
 
 class OracleDataCache(WormholeTransfer):

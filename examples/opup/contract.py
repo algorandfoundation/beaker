@@ -13,10 +13,7 @@ from pyteal import (
 )
 from beaker import sandbox, Application
 
-if __name__ == "__main__":
-    from op_up import OpUp, OpUpState, Repeat, TargetApp  # type: ignore
-else:
-    from .op_up import OpUp, OpUpState, Repeat, TargetApp
+from examples.opup.op_up import OpUp, OpUpState, Repeat, TargetApp
 
 
 def ExpensiveApp() -> Application:
@@ -33,7 +30,7 @@ def ExpensiveApp() -> Application:
     def hash_it(
         input: abi.String,
         iters: abi.Uint64,
-        opup_app: abi.Application = OpUpState.opup_app_id,
+        opup_app: abi.Application = OpUpState.opup_app_id,  # type: ignore[assignment]
         *,
         output: abi.StaticBytes[Literal[32]],
     ):
