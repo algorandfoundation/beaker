@@ -375,7 +375,7 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="nd">@external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@external</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">get_membership_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">MembershipRecord</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="p">]</span><span class="o">.</span><span class="n">store_into</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
 
