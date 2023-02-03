@@ -34,5 +34,5 @@ class AccountStateStorage(StateStorage):
         ...
 
 
-class BoxStorage(ABC):
-    pass
+# class BoxStorage(ABC):
+#     pass
