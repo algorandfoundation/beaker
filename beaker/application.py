@@ -133,7 +133,6 @@ class CompilerOptions:
     """avm_version: defines the #pragma version used in output"""
     scratch_slots: bool = dataclasses.field(default=True)
     """scratch_slots: cancel contiguous store/load operations that have no load dependencies elsewhere. 
-       Available AVM version 9
        default=True"""
     frame_pointers: bool = dataclasses.field(default=True)
     """frame_pointers: employ frame pointers instead of scratch slots during compilation.
