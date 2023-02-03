@@ -24,13 +24,9 @@ from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
 
 
 class GlobalBlob(Blob):
-    def __init__(self, *, keys: int | list[int] | None = None):
-        if keys is None:
-            keys = MAX_GLOBAL_STATE
+    def __init__(self, *, keys: int | list[int] = MAX_GLOBAL_STATE):
         super().__init__(keys=keys)
-        self.init_subroutines()
 
-    def init_subroutines(self) -> None:
         @Subroutine(TealType.none)
         def set_byte_impl(idx: Expr, byte: Expr) -> Expr:
             return Seq(
@@ -40,6 +36,8 @@ class GlobalBlob(Blob):
                     SetByte(App.globalGet(key.load()), self._offset_for_idx(idx), byte),
                 ),
             )
+
+        self._set_byte_impl = set_byte_impl
 
         @Subroutine(TealType.none)
         def zero_impl() -> Expr:
@@ -61,11 +59,15 @@ class GlobalBlob(Blob):
             """
             return InlineAssembly(zloop, EMPTY_PAGE, self.max_keys, type=TealType.none)
 
+        self._zero_impl = zero_impl
+
         @Subroutine(TealType.uint64)
         def get_byte_impl(idx: Expr) -> Expr:
             return GetByte(
                 App.globalGet(self._key(self._key_idx(idx))), self._offset_for_idx(idx)
             )
+
+        self._get_byte_impl = get_byte_impl
 
         @Subroutine(TealType.bytes)
         def read_impl(bstart: Expr, bstop: Expr) -> Expr:
@@ -103,6 +105,8 @@ class GlobalBlob(Blob):
                 ),
                 buff.load(),
             )
+
+        self._read_impl = read_impl
 
         @Subroutine(TealType.none)
         def write_impl(bstart: Expr, buff: Expr) -> Expr:
@@ -161,11 +165,7 @@ class GlobalBlob(Blob):
                 ),
             )
 
-        self.set_byte_impl = set_byte_impl
-        self.zero_impl = zero_impl
-        self.get_byte_impl = get_byte_impl
-        self.read_impl = read_impl
-        self.write_impl = write_impl
+        self._write_impl = write_impl
 
     def zero(self) -> Expr:
         """
@@ -173,29 +173,29 @@ class GlobalBlob(Blob):
 
         This allows us to be lazy later and _assume_ all the strings are the same size
         """
-        return self.zero_impl()
+        return self._zero_impl()
 
     def get_byte(self, idx: Expr) -> Expr:
         """
         Get a single byte from global storage of an application by index
         """
-        return self.get_byte_impl(idx)
+        return self._get_byte_impl(idx)
 
     def set_byte(self, idx: Expr, byte: Expr) -> Expr:
         """
         Set a single byte from global storage of an application by index
         """
-        return self.set_byte_impl(idx, byte)
+        return self._set_byte_impl(idx, byte)
 
     def read(self, bstart: Expr, bstop: Expr) -> Expr:
         """
         read bytes between bstart and bend from global storage
         of an application by index
         """
-        return self.read_impl(bstart, bstop)
+        return self._read_impl(bstart, bstop)
 
     def write(self, bstart: Expr, buff: Expr) -> Expr:
         """
         write bytes between bstart and len(buff) to global storage of an application
         """
-        return self.write_impl(bstart, buff)
+        return self._write_impl(bstart, buff)

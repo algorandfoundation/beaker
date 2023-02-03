@@ -43,10 +43,12 @@ class Blob(ABC):
     def _key(self, i: Expr) -> Expr:
         return Extract(self.byte_key_str, i, Int(1))
 
-    def _key_idx(self, idx: Expr) -> Expr:
+    @staticmethod
+    def _key_idx(idx: Expr) -> Expr:
         return idx / BLOB_PAGE_SIZE
 
-    def _offset_for_idx(self, idx: Expr) -> Expr:
+    @staticmethod
+    def _offset_for_idx(idx: Expr) -> Expr:
         return idx % BLOB_PAGE_SIZE
 
     @abstractmethod
