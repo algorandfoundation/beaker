@@ -56,7 +56,7 @@ class Mapping:
                     raise TealTypeError(key.type_of(), TealType.bytes)
                 return MapElement(self._prefix_key(key), self._value_type)
             case _:
-                return TealTypeError(type(key), Expr | abi.BaseType)
+                raise TealTypeError(type(key), Expr | abi.BaseType)
 
 
 class MapElement:
