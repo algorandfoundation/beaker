@@ -28,6 +28,7 @@ from pyteal import (
 
 
 from beaker import Application, ApplicationStateValue, sandbox, client, consts
+from beaker.application import CompileOptions
 from beaker.lib.math import Max
 
 
@@ -47,7 +48,7 @@ BoxName = Bytes(_box_name)
 BoxSize = Int(_box_size)
 MaxInts = Int(_max_ints)
 
-sorted_ints_app = SortedIntegers(version=8)
+sorted_ints_app = SortedIntegers(compile_options=CompileOptions(avm_version=8))
 
 
 @sorted_ints_app.external

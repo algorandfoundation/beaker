@@ -15,7 +15,7 @@ from algosdk.atomic_transaction_composer import (
 
 from beaker.decorators import Authorize, DefaultArgument
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application
+from beaker.application import Application, CompileOptions
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
@@ -29,8 +29,11 @@ class App(Application):
     acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
-    def __init__(self, version: int = pt.MAX_TEAL_VERSION):
-        super().__init__(version=version, implement_default_create=False)
+    def __init__(self, version: int = pt.MAX_PROGRAM_VERSION):
+        super().__init__(
+            compile_options=CompileOptions(avm_version=version),
+            implement_default_create=False,
+        )
 
         @self.create(bare=True)
         def create():

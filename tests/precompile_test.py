@@ -19,7 +19,7 @@ def test_precompile_basic():
         def evaluate():
             return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
-        return LogicSignature(evaluate, teal_version=version)
+        return LogicSignature(evaluate, avm_version=version)
 
     app = Application()
 
@@ -57,7 +57,7 @@ def test_templated_bytes(tmpl_val: str):
         return LogicSignatureTemplate(
             lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
             runtime_template_variables={"tv": pt.TealType.bytes},
-            teal_version=version,
+            avm_version=version,
         )
 
     class App(Application):
@@ -107,7 +107,7 @@ def test_templated_ints(tmpl_val: int):
         return LogicSignatureTemplate(
             evaluate,
             runtime_template_variables={"tv": pt.TealType.uint64},
-            teal_version=version,
+            avm_version=version,
         )
 
     class App(Application):
