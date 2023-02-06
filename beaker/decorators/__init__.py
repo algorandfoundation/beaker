@@ -4,8 +4,17 @@ from enum import Enum
 from inspect import signature, Parameter
 from typing import Callable, Any, TypedDict
 
-from pyteal import abi, Expr, Int, TealTypeError, Bytes, ABIReturnSubroutine
-
+from pyteal import (
+    abi,
+    Expr,
+    Int,
+    TealTypeError,
+    Bytes,
+    ABIReturnSubroutine,
+    CallConfig,
+    MethodConfig,
+)
+from algosdk.abi import Method
 from beaker.decorators.authorize import _authorize, Authorize
 from beaker.state import AccountStateValue, ApplicationStateValue
 
@@ -19,7 +28,7 @@ class DefaultArgumentClass(str, Enum):
     Constant = "constant"
 
 
-DefaultArgumentType = Expr | ABIReturnSubroutine | int | bytes | str
+DefaultArgumentType = Expr | ABIReturnSubroutine | Method | int | bytes | str
 
 
 class DefaultArgument:
@@ -53,6 +62,8 @@ class DefaultArgument:
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
                 self.resolvable_class = DefaultArgumentClass.ABIMethod
+            case Method():
+                self.resolvable_class = DefaultArgumentClass.ABIMethod
             case _:
                 raise TealTypeError(self.resolver, DefaultArgumentType)
 
@@ -74,11 +85,18 @@ class DefaultArgument:
                 if not getattr(fn, "_read_only", None):
                     raise TealTypeError(self.resolver, DefaultArgumentType)
                 return fn.method_spec().dictify()
+            case Method() as method:
+                return method.dictify()
             case _:
                 raise TealTypeError(self.resolver, DefaultArgumentType)
 
     def dictify(self) -> dict[str, Any]:
-        return {"source": self.resolvable_class.value, "data": self.resolve_hint()}
+        result = {"source": self.resolvable_class.value, "data": self.resolve_hint()}
+        try:
+            result["stack_type"] = self.resolver.stack_type.name  # type: ignore[union-attr]
+        except AttributeError:
+            pass
+        return result
 
 
 class StructArgDict(TypedDict):
@@ -97,6 +115,7 @@ class MethodHints:
     structs: dict[str, StructArgDict] = field(default_factory=dict)
     #: defaults
     default_arguments: dict[str, DefaultArgument] = field(default_factory=dict)
+    config: MethodConfig = field(default_factory=MethodConfig)
 
     def empty(self) -> bool:
         return not self.dictify()
@@ -111,16 +130,23 @@ class MethodHints:
             }
         if self.structs:
             d["structs"] = self.structs
+        sparse_config = {
+            k: v.name for k, v in self.config.__dict__.items() if v != CallConfig.NEVER
+        }
+        if sparse_config:
+            d["config"] = sparse_config
         return d
 
 
 def capture_method_hints_and_remove_defaults(
-    fn: HandlerFunc, read_only: bool
+    fn: HandlerFunc,
+    read_only: bool,
+    config: MethodConfig,
 ) -> MethodHints:
     sig = signature(fn)
     params = sig.parameters.copy()
 
-    mh = MethodHints(read_only=read_only)
+    mh = MethodHints(read_only=read_only, config=config)
 
     for name, param in params.items():
         match param.default:

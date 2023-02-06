@@ -4,6 +4,7 @@ from pyteal import Bytes
 
 from beaker.application import (
     Application,
+    CompilerOptions,
     precompiled,
     this_app,
 )
@@ -17,6 +18,36 @@ from beaker.precompile import (
     LSigTemplatePrecompile,
     py_encode_uvarint,
 )
+
+
+def test_compile():
+    version = 8
+    app = Application(
+        "test_compile", compiler_options=CompilerOptions(avm_version=version)
+    )
+    client = get_algod_client()
+    precompile = AppPrecompile(app, client)
+
+    assert precompile.approval
+    approval_program = precompile.approval.raw_binary
+    approval_map = precompile.approval.source_map
+
+    assert len(approval_program) > 0, "Should have a valid approval program"
+    assert approval_program[0] == version, "First byte should be the version we set"
+    assert (
+        approval_map and approval_map.version == 3
+    ), "Should have valid source map with version 3"
+    assert len(approval_map.pc_to_line) > 0, "Should have valid mapping"
+
+    assert precompile.clear
+    clear_program = precompile.clear.raw_binary
+    clear_map = precompile.clear.source_map
+    assert len(clear_program) > 0, "Should have a valid clear program"
+    assert clear_program[0] == version, "First byte should be the version we set"
+    assert (
+        clear_map and clear_map.version == 3
+    ), "Should have valid source map with version 3"
+    assert len(clear_map.pc_to_line) > 0, "Should have valid mapping"
 
 
 def test_precompile_basic():
@@ -39,11 +70,10 @@ def test_precompile_basic():
     assert app.clear_program is None
     assert app._lsig_precompiles == {}
 
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
-    ac.build()
+    precompile = AppPrecompile(app, get_algod_client())
 
-    assert ac.approval_program is not None
-    assert ac.clear_program is not None
+    assert precompile.approval.teal is not None
+    assert precompile.clear.teal is not None
     lsig_pc = app._lsig_precompiles.get(lsig)
     assert lsig_pc is not None
     assert lsig_pc.logic.binary is not None
@@ -80,11 +110,10 @@ def test_templated_bytes(tmpl_val: str):
     assert app.clear_program is None
     assert pc is None
 
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
-    ac.build()
+    precompile = AppPrecompile(app, get_algod_client())
 
-    assert ac.approval_program is not None
-    assert ac.clear_program is not None
+    assert precompile.approval.teal is not None
+    assert precompile.clear.teal is not None
     assert pc is not None
     assert pc.logic.binary_hash is not None
 
@@ -128,11 +157,10 @@ def test_templated_ints(tmpl_val: int):
     assert app.clear_program is None
     assert pc is None
 
-    ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
-    ac.build()
+    precompile = AppPrecompile(app, get_algod_client())
 
-    assert ac.approval_program is not None
-    assert ac.clear_program is not None
+    assert precompile.approval.teal is not None
+    assert precompile.clear.teal is not None
     assert pc is not None
     assert pc.logic.binary_hash is not None
 
@@ -182,12 +210,9 @@ def test_nested_precompile():
     assert oa._lsig_precompiles == {}
     assert oa._lsig_template_precompiles == {}
 
-    ac = ApplicationClient(
-        client=get_algod_client(), app=oa, signer=get_accounts().pop().signer
-    )
-    ac.build()
+    precompile = AppPrecompile(oa, get_algod_client())
 
-    assert ac.approval_binary
+    assert precompile.approval.raw_binary
 
     child = oa._app_precompiles.get(inner_app)
     assert child is not None

@@ -15,7 +15,6 @@ from algosdk.encoding import decode_address
 import pyteal
 
 from beaker import client, sandbox, testing, consts
-from beaker.precompile import ProgramAssertion
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from tests.conftest import check_application_artifacts_output_stability
@@ -823,9 +822,7 @@ def test_approval_assert_coverage(
     some asserts are _not_ tested.
     """
 
-    all_asserts: dict[
-        int, ProgramAssertion
-    ] = creator_app_client.approval_asserts  # type: ignore[assignment]
+    all_asserts = creator_app_client.approval.assertions
 
     for msg, method, kwargs, app_client in all_assert_cases:
         with pytest.raises(LogicException, match=msg):

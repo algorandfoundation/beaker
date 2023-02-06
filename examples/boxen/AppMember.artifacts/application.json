@@ -1,15 +1,25 @@
 {
     "hints": {
+        "bootstrap": {
+            "config": {
+                "no_op": "CALL"
+            }
+        },
         "get_affirmation": {
             "default_arguments": {
                 "member_token": {
                     "source": "global-state",
-                    "data": "membership_token"
+                    "data": "membership_token",
+                    "stack_type": "uint64"
                 },
                 "club_app": {
                     "source": "global-state",
-                    "data": "club_app_id"
+                    "data": "club_app_id",
+                    "stack_type": "uint64"
                 }
+            },
+            "config": {
+                "no_op": "CALL"
             }
         }
     },
@@ -17,11 +27,17 @@
         "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4NjM2Yzc1NjI1ZjYxNzA3MDVmNjk2NAp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sNgp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweGQ3OWE5MjBmIC8vICJib290c3RyYXAocGF5LGFwcGxpY2F0aW9uLGFzc2V0KXZvaWQiCj09CmJueiBtYWluX2w1CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4ZjI2MWQ5NzMgLy8gImdldF9hZmZpcm1hdGlvbihhc3NldCxhcHBsaWNhdGlvbil2b2lkIgo9PQpibnogbWFpbl9sNAplcnIKbWFpbl9sNDoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQppbnRjXzAgLy8gMApnZXRieXRlCnN0b3JlIDMKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMgppbnRjXzAgLy8gMApnZXRieXRlCnN0b3JlIDQKbG9hZCAzCmxvYWQgNApjYWxsc3ViIGdldGFmZmlybWF0aW9uXzMKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDU6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKaW50Y18wIC8vIDAKZ2V0Ynl0ZQpzdG9yZSAxCnR4bmEgQXBwbGljYXRpb25BcmdzIDIKaW50Y18wIC8vIDAKZ2V0Ynl0ZQpzdG9yZSAyCnR4biBHcm91cEluZGV4CmludGNfMSAvLyAxCi0Kc3RvcmUgMApsb2FkIDAKZ3R4bnMgVHlwZUVudW0KaW50Y18xIC8vIHBheQo9PQphc3NlcnQKbG9hZCAwCmxvYWQgMQpsb2FkIDIKY2FsbHN1YiBib290c3RyYXBfMgppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sNjoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sOAplcnIKbWFpbl9sODoKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKPT0KYXNzZXJ0CmNhbGxzdWIgY3JlYXRlXzAKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBjcmVhdGUKY3JlYXRlXzA6CnByb3RvIDAgMAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGF1dGhfb25seQphdXRob25seV8xOgpwcm90byAxIDEKZnJhbWVfZGlnIC0xCmdsb2JhbCBDcmVhdG9yQWRkcmVzcwo9PQpyZXRzdWIKCi8vIGJvb3RzdHJhcApib290c3RyYXBfMjoKcHJvdG8gMyAwCnR4biBTZW5kZXIKY2FsbHN1YiBhdXRob25seV8xCi8vIHVuYXV0aG9yaXplZAphc3NlcnQKYnl0ZWNfMCAvLyAiY2x1Yl9hcHBfaWQiCmZyYW1lX2RpZyAtMgp0eG5hcyBBcHBsaWNhdGlvbnMKYXBwX2dsb2JhbF9wdXQKcHVzaGJ5dGVzIDB4NmQ2NTZkNjI2NTcyNzM2ODY5NzA1Zjc0NmY2YjY1NmUgLy8gIm1lbWJlcnNoaXBfdG9rZW4iCmZyYW1lX2RpZyAtMQp0eG5hcyBBc3NldHMKYXBwX2dsb2JhbF9wdXQKaXR4bl9iZWdpbgpwdXNoaW50IDQgLy8gYXhmZXIKaXR4bl9maWVsZCBUeXBlRW51bQpmcmFtZV9kaWcgLTEKdHhuYXMgQXNzZXRzCml0eG5fZmllbGQgWGZlckFzc2V0CmludGNfMCAvLyAwCml0eG5fZmllbGQgQXNzZXRBbW91bnQKZ2xvYmFsIEN1cnJlbnRBcHBsaWNhdGlvbkFkZHJlc3MKaXR4bl9maWVsZCBBc3NldFJlY2VpdmVyCmludGNfMCAvLyAwCml0eG5fZmllbGQgRmVlCml0eG5fc3VibWl0CnJldHN1YgoKLy8gZ2V0X2FmZmlybWF0aW9uCmdldGFmZmlybWF0aW9uXzM6CnByb3RvIDIgMApwdXNoYnl0ZXMgMHggLy8gIiIKZHVwbiAyCml0eG5fYmVnaW4KcHVzaGludCA2IC8vIGFwcGwKaXR4bl9maWVsZCBUeXBlRW51bQpieXRlY18wIC8vICJjbHViX2FwcF9pZCIKYXBwX2dsb2JhbF9nZXQKaXR4bl9maWVsZCBBcHBsaWNhdGlvbklECmZyYW1lX2RpZyAtMgp0eG5hcyBBc3NldHMKaXR4bl9maWVsZCBBc3NldHMKcHVzaGJ5dGVzIDB4ZDExYTVkNGYgLy8gImdldF9hZmZpcm1hdGlvbihhc3NldClieXRlWzY0XSIKaXR4bl9maWVsZCBBcHBsaWNhdGlvbkFyZ3MKcHVzaGJ5dGVzIDB4MDAgLy8gMHgwMAppdHhuX2ZpZWxkIEFwcGxpY2F0aW9uQXJncwppdHhuX3N1Ym1pdApwdXNoYnl0ZXMgMHg2YzYxNzM3NDVmNjE2NjY2Njk3MjZkNjE3NDY5NmY2ZSAvLyAibGFzdF9hZmZpcm1hdGlvbiIKaXR4biBMYXN0TG9nCmV4dHJhY3QgNCAwCmFwcF9nbG9iYWxfcHV0CnJldHN1Yg==",
         "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
     },
-    "schema": {
-        "local": {
-            "declared": {},
-            "reserved": {}
+    "state": {
+        "global": {
+            "num_byte_slices": 1,
+            "num_uints": 2
         },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
         "global": {
             "declared": {
                 "membership_token": {
@@ -40,6 +56,10 @@
                     "descr": ""
                 }
             },
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
             "reserved": {}
         }
     },

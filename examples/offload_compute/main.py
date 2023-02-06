@@ -49,10 +49,8 @@ def demo():
     app = eth_checker
     app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
 
-    app_client.build()
-
     # Now we should have the approval program available
-    assert app_client.approval_program is not None
+    assert app_client.approval.teal is not None
 
     app_client.create()
 
