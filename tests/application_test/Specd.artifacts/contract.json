@@ -31,6 +31,18 @@
             "returns": {
                 "type": "void"
             }
+        },
+        {
+            "name": "default_app_state",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "value"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
         }
     ],
     "networks": {}

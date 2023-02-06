@@ -450,6 +450,12 @@ def test_app_spec():
     def struct_meth(thing: Thing):
         return pt.Approve()
 
+    @app.external
+    def default_app_state(
+        value: pt.abi.Uint64 = SpecdState.decl_app_val,  # type: ignore[assignment]
+    ):
+        return pt.Approve()
+
     check_application_artifacts_output_stability(app)
 
 
