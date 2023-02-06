@@ -14,7 +14,6 @@ class LegacyApplication(Application):
             state_class=self.__class__,
         )
         if implement_default_create:
-
             self.implement(unconditional_create_approval)
         self.post_init()
 

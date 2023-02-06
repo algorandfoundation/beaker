@@ -37,15 +37,16 @@ def test_precompile_basic():
 
     assert app.approval_program is None
     assert app.clear_program is None
-    assert len(list(app.lsig_precompiles)) == 0
+    assert app._lsig_precompiles == {}
 
     ac = ApplicationClient(get_algod_client(), app, signer=get_accounts().pop().signer)
     ac.build()
 
     assert ac.approval_program is not None
     assert ac.clear_program is not None
-    assert len(list(app.lsig_precompiles)) == 1
-    assert next(iter(app.lsig_precompiles)).logic.binary is not None
+    lsig_pc = app._lsig_precompiles.get(lsig)
+    assert lsig_pc is not None
+    assert lsig_pc.logic.binary is not None
 
 
 TMPL_BYTE_VALS = [
@@ -142,18 +143,11 @@ def test_templated_ints(tmpl_val: int):
     )
 
 
-def InnerLsig() -> LogicSignatureTemplate:
-    def evaluate():
-        return pt.Approve()
-
-    return LogicSignatureTemplate(
-        evaluate(),
-        runtime_template_variables={"nonce": pt.TealType.bytes},
-    )
-
-
-def InnerApp() -> Application:
-    return Application("InnerApp").implement(unconditional_create_approval)
+inner_app = Application("InnerApp").implement(unconditional_create_approval)
+inner_lsig = LogicSignatureTemplate(
+    pt.Approve(),
+    runtime_template_variables={"nonce": pt.TealType.bytes},
+)
 
 
 def OuterApp() -> Application:
@@ -162,8 +156,8 @@ def OuterApp() -> Application:
 
     @app.external
     def doit(nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
-        child = precompiled(InnerApp())
-        lsig = precompiled(InnerLsig())
+        child = precompiled(inner_app)
+        lsig = precompiled(inner_lsig)
         return pt.Seq(
             pt.Assert(pt.Txn.sender() == lsig.address(nonce=nonce.get())),
             pt.InnerTxnBuilder.Execute(
@@ -184,15 +178,9 @@ def test_nested_precompile():
     oa = OuterApp()
 
     # Nothing is available until we build out the app and all its precompiles
-    assert not hasattr(oa, "child")
-    assert not hasattr(oa, "lsig")
-    # assert oa.child.approval.teal is not None
-    # assert oa.child.clear.teal is not None
-    # assert oa.lsig.logic.teal is not None
-    #
-    # assert oa.child.approval.raw_binary is None
-    # assert oa.child.clear.raw_binary is None
-    # assert oa.lsig.logic.raw_binary is None
+    assert oa._app_precompiles == {}
+    assert oa._lsig_precompiles == {}
+    assert oa._lsig_template_precompiles == {}
 
     ac = ApplicationClient(
         client=get_algod_client(), app=oa, signer=get_accounts().pop().signer
@@ -201,9 +189,9 @@ def test_nested_precompile():
 
     assert ac.approval_binary
 
-    child = next(iter(oa.app_precompiles), None)
+    child = oa._app_precompiles.get(inner_app)
     assert child is not None
-    lsig = next(iter(oa.lsig_template_precompiles), None)
+    lsig = oa._lsig_template_precompiles.get(inner_lsig)
     assert lsig is not None
 
     assert child.approval.raw_binary is not None
@@ -283,14 +271,12 @@ def test_extra_page_population():
 
 
 def _check_app_precompiles(app_precompile: AppPrecompile):
-    for p in app_precompile.app.precompiles:
-        match p:
-            case LSigPrecompile():
-                _check_lsig_precompiles(p)
-            case AppPrecompile():
-                _check_app_precompiles(p)
-            case LSigTemplatePrecompile():
-                _check_lsig_template_precompiles(p)
+    for lp in app_precompile.app._lsig_precompiles.values():
+        _check_lsig_precompiles(lp)
+    for ap in app_precompile.app._app_precompiles.values():
+        _check_app_precompiles(ap)
+    for ltp in app_precompile.app._lsig_template_precompiles.values():
+        _check_lsig_template_precompiles(ltp)
 
     assert app_precompile.approval.teal != ""
     assert app_precompile.approval.raw_binary is not None

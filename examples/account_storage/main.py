@@ -132,13 +132,12 @@ def demo():
 
     # Create 10 random nonces for unique lsig accounts
     # and make them opt in to the app
+    lsig_pc = disk_hungry._lsig_template_precompiles[key_sig]
     for _ in range(10):
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
         nonce = get_nonce()
-        lsig_signer = next(iter(disk_hungry.lsig_template_precompiles)).template_signer(
-            nonce=nonce
-        )
+        lsig_signer = lsig_pc.template_signer(nonce=nonce)
 
         print(
             f"Creating templated lsig with nonce {nonce} "

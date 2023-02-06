@@ -57,7 +57,7 @@ def demo():
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_signer = next(iter(eth_checker.lsig_precompiles)).signer()
+    lsig_signer = eth_checker._lsig_precompiles[verify_lsig].signer()
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()

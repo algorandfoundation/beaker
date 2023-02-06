@@ -1,7 +1,6 @@
 import base64
 import dataclasses
 import inspect
-import itertools
 import json
 import warnings
 from contextlib import contextmanager
@@ -18,7 +17,6 @@ from typing import (
     Concatenate,
     TypeVar,
     overload,
-    Iterable,
     Iterator,
 )
 
@@ -253,30 +251,6 @@ class Application:
                 )
             case _:
                 raise TypeError("TODO write error message")
-
-    @property
-    def precompiles(
-        self,
-    ) -> list[AppPrecompile | LSigPrecompile | LSigTemplatePrecompile]:
-        return list(
-            itertools.chain(
-                self.app_precompiles,
-                self.lsig_precompiles,
-                self.lsig_template_precompiles,
-            )
-        )
-
-    @property
-    def app_precompiles(self) -> Iterable[AppPrecompile]:
-        return self._app_precompiles.values()
-
-    @property
-    def lsig_precompiles(self) -> Iterable[LSigPrecompile]:
-        return self._lsig_precompiles.values()
-
-    @property
-    def lsig_template_precompiles(self) -> Iterable[LSigTemplatePrecompile]:
-        return self._lsig_template_precompiles.values()
 
     @property
     def hints(self) -> dict[str, MethodHints]:
