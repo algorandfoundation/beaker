@@ -31,6 +31,11 @@ oracle_data_cache_app = Application(
 oracle_data_cache_app.implement(unconditional_create_approval)
 
 
+@oracle_data_cache_app.external
+def lookup(ts: abi.Uint64, *, output: OracleData) -> Expr:
+    return output.decode(OracleState.prices[ts].get_must())
+
+
 def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> Expr:
     """
     invoked from parent class `portal_transfer` after parsing the VAA into
@@ -56,11 +61,6 @@ def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> 
 
 
 oracle_data_cache_app.implement(wormhole_transfer, handle_transfer=handle_transfer)
-
-
-@oracle_data_cache_app.external
-def lookup(ts: abi.Uint64, *, output: OracleData) -> Expr:
-    return output.decode(OracleState.prices[ts].get_must())
 
 
 if __name__ == "__main__":
