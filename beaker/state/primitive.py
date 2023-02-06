@@ -215,7 +215,7 @@ class ApplicationStateValue(StateValue, ApplicationStateStorage):
         if self.key is None:
             raise TealInputError(f"ApplicationStateValue {self} has no key defined")
 
-        return If((v := App.globalGetEx(Int(0), self.key)).hasValue(), v.value(), val)
+        return Seq(v := self.get_maybe(), If(v.hasValue(), v.value(), val))
 
     def get_external(self, app_id: Expr) -> MaybeValue:
         if app_id.type_of() is not TealType.uint64:
@@ -331,11 +331,7 @@ class AccountStateValue(StateValue, AccountStateStorage):
         if self.acct is None:
             raise TealInputError(f"AccountStateValue {self} has no account defined")
 
-        return If(
-            (v := App.localGetEx(self.acct, Int(0), self.key)).hasValue(),
-            v.value(),
-            val,
-        )
+        return Seq(v := self.get_maybe(), If(v.hasValue(), v.value(), val))
 
     def get_external(self, app_id: Expr) -> MaybeValue:
         if app_id.type_of() is not TealType.uint64:

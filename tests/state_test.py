@@ -105,10 +105,9 @@ def do_lv_test(key, stack_type, default, val):
 
     default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
-    expected = pt.If(
-        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)).hasValue(),
-        v.value(),
-        default,
+    expected = pt.Seq(
+        v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key),
+        pt.If(v.hasValue(), v.value(), default),
     ).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -192,10 +191,9 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
 
     default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
-    expected = pt.If(
-        (v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key)).hasValue(),
-        v.value(),
-        default,
+    expected = pt.Seq(
+        v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key),
+        pt.If(v.hasValue(), v.value(), default),
     ).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -323,8 +321,8 @@ def do_gv_test(key, stack_type, default, val, static):
 
     default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
-    expected = pt.If(
-        (v := pt.App.globalGetEx(pt.Int(0), key)).hasValue(), v.value(), default
+    expected = pt.Seq(
+        v := pt.App.globalGetEx(pt.Int(0), key), pt.If(v.hasValue(), v.value(), default)
     ).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -449,8 +447,8 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
 
     default = _get_default_for_type(stack_type=stack_type, default=None)
     actual = lv.get_else(default).__teal__(options)
-    expected = pt.If(
-        (v := pt.App.globalGetEx(pt.Int(0), key)).hasValue(), v.value(), default
+    expected = pt.Seq(
+        v := pt.App.globalGetEx(pt.Int(0), key), pt.If(v.hasValue(), v.value(), default)
     ).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected

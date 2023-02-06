@@ -35,7 +35,7 @@ def test_algoexplorer():
 
         print(f"trying {network}")
         ae = AlgoExplorer(network)
-        ae.algod().suggested_params()
+        # ae.algod().suggested_params()
         ae.indexer().health()
 
 

@@ -9,7 +9,6 @@
             }
         },
         "get_membership_record": {
-            "read_only": true,
             "structs": {
                 "output": {
                     "name": "MembershipRecord",

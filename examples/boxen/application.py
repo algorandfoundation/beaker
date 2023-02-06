@@ -162,7 +162,7 @@ class MembershipClub(LegacyApplication):
                 ),
             )
 
-        @self.external(read_only=True)
+        @self.external()
         def get_membership_record(member: abi.Address, *, output: MembershipRecord):
             return self.membership_records[member].store_into(output)
 
