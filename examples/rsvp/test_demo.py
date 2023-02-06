@@ -1,5 +1,5 @@
-from .demo import demo
-from .contract import rsvp
+from examples.rsvp.demo import demo
+from examples.rsvp.contract import rsvp
 from tests.conftest import check_application_artifacts_output_stability
 
 

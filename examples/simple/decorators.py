@@ -1,5 +1,5 @@
-from pyteal import *
-from beaker import *
+from pyteal import abi
+from beaker import sandbox, client
 from beaker.testing.legacy import LegacyApplication
 
 

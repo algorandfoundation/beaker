@@ -5,7 +5,7 @@ from algosdk.atomic_transaction_composer import TransactionWithSigner
 from beaker import sandbox, consts
 from beaker.client import ApplicationClient
 
-from .contract import rsvp as app
+from examples.rsvp.contract import rsvp as app
 
 
 def demo():
@@ -110,12 +110,12 @@ def demo():
     # Withdraw funds and close event RSVP
     print("Event creator withdrawing funds...")
     app_client.call("withdraw_external")
-    print(f"Event creator successfully withdrew remaining balance.")
+    print("Event creator successfully withdrew remaining balance.")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")
 
     print("Event creator deleting rsvp contract...")
     app_client.delete()
-    print(f"RSVP successfully deleted")
+    print("RSVP successfully deleted")
 
 
 if __name__ == "__main__":

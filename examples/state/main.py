@@ -14,7 +14,7 @@ def demo():
 
     app = StateExample()
 
-    app_client = ApplicationClient(client, StateExample(), signer=acct.signer)
+    app_client = ApplicationClient(client, app, signer=acct.signer)
     app_id, app_address, transaction_id = app_client.create()
     print(
         f"DEPLOYED: App ID: {app_id} Address: {app_address} "

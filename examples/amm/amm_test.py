@@ -20,7 +20,7 @@ from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from tests.conftest import check_application_artifacts_output_stability
 
-from .amm import ConstantProductAMM, ConstantProductAMMErrors
+from examples.amm.amm import ConstantProductAMM, ConstantProductAMMErrors
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()

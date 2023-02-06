@@ -124,7 +124,7 @@ def demo():
     app_client2.call(set_manager, new_manager=acct1.address)
     print(f"Current app state: {app_client1.get_application_state()}")
 
-    ## Create a new client that just sets the app id we wish to interact with
+    # Create a new client that just sets the app id we wish to interact with
     app_client3 = ApplicationClient(
         client=sandbox.get_algod_client(),
         app=my_app,

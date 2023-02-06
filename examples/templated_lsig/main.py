@@ -1,19 +1,19 @@
 import base64
 from copy import copy
-from nacl.signing import SigningKey
+from typing import Literal
 
-from algosdk.encoding import decode_address
 from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
-
-from typing import Literal
+from algosdk.encoding import decode_address
+from nacl.signing import SigningKey
 from pyteal import Assert, Expr, abi, Txn, Ed25519Verify_Bare, Seq, Int, TealType
-from beaker import sandbox, client, LogicSignatureTemplate, Application, consts
-from beaker.testing.legacy import LegacyApplication
+
+from beaker import sandbox, client, LogicSignatureTemplate, consts
 from beaker.precompile import LSigTemplatePrecompile
+from beaker.testing.legacy import LegacyApplication
 
 Signature = abi.StaticBytes[Literal[64]]
 

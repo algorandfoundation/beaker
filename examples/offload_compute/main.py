@@ -3,7 +3,7 @@ from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
-from algosdk.transaction import *
+from algosdk.transaction import PaymentTxn
 from pyteal import Assert, Seq, Txn, abi, Expr
 
 from beaker import (

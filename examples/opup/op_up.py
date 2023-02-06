@@ -1,6 +1,6 @@
 from typing import Final
+
 from pyteal import (
-    If,
     Global,
     TealType,
     abi,
@@ -21,9 +21,9 @@ from pyteal import (
 
 from beaker.application import Application, precompiled
 from beaker.blueprints import unconditional_create_approval
-from beaker.state import ApplicationStateValue
 from beaker.consts import Algos
 from beaker.decorators import Authorize
+from beaker.state import ApplicationStateValue
 
 
 def TargetApp() -> Application:

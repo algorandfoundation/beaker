@@ -9,7 +9,6 @@ from beaker import (
     sandbox,
     client,
     identity_key_gen,
-    this_app,
     unconditional_create_approval,
     unconditional_opt_in_approval,
 )
