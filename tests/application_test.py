@@ -418,6 +418,8 @@ def test_default_read_only_method():
 
 
 def test_app_spec():
+    """Test various application.json (aka app spec) outputs with an approval test"""
+
     class SpecdState:
         decl_app_val = ApplicationStateValue(pt.TealType.uint64)
         decl_acct_val = AccountStateValue(pt.TealType.uint64)
@@ -442,73 +444,7 @@ def test_app_spec():
     def struct_meth(thing: Thing):
         return pt.Approve()
 
-    app.compile()
-
-    actual_spec = app.application_spec()
-
-    get_asset_id_hints = {"read_only": True}
-    annotated_meth_hints = {
-        "default_arguments": {
-            "aid": {
-                "source": "abi-method",
-                "data": {
-                    "name": "get_asset_id",
-                    "args": [],
-                    "returns": {"type": "uint64"},
-                },
-            },
-        }
-    }
-    struct_meth_hints = {
-        "structs": {
-            "thing": {"name": "Thing", "elements": [("a", "uint64"), ("b", "uint32")]}
-        }
-    }
-
-    expected_hints = {
-        "get_asset_id": get_asset_id_hints,
-        "annotated_meth": annotated_meth_hints,
-        "struct_meth": struct_meth_hints,
-    }
-
-    expected_schema = {
-        "local": {
-            "declared": {
-                "decl_acct_val": {
-                    "type": "uint64",
-                    "key": "decl_acct_val",
-                    "descr": "",
-                }
-            },
-            "reserved": {},
-        },
-        "global": {
-            "declared": {
-                "decl_app_val": {
-                    "type": "uint64",
-                    "key": "decl_app_val",
-                    "descr": "",
-                }
-            },
-            "reserved": {},
-        },
-    }
-
-    def dict_match(a: dict, e: dict) -> bool:
-        for k, v in a.items():
-            if type(v) is dict:
-                if not dict_match(v, e[k]):
-                    print(f"comparing {k} {v} {e[k]}")
-                    return False
-            else:
-                if v != e[k]:
-                    print(f"comparing {k}")
-                    return False
-
-        return True
-
-    assert dict_match(actual_spec["hints"], expected_hints)
-    assert dict_match(actual_spec["schema"], expected_schema)
+    check_application_artifacts_output_stability(app)
 
 
 #

@@ -1,0 +1,120 @@
+{
+    "hints": {
+        "get_asset_id": {
+            "read_only": true,
+            "config": {
+                "no_op": "CALL"
+            }
+        },
+        "annotated_meth": {
+            "default_arguments": {
+                "aid": {
+                    "source": "abi-method",
+                    "data": {
+                        "name": "get_asset_id",
+                        "args": [],
+                        "returns": {
+                            "type": "uint64"
+                        }
+                    }
+                }
+            },
+            "config": {
+                "no_op": "CALL"
+            }
+        },
+        "struct_meth": {
+            "structs": {
+                "thing": {
+                    "name": "Thing",
+                    "elements": [
+                        [
+                            "a",
+                            "uint64"
+                        ],
+                        [
+                            "b",
+                            "uint32"
+                        ]
+                    ]
+                }
+            },
+            "config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDViYTIyYTg0IC8vICJnZXRfYXNzZXRfaWQoKXVpbnQ2NCIKPT0KYm56IG1haW5fbDYKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHg3Mzk3NTJmZiAvLyAiYW5ub3RhdGVkX21ldGgoYXNzZXQpdm9pZCIKPT0KYm56IG1haW5fbDUKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHhlZjVjZGY4YyAvLyAic3RydWN0X21ldGgoKHVpbnQ2NCx1aW50MzIpKXZvaWQiCj09CmJueiBtYWluX2w0CmVycgptYWluX2w0Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmNhbGxzdWIgc3RydWN0bWV0aF8yCmludGNfMSAvLyAxCnJldHVybgptYWluX2w1Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKY2FsbHN1YiBhbm5vdGF0ZWRtZXRoXzEKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDY6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CmNhbGxzdWIgZ2V0YXNzZXRpZF8wCnN0b3JlIDAKcHVzaGJ5dGVzIDB4MTUxZjdjNzUgLy8gMHgxNTFmN2M3NQpsb2FkIDAKaXRvYgpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgoKLy8gZ2V0X2Fzc2V0X2lkCmdldGFzc2V0aWRfMDoKcHJvdG8gMCAxCmludGNfMCAvLyAwCnB1c2hpbnQgMTIzIC8vIDEyMwpmcmFtZV9idXJ5IDAKcmV0c3ViCgovLyBhbm5vdGF0ZWRfbWV0aAphbm5vdGF0ZWRtZXRoXzE6CnByb3RvIDEgMAppbnRjXzEgLy8gMQphc3NlcnQKcmV0c3ViCgovLyBzdHJ1Y3RfbWV0aApzdHJ1Y3RtZXRoXzI6CnByb3RvIDEgMAppbnRjXzEgLy8gMQpyZXR1cm4=",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 1
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 1
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {
+                "decl_app_val": {
+                    "type": "uint64",
+                    "key": "decl_app_val",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        },
+        "local": {
+            "declared": {
+                "decl_acct_val": {
+                    "type": "uint64",
+                    "key": "decl_acct_val",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "Specd",
+        "methods": [
+            {
+                "name": "get_asset_id",
+                "args": [],
+                "returns": {
+                    "type": "uint64"
+                }
+            },
+            {
+                "name": "annotated_meth",
+                "args": [
+                    {
+                        "type": "asset",
+                        "name": "aid"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "struct_meth",
+                "args": [
+                    {
+                        "type": "(uint64,uint32)",
+                        "name": "thing"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    }
+}
