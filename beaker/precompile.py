@@ -281,10 +281,10 @@ class AppPrecompile:
         assert self.clear.raw_binary is not None
         return {
             TxnField.type_enum: TxnType.ApplicationCall,
-            TxnField.local_num_byte_slices: Int(self.app.acct_state.num_byte_slices),
-            TxnField.local_num_uints: Int(self.app.acct_state.num_uints),
-            TxnField.global_num_byte_slices: Int(self.app.app_state.num_byte_slices),
-            TxnField.global_num_uints: Int(self.app.app_state.num_uints),
+            TxnField.local_num_byte_slices: Int(self.app._acct_state.num_byte_slices),
+            TxnField.local_num_uints: Int(self.app._acct_state.num_uints),
+            TxnField.global_num_byte_slices: Int(self.app._app_state.num_byte_slices),
+            TxnField.global_num_uints: Int(self.app._app_state.num_uints),
             TxnField.approval_program_pages: self.approval.program_pages,
             TxnField.clear_state_program_pages: self.clear.program_pages,
             TxnField.extra_program_pages: Int(

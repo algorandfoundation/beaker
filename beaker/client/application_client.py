@@ -1,11 +1,12 @@
+import copy
 import dataclasses
-from pathlib import Path
 import warnings
 from base64 import b64decode
-import copy
+from pathlib import Path
 from typing import Any, cast, Sequence, Callable
 
 import algosdk
+from algosdk import transaction, abi
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
@@ -18,12 +19,13 @@ from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
     AtomicTransactionResponse,
 )
-from algosdk import transaction, abi
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 from pyteal import ABIReturnSubroutine, MethodConfig, CallConfig
 
 from beaker.application import Application
+from beaker.client.logic_error import LogicException, parse_logic_error
+from beaker.client.state_decode import decode_state
 from beaker.compiled_application import CompiledApplication
 from beaker.consts import num_extra_program_pages
 from beaker.decorators import (
@@ -31,8 +33,6 @@ from beaker.decorators import (
     DefaultArgument,
     DefaultArgumentClass,
 )
-from beaker.client.state_decode import decode_state
-from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.precompile import AppProgram
 
 
@@ -47,11 +47,14 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams | None = None,
     ):
         self.client = client
-        if isinstance(app, Application):
-            app = app.compile(client)
-        elif isinstance(app, str) or isinstance(app, Path):
-            app = CompiledApplication.from_json(app)
-        self.app = app
+        self.app: CompiledApplication
+        match app:
+            case CompiledApplication() as compiled_app:
+                self.app = compiled_app
+            case Application() as app:
+                self.app = app.compile(client)
+            case str() | Path():
+                self.app = CompiledApplication.from_json(app)
         self.app_id = app_id
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 

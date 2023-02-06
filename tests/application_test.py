@@ -77,11 +77,14 @@ def test_method_overload():
         return pt.Approve()
 
     assert app.abi_methods == {"handle_algo": handle_algo, "handle_asa": handle_asa}
-    app.compile()
-    assert app.contract
+    compiled = app.compile()
+    assert compiled.contract
     assert isinstance(handle_algo, pt.ABIReturnSubroutine)
     assert isinstance(handle_asa, pt.ABIReturnSubroutine)
-    assert app.contract.methods == [handle_algo.method_spec(), handle_asa.method_spec()]
+    assert compiled.contract.methods == [
+        handle_algo.method_spec(),
+        handle_asa.method_spec(),
+    ]
 
     check_application_artifacts_output_stability(app)
 
@@ -133,14 +136,14 @@ def test_application_external_override_true():
     def handle_2():
         return pt.Assert(pt.Int(2))
 
-    app.compile()
-    assert app.contract
+    compiled = app.compile()
+    assert compiled.contract
 
     assert isinstance(handle_2, pt.ABIReturnSubroutine)
 
     assert list(app.abi_methods) == ["handle_2"]
     assert (
-        app.contract.get_method_by_name("handle") == handle_2.method_spec()
+        compiled.contract.get_method_by_name("handle") == handle_2.method_spec()
     ), "Expected contract method to match method spec"
 
 
@@ -174,12 +177,12 @@ def test_application_external_override_none(create_existing_handle: bool):
     def handle_2():
         return pt.Assert(pt.Int(2))
 
-    app.compile()
-    assert app.contract
+    contract = app.compile().contract
+    assert contract
     assert isinstance(handle_2, pt.ABIReturnSubroutine)
 
     assert (
-        app.contract.get_method_by_name("handle") == handle_2.method_spec()
+        contract.get_method_by_name("handle") == handle_2.method_spec()
     ), "Expected contract method to match method spec"
     assert list(app.abi_methods) == ["handle_2"]
 
@@ -308,9 +311,9 @@ def test_state_init():
             this_app().initialize_account_state(),
         )
 
-    assert app.app_state.num_uints == 4
-    assert app.app_state.num_byte_slices == 8
-    assert app.app_state.fields.keys() == {
+    assert app._app_state.num_uints == 4
+    assert app._app_state.num_byte_slices == 8
+    assert app._app_state.fields.keys() == {
         "uint_val",
         "byte_val",
         "uint_dynamic",
@@ -318,9 +321,9 @@ def test_state_init():
         "blob",
     }
 
-    assert app.acct_state.num_uints == 3
-    assert app.acct_state.num_byte_slices == 6
-    assert app.acct_state.fields.keys() == {
+    assert app._acct_state.num_uints == 3
+    assert app._acct_state.num_byte_slices == 6
+    assert app._acct_state.fields.keys() == {
         "uint_acct_val",
         "byte_acct_val",
         "uint_acct_dynamic",
@@ -344,9 +347,10 @@ def test_default_param_state():
     ):
         return pt.Assert(aid.asset_id() == HintyState.asset_id)
 
-    assert "hintymeth" in h.hints, "Expected a hint available for the method"
+    hints = h.compile().hints
+    assert "hintymeth" in hints, "Expected a hint available for the method"
 
-    hint = h.hints["hintymeth"]
+    hint = hints["hintymeth"]
 
     assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
@@ -372,9 +376,10 @@ def test_default_param_const():
     ):
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
-    assert "hintymeth" in app.hints, "Expected a hint available for the method"
+    hints = app.compile().hints
+    assert "hintymeth" in hints, "Expected a hint available for the method"
 
-    hint = app.hints["hintymeth"]
+    hint = hints["hintymeth"]
 
     assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
@@ -402,9 +407,10 @@ def test_default_read_only_method():
     ):
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
-    assert "hintymeth" in app.hints, "Expected a hint available for the method"
+    hints = app.compile().hints
+    assert "hintymeth" in hints, "Expected a hint available for the method"
 
-    hint = app.hints["hintymeth"]
+    hint = hints["hintymeth"]
 
     assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
@@ -472,7 +478,7 @@ def test_struct_args():
     ret = Returns("void")
     assert Method("structy", [arg], ret) == structy.method_spec()
 
-    assert app.hints["structy"].structs == {
+    assert app.compile().hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
             "elements": [
@@ -505,23 +511,18 @@ def test_closure_vars():
         return app
 
     i1 = Inst("first")
-    i1.compile()
-    assert i1.approval_program
+    i1_approval_program = i1.compile().approval_program
+    assert i1_approval_program
 
     i2 = Inst("second")
-    i2.compile()
-    assert i2.approval_program
+    i2_approval_program = i2.compile().approval_program
+    assert i2_approval_program
 
-    assert i1.approval_program.index("first") > 0, "Expected to see the string `first`"
-    assert (
-        i2.approval_program.index("second") > 0
-    ), "Expected to see the string `second`"
+    assert "first" in i1_approval_program, "Expected to see the string `first`"
+    assert "second" in i2_approval_program, "Expected to see the string `second`"
 
-    with pytest.raises(ValueError):
-        i1.approval_program.index("second")
-
-    with pytest.raises(ValueError):
-        i2.approval_program.index("first")
+    assert "second" not in i1_approval_program
+    assert "first" not in i2_approval_program
 
 
 def hashy(sig: str):

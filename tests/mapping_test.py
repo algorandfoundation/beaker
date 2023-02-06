@@ -62,5 +62,5 @@ def test_app_mapping():
     def thing(name: pt.abi.Address, *, output: pt.abi.Uint64):
         return m[name].store_into(output)
 
-    t.compile()
-    assert t.approval_program
+    compiled = t.compile()
+    assert compiled.approval_program

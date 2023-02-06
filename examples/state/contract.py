@@ -135,4 +135,5 @@ class StateExample(Application):
 
 if __name__ == "__main__":
     se = StateExample()
-    print(se.approval_program)
+    compiled = se.compile()
+    print(compiled.approval_program)

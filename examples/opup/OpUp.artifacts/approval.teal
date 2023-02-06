@@ -22,17 +22,17 @@ assert
 txn GroupIndex
 intc_1 // 1
 -
-store 0
-load 0
+store 2
+load 2
 gtxns TypeEnum
 intc_1 // pay
 ==
 assert
-load 0
+load 2
 callsub opupbootstrap_1
-store 1
+store 3
 pushbytes 0x151f7c75 // 0x151f7c75
-load 1
+load 3
 itob
 concat
 log
@@ -90,9 +90,9 @@ itxn_submit
 intc_0 // 0
 bytec_0 // "ouaid"
 app_global_get_ex
-store 3
-store 2
-load 3
+store 1
+store 0
+load 1
 !
 assert
 bytec_0 // "ouaid"

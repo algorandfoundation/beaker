@@ -17,9 +17,9 @@ def test_external_read_only():
     assert isinstance(handleable, pt.ABIReturnSubroutine)
     assert "handleable" in app.abi_methods
 
-    app.compile()
-
-    assert app.application_spec()["hints"]["handleable"].get("read_only") is True
+    assert (
+        app.compile().application_spec["hints"]["handleable"].get("read_only") is True
+    )
 
 
 def test_authorize_only():
@@ -177,8 +177,7 @@ def test_named_tuple():
     def thing(o: Order) -> pt.Expr:
         return pt.Approve()
 
-    app.compile()
-    hints = app.hints
+    hints = app.compile().hints
     assert hints is not None
     thing_hints = hints.get("thing")
     assert thing_hints is not None
@@ -243,7 +242,7 @@ def test_bare():
 
     assert isinstance(clear_state, pt.SubroutineFnWrapper)
     assert "clear_state" not in app.bare_methods
-    assert app.clear_state_method is clear_state
+    assert app._clear_state_method is clear_state
 
     @app.external(bare=True, method_config={"no_op": pt.CallConfig.ALL}, override=True)
     def external() -> pt.Expr:

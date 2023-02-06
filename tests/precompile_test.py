@@ -66,14 +66,12 @@ def test_precompile_basic():
         lsig_pc = precompiled(lsig)
         return pt.Assert(pt.Txn.sender() == lsig_pc.address())
 
-    assert app.approval_program is None
-    assert app.clear_program is None
     assert app._lsig_precompiles == {}
 
-    precompile = AppPrecompile(app, get_algod_client())
+    compiled = app.compile(get_algod_client())
 
-    assert precompile.approval.teal is not None
-    assert precompile.clear.teal is not None
+    assert compiled.approval_program
+    assert compiled.clear_program
     lsig_pc = app._lsig_precompiles.get(lsig)
     assert lsig_pc is not None
     assert lsig_pc.logic.binary is not None
@@ -96,24 +94,22 @@ def test_templated_bytes(tmpl_val: str):
             avm_version=version,
         )
 
-    pc: LSigTemplatePrecompile | None = None
-
     app = Application("App")
+    lsig = Lsig(version=6)
 
     @app.external
     def check_it() -> pt.Expr:
-        nonlocal pc
-        pc = app.precompiled(Lsig(version=6))
-        return pt.Assert(pt.Txn.sender() == pc.address(tv=pt.Bytes(tmpl_val)))
+        return pt.Assert(
+            pt.Txn.sender() == app.precompiled(lsig).address(tv=pt.Bytes(tmpl_val))
+        )
 
-    assert app.approval_program is None
-    assert app.clear_program is None
-    assert pc is None
+    assert app._lsig_template_precompiles == {}
 
-    precompile = AppPrecompile(app, get_algod_client())
+    compiled = app.compile(get_algod_client())
 
-    assert precompile.approval.teal is not None
-    assert precompile.clear.teal is not None
+    assert compiled.approval_program
+    assert compiled.approval_program
+    pc = app._lsig_template_precompiles.get(lsig)
     assert pc is not None
     assert pc.logic.binary_hash is not None
 
@@ -143,24 +139,21 @@ def test_templated_ints(tmpl_val: int):
             avm_version=version,
         )
 
-    pc: LSigTemplatePrecompile | None = None
-
     app = Application("App")
+    lsig = Lsig(version=6)
 
     @app.external
     def check_it() -> pt.Expr:
-        nonlocal pc
-        pc = this_app().precompiled(Lsig(version=6))
-        return pt.Assert(pt.Txn.sender() == pc.address(tv=pt.Int(tmpl_val)))
+        lsig_pc = this_app().precompiled(lsig)
+        return pt.Assert(pt.Txn.sender() == lsig_pc.address(tv=pt.Int(tmpl_val)))
 
-    assert app.approval_program is None
-    assert app.clear_program is None
-    assert pc is None
+    assert app._lsig_template_precompiles == {}
 
-    precompile = AppPrecompile(app, get_algod_client())
+    compiled = app.compile(get_algod_client())
 
-    assert precompile.approval.teal is not None
-    assert precompile.clear.teal is not None
+    assert compiled.approval_program
+    assert compiled.clear_program
+    pc = app._lsig_template_precompiles.get(lsig)
     assert pc is not None
     assert pc.logic.binary_hash is not None
 

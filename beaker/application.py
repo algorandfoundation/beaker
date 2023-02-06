@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
 from typing import (
-    Any,
     cast,
     Optional,
     Callable,
@@ -18,7 +17,6 @@ from typing import (
     Iterator,
 )
 
-from algosdk.abi import Contract
 from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     SubroutineFnWrapper,
@@ -154,10 +152,11 @@ class Application:
         self.name = name
         self.descr = descr
         self.compiler_options = compiler_options
+        self.bare_methods: dict[str, SubroutineFnWrapper] = {}
+        self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
-        self._compiled: CompiledApplication | None = None
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
-        self.clear_state_method: SubroutineFnWrapper | None = None
+        self._clear_state_method: SubroutineFnWrapper | None = None
         self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}
         self._lsig_template_precompiles: dict[
             LogicSignatureTemplate, LSigTemplatePrecompile
@@ -165,10 +164,8 @@ class Application:
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
         self._state_class = state_class or type(None)
-        self.acct_state = AccountState(klass=self._state_class)
-        self.app_state = ApplicationState(klass=self._state_class)
-        self.bare_methods: dict[str, SubroutineFnWrapper] = {}
-        self.abi_methods: dict[str, ABIReturnSubroutine] = {}
+        self._acct_state = AccountState(klass=self._state_class)
+        self._app_state = ApplicationState(klass=self._state_class)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
@@ -219,10 +216,6 @@ class Application:
                 )
             case _:
                 raise TypeError("TODO write error message")
-
-    @property
-    def hints(self) -> dict[str, MethodHints]:
-        return {ext.method.name(): ext.hints for ext in self._abi_externals.values()}
 
     def register_abi_external(
         self,
@@ -672,11 +665,11 @@ class Application:
     ) -> SubroutineFnWrapper | Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
         def decorator(fun: Callable[[], Expr]) -> SubroutineFnWrapper:
             sub = SubroutineFnWrapper(fun, TealType.none, name=name)
-            if override is True and self.clear_state_method is None:
+            if override is True and self._clear_state_method is None:
                 raise ValueError("override=True but no clear_state defined")
-            elif override is False and self.clear_state_method is not None:
+            elif override is False and self._clear_state_method is not None:
                 raise ValueError("override=False but clear_state already defined")
-            self.clear_state_method = sub
+            self._clear_state_method = sub
             return sub
 
         return decorator if fn is None else decorator(fn)
@@ -788,81 +781,55 @@ class Application:
     def compile(self, client: Optional[AlgodClient] = None) -> CompiledApplication:
         """Fully compile the application to TEAL
 
-        Note: If the application has ``Precompile`` fields, the ``client`` must be passed to
+        Note: If the application makes use of ``precompiled``, then ``client`` must be passed to
         compile them into bytecode.
 
         Args:
             client (optional): An Algod client that can be passed to ``Precompile`` to have them fully compiled.
         """
 
-        if self._compiled is None:
-            with _set_ctx(app=self, client=client):
-                bare_call_kwargs = {str(k): v for k, v in self._bare_externals.items()}
-                router = Router(
-                    name=self.name,
-                    bare_calls=BareCallActions(**bare_call_kwargs),
-                    descr=self.descr,
-                    clear_state=self.clear_state_method,
-                )
+        with _set_ctx(app=self, client=client):
+            bare_calls = BareCallActions(
+                **cast(dict[str, OnCompleteAction], self._bare_externals)
+            )
+            router = Router(
+                name=self.name,
+                bare_calls=bare_calls,
+                descr=self.descr,
+                clear_state=self._clear_state_method,
+            )
 
-                # Add method externals
-                for abi_external in self._abi_externals.values():
-                    method_config = MethodConfig(
-                        **{str(a): cc for a, cc in abi_external.actions.items()}
-                    )
-                    router.add_method_handler(
-                        method_call=abi_external.method,
-                        method_config=method_config,
-                    )
-
-                # Compile approval and clear programs
-                approval_program, clear_program, contract = router.compile_program(
-                    version=self.compiler_options.avm_version,
-                    assemble_constants=self.compiler_options.assemble_constants,
-                    optimize=OptimizeOptions(
-                        scratch_slots=self.compiler_options.scratch_slots,
-                        frame_pointers=self.compiler_options.frame_pointers,
+            # Add method externals
+            hints: dict[str, MethodHints] = {}
+            for abi_external in self._abi_externals.values():
+                router.add_method_handler(
+                    method_call=abi_external.method,
+                    method_config=MethodConfig(
+                        **cast(dict[str, CallConfig], abi_external.actions)
                     ),
                 )
+                hints[abi_external.method.name()] = abi_external.hints
 
-                self._compiled = CompiledApplication(
-                    approval_program=approval_program,
-                    clear_program=clear_program,
-                    contract=contract,
-                    hints=self.hints,
-                    app_state=self.app_state.dictify(),
-                    account_state=self.acct_state.dictify(),
-                    app_state_schema=self.app_state.schema(),
-                    account_state_schema=self.acct_state.schema(),
-                )
-
-        return self._compiled
-
-    @property
-    def approval_program(self) -> str | None:
-        if self._compiled is None:
-            return None
-        return self._compiled.approval_program
-
-    @property
-    def clear_program(self) -> str | None:
-        if self._compiled is None:
-            return None
-        return self._compiled.clear_program
-
-    @property
-    def contract(self) -> Contract | None:
-        if self._compiled is None:
-            return None
-        return self._compiled.contract
-
-    def application_spec(self) -> dict[str, Any]:
-        """returns a dictionary, helpful to provide to callers with information about the application specification"""
-        if self._compiled is None:
-            raise ValueError(
-                "approval or clear program are none, please build the programs first"
+            # Compile approval and clear programs
+            approval_program, clear_program, contract = router.compile_program(
+                version=self.compiler_options.avm_version,
+                assemble_constants=self.compiler_options.assemble_constants,
+                optimize=OptimizeOptions(
+                    scratch_slots=self.compiler_options.scratch_slots,
+                    frame_pointers=self.compiler_options.frame_pointers,
+                ),
             )
-        return self._compiled.application_spec
+
+        return CompiledApplication(
+            approval_program=approval_program,
+            clear_program=clear_program,
+            contract=contract,
+            hints=hints,
+            app_state=self._app_state.dictify(),
+            account_state=self._acct_state.dictify(),
+            app_state_schema=self._app_state.schema(),
+            account_state_schema=self._acct_state.schema(),
+        )
 
     def initialize_application_state(self) -> Expr:
         """
@@ -871,7 +838,7 @@ class Application:
         :return: The Expr to initialize the application state.
         :rtype: pyteal.Expr
         """
-        return self.app_state.initialize()
+        return self._app_state.initialize()
 
     def initialize_account_state(self, addr: Expr = Txn.sender()) -> Expr:
         """
@@ -882,7 +849,7 @@ class Application:
         :rtype: pyteal.Expr
         """
 
-        return self.acct_state.initialize(addr)
+        return self._acct_state.initialize(addr)
 
     def dump(self, directory: str = ".", client: Optional[AlgodClient] = None) -> None:
         """write out the artifacts generated by the application to disk
@@ -891,6 +858,4 @@ class Application:
             directory (optional): str path to the directory where the artifacts should be written
             client (optional): AlgodClient to be passed to any precompiles
         """
-        self.compile(client)
-        assert self._compiled is not None
-        self._compiled.dump(Path(directory))
+        self.compile(client).dump(Path(directory))

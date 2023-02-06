@@ -1,25 +1,24 @@
 import copy
 import itertools
-import pytest
 import typing
 
+import pyteal
+import pytest
+from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
     AccountTransactionSigner,
     abi,
 )
-from algosdk import transaction
-from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
-import pyteal
+from algosdk.v2client.algod import AlgodClient
 
 from beaker import client, sandbox, testing, consts
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
-from tests.conftest import check_application_artifacts_output_stability
-
 from examples.amm.amm import ConstantProductAMM, ConstantProductAMMErrors
+from tests.conftest import check_application_artifacts_output_stability
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()
