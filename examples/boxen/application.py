@@ -1,4 +1,5 @@
 import typing
+
 from pyteal import (
     Assert,
     Expr,
@@ -14,10 +15,16 @@ from pyteal import (
     TxnType,
     abi,
 )
-from beaker import Application, ApplicationStateValue, Authorize, consts
-from beaker.testing.legacy import LegacyApplication
 
+from beaker import (
+    Application,
+    ApplicationStateValue,
+    Authorize,
+    consts,
+    unconditional_create_approval,
+)
 from beaker.lib.storage import Mapping, List
+
 
 # Use a box per member to denote membership parameters
 class MembershipRecord(abi.NamedTuple):
@@ -62,7 +69,7 @@ def clawback_axfer(
     )
 
 
-class MembershipClub(LegacyApplication):
+class MembershipClub:
     ####
     # Box abstractions
 
@@ -101,8 +108,13 @@ class MembershipClub(LegacyApplication):
     MaxMembers = Int(_max_members)
     MinimumBalance = Int(_min_balance)
 
-    def post_init(self) -> None:
-        @self.external(authorize=Authorize.only(Global.creator_address()))
+    @classmethod
+    def construct(cls) -> Application:
+        app = Application(
+            cls.__qualname__, descr=cls.__doc__, state_class=cls
+        ).implement(unconditional_create_approval)
+
+        @app.external(authorize=Authorize.only(Global.creator_address()))
         def bootstrap(
             seed: abi.PaymentTransaction,
             token_name: abi.String,
@@ -112,87 +124,94 @@ class MembershipClub(LegacyApplication):
             """create membership token and receive initial seed payment"""
             return Seq(
                 Assert(
-                    seed.get().receiver() == self.address,
+                    seed.get().receiver() == Global.current_application_address(),
                     comment="payment must be to app address",
                 ),
                 Assert(
-                    seed.get().amount() >= self.MinimumBalance,
-                    comment=f"payment must be for >= {self._min_balance}",
+                    seed.get().amount() >= cls.MinimumBalance,
+                    comment=f"payment must be for >= {cls._min_balance}",
                 ),
-                Pop(self.affirmations.create()),
+                Pop(cls.affirmations.create()),
                 InnerTxnBuilder.Execute(
                     {
                         TxnField.type_enum: TxnType.AssetConfig,
                         TxnField.config_asset_name: token_name.get(),
-                        TxnField.config_asset_total: self.MaxMembers,
+                        TxnField.config_asset_total: cls.MaxMembers,
                         TxnField.config_asset_default_frozen: Int(1),
-                        TxnField.config_asset_manager: self.address,
-                        TxnField.config_asset_clawback: self.address,
-                        TxnField.config_asset_freeze: self.address,
-                        TxnField.config_asset_reserve: self.address,
+                        TxnField.config_asset_manager: Global.current_application_address(),
+                        TxnField.config_asset_clawback: Global.current_application_address(),
+                        TxnField.config_asset_freeze: Global.current_application_address(),
+                        TxnField.config_asset_reserve: Global.current_application_address(),
                         TxnField.fee: Int(0),
                     }
                 ),
-                self.membership_token.set(InnerTxn.created_asset_id()),
-                output.set(self.membership_token),
+                cls.membership_token.set(InnerTxn.created_asset_id()),
+                output.set(cls.membership_token),
             )
 
-        @self.external(authorize=Authorize.only(Global.creator_address()))
+        @app.external(authorize=Authorize.only(Global.creator_address()))
         def remove_member(member: abi.Address):
-            return Pop(self.membership_records[member].delete())
+            return Pop(cls.membership_records[member].delete())
 
-        @self.external(authorize=Authorize.only(Global.creator_address()))
+        @app.external(authorize=Authorize.only(Global.creator_address()))
         def add_member(
             new_member: abi.Account,
-            membership_token: abi.Asset = self.membership_token,  # type: ignore[assignment]
+            membership_token: abi.Asset = cls.membership_token,  # type: ignore[assignment]
         ):
             return Seq(
                 (role := abi.Uint8()).set(Int(0)),
                 (voted := abi.Bool()).set(consts.FALSE),
                 (mr := MembershipRecord()).set(role, voted),
-                self.membership_records[new_member.address()].set(mr),
+                cls.membership_records[new_member.address()].set(mr),
                 InnerTxnBuilder.Execute(
                     clawback_axfer(
-                        self.membership_token,
+                        cls.membership_token,
                         Int(1),
                         new_member.address(),
-                        self.address,
+                        Global.current_application_address(),
                         extra={TxnField.fee: Int(0)},
                     )
                 ),
             )
 
-        @self.external()
+        @app.external()
         def get_membership_record(member: abi.Address, *, output: MembershipRecord):
-            return self.membership_records[member].store_into(output)
+            return cls.membership_records[member].store_into(output)
 
-        @self.external(authorize=Authorize.holds_token(self.membership_token))
+        @app.external(authorize=Authorize.holds_token(cls.membership_token))
         def set_affirmation(
             idx: abi.Uint16,
             affirmation: Affirmation,
-            membership_token: abi.Asset = self.membership_token,  # type: ignore[assignment]
+            membership_token: abi.Asset = cls.membership_token,  # type: ignore[assignment]
         ):
-            return self.affirmations[idx.get()].set(affirmation)
+            return cls.affirmations[idx.get()].set(affirmation)
 
-        @self.external(authorize=Authorize.holds_token(self.membership_token))
+        @app.external(authorize=Authorize.holds_token(cls.membership_token))
         def get_affirmation(
-            membership_token: abi.Asset = self.membership_token,  # type: ignore[assignment]
+            membership_token: abi.Asset = cls.membership_token,  # type: ignore[assignment]
             *,
             output: Affirmation,
         ):
             return output.set(
-                self.affirmations[Global.round() % self.affirmations.elements]
+                cls.affirmations[Global.round() % cls.affirmations.elements]
             )
 
+        return app
 
-class AppMember(LegacyApplication):
+
+class AppMember:
 
     membership_token = ApplicationStateValue(TealType.uint64)
     club_app_id = ApplicationStateValue(TealType.uint64)
     last_affirmation = ApplicationStateValue(TealType.bytes)
 
-    def post_init(self) -> None:
-        @self.external(authorize=Authorize.only(Global.creator_address()))
+    @classmethod
+    def construct(cls) -> Application:
+        app = Application(
+            cls.__qualname__, descr=cls.__doc__, state_class=cls
+        ).implement(unconditional_create_approval)
+
+        @app.external(authorize=Authorize.only(Global.creator_address()))
         def bootstrap(
             seed: abi.PaymentTransaction,
             app_id: abi.Application,
@@ -200,36 +219,38 @@ class AppMember(LegacyApplication):
         ):
             return Seq(
                 # Set app id
-                self.club_app_id.set(app_id.application_id()),
+                cls.club_app_id.set(app_id.application_id()),
                 # Set membership token
-                self.membership_token.set(membership_token.asset_id()),
+                cls.membership_token.set(membership_token.asset_id()),
                 # Opt in to membership token
                 InnerTxnBuilder.Execute(
                     axfer(
                         membership_token.asset_id(),
                         Int(0),
-                        self.address,
+                        Global.current_application_address(),
                         extra={TxnField.fee: Int(0)},
                     )
                 ),
             )
 
-        @self.external
+        @app.external
         def get_affirmation(
-            member_token: abi.Asset = self.membership_token,  # type: ignore[assignment]
-            club_app: abi.Application = self.club_app_id,  # type: ignore[assignment]
+            member_token: abi.Asset = cls.membership_token,  # type: ignore[assignment]
+            club_app: abi.Application = cls.club_app_id,  # type: ignore[assignment]
         ):
             return Seq(
                 InnerTxnBuilder.ExecuteMethodCall(
-                    app_id=self.club_app_id,
-                    method_signature=MembershipClub()
+                    app_id=cls.club_app_id,
+                    method_signature=MembershipClub.construct()
                     .abi_methods["get_affirmation"]
                     .method_signature(),
                     args=[member_token],
                 ),
-                self.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
+                cls.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
             )
+
+        return app
 
 
 if __name__ == "__main__":
-    MembershipClub().dump("./artifacts")
+    MembershipClub.construct().dump("./artifacts")

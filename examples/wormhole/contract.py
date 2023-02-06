@@ -1,64 +1,67 @@
-from typing import Final
 from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
-from beaker import ReservedApplicationStateValue
 
-from examples.wormhole.wormhole import ContractTransferVAA, WormholeTransfer
+from beaker import (
+    ReservedApplicationStateValue,
+    Application,
+    unconditional_create_approval,
+)
+from examples.wormhole.wormhole import ContractTransferVAA, wormhole_transfer
 
 
-class OracleDataCache(WormholeTransfer):
-    """
+class OracleData(abi.NamedTuple):
+    timestamp: abi.Field[abi.Uint64]
+    price: abi.Field[abi.Uint64]
+    confidence: abi.Field[abi.Uint64]
+
+
+class OracleState:
+    prices = ReservedApplicationStateValue(stack_type=TealType.bytes, max_keys=64)
+
+
+oracle_data_cache_app = Application(
+    "OracleDataCache",
+    descr="""
     Stores price feed in application state keyed by timestamp
 
     TODO: more than 64 vals lol
+    """,
+    state_class=OracleState,
+)
+
+oracle_data_cache_app.implement(unconditional_create_approval)
+
+
+def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> Expr:
     """
-
-    class OracleData(abi.NamedTuple):
-        timestamp: abi.Field[abi.Uint64]
-        price: abi.Field[abi.Uint64]
-        confidence: abi.Field[abi.Uint64]
-
-    prices: Final[ReservedApplicationStateValue] = ReservedApplicationStateValue(
-        stack_type=TealType.bytes, max_keys=64
+    invoked from parent class `portal_transfer` after parsing the VAA into
+    abi vars
+    """
+    return Seq(
+        # TODO: assert foreign sender? Should be in provided contract?
+        # Do this once, since `get`` incurs a couple op penalty over `load`
+        (payload := ScratchVar()).store(ctvaa.payload.get()),
+        # Read vals from json
+        (timestamp := abi.Uint64()).set(JsonRef.as_uint64(payload.load(), Bytes("ts"))),
+        (price := abi.Uint64()).set(JsonRef.as_uint64(payload.load(), Bytes("price"))),
+        (confidence := abi.Uint64()).set(
+            JsonRef.as_uint64(payload.load(), Bytes("confidence"))
+        ),
+        # Construct named tuple for storage
+        (od := abi.make(OracleData)).set(timestamp, price, confidence),
+        # Write to app state
+        OracleState.prices[timestamp].set(od.encode()),
+        # echo the payload
+        output.set(ctvaa.payload),
     )
 
-    def handle_transfer(
-        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
-    ) -> Expr:
-        """
-        invoked from parent class `portal_transfer` after parsing the VAA into
-        abi vars
-        """
-        return Seq(
-            # TODO: assert foreign sender? Should be in provided contract?
-            # Do this once, since `get`` incurs a couple op penalty over `load`
-            (payload := ScratchVar()).store(ctvaa.payload.get()),
-            # Read vals from json
-            (timestamp := abi.Uint64()).set(
-                JsonRef.as_uint64(payload.load(), Bytes("ts"))
-            ),
-            (price := abi.Uint64()).set(
-                JsonRef.as_uint64(payload.load(), Bytes("price"))
-            ),
-            (confidence := abi.Uint64()).set(
-                JsonRef.as_uint64(payload.load(), Bytes("confidence"))
-            ),
-            # Construct named tuple for storage
-            (od := abi.make(OracleDataCache.OracleData)).set(
-                timestamp, price, confidence
-            ),
-            # Write to app state
-            self.prices[timestamp].set(od.encode()),
-            # echo the payload
-            output.set(ctvaa.payload),
-        )
 
-    def __init__(self):
-        super().__init__()
+oracle_data_cache_app.implement(wormhole_transfer, handle_transfer=handle_transfer)
 
-        @self.external
-        def lookup(ts: abi.Uint64, *, output: OracleDataCache.OracleData) -> Expr:
-            return output.decode(self.prices[ts].get_must())
+
+@oracle_data_cache_app.external
+def lookup(ts: abi.Uint64, *, output: OracleData) -> Expr:
+    return output.decode(OracleState.prices[ts].get_must())
 
 
 if __name__ == "__main__":
-    OracleDataCache().dump("./spec")
+    oracle_data_cache_app.dump("./spec")

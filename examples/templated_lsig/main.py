@@ -11,9 +11,15 @@ from algosdk.encoding import decode_address
 from nacl.signing import SigningKey
 from pyteal import Assert, Expr, abi, Txn, Ed25519Verify_Bare, Seq, Int, TealType
 
-from beaker import sandbox, client, LogicSignatureTemplate, consts
-from beaker.precompile import LSigTemplatePrecompile
-from beaker.testing.legacy import LegacyApplication
+from beaker import (
+    sandbox,
+    client,
+    LogicSignatureTemplate,
+    consts,
+    precompiled,
+    Application,
+    unconditional_create_approval,
+)
 
 Signature = abi.StaticBytes[Literal[64]]
 
@@ -40,18 +46,15 @@ def SigChecker() -> LogicSignatureTemplate:
 
 sig_checker = SigChecker()
 
+app = Application("App").implement(unconditional_create_approval)
 
-class App(LegacyApplication):
 
-    sig_checker: LSigTemplatePrecompile
-
-    def post_init(self) -> None:
-        @self.external
-        def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
-            self.sig_checker = self.precompiled(sig_checker)
-            return Assert(
-                Txn.sender() == self.sig_checker.address(user_addr=signer_address.get())
-            )
+@app.external
+def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
+    sig_checker_pc = precompiled(sig_checker)
+    return Assert(
+        Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
+    )
 
 
 def sign_msg(msg: str, sk: str) -> bytes:
@@ -64,7 +67,6 @@ def demo():
     acct = sandbox.get_accounts().pop()
 
     # Create app client
-    app = App()
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), app, signer=acct.signer
     )
@@ -83,7 +85,7 @@ def demo():
     #     )
 
     # Get the signer for the lsig from its populated precompile
-    lsig_signer = app.sig_checker.template_signer(
+    lsig_signer = app._lsig_template_precompiles[sig_checker].template_signer(
         user_addr=decode_address(acct.address)
     )
     # Prepare a new client so it can sign calls

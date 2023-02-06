@@ -43,7 +43,7 @@ def demo():
     member_acct = accts.pop()
 
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), MembershipClub(), signer=acct.signer
+        sandbox.get_algod_client(), MembershipClub.construct(), signer=acct.signer
     )
     print("Creating app")
     app_client.create()
@@ -127,7 +127,7 @@ def demo():
     # Create App we'll use to be a member of club
     print("Creating app member")
     app_member_client = client.ApplicationClient(
-        sandbox.get_algod_client(), AppMember(), signer=app_client.signer
+        sandbox.get_algod_client(), AppMember.construct(), signer=app_client.signer
     )
     _, app_member_addr, _ = app_member_client.create()
 

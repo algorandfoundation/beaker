@@ -1,8 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import Literal
+from typing import Literal, Callable
 
+from mypy_extensions import NamedArg
 from pyteal import (
-    Reject,
     abi,
     Expr,
     Seq,
@@ -11,7 +10,7 @@ from pyteal import (
     Suffix,
 )
 
-from beaker.testing.legacy import LegacyApplication
+from beaker import Application
 
 
 def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
@@ -118,42 +117,37 @@ class ContractTransferVAA:
         return Seq(*ops)
 
 
-class WormholeTransfer(LegacyApplication, ABC):
-    """Wormhole Payload3 Message handler
+def wormhole_transfer(
+    app: Application,
+    handle_transfer: Callable[
+        [ContractTransferVAA, NamedArg(abi.DynamicBytes, "output")], Expr  # noqa: F821
+    ],
+) -> Application:
+    """Implement Wormhole Payload3 Message handler
 
     A Message transfer from another chain to Algorand  using the Wormhole protocol
     will cause this contract to have it's `portal_transfer` method called.
+
+    Args:
+        app: app to add to
+        handle_transfer: app specific logic that needs to be done on transfer - should take the decoded ContractTransferVAA, and an output parameter
     """
 
-    def post_init(self) -> None:
-        @self.external
-        def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
-            """portal_transfer accepts a VAA containing information about the transfer and the payload.
-
-            Args:
-                vaa: VAA encoded dynamic byte array
-
-            Returns:
-                Undefined byte array
-
-            To allow a more flexible interface we publicize that we output generic bytes
-            """
-            return Seq(
-                (ctvaa := ContractTransferVAA()).decode(vaa.get()),
-                self.handle_transfer(ctvaa, output=output),
-            )
-
-    @abstractmethod
-    def handle_transfer(
-        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
-    ) -> Expr:
-        """handle transfer should be overridden with app specific logic
-        needs to be done on transfer
+    @app.external
+    def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
+        """portal_transfer accepts a VAA containing information about the transfer and the payload.
 
         Args:
-            ctvaa: The decoded ContractTransferVAA
+            vaa: VAA encoded dynamic byte array
 
         Returns:
-            app specific byte array
+            Undefined byte array
+
+        To allow a more flexible interface we publicize that we output generic bytes
         """
-        return Reject()
+        return Seq(
+            (ctvaa := ContractTransferVAA()).decode(vaa.get()),
+            handle_transfer(ctvaa, output=output),
+        )
+
+    return app

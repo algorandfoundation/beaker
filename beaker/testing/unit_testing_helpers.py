@@ -4,7 +4,7 @@ from typing import Any
 import pyteal as pt
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
-from beaker import Application, client, sandbox
+from beaker import Application, client, sandbox, unconditional_opt_in_approval
 from beaker.application import CompilerOptions
 from beaker.blueprints import unconditional_create_approval
 
@@ -41,7 +41,9 @@ def unit_test_app_blueprint(
     the return value against what you expect.
     """
 
-    app = app.implement(unconditional_create_approval)
+    app = app.implement(unconditional_create_approval).implement(
+        unconditional_opt_in_approval, initialize_account_state=True
+    )
 
     @app.delete
     def delete() -> pt.Expr:
@@ -50,10 +52,6 @@ def unit_test_app_blueprint(
     @app.update
     def update() -> pt.Expr:
         return pt.Approve()
-
-    @app.opt_in
-    def opt_in() -> pt.Expr:
-        return app.acct_state.initialize()
 
     @app.close_out
     def close_out() -> pt.Expr:
