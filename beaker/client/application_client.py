@@ -1,5 +1,4 @@
 import dataclasses
-import json
 from pathlib import Path
 import warnings
 from base64 import b64decode
@@ -49,15 +48,10 @@ class ApplicationClient:
     ):
         self.client = client
         if isinstance(app, Application):
-            app.compile(client)
-            app = json.dumps(app.application_spec())
-            # TODO: just use app.compile(client)
-
-        self.app = (
-            app
-            if isinstance(app, CompiledApplication)
-            else CompiledApplication.from_json(app)
-        )
+            app = app.compile(client)
+        elif isinstance(app, str) or isinstance(app, Path):
+            app = CompiledApplication.from_json(app)
+        self.app = app
         self.app_id = app_id
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
