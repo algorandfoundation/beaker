@@ -59,6 +59,7 @@ class List:
 
 class ListElement(Expr):
     def __init__(self, name: Expr, element_size: Expr, idx: Expr):
+        super().__init__()
         if name.type_of() != TealType.bytes:
             raise TealTypeError(name.type_of(), TealType.bytes)
 
