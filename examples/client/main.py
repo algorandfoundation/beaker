@@ -1,5 +1,7 @@
 from typing import Final
-from pyteal import abi, TealType, Global, Approve, ABIReturnSubroutine
+
+from pyteal import abi, TealType, Global, Approve, ABIReturnSubroutine, Expr
+
 from beaker import (
     Application,
     AccountStateValue,
@@ -8,7 +10,8 @@ from beaker import (
     client,
     sandbox,
     consts,
-    this_app,
+    unconditional_create_approval,
+    unconditional_opt_in_approval,
 )
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
@@ -24,43 +27,36 @@ class ClientExampleState:
     )
 
 
-my_app = Application("ClientExample", state=ClientExampleState)
-
-
-@my_app.create
-def create():
-    return this_app().initialize_application_state()
-
-
-@my_app.opt_in
-def opt_in():
-    # Defaults to sender
-    return this_app().initialize_account_state()
+my_app = (
+    Application("ClientExample", state=ClientExampleState())
+    .implement(unconditional_create_approval, initialize_app_state=True)
+    .implement(unconditional_opt_in_approval, initialize_account_state=True)
+)
 
 
 @my_app.close_out
-def close_out():
+def close_out() -> Expr:
     return Approve()
 
 
-@my_app.delete(authorize=Authorize.only(ClientExampleState.manager))
-def delete():
+@my_app.delete(authorize=Authorize.only(my_app.state.manager))
+def delete() -> Expr:
     return Approve()
 
 
-@my_app.external(authorize=Authorize.only(ClientExampleState.manager))
-def set_manager(new_manager: abi.Address):
-    return ClientExampleState.manager.set(new_manager.get())
+@my_app.external(authorize=Authorize.only(my_app.state.manager))
+def set_manager(new_manager: abi.Address) -> Expr:
+    return my_app.state.manager.set(new_manager.get())
 
 
 @my_app.external
-def set_nick(nick: abi.String):
-    return ClientExampleState.nickname.set(nick.get())
+def set_nick(nick: abi.String) -> Expr:
+    return my_app.state.nickname.set(nick.get())
 
 
 @my_app.external(read_only=True)
-def get_nick(*, output: abi.String):
-    return output.set(ClientExampleState.nickname)
+def get_nick(*, output: abi.String) -> Expr:
+    return output.set(my_app.state.nickname)
 
 
 def demo():

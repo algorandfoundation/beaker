@@ -15,7 +15,7 @@ from typing import (
     TypeVar,
     overload,
     Iterator,
-    Any,
+    Generic,
 )
 
 from algosdk.v2client.algod import AlgodClient
@@ -56,6 +56,7 @@ OnCompleteActionName: TypeAlias = Literal[
 
 T = TypeVar("T")
 P = ParamSpec("P")
+TState = TypeVar("TState", covariant=True)
 
 
 @dataclasses.dataclass
@@ -78,7 +79,7 @@ class CompileContext:
 _ctx: ContextVar[CompileContext] = ContextVar("beaker.compile_context")
 
 
-def this_app() -> "Application":
+def this_app() -> "Application[TState]":
     return _ctx.get().app
 
 
@@ -139,18 +140,38 @@ class CompilerOptions:
         Defaults to True."""
 
 
-class Application:
+class Application(Generic[TState]):
+    @overload
+    def __init__(
+        self: "Application[None]",
+        name: str,
+        *,
+        descr: str | None = None,
+        compiler_options: CompilerOptions | None = None,
+    ):
+        ...
+
+    @overload
+    def __init__(
+        self: "Application[TState]",
+        name: str,
+        *,
+        state: TState,
+        descr: str | None = None,
+        compiler_options: CompilerOptions | None = None,
+    ):
+        ...
+
     def __init__(
         self,
         name: str,
         *,
-        # state: TState # TODO how to make this generic but also default to empty?!?!!?
-        state: Any = None,
+        state: TState = cast(TState, None),
         descr: str | None = None,
         compiler_options: CompilerOptions | None = None,
-    ) -> None:
+    ):
         """<TODO>"""
-        self.state = state
+        self._state: TState = state
         self.name = name
         self.descr = descr
         self.compiler_options = compiler_options or CompilerOptions()
@@ -165,14 +186,26 @@ class Application:
         ] = {}
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self._acct_state = AccountState(self.state)
-        self._app_state = ApplicationState(self.state)
+        self._acct_state = AccountState(self._state)
+        self._app_state = ApplicationState(self._state)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
             "Subclassing beaker.Application is deprecated, please see the migration guide at: TODO",
             DeprecationWarning,
         )
+
+    @property
+    def state(self) -> TState:
+        if ctx := _ctx.get(None):
+            # if inside a context (ie when an expression is being evaluated by PyTeal),
+            # raise a warning when attempting to access the state of a different app instance
+            if ctx.app is not self:
+                warnings.warn(
+                    f"Accessing state property of Application {ctx.app.name} during compilation of Application {self.name}",
+                    RuntimeWarning,
+                )
+        return self._state
 
     @overload
     def precompiled(self, value: "Application", /) -> AppPrecompile:
@@ -773,11 +806,12 @@ class Application:
 
     def implement(
         self,
-        blueprint: Callable[Concatenate["Application", P], T],
+        blueprint: Callable[Concatenate["Application[TState]", P], T],
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> T:
-        return blueprint(self, *args, **kwargs)
+    ) -> "Application[TState]":
+        blueprint(self, *args, **kwargs)
+        return self
 
     def compile(self, client: Optional[AlgodClient] = None) -> CompiledApplication:
         """Fully compile the application to TEAL
