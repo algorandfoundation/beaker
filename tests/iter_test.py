@@ -17,6 +17,27 @@ def test_iterate():
     assert_output(ut, [], output)
 
 
+def test_iterate_default_stack_var_is_unique():
+    inner_loop = 2
+    outer_loop = 3
+    ut = UnitTestingApp(
+        pt.Seq(
+            (buff := pt.ScratchVar()).store(pt.Bytes("")),
+            Iterate(
+                Iterate(
+                    buff.store(pt.Concat(buff.load(), pt.Bytes("a"))),
+                    pt.Int(inner_loop),
+                ),
+                pt.Int(outer_loop),
+            ),
+            buff.load(),
+        )
+    )
+
+    output = [list(b"a" * inner_loop * outer_loop)]
+    assert_output(ut, [], output)
+
+
 def test_iterate_with_closure():
     i = pt.ScratchVar()
     buff = pt.ScratchVar()

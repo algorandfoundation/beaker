@@ -1,7 +1,7 @@
 from pyteal import Expr, For, Int, ScratchVar
 
 
-def Iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:  # noqa: N802
+def Iterate(sub: Expr, n: Int, i: ScratchVar | None = None) -> Expr:  # noqa: N802
     """Iterate provides a convenience method for calling a method n times
 
     Args:
@@ -13,6 +13,7 @@ def Iterate(sub: Expr, n: Int, i: ScratchVar = ScratchVar()) -> Expr:  # noqa: N
         A Subroutine expression to be passed directly into an Expr tree
     """
 
+    i = i or ScratchVar()
     init = i.store(Int(0))
     cond = i.load() < n
     iter = i.store(i.load() + Int(1))
