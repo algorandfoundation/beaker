@@ -19,7 +19,6 @@ from beaker.state.reserved import (
     ReservedApplicationStateValue,
     ReservedAccountStateValue,
 )
-from beaker.utils import get_class_attributes
 
 ST = TypeVar("ST", bound=StateStorage)
 
@@ -45,21 +44,19 @@ class State(Generic[ST]):
     def __init__(self, klass: type, storage_klass: type[ST]):
         self.fields: dict[str, ST] = {}
         self.schema = StateSchema(num_uints=0, num_byte_slices=0)
-        # TODO: stop using hack, use this instead V
-        # for name in dir(klass):
-        #     if not name.startswith("__"):
-        for name in get_class_attributes(klass, use_legacy_ordering=True):
-            value = getattr_static(klass, name, None)
-            if isinstance(value, storage_klass):
-                match value.value_type():
-                    case TealType.uint64:
-                        self.schema.num_uints += value.num_keys()
-                    case TealType.bytes:
-                        self.schema.num_byte_slices += value.num_keys()
-                    case _:
-                        raise TypeError("Only uint64 and bytes supported")
+        for name in dir(klass):
+            if not name.startswith("__"):
+                value = getattr_static(klass, name, None)
+                if isinstance(value, storage_klass):
+                    match value.value_type():
+                        case TealType.uint64:
+                            self.schema.num_uints += value.num_keys()
+                        case TealType.bytes:
+                            self.schema.num_byte_slices += value.num_keys()
+                        case _:
+                            raise TypeError("Only uint64 and bytes supported")
 
-                self.fields[name] = value
+                    self.fields[name] = value
 
     def dictify(self) -> StateDict:
         """Convert the state to a dict for encoding"""
