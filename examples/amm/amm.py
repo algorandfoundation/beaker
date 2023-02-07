@@ -56,7 +56,7 @@ class ConstantProductAMMErrors:
     SendAmountTooLow = "outgoing amount too low"
 
 
-class ConstantProductAMM(Application):
+class ConstantProductAMM:
 
     # Declare Application state, marking `Final` here so the python class var doesn't get changed
     # Marking a var `Final` does _not_ change anything at the AVM level
@@ -111,9 +111,9 @@ class ConstantProductAMM(Application):
 
     @classmethod
     def construct(cls) -> Application:
-        app = Application(
-            cls.__qualname__, descr=cls.__doc__, state_class=cls
-        ).implement(unconditional_create_approval, initialize_app_state=True)
+        app = Application(cls.__qualname__, descr=cls.__doc__, state=cls).implement(
+            unconditional_create_approval, initialize_app_state=True
+        )
 
         address = Global.current_application_address()
 

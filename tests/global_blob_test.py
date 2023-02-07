@@ -14,7 +14,7 @@ class GlobalBlobState:
 
 
 def GlobalBlobTest(name: str) -> bkr.Application:
-    return UnitTestingApp(name=name, state_class=GlobalBlobState)
+    return UnitTestingApp(name=name, state=GlobalBlobState)
 
 
 def test_global_blob_zero():

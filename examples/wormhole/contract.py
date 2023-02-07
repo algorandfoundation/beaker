@@ -25,7 +25,7 @@ oracle_data_cache_app = Application(
 
     TODO: more than 64 vals lol
     """,
-    state_class=OracleState,
+    state=OracleState,
 )
 
 oracle_data_cache_app.implement(unconditional_create_approval)

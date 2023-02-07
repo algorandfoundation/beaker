@@ -1,5 +1,4 @@
-from inspect import getattr_static
-from typing import Any, Generic, TypeVar, Literal, TypedDict
+from typing import Any, Generic, TypeVar, TypedDict
 
 from algosdk.transaction import StateSchema
 from pyteal import TealType, Expr, Seq, Txn
@@ -41,13 +40,16 @@ class StateDict(TypedDict):
 
 
 class State(Generic[ST]):
-    def __init__(self, klass: type, storage_klass: type[ST]):
+    def __init__(self, namespace: Any, storage_namespace: type[ST]):
         self.fields: dict[str, ST] = {}
         self.schema = StateSchema(num_uints=0, num_byte_slices=0)
-        for name in dir(klass):
+        for name in dir(namespace):
             if not name.startswith("__"):
-                value = getattr_static(klass, name, None)
-                if isinstance(value, storage_klass):
+                try:
+                    value = getattr(namespace, name, None)
+                except Exception:
+                    value = None
+                if isinstance(value, storage_namespace):
                     match value.value_type():
                         case TealType.uint64:
                             self.schema.num_uints += value.num_keys()
@@ -87,8 +89,8 @@ class State(Generic[ST]):
 
 
 class ApplicationState(State):
-    def __init__(self, klass: type):
-        super().__init__(klass=klass, storage_klass=ApplicationStateStorage)
+    def __init__(self, namespace: Any):
+        super().__init__(namespace=namespace, storage_namespace=ApplicationStateStorage)
 
         if self.total_keys > MAX_GLOBAL_STATE:
             raise ValueError(
@@ -101,8 +103,8 @@ class ApplicationState(State):
 
 
 class AccountState(State):
-    def __init__(self, klass: type):
-        super().__init__(klass=klass, storage_klass=AccountStateStorage)
+    def __init__(self, namespace: Any):
+        super().__init__(namespace=namespace, storage_namespace=AccountStateStorage)
 
         if self.total_keys > MAX_LOCAL_STATE:
             raise ValueError(

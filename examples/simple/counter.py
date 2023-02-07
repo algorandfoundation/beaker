@@ -14,7 +14,7 @@ class CounterState:
     )
 
 
-counter_app = Application("CounterApp", state_class=CounterState)
+counter_app = Application("CounterApp", state=CounterState)
 
 
 @counter_app.create

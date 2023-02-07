@@ -110,9 +110,9 @@ class MembershipClub:
 
     @classmethod
     def construct(cls) -> Application:
-        app = Application(
-            cls.__qualname__, descr=cls.__doc__, state_class=cls
-        ).implement(unconditional_create_approval)
+        app = Application(cls.__qualname__, descr=cls.__doc__, state=cls).implement(
+            unconditional_create_approval
+        )
 
         @app.external(authorize=Authorize.only(Global.creator_address()))
         def bootstrap(
@@ -207,9 +207,9 @@ class AppMember:
 
     @classmethod
     def construct(cls) -> Application:
-        app = Application(
-            cls.__qualname__, descr=cls.__doc__, state_class=cls
-        ).implement(unconditional_create_approval)
+        app = Application(cls.__qualname__, descr=cls.__doc__, state=cls).implement(
+            unconditional_create_approval
+        )
 
         @app.external(authorize=Authorize.only(Global.creator_address()))
         def bootstrap(

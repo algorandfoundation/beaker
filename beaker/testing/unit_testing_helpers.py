@@ -78,12 +78,12 @@ def UnitTestingApp(
     expr_to_test: pt.Expr | None = None,
     name: str = "UnitTestingApp",
     version: int = pt.MAX_PROGRAM_VERSION,
-    state_class: type | None = None,
+    state: Any | None = None,
 ) -> Application:
     return Application(
         name,
         compiler_options=CompilerOptions(avm_version=version),
-        state_class=state_class,
+        state=state,
     ).implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
 
 

@@ -66,7 +66,7 @@ def OpUp(
 ) -> Application:
     app = Application(
         name=name or "OpUp",
-        state_class=OpUpState,
+        state=OpUpState,
         descr=descr
         or """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget.""",
     ).implement(unconditional_create_approval)

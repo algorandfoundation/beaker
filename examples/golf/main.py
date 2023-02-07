@@ -52,7 +52,7 @@ MaxInts = Int(_max_ints)
 sorted_ints_app = Application(
     "SortedIntegers",
     compiler_options=CompilerOptions(avm_version=8),
-    state_class=SortedIntegersState,
+    state=SortedIntegersState,
 ).implement(unconditional_create_approval)
 
 

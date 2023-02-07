@@ -295,7 +295,7 @@ def test_state_init():
         # not-state
         not_a_state_var = pt.Int(1)
 
-    app = Application("TestStateInit", state_class=MyState)
+    app = Application("TestStateInit", state=MyState)
 
     @app.create
     def create() -> pt.Expr:
@@ -335,10 +335,10 @@ def test_state_init():
 
 
 def test_default_param_state():
-    class HintyState(Application):
+    class HintyState:
         asset_id = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(123))
 
-    h = Application("Hinty", state_class=HintyState)
+    h = Application("Hinty", state=HintyState)
 
     @h.external
     def hintymeth(
@@ -430,7 +430,7 @@ def test_app_spec():
         decl_app_val = ApplicationStateValue(pt.TealType.uint64)
         decl_acct_val = AccountStateValue(pt.TealType.uint64)
 
-    app = Application("Specd", state_class=SpecdState)
+    app = Application("Specd", state=SpecdState)
 
     @app.external(read_only=True)
     def get_asset_id(*, output: pt.abi.Uint64):

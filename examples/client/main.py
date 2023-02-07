@@ -24,7 +24,7 @@ class ClientExampleState:
     )
 
 
-my_app = Application("ClientExample", state_class=ClientExampleState)
+my_app = Application("ClientExample", state=ClientExampleState)
 
 
 @my_app.create

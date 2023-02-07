@@ -485,9 +485,11 @@ def test_expr_impl_app():
     assert asv.type_of() == pt.TealType.uint64
 
 
-def test_application_state():
-    class MyState:
+def test_application_state_type():
+    class BaseState:
         a = ApplicationStateValue(pt.TealType.uint64)
+
+    class MyState(BaseState):
         b = ApplicationStateValue(pt.TealType.bytes)
 
     astate = ApplicationState(MyState)
@@ -502,9 +504,30 @@ def test_application_state():
         ApplicationState(MyBigState)
 
 
-def test_account_state():
-    class MyState:
+def test_application_state_instance():
+    class BaseState:
+        a = ApplicationStateValue(pt.TealType.uint64)
+
+    class MyState(BaseState):
+        b = ApplicationStateValue(pt.TealType.bytes)
+
+    astate = ApplicationState(MyState())
+
+    assert astate.schema.num_byte_slices == 1
+    assert astate.schema.num_uints == 1
+
+    class MyBigState(MyState):
+        c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
+
+    with pytest.raises(Exception):
+        ApplicationState(MyBigState())
+
+
+def test_account_state_type():
+    class BaseState:
         a = AccountStateValue(pt.TealType.uint64)
+
+    class MyState(BaseState):
         b = AccountStateValue(pt.TealType.bytes)
 
     astate = AccountState(MyState)
@@ -517,3 +540,22 @@ def test_account_state():
 
     with pytest.raises(Exception):
         AccountState(MyBigState)
+
+
+def test_account_state_instance():
+    class BaseState:
+        a = AccountStateValue(pt.TealType.uint64)
+
+    class MyState(BaseState):
+        b = AccountStateValue(pt.TealType.bytes)
+
+    astate = AccountState(MyState())
+
+    assert astate.schema.num_byte_slices == 1
+    assert astate.schema.num_uints == 1
+
+    class MyBigState(MyState):
+        c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
+
+    with pytest.raises(Exception):
+        AccountState(MyBigState())

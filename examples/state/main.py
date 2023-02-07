@@ -1,7 +1,7 @@
 from beaker.client import ApplicationClient, LogicException
 from beaker.sandbox import get_algod_client, get_accounts
 
-from examples.state.contract import StateExample
+from examples.state.contract import app
 
 
 def demo():
@@ -11,8 +11,6 @@ def demo():
     acct = accts.pop()
 
     client = get_algod_client()
-
-    app = StateExample()
 
     app_client = ApplicationClient(client, app, signer=acct.signer)
     app_id, app_address, transaction_id = app_client.create()

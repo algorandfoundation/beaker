@@ -15,6 +15,7 @@ from typing import (
     TypeVar,
     overload,
     Iterator,
+    Any,
 )
 
 from algosdk.v2client.algod import AlgodClient
@@ -144,11 +145,12 @@ class Application:
         name: str,
         *,
         # state: TState # TODO how to make this generic but also default to empty?!?!!?
-        state_class: type | None = None,
+        state: Any = None,
         descr: str | None = None,
         compiler_options: CompilerOptions | None = None,
     ) -> None:
         """<TODO>"""
+        self.state = state
         self.name = name
         self.descr = descr
         self.compiler_options = compiler_options or CompilerOptions()
@@ -163,9 +165,8 @@ class Application:
         ] = {}
         self._app_precompiles: dict[Application, AppPrecompile] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self._state_class = state_class or type(None)
-        self._acct_state = AccountState(klass=self._state_class)
-        self._app_state = ApplicationState(klass=self._state_class)
+        self._acct_state = AccountState(self.state)
+        self._app_state = ApplicationState(self.state)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(

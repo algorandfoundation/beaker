@@ -14,7 +14,7 @@ class LocalBlobTestState:
 
 
 def LocalBlobTest(name: str = "LB") -> bkr.Application:
-    return UnitTestingApp(name=name, state_class=LocalBlobTestState)
+    return UnitTestingApp(name=name, state=LocalBlobTestState)
 
 
 def test_local_blob_zero():

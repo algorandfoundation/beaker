@@ -26,7 +26,7 @@ class Child1State:
     )
 
 
-child1_app = Application("Child1", state_class=Child1State).implement(
+child1_app = Application("Child1", state=Child1State).implement(
     unconditional_create_approval, initialize_app_state=True
 )
 

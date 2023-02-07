@@ -70,7 +70,7 @@ class EventRSVPState:
     )
 
 
-rsvp = Application("EventRSVP", state_class=EventRSVPState)
+rsvp = Application("EventRSVP", state=EventRSVPState)
 
 
 @rsvp.create

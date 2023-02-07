@@ -22,7 +22,7 @@ from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
 
-class AppState(Application):
+class AppState:
     app_state_val_int = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(1))
     app_state_val_byte = ApplicationStateValue(
         pt.TealType.bytes, default=pt.Bytes("test")
@@ -34,7 +34,7 @@ class AppState(Application):
 def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application:
     app = Application(
         "App",
-        state_class=AppState,
+        state=AppState,
         compiler_options=CompilerOptions(avm_version=version),
     )
 

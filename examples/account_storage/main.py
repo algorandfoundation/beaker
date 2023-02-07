@@ -57,7 +57,7 @@ class DiskHungryState:
 disk_hungry = Application(
     "DiskHungry",
     compiler_options=CompilerOptions(avm_version=8),
-    state_class=DiskHungryState,
+    state=DiskHungryState,
 ).implement(unconditional_create_approval)
 key_sig = KeySig(version=8)
 

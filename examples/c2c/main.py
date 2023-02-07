@@ -35,7 +35,7 @@ class C2CSubState:
 sub_app = bkr.Application(
     "C2CSub",
     descr="Sub application who's only purpose is to opt into then close out of an asset",
-    state_class=C2CSubState,
+    state=C2CSubState,
 )
 
 

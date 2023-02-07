@@ -29,7 +29,7 @@ class Structer:
 
 
 structer_app = (
-    Application("Structer", state_class=Structer)
+    Application("Structer", state=Structer)
     .implement(unconditional_create_approval)
     .implement(unconditional_opt_in_approval, initialize_account_state=True)
 )
