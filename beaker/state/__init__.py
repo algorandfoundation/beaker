@@ -1,5 +1,5 @@
 from inspect import getattr_static
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Literal, TypedDict
 
 from algosdk.transaction import StateSchema
 from pyteal import TealType, Expr, Seq, Txn
@@ -24,34 +24,49 @@ from beaker.utils import get_class_attributes
 ST = TypeVar("ST", bound=StateStorage)
 
 
+class DeclaredStateDict(TypedDict):
+    type: str
+    key: str | bytes
+    descr: str
+
+
+class ReservedStateDict(TypedDict):
+    type: str
+    max_keys: int
+    descr: str
+
+
+class StateDict(TypedDict):
+    declared: dict[str, DeclaredStateDict]
+    reserved: dict[str, ReservedStateDict]
+
+
 class State(Generic[ST]):
     def __init__(self, klass: type, storage_klass: type[ST]):
-        fields: dict[str, ST] = {}
+        self.fields: dict[str, ST] = {}
+        self.schema = StateSchema(num_uints=0, num_byte_slices=0)
         # TODO: stop using hack, use this instead V
         # for name in dir(klass):
         #     if not name.startswith("__"):
         for name in get_class_attributes(klass, use_legacy_ordering=True):
             value = getattr_static(klass, name, None)
             if isinstance(value, storage_klass):
-                fields[name] = value
+                match value.value_type():
+                    case TealType.uint64:
+                        self.schema.num_uints += value.num_keys()
+                    case TealType.bytes:
+                        self.schema.num_byte_slices += value.num_keys()
+                    case _:
+                        raise TypeError("Only uint64 and bytes supported")
 
-        self.fields = fields
-        # self.__dict__.update(fields)
+                self.fields[name] = value
 
-        self.num_uints = sum(
-            f.num_keys() for f in fields.values() if f.value_type() == TealType.uint64
-        )
-
-        self.num_byte_slices = sum(
-            f.num_keys() for f in fields.values() if f.value_type() == TealType.bytes
-        )
-
-    def dictify(self) -> dict[str, dict[str, Any]]:
+    def dictify(self) -> StateDict:
         """Convert the state to a dict for encoding"""
         return {
             "declared": {
                 name: {
-                    "type": _stack_type_to_string(field.value_type()),
+                    "type": field.value_type().name,
                     "key": field.known_keys()[0],  # type: ignore[index]
                     "descr": field.description() or "",
                 }
@@ -60,7 +75,7 @@ class State(Generic[ST]):
             },
             "reserved": {
                 name: {
-                    "type": _stack_type_to_string(field.value_type()),
+                    "type": field.value_type().name,
                     "max_keys": field.num_keys(),
                     "descr": field.description() or "",
                 }
@@ -69,19 +84,18 @@ class State(Generic[ST]):
             },
         }
 
-    def schema(self) -> StateSchema:
-        """gets the schema as num uints/bytes for app create transactions"""
-        return StateSchema(
-            num_uints=self.num_uints, num_byte_slices=self.num_byte_slices
-        )
+    @property
+    def total_keys(self) -> int:
+        return self.schema.num_uints + self.schema.num_byte_slices
 
 
 class ApplicationState(State):
     def __init__(self, klass: type):
         super().__init__(klass=klass, storage_klass=ApplicationStateStorage)
-        if (total := self.num_uints + self.num_byte_slices) > MAX_GLOBAL_STATE:
+
+        if self.total_keys > MAX_GLOBAL_STATE:
             raise ValueError(
-                f"Too much application state, expected {total} <= {MAX_GLOBAL_STATE}"
+                f"Too much application state, expected {self.total_keys} <= {MAX_GLOBAL_STATE}"
             )
 
     def initialize(self) -> Expr:
@@ -93,9 +107,9 @@ class AccountState(State):
     def __init__(self, klass: type):
         super().__init__(klass=klass, storage_klass=AccountStateStorage)
 
-        if (total := self.num_uints + self.num_byte_slices) > MAX_LOCAL_STATE:
+        if self.total_keys > MAX_LOCAL_STATE:
             raise ValueError(
-                f"Too much account state, expected {total} <= {MAX_LOCAL_STATE}"
+                f"Too much account state, expected {self.total_keys} <= {MAX_LOCAL_STATE}"
             )
 
     def initialize(self, acct: Expr = Txn.sender()) -> Expr:
@@ -103,10 +117,3 @@ class AccountState(State):
         return Seq(
             list(filter(None, [f.initialize(acct=acct) for f in self.fields.values()]))
         )
-
-
-def _stack_type_to_string(st: TealType) -> str:
-    if st in (TealType.uint64, TealType.bytes):
-        return st.name
-
-    raise Exception("Only uint64 and bytes supported")

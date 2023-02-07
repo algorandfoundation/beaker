@@ -146,12 +146,12 @@ class Application:
         # state: TState # TODO how to make this generic but also default to empty?!?!!?
         state_class: type | None = None,
         descr: str | None = None,
-        compiler_options: CompilerOptions = CompilerOptions(),
+        compiler_options: CompilerOptions | None = None,
     ) -> None:
         """<TODO>"""
         self.name = name
         self.descr = descr
-        self.compiler_options = compiler_options
+        self.compiler_options = compiler_options or CompilerOptions()
         self.bare_methods: dict[str, SubroutineFnWrapper] = {}
         self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
@@ -399,7 +399,7 @@ class Application:
                 hints = capture_method_hints_and_remove_defaults(
                     func,
                     read_only=read_only,
-                    config=MethodConfig(**actions),  # type: ignore[misc]
+                    config=MethodConfig(**cast(dict[str, CallConfig], actions)),
                 )
                 method = ABIReturnSubroutine(func, overriding_name=name)
                 setattr(method, "_read_only", read_only)
@@ -827,8 +827,8 @@ class Application:
             hints=hints,
             app_state=self._app_state.dictify(),
             account_state=self._acct_state.dictify(),
-            app_state_schema=self._app_state.schema(),
-            account_state_schema=self._acct_state.schema(),
+            app_state_schema=self._app_state.schema,
+            account_state_schema=self._acct_state.schema,
         )
 
     def initialize_application_state(self) -> Expr:

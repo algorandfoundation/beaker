@@ -311,8 +311,8 @@ def test_state_init():
             this_app().initialize_account_state(),
         )
 
-    assert app._app_state.num_uints == 4
-    assert app._app_state.num_byte_slices == 8
+    assert app._app_state.schema.num_uints == 4
+    assert app._app_state.schema.num_byte_slices == 8
     assert app._app_state.fields.keys() == {
         "uint_val",
         "byte_val",
@@ -321,8 +321,8 @@ def test_state_init():
         "blob",
     }
 
-    assert app._acct_state.num_uints == 3
-    assert app._acct_state.num_byte_slices == 6
+    assert app._acct_state.schema.num_uints == 3
+    assert app._acct_state.schema.num_byte_slices == 6
     assert app._acct_state.fields.keys() == {
         "uint_acct_val",
         "byte_acct_val",

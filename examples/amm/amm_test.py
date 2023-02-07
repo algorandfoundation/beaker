@@ -17,7 +17,7 @@ from algosdk.v2client.algod import AlgodClient
 from beaker import client, sandbox, testing, consts
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
-from examples.amm.amm import ConstantProductAMM, ConstantProductAMMErrors
+from examples.amm.amm import ConstantProductAMM, ConstantProductAMMErrors, amm_app
 from tests.conftest import check_application_artifacts_output_stability
 
 accts = sandbox.get_accounts()
@@ -102,7 +102,7 @@ def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
 @pytest.fixture(scope="session")
 def creator_app_client(creator_acct: AcctInfo) -> client.ApplicationClient:
     _, _, signer = creator_acct
-    app = ConstantProductAMM()
+    app = ConstantProductAMM.construct()
     app_client = client.ApplicationClient(algod_client, app, signer=signer)
     return app_client
 
@@ -895,7 +895,6 @@ def _addr_to_hex(addr: str) -> str:
 
 
 def test_output_stability():
-    app = ConstantProductAMM()
     check_application_artifacts_output_stability(
-        app, dir_name="artifacts", dir_per_test_file=False
+        amm_app, dir_name="artifacts", dir_per_test_file=False
     )

@@ -12,6 +12,7 @@ from pyteal import TealType, Bytes, MethodConfig, CallConfig
 from beaker.state import (
     ApplicationStateValue,
     AccountStateValue,
+    StateDict,
 )
 from beaker.decorators import (
     MethodHints,
@@ -27,8 +28,8 @@ class CompiledApplication:
     clear_program: str
     contract: Contract
     hints: dict[str, MethodHints]
-    app_state: dict[str, dict[str, Any]]
-    account_state: dict[str, dict[str, Any]]
+    app_state: StateDict
+    account_state: StateDict
     app_state_schema: StateSchema
     account_state_schema: StateSchema
 

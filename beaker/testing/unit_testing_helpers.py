@@ -128,7 +128,9 @@ def assert_output(
     )
     app_client.create()
 
-    has_state = app._acct_state.num_byte_slices + app._acct_state.num_uints > 0
+    has_state = (
+        app._acct_state.schema.num_byte_slices + app._acct_state.schema.num_uints > 0
+    )
 
     if has_state:
         app_client.opt_in()

@@ -492,8 +492,8 @@ def test_application_state():
 
     astate = ApplicationState(MyState)
 
-    assert astate.num_byte_slices == 1
-    assert astate.num_uints == 1
+    assert astate.schema.num_byte_slices == 1
+    assert astate.schema.num_uints == 1
 
     class MyBigState(MyState):
         c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
@@ -509,8 +509,8 @@ def test_account_state():
 
     astate = AccountState(MyState)
 
-    assert astate.num_byte_slices == 1
-    assert astate.num_uints == 1
+    assert astate.schema.num_byte_slices == 1
+    assert astate.schema.num_uints == 1
 
     class MyBigState(MyState):
         c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
