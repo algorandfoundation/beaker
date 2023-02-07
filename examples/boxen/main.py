@@ -97,6 +97,24 @@ def demo():
         boxes=[[app_client.app_id, decode_address(member_acct.address)]],
     )
     print(result.return_value)
+    print("Role is: ", result.return_value[0])
+
+    # Update the members role
+    app_client.call(
+        MembershipClub.update_role,
+        member=member_acct.address,
+        new_role=3,
+        boxes=[[app_client.app_id, decode_address(member_acct.address)]],
+    )
+
+    # reread the membership record box
+    result = app_client.call(
+        MembershipClub.get_membership_record,
+        member=member_acct.address,
+        boxes=[[app_client.app_id, decode_address(member_acct.address)]],
+    )
+    print(result.return_value)
+    print("New Role is: ", result.return_value[0])
 
     # Create a new client for the member
     member_client = app_client.prepare(signer=member_acct.signer)

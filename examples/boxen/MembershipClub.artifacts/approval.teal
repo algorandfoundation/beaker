@@ -1,55 +1,39 @@
 #pragma version 8
 intcblock 0 1 64
-bytecblock 0x6d656d626572736869705f746f6b656e 0x 0x151f7c75 0x61666669726d6174696f6e73 0x00
+bytecblock 0x6d656d626572736869705f746f6b656e 0x 0x00 0x151f7c75 0x61666669726d6174696f6e73
 txn NumAppArgs
 intc_0 // 0
 ==
-bnz main_l14
+bnz main_l16
 txna ApplicationArgs 0
 pushbytes 0x54d2d66d // "bootstrap(pay,string)uint64"
 ==
-bnz main_l13
+bnz main_l15
 txna ApplicationArgs 0
 pushbytes 0x92ebf6de // "remove_member(address)void"
 ==
-bnz main_l12
+bnz main_l14
 txna ApplicationArgs 0
 pushbytes 0xdce35138 // "add_member(account,asset)void"
 ==
-bnz main_l11
+bnz main_l13
+txna ApplicationArgs 0
+pushbytes 0x642adb59 // "update_role(account,uint8)void"
+==
+bnz main_l12
 txna ApplicationArgs 0
 pushbytes 0xc8d0d243 // "get_membership_record(address)(uint8,bool)"
 ==
-bnz main_l10
+bnz main_l11
 txna ApplicationArgs 0
 pushbytes 0x35128a99 // "set_affirmation(uint16,byte[64],asset)void"
 ==
-bnz main_l9
+bnz main_l10
 txna ApplicationArgs 0
 pushbytes 0xd11a5d4f // "get_affirmation(asset)byte[64]"
 ==
-bnz main_l8
+bnz main_l9
 err
-main_l8:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-callsub getaffirmation_11
-store 13
-bytec_2 // 0x151f7c75
-load 13
-concat
-log
-intc_1 // 1
-return
 main_l9:
 txn OnCompletion
 intc_0 // NoOp
@@ -61,18 +45,13 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 intc_0 // 0
-extract_uint16
-store 10
-txna ApplicationArgs 2
-store 11
-txna ApplicationArgs 3
-intc_0 // 0
 getbyte
-store 12
-load 10
-load 11
-load 12
-callsub setaffirmation_10
+callsub getaffirmation_13
+store 15
+bytec_3 // 0x151f7c75
+load 15
+concat
+log
 intc_1 // 1
 return
 main_l10:
@@ -85,15 +64,62 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub getmembershiprecord_9
-store 9
-bytec_2 // 0x151f7c75
-load 9
+intc_0 // 0
+extract_uint16
+store 12
+txna ApplicationArgs 2
+store 13
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+store 14
+load 12
+load 13
+load 14
+callsub setaffirmation_12
+intc_1 // 1
+return
+main_l11:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+callsub getmembershiprecord_11
+store 11
+bytec_3 // 0x151f7c75
+load 11
 concat
 log
 intc_1 // 1
 return
-main_l11:
+main_l12:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+store 9
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+store 10
+load 9
+load 10
+callsub updaterole_10
+intc_1 // 1
+return
+main_l13:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -112,10 +138,10 @@ getbyte
 store 8
 load 7
 load 8
-callsub addmember_8
+callsub addmember_9
 intc_1 // 1
 return
-main_l12:
+main_l14:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -125,10 +151,10 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub removemember_7
+callsub removemember_8
 intc_1 // 1
 return
-main_l13:
+main_l15:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -150,22 +176,22 @@ intc_1 // pay
 assert
 load 4
 load 5
-callsub bootstrap_6
+callsub bootstrap_7
 store 6
-bytec_2 // 0x151f7c75
+bytec_3 // 0x151f7c75
 load 6
 itob
 concat
 log
 intc_1 // 1
 return
-main_l14:
+main_l16:
 txn OnCompletion
 intc_0 // NoOp
 ==
-bnz main_l16
+bnz main_l18
 err
-main_l16:
+main_l18:
 txn ApplicationID
 intc_0 // 0
 ==
@@ -204,8 +230,16 @@ global CreatorAddress
 ==
 retsub
 
+// auth_only
+authonly_4:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
 // auth_holds_token
-authholdstoken_4:
+authholdstoken_5:
 proto 1 1
 frame_dig -1
 bytec_0 // "membership_token"
@@ -221,7 +255,7 @@ intc_0 // 0
 retsub
 
 // auth_holds_token
-authholdstoken_5:
+authholdstoken_6:
 proto 1 1
 frame_dig -1
 bytec_0 // "membership_token"
@@ -237,7 +271,7 @@ intc_0 // 0
 retsub
 
 // bootstrap
-bootstrap_6:
+bootstrap_7:
 proto 2 1
 intc_0 // 0
 txn Sender
@@ -256,7 +290,7 @@ pushint 3658500 // 3658500
 >=
 // payment must be for >= 3658500
 assert
-bytec_3 // "affirmations"
+bytec 4 // "affirmations"
 pushint 640 // 640
 box_create
 pop
@@ -284,9 +318,9 @@ itxn_submit
 intc_0 // 0
 bytec_0 // "membership_token"
 app_global_get_ex
-store 15
-store 14
-load 15
+store 17
+store 16
+load 17
 !
 assert
 bytec_0 // "membership_token"
@@ -298,7 +332,7 @@ frame_bury 0
 retsub
 
 // remove_member
-removemember_7:
+removemember_8:
 proto 1 0
 txn Sender
 callsub authonly_2
@@ -310,7 +344,7 @@ pop
 retsub
 
 // add_member
-addmember_8:
+addmember_9:
 proto 2 0
 intc_0 // 0
 dup
@@ -333,11 +367,11 @@ intc_0 // 0
 !
 !
 frame_bury 1
-bytec 4 // 0x00
+bytec_2 // 0x00
 intc_0 // 0
 frame_dig 0
 setbyte
-bytec 4 // 0x00
+bytec_2 // 0x00
 intc_0 // 0
 frame_dig 1
 setbit
@@ -369,28 +403,73 @@ itxn_field AssetSender
 itxn_submit
 retsub
 
+// update_role
+updaterole_10:
+proto 2 0
+bytec_1 // ""
+intc_0 // 0
+dupn 2
+bytec_1 // ""
+dup
+txn Sender
+callsub authonly_4
+// unauthorized
+assert
+frame_dig -2
+txnas Accounts
+box_get
+store 19
+store 18
+load 19
+assert
+load 18
+frame_bury 0
+frame_dig 0
+pushint 8 // 8
+getbit
+frame_bury 1
+bytec_2 // 0x00
+intc_0 // 0
+frame_dig -1
+setbyte
+bytec_2 // 0x00
+intc_0 // 0
+frame_dig 1
+setbit
+concat
+frame_bury 0
+frame_dig -2
+txnas Accounts
+box_del
+pop
+frame_dig -2
+txnas Accounts
+frame_dig 0
+box_put
+retsub
+
 // get_membership_record
-getmembershiprecord_9:
+getmembershiprecord_11:
 proto 1 1
 bytec_1 // ""
 frame_dig -1
 box_get
-store 17
-store 16
-load 17
+store 21
+store 20
+load 21
 assert
-load 16
+load 20
 frame_bury 0
 retsub
 
 // set_affirmation
-setaffirmation_10:
+setaffirmation_12:
 proto 3 0
 txn Sender
-callsub authholdstoken_4
+callsub authholdstoken_5
 // unauthorized
 assert
-bytec_3 // "affirmations"
+bytec 4 // "affirmations"
 intc_2 // 64
 frame_dig -3
 *
@@ -399,14 +478,14 @@ box_replace
 retsub
 
 // get_affirmation
-getaffirmation_11:
+getaffirmation_13:
 proto 1 1
 bytec_1 // ""
 txn Sender
-callsub authholdstoken_5
+callsub authholdstoken_6
 // unauthorized
 assert
-bytec_3 // "affirmations"
+bytec 4 // "affirmations"
 intc_2 // 64
 global Round
 pushint 10 // 10
