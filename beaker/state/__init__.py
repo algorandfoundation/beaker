@@ -40,7 +40,7 @@ class StateDict(TypedDict):
 
 
 class State(Generic[ST]):
-    def __init__(self, namespace: Any, storage_namespace: type[ST]):
+    def __init__(self, namespace: Any, storage_class: type[ST]):
         self.fields: dict[str, ST] = {}
         self.schema = StateSchema(num_uints=0, num_byte_slices=0)
         for name in dir(namespace):
@@ -49,7 +49,7 @@ class State(Generic[ST]):
                     value = getattr(namespace, name, None)
                 except Exception:
                     value = None
-                if isinstance(value, storage_namespace):
+                if isinstance(value, storage_class):
                     match value.value_type():
                         case TealType.uint64:
                             self.schema.num_uints += value.num_keys()
@@ -90,7 +90,7 @@ class State(Generic[ST]):
 
 class ApplicationState(State):
     def __init__(self, namespace: Any):
-        super().__init__(namespace=namespace, storage_namespace=ApplicationStateStorage)
+        super().__init__(namespace=namespace, storage_class=ApplicationStateStorage)
 
         if self.total_keys > MAX_GLOBAL_STATE:
             raise ValueError(
@@ -104,7 +104,7 @@ class ApplicationState(State):
 
 class AccountState(State):
     def __init__(self, namespace: Any):
-        super().__init__(namespace=namespace, storage_namespace=AccountStateStorage)
+        super().__init__(namespace=namespace, storage_class=AccountStateStorage)
 
         if self.total_keys > MAX_LOCAL_STATE:
             raise ValueError(
