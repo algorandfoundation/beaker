@@ -51,7 +51,7 @@ class StateValue(Expr):
     def __init__(
         self,
         stack_type: Literal[TealType.bytes, TealType.uint64],
-        key: Expr | None = None,
+        key: Expr | str | None = None,
         default: Expr | None = None,
         static: bool = False,
         descr: str | None = None,
@@ -62,8 +62,11 @@ class StateValue(Expr):
         self.static = static
         self.descr = descr
 
-        if key is not None and key.type_of() != TealType.bytes:
-            raise TealTypeError(key.type_of(), TealType.bytes)
+        if key is not None:
+            if isinstance(key, str):
+                key = Bytes(key)
+            elif key.type_of() != TealType.bytes:
+                raise TealTypeError(key.type_of(), TealType.bytes)
         self.key = key
 
         if default is not None and default.type_of() != self.stack_type:
@@ -251,7 +254,7 @@ class AccountStateValue(StateValue, AccountStateStorage):
     def __init__(
         self,
         stack_type: Literal[TealType.bytes, TealType.uint64],
-        key: Expr | None = None,
+        key: Expr | str | None = None,
         default: Expr | None = None,
         static: bool = False,
         descr: str | None = None,

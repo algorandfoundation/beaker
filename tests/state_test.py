@@ -509,7 +509,8 @@ def test_application_state_instance():
         a = ApplicationStateValue(pt.TealType.uint64)
 
     class MyState(BaseState):
-        b = ApplicationStateValue(pt.TealType.bytes)
+        def __init__(self) -> None:
+            self.b = ApplicationStateValue(pt.TealType.bytes, key="b")
 
     astate = ApplicationState(MyState())
 
@@ -547,7 +548,8 @@ def test_account_state_instance():
         a = AccountStateValue(pt.TealType.uint64)
 
     class MyState(BaseState):
-        b = AccountStateValue(pt.TealType.bytes)
+        def __init__(self) -> None:
+            self.b = AccountStateValue(pt.TealType.bytes, key="b")
 
     astate = AccountState(MyState())
 

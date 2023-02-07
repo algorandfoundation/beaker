@@ -43,7 +43,13 @@ class ReservedStateValue(Generic[ST], ABC):
         max_keys: int,
         key_gen: KeyGenerator | None = None,
         descr: str | None = None,
+        *,
+        prefix: str | None = None,
     ):
+        if prefix is not None:
+            if key_gen is not None:
+                raise ValueError("Only one of key_gen or prefix can be specified")
+            key_gen = prefix_key_gen(prefix)
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
