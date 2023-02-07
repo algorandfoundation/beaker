@@ -1,10 +1,15 @@
-from typing import Any, Generic, TypeVar, TypedDict
+from typing import Any, Generic, TypeVar, TypeAlias
 
 from algosdk.transaction import StateSchema
 from pyteal import TealType, Expr, Seq, Txn
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
-from beaker.state._abc import ApplicationStateStorage, AccountStateStorage, StateStorage
+from beaker.state._abc import (
+    ApplicationStateStorage,
+    AccountStateStorage,
+    StateStorage,
+    AppSpecSchemaFragment,
+)
 from beaker.state.blob import StateBlob, ApplicationStateBlob, AccountStateBlob
 from beaker.state.primitive import (
     StateValue,
@@ -22,66 +27,50 @@ from beaker.state.reserved import (
 ST = TypeVar("ST", bound=StateStorage)
 
 
-class DeclaredStateDict(TypedDict):
-    type: str
-    key: str | bytes
-    descr: str
+StateDict: TypeAlias = dict[str, dict[str, dict]]
 
 
-class ReservedStateDict(TypedDict):
-    type: str
-    max_keys: int
-    descr: str
+T = TypeVar("T")
 
 
-class StateDict(TypedDict):
-    declared: dict[str, DeclaredStateDict]
-    reserved: dict[str, ReservedStateDict]
+def _get_attrs_of_type(namespace: Any, type_: type[T]) -> dict[str, T]:
+    result = {}
+    for name in dir(namespace):
+        if not name.startswith("__"):
+            try:
+                value = getattr(namespace, name, None)
+            except Exception:
+                value = None
+            if isinstance(value, type_):
+                result[name] = value
+    return result
 
 
 class State(Generic[ST]):
     def __init__(self, namespace: Any, storage_class: type[ST]):
-        self.fields: dict[str, ST] = {}
+        self._fields: list[ST] = []
         self.schema = StateSchema(num_uints=0, num_byte_slices=0)
-        for name in dir(namespace):
-            if not name.startswith("__"):
-                try:
-                    value = getattr(namespace, name, None)
-                except Exception:
-                    value = None
-                if isinstance(value, storage_class):
-                    match value.value_type():
-                        case TealType.uint64:
-                            self.schema.num_uints += value.num_keys()
-                        case TealType.bytes:
-                            self.schema.num_byte_slices += value.num_keys()
-                        case _:
-                            raise TypeError("Only uint64 and bytes supported")
-
-                    self.fields[name] = value
+        self._app_spec_fragment: StateDict = {"declared": {}, "reserved": {}}
+        for name, field in _get_attrs_of_type(namespace, storage_class).items():
+            match field.value_type():
+                case TealType.uint64:
+                    self.schema.num_uints += field.num_keys()
+                case TealType.bytes:
+                    self.schema.num_byte_slices += field.num_keys()
+                case _:
+                    raise TypeError("Only uint64 and bytes supported")
+            match field.app_spec_json():
+                case AppSpecSchemaFragment(section, data):
+                    self._app_spec_fragment.setdefault(section, {})[name] = data
+                case None:
+                    pass
+                case other:
+                    raise ValueError(f"Unhandled value: {other}")
+            self._fields.append(field)
 
     def dictify(self) -> StateDict:
         """Convert the state to a dict for encoding"""
-        return {
-            "declared": {
-                name: {
-                    "type": field.value_type().name,
-                    "key": field.known_keys()[0],  # type: ignore[index]
-                    "descr": field.description() or "",
-                }
-                for name, field in self.fields.items()
-                if field.known_keys() is not None and field.num_keys() == 1  # HACK!
-            },
-            "reserved": {
-                name: {
-                    "type": field.value_type().name,
-                    "max_keys": field.num_keys(),
-                    "descr": field.description() or "",
-                }
-                for name, field in self.fields.items()
-                if field.known_keys() is None  # HACK!
-            },
-        }
+        return self._app_spec_fragment
 
     @property
     def total_keys(self) -> int:
@@ -99,7 +88,7 @@ class ApplicationState(State):
 
     def initialize(self) -> Expr:
         """Generate expression from state values to initialize a default value"""
-        return Seq(list(filter(None, [f.initialize() for f in self.fields.values()])))
+        return Seq(list(filter(None, [f.initialize() for f in self._fields])))
 
 
 class AccountState(State):
@@ -113,6 +102,4 @@ class AccountState(State):
 
     def initialize(self, acct: Expr = Txn.sender()) -> Expr:
         """Generate expression from state values to initialize a default value"""
-        return Seq(
-            list(filter(None, [f.initialize(acct=acct) for f in self.fields.values()]))
-        )
+        return Seq(list(filter(None, [f.initialize(acct=acct) for f in self._fields])))

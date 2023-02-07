@@ -1,12 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from pyteal import TealType, Expr
 
 
+class AppSpecSchemaFragment(NamedTuple):
+    section: str
+    data: dict
+
+
 class StateStorage(ABC):
     @abstractmethod
-    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
+    def app_spec_json(self) -> AppSpecSchemaFragment | None:
         ...
 
     @abstractmethod
@@ -15,10 +20,6 @@ class StateStorage(ABC):
 
     @abstractmethod
     def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        ...
-
-    @abstractmethod
-    def description(self) -> str | None:
         ...
 
 

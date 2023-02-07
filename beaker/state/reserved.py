@@ -5,7 +5,12 @@ from pyteal import TealType, SubroutineFnWrapper, TealTypeError, Expr
 from pyteal.ast import abi
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
-from beaker.state._abc import ApplicationStateStorage, AccountStateStorage
+from beaker.state._abc import (
+    ApplicationStateStorage,
+    AccountStateStorage,
+    StateStorage,
+    AppSpecSchemaFragment,
+)
 from beaker.state.primitive import (
     StateValue,
     ApplicationStateValue,
@@ -26,7 +31,7 @@ KeyGenerator: TypeAlias = SubroutineFnWrapper | Callable[[Expr], Expr]
 ST = TypeVar("ST", bound=StateValue)
 
 
-class ReservedStateValue(Generic[ST], ABC):
+class ReservedStateValue(Generic[ST], StateStorage, ABC):
     """Base Class for ReservedStateValues
 
     Attributes:
@@ -85,6 +90,22 @@ class ReservedStateValue(Generic[ST], ABC):
     def _get_state_for_key(self, key: Expr) -> ST:
         ...
 
+    def num_keys(self) -> int:
+        return self.max_keys
+
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return self.stack_type
+
+    def app_spec_json(self) -> AppSpecSchemaFragment:
+        return AppSpecSchemaFragment(
+            "reserved",
+            {
+                "type": self.value_type().name,
+                "max_keys": self.num_keys(),
+                "descr": self.descr or "",
+            },
+        )
+
 
 class ReservedApplicationStateValue(
     ReservedStateValue[ApplicationStateValue], ApplicationStateStorage
@@ -100,21 +121,6 @@ class ReservedApplicationStateValue(
         descr (str): Description of the state value to provide some information to clients
     """
 
-    def initialize(self) -> Expr | None:
-        return None
-
-    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
-        return None
-
-    def num_keys(self) -> int:
-        return self.max_keys
-
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        return self.stack_type
-
-    def description(self) -> str | None:
-        return self.descr
-
     def __init__(
         self,
         stack_type: Literal[TealType.bytes, TealType.uint64],
@@ -126,6 +132,9 @@ class ReservedApplicationStateValue(
 
         if max_keys <= 0 or max_keys > MAX_GLOBAL_STATE:
             raise Exception(f"max keys expected to be between 0 and {MAX_GLOBAL_STATE}")
+
+    def initialize(self) -> Expr | None:
+        return None
 
     def _get_state_for_key(self, key: Expr) -> ApplicationStateValue:
         """Method to access the state value with the key seed provided"""
@@ -148,21 +157,6 @@ class ReservedAccountStateValue(
         descr (str): Description of the state value to provide some information to clients
     """
 
-    def initialize(self, acct: Expr) -> Expr | None:
-        return None
-
-    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
-        return None
-
-    def num_keys(self) -> int:
-        return self.max_keys
-
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        return self.stack_type
-
-    def description(self) -> str | None:
-        return self.descr
-
     def __init__(
         self,
         stack_type: Literal[TealType.bytes, TealType.uint64],
@@ -174,6 +168,9 @@ class ReservedAccountStateValue(
 
         if max_keys <= 0 or max_keys > MAX_LOCAL_STATE:
             raise Exception(f"max keys expected to be between 0 and {MAX_LOCAL_STATE}")
+
+    def initialize(self, acct: Expr) -> Expr | None:
+        return None
 
     def _get_state_for_key(self, key: Expr) -> AccountStateValue:
         """Access AccountState value given key_seed"""

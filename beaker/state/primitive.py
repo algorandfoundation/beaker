@@ -32,10 +32,15 @@ __all__ = [
     "identity_key_gen",
 ]
 
-from beaker.state._abc import ApplicationStateStorage, AccountStateStorage
+from beaker.state._abc import (
+    ApplicationStateStorage,
+    AccountStateStorage,
+    StateStorage,
+    AppSpecSchemaFragment,
+)
 
 
-class StateValue(Expr):
+class StateValue(Expr, StateStorage):
     """Base Class for state values
 
     Attributes:
@@ -119,6 +124,22 @@ class StateValue(Expr):
         default = _get_default_for_type(self.stack_type, self.default)
         return self.get() == default
 
+    def num_keys(self) -> int:
+        return 1
+
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return self.stack_type
+
+    def app_spec_json(self) -> AppSpecSchemaFragment:
+        return AppSpecSchemaFragment(
+            "declared",
+            {
+                "type": self.value_type().name,
+                "key": self.str_key(),
+                "descr": self.descr or "",
+            },
+        )
+
     @abstractmethod
     def set(self, val: Expr) -> Expr:
         """sets the value to the argument passed"""
@@ -160,21 +181,9 @@ class ApplicationStateValue(StateValue, ApplicationStateStorage):
     """
 
     def initialize(self) -> Expr | None:
-        if not self.static or (self.static and self.default is not None):
-            return self.set_default()
-        return None
-
-    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
-        return [self.str_key()]
-
-    def num_keys(self) -> int:
-        return 1
-
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        return self.stack_type
-
-    def description(self) -> str | None:
-        return self.descr
+        if self.static and self.default is None:
+            return None
+        return self.set_default()
 
     def __str__(self) -> str:
         return f"ApplicationStateValue {self.key}"
@@ -263,21 +272,9 @@ class AccountStateValue(StateValue, AccountStateStorage):
         self.acct: Expr = Txn.sender()
 
     def initialize(self, acct: Expr) -> Expr | None:
-        if not self.static or (self.static and self.default is not None):
-            return self[acct].set_default()
-        return None
-
-    def known_keys(self) -> list[str] | list[bytes] | list[str | bytes] | None:
-        return [self.str_key()]
-
-    def num_keys(self) -> int:
-        return 1
-
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        return self.stack_type
-
-    def description(self) -> str | None:
-        return self.descr
+        if self.static and self.default is None:
+            return None
+        return self[acct].set_default()
 
     def __str__(self) -> str:
         return f"AccountStateValue {self.acct} {self.key}"

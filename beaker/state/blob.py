@@ -13,10 +13,16 @@ __all__ = [
     "ApplicationStateBlob",
 ]
 
-from beaker.state._abc import AccountStateStorage, ApplicationStateStorage
+from beaker.state._abc import AccountStateStorage, ApplicationStateStorage, StateStorage
 
 
-class StateBlob(ABC):
+class StateBlob(StateStorage, ABC):
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
+        return TealType.bytes
+
+    def app_spec_json(self) -> None:
+        return None
+
     @abstractmethod
     def read(self, start: Expr, stop: Expr) -> Expr:
         """
@@ -77,17 +83,8 @@ class AccountStateBlob(AccountStateStorage, StateBlob):
         self.acct: Expr = Txn.sender()
         self.descr = descr
 
-    def description(self) -> str | None:
-        return self.descr
-
     def num_keys(self) -> int:
         return self.blob._max_keys
-
-    def known_keys(self) -> list[bytes]:
-        return self.blob.byte_keys
-
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        return TealType.bytes
 
     def initialize(self, acct: Expr) -> Expr:
         return self.blob.zero(acct=acct)
@@ -117,17 +114,8 @@ class ApplicationStateBlob(ApplicationStateStorage, StateBlob):
         self.blob = GlobalBlob(keys=keys)
         self.descr = descr
 
-    def description(self) -> str | None:
-        return self.descr
-
     def num_keys(self) -> int:
         return self.blob._max_keys
-
-    def known_keys(self) -> list[bytes]:
-        return self.blob.byte_keys
-
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        return TealType.bytes
 
     def initialize(self) -> Expr:
         return self.blob.zero()
