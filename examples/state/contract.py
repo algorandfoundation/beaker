@@ -12,23 +12,7 @@ from beaker.state import AccountStateBlob, ApplicationStateBlob
 
 
 class StateExample(Application):
-
-    declared_app_value: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.bytes,
-        default=Bytes(
-            "A declared state value that is protected with the `static` flag"
-        ),
-        descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
-        static=True,
-    )
-
-    reserved_app_value: Final[
-        ReservedApplicationStateValue
-    ] = ReservedApplicationStateValue(
-        stack_type=TealType.uint64,
-        max_keys=32,
-        descr="A reserved app state variable, with 32 possible keys",
-    )
+    account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
 
     application_blob: Final[ApplicationStateBlob] = ApplicationStateBlob(
         keys=16,
@@ -40,6 +24,15 @@ class StateExample(Application):
         descr="An int stored for each account that opts in",
     )
 
+    declared_app_value: Final[ApplicationStateValue] = ApplicationStateValue(
+        stack_type=TealType.bytes,
+        default=Bytes(
+            "A declared state value that is protected with the `static` flag"
+        ),
+        descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
+        static=True,
+    )
+
     reserved_account_value: Final[
         ReservedAccountStateValue
     ] = ReservedAccountStateValue(
@@ -47,8 +40,13 @@ class StateExample(Application):
         max_keys=8,
         descr="A reserved state value, allowing 8 keys to be reserved, in this case byte type",
     )
-
-    account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
+    reserved_app_value: Final[
+        ReservedApplicationStateValue
+    ] = ReservedApplicationStateValue(
+        stack_type=TealType.uint64,
+        max_keys=32,
+        descr="A reserved app state variable, with 32 possible keys",
+    )
 
     def __init__(self):
         super().__init__(

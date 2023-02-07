@@ -259,37 +259,37 @@ def test_state_init():
 
     class MyState:
         # global
-        uint_val = ApplicationStateValue(
-            stack_type=pt.TealType.uint64, descr="uint_val_description"
-        )
+        blob = ApplicationStateBlob(keys=4, descr="blob_description")
         byte_val = ApplicationStateValue(
             stack_type=pt.TealType.bytes, descr="byte_val_description"
         )
-        uint_dynamic = ReservedApplicationStateValue(
-            stack_type=pt.TealType.uint64, max_keys=3, descr="uint_dynamic_description"
+        uint_val = ApplicationStateValue(
+            stack_type=pt.TealType.uint64, descr="uint_val_description"
         )
         byte_dynamic = ReservedApplicationStateValue(
             stack_type=pt.TealType.bytes, max_keys=3, descr="byte_dynamic_description"
         )
-        blob = ApplicationStateBlob(keys=4, descr="blob_description")
-        # local
-        uint_acct_val = AccountStateValue(
-            stack_type=pt.TealType.uint64, descr="uint_acct_val_description"
+        uint_dynamic = ReservedApplicationStateValue(
+            stack_type=pt.TealType.uint64, max_keys=3, descr="uint_dynamic_description"
         )
+        # local
+        acct_blob = AccountStateBlob(keys=3, descr="acct_blob_description")
         byte_acct_val = AccountStateValue(
             stack_type=pt.TealType.bytes, descr="byte_acct_val_description"
         )
-        uint_acct_dynamic = ReservedAccountStateValue(
-            stack_type=pt.TealType.uint64,
-            max_keys=2,
-            descr="uint_acct_dynamic_description",
+        uint_acct_val = AccountStateValue(
+            stack_type=pt.TealType.uint64, descr="uint_acct_val_description"
         )
         byte_acct_dynamic = ReservedAccountStateValue(
             stack_type=pt.TealType.bytes,
             max_keys=2,
             descr="byte_acct_dynamic_description",
         )
-        acct_blob = AccountStateBlob(keys=3, descr="acct_blob_description")
+        uint_acct_dynamic = ReservedAccountStateValue(
+            stack_type=pt.TealType.uint64,
+            max_keys=2,
+            descr="uint_acct_dynamic_description",
+        )
         # box
         lst = List(value_type=abi.Uint32, elements=5, name="lst_description")
         # not-state

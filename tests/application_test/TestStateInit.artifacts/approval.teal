@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 127 1
-bytecblock 0x 0x75696e745f76616c 0x627974655f76616c
+bytecblock 0x 0x627974655f76616c 0x75696e745f76616c
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -76,13 +76,13 @@ retsub
 // create
 create_2:
 proto 0 0
-bytec_1 // "uint_val"
-intc_0 // 0
-app_global_put
-bytec_2 // "byte_val"
+callsub zeroimpl_0
+bytec_1 // "byte_val"
 bytec_0 // ""
 app_global_put
-callsub zeroimpl_0
+bytec_2 // "uint_val"
+intc_0 // 0
+app_global_put
 retsub
 
 // opt_in
@@ -92,22 +92,22 @@ txn ApplicationID
 intc_0 // 0
 ==
 bz optin_3_l2
-bytec_1 // "uint_val"
-intc_0 // 0
-app_global_put
-bytec_2 // "byte_val"
+callsub zeroimpl_0
+bytec_1 // "byte_val"
 bytec_0 // ""
 app_global_put
-callsub zeroimpl_0
+bytec_2 // "uint_val"
+intc_0 // 0
+app_global_put
 optin_3_l2:
 txn Sender
-pushbytes 0x75696e745f616363745f76616c // "uint_acct_val"
-intc_0 // 0
-app_local_put
+callsub zeroimpl_1
 txn Sender
 pushbytes 0x627974655f616363745f76616c // "byte_acct_val"
 bytec_0 // ""
 app_local_put
 txn Sender
-callsub zeroimpl_1
+pushbytes 0x75696e745f616363745f76616c // "uint_acct_val"
+intc_0 // 0
+app_local_put
 retsub

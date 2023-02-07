@@ -60,12 +60,6 @@ class ConstantProductAMM(Application):
 
     # Declare Application state, marking `Final` here so the python class var doesn't get changed
     # Marking a var `Final` does _not_ change anything at the AVM level
-    governor: Final[ApplicationStateValue] = ApplicationStateValue(
-        stack_type=TealType.bytes,
-        key=Bytes("g"),
-        default=Global.creator_address(),
-        descr="The current governor of this contract, allowed to do admin type actions",
-    )
     asset_a: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
         key=Bytes("a"),
@@ -77,6 +71,12 @@ class ConstantProductAMM(Application):
         key=Bytes("b"),
         static=True,
         descr="The asset id of asset B",
+    )
+    governor: Final[ApplicationStateValue] = ApplicationStateValue(
+        stack_type=TealType.bytes,
+        key=Bytes("g"),
+        default=Global.creator_address(),
+        descr="The current governor of this contract, allowed to do admin type actions",
     )
     pool_token: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,

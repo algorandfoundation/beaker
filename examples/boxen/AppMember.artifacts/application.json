@@ -40,11 +40,6 @@
     "schema": {
         "global": {
             "declared": {
-                "membership_token": {
-                    "type": "uint64",
-                    "key": "membership_token",
-                    "descr": ""
-                },
                 "club_app_id": {
                     "type": "uint64",
                     "key": "club_app_id",
@@ -53,6 +48,11 @@
                 "last_affirmation": {
                     "type": "bytes",
                     "key": "last_affirmation",
+                    "descr": ""
+                },
+                "membership_token": {
+                    "type": "uint64",
+                    "key": "membership_token",
                     "descr": ""
                 }
             },

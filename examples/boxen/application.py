@@ -201,9 +201,9 @@ class MembershipClub:
 
 class AppMember:
 
-    membership_token = ApplicationStateValue(TealType.uint64)
     club_app_id = ApplicationStateValue(TealType.uint64)
     last_affirmation = ApplicationStateValue(TealType.bytes)
+    membership_token = ApplicationStateValue(TealType.uint64)
 
     @classmethod
     def construct(cls) -> Application:

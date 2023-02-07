@@ -89,11 +89,6 @@
     "schema": {
         "global": {
             "declared": {
-                "governor": {
-                    "type": "bytes",
-                    "key": "g",
-                    "descr": "The current governor of this contract, allowed to do admin type actions"
-                },
                 "asset_a": {
                     "type": "uint64",
                     "key": "a",
@@ -103,6 +98,11 @@
                     "type": "uint64",
                     "key": "b",
                     "descr": "The asset id of asset B"
+                },
+                "governor": {
+                    "type": "bytes",
+                    "key": "g",
+                    "descr": "The current governor of this contract, allowed to do admin type actions"
                 },
                 "pool_token": {
                     "type": "uint64",
