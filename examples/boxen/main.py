@@ -5,8 +5,12 @@ from algosdk.transaction import PaymentTxn, AssetOptInTxn
 
 from beaker import client, consts, sandbox
 
-from examples.boxen.application import AppMember, MembershipRecord, MembershipClub
-
+from examples.boxen.application import (
+    MembershipRecord,
+    MinimumBalance,
+    app_member_app,
+    membership_club_app,
+)
 
 record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))
 
@@ -43,7 +47,7 @@ def demo():
     member_acct = accts.pop()
 
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), MembershipClub.construct(), signer=acct.signer
+        sandbox.get_algod_client(), membership_club_app, signer=acct.signer
     )
     print("Creating app")
     app_client.create()
@@ -56,7 +60,10 @@ def demo():
     sp.flat_fee = True
     sp.fee = 2000
     ptxn = PaymentTxn(
-        acct.address, sp, app_client.app_addr, MembershipClub._min_balance
+        acct.address,
+        sp,
+        app_client.app_addr,
+        MinimumBalance.value,
     )
     result = app_client.call(
         "bootstrap",
@@ -127,7 +134,7 @@ def demo():
     # Create App we'll use to be a member of club
     print("Creating app member")
     app_member_client = client.ApplicationClient(
-        sandbox.get_algod_client(), AppMember.construct(), signer=app_client.signer
+        sandbox.get_algod_client(), app_member_app, signer=app_client.signer
     )
     _, app_member_addr, _ = app_member_client.create()
 
