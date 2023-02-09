@@ -362,7 +362,7 @@ class ApplicationClient:
                 self.app.on_delete,
                 on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
-                sp=sp,
+                suggested_params=sp,
                 index=self.app_id,
                 app_args=args,
                 signer=signer,
