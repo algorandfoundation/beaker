@@ -175,6 +175,17 @@ def add_member(
     )
 
 
+@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+def update_role(member: abi.Account, new_role: abi.Uint8):
+    return Seq(
+        (mr := MembershipRecord()).decode(membership_records[member.address()].get()),
+        # retain their voted status
+        (voted := abi.Bool()).set(mr.voted),
+        mr.set(new_role, voted),
+        membership_records[member.address()].set(mr),
+    )
+
+
 @membership_club_app.external()
 def get_membership_record(member: abi.Address, *, output: MembershipRecord):
     return membership_records[member].store_into(output)
