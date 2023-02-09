@@ -2,7 +2,7 @@ import pytest
 import pyteal as pt
 import beaker as bkr
 
-from beaker.testing import UnitTestingApp, assert_output
+from tests.helpers import UnitTestingApp, assert_output
 
 from beaker.lib.storage.local_blob import LocalBlob
 from beaker.lib.storage.blob import blob_page_size

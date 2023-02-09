@@ -2,7 +2,7 @@ import pytest
 import pyteal as pt
 import beaker as bkr
 
-from beaker.testing import (
+from tests.helpers import (
     UnitTestingApp,
     assert_output,
     returned_int_as_bytes,

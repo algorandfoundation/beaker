@@ -14,11 +14,12 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.encoding import decode_address
 from algosdk.v2client.algod import AlgodClient
 
-from beaker import client, sandbox, testing, consts
+from beaker import client, sandbox, consts
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from examples.amm.amm import ConstantProductAMM, ConstantProductAMMErrors, amm_app
 from tests.conftest import check_application_artifacts_output_stability
+from tests import helpers
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()
@@ -154,7 +155,7 @@ def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
     """
     app_addr, _, _ = get_app_client_details(c)
 
-    xs = testing.get_balances(c.client, [app_addr])
+    xs = helpers.get_balances(c.client, [app_addr])
     assert app_addr in xs
     assert 0 in xs[app_addr]
     actual_algos = xs[app_addr][0]
@@ -358,7 +359,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
     _opt_in_to_token(addr, signer, pool_asset)
 
     balance_accts = [app_addr, addr]
-    balances_before = testing.get_balances(creator_app_client.client, balance_accts)
+    balances_before = helpers.get_balances(creator_app_client.client, balance_accts)
 
     a_amount = 10000
     b_amount = 3000
@@ -370,8 +371,8 @@ def test_app_fund(creator_app_client: ApplicationClient):
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, balance_accts)
-    balance_deltas = testing.get_deltas(balances_before, balances_after)
+    balances_after = helpers.get_balances(creator_app_client.client, balance_accts)
+    balance_deltas = helpers.get_deltas(balances_before, balances_after)
 
     assert balance_deltas[app_addr][a_asset] == a_amount
     assert balance_deltas[app_addr][b_asset] == b_amount
@@ -390,7 +391,7 @@ def test_mint(creator_app_client: ApplicationClient):
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
-    balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_before = helpers.get_balances(creator_app_client.client, [app_addr, addr])
 
     ratio_before = _get_ratio_from_state(creator_app_client)
 
@@ -404,8 +405,8 @@ def test_mint(creator_app_client: ApplicationClient):
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
-    balance_deltas = testing.get_deltas(balances_before, balances_after)
+    balances_after = helpers.get_balances(creator_app_client.client, [app_addr, addr])
+    balance_deltas = helpers.get_deltas(balances_before, balances_after)
 
     # App got the right amount
     assert balance_deltas[app_addr][a_asset] == a_amount
@@ -437,7 +438,7 @@ def test_burn(creator_app_client: ApplicationClient):
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
     assert addr
-    balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_before = helpers.get_balances(creator_app_client.client, [app_addr, addr])
 
     burn_amt = balances_before[addr][pool_asset] // 10
 
@@ -448,8 +449,8 @@ def test_burn(creator_app_client: ApplicationClient):
         ),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
-    balances_delta = testing.get_deltas(balances_before, balances_after)
+    balances_after = helpers.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_delta = helpers.get_deltas(balances_before, balances_after)
 
     assert balances_delta[app_addr][pool_asset] == burn_amt
 
@@ -482,7 +483,7 @@ def test_swap(creator_app_client: ApplicationClient):
 
     _, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
-    balances_before = testing.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_before = helpers.get_balances(creator_app_client.client, [app_addr, addr])
 
     swap_amt = balances_before[addr][a_asset] // 10
     creator_app_client.call(
@@ -490,8 +491,8 @@ def test_swap(creator_app_client: ApplicationClient):
         **build_swap_transaction(creator_app_client, (a_asset, b_asset), swap_amt),
     )
 
-    balances_after = testing.get_balances(creator_app_client.client, [app_addr, addr])
-    balances_delta = testing.get_deltas(balances_before, balances_after)
+    balances_after = helpers.get_balances(creator_app_client.client, [app_addr, addr])
+    balances_delta = helpers.get_deltas(balances_before, balances_after)
 
     assert balances_delta[app_addr][a_asset] == swap_amt
 

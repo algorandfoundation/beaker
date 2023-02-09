@@ -1,5 +1,5 @@
 import pyteal as pt
-from beaker.testing.unit_testing_helpers import UnitTestingApp, assert_output
+from tests.helpers import UnitTestingApp, assert_output
 
 from beaker.lib.iter import Iterate
 
