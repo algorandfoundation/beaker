@@ -2,24 +2,140 @@ import base64
 import dataclasses
 import json
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, TypedDict, TypeAlias, Literal
 
-from algosdk import abi, transaction
-from algosdk.abi import Contract
+from algosdk import transaction
+from algosdk.abi import Contract, Method
+from algosdk.abi.method import MethodDict
 from algosdk.transaction import StateSchema
-from pyteal import TealType, Bytes, MethodConfig, CallConfig
+from pyteal import (
+    Expr,
+    Int,
+    Bytes,
+    ABIReturnSubroutine,
+    CallConfig,
+    MethodConfig,
+    TealType,
+)
 
-from beaker.state import (
-    ApplicationStateValue,
-    AccountStateValue,
-    StateDict,
-)
-from beaker.decorators import (
-    MethodHints,
-    DefaultArgument,
-    DefaultArgumentType,
-    DefaultArgumentClass,
-)
+from beaker.state import AccountStateValue, ApplicationStateValue, StateDict
+
+
+class StructArgDict(TypedDict):
+    name: str
+    elements: list[tuple[str, str]]
+
+
+DefaultArgumentClass: TypeAlias = Literal[
+    "abi-method", "local-state", "global-state", "constant"
+]
+
+
+@dataclasses.dataclass
+class DefaultArgument:
+    """
+    DefaultArgument is a container for any arguments that may
+    be resolved prior to calling some target method
+    """
+
+    source: DefaultArgumentClass
+    data: int | str | bytes | MethodDict
+    stack_type: Literal["uint64", "bytes"] | None
+
+    def dictify(self) -> dict[str, Any]:
+        return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}
+
+    @staticmethod
+    def from_resolver(
+        resolver: Expr | ABIReturnSubroutine | Method | int | bytes | str,
+    ) -> "DefaultArgument":
+        resolvable_class: DefaultArgumentClass
+        data: int | str | bytes | MethodDict
+        match resolver:
+            # Expr types
+            case AccountStateValue() as asv:
+                resolvable_class = "local-state"
+                data = asv.str_key()
+            case ApplicationStateValue():
+                resolvable_class = "global-state"
+                data = resolver.str_key()
+            case Bytes():
+                resolvable_class = "constant"
+                data = resolver.byte_str.replace('"', "")
+            case Int():
+                resolvable_class = "constant"
+                data = resolver.value
+            # Native types
+            case int() | str() | bytes():
+                resolvable_class = "constant"
+                data = resolver
+            # FunctionType
+            case Method() as method:
+                resolvable_class = "abi-method"
+                data = method.dictify()
+            case ABIReturnSubroutine() as fn:
+                if not getattr(fn, "_read_only", None):
+                    raise ValueError(
+                        "Only ABI methods with read_only=True should be used as default arguments to other ABI methods"
+                    )
+                return DefaultArgument.from_resolver(fn.method_spec())
+            case _:
+                raise TypeError(
+                    f"Unexpected type for a default argument to ABI method: {type(resolver)}"
+                )
+
+        stack_type: Literal["uint64", "bytes"] | None
+        try:
+            teal_type = resolver.stack_type  # type: ignore[union-attr]
+        except AttributeError:
+            stack_type = None
+        else:
+            if teal_type == TealType.uint64:
+                stack_type = "uint64"
+            elif teal_type == TealType.bytes:
+                stack_type = "bytes"
+            else:
+                stack_type = None
+
+        return DefaultArgument(
+            source=resolvable_class, data=data, stack_type=stack_type
+        )
+
+
+@dataclasses.dataclass
+class MethodHints:
+    """MethodHints provides hints to the caller about how to call the method"""
+
+    #: hint to indicate this method can be called through Dryrun
+    read_only: bool = False
+    #: hint to provide names for tuple argument indices
+    #: method_name=>param_name=>{name:str, elements:[str,str]}
+    structs: dict[str, StructArgDict] = dataclasses.field(default_factory=dict)
+    #: defaults
+    default_arguments: dict[str, DefaultArgument] = dataclasses.field(
+        default_factory=dict
+    )
+    config: MethodConfig = dataclasses.field(default_factory=MethodConfig)
+
+    def empty(self) -> bool:
+        return not self.dictify()
+
+    def dictify(self) -> dict[str, Any]:
+        d: dict[str, Any] = {}
+        if self.read_only:
+            d["read_only"] = True
+        if self.default_arguments:
+            d["default_arguments"] = {
+                k: v.dictify() for k, v in self.default_arguments.items()
+            }
+        if self.structs:
+            d["structs"] = self.structs
+        sparse_config = {
+            k: v.name for k, v in self.config.__dict__.items() if v != CallConfig.NEVER
+        }
+        if sparse_config:
+            d["config"] = sparse_config
+        return d
 
 
 @dataclasses.dataclass
@@ -68,7 +184,7 @@ class ApplicationSpecification:
             application_spec = application_spec.read_text()
 
         application_json = json.loads(application_spec)
-        contract = abi.Contract.undictify(application_json["contract"])
+        contract = Contract.undictify(application_json["contract"])
         source = application_json["source"]
         approval_program = base64.b64decode(source["approval"]).decode("utf8")
         clear_program = base64.b64decode(source["clear"]).decode("utf8")
@@ -110,30 +226,7 @@ class ApplicationSpecification:
 
 
 def _default_argument_from_json(default_argument: dict[str, Any]) -> DefaultArgument:
-    source = default_argument["source"]
-    data = default_argument["data"]
-
-    def get_stack_type() -> Literal[TealType.bytes] | Literal[TealType.uint64]:
-        stack_type = default_argument["stack_type"]
-        if stack_type == "bytes":
-            return TealType.bytes
-        if stack_type == "uint64":
-            return TealType.uint64
-        raise NotImplementedError()
-
-    resolver: DefaultArgumentType
-    match source:
-        case DefaultArgumentClass.Constant.value:
-            resolver = data
-        case DefaultArgumentClass.GlobalState.value:
-            resolver = ApplicationStateValue(get_stack_type(), Bytes(data))
-        case DefaultArgumentClass.LocalState.value:
-            resolver = AccountStateValue(get_stack_type(), Bytes(data))
-        case DefaultArgumentClass.ABIMethod.value:
-            resolver = abi.Method.undictify(data)
-        case _:
-            raise NotImplementedError()
-    return DefaultArgument(resolver)
+    return DefaultArgument(**default_argument)
 
 
 def _method_hints_from_json(method_hints: dict[str, Any]) -> MethodHints:

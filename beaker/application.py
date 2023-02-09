@@ -35,11 +35,10 @@ from pyteal import (
     MethodConfig,
 )
 
-from beaker.application_specification import ApplicationSpecification
-from beaker.decorators import (
+from beaker.application_specification import (
+    ApplicationSpecification,
     MethodHints,
-    HandlerFunc,
-    capture_method_hints_and_remove_defaults,
+    DefaultArgument,
 )
 from beaker.decorators.authorize import _authorize
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
@@ -57,6 +56,8 @@ OnCompleteActionName: TypeAlias = Literal[
 T = TypeVar("T")
 P = ParamSpec("P")
 TState = TypeVar("TState", covariant=True)
+
+HandlerFunc = Callable[..., Expr]
 
 
 @dataclasses.dataclass
@@ -396,7 +397,7 @@ class Application(Generic[TState]):
                 )
                 return sub
             else:
-                hints = capture_method_hints_and_remove_defaults(
+                hints = _capture_method_hints_and_remove_defaults(
                     func,
                     read_only=read_only,
                     config=MethodConfig(**cast(dict[str, CallConfig], actions)),
@@ -903,3 +904,41 @@ def _remove_first_match(
         if predicate(k, v):
             del m[k]
             break
+
+
+def _capture_method_hints_and_remove_defaults(
+    fn: HandlerFunc,
+    read_only: bool,
+    config: MethodConfig,
+) -> MethodHints:
+    from pyteal.ast import abi
+
+    sig = inspect.signature(fn)
+    params = sig.parameters.copy()
+
+    mh = MethodHints(read_only=read_only, config=config)
+
+    for name, param in params.items():
+        match param.default:
+            case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
+                mh.default_arguments[name] = DefaultArgument.from_resolver(
+                    param.default
+                )
+                params[name] = param.replace(default=inspect.Parameter.empty)
+        if inspect.isclass(param.annotation) and issubclass(
+            param.annotation, abi.NamedTuple
+        ):
+            mh.structs[name] = {
+                "name": str(param.annotation.__name__),
+                "elements": [
+                    (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
+                    for name, typ in param.annotation.__annotations__.items()
+                ],
+            }
+
+    if mh.default_arguments:
+        # Fix function sig/annotations
+        newsig = sig.replace(parameters=list(params.values()))
+        fn.__signature__ = newsig  # type: ignore[attr-defined]
+
+    return mh

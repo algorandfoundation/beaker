@@ -14,9 +14,10 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
 )
 
-from beaker.decorators import Authorize, DefaultArgument
+from beaker.decorators import Authorize
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, CompilerOptions
+from beaker.application_specification import DefaultArgument
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
@@ -537,13 +538,22 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.create()
     ac.opt_in()
 
-    assert ac.resolve(DefaultArgument(pt.Int(1))) == 1
-    assert ac.resolve(DefaultArgument(pt.Bytes("stringy"))) == "stringy"
-    assert ac.resolve(DefaultArgument(AppState.app_state_val_int)) == 1
-    assert ac.resolve(DefaultArgument(AppState.app_state_val_byte)) == b"test"
-    assert ac.resolve(DefaultArgument(AppState.acct_state_val_int)) == 1
-    assert ac.resolve(DefaultArgument(AppState.acct_state_val_byte)) == b"test"
-    assert ac.resolve(DefaultArgument(app.abi_methods["dummy"])) == "deadbeef"
+    assert ac.resolve(DefaultArgument.from_resolver(pt.Int(1))) == 1
+    assert ac.resolve(DefaultArgument.from_resolver(pt.Bytes("stringy"))) == "stringy"
+    assert ac.resolve(DefaultArgument.from_resolver(AppState.app_state_val_int)) == 1
+    assert (
+        ac.resolve(DefaultArgument.from_resolver(AppState.app_state_val_byte))
+        == b"test"
+    )
+    assert ac.resolve(DefaultArgument.from_resolver(AppState.acct_state_val_int)) == 1
+    assert (
+        ac.resolve(DefaultArgument.from_resolver(AppState.acct_state_val_byte))
+        == b"test"
+    )
+    assert (
+        ac.resolve(DefaultArgument.from_resolver(app.abi_methods["dummy"]))
+        == "deadbeef"
+    )
 
 
 def test_override_app_create(sb_accts: SandboxAccounts):

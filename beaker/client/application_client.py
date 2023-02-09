@@ -24,16 +24,15 @@ from algosdk.v2client.algod import AlgodClient
 from pyteal import ABIReturnSubroutine, MethodConfig, CallConfig
 
 from beaker.application import Application
-from beaker.client.logic_error import LogicException, parse_logic_error
-from beaker.client.state_decode import decode_state
-from beaker.application_specification import ApplicationSpecification
-from beaker.consts import num_extra_program_pages
-from beaker.decorators import (
+from beaker.application_specification import (
+    ApplicationSpecification,
     MethodHints,
     DefaultArgument,
-    DefaultArgumentClass,
 )
-from beaker import Program
+from beaker.client.logic_error import LogicException, parse_logic_error
+from beaker.client.state_decode import decode_state
+from beaker.compilation import Program
+from beaker.consts import num_extra_program_pages
 
 
 class ApplicationClient:
@@ -706,18 +705,21 @@ class ApplicationClient:
         return b64decode(contents["value"])
 
     def resolve(self, to_resolve: DefaultArgument) -> Any:
-        if to_resolve.resolvable_class == DefaultArgumentClass.Constant:
-            return to_resolve.resolve_hint()
-        elif to_resolve.resolvable_class == DefaultArgumentClass.GlobalState:
-            key = to_resolve.resolve_hint()
+        if to_resolve.source == "constant":
+            return to_resolve.data
+        elif to_resolve.source == "global-state":
+            key = to_resolve.data
+            assert isinstance(key, str)
             app_state = self.get_application_state(raw=True)
             return app_state[key.encode()]
-        elif to_resolve.resolvable_class == DefaultArgumentClass.LocalState:
-            key = to_resolve.resolve_hint()
+        elif to_resolve.source == "local-state":
+            key = to_resolve.data
+            assert isinstance(key, str)
             acct_state = self.get_account_state(self.get_sender(), raw=True)
             return acct_state[key.encode()]
-        elif to_resolve.resolvable_class == DefaultArgumentClass.ABIMethod:
-            method = abi.Method.undictify(to_resolve.resolve_hint())
+        elif to_resolve.source == "abi-method":
+            assert isinstance(to_resolve.data, dict)
+            method = abi.Method.undictify(cast(dict, to_resolve.data))
             result = self.call(method)
             return result.return_value
         else:
