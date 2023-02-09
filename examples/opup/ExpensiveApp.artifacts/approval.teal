@@ -24,21 +24,21 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-store 7
+store 2
 txna ApplicationArgs 2
 btoi
-store 8
+store 3
 txna ApplicationArgs 3
 intc_0 // 0
 getbyte
-store 9
-load 7
-load 8
-load 9
+store 4
+load 2
+load 3
+load 4
 callsub hashit_3
-store 10
+store 5
 bytec_1 // 0x151f7c75
-load 10
+load 5
 concat
 log
 intc_1 // 1
@@ -55,17 +55,17 @@ assert
 txn GroupIndex
 intc_1 // 1
 -
-store 5
-load 5
+store 0
+load 0
 gtxns TypeEnum
 intc_1 // pay
 ==
 assert
-load 5
+load 0
 callsub opupbootstrap_1
-store 6
+store 1
 bytec_1 // 0x151f7c75
-load 6
+load 1
 itob
 concat
 log
@@ -123,9 +123,9 @@ itxn_submit
 intc_0 // 0
 bytec_0 // "ouaid"
 app_global_get_ex
-store 1
-store 0
-load 1
+store 7
+store 6
+load 7
 !
 assert
 bytec_0 // "ouaid"
@@ -144,29 +144,29 @@ app_global_get
 ==
 assert
 intc_0 // 0
-store 2
+store 8
 hashit_3_l1:
-load 2
+load 8
 pushint 255 // 255
 <
 bnz hashit_3_l5
 frame_dig -3
 extract 2 0
-store 3
+store 9
 intc_0 // 0
-store 4
+store 10
 hashit_3_l3:
-load 4
+load 10
 frame_dig -2
 <
 bz hashit_3_l6
-load 3
+load 9
 sha256
-store 3
-load 4
+store 9
+load 10
 intc_1 // 1
 +
-store 4
+store 10
 b hashit_3_l3
 hashit_3_l5:
 itxn_begin
@@ -180,12 +180,12 @@ itxn_field ApplicationArgs
 intc_0 // 0
 itxn_field Fee
 itxn_submit
-load 2
+load 8
 intc_1 // 1
 +
-store 2
+store 8
 b hashit_3_l1
 hashit_3_l6:
-load 3
+load 9
 frame_bury 0
 retsub

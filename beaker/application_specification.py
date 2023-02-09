@@ -40,7 +40,7 @@ class DefaultArgument:
 
     source: DefaultArgumentClass
     data: int | str | bytes | MethodDict
-    stack_type: Literal["uint64", "bytes"] | None
+    stack_type: Literal["uint64", "bytes"] | None = None
 
     def dictify(self) -> dict[str, Any]:
         return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}
@@ -130,11 +130,12 @@ class MethodHints:
             }
         if self.structs:
             d["structs"] = self.structs
-        sparse_config = {
-            k: v.name for k, v in self.config.__dict__.items() if v != CallConfig.NEVER
-        }
-        if sparse_config:
-            d["config"] = sparse_config
+        if not self.config.is_never():
+            d["config"] = {
+                k: v.name
+                for k, v in self.config.__dict__.items()
+                if v != CallConfig.NEVER
+            }
         return d
 
 
@@ -188,15 +189,14 @@ class ApplicationSpecification:
         source = application_json["source"]
         approval_program = base64.b64decode(source["approval"]).decode("utf8")
         clear_program = base64.b64decode(source["clear"]).decode("utf8")
-        hints_json = application_json["hints"]
         schema = application_json["schema"]
         state = application_json["state"]
-        local_state = _state_schema_from_json(state["local"])
-        global_state = _state_schema_from_json(state["global"])
-        hints = dict(
-            (x.name, _method_hints_from_json(hints_json.get(x.name)))
-            for x in contract.methods
-        )
+        local_state = transaction.StateSchema(**state["local"])
+        global_state = transaction.StateSchema(**state["global"])
+
+        hints = {
+            k: _method_hints_from_json(v) for k, v in application_json["hints"].items()
+        }
 
         return ApplicationSpecification(
             approval_program=approval_program,
@@ -225,30 +225,12 @@ class ApplicationSpecification:
         (directory / "application.json").write_text(self.to_json())
 
 
-def _default_argument_from_json(default_argument: dict[str, Any]) -> DefaultArgument:
-    return DefaultArgument(**default_argument)
-
-
 def _method_hints_from_json(method_hints: dict[str, Any]) -> MethodHints:
-    result = MethodHints()
-    if method_hints is None:
-        return result
-    if "read_only" in method_hints:
-        result.read_only = method_hints["read_only"]
-    if "structs" in method_hints:
-        # TODO: convert inner lists to tuple?,
-        result.structs = method_hints["structs"]
-    if "default_arguments" in method_hints:
-        result.default_arguments = {
-            k: _default_argument_from_json(v)
-            for k, v in method_hints["default_arguments"].items()
-        }
-    if "config" in method_hints:
-        result.config = MethodConfig(
-            **{k: CallConfig[v] for k, v in method_hints["config"].items()}
-        )
-    return result
-
-
-def _state_schema_from_json(schema: dict[str, Any]) -> transaction.StateSchema:
-    return transaction.StateSchema(schema["num_uints"], schema["num_byte_slices"])
+    method_hints["default_arguments"] = {
+        k: DefaultArgument(**v)
+        for k, v in method_hints.get("default_arguments", {}).items()
+    }
+    method_hints["config"] = MethodConfig(
+        **{k: CallConfig[v] for k, v in method_hints.get("config", {}).items()}
+    )
+    return MethodHints(**method_hints)

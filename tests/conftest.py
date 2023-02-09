@@ -31,7 +31,7 @@ def check_application_artifacts_output_stability(
         raise ValueError("Only one of dir_name and output_dir should be specified")
 
     algod_client = sandbox.get_algod_client()
-    app.build(algod_client)
+    spec = app.build(algod_client)
 
     if output_dir is None:
         caller_frame = inspect.stack()[1]
@@ -45,7 +45,7 @@ def check_application_artifacts_output_stability(
     output_dir_did_exist = output_dir.is_dir()
 
     output_dir_str = str(output_dir.resolve())
-    app.dump(output_dir_str)
+    spec.dump(output_dir)
     assert output_dir.is_dir()
     git_diff = subprocess.run(
         [
