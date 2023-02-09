@@ -375,6 +375,18 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
+    <span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+    <span class="k">def</span> <span class="nf">update_role</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Account</span><span class="p">,</span> <span class="n">new_role</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">mr</span> <span class="o">:=</span> <span class="n">MembershipRecord</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="o">.</span><span class="n">address</span><span class="p">()]</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="p">),</span>
+            <span class="c1"># retain their voted status</span>
+            <span class="p">(</span><span class="n">voted</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mr</span><span class="o">.</span><span class="n">voted</span><span class="p">),</span>
+            <span class="n">mr</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_role</span><span class="p">,</span> <span class="n">voted</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="o">.</span><span class="n">address</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mr</span><span class="p">),</span>
+        <span class="p">)</span>
+
     <span class="nd">@external</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">get_membership_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">MembershipRecord</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="p">]</span><span class="o">.</span><span class="n">store_into</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
@@ -439,10 +451,6 @@
             <span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">last_affirmation</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Suffix</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">last_log</span><span class="p">(),</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">))),</span>
         <span class="p">)</span>
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">MembershipClub</span><span class="p">()</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s2">&quot;./artifacts&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
