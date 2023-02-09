@@ -51,5 +51,5 @@ def test_list_app():
     def set(idx: pt.abi.Uint16, val: pt.abi.Uint64):
         return State.l[idx.get()].set(val)
 
-    compiled = t.compile()
+    compiled = t.build()
     assert compiled.approval_program

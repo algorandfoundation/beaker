@@ -123,13 +123,14 @@ def assert_output(
             "Expression undefined. Either pass the expr to test or implement unit_test method"
         )
 
+    spec = app.build(algod_client)
     app_client = client.ApplicationClient(
-        algod_client, app, signer=sandbox_accounts[0].signer
+        algod_client, app=spec, signer=sandbox_accounts[0].signer
     )
     app_client.create()
 
     has_state = (
-        app._acct_state.schema.num_byte_slices + app._acct_state.schema.num_uints > 0
+        spec.account_state_schema.num_byte_slices or spec.account_state_schema.num_uints
     )
 
     if has_state:

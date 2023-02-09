@@ -110,6 +110,10 @@ class LogicSignatureTemplate:
         avm_version: int = MAX_PROGRAM_VERSION,
     ):
         """initialize the logic signature and identify relevant attributes"""
+        if not runtime_template_variables:
+            raise ValueError(
+                "No runtime template variables supplied - use LogicSignature instead if that was intentional"
+            )
 
         self.runtime_template_variables: dict[str, RuntimeTemplateVariable] = {
             name: RuntimeTemplateVariable(stack_type=stack_type, name=name)

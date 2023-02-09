@@ -148,7 +148,7 @@ def test_local_blob_single_subroutine():
             output.decode(s.encode()),
         )
 
-    program = app.compile().approval_program
+    program = app.build().approval_program
     assert program
     assert program.count("write_impl") == 1
     assert program.count("read_impl") == 1

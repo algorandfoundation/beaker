@@ -16,7 +16,7 @@ from beaker.precompile import (
     AppPrecompile,
     LSigPrecompile,
     LSigTemplatePrecompile,
-    py_encode_uvarint,
+    _py_encode_uvarint,
 )
 
 
@@ -28,9 +28,9 @@ def test_compile():
     client = get_algod_client()
     precompile = AppPrecompile(app, client)
 
-    assert precompile.approval
-    approval_program = precompile.approval.raw_binary
-    approval_map = precompile.approval.source_map
+    assert precompile.approval_program
+    approval_program = precompile.approval_program.raw_binary
+    approval_map = precompile.approval_program.source_map
 
     assert len(approval_program) > 0, "Should have a valid approval program"
     assert approval_program[0] == version, "First byte should be the version we set"
@@ -39,9 +39,9 @@ def test_compile():
     ), "Should have valid source map with version 3"
     assert len(approval_map.pc_to_line) > 0, "Should have valid mapping"
 
-    assert precompile.clear
-    clear_program = precompile.clear.raw_binary
-    clear_map = precompile.clear.source_map
+    assert precompile.clear_program
+    clear_program = precompile.clear_program.raw_binary
+    clear_map = precompile.clear_program.source_map
     assert len(clear_program) > 0, "Should have a valid clear program"
     assert clear_program[0] == version, "First byte should be the version we set"
     assert (
@@ -68,13 +68,13 @@ def test_precompile_basic():
 
     assert app._lsig_precompiles == {}
 
-    compiled = app.compile(get_algod_client())
+    compiled = app.build(get_algod_client())
 
     assert compiled.approval_program
     assert compiled.clear_program
     lsig_pc = app._lsig_precompiles.get(lsig)
     assert lsig_pc is not None
-    assert lsig_pc.logic.binary is not None
+    assert lsig_pc.logic_program.binary is not None
 
 
 TMPL_BYTE_VALS = [
@@ -105,22 +105,22 @@ def test_templated_bytes(tmpl_val: str):
 
     assert app._lsig_template_precompiles == {}
 
-    compiled = app.compile(get_algod_client())
+    compiled = app.build(get_algod_client())
 
     assert compiled.approval_program
     assert compiled.approval_program
     pc = app._lsig_template_precompiles.get(lsig)
     assert pc is not None
-    assert pc.logic.binary_hash is not None
+    assert pc.logic_program.binary_hash is not None
 
-    populated_teal = pc.logic.populate_template(tv=tmpl_val)
+    populated_teal = pc._populate_template(tv=tmpl_val)
 
     vlen = len(tmpl_val)
     if type(tmpl_val) is str:
         vlen = len(tmpl_val.encode("utf-8"))
 
-    assert len(populated_teal) == len(pc.logic.raw_binary) + vlen + (
-        len(py_encode_uvarint(vlen)) - 1
+    assert len(populated_teal) == len(pc.logic_program.raw_binary) + vlen + (
+        len(_py_encode_uvarint(vlen)) - 1
     )
 
 
@@ -149,18 +149,18 @@ def test_templated_ints(tmpl_val: int):
 
     assert app._lsig_template_precompiles == {}
 
-    compiled = app.compile(get_algod_client())
+    compiled = app.build(get_algod_client())
 
     assert compiled.approval_program
     assert compiled.clear_program
     pc = app._lsig_template_precompiles.get(lsig)
     assert pc is not None
-    assert pc.logic.binary_hash is not None
+    assert pc.logic_program.binary_hash is not None
 
-    populated_teal = pc.logic.populate_template(tv=tmpl_val)
+    populated_teal = pc._populate_template(tv=tmpl_val)
 
-    assert len(populated_teal) == len(pc.logic.raw_binary) + (
-        len(py_encode_uvarint(tmpl_val)) - 1
+    assert len(populated_teal) == len(pc.logic_program.raw_binary) + (
+        len(_py_encode_uvarint(tmpl_val)) - 1
     )
 
 
@@ -184,8 +184,8 @@ def OuterApp() -> Application:
             pt.InnerTxnBuilder.Execute(
                 {
                     pt.TxnField.type_enum: pt.TxnType.ApplicationCall,
-                    pt.TxnField.approval_program: child.approval.binary,
-                    pt.TxnField.clear_state_program: child.clear.binary,
+                    pt.TxnField.approval_program: child.approval_program.binary,
+                    pt.TxnField.clear_state_program: child.clear_program.binary,
                     pt.TxnField.fee: pt.Int(0),
                 }
             ),
@@ -205,25 +205,25 @@ def test_nested_precompile():
 
     precompile = AppPrecompile(oa, get_algod_client())
 
-    assert precompile.approval.raw_binary
+    assert precompile.approval_program.raw_binary
 
     child = oa._app_precompiles.get(inner_app)
     assert child is not None
     lsig = oa._lsig_template_precompiles.get(inner_lsig)
     assert lsig is not None
 
-    assert child.approval.raw_binary is not None
-    assert child.clear.raw_binary is not None
-    assert lsig.logic.raw_binary is not None
+    assert child.approval_program.raw_binary is not None
+    assert child.clear_program.raw_binary is not None
+    assert lsig.logic_program.raw_binary is not None
 
-    assert len(lsig.logic._template_values) == 1
+    assert len(lsig._template_values) == 1
 
 
 def test_build_recursive():
     app = OuterApp()
     client = get_algod_client()
     pc = AppPrecompile(app, client)
-    _check_app_precompiles(pc)
+    _check_app_precompiles(app, pc)
 
 
 def LargeApp() -> Application:
@@ -262,72 +262,75 @@ def test_large_app_create():
 
 
 def test_page_hash():
-    small_precompile = AppPrecompile(Application("SmallApp"), get_algod_client())
-    _check_app_precompiles(small_precompile)
+    app = Application("SmallApp")
+    small_precompile = AppPrecompile(app, get_algod_client())
+    _check_app_precompiles(app, small_precompile)
 
 
 def test_extra_page_population():
 
     app = LargeApp()
     app_precompile = AppPrecompile(app, get_algod_client())
-    _check_app_precompiles(app_precompile)
+    _check_app_precompiles(app, app_precompile)
 
-    assert app_precompile.approval.program_pages is not None
-    assert app_precompile.clear.program_pages is not None
+    assert app_precompile.approval_program.pages is not None
+    assert app_precompile.clear_program.pages is not None
     recovered_approval_binary = b""
-    for approval_page in app_precompile.approval.program_pages:
+    for approval_page in app_precompile.approval_program.pages:
         assert isinstance(approval_page, Bytes)
         recovered_approval_binary += bytes.fromhex(approval_page.byte_str)
 
     recovered_clear_binary = b""
-    for clear_page in app_precompile.clear.program_pages:
+    for clear_page in app_precompile.clear_program.pages:
         assert isinstance(clear_page, Bytes)
         recovered_clear_binary += bytes.fromhex(clear_page.byte_str)
 
-    assert recovered_approval_binary == app_precompile.approval.raw_binary
-    assert recovered_clear_binary == app_precompile.clear.raw_binary
+    assert recovered_approval_binary == app_precompile.approval_program.raw_binary
+    assert recovered_clear_binary == app_precompile.clear_program.raw_binary
 
 
-def _check_app_precompiles(app_precompile: AppPrecompile):
-    for lp in app_precompile.app._lsig_precompiles.values():
+def _check_app_precompiles(app: Application, app_precompile: AppPrecompile):
+    for lp in app._lsig_precompiles.values():
         _check_lsig_precompiles(lp)
-    for ap in app_precompile.app._app_precompiles.values():
-        _check_app_precompiles(ap)
-    for ltp in app_precompile.app._lsig_template_precompiles.values():
-        _check_lsig_template_precompiles(ltp)
+    for nested_app, app_pc in app._app_precompiles.items():
+        _check_app_precompiles(nested_app, app_pc)
+    for lsig_template, ltp in app._lsig_template_precompiles.items():
+        _check_lsig_template_precompiles(lsig_template, ltp)
 
-    assert app_precompile.approval.teal != ""
-    assert app_precompile.approval.raw_binary is not None
-    assert app_precompile.approval.binary.byte_str != b""
-    assert app_precompile.approval.source_map is not None
-    assert app_precompile.approval.binary_hash is not None
+    assert app_precompile.approval_program.teal != ""
+    assert app_precompile.approval_program.raw_binary is not None
+    assert app_precompile.approval_program.binary.byte_str != b""
+    assert app_precompile.approval_program.source_map is not None
+    assert app_precompile.approval_program.binary_hash is not None
 
-    assert len(app_precompile.approval.program_pages) > 0
+    assert len(app_precompile.approval_program.pages) > 0
 
-    assert app_precompile.clear.teal != ""
-    assert app_precompile.clear.raw_binary is not None
-    assert app_precompile.clear.binary.byte_str != b""
-    assert app_precompile.clear.source_map is not None
-    assert app_precompile.clear.binary_hash is not None
-    assert len(app_precompile.clear.program_pages) > 0
+    assert app_precompile.clear_program.teal != ""
+    assert app_precompile.clear_program.raw_binary is not None
+    assert app_precompile.clear_program.binary.byte_str != b""
+    assert app_precompile.clear_program.source_map is not None
+    assert app_precompile.clear_program.binary_hash is not None
+    assert len(app_precompile.clear_program.pages) > 0
 
 
 def _check_lsig_precompiles(lsig_precompile: LSigPrecompile):
-    assert lsig_precompile.logic.teal != ""
-    assert lsig_precompile.logic.raw_binary is not None
-    assert lsig_precompile.logic.binary.byte_str != b""
-    assert lsig_precompile.logic.source_map is not None
-    assert lsig_precompile.logic.binary_hash is not None
+    assert lsig_precompile.logic_program.teal != ""
+    assert lsig_precompile.logic_program.raw_binary is not None
+    assert lsig_precompile.logic_program.binary.byte_str != b""
+    assert lsig_precompile.logic_program.source_map is not None
+    assert lsig_precompile.logic_program.binary_hash is not None
     assert lsig_precompile.address()
 
 
-def _check_lsig_template_precompiles(lsig_precompile: LSigTemplatePrecompile):
-    assert lsig_precompile.logic.teal != ""
-    assert lsig_precompile.logic.raw_binary is not None
-    assert lsig_precompile.logic.binary.byte_str != b""
-    assert lsig_precompile.logic.source_map is not None
-    assert lsig_precompile.logic.binary_hash is not None
+def _check_lsig_template_precompiles(
+    lsig_template: LogicSignatureTemplate, lsig_precompile: LSigTemplatePrecompile
+):
+    assert lsig_precompile.logic_program.teal != ""
+    assert lsig_precompile.logic_program.raw_binary is not None
+    assert lsig_precompile.logic_program.binary.byte_str != b""
+    assert lsig_precompile.logic_program.source_map is not None
+    assert lsig_precompile.logic_program.binary_hash is not None
     assert (
-        lsig_precompile.logic._template_values.keys()
-        == lsig_precompile.lsig.runtime_template_variables.keys()
+        lsig_precompile._template_values.keys()
+        == lsig_template.runtime_template_variables.keys()
     )

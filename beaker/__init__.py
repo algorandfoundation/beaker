@@ -14,7 +14,8 @@ from .state import (
 )
 from .decorators import Authorize
 from .logic_signature import LogicSignature, LogicSignatureTemplate
-from .precompile import Program, AppPrecompile, LSigPrecompile
+from .precompile import AppPrecompile, LSigPrecompile
+from .compilation import Program
 
 from . import client
 from . import sandbox

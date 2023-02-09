@@ -85,7 +85,7 @@ def demo():
     #     )
 
     # Get the signer for the lsig from its populated precompile
-    lsig_signer = app._lsig_template_precompiles[sig_checker].template_signer(
+    lsig_signer = app._lsig_template_precompiles[sig_checker].signer(
         user_addr=decode_address(acct.address)
     )
     # Prepare a new client so it can sign calls

@@ -16,6 +16,7 @@ from typing import (
     overload,
     Iterator,
     Generic,
+    MutableMapping,
 )
 
 from algosdk.v2client.algod import AlgodClient
@@ -34,7 +35,7 @@ from pyteal import (
     MethodConfig,
 )
 
-from beaker.compiled_application import CompiledApplication
+from beaker.application_specification import ApplicationSpecification
 from beaker.decorators import (
     MethodHints,
     HandlerFunc,
@@ -44,7 +45,6 @@ from beaker.decorators.authorize import _authorize
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import AppPrecompile, LSigPrecompile, LSigTemplatePrecompile
 from beaker.state import AccountState, ApplicationState
-from beaker.utils import remove_first_match
 
 OnCompleteActionName: TypeAlias = Literal[
     "no_op",
@@ -79,47 +79,13 @@ class CompileContext:
 _ctx: ContextVar[CompileContext] = ContextVar("beaker.compile_context")
 
 
-def this_app() -> "Application[TState]":
-    return _ctx.get().app
-
-
 @contextmanager
-def _set_ctx(app: "Application", client: AlgodClient | None = None) -> Iterator[None]:
-    if client is None:
-        curr = _ctx.get(None)
-        if curr is not None:
-            client = curr.client
+def _set_ctx(app: "Application", client: AlgodClient | None) -> Iterator[None]:
     token = _ctx.set(CompileContext(app=app, client=client))
     try:
         yield
     finally:
         _ctx.reset(token)
-
-
-@overload
-def precompiled(value: "Application", /) -> AppPrecompile:
-    ...
-
-
-@overload
-def precompiled(value: "LogicSignature", /) -> LSigPrecompile:
-    ...
-
-
-@overload
-def precompiled(value: "LogicSignatureTemplate", /) -> LSigTemplatePrecompile:
-    ...
-
-
-def precompiled(
-    value: "Application | LogicSignature | LogicSignatureTemplate",
-    /,
-) -> AppPrecompile | LSigPrecompile | LSigTemplatePrecompile:
-    try:
-        ctx = _ctx.get()
-    except LookupError:
-        raise LookupError("beaker.precompiled(...) should be called inside a function")
-    return ctx.app.precompiled(value)
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -290,8 +256,8 @@ class Application(Generic[TState]):
             method = self.abi_methods.pop(name_or_reference)
         else:
             method = name_or_reference
-            remove_first_match(self.abi_methods, lambda _, v: v is method)
-        remove_first_match(self._abi_externals, lambda _, v: v.method is method)
+            _remove_first_match(self.abi_methods, lambda _, v: v is method)
+        _remove_first_match(self._abi_externals, lambda _, v: v.method is method)
 
     def register_bare_external(
         self,
@@ -329,8 +295,8 @@ class Application(Generic[TState]):
             method = self.bare_methods.pop(name_or_reference)
         else:
             method = name_or_reference
-            remove_first_match(self.bare_methods, lambda _, v: v is method)
-        remove_first_match(self._bare_externals, lambda _, v: v.action is method)
+            _remove_first_match(self.bare_methods, lambda _, v: v is method)
+        _remove_first_match(self._bare_externals, lambda _, v: v.action is method)
 
     @overload
     def external(
@@ -813,14 +779,14 @@ class Application(Generic[TState]):
         blueprint(self, *args, **kwargs)
         return self
 
-    def compile(self, client: Optional[AlgodClient] = None) -> CompiledApplication:
-        """Fully compile the application to TEAL
+    def build(self, client: AlgodClient | None = None) -> ApplicationSpecification:
+        """Build the application specification, including transpiling the application to TEAL, and fully compiling
+        any nested (i.e. precompiled) apps/lsigs to byte code.
 
-        Note: If the application makes use of ``precompiled``, then ``client`` must be passed to
-        compile them into bytecode.
+        Note: .
 
         Args:
-            client (optional): An Algod client that can be passed to ``Precompile`` to have them fully compiled.
+            client (optional): An Algod client that is required if there are any ``precopiled`` so they can be fully compiled.
         """
 
         with _set_ctx(app=self, client=client):
@@ -855,7 +821,7 @@ class Application(Generic[TState]):
                 ),
             )
 
-        return CompiledApplication(
+        return ApplicationSpecification(
             approval_program=approval_program,
             clear_program=clear_program,
             contract=contract,
@@ -893,4 +859,47 @@ class Application(Generic[TState]):
             directory (optional): str path to the directory where the artifacts should be written
             client (optional): AlgodClient to be passed to any precompiles
         """
-        self.compile(client).dump(Path(directory))
+        self.build(client).dump(Path(directory))
+
+
+def this_app() -> Application[TState]:
+    return _ctx.get().app
+
+
+@overload
+def precompiled(value: Application, /) -> AppPrecompile:
+    ...
+
+
+@overload
+def precompiled(value: "LogicSignature", /) -> LSigPrecompile:
+    ...
+
+
+@overload
+def precompiled(value: "LogicSignatureTemplate", /) -> LSigTemplatePrecompile:
+    ...
+
+
+def precompiled(
+    value: "Application | LogicSignature | LogicSignatureTemplate",
+    /,
+) -> AppPrecompile | LSigPrecompile | LSigTemplatePrecompile:
+    try:
+        ctx = _ctx.get()
+    except LookupError:
+        raise LookupError("beaker.precompiled(...) should be called inside a function")
+    return ctx.app.precompiled(value)
+
+
+TKey = TypeVar("TKey")
+TValue = TypeVar("TValue")
+
+
+def _remove_first_match(
+    m: MutableMapping[TKey, TValue], predicate: Callable[[TKey, TValue], bool]
+) -> None:
+    for k, v in m.items():
+        if predicate(k, v):
+            del m[k]
+            break

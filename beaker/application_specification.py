@@ -23,7 +23,7 @@ from beaker.decorators import (
 
 
 @dataclasses.dataclass
-class CompiledApplication:
+class ApplicationSpecification:
     approval_program: str
     clear_program: str
     contract: Contract
@@ -33,11 +33,7 @@ class CompiledApplication:
     app_state_schema: StateSchema
     account_state_schema: StateSchema
 
-    def to_json(self) -> str:
-        return json.dumps(self.application_spec, indent=4)
-
-    @property
-    def application_spec(self) -> dict:
+    def dictify(self) -> dict:
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "source": {
@@ -63,8 +59,11 @@ class CompiledApplication:
             "contract": self.contract.dictify(),
         }
 
+    def to_json(self) -> str:
+        return json.dumps(self.dictify(), indent=4)
+
     @staticmethod
-    def from_json(application_spec: Path | str) -> "CompiledApplication":
+    def from_json(application_spec: Path | str) -> "ApplicationSpecification":
         if isinstance(application_spec, Path):
             application_spec = application_spec.read_text()
 
@@ -83,7 +82,7 @@ class CompiledApplication:
             for x in contract.methods
         )
 
-        return CompiledApplication(
+        return ApplicationSpecification(
             approval_program=approval_program,
             clear_program=clear_program,
             app_state=schema["global"],

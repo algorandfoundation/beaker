@@ -62,7 +62,7 @@ def demo():
 if __name__ == "__main__":
     import json
 
-    calc = calculator_app.compile()
+    calc = calculator_app.build()
     print(calc.approval_program)
     print(calc.clear_program)
     assert calc.contract

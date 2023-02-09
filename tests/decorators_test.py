@@ -17,9 +17,7 @@ def test_external_read_only():
     assert isinstance(handleable, pt.ABIReturnSubroutine)
     assert "handleable" in app.abi_methods
 
-    assert (
-        app.compile().application_spec["hints"]["handleable"].get("read_only") is True
-    )
+    assert app.build().dictify()["hints"]["handleable"].get("read_only") is True
 
 
 def test_authorize_only():
@@ -177,7 +175,7 @@ def test_named_tuple():
     def thing(o: Order) -> pt.Expr:
         return pt.Approve()
 
-    hints = app.compile().hints
+    hints = app.build().hints
     assert hints is not None
     thing_hints = hints.get("thing")
     assert thing_hints is not None

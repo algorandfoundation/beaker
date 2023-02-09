@@ -137,7 +137,7 @@ def demo():
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions
         nonce = get_nonce()
-        lsig_signer = lsig_pc.template_signer(nonce=nonce)
+        lsig_signer = lsig_pc.signer(nonce=nonce)
 
         print(
             f"Creating templated lsig with nonce {nonce} "

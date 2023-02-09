@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Any, Generic, TypeVar, TypeAlias
 
 from algosdk.transaction import StateSchema
@@ -48,29 +49,33 @@ def _get_attrs_of_type(namespace: Any, type_: type[T]) -> dict[str, T]:
 
 class State(Generic[ST]):
     def __init__(self, namespace: Any, storage_class: type[ST]):
-        self._fields: list[ST] = []
-        self.schema = StateSchema(num_uints=0, num_byte_slices=0)
-        self._app_spec_fragment: StateDict = {"declared": {}, "reserved": {}}
-        for name, field in _get_attrs_of_type(namespace, storage_class).items():
-            match field.value_type():
-                case TealType.uint64:
-                    self.schema.num_uints += field.num_keys()
-                case TealType.bytes:
-                    self.schema.num_byte_slices += field.num_keys()
-                case _:
-                    raise TypeError("Only uint64 and bytes supported")
-            match field.app_spec_json():
-                case AppSpecSchemaFragment(section, data):
-                    self._app_spec_fragment.setdefault(section, {})[name] = data
-                case None:
-                    pass
-                case other:
-                    raise ValueError(f"Unhandled value: {other}")
-            self._fields.append(field)
+        self._fields = _get_attrs_of_type(namespace, storage_class)
 
     def dictify(self) -> StateDict:
         """Convert the state to a dict for encoding"""
-        return self._app_spec_fragment
+        result: StateDict = {"declared": {}, "reserved": {}}
+        for name, field in self._fields.items():
+            match field.app_spec_json():
+                case AppSpecSchemaFragment(section, data):
+                    result.setdefault(section, {})[name] = data
+                case None:
+                    pass
+                case other:
+                    raise TypeError(f"Unhandled type: {type(other)}")
+        return result
+
+    @cached_property
+    def schema(self) -> StateSchema:
+        result = StateSchema(num_uints=0, num_byte_slices=0)
+        for field in self._fields.values():
+            match field.value_type():
+                case TealType.uint64:
+                    result.num_uints += field.num_keys()
+                case TealType.bytes:
+                    result.num_byte_slices += field.num_keys()
+                case _:
+                    raise TypeError("Only uint64 and bytes supported")
+        return result
 
     @property
     def total_keys(self) -> int:
@@ -88,7 +93,7 @@ class ApplicationState(State):
 
     def initialize(self) -> Expr:
         """Generate expression from state values to initialize a default value"""
-        return Seq(list(filter(None, [f.initialize() for f in self._fields])))
+        return Seq(*filter(None, [f.initialize() for f in self._fields.values()]))
 
 
 class AccountState(State):
@@ -102,4 +107,6 @@ class AccountState(State):
 
     def initialize(self, acct: Expr = Txn.sender()) -> Expr:
         """Generate expression from state values to initialize a default value"""
-        return Seq(list(filter(None, [f.initialize(acct=acct) for f in self._fields])))
+        return Seq(
+            *filter(None, [f.initialize(acct=acct) for f in self._fields.values()])
+        )

@@ -143,5 +143,5 @@ def get_reserved_account_state_val(k: abi.Uint8, *, output: abi.String):
 
 
 if __name__ == "__main__":
-    compiled = app.compile()
+    compiled = app.build()
     print(compiled.approval_program)

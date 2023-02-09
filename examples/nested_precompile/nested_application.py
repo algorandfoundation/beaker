@@ -61,8 +61,8 @@ def create_child_1(*, output: abi.Uint64) -> Expr:
         InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.ApplicationCall,
-                TxnField.approval_program: child_1_pc.approval.binary,
-                TxnField.clear_state_program: child_1_pc.clear.binary,
+                TxnField.approval_program: child_1_pc.approval_program.binary,
+                TxnField.clear_state_program: child_1_pc.clear_program.binary,
                 TxnField.global_num_uints: Int(1),
             }
         ),
@@ -78,8 +78,8 @@ def create_child_2(*, output: abi.Uint64) -> Expr:
         InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.ApplicationCall,
-                TxnField.approval_program: child_2_pc.approval.binary,
-                TxnField.clear_state_program: child_2_pc.clear.binary,
+                TxnField.approval_program: child_2_pc.approval_program.binary,
+                TxnField.clear_state_program: child_2_pc.clear_program.binary,
                 TxnField.global_num_uints: Int(1),
             }
         ),
@@ -98,8 +98,8 @@ def create_parent(*, output: abi.Uint64) -> Expr:
         InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.ApplicationCall,
-                TxnField.approval_program: parent_app_pc.approval.binary,
-                TxnField.clear_state_program: parent_app_pc.clear.binary,
+                TxnField.approval_program: parent_app_pc.approval_program.binary,
+                TxnField.clear_state_program: parent_app_pc.clear_program.binary,
             }
         ),
         output.set(InnerTxn.created_application_id()),

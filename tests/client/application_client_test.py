@@ -553,7 +553,7 @@ def test_override_app_create(sb_accts: SandboxAccounts):
     def create(x: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(x.get())
 
-    sc.compile()
+    sc.build()
 
     _, _, signer = sb_accts[0]
 

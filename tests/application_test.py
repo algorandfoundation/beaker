@@ -77,7 +77,7 @@ def test_method_overload():
         return pt.Approve()
 
     assert app.abi_methods == {"handle_algo": handle_algo, "handle_asa": handle_asa}
-    compiled = app.compile()
+    compiled = app.build()
     assert compiled.contract
     assert isinstance(handle_algo, pt.ABIReturnSubroutine)
     assert isinstance(handle_asa, pt.ABIReturnSubroutine)
@@ -136,7 +136,7 @@ def test_application_external_override_true():
     def handle_2():
         return pt.Assert(pt.Int(2))
 
-    compiled = app.compile()
+    compiled = app.build()
     assert compiled.contract
 
     assert isinstance(handle_2, pt.ABIReturnSubroutine)
@@ -177,7 +177,7 @@ def test_application_external_override_none(create_existing_handle: bool):
     def handle_2():
         return pt.Assert(pt.Int(2))
 
-    contract = app.compile().contract
+    contract = app.build().contract
     assert contract
     assert isinstance(handle_2, pt.ABIReturnSubroutine)
 
@@ -203,7 +203,7 @@ def test_application_bare_override_true():
     def handle_2():
         return pt.Assert(pt.Int(1))
 
-    app.compile()
+    app.build()
     assert list(app.bare_methods) == ["handle_2"]
 
 
@@ -250,7 +250,7 @@ def test_application_bare_override_none(create_existing_handle: bool):
     def handle_2():
         return pt.Assert(pt.Int(1))
 
-    app.compile()
+    app.build()
     assert list(app.bare_methods) == ["handle_2"]
 
 
@@ -311,26 +311,6 @@ def test_state_init():
             this_app().initialize_account_state(),
         )
 
-    assert app._app_state.schema.num_uints == 4
-    assert app._app_state.schema.num_byte_slices == 8
-    # assert app._app_state.fields.keys() == {
-    #     "uint_val",
-    #     "byte_val",
-    #     "uint_dynamic",
-    #     "byte_dynamic",
-    #     "blob",
-    # }
-
-    assert app._acct_state.schema.num_uints == 3
-    assert app._acct_state.schema.num_byte_slices == 6
-    # assert app._acct_state.fields.keys() == {
-    #     "uint_acct_val",
-    #     "byte_acct_val",
-    #     "uint_acct_dynamic",
-    #     "byte_acct_dynamic",
-    #     "acct_blob",
-    # }
-
     check_application_artifacts_output_stability(app)
 
 
@@ -347,7 +327,7 @@ def test_default_param_state():
     ):
         return pt.Assert(aid.asset_id() == HintyState.asset_id)
 
-    hints = h.compile().hints
+    hints = h.build().hints
     assert "hintymeth" in hints, "Expected a hint available for the method"
 
     hint = hints["hintymeth"]
@@ -376,7 +356,7 @@ def test_default_param_const():
     ):
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
-    hints = app.compile().hints
+    hints = app.build().hints
     assert "hintymeth" in hints, "Expected a hint available for the method"
 
     hint = hints["hintymeth"]
@@ -407,7 +387,7 @@ def test_default_read_only_method():
     ):
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
-    hints = app.compile().hints
+    hints = app.build().hints
     assert "hintymeth" in hints, "Expected a hint available for the method"
 
     hint = hints["hintymeth"]
@@ -484,7 +464,7 @@ def test_struct_args():
     ret = Returns("void")
     assert Method("structy", [arg], ret) == structy.method_spec()
 
-    assert app.compile().hints["structy"].structs == {
+    assert app.build().hints["structy"].structs == {
         "user_record": {
             "name": "UserRecord",
             "elements": [
@@ -517,11 +497,11 @@ def test_closure_vars():
         return app
 
     i1 = Inst("first")
-    i1_approval_program = i1.compile().approval_program
+    i1_approval_program = i1.build().approval_program
     assert i1_approval_program
 
     i2 = Inst("second")
-    i2_approval_program = i2.compile().approval_program
+    i2_approval_program = i2.build().approval_program
     assert i2_approval_program
 
     assert "first" in i1_approval_program, "Expected to see the string `first`"
@@ -563,4 +543,4 @@ def test_multi_optin():
     def opt2(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64):
         return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
-    test.compile()
+    test.build()

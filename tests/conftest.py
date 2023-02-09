@@ -31,22 +31,16 @@ def check_application_artifacts_output_stability(
         raise ValueError("Only one of dir_name and output_dir should be specified")
 
     algod_client = sandbox.get_algod_client()
-    app.compile(algod_client)
+    app.build(algod_client)
 
     if output_dir is None:
-        if type(app) is Application:
-            caller_frame = inspect.stack()[1]
-            # caller_name = caller_frame.function
-            caller_path = Path(caller_frame.filename).resolve()
-            caller_dir = caller_path.parent
-            if dir_per_test_file:
-                caller_dir /= caller_path.stem
-            output_dir = caller_dir / (dir_name or f"{app.name}.artifacts")
-        else:
-            app_class = app.__class__
-            module_path = Path(inspect.getfile(app_class))
-            module_dir = module_path.parent
-            output_dir = module_dir / (dir_name or f"{app.name}.artifacts")
+        caller_frame = inspect.stack()[1]
+        # caller_name = caller_frame.function
+        caller_path = Path(caller_frame.filename).resolve()
+        caller_dir = caller_path.parent
+        if dir_per_test_file:
+            caller_dir /= caller_path.stem
+        output_dir = caller_dir / (dir_name or f"{app.name}.artifacts")
 
     output_dir_did_exist = output_dir.is_dir()
 

@@ -94,8 +94,8 @@ def OpUp(
             InnerTxnBuilder.SetFields(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: target.approval.binary,
-                    TxnField.clear_state_program: target.clear.binary,
+                    TxnField.approval_program: target.approval_program.binary,
+                    TxnField.clear_state_program: target.clear_program.binary,
                     TxnField.fee: Int(0),
                 }
             ),

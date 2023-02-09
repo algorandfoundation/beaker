@@ -26,35 +26,35 @@ from pyteal import ABIReturnSubroutine, MethodConfig, CallConfig
 from beaker.application import Application
 from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.client.state_decode import decode_state
-from beaker.compiled_application import CompiledApplication
+from beaker.application_specification import ApplicationSpecification
 from beaker.consts import num_extra_program_pages
 from beaker.decorators import (
     MethodHints,
     DefaultArgument,
     DefaultArgumentClass,
 )
-from beaker.precompile import AppProgram
+from beaker import Program
 
 
 class ApplicationClient:
     def __init__(
         self,
         client: AlgodClient,
-        app: CompiledApplication | str | Path | Application,
+        app: ApplicationSpecification | str | Path | Application,
         app_id: int = 0,
         signer: TransactionSigner | None = None,
         sender: str | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
     ):
         self.client = client
-        self.app: CompiledApplication
+        self.app: ApplicationSpecification
         match app:
-            case CompiledApplication() as compiled_app:
+            case ApplicationSpecification() as compiled_app:
                 self.app = compiled_app
             case Application() as app:
-                self.app = app.compile(client)
+                self.app = app.build(client)
             case str() | Path():
-                self.app = CompiledApplication.from_json(app)
+                self.app = ApplicationSpecification.from_json(app)
         self.app_id = app_id
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
@@ -63,8 +63,8 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval = AppProgram(self.app.approval_program, self.client)
-        self.clear = AppProgram(self.app.clear_program, self.client)
+        self.approval = Program(self.app.approval_program, self.client)
+        self.clear = Program(self.app.clear_program, self.client)
 
         self.suggested_params = suggested_params
 
