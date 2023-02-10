@@ -102,7 +102,6 @@ return
 createsub_1:
 proto 0 1
 intc_0 // 0
-dupn 3
 itxn_begin
 intc_2 // appl
 itxn_field TypeEnum

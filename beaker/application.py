@@ -216,20 +216,25 @@ class Application(Generic[TState]):
             raise ValueError(
                 "beaker.precompiled(...) requires use of a client when calling Application.compile(...)"
             )
+        client = ctx.client
         match value:
             case Application() as app:
-                # TODO: check recursion?
-                return self._precompiled_apps.setdefault(
-                    app, PrecompiledApplication(app, ctx.client)
+                return _lazy_setdefault(
+                    self._precompiled_apps,
+                    app,
+                    lambda: PrecompiledApplication(app, client),
                 )
             case LogicSignature() as lsig:
-                return self._precompiled_lsigs.setdefault(
-                    lsig, PrecompiledLogicSignature(lsig, ctx.client)
+                return _lazy_setdefault(
+                    self._precompiled_lsigs,
+                    lsig,
+                    lambda: PrecompiledLogicSignature(lsig, client),
                 )
             case LogicSignatureTemplate() as lsig_template:
-                return self._precompiled_lsig_templates.setdefault(
+                return _lazy_setdefault(
+                    self._precompiled_lsig_templates,
                     lsig_template,
-                    PrecompiledLogicSignatureTemplate(lsig_template, ctx.client),
+                    lambda: PrecompiledLogicSignatureTemplate(lsig_template, client),
                 )
             case _:
                 raise TypeError("TODO write error message")
@@ -908,6 +913,8 @@ def precompiled(
         app: Application = this_app()
     except LookupError:
         raise LookupError("beaker.precompiled(...) should be called inside a function")
+    if value is app:
+        raise ValueError("Attempted to precompile the current application")
     return app.precompiled(value)
 
 
@@ -922,6 +929,18 @@ def _remove_first_match(
         if predicate(k, v):
             del m[k]
             break
+
+
+def _lazy_setdefault(
+    m: MutableMapping[TKey, TValue], key: TKey, default_factory: Callable[[], TValue]
+) -> TValue:
+    try:
+        return m[key]
+    except KeyError:
+        pass
+    default = default_factory()
+    m[key] = default
+    return default
 
 
 def _capture_method_hints_and_remove_defaults(
