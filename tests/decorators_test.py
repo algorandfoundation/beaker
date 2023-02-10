@@ -251,6 +251,20 @@ def test_bare():
     assert "external" in app.bare_methods
 
 
+@pytest.mark.parametrize(
+    "config", [pt.CallConfig.CREATE, pt.CallConfig.CALL, pt.CallConfig.ALL]
+)
+def test_external_method_config(config: pt.CallConfig):
+    app = Application("")
+
+    @app.external(method_config=pt.MethodConfig(no_op=config))
+    def external() -> pt.Expr:
+        return pt.Approve()
+
+    app_spec = app.build()
+    assert app_spec.hints["external"].config.no_op == config
+
+
 def test_account_state_resolvable():
     from beaker.state import AccountStateValue
 
@@ -294,6 +308,18 @@ def test_abi_method_resolvable():
 
     assert isinstance(x, pt.ABIReturnSubroutine)
     r = DefaultArgument.from_resolver(x)
+    assert r.source == "abi-method"
+
+
+def test_method_resolvable():
+    app = Application("")
+
+    @app.external(read_only=True)
+    def x():
+        return pt.Assert(pt.Int(1))
+
+    assert isinstance(x, pt.ABIReturnSubroutine)
+    r = DefaultArgument.from_resolver(x.method_spec())
     assert r.source == "abi-method"
 
 

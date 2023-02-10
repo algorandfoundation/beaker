@@ -20,8 +20,6 @@ from beaker.state import (
 )
 from tests.conftest import check_application_artifacts_output_stability
 
-options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
-
 
 def test_empty_application():
     app = Application("EmptyApp")
@@ -119,9 +117,6 @@ def test_mixed_bares():
 
     assert len(app.bare_methods) == 1
     assert len(app.abi_methods) == 1
-
-
-# TODO: add tests for CallConfig parameter in decorators
 
 
 def test_application_external_override_true():
@@ -223,9 +218,6 @@ def test_application_bare_override_false():
         )
         def handle_2():
             return pt.Assert(pt.Int(1))
-
-
-# TODO: test clear_state
 
 
 @pytest.mark.parametrize("create_existing_handle", [True, False])
