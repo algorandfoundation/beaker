@@ -1,9 +1,6 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, KeysView
 
-from algosdk.atomic_transaction_composer import LogicSigTransactionSigner
-from algosdk.transaction import LogicSigAccount
-from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     Seq,
     Bytes,
@@ -11,7 +8,6 @@ from pyteal import (
     ScratchVar,
     TealType,
     TealTypeError,
-    TealInputError,
     Int,
     Concat,
     Len,
@@ -28,6 +24,7 @@ from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
 from beaker.lib.strings import EncodeUVarInt
 
 if TYPE_CHECKING:
+    from algosdk.v2client.algod import AlgodClient
     from beaker.application import Application
     from beaker.logic_signature import (
         LogicSignature,
@@ -41,7 +38,7 @@ class AppPrecompile:
     should be fully compiled prior to constructing its own program.
     """
 
-    def __init__(self, app: "Application", client: AlgodClient):
+    def __init__(self, app: "Application", client: "AlgodClient"):
         app_spec = app.build(client)
         self._global_schema = app_spec.app_state_schema
         self._local_schema = app_spec.account_state_schema
@@ -56,20 +53,32 @@ class AppPrecompile:
         creating this application that can be passed directly to
         the InnerTxnBuilder.Execute method
         """
-        return {
+        result: dict[TxnField, Expr | list[Expr]] = {
             TxnField.type_enum: TxnType.ApplicationCall,
-            TxnField.local_num_byte_slices: Int(self._local_schema.num_byte_slices),
-            TxnField.local_num_uints: Int(self._local_schema.num_uints),
-            TxnField.global_num_byte_slices: Int(self._global_schema.num_byte_slices),
-            TxnField.global_num_uints: Int(self._global_schema.num_uints),
-            TxnField.approval_program_pages: self.approval_program.pages,
-            TxnField.clear_state_program_pages: self.clear_program.pages,
-            TxnField.extra_program_pages: Int(
+        }
+        approval_pages = self.approval_program.pages
+        clear_pages = self.clear_program.pages
+        if len(approval_pages) == 1 and len(clear_pages) == 1:
+            result[TxnField.approval_program] = approval_pages[0]
+            result[TxnField.clear_state_program] = clear_pages[0]
+        else:
+            result[TxnField.approval_program_pages] = approval_pages
+            result[TxnField.clear_state_program_pages] = clear_pages
+            result[TxnField.extra_program_pages] = Int(
                 num_extra_program_pages(
                     self.approval_program.raw_binary, self.clear_program.raw_binary
                 )
-            ),
-        }
+            )
+
+        if l_nbs := self._local_schema.num_byte_slices:
+            result[TxnField.local_num_byte_slices] = Int(l_nbs)
+        if l_nui := self._local_schema.num_uints:
+            result[TxnField.local_num_uints] = Int(l_nui)
+        if g_nbs := self._global_schema.num_byte_slices:
+            result[TxnField.global_num_byte_slices] = Int(g_nbs)
+        if g_nui := self._global_schema.num_uints:
+            result[TxnField.global_num_uints] = Int(g_nui)
+        return result
 
 
 class LSigPrecompile:
@@ -78,26 +87,12 @@ class LSigPrecompile:
     should be fully compiled prior to constructing its own program.
     """
 
-    def __init__(self, lsig: "LogicSignature", client: AlgodClient):
+    def __init__(self, lsig: "LogicSignature", client: "AlgodClient"):
         self.logic_program = Program(lsig.program, client)
 
     def address(self) -> Expr:
-        """hash returns an expression for this Precompile.
-        It will fail if any template_values are set.
-        """
-        if self.logic_program.binary_hash is None:
-            raise TealInputError("No address defined for precompile")
-
+        """Get the address from this LSig program."""
         return Addr(self.logic_program.binary_hash)
-
-    def signer(self) -> LogicSigTransactionSigner:
-        """
-        signer returns a LogicSigTransactionSigner to be used with
-        an ApplicationClient or AtomicTransactionComposer.
-
-        It should only be used for non templated Precompiles.
-        """
-        return LogicSigTransactionSigner(LogicSigAccount(self.logic_program.raw_binary))
 
 
 @dataclass
@@ -116,7 +111,7 @@ class LSigTemplatePrecompile:
     should be fully compiled prior to constructing its own program.
     """
 
-    def __init__(self, lsig: "LogicSignatureTemplate", client: AlgodClient):
+    def __init__(self, lsig: "LogicSignatureTemplate", client: "AlgodClient"):
         self._template_values: dict[str, PrecompileTemplateValue] = {}
 
         lines = lsig.program.splitlines()
@@ -153,16 +148,8 @@ class LSigTemplatePrecompile:
         return Sha512_256(
             Concat(
                 Bytes(PROGRAM_DOMAIN_SEPARATOR),
-                self._populate_template_expr(**kwargs),
+                self.populate_template_expr(**kwargs),
             )
-        )
-
-    def signer(self, **kwargs: str | bytes | int) -> LogicSigTransactionSigner:
-        """Get the Signer object for a populated version of the template contract"""
-        self._check_kwargs(kwargs.keys())
-
-        return LogicSigTransactionSigner(
-            LogicSigAccount(self._populate_template(**kwargs))
         )
 
     def _check_kwargs(self, keys: KeysView[str]) -> None:
@@ -172,18 +159,20 @@ class LSigTemplatePrecompile:
                 f"but got: {', '.join(keys)}"
             )
 
-    def _populate_template_expr(self, **kwargs: Expr) -> Expr:
+    def populate_template_expr(self, **kwargs: Expr) -> Expr:
         """
         populate_template_expr returns the Expr that will patch a
         blank binary given a set of arguments.
 
-        It is called by ``address`` to return a Expr that
+        It is called by ``address`` to return an Expr that
         can be used to compare with a sender given some arguments.
         """
 
         # To understand how this works, first look at the pure python one above
         # it should produce an identical output in terms of populated binary.
         # This function just reproduces the same effects in pyteal
+
+        self._check_kwargs(kwargs.keys())
 
         populate_program: list[Expr] = [
             (last_pos := ScratchVar(TealType.uint64)).store(Int(0)),
@@ -225,7 +214,7 @@ class LSigTemplatePrecompile:
 
         return Seq(*populate_program)
 
-    def _populate_template(self, **kwargs: str | bytes | int) -> bytes:
+    def populate_template(self, **kwargs: str | bytes | int) -> bytes:
         """
         populate_template returns the bytes resulting from patching the set of
         arguments passed into the blank binary
@@ -233,6 +222,8 @@ class LSigTemplatePrecompile:
         The args passed should be of the same type and in the same order as the
         template values declared.
         """
+
+        self._check_kwargs(kwargs.keys())
 
         # Get a copy of the binary so we can work on it in place
         populated_binary = list(self.logic_program.raw_binary)
@@ -276,8 +267,8 @@ def _py_encode_uvarint(integer: int) -> bytes:
     :return: bytes containing the integer encoded as an uvarint
     """
 
-    def to_byte(integer: int) -> int:
-        return integer & 0b1111_1111
+    def to_byte(x: int) -> int:
+        return x & 0b1111_1111
 
     buffer: bytearray = bytearray()
 

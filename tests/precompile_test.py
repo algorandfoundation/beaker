@@ -113,7 +113,7 @@ def test_templated_bytes(tmpl_val: str):
     assert pc is not None
     assert pc.logic_program.binary_hash is not None
 
-    populated_teal = pc._populate_template(tv=tmpl_val)
+    populated_teal = pc.populate_template(tv=tmpl_val)
 
     vlen = len(tmpl_val)
     if type(tmpl_val) is str:
@@ -157,7 +157,7 @@ def test_templated_ints(tmpl_val: int):
     assert pc is not None
     assert pc.logic_program.binary_hash is not None
 
-    populated_teal = pc._populate_template(tv=tmpl_val)
+    populated_teal = pc.populate_template(tv=tmpl_val)
 
     assert len(populated_teal) == len(pc.logic_program.raw_binary) + (
         len(_py_encode_uvarint(tmpl_val)) - 1

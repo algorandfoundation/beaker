@@ -6,8 +6,10 @@ from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
+    LogicSigTransactionSigner,
 )
 from algosdk.encoding import decode_address
+from algosdk.transaction import LogicSigAccount
 from nacl.signing import SigningKey
 from pyteal import Assert, Expr, abi, Txn, Ed25519Verify_Bare, Seq, Int, TealType
 
@@ -20,6 +22,7 @@ from beaker import (
     Application,
     unconditional_create_approval,
 )
+from beaker.precompile import LSigTemplatePrecompile
 
 Signature = abi.StaticBytes[Literal[64]]
 
@@ -85,8 +88,11 @@ def demo():
     #     )
 
     # Get the signer for the lsig from its populated precompile
-    lsig_signer = app._lsig_template_precompiles[sig_checker].signer(
-        user_addr=decode_address(acct.address)
+    lsig_pc = LSigTemplatePrecompile(sig_checker, app_client.client)
+    lsig_signer = LogicSigTransactionSigner(
+        LogicSigAccount(
+            lsig_pc.populate_template(user_addr=decode_address(acct.address))
+        )
     )
     # Prepare a new client so it can sign calls
     lsig_client = app_client.prepare(signer=lsig_signer)

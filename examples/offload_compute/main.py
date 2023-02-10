@@ -2,8 +2,9 @@ from Cryptodome.Hash import keccak
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
+    LogicSigTransactionSigner,
 )
-from algosdk.transaction import PaymentTxn
+from algosdk.transaction import PaymentTxn, LogicSigAccount
 from pyteal import Assert, Seq, Txn, abi, Expr
 
 from beaker import (
@@ -13,6 +14,7 @@ from beaker import (
     sandbox,
     precompiled,
     unconditional_create_approval,
+    LSigPrecompile,
 )
 
 from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
@@ -55,7 +57,10 @@ def demo():
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_signer = eth_checker._lsig_precompiles[verify_lsig].signer()
+    lsig_pc = LSigPrecompile(verify_lsig, algod_client)
+    lsig_signer = LogicSigTransactionSigner(
+        LogicSigAccount(lsig_pc.logic_program.raw_binary)
+    )
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()
