@@ -15,16 +15,16 @@ from pyteal import (
     ABIReturnSubroutine,
     CallConfig,
     MethodConfig,
-    TealType,
 )
-
-from beaker.state import AccountStateValue, ApplicationStateValue, StateDict
 
 __all__ = [
     "DefaultArgument",
     "MethodHints",
     "ApplicationSpecification",
+    "StateDict",
 ]
+
+StateDict: TypeAlias = dict[str, dict[str, dict]]
 
 
 class StructArgDict(TypedDict):
@@ -55,26 +55,29 @@ class DefaultArgument:
     def from_resolver(
         resolver: Expr | ABIReturnSubroutine | Method | int | bytes | str,
     ) -> "DefaultArgument":
+        from beaker.state.primitive import AccountStateValue, ApplicationStateValue
+
         resolvable_class: DefaultArgumentClass
         data: int | str | bytes | MethodDict
+        stack_type: Literal["uint64", "bytes"] | None = None
         match resolver:
-            # Expr types
-            case AccountStateValue() as asv:
-                resolvable_class = "local-state"
-                data = asv.str_key()
-            case ApplicationStateValue():
-                resolvable_class = "global-state"
-                data = resolver.str_key()
-            case Bytes():
-                resolvable_class = "constant"
-                data = resolver.byte_str.replace('"', "")
-            case Int():
-                resolvable_class = "constant"
-                data = resolver.value
             # Native types
             case int() | str() | bytes():
                 resolvable_class = "constant"
                 data = resolver
+            # Expr types
+            case Bytes():
+                return DefaultArgument.from_resolver(resolver.byte_str.replace('"', ""))
+            case Int():
+                return DefaultArgument.from_resolver(resolver.value)
+            case AccountStateValue() as acct_sv:
+                resolvable_class = "local-state"
+                data = acct_sv.str_key()
+                stack_type = acct_sv.stack_type.name  # type: ignore[assignment]
+            case ApplicationStateValue() as app_sv:
+                resolvable_class = "global-state"
+                data = app_sv.str_key()
+                stack_type = app_sv.stack_type.name  # type: ignore[assignment]
             # FunctionType
             case Method() as method:
                 resolvable_class = "abi-method"
@@ -90,21 +93,10 @@ class DefaultArgument:
                     f"Unexpected type for a default argument to ABI method: {type(resolver)}"
                 )
 
-        stack_type: Literal["uint64", "bytes"] | None
-        try:
-            teal_type = resolver.stack_type  # type: ignore[union-attr]
-        except AttributeError:
-            stack_type = None
-        else:
-            if teal_type == TealType.uint64:
-                stack_type = "uint64"
-            elif teal_type == TealType.bytes:
-                stack_type = "bytes"
-            else:
-                stack_type = None
-
         return DefaultArgument(
-            source=resolvable_class, data=data, stack_type=stack_type
+            source=resolvable_class,
+            data=data,
+            stack_type=stack_type,
         )
 
 

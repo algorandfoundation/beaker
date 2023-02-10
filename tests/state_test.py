@@ -1,13 +1,12 @@
 import pytest
 import pyteal as pt
 from beaker.state import (
-    ApplicationState,
-    AccountState,
     ReservedAccountStateValue,
     ReservedApplicationStateValue,
     ApplicationStateValue,
     AccountStateValue,
 )
+from beaker.state._aggregate import ApplicationStateAggregate, AccountStateAggregate
 from beaker.state.primitive import _get_default_for_type
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
@@ -492,7 +491,7 @@ def test_application_state_type():
     class MyState(BaseState):
         b = ApplicationStateValue(pt.TealType.bytes)
 
-    astate = ApplicationState(MyState)
+    astate = ApplicationStateAggregate(MyState)
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
@@ -501,7 +500,7 @@ def test_application_state_type():
         c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
 
     with pytest.raises(Exception):
-        ApplicationState(MyBigState)
+        ApplicationStateAggregate(MyBigState)
 
 
 def test_application_state_instance():
@@ -512,7 +511,7 @@ def test_application_state_instance():
         def __init__(self) -> None:
             self.b = ApplicationStateValue(pt.TealType.bytes, key="b")
 
-    astate = ApplicationState(MyState())
+    astate = ApplicationStateAggregate(MyState())
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
@@ -521,7 +520,7 @@ def test_application_state_instance():
         c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
 
     with pytest.raises(Exception):
-        ApplicationState(MyBigState())
+        ApplicationStateAggregate(MyBigState())
 
 
 def test_account_state_type():
@@ -531,7 +530,7 @@ def test_account_state_type():
     class MyState(BaseState):
         b = AccountStateValue(pt.TealType.bytes)
 
-    astate = AccountState(MyState)
+    astate = AccountStateAggregate(MyState)
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
@@ -540,7 +539,7 @@ def test_account_state_type():
         c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
 
     with pytest.raises(Exception):
-        AccountState(MyBigState)
+        AccountStateAggregate(MyBigState)
 
 
 def test_account_state_instance():
@@ -551,7 +550,7 @@ def test_account_state_instance():
         def __init__(self) -> None:
             self.b = AccountStateValue(pt.TealType.bytes, key="b")
 
-    astate = AccountState(MyState())
+    astate = AccountStateAggregate(MyState())
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
@@ -560,4 +559,4 @@ def test_account_state_instance():
         c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
 
     with pytest.raises(Exception):
-        AccountState(MyBigState())
+        AccountStateAggregate(MyBigState())

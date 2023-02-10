@@ -45,7 +45,7 @@ from beaker.precompile import (
     PrecompiledLogicSignature,
     PrecompiledLogicSignatureTemplate,
 )
-from beaker.state import AccountState, ApplicationState
+from beaker.state._aggregate import ApplicationStateAggregate, AccountStateAggregate
 
 if typing.TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
@@ -146,8 +146,8 @@ class Application(Generic[TState]):
         ] = {}
         self._precompiled_apps: dict[Application, PrecompiledApplication] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self._acct_state = AccountState(self._state)
-        self._app_state = ApplicationState(self._state)
+        self._acct_state = AccountStateAggregate(self._state)
+        self._app_state = ApplicationStateAggregate(self._state)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
