@@ -1,4 +1,4 @@
-from typing import Final
+from typing import Final, Callable
 
 from pyteal import (
     Global,
@@ -6,8 +6,6 @@ from pyteal import (
     abi,
     InnerTxnBuilder,
     Seq,
-    Bytes,
-    TxnType,
     InnerTxn,
     TxnField,
     Assert,
@@ -19,25 +17,14 @@ from pyteal import (
     Subroutine,
 )
 
-from beaker.application import Application, precompiled
-from beaker.blueprints import unconditional_create_approval
+from beaker import (
+    Application,
+    precompiled,
+    unconditional_create_approval,
+    Authorize,
+    ApplicationStateValue,
+)
 from beaker.consts import Algos
-from beaker.decorators import Authorize
-from beaker.state import ApplicationStateValue
-
-
-def TargetApp() -> Application:
-
-    app = Application(
-        name="TargetApp",
-        descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
-    ).implement(unconditional_create_approval)
-
-    @app.external(authorize=Authorize.only(Global.creator_address()))
-    def opup():
-        return Approve()
-
-    return app
 
 
 def Repeat(n: int, expr: Expr) -> Expr:
@@ -57,19 +44,19 @@ def Repeat(n: int, expr: Expr) -> Expr:
 class OpUpState:
     #: The id of the app created during `bootstrap`
     opup_app_id = ApplicationStateValue(
-        stack_type=TealType.uint64, key=Bytes("ouaid"), static=True
+        stack_type=TealType.uint64, key="ouaid", static=True
     )
 
 
-def OpUp(
-    target_app: Application, name: str | None = None, descr: str | None = None
-) -> Application:
-    app = Application(
-        name=name or "OpUp",
-        state=OpUpState,
-        descr=descr
-        or """OpUp creates a "target" application to make opup calls against in order to increase our opcode budget.""",
+def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
+    target_app = Application(
+        name="TargetApp",
+        descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
     ).implement(unconditional_create_approval)
+
+    @target_app.external(authorize=Authorize.only(Global.creator_address()))
+    def opup():
+        return Approve()
 
     #: The minimum balance required for this class
     min_balance: Final[Expr] = Algos(0.1)
@@ -93,9 +80,7 @@ def OpUp(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
                 {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: target.approval_program.binary,
-                    TxnField.clear_state_program: target.clear_program.binary,
+                    **target.get_create_config(),
                     TxnField.fee: Int(0),
                 }
             ),
@@ -103,4 +88,14 @@ def OpUp(
             OpUpState.opup_app_id.set(InnerTxn.created_application_id()),
         )
 
-    return app
+    # No decorator, inline it
+    def call_opup() -> Expr:
+        """internal method to just return the method call to our target app"""
+        return InnerTxnBuilder.ExecuteMethodCall(
+            app_id=OpUpState.opup_app_id,
+            method_signature=opup.method_signature(),  # type: ignore[union-attr]
+            args=[],
+            extra_fields={TxnField.fee: Int(0)},
+        )
+
+    return call_opup

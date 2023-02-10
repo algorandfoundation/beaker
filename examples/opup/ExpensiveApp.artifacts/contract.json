@@ -36,5 +36,5 @@
         }
     ],
     "networks": {},
-    "desc": "Do expensive work to demonstrate inheriting from OpUp"
+    "desc": "Do expensive work to demonstrate implementing op_up blueprint"
 }

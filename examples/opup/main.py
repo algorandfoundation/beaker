@@ -8,7 +8,7 @@ from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_algod_client, get_accounts
 
-from examples.opup.contract import ExpensiveApp
+from examples.opup.contract import expensive_app
 
 
 client = get_algod_client()
@@ -22,7 +22,6 @@ def demo():
     # we need to cover 255 inner transactions + ours
     sp.flat_fee = True
     sp.fee = 256 * milli_algo
-    expensive_app = ExpensiveApp()
     app_client = ApplicationClient(
         client, expensive_app, signer=acct.signer, suggested_params=sp
     )
