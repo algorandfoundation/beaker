@@ -108,7 +108,7 @@ MinimumBalance = Int(_min_balance)
 
 
 membership_club_app = Application(
-    "MembershipClub", state=MembershipClubState
+    "MembershipClub", state=MembershipClubState()
 ).implement(unconditional_create_approval)
 
 
