@@ -31,7 +31,7 @@ from beaker import (
 )
 from beaker.application import CompilerOptions
 from beaker.blueprints import unconditional_create_approval
-from beaker.precompile import LSigTemplatePrecompile
+from beaker.precompile import PrecompiledLogicSignatureTemplate
 
 
 # Simple logic sig, will approve _any_ transaction
@@ -133,7 +133,7 @@ def demo():
 
     # Create 10 random nonces for unique lsig accounts
     # and make them opt in to the app
-    lsig_pc = LSigTemplatePrecompile(key_sig, app_client.client)
+    lsig_pc = PrecompiledLogicSignatureTemplate(key_sig, app_client.client)
     for _ in range(10):
         # Populate the binary template with the random nonce and get back
         # a Signer obj to submit transactions

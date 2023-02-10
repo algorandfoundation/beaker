@@ -7,6 +7,11 @@ from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 from pyteal import Bytes, Expr
 
+__all__ = [
+    "ProgramAssertion",
+    "Program",
+]
+
 
 @dataclass
 class ProgramAssertion:

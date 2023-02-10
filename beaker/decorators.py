@@ -20,7 +20,7 @@ from pyteal import (
 
 __all__ = [
     "Authorize",
-    "_authorize",
+    "authorize",
 ]
 
 
@@ -79,7 +79,7 @@ HandlerReturn = TypeVar("HandlerReturn", bound=Expr)
 HandlerParams = ParamSpec("HandlerParams")
 
 
-def _authorize(
+def authorize(
     allowed: SubroutineFnWrapper,
 ) -> Callable[[Callable[HandlerParams, HandlerReturn]], Callable[HandlerParams, Expr]]:
     auth_sub_args = allowed.subroutine.expected_arg_types

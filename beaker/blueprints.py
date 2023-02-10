@@ -2,6 +2,11 @@ from pyteal import Expr, Approve
 
 from beaker import Application, this_app
 
+__all__ = [
+    "unconditional_create_approval",
+    "unconditional_opt_in_approval",
+]
+
 
 def unconditional_create_approval(
     app: Application, initialize_app_state: bool = False

@@ -15,6 +15,11 @@ from pyteal import (
     TealSimpleBlock,
 )
 
+__all__ = [
+    "LogicSignature",
+    "LogicSignatureTemplate",
+]
+
 
 class RuntimeTemplateVariable(Expr):
     """

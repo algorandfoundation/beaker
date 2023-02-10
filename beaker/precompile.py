@@ -32,7 +32,14 @@ if TYPE_CHECKING:
     )
 
 
-class AppPrecompile:
+__all__ = [
+    "PrecompiledApplication",
+    "PrecompiledLogicSignature",
+    "PrecompiledLogicSignatureTemplate",
+]
+
+
+class PrecompiledApplication:
     """
     AppPrecompile allows a smart contract to signal that some child Application
     should be fully compiled prior to constructing its own program.
@@ -81,7 +88,7 @@ class AppPrecompile:
         return result
 
 
-class LSigPrecompile:
+class PrecompiledLogicSignature:
     """
     LSigPrecompile allows a smart contract to signal that some child Logic Signature
     should be fully compiled prior to constructing its own program.
@@ -105,7 +112,7 @@ class PrecompileTemplateValue:
     pc: int = 0
 
 
-class LSigTemplatePrecompile:
+class PrecompiledLogicSignatureTemplate:
     """
     LSigPrecompile allows a smart contract to signal that some child Logic Signature
     should be fully compiled prior to constructing its own program.

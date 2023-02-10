@@ -1,12 +1,12 @@
 import dataclasses
 import inspect
+import typing
 import warnings
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
 from typing import (
     cast,
-    Optional,
     Callable,
     TypeAlias,
     Literal,
@@ -19,7 +19,6 @@ from typing import (
     MutableMapping,
 )
 
-from algosdk.v2client.algod import AlgodClient
 from pyteal import (
     SubroutineFnWrapper,
     Txn,
@@ -40,10 +39,24 @@ from beaker.application_specification import (
     MethodHints,
     DefaultArgument,
 )
-from beaker.decorators import _authorize
+from beaker.decorators import authorize as authorize_decorator
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
-from beaker.precompile import AppPrecompile, LSigPrecompile, LSigTemplatePrecompile
+from beaker.precompile import (
+    PrecompiledApplication,
+    PrecompiledLogicSignature,
+    PrecompiledLogicSignatureTemplate,
+)
 from beaker.state import AccountState, ApplicationState
+
+if typing.TYPE_CHECKING:
+    from algosdk.v2client.algod import AlgodClient
+
+__all__ = [
+    "Application",
+    "CompilerOptions",
+    "this_app",
+    "precompiled",
+]
 
 OnCompleteActionName: TypeAlias = Literal[
     "no_op",
@@ -71,17 +84,17 @@ DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
 DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, kw_only=True)
 class CompileContext:
-    app: "Application" = dataclasses.field(kw_only=True)
-    client: AlgodClient | None
+    app: "Application"
+    client: "AlgodClient | None"
 
 
 _ctx: ContextVar[CompileContext] = ContextVar("beaker.compile_context")
 
 
 @contextmanager
-def _set_ctx(app: "Application", client: AlgodClient | None) -> Iterator[None]:
+def _set_ctx(app: "Application", client: "AlgodClient | None") -> Iterator[None]:
     token = _ctx.set(CompileContext(app=app, client=client))
     try:
         yield
@@ -147,11 +160,11 @@ class Application(Generic[TState]):
 
         self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
         self._clear_state_method: SubroutineFnWrapper | None = None
-        self._lsig_precompiles: dict[LogicSignature, LSigPrecompile] = {}
-        self._lsig_template_precompiles: dict[
-            LogicSignatureTemplate, LSigTemplatePrecompile
+        self._precompiled_lsigs: dict[LogicSignature, PrecompiledLogicSignature] = {}
+        self._precompiled_lsig_templates: dict[
+            LogicSignatureTemplate, PrecompiledLogicSignatureTemplate
         ] = {}
-        self._app_precompiles: dict[Application, AppPrecompile] = {}
+        self._precompiled_apps: dict[Application, PrecompiledApplication] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
         self._acct_state = AccountState(self._state)
         self._app_state = ApplicationState(self._state)
@@ -175,22 +188,24 @@ class Application(Generic[TState]):
         return self._state
 
     @overload
-    def precompiled(self, value: "Application", /) -> AppPrecompile:
+    def precompiled(self, value: "Application", /) -> PrecompiledApplication:
         ...
 
     @overload
-    def precompiled(self, value: "LogicSignature", /) -> LSigPrecompile:
+    def precompiled(self, value: "LogicSignature", /) -> PrecompiledLogicSignature:
         ...
 
     @overload
-    def precompiled(self, value: "LogicSignatureTemplate", /) -> LSigTemplatePrecompile:
+    def precompiled(
+        self, value: "LogicSignatureTemplate", /  # noqa: W504
+    ) -> PrecompiledLogicSignatureTemplate:
         ...
 
     def precompiled(
         self,
         value: "Application | LogicSignature | LogicSignatureTemplate",
         /,
-    ) -> AppPrecompile | LSigPrecompile | LSigTemplatePrecompile:
+    ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
         try:
             ctx = _ctx.get()
         except LookupError:
@@ -204,16 +219,17 @@ class Application(Generic[TState]):
         match value:
             case Application() as app:
                 # TODO: check recursion?
-                return self._app_precompiles.setdefault(
-                    app, AppPrecompile(app, ctx.client)
+                return self._precompiled_apps.setdefault(
+                    app, PrecompiledApplication(app, ctx.client)
                 )
             case LogicSignature() as lsig:
-                return self._lsig_precompiles.setdefault(
-                    lsig, LSigPrecompile(lsig, ctx.client)
+                return self._precompiled_lsigs.setdefault(
+                    lsig, PrecompiledLogicSignature(lsig, ctx.client)
                 )
             case LogicSignatureTemplate() as lsig_template:
-                return self._lsig_template_precompiles.setdefault(
-                    lsig_template, LSigTemplatePrecompile(lsig_template, ctx.client)
+                return self._precompiled_lsig_templates.setdefault(
+                    lsig_template,
+                    PrecompiledLogicSignatureTemplate(lsig_template, ctx.client),
                 )
             case _:
                 raise TypeError("TODO write error message")
@@ -383,7 +399,7 @@ class Application(Generic[TState]):
                     actions = method_config
 
             if authorize is not None:
-                func = _authorize(authorize)(func)
+                func = authorize_decorator(authorize)(func)
             if bare:
                 sub = SubroutineFnWrapper(func, return_type=TealType.none, name=name)
                 if sub.subroutine.argument_count():
@@ -780,7 +796,7 @@ class Application(Generic[TState]):
         blueprint(self, *args, **kwargs)
         return self
 
-    def build(self, client: AlgodClient | None = None) -> ApplicationSpecification:
+    def build(self, client: "AlgodClient | None" = None) -> ApplicationSpecification:
         """Build the application specification, including transpiling the application to TEAL, and fully compiling
         any nested (i.e. precompiled) apps/lsigs to byte code.
 
@@ -853,7 +869,7 @@ class Application(Generic[TState]):
 
         return self._acct_state.initialize(addr)
 
-    def dump(self, directory: str = ".", client: Optional[AlgodClient] = None) -> None:
+    def dump(self, directory: str = ".", client: "AlgodClient | None" = None) -> None:
         """write out the artifacts generated by the application to disk
 
         Args:
@@ -868,29 +884,31 @@ def this_app() -> Application[TState]:
 
 
 @overload
-def precompiled(value: Application, /) -> AppPrecompile:
+def precompiled(value: Application, /) -> PrecompiledApplication:
     ...
 
 
 @overload
-def precompiled(value: "LogicSignature", /) -> LSigPrecompile:
+def precompiled(value: "LogicSignature", /) -> PrecompiledLogicSignature:
     ...
 
 
 @overload
-def precompiled(value: "LogicSignatureTemplate", /) -> LSigTemplatePrecompile:
+def precompiled(
+    value: "LogicSignatureTemplate", /  # noqa: W504
+) -> PrecompiledLogicSignatureTemplate:
     ...
 
 
 def precompiled(
     value: "Application | LogicSignature | LogicSignatureTemplate",
     /,
-) -> AppPrecompile | LSigPrecompile | LSigTemplatePrecompile:
+) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
     try:
-        ctx = _ctx.get()
+        app: Application = this_app()
     except LookupError:
         raise LookupError("beaker.precompiled(...) should be called inside a function")
-    return ctx.app.precompiled(value)
+    return app.precompiled(value)
 
 
 TKey = TypeVar("TKey")

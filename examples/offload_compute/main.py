@@ -14,8 +14,8 @@ from beaker import (
     sandbox,
     precompiled,
     unconditional_create_approval,
-    LSigPrecompile,
 )
+from beaker.precompile import PrecompiledLogicSignature
 
 from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
 
@@ -57,7 +57,7 @@ def demo():
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_pc = LSigPrecompile(verify_lsig, algod_client)
+    lsig_pc = PrecompiledLogicSignature(verify_lsig, algod_client)
     lsig_signer = LogicSigTransactionSigner(
         LogicSigAccount(lsig_pc.logic_program.raw_binary)
     )

@@ -22,7 +22,7 @@ from beaker import (
     Application,
     unconditional_create_approval,
 )
-from beaker.precompile import LSigTemplatePrecompile
+from beaker.precompile import PrecompiledLogicSignatureTemplate
 
 Signature = abi.StaticBytes[Literal[64]]
 
@@ -88,7 +88,7 @@ def demo():
     #     )
 
     # Get the signer for the lsig from its populated precompile
-    lsig_pc = LSigTemplatePrecompile(sig_checker, app_client.client)
+    lsig_pc = PrecompiledLogicSignatureTemplate(sig_checker, app_client.client)
     lsig_signer = LogicSigTransactionSigner(
         LogicSigAccount(
             lsig_pc.populate_template(user_addr=decode_address(acct.address))
