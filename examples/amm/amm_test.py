@@ -387,11 +387,11 @@ def test_app_fund(creator_app_client: ApplicationClient):
     assert balance_deltas[app_addr][b_asset] == b_amount
     assert_app_algo_balance(creator_app_client, app_algo_balance)
 
-    expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - scale.value)
+    expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - scale)
     assert balance_deltas[addr][pool_asset] == expected_pool_tokens
 
     ratio = _get_ratio_from_state(creator_app_client)
-    expected_ratio = int((a_amount * scale.value) / b_amount)
+    expected_ratio = int((a_amount * scale) / b_amount)
     assert ratio == expected_ratio
 
 
@@ -405,7 +405,7 @@ def test_mint(creator_app_client: ApplicationClient):
     ratio_before = _get_ratio_from_state(creator_app_client)
 
     a_amount = 40000
-    b_amount = int(a_amount * scale.value / ratio_before)
+    b_amount = int(a_amount * scale / ratio_before)
 
     creator_app_client.call(
         "mint",
@@ -430,7 +430,7 @@ def test_mint(creator_app_client: ApplicationClient):
         balances_before[app_addr][a_asset],
         b_amount,
         balances_before[app_addr][b_asset],
-        scale.value,
+        scale,
     )
     assert balance_deltas[addr][pool_asset] == int(expected_pool_tokens)
 
@@ -509,9 +509,7 @@ def test_swap(creator_app_client: ApplicationClient):
     a_supply = balances_before[app_addr][a_asset]
     b_supply = balances_before[app_addr][b_asset]
 
-    expected_b_tokens = _get_tokens_to_swap(
-        swap_amt, a_supply, b_supply, scale.value, fee.value
-    )
+    expected_b_tokens = _get_tokens_to_swap(swap_amt, a_supply, b_supply, scale, fee)
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
 
     assert_app_algo_balance(creator_app_client, app_algo_balance)
@@ -885,7 +883,7 @@ def _get_tokens_from_state(
 
 
 def _expect_ratio(a_sup, b_sup):
-    return int((a_sup * scale.value) / b_sup)
+    return int((a_sup * scale) / b_sup)
 
 
 def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):

@@ -99,15 +99,16 @@ amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState()).imp
 ##############
 
 # Total supply of the pool tokens
-_total_supply: Final[int] = int(1e10)
-total_supply: Final[Int] = Int(_total_supply)
+total_supply: Final[int] = int(1e10)
+total_supply_expr: Final[Int] = Int(total_supply)
 # scale helps with precision when doing computation for
 # the number of tokens to transfer
-_scale: Final[int] = 1000
-scale: Final[Int] = Int(_scale)
+scale: Final[int] = 1000
+scale_expr: Final[Int] = Int(scale)
 # Fee for swaps, 5 represents 0.5% ((fee / scale)*100)
-_fee: Final[int] = 5
-fee: Final[Int] = Int(_fee)
+fee: Final[int] = 5
+fee_expr: Final[Int] = Int(fee)
+
 
 # Only the account set in app_state.governor may call this method
 @amm_app.external(authorize=Authorize.only(amm_app.state.governor))
@@ -274,7 +275,7 @@ def mint(
                 ),
                 # Normal mint
                 tokens_to_mint(
-                    total_supply - pool_bal.value(),
+                    total_supply_expr - pool_bal.value(),
                     a_bal.value() - a_xfer.get().asset_amount(),
                     b_bal.value() - b_xfer.get().asset_amount(),
                     a_xfer.get().asset_amount(),
@@ -354,7 +355,7 @@ def burn(
         ),
         # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
         (issued := ScratchVar()).store(
-            total_supply - (pool_bal.value() - pool_xfer.get().asset_amount())
+            total_supply_expr - (pool_bal.value() - pool_xfer.get().asset_amount())
         ),
         (a_amt := ScratchVar()).store(
             tokens_to_burn(
@@ -484,21 +485,21 @@ def swap(
 @Subroutine(TealType.uint64)
 def tokens_to_mint(issued, a_supply, b_supply, a_amount, b_amount):
     return Seq(
-        (a_rat := ScratchVar()).store(WideRatio([a_amount, scale], [a_supply])),
-        (b_rat := ScratchVar()).store(WideRatio([b_amount, scale], [b_supply])),
+        (a_rat := ScratchVar()).store(WideRatio([a_amount, scale_expr], [a_supply])),
+        (b_rat := ScratchVar()).store(WideRatio([b_amount, scale_expr], [b_supply])),
         WideRatio(
             [
                 If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()),
                 issued,
             ],
-            [scale],
+            [scale_expr],
         ),
     )
 
 
 @Subroutine(TealType.uint64)
 def tokens_to_mint_initial(a_amount, b_amount):
-    return Sqrt(a_amount * b_amount) - scale
+    return Sqrt(a_amount * b_amount) - scale_expr
 
 
 @Subroutine(TealType.uint64)
@@ -508,10 +509,10 @@ def tokens_to_burn(issued, supply, amount):
 
 @Subroutine(TealType.uint64)
 def tokens_to_swap(in_amount, in_supply, out_supply):
-    factor = scale - fee
+    factor = scale_expr - fee_expr
     return WideRatio(
         [in_amount, factor, out_supply],
-        [(in_supply * scale) + (in_amount * factor)],
+        [(in_supply * scale_expr) + (in_amount * factor)],
     )
 
 
@@ -554,7 +555,7 @@ def do_create_pool_token(a, b):
                     Bytes("DPT-"), una.value(), Bytes("-"), unb.value()
                 ),
                 TxnField.config_asset_unit_name: Bytes("dpt"),
-                TxnField.config_asset_total: total_supply,
+                TxnField.config_asset_total: total_supply_expr,
                 TxnField.config_asset_decimals: Int(3),
                 TxnField.config_asset_manager: Global.current_application_address(),
                 TxnField.config_asset_reserve: Global.current_application_address(),
@@ -580,5 +581,5 @@ def compute_ratio():
             bal_a.hasValue(),
             bal_b.hasValue(),
         ),
-        WideRatio([bal_a.value(), scale], [bal_b.value()]),
+        WideRatio([bal_a.value(), scale_expr], [bal_b.value()]),
     )
