@@ -37,6 +37,8 @@ def decode_state(
                 val = sv["value"]["uint"]
             case 3:
                 val = None
+            case _:
+                raise NotImplementedError()
 
         decoded_state[key] = val
     return decoded_state
