@@ -1,6 +1,6 @@
 from pyteal import Expr, Approve
 
-from beaker import Application, this_app
+from beaker import Application
 
 __all__ = [
     "unconditional_create_approval",
@@ -14,7 +14,7 @@ def unconditional_create_approval(
     @app.create
     def create() -> Expr:
         if initialize_app_state:
-            return this_app().initialize_application_state()
+            return app.initialize_application_state()
         return Approve()
 
 
@@ -24,5 +24,5 @@ def unconditional_opt_in_approval(
     @app.opt_in
     def opt_in() -> Expr:
         if initialize_account_state:
-            return this_app().initialize_account_state()
+            return app.initialize_account_state()
         return Approve()

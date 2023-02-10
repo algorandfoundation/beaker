@@ -165,12 +165,12 @@ class Application(Generic[TState]):
         ...
 
     @overload
-    def precompiled(self, value: "LogicSignature", /) -> PrecompiledLogicSignature:
+    def precompiled(self, value: LogicSignature, /) -> PrecompiledLogicSignature:
         ...
 
     @overload
     def precompiled(
-        self, value: "LogicSignatureTemplate", /  # noqa: W504
+        self, value: LogicSignatureTemplate, /  # noqa: W504
     ) -> PrecompiledLogicSignatureTemplate:
         ...
 
@@ -875,28 +875,28 @@ def precompiled(value: Application, /) -> PrecompiledApplication:
 
 
 @overload
-def precompiled(value: "LogicSignature", /) -> PrecompiledLogicSignature:
+def precompiled(value: LogicSignature, /) -> PrecompiledLogicSignature:
     ...
 
 
 @overload
 def precompiled(
-    value: "LogicSignatureTemplate", /  # noqa: W504
+    value: LogicSignatureTemplate, /  # noqa: W504
 ) -> PrecompiledLogicSignatureTemplate:
     ...
 
 
 def precompiled(
-    value: "Application | LogicSignature | LogicSignatureTemplate",
+    value: Application | LogicSignature | LogicSignatureTemplate,
     /,
 ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
     try:
-        app: Application = this_app()
+        ctx_app: Application = this_app()
     except LookupError:
         raise LookupError("beaker.precompiled(...) should be called inside a function")
-    if value is app:
+    if value is ctx_app:
         raise ValueError("Attempted to precompile the current application")
-    return app.precompiled(value)
+    return ctx_app.precompiled(value)
 
 
 TKey = TypeVar("TKey")
