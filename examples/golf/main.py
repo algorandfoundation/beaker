@@ -27,8 +27,14 @@ from pyteal import (
 )
 
 
-from beaker import Application, ApplicationStateValue, sandbox, client, consts
-from beaker.application import CompilerOptions
+from beaker import (
+    Application,
+    ApplicationStateValue,
+    sandbox,
+    client,
+    consts,
+    BuildOptions,
+)
 from beaker.blueprints import unconditional_create_approval
 from beaker.lib.math import Max
 
@@ -51,7 +57,7 @@ MaxInts = Int(_max_ints)
 
 sorted_ints_app = Application(
     "SortedIntegers",
-    compiler_options=CompilerOptions(avm_version=8),
+    build_options=BuildOptions(avm_version=8),
     state=SortedIntegersState,
 ).implement(unconditional_create_approval)
 

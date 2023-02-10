@@ -5,11 +5,11 @@ import pytest
 from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
-from beaker import ApplicationStateBlob, AccountStateBlob
-from beaker.application import (
+from beaker import (
+    ApplicationStateBlob,
+    AccountStateBlob,
+    BuildOptions,
     Application,
-    CompilerOptions,
-    MethodConfig,
     this_app,
 )
 from beaker.application_specification import ApplicationSpecification
@@ -35,9 +35,7 @@ def test_unconditional_create_approval():
 
 
 def test_avm_version():
-    app = Application(
-        "EmptyAppVersion7", compiler_options=CompilerOptions(avm_version=7)
-    )
+    app = Application("EmptyAppVersion7", build_options=BuildOptions(avm_version=7))
     check_application_artifacts_output_stability(app)
 
 
@@ -187,13 +185,13 @@ def test_application_external_override_none(create_existing_handle: bool):
 def test_application_bare_override_true():
     app = Application("BareOverrideTrue")
 
-    @app.external(bare=True, method_config=MethodConfig(opt_in=pt.CallConfig.CALL))
+    @app.external(bare=True, method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
     def handle():
         return pt.Assert(pt.Int(1))
 
     @app.external(
         bare=True,
-        method_config=MethodConfig(opt_in=pt.CallConfig.CALL),
+        method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL),
         override=True,
         name="handle",
     )
@@ -207,7 +205,7 @@ def test_application_bare_override_true():
 def test_application_bare_override_false():
     app = Application("BareOverrideFalse")
 
-    @app.external(bare=True, method_config=MethodConfig(opt_in=pt.CallConfig.CALL))
+    @app.external(bare=True, method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
     def handle():
         return pt.Assert(pt.Int(1))
 
@@ -215,7 +213,7 @@ def test_application_bare_override_false():
 
         @app.external(
             bare=True,
-            method_config=MethodConfig(opt_in=pt.CallConfig.CALL),
+            method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL),
             override=False,
             name="handle",
         )
@@ -231,13 +229,15 @@ def test_application_bare_override_none(create_existing_handle: bool):
 
     if create_existing_handle:
 
-        @app.external(bare=True, method_config=MethodConfig(opt_in=pt.CallConfig.CALL))
+        @app.external(
+            bare=True, method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL)
+        )
         def handle():
             return pt.Assert(pt.Int(1))
 
     @app.external(
         bare=True,
-        method_config=MethodConfig(opt_in=pt.CallConfig.CALL),
+        method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL),
         override=None,
         name="handle",
     )

@@ -22,12 +22,10 @@ from typing import (
 from pyteal import (
     SubroutineFnWrapper,
     Txn,
-    MAX_PROGRAM_VERSION,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
     OnCompleteAction,
-    OptimizeOptions,
     Router,
     CallConfig,
     TealType,
@@ -39,6 +37,7 @@ from beaker.application_specification import (
     MethodHints,
     DefaultArgument,
 )
+from beaker.build_options import BuildOptions
 from beaker.decorators import authorize as authorize_decorator
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
@@ -53,7 +52,6 @@ if typing.TYPE_CHECKING:
 
 __all__ = [
     "Application",
-    "CompilerOptions",
     "this_app",
     "precompiled",
 ]
@@ -85,39 +83,21 @@ DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
-class CompileContext:
+class BuildContext:
     app: "Application"
     client: "AlgodClient | None"
 
 
-_ctx: ContextVar[CompileContext] = ContextVar("beaker.compile_context")
+_ctx: ContextVar[BuildContext] = ContextVar("beaker.build_context")
 
 
 @contextmanager
 def _set_ctx(app: "Application", client: "AlgodClient | None") -> Iterator[None]:
-    token = _ctx.set(CompileContext(app=app, client=client))
+    token = _ctx.set(BuildContext(app=app, client=client))
     try:
         yield
     finally:
         _ctx.reset(token)
-
-
-@dataclasses.dataclass(kw_only=True)
-class CompilerOptions:
-    avm_version: int = MAX_PROGRAM_VERSION
-    """avm_version: defines the #pragma version used in output"""
-    scratch_slots: bool = True
-    """scratch_slots: cancel contiguous store/load operations that have no load dependencies elsewhere. 
-       default=True"""
-    frame_pointers: bool | None = None
-    """frame_pointers: employ frame pointers instead of scratch slots during compilation.
-       Available and enabled by default from AVM version 8"""
-    assemble_constants: bool = True
-    """assembleConstants: When true, the compiler will produce a program with fully
-        assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
-        constants will be assembled in the most space-efficient way, so enabling this may reduce
-        the compiled program's size. Enabling this option requires a minimum AVM version of 3.
-        Defaults to True."""
 
 
 class Application(Generic[TState]):
@@ -127,7 +107,7 @@ class Application(Generic[TState]):
         name: str,
         *,
         descr: str | None = None,
-        compiler_options: CompilerOptions | None = None,
+        build_options: BuildOptions | None = None,
     ):
         ...
 
@@ -138,7 +118,7 @@ class Application(Generic[TState]):
         *,
         state: TState,
         descr: str | None = None,
-        compiler_options: CompilerOptions | None = None,
+        build_options: BuildOptions | None = None,
     ):
         ...
 
@@ -148,13 +128,13 @@ class Application(Generic[TState]):
         *,
         state: TState = cast(TState, None),
         descr: str | None = None,
-        compiler_options: CompilerOptions | None = None,
+        build_options: BuildOptions | None = None,
     ):
         """<TODO>"""
         self._state: TState = state
         self.name = name
         self.descr = descr
-        self.compiler_options = compiler_options or CompilerOptions()
+        self.build_options = build_options or BuildOptions()
         self.bare_methods: dict[str, SubroutineFnWrapper] = {}
         self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
@@ -828,12 +808,9 @@ class Application(Generic[TState]):
 
             # Compile approval and clear programs
             approval_program, clear_program, contract = router.compile_program(
-                version=self.compiler_options.avm_version,
-                assemble_constants=self.compiler_options.assemble_constants,
-                optimize=OptimizeOptions(
-                    scratch_slots=self.compiler_options.scratch_slots,
-                    frame_pointers=self.compiler_options.frame_pointers,
-                ),
+                version=self.build_options.avm_version,
+                assemble_constants=self.build_options.assemble_constants,
+                optimize=self.build_options.optimize_options,
             )
 
         return ApplicationSpecification(

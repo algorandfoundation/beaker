@@ -19,8 +19,7 @@ from pyteal import (
     Len,
     Seq,
 )
-from beaker import LogicSignature
-
+from beaker import LogicSignature, BuildOptions
 
 HashValue = abi.StaticBytes[Literal[32]]
 Signature = abi.StaticBytes[Literal[65]]
@@ -100,4 +99,4 @@ def EthEcdsaVerify(version: int) -> LogicSignature:
             ),
         )
 
-    return LogicSignature(evaluate, avm_version=version)
+    return LogicSignature(evaluate, build_options=BuildOptions(avm_version=version))

@@ -1,9 +1,14 @@
 from pyteal import Concat, Bytes, Expr, abi
-from beaker import sandbox, client, Application, unconditional_create_approval
-from beaker.application import CompilerOptions
+from beaker import (
+    sandbox,
+    client,
+    Application,
+    unconditional_create_approval,
+    BuildOptions,
+)
 
 hello_app = Application(
-    "HelloBeaker", compiler_options=CompilerOptions(avm_version=8)
+    "HelloBeaker", build_options=BuildOptions(avm_version=8)
 ).implement(unconditional_create_approval)
 
 

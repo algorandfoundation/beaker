@@ -16,7 +16,8 @@ from algosdk.atomic_transaction_composer import (
 
 from beaker.decorators import Authorize
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, CompilerOptions
+from beaker.application import Application
+from beaker.build_options import BuildOptions
 from beaker.application_specification import DefaultArgument
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
@@ -36,7 +37,7 @@ def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application:
     app = Application(
         "App",
         state=AppState,
-        compiler_options=CompilerOptions(avm_version=version),
+        build_options=BuildOptions(avm_version=version),
     )
 
     @app.create(bare=True)

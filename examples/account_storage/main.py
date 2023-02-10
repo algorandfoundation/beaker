@@ -28,9 +28,9 @@ from beaker import (
     sandbox,
     precompiled,
     LogicSignatureTemplate,
+    BuildOptions,
+    unconditional_create_approval,
 )
-from beaker.application import CompilerOptions
-from beaker.blueprints import unconditional_create_approval
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
 
@@ -42,7 +42,7 @@ def KeySig(version: int) -> LogicSignatureTemplate:
     return LogicSignatureTemplate(
         lambda: Approve(),
         runtime_template_variables={"nonce": TealType.bytes},
-        avm_version=version,
+        build_options=BuildOptions(avm_version=version),
     )
 
 
@@ -57,7 +57,7 @@ class DiskHungryState:
 
 disk_hungry = Application(
     "DiskHungry",
-    compiler_options=CompilerOptions(avm_version=8),
+    build_options=BuildOptions(avm_version=8),
     state=DiskHungryState,
 ).implement(unconditional_create_approval)
 key_sig = KeySig(version=8)

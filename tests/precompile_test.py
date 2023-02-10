@@ -4,10 +4,10 @@ from pyteal import Bytes
 
 from beaker.application import (
     Application,
-    CompilerOptions,
     precompiled,
     this_app,
 )
+from beaker import BuildOptions
 from beaker.blueprints import unconditional_create_approval
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
@@ -22,9 +22,7 @@ from beaker.precompile import (
 
 def test_compile():
     version = 8
-    app = Application(
-        "test_compile", compiler_options=CompilerOptions(avm_version=version)
-    )
+    app = Application("test_compile", build_options=BuildOptions(avm_version=version))
     client = get_algod_client()
     precompile = PrecompiledApplication(app, client)
 
@@ -55,7 +53,7 @@ def test_precompile_basic():
         def evaluate():
             return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
-        return LogicSignature(evaluate, avm_version=version)
+        return LogicSignature(evaluate, build_options=BuildOptions(avm_version=version))
 
     app = Application("BasicPrecompile")
 
@@ -91,7 +89,7 @@ def test_templated_bytes(tmpl_val: str):
         return LogicSignatureTemplate(
             lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
             runtime_template_variables={"tv": pt.TealType.bytes},
-            avm_version=version,
+            build_options=BuildOptions(avm_version=version),
         )
 
     app = Application("App")
@@ -136,7 +134,7 @@ def test_templated_ints(tmpl_val: int):
         return LogicSignatureTemplate(
             evaluate,
             runtime_template_variables={"tv": pt.TealType.uint64},
-            avm_version=version,
+            build_options=BuildOptions(avm_version=version),
         )
 
     app = Application("App")

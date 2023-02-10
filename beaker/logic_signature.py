@@ -6,7 +6,6 @@ from pyteal import (
     TealType,
     Tmpl,
     Expr,
-    MAX_PROGRAM_VERSION,
     Seq,
     compileTeal,
     Mode,
@@ -15,10 +14,101 @@ from pyteal import (
     TealSimpleBlock,
 )
 
+from beaker.build_options import BuildOptions
+
 __all__ = [
     "LogicSignature",
     "LogicSignatureTemplate",
 ]
+
+
+class LogicSignature:
+    """
+    LogicSignature allows the definition of a logic signature program.
+
+    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
+
+    The `evaluate` method is the entry point to the application and must be overridden in any subclass
+    to call the necessary logic.
+    """
+
+    def __init__(
+        self,
+        expr_or_func: Callable[[], Expr] | Expr,
+        *,
+        build_options: BuildOptions | None = None,
+    ):
+        logic: Expr
+        if callable(expr_or_func):
+            logic = expr_or_func()
+        else:
+            logic = expr_or_func
+
+        self.program = _lsig_to_teal(logic, build_options=build_options)
+
+
+class LogicSignatureTemplate:
+    """
+    LogicSignature allows the definition of a logic signature program.
+
+    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
+
+    The `evaluate` method is the entry point to the application and must be overridden in any subclass
+    to call the necessary logic.
+    """
+
+    def __init__(
+        self,
+        expr_or_func: Callable[..., Expr] | Expr,
+        *,
+        runtime_template_variables: dict[str, TealType],
+        build_options: BuildOptions | None = None,
+    ):
+        """initialize the logic signature and identify relevant attributes"""
+        if not runtime_template_variables:
+            raise ValueError(
+                "No runtime template variables supplied - use LogicSignature instead if that was intentional"
+            )
+
+        build_options = build_options or BuildOptions()
+
+        self.runtime_template_variables: dict[str, RuntimeTemplateVariable] = {
+            name: RuntimeTemplateVariable(stack_type=stack_type, name=name)
+            for name, stack_type in runtime_template_variables.items()
+        }
+
+        logic: Expr
+        if not callable(expr_or_func):
+            logic = expr_or_func
+        else:
+            params = inspect.signature(expr_or_func).parameters
+            if not (params.keys() <= runtime_template_variables.keys()):
+                raise ValueError(
+                    "Logic signature methods should take no arguments, unless using runtime templates"
+                )
+            forward_args = list(params.keys())
+            logic = expr_or_func(
+                *[self.runtime_template_variables[name] for name in forward_args]
+            )
+
+        self.program = _lsig_to_teal(
+            Seq(
+                *[tv._init_expr() for tv in self.runtime_template_variables.values()],
+                logic,
+            ),
+            build_options,
+        )
+
+
+def _lsig_to_teal(expr: Expr, build_options: BuildOptions | None) -> str:
+    build_options = build_options or BuildOptions()
+    return compileTeal(
+        expr,
+        mode=Mode.Signature,
+        version=build_options.avm_version,
+        assembleConstants=build_options.assemble_constants,
+        optimize=build_options.optimize_options,
+    )
 
 
 class RuntimeTemplateVariable(Expr):
@@ -65,86 +155,3 @@ class RuntimeTemplateVariable(Expr):
         else:
             tmpl = Tmpl.Int(self.token)
         return self.scratch.store(tmpl)
-
-
-class LogicSignature:
-    """
-    LogicSignature allows the definition of a logic signature program.
-
-    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
-
-    The `evaluate` method is the entry point to the application and must be overridden in any subclass
-    to call the necessary logic.
-    """
-
-    def __init__(
-        self,
-        expr_or_func: Callable[[], Expr] | Expr,
-        *,
-        avm_version: int = MAX_PROGRAM_VERSION,
-    ):
-        logic: Expr
-        if callable(expr_or_func):
-            logic = expr_or_func()
-        else:
-            logic = expr_or_func
-
-        self.program = compileTeal(
-            logic,
-            mode=Mode.Signature,
-            version=avm_version,
-            assembleConstants=True,
-        )
-
-
-class LogicSignatureTemplate:
-    """
-    LogicSignature allows the definition of a logic signature program.
-
-    A LogicSignature may include constants, subroutines, and :ref:TemplateVariables as attributes
-
-    The `evaluate` method is the entry point to the application and must be overridden in any subclass
-    to call the necessary logic.
-    """
-
-    def __init__(
-        self,
-        expr_or_func: Callable[..., Expr] | Expr,
-        *,
-        runtime_template_variables: dict[str, TealType],
-        avm_version: int = MAX_PROGRAM_VERSION,
-    ):
-        """initialize the logic signature and identify relevant attributes"""
-        if not runtime_template_variables:
-            raise ValueError(
-                "No runtime template variables supplied - use LogicSignature instead if that was intentional"
-            )
-
-        self.runtime_template_variables: dict[str, RuntimeTemplateVariable] = {
-            name: RuntimeTemplateVariable(stack_type=stack_type, name=name)
-            for name, stack_type in runtime_template_variables.items()
-        }
-
-        logic: Expr
-        if not callable(expr_or_func):
-            logic = expr_or_func
-        else:
-            params = inspect.signature(expr_or_func).parameters
-            if not (params.keys() <= runtime_template_variables.keys()):
-                raise ValueError(
-                    "Logic signature methods should take no arguments, unless using runtime templates"
-                )
-            forward_args = list(params.keys())
-            logic = expr_or_func(
-                *[self.runtime_template_variables[name] for name in forward_args]
-            )
-
-        self.program = compileTeal(
-            Seq(
-                *[tv._init_expr() for tv in self.runtime_template_variables.values()],
-                logic,
-            ),
-            mode=Mode.Signature,
-            version=avm_version,
-            assembleConstants=True,
-        )

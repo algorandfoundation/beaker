@@ -4,8 +4,13 @@ from typing import Any
 import pyteal as pt
 from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
-from beaker import Application, client, sandbox, unconditional_opt_in_approval
-from beaker.application import CompilerOptions
+from beaker import (
+    Application,
+    client,
+    sandbox,
+    unconditional_opt_in_approval,
+    BuildOptions,
+)
 from beaker.blueprints import unconditional_create_approval
 
 algod_client = None
@@ -82,7 +87,7 @@ def UnitTestingApp(
 ) -> Application:
     return Application(
         name,
-        compiler_options=CompilerOptions(avm_version=version),
+        build_options=BuildOptions(avm_version=version),
         state=state,
     ).implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
 
