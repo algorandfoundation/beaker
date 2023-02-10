@@ -76,18 +76,18 @@ class MembershipClubState:
         descr="The asset that represents membership of this club",
     )
 
+    ####
+    # Box abstractions
 
-####
-# Box abstractions
+    # A Mapping will create a new box for every unique key,
+    # taking a data type for key and value
+    # Only static types can provide information about the max
+    # size (and min balance required).
+    membership_records = Mapping(abi.Address, MembershipRecord)
 
-# A Mapping will create a new box for every unique key,
-# taking a data type for key and value
-# Only static types can provide information about the max
-# size (and min balance required).
-membership_records = Mapping(abi.Address, MembershipRecord)
+    # A Listing is a simple list, initialized with some _static_ data type and a length
+    affirmations = List(Affirmation, 10)
 
-# A Listing is a simple list, initialized with some _static_ data type and a length
-affirmations = List(Affirmation, 10, name="affirmations")
 
 #####
 # Math for determining min balance based on expected size of boxes
@@ -98,7 +98,8 @@ _min_balance = (
     + (BoxFlatMinBalance + (_member_box_size * BoxByteMinBalance))
     * _max_members  # cover min bal for member record boxes we might create
     + (
-        BoxFlatMinBalance + (affirmations._box_size * BoxByteMinBalance)
+        BoxFlatMinBalance
+        + (MembershipClubState.affirmations.box_size.value * BoxByteMinBalance)
     )  # cover min bal for affirmation box
 )
 ####
@@ -129,7 +130,7 @@ def bootstrap(
             seed.get().amount() >= MinimumBalance,
             comment=f"payment must be for >= {_min_balance}",
         ),
-        Pop(affirmations.create()),
+        Pop(membership_club_app.state.affirmations.create()),
         InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.AssetConfig,
@@ -150,7 +151,7 @@ def bootstrap(
 
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
 def remove_member(member: abi.Address):
-    return Pop(membership_records[member].delete())
+    return Pop(membership_club_app.state.membership_records[member].delete())
 
 
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
@@ -162,7 +163,7 @@ def add_member(
         (role := abi.Uint8()).set(Int(0)),
         (voted := abi.Bool()).set(consts.FALSE),
         (mr := MembershipRecord()).set(role, voted),
-        membership_records[new_member.address()].set(mr),
+        membership_club_app.state.membership_records[new_member.address()].set(mr),
         InnerTxnBuilder.Execute(
             clawback_axfer(
                 membership_club_app.state.membership_token,
@@ -178,17 +179,19 @@ def add_member(
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
 def update_role(member: abi.Account, new_role: abi.Uint8):
     return Seq(
-        (mr := MembershipRecord()).decode(membership_records[member.address()].get()),
+        (mr := MembershipRecord()).decode(
+            membership_club_app.state.membership_records[member.address()].get()
+        ),
         # retain their voted status
         (voted := abi.Bool()).set(mr.voted),
         mr.set(new_role, voted),
-        membership_records[member.address()].set(mr),
+        membership_club_app.state.membership_records[member.address()].set(mr),
     )
 
 
 @membership_club_app.external()
 def get_membership_record(member: abi.Address, *, output: MembershipRecord):
-    return membership_records[member].store_into(output)
+    return membership_club_app.state.membership_records[member].store_into(output)
 
 
 @membership_club_app.external(
@@ -199,7 +202,7 @@ def set_affirmation(
     affirmation: Affirmation,
     membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
 ):
-    return affirmations[idx.get()].set(affirmation)
+    return membership_club_app.state.affirmations[idx.get()].set(affirmation)
 
 
 @membership_club_app.external(
@@ -210,7 +213,11 @@ def get_affirmation(
     *,
     output: Affirmation,
 ):
-    return output.set(affirmations[Global.round() % affirmations.elements])
+    return output.set(
+        membership_club_app.state.affirmations[
+            Global.round() % membership_club_app.state.affirmations.elements
+        ]
+    )
 
 
 class MemberState:
@@ -219,7 +226,7 @@ class MemberState:
     membership_token = ApplicationStateValue(TealType.uint64)
 
 
-app_member_app = Application("AppMember", state=MemberState).implement(
+app_member_app = Application("AppMember", state=MemberState()).implement(
     unconditional_create_approval
 )
 
