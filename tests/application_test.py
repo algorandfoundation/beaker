@@ -1,3 +1,5 @@
+from typing import Callable
+
 import pyteal as pt
 import pytest
 from Cryptodome.Hash import SHA512
@@ -10,6 +12,7 @@ from beaker.application import (
     MethodConfig,
     this_app,
 )
+from beaker.application_specification import ApplicationSpecification
 from beaker.blueprints import unconditional_create_approval
 from beaker.lib.storage import List
 from beaker.state import (
@@ -392,9 +395,7 @@ def test_default_read_only_method():
     ), "Expected the hint to match the method spec"
 
 
-def test_app_spec():
-    """Test various application.json (aka app spec) outputs with an approval test"""
-
+def _get_full_app_spec():
     class SpecdState:
         decl_app_val = ApplicationStateValue(pt.TealType.uint64)
         decl_acct_val = AccountStateValue(pt.TealType.uint64)
@@ -425,16 +426,61 @@ def test_app_spec():
     ):
         return pt.Approve()
 
+    return app
+
+
+def _get_partial_app_spec():
+    class SpecdState:
+        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
+        decl_acct_val = AccountStateValue(pt.TealType.uint64)
+
+    app = Application("PartialSpec", state=SpecdState)
+
+    class Thing(pt.abi.NamedTuple):
+        a: pt.abi.Field[pt.abi.Uint64]
+        b: pt.abi.Field[pt.abi.Uint32]
+
+    @app.external
+    def struct_meth(thing: Thing):
+        return pt.Approve()
+
+    @app.external
+    def default_app_state(
+        value: pt.abi.Uint64 = SpecdState.decl_app_val,  # type: ignore[assignment]
+    ):
+        return pt.Approve()
+
+    return app
+
+
+def _get_minimal_app_spec():
+    app = Application("MinimalSpec")
+
+    return app
+
+
+@pytest.mark.parametrize(
+    "app_factory", [_get_full_app_spec, _get_partial_app_spec, _get_minimal_app_spec]
+)
+def test_app_spec(app_factory: Callable[[], Application]):
+    """Test various application.json (aka app spec) outputs with an approval test"""
+    app = app_factory()
     check_application_artifacts_output_stability(app)
 
 
-#
-#
-# EXPECTED_BARE_HANDLERS = [
-#     "create",
-# ]
-#
-#
+@pytest.mark.parametrize(
+    "app_factory", [_get_full_app_spec, _get_partial_app_spec, _get_minimal_app_spec]
+)
+def test_app_spec_from_json(app_factory: Callable[[], Application]):
+    app = app_factory()
+    app_spec1 = app.build()
+
+    json = app_spec1.to_json()
+    app_spec2 = ApplicationSpecification.from_json(json)
+
+    assert app_spec1 == app_spec2
+
+
 def test_struct_args():
     from algosdk.abi import Method, Argument, Returns
 

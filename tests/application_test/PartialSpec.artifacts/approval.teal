@@ -1,0 +1,50 @@
+#pragma version 8
+intcblock 0 1
+txna ApplicationArgs 0
+pushbytes 0xef5cdf8c // "struct_meth((uint64,uint32))void"
+==
+bnz main_l4
+txna ApplicationArgs 0
+pushbytes 0xecf9f1da // "default_app_state(uint64)void"
+==
+bnz main_l3
+err
+main_l3:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub defaultappstate_1
+intc_1 // 1
+return
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+callsub structmeth_0
+intc_1 // 1
+return
+
+// struct_meth
+structmeth_0:
+proto 1 0
+intc_1 // 1
+return
+
+// default_app_state
+defaultappstate_1:
+proto 1 0
+intc_1 // 1
+return
