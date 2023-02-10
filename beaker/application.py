@@ -40,7 +40,7 @@ from beaker.application_specification import (
     MethodHints,
     DefaultArgument,
 )
-from beaker.decorators.authorize import _authorize
+from beaker.decorators import _authorize
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import AppPrecompile, LSigPrecompile, LSigTemplatePrecompile
 from beaker.state import AccountState, ApplicationState

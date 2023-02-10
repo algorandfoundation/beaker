@@ -18,6 +18,11 @@ from pyteal import (
     Txn,
 )
 
+__all__ = [
+    "Authorize",
+    "_authorize",
+]
+
 
 # TODO: refactor this to be more of an Expr builder so it becomes composable
 class Authorize:
