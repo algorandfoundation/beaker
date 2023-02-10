@@ -1,4 +1,7 @@
+import contextlib
 from dataclasses import dataclass
+from functools import cached_property
+from typing import Iterator
 
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.kmd import KMDClient
@@ -24,7 +27,7 @@ def get_sandbox_default_wallet() -> Wallet:
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SandboxAccount:
     """SandboxAccount is a simple dataclass to hold a sandbox account details"""
 
@@ -32,8 +35,11 @@ class SandboxAccount:
     address: str
     #: The base64 encoded private key of the account
     private_key: str
+
     #: An AccountTransactionSigner that can be used as a TransactionSigner
-    signer: AccountTransactionSigner
+    @cached_property
+    def signer(self) -> AccountTransactionSigner:
+        return AccountTransactionSigner(self.private_key)
 
 
 def get_accounts(
@@ -44,36 +50,15 @@ def get_accounts(
 ) -> list[SandboxAccount]:
     """gets all the accounts in the sandbox kmd, defaults
     to the `unencrypted-default-wallet` created on private networks automatically"""
-
     kmd = KMDClient(kmd_token, kmd_address)
-    wallets = kmd.list_wallets()
-
-    wallet_id = None
-    for wallet in wallets:
-        if wallet["name"] == wallet_name:
-            wallet_id = wallet["id"]
-            break
-
-    if wallet_id is None:
-        raise Exception("Wallet not found: {}".format(wallet_name))
-
-    wallet_handle = kmd.init_wallet_handle(wallet_id, wallet_password)
-
-    try:
-        addresses = kmd.list_keys(wallet_handle)
-        private_keys = [
-            kmd.export_key(wallet_handle, wallet_password, addr) for addr in addresses
-        ]
-        kmd_accounts = [
+    with wallet_handle_by_name(kmd, wallet_name, wallet_password) as wallet_handle:
+        return [
             SandboxAccount(
-                addresses[i], private_keys[i], AccountTransactionSigner(private_keys[i])
+                address=address,
+                private_key=kmd.export_key(wallet_handle, wallet_password, address),
             )
-            for i in range(len(private_keys))
+            for address in kmd.list_keys(wallet_handle)
         ]
-    finally:
-        kmd.release_wallet_handle(wallet_handle)
-
-    return kmd_accounts
 
 
 def add_account(
@@ -84,27 +69,9 @@ def add_account(
     wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
 ) -> str:
     """Adds a new account to the sandbox kmd"""
-
     kmd = KMDClient(kmd_token, kmd_address)
-    wallets = kmd.list_wallets()
-
-    wallet_id = None
-    for wallet in wallets:
-        if wallet["name"] == wallet_name:
-            wallet_id = wallet["id"]
-            break
-
-    if wallet_id is None:
-        raise Exception("Wallet not found: {}".format(wallet_name))
-
-    wallet_handle = kmd.init_wallet_handle(wallet_id, wallet_password)
-
-    try:
-        added = kmd.import_key(wallet_handle, private_key)
-    finally:
-        kmd.release_wallet_handle(wallet_handle)
-
-    return added
+    with wallet_handle_by_name(kmd, wallet_name, wallet_password) as wallet_handle:
+        return kmd.import_key(wallet_handle, private_key)
 
 
 def delete_account(
@@ -115,22 +82,25 @@ def delete_account(
     wallet_password: str = DEFAULT_KMD_WALLET_PASSWORD,
 ) -> None:
     """Deletes an existing account from the sandbox kmd"""
-
     kmd = KMDClient(kmd_token, kmd_address)
+    with wallet_handle_by_name(kmd, wallet_name, wallet_password) as wallet_handle:
+        kmd.delete_key(wallet_handle, wallet_password, address)
+
+
+@contextlib.contextmanager
+def wallet_handle_by_name(
+    kmd: KMDClient, wallet_name: str, wallet_password: str
+) -> Iterator[str]:
+
     wallets = kmd.list_wallets()
 
-    wallet_id = None
-    for wallet in wallets:
-        if wallet["name"] == wallet_name:
-            wallet_id = wallet["id"]
-            break
-
-    if wallet_id is None:
+    try:
+        wallet_id = next(iter(w["id"] for w in wallets if w["name"] == wallet_name))
+    except StopIteration:
         raise Exception("Wallet not found: {}".format(wallet_name))
 
     wallet_handle = kmd.init_wallet_handle(wallet_id, wallet_password)
-
     try:
-        kmd.delete_key(wallet_handle, password=wallet_password, address=address)
+        yield wallet_handle
     finally:
         kmd.release_wallet_handle(wallet_handle)
