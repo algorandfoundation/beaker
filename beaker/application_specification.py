@@ -5,26 +5,20 @@ from pathlib import Path
 from typing import Any, TypedDict, TypeAlias, Literal
 
 from algosdk import transaction
-from algosdk.abi import Contract, Method
+from algosdk.abi import Contract
 from algosdk.abi.method import MethodDict
 from algosdk.transaction import StateSchema
-from pyteal import (
-    Expr,
-    Int,
-    Bytes,
-    ABIReturnSubroutine,
-    CallConfig,
-    MethodConfig,
-)
+from pyteal import CallConfig, MethodConfig
 
 __all__ = [
-    "DefaultArgument",
+    "DefaultArgumentDict",
+    "DefaultArgumentType",
     "MethodHints",
     "ApplicationSpecification",
-    "StateDict",
+    "AppSpecStateDict",
 ]
 
-StateDict: TypeAlias = dict[str, dict[str, dict]]
+AppSpecStateDict: TypeAlias = dict[str, dict[str, dict]]
 
 
 class StructArgDict(TypedDict):
@@ -32,72 +26,23 @@ class StructArgDict(TypedDict):
     elements: list[list[str]]
 
 
-DefaultArgumentClass: TypeAlias = Literal[
+DefaultArgumentType: TypeAlias = Literal[
     "abi-method", "local-state", "global-state", "constant"
 ]
 
 
-@dataclasses.dataclass
-class DefaultArgument:
+class DefaultArgumentDict_Optional(TypedDict, total=False):
+    stack_type: Literal["uint64", "bytes"]
+
+
+class DefaultArgumentDict(DefaultArgumentDict_Optional):
     """
     DefaultArgument is a container for any arguments that may
     be resolved prior to calling some target method
     """
 
-    source: DefaultArgumentClass
+    source: DefaultArgumentType
     data: int | str | bytes | MethodDict
-    stack_type: Literal["uint64", "bytes"] | None = None
-
-    def dictify(self) -> dict[str, Any]:
-        return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}
-
-    @staticmethod
-    def from_resolver(
-        resolver: Expr | ABIReturnSubroutine | Method | int | bytes | str,
-    ) -> "DefaultArgument":
-        from beaker.state.primitive import AccountStateValue, ApplicationStateValue
-
-        resolvable_class: DefaultArgumentClass
-        data: int | str | bytes | MethodDict
-        stack_type: Literal["uint64", "bytes"] | None = None
-        match resolver:
-            # Native types
-            case int() | str() | bytes():
-                resolvable_class = "constant"
-                data = resolver
-            # Expr types
-            case Bytes():
-                return DefaultArgument.from_resolver(resolver.byte_str.replace('"', ""))
-            case Int():
-                return DefaultArgument.from_resolver(resolver.value)
-            case AccountStateValue() as acct_sv:
-                resolvable_class = "local-state"
-                data = acct_sv.str_key()
-                stack_type = acct_sv.stack_type.name  # type: ignore[assignment]
-            case ApplicationStateValue() as app_sv:
-                resolvable_class = "global-state"
-                data = app_sv.str_key()
-                stack_type = app_sv.stack_type.name  # type: ignore[assignment]
-            # FunctionType
-            case Method() as method:
-                resolvable_class = "abi-method"
-                data = method.dictify()
-            case ABIReturnSubroutine() as fn:
-                if not getattr(fn, "_read_only", None):
-                    raise ValueError(
-                        "Only ABI methods with read_only=True should be used as default arguments to other ABI methods"
-                    )
-                return DefaultArgument.from_resolver(fn.method_spec())
-            case _:
-                raise TypeError(
-                    f"Unexpected type for a default argument to ABI method: {type(resolver)}"
-                )
-
-        return DefaultArgument(
-            source=resolvable_class,
-            data=data,
-            stack_type=stack_type,
-        )
 
 
 @dataclasses.dataclass
@@ -110,7 +55,7 @@ class MethodHints:
     #: method_name=>param_name=>{name:str, elements:[str,str]}
     structs: dict[str, StructArgDict] = dataclasses.field(default_factory=dict)
     #: defaults
-    default_arguments: dict[str, DefaultArgument] = dataclasses.field(
+    default_arguments: dict[str, DefaultArgumentDict] = dataclasses.field(
         default_factory=dict
     )
     config: MethodConfig = dataclasses.field(default_factory=MethodConfig)
@@ -123,9 +68,7 @@ class MethodHints:
         if self.read_only:
             d["read_only"] = True
         if self.default_arguments:
-            d["default_arguments"] = {
-                k: v.dictify() for k, v in self.default_arguments.items()
-            }
+            d["default_arguments"] = self.default_arguments
         if self.structs:
             d["structs"] = self.structs
         if not self.config.is_never():
@@ -143,8 +86,8 @@ class ApplicationSpecification:
     clear_program: str
     contract: Contract
     hints: dict[str, MethodHints]
-    app_state: StateDict
-    account_state: StateDict
+    app_state: AppSpecStateDict
+    account_state: AppSpecStateDict
     app_state_schema: StateSchema
     account_state_schema: StateSchema
 
@@ -224,10 +167,6 @@ class ApplicationSpecification:
 
 
 def _method_hints_from_json(method_hints: dict[str, Any]) -> MethodHints:
-    method_hints["default_arguments"] = {
-        k: DefaultArgument(**v)
-        for k, v in method_hints.get("default_arguments", {}).items()
-    }
     method_hints["config"] = MethodConfig(
         **{k: CallConfig[v] for k, v in method_hints.get("config", {}).items()}
     )

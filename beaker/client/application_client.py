@@ -27,7 +27,7 @@ from beaker.application import Application
 from beaker.application_specification import (
     ApplicationSpecification,
     MethodHints,
-    DefaultArgument,
+    DefaultArgumentDict,
 )
 from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.client.state_decode import decode_state
@@ -704,26 +704,24 @@ class ApplicationClient:
         contents = self.client.application_box_by_name(self.app_id, name)
         return b64decode(contents["value"])
 
-    def resolve(self, to_resolve: DefaultArgument) -> Any:
-        if to_resolve.source == "constant":
-            return to_resolve.data
-        elif to_resolve.source == "global-state":
-            key = to_resolve.data
-            assert isinstance(key, str)
-            app_state = self.get_application_state(raw=True)
-            return app_state[key.encode()]
-        elif to_resolve.source == "local-state":
-            key = to_resolve.data
-            assert isinstance(key, str)
-            acct_state = self.get_account_state(self.get_sender(), raw=True)
-            return acct_state[key.encode()]
-        elif to_resolve.source == "abi-method":
-            assert isinstance(to_resolve.data, dict)
-            method = abi.Method.undictify(cast(dict, to_resolve.data))
-            result = self.call(method)
-            return result.return_value
-        else:
-            raise Exception(f"Unrecognized resolver: {to_resolve}")
+    def resolve(self, to_resolve: DefaultArgumentDict) -> Any:
+        match to_resolve:
+            case {"source": "constant", "data": data}:
+                return data
+            case {"source": "global-state", "data": str() as key}:
+                app_state = self.get_application_state(raw=True)
+                return app_state[key.encode()]
+            case {"source": "local-state", "data": str() as key}:
+                acct_state = self.get_account_state(self.get_sender(), raw=True)
+                return acct_state[key.encode()]
+            case {"source": "abi-method", "data": dict() as method_dict}:
+                method = abi.Method.undictify(method_dict)
+                result = self.call(method)
+                return result.return_value
+            case {"source": source}:
+                raise ValueError(f"Unrecognized default argument source: {source}")
+            case _:
+                raise TypeError("Unable to interpret default argument specification")
 
     def method_hints(self, method_name: str) -> MethodHints:
         if method_name not in self.app.hints:

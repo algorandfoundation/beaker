@@ -4,7 +4,7 @@ from typing import TypeVar, Any, Generic
 from algosdk.transaction import StateSchema
 from pyteal import TealType, Expr, Seq, Txn
 
-from beaker.application_specification import StateDict
+from beaker.application_specification import AppSpecStateDict
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
     StateStorage,
@@ -34,9 +34,9 @@ class StateAggregate(Generic[ST]):
     def __init__(self, namespace: Any, storage_class: type[ST]):
         self._fields = _get_attrs_of_type(namespace, storage_class)
 
-    def dictify(self) -> StateDict:
+    def dictify(self) -> AppSpecStateDict:
         """Convert the state to a dict for encoding"""
-        result: StateDict = {"declared": {}, "reserved": {}}
+        result: AppSpecStateDict = {"declared": {}, "reserved": {}}
         for name, field in self._fields.items():
             match field.app_spec_json():
                 case AppSpecSchemaFragment(section, data):
@@ -76,7 +76,7 @@ class ApplicationStateAggregate(StateAggregate):
 
     def initialize(self) -> Expr:
         """Generate expression from state values to initialize a default value"""
-        return Seq(*filter(None, [f.initialize() for f in self._fields.values()]))
+        return Seq(*filter(None, (f.initialize() for f in self._fields.values())))
 
 
 class AccountStateAggregate(StateAggregate):
@@ -91,5 +91,5 @@ class AccountStateAggregate(StateAggregate):
     def initialize(self, acct: Expr = Txn.sender()) -> Expr:
         """Generate expression from state values to initialize a default value"""
         return Seq(
-            *filter(None, [f.initialize(acct=acct) for f in self._fields.values()])
+            *filter(None, (f.initialize(acct=acct) for f in self._fields.values()))
         )

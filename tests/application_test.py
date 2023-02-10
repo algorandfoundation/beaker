@@ -330,9 +330,9 @@ def test_default_param_state():
 
     default = hint.default_arguments["aid"]
 
-    assert default.source == "global-state"
+    assert default["source"] == "global-state"
     assert (
-        default.data == HintyState.asset_id.str_key()
+        default["data"] == HintyState.asset_id.str_key()
     ), "Expected the hint to match the method spec"
 
 
@@ -359,8 +359,8 @@ def test_default_param_const():
 
     default = hint.default_arguments["aid"]
 
-    assert default.source == "constant"
-    assert default.data == const_val, "Expected the hint to match the method spec"
+    assert default["source"] == "constant"
+    assert default["data"] == const_val, "Expected the hint to match the method spec"
 
 
 def test_default_read_only_method():
@@ -389,9 +389,9 @@ def test_default_read_only_method():
     default = hint.default_arguments["aid"]
 
     assert isinstance(get_asset_id, pt.ABIReturnSubroutine)
-    assert default.source == "abi-method"
+    assert default["source"] == "abi-method"
     assert (
-        default.data == get_asset_id.method_spec().dictify()
+        default["data"] == get_asset_id.method_spec().dictify()
     ), "Expected the hint to match the method spec"
 
 

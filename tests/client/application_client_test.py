@@ -16,9 +16,8 @@ from algosdk.atomic_transaction_composer import (
 
 from beaker.decorators import Authorize
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application
+from beaker.application import Application, _default_argument_from_resolver
 from beaker.build_options import BuildOptions
-from beaker.application_specification import DefaultArgument
 from beaker.state import ApplicationStateValue, AccountStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
@@ -539,20 +538,20 @@ def test_resolve(sb_accts: SandboxAccounts):
     ac.create()
     ac.opt_in()
 
-    assert ac.resolve(DefaultArgument.from_resolver(pt.Int(1))) == 1
-    assert ac.resolve(DefaultArgument.from_resolver(pt.Bytes("stringy"))) == "stringy"
-    assert ac.resolve(DefaultArgument.from_resolver(AppState.app_state_val_int)) == 1
+    assert ac.resolve(_default_argument_from_resolver(pt.Int(1))) == 1
+    assert ac.resolve(_default_argument_from_resolver(pt.Bytes("stringy"))) == "stringy"
+    assert ac.resolve(_default_argument_from_resolver(AppState.app_state_val_int)) == 1
     assert (
-        ac.resolve(DefaultArgument.from_resolver(AppState.app_state_val_byte))
+        ac.resolve(_default_argument_from_resolver(AppState.app_state_val_byte))
         == b"test"
     )
-    assert ac.resolve(DefaultArgument.from_resolver(AppState.acct_state_val_int)) == 1
+    assert ac.resolve(_default_argument_from_resolver(AppState.acct_state_val_int)) == 1
     assert (
-        ac.resolve(DefaultArgument.from_resolver(AppState.acct_state_val_byte))
+        ac.resolve(_default_argument_from_resolver(AppState.acct_state_val_byte))
         == b"test"
     )
     assert (
-        ac.resolve(DefaultArgument.from_resolver(app.abi_methods["dummy"]))
+        ac.resolve(_default_argument_from_resolver(app.abi_methods["dummy"]))
         == "deadbeef"
     )
 

@@ -1,9 +1,8 @@
 import pyteal as pt
 import pytest
 
-from beaker import Application
-from beaker.decorators import Authorize
-from beaker.application_specification import DefaultArgument
+from beaker import Application, Authorize
+from beaker.application import _default_argument_from_resolver
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
@@ -245,24 +244,24 @@ def test_account_state_resolvable():
     from beaker.state import AccountStateValue
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = DefaultArgument.from_resolver(x)
-    assert r.source == "local-state"
+    r = _default_argument_from_resolver(x)
+    assert r["source"] == "local-state"
 
 
 def test_reserved_account_state_resolvable():
     from beaker.state import ReservedAccountStateValue
 
     x = ReservedAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = DefaultArgument.from_resolver(x[pt.Bytes("x")])
-    assert r.source == "local-state"
+    r = _default_argument_from_resolver(x[pt.Bytes("x")])
+    assert r["source"] == "local-state"
 
 
 def test_application_state_resolvable():
     from beaker.state import ApplicationStateValue
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = DefaultArgument.from_resolver(x)
-    assert r.source == "global-state"
+    r = _default_argument_from_resolver(x)
+    assert r["source"] == "global-state"
 
 
 def test_reserved_application_state_resolvable():
@@ -271,8 +270,8 @@ def test_reserved_application_state_resolvable():
     )
 
     x = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = DefaultArgument.from_resolver(x[pt.Bytes("x")])
-    assert r.source == "global-state"
+    r = _default_argument_from_resolver(x[pt.Bytes("x")])
+    assert r["source"] == "global-state"
 
 
 def test_abi_method_resolvable():
@@ -283,27 +282,15 @@ def test_abi_method_resolvable():
         return pt.Assert(pt.Int(1))
 
     assert isinstance(x, pt.ABIReturnSubroutine)
-    r = DefaultArgument.from_resolver(x)
-    assert r.source == "abi-method"
-
-
-def test_method_resolvable():
-    app = Application("")
-
-    @app.external(read_only=True)
-    def x():
-        return pt.Assert(pt.Int(1))
-
-    assert isinstance(x, pt.ABIReturnSubroutine)
-    r = DefaultArgument.from_resolver(x.method_spec())
-    assert r.source == "abi-method"
+    r = _default_argument_from_resolver(x)
+    assert r["source"] == "abi-method"
 
 
 def test_bytes_constant_resolvable():
-    r = DefaultArgument.from_resolver(pt.Bytes("1"))
-    assert r.source == "constant"
+    r = _default_argument_from_resolver(pt.Bytes("1"))
+    assert r["source"] == "constant"
 
 
 def test_int_constant_resolvable():
-    r = DefaultArgument.from_resolver(pt.Int(1))
-    assert r.source == "constant"
+    r = _default_argument_from_resolver(pt.Int(1))
+    assert r["source"] == "constant"

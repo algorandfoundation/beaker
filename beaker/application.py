@@ -30,12 +30,14 @@ from pyteal import (
     CallConfig,
     TealType,
     MethodConfig,
+    Bytes,
+    Int,
 )
 
 from beaker.application_specification import (
     ApplicationSpecification,
     MethodHints,
-    DefaultArgument,
+    DefaultArgumentDict,
 )
 from beaker.build_options import BuildOptions
 from beaker.decorators import authorize as authorize_decorator
@@ -46,6 +48,7 @@ from beaker.precompile import (
     PrecompiledLogicSignatureTemplate,
 )
 from beaker.state._aggregate import ApplicationStateAggregate, AccountStateAggregate
+from beaker.state.primitive import AccountStateValue, ApplicationStateValue
 
 if typing.TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
@@ -64,6 +67,8 @@ OnCompleteActionName: TypeAlias = Literal[
     "delete_application",
 ]
 
+MethodConfigDict: TypeAlias = dict[OnCompleteActionName, CallConfig]
+
 T = TypeVar("T")
 P = ParamSpec("P")
 TState = TypeVar("TState", covariant=True)
@@ -73,7 +78,7 @@ HandlerFunc = Callable[..., Expr]
 
 @dataclasses.dataclass
 class ABIExternal:
-    actions: dict[OnCompleteActionName, CallConfig]
+    actions: MethodConfigDict
     method: ABIReturnSubroutine
     hints: MethodHints
 
@@ -217,7 +222,7 @@ class Application(Generic[TState]):
         method: ABIReturnSubroutine,
         *,
         python_func_name: str,
-        actions: dict[OnCompleteActionName, CallConfig],
+        actions: MethodConfigDict,
         hints: MethodHints,
         override: bool | None,
     ) -> None:
@@ -259,12 +264,12 @@ class Application(Generic[TState]):
         sub: SubroutineFnWrapper,
         *,
         python_func_name: str,
-        actions: dict[OnCompleteActionName, CallConfig],
+        actions: MethodConfigDict,
         override: bool | None,
     ) -> None:
+        if any(cc == CallConfig.NEVER for cc in actions.values()):
+            raise ValueError("???")
         for for_action, call_config in actions.items():
-            if call_config == CallConfig.NEVER:
-                raise ValueError("???")
             existing_action = self._bare_externals.get(for_action)
             if existing_action is None:
                 if override is True:
@@ -306,9 +311,7 @@ class Application(Generic[TState]):
         self,
         /,
         *,
-        method_config: MethodConfig
-        | dict[OnCompleteActionName, CallConfig]
-        | None = None,
+        method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = False,
@@ -322,9 +325,7 @@ class Application(Generic[TState]):
         fn: HandlerFunc | None = None,
         /,
         *,
-        method_config: MethodConfig
-        | dict[OnCompleteActionName, CallConfig]
-        | None = None,
+        method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = False,
@@ -360,7 +361,7 @@ class Application(Generic[TState]):
             if bare and read_only:
                 raise ValueError("read_only has no effect on bare methods")
 
-            actions: dict[OnCompleteActionName, CallConfig]
+            actions: MethodConfigDict
             match method_config:
                 case None:
                     if bare:
@@ -394,7 +395,7 @@ class Application(Generic[TState]):
                 hints = _capture_method_hints_and_remove_defaults(
                     func,
                     read_only=read_only,
-                    config=MethodConfig(**cast(dict[str, CallConfig], actions)),
+                    actions=actions,
                 )
                 method = ABIReturnSubroutine(func, overriding_name=name)
                 setattr(method, "_read_only", read_only)
@@ -927,19 +928,22 @@ def _lazy_setdefault(
 def _capture_method_hints_and_remove_defaults(
     fn: HandlerFunc,
     read_only: bool,
-    config: MethodConfig,
+    actions: dict[OnCompleteActionName, CallConfig],
 ) -> MethodHints:
     from pyteal.ast import abi
 
     sig = inspect.signature(fn)
     params = sig.parameters.copy()
 
-    mh = MethodHints(read_only=read_only, config=config)
+    mh = MethodHints(
+        read_only=read_only,
+        config=MethodConfig(**{str(k): v for k, v in actions.items()}),
+    )
 
     for name, param in params.items():
         match param.default:
             case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
-                mh.default_arguments[name] = DefaultArgument.from_resolver(
+                mh.default_arguments[name] = _default_argument_from_resolver(
                     param.default
                 )
                 params[name] = param.replace(default=inspect.Parameter.empty)
@@ -960,3 +964,41 @@ def _capture_method_hints_and_remove_defaults(
         fn.__signature__ = newsig  # type: ignore[attr-defined]
 
     return mh
+
+
+def _default_argument_from_resolver(
+    resolver: Expr | ABIReturnSubroutine | int | bytes | str,
+) -> DefaultArgumentDict:
+
+    match resolver:
+        # Native types
+        case int() | str() | bytes():
+            return {"source": "constant", "data": resolver}
+        # Expr types
+        case Bytes():
+            return _default_argument_from_resolver(resolver.byte_str.replace('"', ""))
+        case Int():
+            return _default_argument_from_resolver(resolver.value)
+        case AccountStateValue() as acct_sv:
+            return {
+                "source": "local-state",
+                "data": acct_sv.str_key(),
+                "stack_type": cast(Literal["uint64", "bytes"], acct_sv.stack_type.name),
+            }
+        case ApplicationStateValue() as app_sv:
+            return {
+                "source": "global-state",
+                "data": app_sv.str_key(),
+                "stack_type": cast(Literal["uint64", "bytes"], app_sv.stack_type.name),
+            }
+        # FunctionType
+        case ABIReturnSubroutine() as fn:
+            if not getattr(fn, "_read_only", None):
+                raise ValueError(
+                    "Only ABI methods with read_only=True should be used as default arguments to other ABI methods"
+                )
+            return {"source": "abi-method", "data": fn.method_spec().dictify()}
+        case _:
+            raise TypeError(
+                f"Unexpected type for a default argument to ABI method: {type(resolver)}"
+            )
