@@ -58,7 +58,7 @@ class DiskHungryState:
 disk_hungry = Application(
     "DiskHungry",
     build_options=BuildOptions(avm_version=8),
-    state=DiskHungryState,
+    state=DiskHungryState(),
 ).implement(unconditional_create_approval)
 key_sig = KeySig(version=8)
 
@@ -101,7 +101,7 @@ def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
     return Seq(
         # Read byte
         (byte := ScratchVar()).store(
-            DiskHungryState.data[nonce_acct.address()].read_byte(
+            disk_hungry.state.data[nonce_acct.address()].read_byte(
                 byte_idx(bit_idx.get())
             )
         ),
@@ -114,7 +114,7 @@ def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
             )
         ),
         # Write byte
-        DiskHungryState.data[nonce_acct.address()].write_byte(
+        disk_hungry.state.data[nonce_acct.address()].write_byte(
             byte_idx(bit_idx.get()), byte.load()
         ),
     )
