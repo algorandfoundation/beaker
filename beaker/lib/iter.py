@@ -1,5 +1,9 @@
 from pyteal import Expr, For, Int, ScratchVar
 
+__all__ = [
+    "Iterate",
+]
+
 
 def Iterate(sub: Expr, n: Int, i: ScratchVar | None = None) -> Expr:  # noqa: N802
     """Iterate provides a convenience method for calling a method n times

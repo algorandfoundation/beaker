@@ -13,6 +13,10 @@ from pyteal import (
 
 # Credit Julian (RandLabs)
 
+__all__ = [
+    "InlineAssembly",
+]
+
 
 class CustomOp:
     def __init__(self, opcode: str) -> None:
