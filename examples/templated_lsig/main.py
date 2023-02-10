@@ -77,16 +77,6 @@ def demo():
     # deploy app
     app_client.create()
 
-    # Write the populated template as binary
-    # with open("tmpl.teal", "w") as f:
-    #     f.write(app.sig_checker.lsig.program)
-    # with open("tmp.teal.tok", "wb") as f:
-    #     f.write(
-    #         app.sig_checker.logic.populate_template(
-    #             user_addr=decode_address(acct.address)
-    #         )
-    #     )
-
     # Get the signer for the lsig from its populated precompile
     lsig_pc = PrecompiledLogicSignatureTemplate(sig_checker, app_client.client)
     lsig_signer = LogicSigTransactionSigner(

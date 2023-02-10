@@ -16,6 +16,7 @@ from beaker.state.primitive import (
     ApplicationStateValue,
     AccountStateValue,
     prefix_key_gen,
+    identity_key_gen,
 )
 
 __all__ = [
@@ -54,7 +55,10 @@ class ReservedStateValue(Generic[ST], StateStorage, ABC):
         if prefix is not None:
             if key_gen is not None:
                 raise ValueError("Only one of key_gen or prefix can be specified")
-            key_gen = prefix_key_gen(prefix)
+            if prefix:
+                key_gen = prefix_key_gen(prefix)
+            else:
+                key_gen = identity_key_gen
         self.stack_type = stack_type
         self.max_keys = max_keys
         self.descr = descr
@@ -127,8 +131,10 @@ class ReservedApplicationStateValue(
         max_keys: int,
         key_gen: KeyGenerator | None = None,
         descr: str | None = None,
+        *,
+        prefix: str | None = None,
     ):
-        super().__init__(stack_type, max_keys, key_gen, descr)
+        super().__init__(stack_type, max_keys, key_gen, descr, prefix=prefix)
 
         if max_keys <= 0 or max_keys > MAX_GLOBAL_STATE:
             raise Exception(f"max keys expected to be between 0 and {MAX_GLOBAL_STATE}")
@@ -163,8 +169,10 @@ class ReservedAccountStateValue(
         max_keys: int,
         key_gen: KeyGenerator | None = None,
         descr: str | None = None,
+        *,
+        prefix: str | None = None,
     ):
-        super().__init__(stack_type, max_keys, key_gen, descr)
+        super().__init__(stack_type, max_keys, key_gen, descr, prefix=prefix)
 
         if max_keys <= 0 or max_keys > MAX_LOCAL_STATE:
             raise Exception(f"max keys expected to be between 0 and {MAX_LOCAL_STATE}")

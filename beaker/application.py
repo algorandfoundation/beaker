@@ -177,14 +177,7 @@ class Application(Generic[TState]):
 
     @property
     def state(self) -> TState:
-        if ctx := _ctx.get(None):
-            # if inside a context (ie when an expression is being evaluated by PyTeal),
-            # raise a warning when attempting to access the state of a different app instance
-            if ctx.app is not self:
-                warnings.warn(
-                    f"Accessing state property of Application {ctx.app.name} during compilation of Application {self.name}",
-                    RuntimeWarning,
-                )
+        self._check_context()
         return self._state
 
     @overload
@@ -861,6 +854,7 @@ class Application(Generic[TState]):
         :return: The Expr to initialize the application state.
         :rtype: pyteal.Expr
         """
+        self._check_context()
         return self._app_state.initialize()
 
     def initialize_account_state(self, addr: Expr = Txn.sender()) -> Expr:
@@ -871,7 +865,7 @@ class Application(Generic[TState]):
         :return: The Expr to initialize the account state.
         :rtype: pyteal.Expr
         """
-
+        self._check_context()
         return self._acct_state.initialize(addr)
 
     def dump(self, directory: str = ".", client: "AlgodClient | None" = None) -> None:
@@ -882,6 +876,16 @@ class Application(Generic[TState]):
             client (optional): AlgodClient to be passed to any precompiles
         """
         self.build(client).dump(Path(directory))
+
+    def _check_context(self) -> None:
+        if ctx := _ctx.get(None):
+            # if inside a context (ie when an expression is being evaluated by PyTeal),
+            # raise a warning when attempting to access the state (or related methods) of a different app instance
+            if ctx.app is not self:
+                warnings.warn(
+                    f"Accessing state of Application {ctx.app.name} during compilation of Application {self.name}",
+                    RuntimeWarning,
+                )
 
 
 def this_app() -> Application[TState]:

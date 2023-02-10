@@ -25,7 +25,7 @@ oracle_data_cache_app = Application(
 
     TODO: more than 64 vals lol
     """,
-    state=OracleState,
+    state=OracleState(),
 )
 
 oracle_data_cache_app.implement(unconditional_create_approval)
@@ -33,7 +33,7 @@ oracle_data_cache_app.implement(unconditional_create_approval)
 
 @oracle_data_cache_app.external
 def lookup(ts: abi.Uint64, *, output: OracleData) -> Expr:
-    return output.decode(OracleState.prices[ts].get_must())
+    return output.decode(oracle_data_cache_app.state.prices[ts].get_must())
 
 
 def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> Expr:
@@ -54,7 +54,7 @@ def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> 
         # Construct named tuple for storage
         (od := abi.make(OracleData)).set(timestamp, price, confidence),
         # Write to app state
-        OracleState.prices[timestamp].set(od.encode()),
+        oracle_data_cache_app.state.prices[timestamp].set(od.encode()),
         # echo the payload
         output.set(ctvaa.payload),
     )

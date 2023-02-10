@@ -1,4 +1,3 @@
-from typing import Final
 from beaker import (
     Application,
     ApplicationStateValue,
@@ -12,19 +11,19 @@ from beaker.state import AccountStateBlob, ApplicationStateBlob
 
 
 class ExampleState:
-    account_blob: Final[AccountStateBlob] = AccountStateBlob(keys=3)
+    account_blob = AccountStateBlob(keys=3)
 
-    application_blob: Final[ApplicationStateBlob] = ApplicationStateBlob(
+    application_blob = ApplicationStateBlob(
         keys=16,
     )
 
-    declared_account_value: Final[AccountStateValue] = AccountStateValue(
+    declared_account_value = AccountStateValue(
         stack_type=TealType.uint64,
         default=Int(1),
         descr="An int stored for each account that opts in",
     )
 
-    declared_app_value: Final[ApplicationStateValue] = ApplicationStateValue(
+    declared_app_value = ApplicationStateValue(
         stack_type=TealType.bytes,
         default=Bytes(
             "A declared state value that is protected with the `static` flag"
@@ -33,23 +32,19 @@ class ExampleState:
         static=True,
     )
 
-    reserved_account_value: Final[
-        ReservedAccountStateValue
-    ] = ReservedAccountStateValue(
+    reserved_account_value = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
         descr="A reserved state value, allowing 8 keys to be reserved, in this case byte type",
     )
-    reserved_app_value: Final[
-        ReservedApplicationStateValue
-    ] = ReservedApplicationStateValue(
+    reserved_app_value = ReservedApplicationStateValue(
         stack_type=TealType.uint64,
         max_keys=32,
         descr="A reserved app state variable, with 32 possible keys",
     )
 
 
-app = Application("StateExample", state=ExampleState)
+app = Application("StateExample", state=ExampleState())
 
 
 @app.create

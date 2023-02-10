@@ -1,5 +1,3 @@
-from typing import Final
-
 from algosdk.abi import ABIType
 from pyteal import abi, TealType, Int, Seq, Expr
 
@@ -8,7 +6,6 @@ from beaker import (
     ReservedAccountStateValue,
     sandbox,
     client,
-    identity_key_gen,
     unconditional_create_approval,
     unconditional_opt_in_approval,
 )
@@ -20,16 +17,16 @@ class Order(abi.NamedTuple):
     quantity: abi.Field[abi.Uint16]
 
 
-class Structer:
-    orders: Final[ReservedAccountStateValue] = ReservedAccountStateValue(
+class StructerState:
+    orders = ReservedAccountStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
-        key_gen=identity_key_gen,
+        prefix="",
     )
 
 
 structer_app = (
-    Application("Structer", state=Structer)
+    Application("Structer", state=StructerState)
     .implement(unconditional_create_approval)
     .implement(unconditional_opt_in_approval, initialize_account_state=True)
 )
@@ -37,19 +34,19 @@ structer_app = (
 
 @structer_app.external
 def place_order(order_number: abi.Uint8, order: Order) -> Expr:
-    return Structer.orders[order_number].set(order.encode())
+    return structer_app.state.orders[order_number].set(order.encode())
 
 
 @structer_app.external(read_only=True)
 def read_item(order_number: abi.Uint8, *, output: Order) -> Expr:
-    return output.decode(Structer.orders[order_number])
+    return output.decode(structer_app.state.orders[order_number])
 
 
 @structer_app.external
 def increase_quantity(order_number: abi.Uint8, *, output: Order) -> Expr:
     return Seq(
         # Read the order from state
-        (new_order := Order()).decode(Structer.orders[order_number]),
+        (new_order := Order()).decode(structer_app.state.orders[order_number]),
         # Select out in the quantity attribute, its a TupleElement type
         # so needs to be stored somewhere
         (quant := abi.Uint16()).set(new_order.quantity),
@@ -60,7 +57,7 @@ def increase_quantity(order_number: abi.Uint8, *, output: Order) -> Expr:
         # borrow the item we already know about
         new_order.set(item, quant),
         # Write the new order to state
-        Structer.orders[order_number].set(new_order.encode()),
+        structer_app.state.orders[order_number].set(new_order.encode()),
         # Write new order to caller
         output.decode(new_order.encode()),
     )
@@ -121,9 +118,4 @@ def demo():
 
 
 if __name__ == "__main__":
-    # import json
-    # s = Structer()
-    # with open("structer.json", "w") as f:
-    #    f.write(json.dumps((s.application_spec())))
-
     demo()

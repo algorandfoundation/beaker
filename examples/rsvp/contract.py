@@ -70,7 +70,7 @@ class EventRSVPState:
     )
 
 
-rsvp = Application("EventRSVP", state=EventRSVPState)
+rsvp = Application("EventRSVP", state=EventRSVPState())
 
 
 @rsvp.create
@@ -78,7 +78,7 @@ def create(event_price: abi.Uint64):
     """Deploys the contract and initialze the app states"""
     return Seq(
         rsvp.initialize_application_state(),
-        EventRSVPState.price.set(event_price.get()),
+        rsvp.state.price.set(event_price.get()),
     )
 
 
@@ -89,17 +89,17 @@ def do_rsvp(payment: abi.PaymentTransaction):
         Assert(
             Global.group_size() == Int(2),
             payment.get().receiver() == Global.current_application_address(),
-            payment.get().amount() == EventRSVPState.price,
+            payment.get().amount() == rsvp.state.price,
         ),
         rsvp.initialize_account_state(),
-        EventRSVPState.rsvp.increment(),
+        rsvp.state.rsvp.increment(),
     )
 
 
 @rsvp.external(authorize=Authorize.opted_in(Global.current_application_id()))
 def check_in():
     """If the Sender RSVPed, check-in the Sender"""
-    return EventRSVPState.checked_in.set(Int(1))
+    return rsvp.state.checked_in.set(Int(1))
 
 
 @rsvp.external(authorize=Authorize.only(Global.creator_address()))
@@ -125,13 +125,13 @@ def delete():
 @rsvp.external(read_only=True, authorize=Authorize.only(Global.creator_address()))
 def read_rsvp(*, output: abi.Uint64):
     """Read amount of RSVP to the event. Only callable by Creator."""
-    return output.set(EventRSVPState.rsvp)
+    return output.set(rsvp.state.rsvp)
 
 
 @rsvp.external(read_only=True)
 def read_price(*, output: abi.Uint64):
     """Read amount of RSVP to the event. Only callable by Creator."""
-    return output.set(EventRSVPState.price)
+    return output.set(rsvp.state.price)
 
 
 def _do_refund() -> Expr:
@@ -142,11 +142,11 @@ def _do_refund() -> Expr:
             {
                 TxnField.type_enum: TxnType.Payment,
                 TxnField.receiver: Txn.sender(),
-                TxnField.amount: EventRSVPState.price - FEE,
+                TxnField.amount: rsvp.state.price - FEE,
             }
         ),
         InnerTxnBuilder.Submit(),
-        EventRSVPState.rsvp.decrement(),
+        rsvp.state.rsvp.decrement(),
     )
 
 

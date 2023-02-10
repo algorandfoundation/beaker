@@ -1,10 +1,13 @@
 from pyteal import abi, TealType, Global, Int, Seq
 
-from beaker import sandbox
-from beaker.application import this_app, Application
+from beaker import (
+    sandbox,
+    Application,
+    Authorize,
+    ApplicationStateValue,
+    unconditional_create_approval,
+)
 from beaker.client import ApplicationClient, LogicException
-from beaker.decorators import Authorize
-from beaker.state import ApplicationStateValue
 
 
 class CounterState:
@@ -14,12 +17,9 @@ class CounterState:
     )
 
 
-counter_app = Application("CounterApp", state=CounterState)
-
-
-@counter_app.create
-def create():
-    return this_app().initialize_application_state()
+counter_app = Application("CounterApp", state=CounterState()).implement(
+    unconditional_create_approval, initialize_app_state=True
+)
 
 
 AuthorizeCreatorOnly = Authorize.only(Global.creator_address())
@@ -29,8 +29,8 @@ AuthorizeCreatorOnly = Authorize.only(Global.creator_address())
 def increment(*, output: abi.Uint64):
     """increment the counter"""
     return Seq(
-        CounterState.counter.set(CounterState.counter + Int(1)),
-        output.set(CounterState.counter),
+        counter_app.state.counter.set(counter_app.state.counter + Int(1)),
+        output.set(counter_app.state.counter),
     )
 
 
@@ -38,8 +38,8 @@ def increment(*, output: abi.Uint64):
 def decrement(*, output: abi.Uint64):
     """decrement the counter"""
     return Seq(
-        CounterState.counter.set(CounterState.counter - Int(1)),
-        output.set(CounterState.counter),
+        counter_app.state.counter.set(counter_app.state.counter - Int(1)),
+        output.set(counter_app.state.counter),
     )
 
 
