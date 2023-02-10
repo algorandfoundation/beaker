@@ -8,7 +8,7 @@ from beaker import consts
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
 
-from examples.amm.amm import amm_app, ConstantProductAMM
+from examples.amm.amm import ConstantProductAMMState, amm_app, scale
 
 # Take first account from sandbox
 acct = get_accounts().pop()
@@ -183,11 +183,9 @@ def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
             print("\tAssetB Balance {}".format(asset["amount"]))
 
     state = app_client.get_application_state()
-    state_key = ConstantProductAMM.ratio.str_key()
+    state_key = ConstantProductAMMState.ratio.str_key()
     if state_key in state:
-        print(
-            f"\tCurrent ratio a/b == {int(state[state_key]) / ConstantProductAMM._scale}"
-        )
+        print(f"\tCurrent ratio a/b == {int(state[state_key]) / scale.value}")
     else:
         print("\tNo ratio a/b")
 

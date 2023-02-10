@@ -17,7 +17,13 @@ from algosdk.v2client.algod import AlgodClient
 from beaker import client, sandbox, consts
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
-from examples.amm.amm import ConstantProductAMM, ConstantProductAMMErrors, amm_app
+from examples.amm.amm import (
+    ConstantProductAMMErrors,
+    ConstantProductAMMState,
+    amm_app,
+    scale,
+    fee,
+)
 from tests.conftest import check_application_artifacts_output_stability
 from tests import helpers
 
@@ -103,8 +109,7 @@ def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
 @pytest.fixture(scope="session")
 def creator_app_client(creator_acct: AcctInfo) -> client.ApplicationClient:
     _, _, signer = creator_acct
-    app = ConstantProductAMM.construct()
-    app_client = client.ApplicationClient(algod_client, app, signer=signer)
+    app_client = client.ApplicationClient(algod_client, amm_app, signer=signer)
     return app_client
 
 
@@ -124,10 +129,12 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     app_state = creator_app_client.get_application_state()
     sender = creator_app_client.get_sender()
 
-    assert app_state[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
+    assert app_state[ConstantProductAMMState.governor.str_key()] == _addr_to_hex(
         sender
     ), "The governor should be my address"
-    assert app_state[ConstantProductAMM.ratio.str_key()] == 0, "The ratio should be 0"
+    assert (
+        app_state[ConstantProductAMMState.ratio.str_key()] == 0
+    ), "The ratio should be 0"
 
 
 def minimum_fee_for_txn_count(
@@ -288,7 +295,7 @@ def test_app_set_governor(
     state_before = creator_app_client.get_application_state()
 
     assert creator_addr is not None
-    assert state_before[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
+    assert state_before[ConstantProductAMMState.governor.str_key()] == _addr_to_hex(
         creator_addr
     )
 
@@ -299,7 +306,9 @@ def test_app_set_governor(
     )
 
     state_after = creator_app_client.get_application_state()
-    assert state_after[ConstantProductAMM.governor.str_key()] == _addr_to_hex(user_addr)
+    assert state_after[ConstantProductAMMState.governor.str_key()] == _addr_to_hex(
+        user_addr
+    )
 
     user_client = creator_app_client.prepare(signer=user_signer)
     # Return state to old gov
@@ -309,9 +318,9 @@ def test_app_set_governor(
     )
 
     state_after_revert = creator_app_client.get_application_state()
-    assert state_after_revert[ConstantProductAMM.governor.str_key()] == _addr_to_hex(
-        creator_addr
-    )
+    assert state_after_revert[
+        ConstantProductAMMState.governor.str_key()
+    ] == _addr_to_hex(creator_addr)
 
 
 def test_app_bootstrap(
@@ -346,9 +355,9 @@ def test_app_bootstrap(
 
     # Make sure our state is updated
     app_state = creator_app_client.get_application_state()
-    assert app_state[ConstantProductAMM.pool_token.str_key()] == pool_token
-    assert app_state[ConstantProductAMM.asset_a.str_key()] == asset_a
-    assert app_state[ConstantProductAMM.asset_b.str_key()] == asset_b
+    assert app_state[ConstantProductAMMState.pool_token.str_key()] == pool_token
+    assert app_state[ConstantProductAMMState.asset_a.str_key()] == asset_a
+    assert app_state[ConstantProductAMMState.asset_b.str_key()] == asset_b
 
 
 def test_app_fund(creator_app_client: ApplicationClient):
@@ -378,11 +387,11 @@ def test_app_fund(creator_app_client: ApplicationClient):
     assert balance_deltas[app_addr][b_asset] == b_amount
     assert_app_algo_balance(creator_app_client, app_algo_balance)
 
-    expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - ConstantProductAMM._scale)
+    expected_pool_tokens = int((a_amount * b_amount) ** 0.5 - scale.value)
     assert balance_deltas[addr][pool_asset] == expected_pool_tokens
 
     ratio = _get_ratio_from_state(creator_app_client)
-    expected_ratio = int((a_amount * ConstantProductAMM._scale) / b_amount)
+    expected_ratio = int((a_amount * scale.value) / b_amount)
     assert ratio == expected_ratio
 
 
@@ -396,7 +405,7 @@ def test_mint(creator_app_client: ApplicationClient):
     ratio_before = _get_ratio_from_state(creator_app_client)
 
     a_amount = 40000
-    b_amount = int(a_amount * ConstantProductAMM._scale / ratio_before)
+    b_amount = int(a_amount * scale.value / ratio_before)
 
     creator_app_client.call(
         "mint",
@@ -421,7 +430,7 @@ def test_mint(creator_app_client: ApplicationClient):
         balances_before[app_addr][a_asset],
         b_amount,
         balances_before[app_addr][b_asset],
-        ConstantProductAMM._scale,
+        scale.value,
     )
     assert balance_deltas[addr][pool_asset] == int(expected_pool_tokens)
 
@@ -501,7 +510,7 @@ def test_swap(creator_app_client: ApplicationClient):
     b_supply = balances_before[app_addr][b_asset]
 
     expected_b_tokens = _get_tokens_to_swap(
-        swap_amt, a_supply, b_supply, ConstantProductAMM._scale, ConstantProductAMM._fee
+        swap_amt, a_supply, b_supply, scale.value, fee.value
     )
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
 
@@ -861,7 +870,7 @@ def _get_tokens_to_burn(asset_supply, burn_amount, pool_issued):
 
 def _get_ratio_from_state(creator_app_client: ApplicationClient):
     app_state = creator_app_client.get_application_state()
-    return app_state[ConstantProductAMM.ratio.str_key()]
+    return app_state[ConstantProductAMMState.ratio.str_key()]
 
 
 def _get_tokens_from_state(
@@ -869,14 +878,14 @@ def _get_tokens_from_state(
 ) -> tuple[int, int, int]:
     app_state = creator_app_client.get_application_state()
     return (
-        int(app_state[ConstantProductAMM.pool_token.str_key()]),
-        int(app_state[ConstantProductAMM.asset_a.str_key()]),
-        int(app_state[ConstantProductAMM.asset_b.str_key()]),
+        int(app_state[ConstantProductAMMState.pool_token.str_key()]),
+        int(app_state[ConstantProductAMMState.asset_a.str_key()]),
+        int(app_state[ConstantProductAMMState.asset_b.str_key()]),
     )
 
 
 def _expect_ratio(a_sup, b_sup):
-    return int((a_sup * ConstantProductAMM._scale) / b_sup)
+    return int((a_sup * scale.value) / b_sup)
 
 
 def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
