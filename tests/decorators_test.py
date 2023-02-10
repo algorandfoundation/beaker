@@ -184,7 +184,7 @@ def test_named_tuple():
     o_hint = thing_hints.structs.get("o")
     assert o_hint == {
         "name": "Order",
-        "elements": [("item", "string"), ("count", "uint64")],
+        "elements": [["item", "string"], ["count", "uint64"]],
     }
 
 

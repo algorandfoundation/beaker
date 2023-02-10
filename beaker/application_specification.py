@@ -23,7 +23,7 @@ from beaker.state import AccountStateValue, ApplicationStateValue, StateDict
 
 class StructArgDict(TypedDict):
     name: str
-    elements: list[tuple[str, str]]
+    elements: list[list[str]]
 
 
 DefaultArgumentClass: TypeAlias = Literal[

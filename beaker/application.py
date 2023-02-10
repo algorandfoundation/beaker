@@ -931,7 +931,7 @@ def _capture_method_hints_and_remove_defaults(
             mh.structs[name] = {
                 "name": str(param.annotation.__name__),
                 "elements": [
-                    (name, str(abi.algosdk_from_annotation(typ.__args__[0])))
+                    [name, str(abi.algosdk_from_annotation(typ.__args__[0]))]
                     for name, typ in param.annotation.__annotations__.items()
                 ],
             }

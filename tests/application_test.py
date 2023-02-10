@@ -457,9 +457,9 @@ def test_struct_args():
         "user_record": {
             "name": "UserRecord",
             "elements": [
-                ("addr", "address"),
-                ("balance", "uint64"),
-                ("nickname", "string"),
+                ["addr", "address"],
+                ["balance", "uint64"],
+                ["nickname", "string"],
             ],
         }
     }
