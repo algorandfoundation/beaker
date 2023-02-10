@@ -188,52 +188,24 @@ def test_named_tuple():
     }
 
 
-def test_bare():
+@pytest.mark.parametrize(
+    "decorator_name",
+    ["create", "no_op", "delete", "update", "opt_in", "close_out"],
+)
+def test_decorators_with_bare_signature(decorator_name: str):
     app = Application("")
+    decorator = getattr(app, decorator_name)
 
-    @app.create
-    def create() -> pt.Expr:
+    @decorator
+    def test() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    assert isinstance(create, pt.SubroutineFnWrapper)
-    assert "create" in app.bare_methods
+    assert isinstance(test, pt.SubroutineFnWrapper)
+    assert "test" in app.bare_methods
 
-    app.deregister_bare_method(create)
 
-    @app.no_op
-    def no_op() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    assert isinstance(no_op, pt.SubroutineFnWrapper)
-    assert "no_op" in app.bare_methods
-
-    @app.delete
-    def delete() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    assert isinstance(delete, pt.SubroutineFnWrapper)
-    assert "delete" in app.bare_methods
-
-    @app.update
-    def update() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    assert isinstance(update, pt.SubroutineFnWrapper)
-    assert "update" in app.bare_methods
-
-    @app.opt_in
-    def opt_in() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    assert isinstance(opt_in, pt.SubroutineFnWrapper)
-    assert "opt_in" in app.bare_methods
-
-    @app.close_out
-    def close_out() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    assert isinstance(close_out, pt.SubroutineFnWrapper)
-    assert "close_out" in app.bare_methods
+def test_bare_clear_state():
+    app = Application("clear_state")
 
     @app.clear_state
     def clear_state() -> pt.Expr:
@@ -243,7 +215,11 @@ def test_bare():
     assert "clear_state" not in app.bare_methods
     assert app._clear_state_method is clear_state
 
-    @app.external(bare=True, method_config={"no_op": pt.CallConfig.ALL}, override=True)
+
+def test_bare_external():
+    app = Application("bare_external")
+
+    @app.external(bare=True, method_config=pt.MethodConfig(no_op=pt.CallConfig.ALL))
     def external() -> pt.Expr:
         return pt.Approve()
 
