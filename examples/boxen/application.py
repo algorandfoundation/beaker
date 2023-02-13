@@ -160,7 +160,19 @@ class MembershipClub(Application):
             ),
         )
 
-    @external(read_only=True)
+    @external(authorize=Authorize.only(Global.creator_address()))
+    def update_role(self, member: abi.Account, new_role: abi.Uint8):
+        return Seq(
+            (mr := MembershipRecord()).decode(
+                self.membership_records[member.address()].get()
+            ),
+            # retain their voted status
+            (voted := abi.Bool()).set(mr.voted),
+            mr.set(new_role, voted),
+            self.membership_records[member.address()].set(mr),
+        )
+
+    @external()
     def get_membership_record(self, member: abi.Address, *, output: MembershipRecord):
         return self.membership_records[member].store_into(output)
 
@@ -224,7 +236,3 @@ class AppMember(Application):
             ),
             self.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
         )
-
-
-if __name__ == "__main__":
-    MembershipClub().dump("./artifacts")
