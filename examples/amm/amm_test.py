@@ -19,7 +19,6 @@ from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from examples.amm.amm import (
     ConstantProductAMMErrors,
-    ConstantProductAMMState,
     amm_app,
     scale,
     fee,
@@ -103,7 +102,7 @@ def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
     )
     algod_client.send_transactions([txn.sign(sk) for txn in send_to_user_txns])
 
-    return (a_asset, b_asset)
+    return a_asset, b_asset
 
 
 @pytest.fixture(scope="session")
@@ -121,7 +120,11 @@ def get_app_client_details(
         app_client.sender,
         app_client.signer,
     )
-    return (app_addr, addr, signer)  # type: ignore
+    assert app_addr is not None
+    assert addr is not None
+    assert signer is not None
+    assert isinstance(signer, AccountTransactionSigner)
+    return app_addr, addr, signer
 
 
 def test_app_create(creator_app_client: client.ApplicationClient):
@@ -129,12 +132,10 @@ def test_app_create(creator_app_client: client.ApplicationClient):
     app_state = creator_app_client.get_application_state()
     sender = creator_app_client.get_sender()
 
-    assert app_state[ConstantProductAMMState.governor.str_key()] == _addr_to_hex(
+    assert app_state[amm_app.state.governor.str_key()] == _addr_to_hex(
         sender
     ), "The governor should be my address"
-    assert (
-        app_state[ConstantProductAMMState.ratio.str_key()] == 0
-    ), "The ratio should be 0"
+    assert app_state[amm_app.state.ratio.str_key()] == 0, "The ratio should be 0"
 
 
 def minimum_fee_for_txn_count(
@@ -295,9 +296,7 @@ def test_app_set_governor(
     state_before = creator_app_client.get_application_state()
 
     assert creator_addr is not None
-    assert state_before[ConstantProductAMMState.governor.str_key()] == _addr_to_hex(
-        creator_addr
-    )
+    assert state_before[amm_app.state.governor.str_key()] == _addr_to_hex(creator_addr)
 
     # Set the new gov
     creator_app_client.call(
@@ -306,9 +305,7 @@ def test_app_set_governor(
     )
 
     state_after = creator_app_client.get_application_state()
-    assert state_after[ConstantProductAMMState.governor.str_key()] == _addr_to_hex(
-        user_addr
-    )
+    assert state_after[amm_app.state.governor.str_key()] == _addr_to_hex(user_addr)
 
     user_client = creator_app_client.prepare(signer=user_signer)
     # Return state to old gov
@@ -318,9 +315,9 @@ def test_app_set_governor(
     )
 
     state_after_revert = creator_app_client.get_application_state()
-    assert state_after_revert[
-        ConstantProductAMMState.governor.str_key()
-    ] == _addr_to_hex(creator_addr)
+    assert state_after_revert[amm_app.state.governor.str_key()] == _addr_to_hex(
+        creator_addr
+    )
 
 
 def test_app_bootstrap(
@@ -355,9 +352,9 @@ def test_app_bootstrap(
 
     # Make sure our state is updated
     app_state = creator_app_client.get_application_state()
-    assert app_state[ConstantProductAMMState.pool_token.str_key()] == pool_token
-    assert app_state[ConstantProductAMMState.asset_a.str_key()] == asset_a
-    assert app_state[ConstantProductAMMState.asset_b.str_key()] == asset_b
+    assert app_state[amm_app.state.pool_token.str_key()] == pool_token
+    assert app_state[amm_app.state.asset_a.str_key()] == asset_a
+    assert app_state[amm_app.state.asset_b.str_key()] == asset_b
 
 
 def test_app_fund(creator_app_client: ApplicationClient):
@@ -868,7 +865,7 @@ def _get_tokens_to_burn(asset_supply, burn_amount, pool_issued):
 
 def _get_ratio_from_state(creator_app_client: ApplicationClient):
     app_state = creator_app_client.get_application_state()
-    return app_state[ConstantProductAMMState.ratio.str_key()]
+    return app_state[amm_app.state.ratio.str_key()]
 
 
 def _get_tokens_from_state(
@@ -876,9 +873,9 @@ def _get_tokens_from_state(
 ) -> tuple[int, int, int]:
     app_state = creator_app_client.get_application_state()
     return (
-        int(app_state[ConstantProductAMMState.pool_token.str_key()]),
-        int(app_state[ConstantProductAMMState.asset_a.str_key()]),
-        int(app_state[ConstantProductAMMState.asset_b.str_key()]),
+        int(app_state[amm_app.state.pool_token.str_key()]),
+        int(app_state[amm_app.state.asset_a.str_key()]),
+        int(app_state[amm_app.state.asset_b.str_key()]),
     )
 
 

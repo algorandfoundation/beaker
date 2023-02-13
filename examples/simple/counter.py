@@ -1,4 +1,4 @@
-from pyteal import abi, TealType, Global, Int, Seq
+from pyteal import abi, TealType, Global, Int, Seq, Expr
 
 from beaker import (
     sandbox,
@@ -26,7 +26,7 @@ AuthorizeCreatorOnly = Authorize.only(Global.creator_address())
 
 
 @counter_app.external(authorize=AuthorizeCreatorOnly)
-def increment(*, output: abi.Uint64):
+def increment(*, output: abi.Uint64) -> Expr:
     """increment the counter"""
     return Seq(
         counter_app.state.counter.set(counter_app.state.counter + Int(1)),
@@ -35,7 +35,7 @@ def increment(*, output: abi.Uint64):
 
 
 @counter_app.external(authorize=AuthorizeCreatorOnly)
-def decrement(*, output: abi.Uint64):
+def decrement(*, output: abi.Uint64) -> Expr:
     """decrement the counter"""
     return Seq(
         counter_app.state.counter.set(counter_app.state.counter - Int(1)),
@@ -43,7 +43,7 @@ def decrement(*, output: abi.Uint64):
     )
 
 
-def demo():
+def demo() -> None:
     client = sandbox.get_algod_client()
 
     accts = sandbox.get_accounts()

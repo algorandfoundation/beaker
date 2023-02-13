@@ -11,8 +11,6 @@ from pyteal import (
     Assert,
     Expr,
     Int,
-    ScratchVar,
-    For,
     Approve,
     Subroutine,
 )
@@ -25,20 +23,6 @@ from beaker import (
     ApplicationStateValue,
 )
 from beaker.consts import Algos
-
-
-def Repeat(n: int, expr: Expr) -> Expr:
-    """internal method to issue transactions against the target app"""
-    if n < 0:
-        raise ValueError("n < 0")
-    elif n == 1:
-        return expr
-    else:
-        return For(
-            (i := ScratchVar()).store(Int(0)),
-            i.load() < Int(n),
-            i.store(i.load() + Int(1)),
-        ).Do(expr)
 
 
 class OpUpState:

@@ -18,7 +18,7 @@ def hello(name: abi.String, *, output: abi.String) -> Expr:
     return output.set(Concat(Bytes("Hello, "), name.get()))
 
 
-def demo():
+def demo() -> None:
     # Create an Application client
     app_client = client.ApplicationClient(
         # Get sandbox algod client

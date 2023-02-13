@@ -7,7 +7,6 @@ from beaker import client, consts, sandbox
 
 from examples.boxen.application import (
     MembershipRecord,
-    MinimumBalance,
     app_member_app,
     membership_club_app,
 )
@@ -41,7 +40,7 @@ def print_boxes(app_client: client.ApplicationClient):
             print(f"\t{encode_address(box_name)} => {membership_record} ")
 
 
-def demo():
+def demo() -> None:
     accts = sandbox.get_accounts()
     acct = accts.pop()
     member_acct = accts.pop()
@@ -63,7 +62,7 @@ def demo():
         acct.address,
         sp,
         app_client.app_addr,
-        MinimumBalance.value,
+        membership_club_app.state.minimum_balance.value,
     )
     result = app_client.call(
         "bootstrap",

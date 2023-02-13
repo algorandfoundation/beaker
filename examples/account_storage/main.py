@@ -40,11 +40,13 @@ from beaker.precompile import PrecompiledLogicSignatureTemplate
 # In this case, we need it to opt in and rekey to the app address
 def KeySig(version: int) -> LogicSignatureTemplate:
     return LogicSignatureTemplate(
-        lambda: Approve(),
+        Approve(),
         runtime_template_variables={"nonce": TealType.bytes},
         build_options=BuildOptions(avm_version=version),
     )
 
+
+key_sig = KeySig(version=8)
 
 # App that needs lots of storage so we use the local storage of
 # unique lsig accounts that have been rekeyed to the app address.
@@ -60,7 +62,6 @@ disk_hungry = Application(
     build_options=BuildOptions(avm_version=8),
     state=DiskHungryState(),
 ).implement(unconditional_create_approval)
-key_sig = KeySig(version=8)
 
 
 # Add account during opt in  by checking the sender against the address
@@ -120,7 +121,7 @@ def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
     )
 
 
-def demo():
+def demo() -> None:
     # Create app client
     app_client = client.ApplicationClient(
         client=sandbox.get_algod_client(),

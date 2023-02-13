@@ -1,4 +1,4 @@
-from pyteal import abi
+from pyteal import abi, Expr
 
 from beaker import sandbox, Application, unconditional_create_approval
 from beaker.client import ApplicationClient
@@ -7,30 +7,30 @@ calculator_app = Application("Calculator").implement(unconditional_create_approv
 
 
 @calculator_app.external
-def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
     """Add a and b, return the result"""
     return output.set(a.get() + b.get())
 
 
 @calculator_app.external
-def mul(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+def mul(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
     """Multiply a and b, return the result"""
     return output.set(a.get() * b.get())
 
 
 @calculator_app.external
-def sub(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+def sub(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
     """Subtract b from a, return the result"""
     return output.set(a.get() - b.get())
 
 
 @calculator_app.external
-def div(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64):
+def div(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
     """Divide a by b, return the result"""
     return output.set(a.get() / b.get())
 
 
-def demo():
+def demo() -> None:
     # Here we use `sandbox` but beaker.client.api_providers can also be used
     # with something like ``AlgoNode(Network.TestNet).algod()``
     algod_client = sandbox.get_algod_client()

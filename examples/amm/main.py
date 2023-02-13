@@ -21,7 +21,7 @@ client = get_algod_client()
 app_client = ApplicationClient(client, amm_app, signer=acct.signer)
 
 
-def demo():
+def demo() -> None:
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()

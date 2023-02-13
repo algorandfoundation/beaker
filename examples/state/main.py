@@ -4,7 +4,7 @@ from beaker.sandbox import get_algod_client, get_accounts
 from examples.state.contract import app
 
 
-def demo():
+def demo() -> None:
 
     accts = get_accounts()
 

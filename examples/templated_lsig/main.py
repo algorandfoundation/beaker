@@ -53,7 +53,7 @@ app = Application("App").implement(unconditional_create_approval)
 
 
 @app.external
-def check(signer_address: abi.Address, msg: abi.String, sig: Signature):
+def check(signer_address: abi.Address, msg: abi.String, sig: Signature) -> Expr:
     sig_checker_pc = precompiled(sig_checker)
     return Assert(
         Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
@@ -66,7 +66,7 @@ def sign_msg(msg: str, sk: str) -> bytes:
     return SigningKey(bytes(pk[:32])).sign(msg.encode()).signature
 
 
-def demo():
+def demo() -> None:
     acct = sandbox.get_accounts().pop()
 
     # Create app client

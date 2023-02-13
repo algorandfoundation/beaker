@@ -16,7 +16,7 @@ client = get_algod_client()
 acct = get_accounts().pop()
 
 
-def demo():
+def demo() -> None:
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()
     # we need to cover 255 inner transactions + ours

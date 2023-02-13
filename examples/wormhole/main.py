@@ -19,7 +19,7 @@ base_vaa = bytes.fromhex(
 oracle_data_codec = ABIType.from_string(str(OracleData().type_spec()))
 
 
-def demo():
+def demo() -> None:
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(),
         oracle_data_cache_app,

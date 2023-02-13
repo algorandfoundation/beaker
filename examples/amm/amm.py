@@ -57,36 +57,33 @@ class ConstantProductAMMErrors:
 
 
 class ConstantProductAMMState:
-
-    # Declare Application state, marking `Final` here so the python class var doesn't get changed
-    # Marking a var `Final` does _not_ change anything at the AVM level
-    asset_a: Final[ApplicationStateValue] = ApplicationStateValue(
+    asset_a = ApplicationStateValue(
         stack_type=TealType.uint64,
-        key=Bytes("a"),
+        key="a",
         static=True,
         descr="The asset id of asset A",
     )
-    asset_b: Final[ApplicationStateValue] = ApplicationStateValue(
+    asset_b = ApplicationStateValue(
         stack_type=TealType.uint64,
-        key=Bytes("b"),
+        key="b",
         static=True,
         descr="The asset id of asset B",
     )
-    governor: Final[ApplicationStateValue] = ApplicationStateValue(
+    governor = ApplicationStateValue(
         stack_type=TealType.bytes,
-        key=Bytes("g"),
+        key="g",
         default=Global.creator_address(),
         descr="The current governor of this contract, allowed to do admin type actions",
     )
-    pool_token: Final[ApplicationStateValue] = ApplicationStateValue(
+    pool_token = ApplicationStateValue(
         stack_type=TealType.uint64,
-        key=Bytes("p"),
+        key="p",
         static=True,
         descr="The asset id of the Pool Token, used to track share of pool the holder may recover",
     )
-    ratio: Final[ApplicationStateValue] = ApplicationStateValue(
+    ratio = ApplicationStateValue(
         stack_type=TealType.uint64,
-        key=Bytes("r"),
+        key="r",
         descr="The ratio between assets (A/B)*Scale",
     )
 

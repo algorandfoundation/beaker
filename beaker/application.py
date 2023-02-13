@@ -162,7 +162,6 @@ class Application(Generic[TState]):
 
     @property
     def state(self) -> TState:
-        self._check_context()
         return self._state
 
     @overload
@@ -861,8 +860,7 @@ class Application(Generic[TState]):
             # raise a warning when attempting to access the state (or related methods) of a different app instance
             if ctx.app is not self:
                 warnings.warn(
-                    f"Accessing state of Application {ctx.app.name} during compilation of Application {self.name}",
-                    RuntimeWarning,
+                    f"Accessing state of Application {self.name} during compilation of Application {ctx.app.name}"
                 )
 
 

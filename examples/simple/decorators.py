@@ -1,4 +1,4 @@
-from pyteal import abi
+from pyteal import abi, Expr
 from beaker import sandbox, client, Application
 
 
@@ -6,11 +6,11 @@ external_example_app = Application("ExternalExample")
 
 
 @external_example_app.create
-def create(input: abi.String, *, output: abi.String):
+def create(input: abi.String, *, output: abi.String) -> Expr:
     return output.decode(input.encode())
 
 
-def demo():
+def demo() -> None:
 
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(),

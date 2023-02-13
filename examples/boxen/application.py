@@ -76,40 +76,33 @@ class MembershipClubState:
         descr="The asset that represents membership of this club",
     )
 
-    ####
-    # Box abstractions
-
-    # A Mapping will create a new box for every unique key,
-    # taking a data type for key and value
-    # Only static types can provide information about the max
-    # size (and min balance required).
-    membership_records = Mapping(abi.Address, MembershipRecord)
-
     # A Listing is a simple list, initialized with some _static_ data type and a length
     affirmations = List(Affirmation, 10)
 
+    def __init__(self, *, max_members: int, record_type: type[abi.BaseType]):
+        self.record_type = record_type
+        # A Mapping will create a new box for every unique key,
+        # taking a data type for key and value
+        # Only static types can provide information about the max
+        # size (and thus min balance required) - dynamic types will fail at abi.size_of
+        self.membership_records = Mapping(abi.Address, record_type)
 
-#####
-# Math for determining min balance based on expected size of boxes
-_max_members = 1000
-_member_box_size = abi.size_of(MembershipRecord)
-_min_balance = (
-    AssetMinBalance  # Cover min bal for member token
-    + (BoxFlatMinBalance + (_member_box_size * BoxByteMinBalance))
-    * _max_members  # cover min bal for member record boxes we might create
-    + (
-        BoxFlatMinBalance
-        + (MembershipClubState.affirmations.box_size.value * BoxByteMinBalance)
-    )  # cover min bal for affirmation box
-)
-####
-
-MaxMembers = Int(_max_members)
-MinimumBalance = Int(_min_balance)
+        # Math for determining min balance based on expected size of boxes
+        self.max_members = Int(max_members)
+        self.minimum_balance = Int(
+            AssetMinBalance  # Cover min bal for member token
+            + (BoxFlatMinBalance + (abi.size_of(record_type) * BoxByteMinBalance))
+            * max_members  # cover min bal for member record boxes we might create
+            + (
+                BoxFlatMinBalance
+                + (self.affirmations.box_size.value * BoxByteMinBalance)
+            )  # cover min bal for affirmation box
+        )
 
 
 membership_club_app = Application(
-    "MembershipClub", state=MembershipClubState()
+    "MembershipClub",
+    state=MembershipClubState(max_members=1000, record_type=MembershipRecord),
 ).implement(unconditional_create_approval)
 
 
@@ -127,15 +120,15 @@ def bootstrap(
             comment="payment must be to app address",
         ),
         Assert(
-            seed.get().amount() >= MinimumBalance,
-            comment=f"payment must be for >= {_min_balance}",
+            seed.get().amount() >= membership_club_app.state.minimum_balance,
+            comment=f"payment must be for >= {membership_club_app.state.minimum_balance.value}",
         ),
         Pop(membership_club_app.state.affirmations.create()),
         InnerTxnBuilder.Execute(
             {
                 TxnField.type_enum: TxnType.AssetConfig,
                 TxnField.config_asset_name: token_name.get(),
-                TxnField.config_asset_total: MaxMembers,
+                TxnField.config_asset_total: membership_club_app.state.max_members,
                 TxnField.config_asset_default_frozen: Int(1),
                 TxnField.config_asset_manager: Global.current_application_address(),
                 TxnField.config_asset_clawback: Global.current_application_address(),

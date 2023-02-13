@@ -1,5 +1,4 @@
 from pyteal import (
-    Approve,
     OnComplete,
     abi,
     TealType,
@@ -17,8 +16,8 @@ from pyteal import (
     Global,
     Subroutine,
 )
+
 import beaker as bkr
-import beaker.blueprints
 from beaker import precompiled
 
 algod_client = bkr.sandbox.get_algod_client()
@@ -32,21 +31,15 @@ class C2CSubState:
     acsv = bkr.AccountStateValue(TealType.bytes, default=Bytes("acsv"))
 
 
-sub_app = bkr.Application(
-    "C2CSub",
-    descr="Sub application who's only purpose is to opt into then close out of an asset",
-    state=C2CSubState(),
+sub_app = (
+    bkr.Application(
+        "C2CSub",
+        descr="Sub application who's only purpose is to opt into then close out of an asset",
+        state=C2CSubState(),
+    )
+    .implement(bkr.unconditional_create_approval, initialize_app_state=True)
+    .implement(bkr.unconditional_opt_in_approval, initialize_account_state=True)
 )
-
-
-@sub_app.create
-def create():
-    return Seq(bkr.this_app().initialize_application_state(), Approve())
-
-
-@sub_app.opt_in
-def opt_in():
-    return Seq(bkr.this_app().initialize_account_state(), Approve())
 
 
 @sub_app.external
@@ -79,7 +72,7 @@ def return_asset(asset: abi.Asset, addr: abi.Account):
 main_app = bkr.Application(
     "C2CMain",
     descr="Main application that handles creation of the sub app and asset and calls it",
-).implement(beaker.blueprints.unconditional_create_approval)
+).implement(bkr.unconditional_create_approval)
 
 
 @main_app.external
@@ -195,7 +188,7 @@ def delete_asset(asset: abi.Asset):
     )
 
 
-def demo():
+def demo() -> None:
 
     accts = bkr.sandbox.get_accounts()
     acct = accts.pop()

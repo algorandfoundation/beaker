@@ -43,7 +43,7 @@ def check_eth_sig(hash: HashValue, signature: Signature, *, output: abi.String) 
     )
 
 
-def demo():
+def demo() -> None:
     algod_client = sandbox.get_algod_client()
     acct = sandbox.get_accounts().pop()
 

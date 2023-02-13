@@ -33,7 +33,7 @@ FEE = Int(1000)
 
 
 @Subroutine(TealType.none)
-def withdraw_funds():
+def withdraw_funds() -> Expr:
     """Helper method that withdraws funds in the RSVP contract"""
     rsvp_bal = Balance(Global.current_application_address())
     return Seq(
@@ -74,7 +74,7 @@ rsvp = Application("EventRSVP", state=EventRSVPState())
 
 
 @rsvp.create
-def create(event_price: abi.Uint64):
+def create(event_price: abi.Uint64) -> Expr:
     """Deploys the contract and initialze the app states"""
     return Seq(
         rsvp.initialize_application_state(),
@@ -83,7 +83,7 @@ def create(event_price: abi.Uint64):
 
 
 @rsvp.opt_in
-def do_rsvp(payment: abi.PaymentTransaction):
+def do_rsvp(payment: abi.PaymentTransaction) -> Expr:
     """Let txn sender rsvp to the event by opting into the contract"""
     return Seq(
         Assert(
@@ -97,19 +97,19 @@ def do_rsvp(payment: abi.PaymentTransaction):
 
 
 @rsvp.external(authorize=Authorize.opted_in(Global.current_application_id()))
-def check_in():
+def check_in() -> Expr:
     """If the Sender RSVPed, check-in the Sender"""
     return rsvp.state.checked_in.set(Int(1))
 
 
 @rsvp.external(authorize=Authorize.only(Global.creator_address()))
-def withdraw_external():
+def withdraw_external() -> Expr:
     """Let event creator to withdraw all funds in the contract"""
     return withdraw_funds()
 
 
 @rsvp.delete(authorize=Authorize.only(Global.creator_address()))
-def delete():
+def delete() -> Expr:
     """Let event creator delete the contract. Withdraws remaining funds"""
     return If(
         Balance(Global.current_application_address()) > (MIN_BAL + FEE),
@@ -123,13 +123,13 @@ def delete():
 
 
 @rsvp.external(read_only=True, authorize=Authorize.only(Global.creator_address()))
-def read_rsvp(*, output: abi.Uint64):
+def read_rsvp(*, output: abi.Uint64) -> Expr:
     """Read amount of RSVP to the event. Only callable by Creator."""
     return output.set(rsvp.state.rsvp)
 
 
 @rsvp.external(read_only=True)
-def read_price(*, output: abi.Uint64):
+def read_price(*, output: abi.Uint64) -> Expr:
     """Read amount of RSVP to the event. Only callable by Creator."""
     return output.set(rsvp.state.price)
 

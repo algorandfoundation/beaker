@@ -1,6 +1,5 @@
 import base64
 import random
-from typing import Final
 
 from algosdk import v2client
 from pyteal import (
@@ -34,13 +33,13 @@ from beaker import (
     client,
     consts,
     BuildOptions,
+    unconditional_create_approval,
 )
-from beaker.blueprints import unconditional_create_approval
 from beaker.lib.math import Max
 
 
 class SortedIntegersState:
-    elements: Final[ApplicationStateValue] = ApplicationStateValue(
+    elements = ApplicationStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
         descr="The number of elements in the array",
@@ -63,7 +62,7 @@ sorted_ints_app = Application(
 
 
 @sorted_ints_app.external
-def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
+def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]) -> Expr:
     return Seq(
         array_contents := App.box_get(BoxName),
         Assert(Or(Int(0), Int(1))),
@@ -126,11 +125,11 @@ def binary_search(val: Expr, arr: Expr, start: Expr, end: Expr) -> Expr:
     )
 
 
-def lookup_element(buff: Expr, idx: Expr):
+def lookup_element(buff: Expr, idx: Expr) -> Expr:
     return ExtractUint64(buff, idx * Int(8))
 
 
-def insert_element(buff: Expr, new_val: Expr, pos: Expr):
+def insert_element(buff: Expr, new_val: Expr, pos: Expr) -> Expr:
     return Concat(
         Extract(buff, Int(0), pos),
         new_val,
@@ -140,7 +139,7 @@ def insert_element(buff: Expr, new_val: Expr, pos: Expr):
 
 
 @sorted_ints_app.external
-def box_create_test():
+def box_create_test() -> Expr:
     return Seq(
         Assert(App.box_create(BoxName, BoxSize)),
         sorted_ints_app.state.elements.set(Int(0)),
@@ -171,7 +170,7 @@ def get_box(
     return vals
 
 
-def demo():
+def demo() -> None:
     acct = sandbox.get_accounts().pop()
 
     app_client = client.ApplicationClient(

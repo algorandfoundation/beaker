@@ -26,7 +26,7 @@ class StructerState:
 
 
 structer_app = (
-    Application("Structer", state=StructerState)
+    Application("Structer", state=StructerState())
     .implement(unconditional_create_approval)
     .implement(unconditional_opt_in_approval, initialize_account_state=True)
 )
@@ -63,7 +63,7 @@ def increase_quantity(order_number: abi.Uint8, *, output: Order) -> Expr:
     )
 
 
-def demo():
+def demo() -> None:
 
     # Create a codec from the python sdk
     order_codec = ABIType.from_string(str(Order().type_spec()))

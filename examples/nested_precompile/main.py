@@ -7,7 +7,7 @@ from examples.nested_precompile.nested_application import (
 )
 
 
-def demo():
+def demo() -> None:
     accts = sandbox.get_accounts()
     acct = accts.pop()
 

@@ -84,8 +84,7 @@ proto 0 0
 bytec_0 // "asv"
 bytec_0 // "asv"
 app_global_put
-intc_1 // 1
-return
+retsub
 
 // opt_in
 optin_1:
@@ -94,8 +93,7 @@ txn Sender
 bytec_1 // "acsv"
 bytec_1 // "acsv"
 app_local_put
-intc_1 // 1
-return
+retsub
 
 // opt_in_to_asset
 optintoasset_2:

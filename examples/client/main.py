@@ -1,5 +1,3 @@
-from typing import Final
-
 from pyteal import abi, TealType, Global, Approve, ABIReturnSubroutine, Expr
 
 from beaker import (
@@ -18,11 +16,11 @@ from beaker.client.logic_error import LogicException
 
 
 class ClientExampleState:
-    manager: Final[ApplicationStateValue] = ApplicationStateValue(
+    manager = ApplicationStateValue(
         stack_type=TealType.bytes, default=Global.creator_address()
     )
 
-    nickname: Final[AccountStateValue] = AccountStateValue(
+    nickname = AccountStateValue(
         stack_type=TealType.bytes, descr="what this user prefers to be called"
     )
 
@@ -59,7 +57,7 @@ def get_nick(*, output: abi.String) -> Expr:
     return output.set(my_app.state.nickname)
 
 
-def demo():
+def demo() -> None:
     # Set up accounts we'll use
     accts = sandbox.get_accounts()
 

@@ -4,10 +4,12 @@ from beaker import (
     ReservedApplicationStateValue,
     AccountStateValue,
     ReservedAccountStateValue,
+    AccountStateBlob,
+    ApplicationStateBlob,
+    unconditional_create_approval,
+    unconditional_opt_in_approval,
 )
-from pyteal import abi, TealType, Bytes, Int, Txn
-
-from beaker.state import AccountStateBlob, ApplicationStateBlob
+from pyteal import abi, TealType, Bytes, Int, Txn, Expr
 
 
 class ExampleState:
@@ -45,26 +47,20 @@ class ExampleState:
     account_blob = AccountStateBlob(keys=3)
 
 
-app = Application("StateExample", state=ExampleState())
-
-
-@app.create
-def create():
-    return app.initialize_application_state()
-
-
-@app.opt_in
-def opt_in():
-    return app.initialize_account_state()
+app = (
+    Application("StateExample", state=ExampleState())
+    .implement(unconditional_create_approval, initialize_app_state=True)
+    .implement(unconditional_opt_in_approval, initialize_account_state=True)
+)
 
 
 @app.external
-def write_acct_blob(v: abi.String):
+def write_acct_blob(v: abi.String) -> Expr:
     return app.state.account_blob.write(Int(0), v.get())
 
 
 @app.external
-def read_acct_blob(*, output: abi.DynamicBytes):
+def read_acct_blob(*, output: abi.DynamicBytes) -> Expr:
     return output.set(
         app.state.account_blob.read(
             Int(0), app.state.account_blob.blob.max_bytes - Int(1)
@@ -73,12 +69,12 @@ def read_acct_blob(*, output: abi.DynamicBytes):
 
 
 @app.external
-def write_app_blob(v: abi.String):
+def write_app_blob(v: abi.String) -> Expr:
     return app.state.application_blob.write(Int(0), v.get())
 
 
 @app.external
-def read_app_blob(*, output: abi.DynamicBytes):
+def read_app_blob(*, output: abi.DynamicBytes) -> Expr:
     return output.set(
         app.state.application_blob.read(
             Int(0), app.state.application_blob.blob.max_bytes - Int(1)
@@ -87,18 +83,18 @@ def read_app_blob(*, output: abi.DynamicBytes):
 
 
 @app.external
-def set_app_state_val(v: abi.String):
+def set_app_state_val(v: abi.String) -> Expr:
     # This will fail, since it was declared as `static` and initialized to a default value during create
     return app.state.declared_app_value.set(v.get())
 
 
 @app.external(read_only=True)
-def get_app_state_val(*, output: abi.String):
+def get_app_state_val(*, output: abi.String) -> Expr:
     return output.set(app.state.declared_app_value)
 
 
 @app.external
-def set_reserved_app_state_val(k: abi.Uint8, v: abi.Uint64):
+def set_reserved_app_state_val(k: abi.Uint8, v: abi.Uint64) -> Expr:
     # Accessing the key with square brackets, accepts both Expr and an ABI type
     # If the value is an Expr it must evaluate to `TealType.bytes`
     # If the value is an ABI type, the `encode` method is used to convert it to bytes
@@ -106,35 +102,35 @@ def set_reserved_app_state_val(k: abi.Uint8, v: abi.Uint64):
 
 
 @app.external(read_only=True)
-def get_reserved_app_state_val(k: abi.Uint8, *, output: abi.Uint64):
+def get_reserved_app_state_val(k: abi.Uint8, *, output: abi.Uint64) -> Expr:
     return output.set(app.state.reserved_app_value[k])
 
 
 @app.external
-def set_account_state_val(v: abi.Uint64):
+def set_account_state_val(v: abi.Uint64) -> Expr:
     # Accessing with `[Txn.sender()]` is redundant but
     # more clear what is happening
     return app.state.declared_account_value[Txn.sender()].set(v.get())
 
 
 @app.external
-def incr_account_state_val(v: abi.Uint64):
+def incr_account_state_val(v: abi.Uint64) -> Expr:
     # Omitting [Txn.sender()] just for demo purposes
     return app.state.declared_account_value.increment(v.get())
 
 
 @app.external(read_only=True)
-def get_account_state_val(*, output: abi.Uint64):
+def get_account_state_val(*, output: abi.Uint64) -> Expr:
     return output.set(app.state.declared_account_value[Txn.sender()])
 
 
 @app.external
-def set_reserved_account_state_val(k: abi.Uint8, v: abi.String):
+def set_reserved_account_state_val(k: abi.Uint8, v: abi.String) -> Expr:
     return app.state.reserved_account_value[k][Txn.sender()].set(v.get())
 
 
 @app.external(read_only=True)
-def get_reserved_account_state_val(k: abi.Uint8, *, output: abi.String):
+def get_reserved_account_state_val(k: abi.Uint8, *, output: abi.String) -> Expr:
     return output.set(app.state.reserved_account_value[k][Txn.sender()])
 
 

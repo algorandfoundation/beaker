@@ -8,7 +8,7 @@ from beaker.client import ApplicationClient
 from examples.rsvp.contract import rsvp as app
 
 
-def demo():
+def demo() -> None:
     client = sandbox.get_algod_client()
     accts = sandbox.get_accounts()
 
