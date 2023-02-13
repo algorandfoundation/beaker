@@ -26,7 +26,7 @@ class Child1State:
     )
 
 
-child1_app = Application("Child1", state=Child1State).implement(
+child1_app = Application("Child1", state=Child1State()).implement(
     unconditional_create_approval, initialize_app_state=True
 )
 
@@ -35,8 +35,8 @@ child1_app = Application("Child1", state=Child1State).implement(
 def increment_counter(*, output: abi.Uint64) -> Expr:
     """Increment the counter global state."""
     return Seq(
-        Child1State.counter.increment(),
-        output.set(Child1State.counter.get()),
+        child1_app.state.counter.increment(),
+        output.set(child1_app.state.counter.get()),
     )
 
 
