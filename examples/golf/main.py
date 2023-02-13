@@ -58,7 +58,7 @@ MaxInts = Int(_max_ints)
 sorted_ints_app = Application(
     "SortedIntegers",
     build_options=BuildOptions(avm_version=8),
-    state=SortedIntegersState,
+    state=SortedIntegersState(),
 ).implement(unconditional_create_approval)
 
 
@@ -71,13 +71,14 @@ def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
         # Write the new array with the contents
         (idx := ScratchVar()).store(
             If(
-                SortedIntegersState.elements == Int(0),
+                sorted_ints_app.state.elements == Int(0),
                 Int(0),
                 binary_search(
                     val.get(),
                     array_contents.value(),
                     Int(0),
-                    SortedIntegersState.elements - Int(1),
+                    sorted_ints_app.state.elements - Int(1),
+                    sorted_ints_app.state.elements - Int(1),
                 )
                 * Int(8),
             )
@@ -91,7 +92,7 @@ def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
                 idx.load(),
             ),
         ),
-        SortedIntegersState.elements.increment(),
+        sorted_ints_app.state.elements.increment(),
         Log(Itob(Global.opcode_budget())),
         output.decode(
             # Prepend the bytes with the number of elements as a uint16,
@@ -143,7 +144,7 @@ def insert_element(buff: Expr, new_val: Expr, pos: Expr):
 def box_create_test():
     return Seq(
         Assert(App.box_create(BoxName, BoxSize)),
-        SortedIntegersState.elements.set(Int(0)),
+        sorted_ints_app.state.elements.set(Int(0)),
     )
 
 
@@ -158,8 +159,10 @@ def decode_budget(tx_info) -> int:
     return decode_int(tx_info["logs"][0])
 
 
-def get_box(app_id: int, name: bytes, client: v2client.algod.AlgodClient) -> list[int]:
-    box_contents = client.application_box_by_name(app_id, name)
+def get_box(
+    app_id: int, name: bytes, algod_client: v2client.algod.AlgodClient
+) -> list[int]:
+    box_contents = algod_client.application_box_by_name(app_id, name)
 
     vals = []
     data = base64.b64decode(box_contents["value"])
@@ -172,10 +175,8 @@ def get_box(app_id: int, name: bytes, client: v2client.algod.AlgodClient) -> lis
 def demo():
     acct = sandbox.get_accounts().pop()
 
-    app = sorted_ints_app
-
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=acct.signer
+        sandbox.get_algod_client(), sorted_ints_app, signer=acct.signer
     )
 
     # Create && fund app acct
