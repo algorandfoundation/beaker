@@ -78,7 +78,6 @@ def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]):
                     array_contents.value(),
                     Int(0),
                     sorted_ints_app.state.elements - Int(1),
-                    sorted_ints_app.state.elements - Int(1),
                 )
                 * Int(8),
             )
