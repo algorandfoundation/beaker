@@ -146,7 +146,7 @@ def demo() -> None:
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
 
-def create_asset(addr, pk, unitname):
+def create_asset(addr: str, pk: str, unitname: str) -> int:
     # Get suggested params from network
     sp = client.suggested_params()
     # Create the transaction
@@ -160,7 +160,7 @@ def create_asset(addr, pk, unitname):
     return result["asset-index"]
 
 
-def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
+def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int) -> None:
 
     addrbal = client.account_info(addr)
     print("Participant: ")

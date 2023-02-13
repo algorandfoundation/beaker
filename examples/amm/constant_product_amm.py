@@ -33,7 +33,7 @@ class ConstantProductInvariant:
 
         return to_mint
 
-    def burn(self, amount) -> tuple[int, int]:
+    def burn(self, amount: int) -> tuple[int, int]:
         burn_a = (self.a_supply * amount) // self.issued()
         burn_b = (self.b_supply * amount) // self.issued()
 
@@ -65,7 +65,9 @@ class ConstantProductInvariant:
         self.a_supply -= swap_amt
         return swap_amt
 
-    def _get_tokens_to_swap(self, in_amount, in_supply, out_supply) -> int:
+    def _get_tokens_to_swap(
+        self, in_amount: int, in_supply: int, out_supply: int
+    ) -> int:
         assert in_supply > 0
         assert out_supply > 0
         """ Constant product swap method with fixed input
@@ -113,12 +115,12 @@ class ConstantProductInvariant:
     def issued(self) -> int:
         return self.max_pool_supply - self.pool_supply
 
-    def ratio(self):
+    def ratio(self) -> float:
         return self.a_supply / self.b_supply
 
 
 class Simulator:
-    def __init__(self):
+    def __init__(self) -> None:
         self.cpi = ConstantProductInvariant(
             a_supply=int(3e7),
             b_supply=int(1e6),
@@ -128,11 +130,11 @@ class Simulator:
             fee=3,
         )
 
-        self.states = []
+        self.states: list[ConstantProductInvariant] = []
 
-    def run_mints(self, num: int = 100):
-        self.sizes = np.random.randint(100, 1000, num)
-        for size in self.sizes:
+    def run_mints(self, num: int = 100) -> None:
+        sizes = np.random.randint(100, 1000, num)
+        for size in sizes:
             # force them to be the right ratio
             a_size = size * self.cpi.ratio()
             b_size = size
@@ -140,26 +142,25 @@ class Simulator:
             self.cpi.mint(a_size, b_size)
             self.states.append(copy(self.cpi))
 
-    def run_burns(self, num: int = 100):
-        self.sizes = np.random.randint(100, 10000000, num)
-        for size in self.sizes:
+    def run_burns(self, num: int = 100) -> None:
+        sizes = np.random.randint(100, 10000000, num)
+        for size in sizes:
             # Get a reasonable size given number of issued tokens
             # should be ~ 1% --> 0.0001% burns
             size = self.cpi.issued() // size
             self.cpi.burn(size)
             self.states.append(copy(self.cpi))
 
-    def run_swaps(self, num: int = 100):
-
-        self.sizes = np.random.randint(10, 1000, num)
-        for idx, size in enumerate(self.sizes):
+    def run_swaps(self, num: int = 100) -> None:
+        sizes = np.random.randint(10, 1000, num)
+        for idx, size in enumerate(sizes):
             a_swap = (idx + size) % 2 == 0
             # Re-size if its an a_swap
             size *= self.cpi.ratio() if a_swap else 1
             _ = self.cpi.swap(size, a_swap)
             self.states.append(copy(self.cpi))
 
-    def run_mix(self, num=100):
+    def run_mix(self, num: int = 100) -> None:
         nums = np.random.randint(1, 4, num)
         for idx, runs in enumerate(nums):
             v = (idx + runs) % 3
@@ -176,8 +177,8 @@ class Simulator:
             return [getattr(c, k) for c in self.states]
         return []
 
-    def get_states(self) -> dict[str, list[int]]:
-        states: dict[str, list[int]] = {}
+    def get_states(self) -> dict[str, list[int] | list[float]]:
+        states: dict[str, list[int] | list[float]] = {}
         for key in self.cpi.__annotations__.keys():
             states[key] = self.get_states_for(key)
 

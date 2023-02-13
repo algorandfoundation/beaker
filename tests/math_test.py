@@ -7,11 +7,11 @@ from tests.helpers import UnitTestingApp, assert_output
 from beaker.lib import math
 
 
-def test_even():
+def test_even() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Bool):
+    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Bool) -> pt.Expr:
         return output.set(math.Even(num.get()))
 
     num = 5
@@ -20,11 +20,11 @@ def test_even():
     assert_output(app, [{"num": n} for n in inputs], output)
 
 
-def test_odd():
+def test_odd() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Bool):
+    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Bool) -> pt.Expr:
         return output.set(math.Odd(num.get()))
 
     num = 5
@@ -34,11 +34,11 @@ def test_odd():
     assert_output(app, [{"num": n} for n in inputs], output)
 
 
-def test_pow10():
+def test_pow10() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(math.Pow10(num.get()))
 
     num = 3
@@ -48,11 +48,13 @@ def test_pow10():
     assert_output(app, [{"num": n} for n in inputs], output)
 
 
-def test_min():
+def test_min() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def unit_test(
+        a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
         return output.set(math.Min(a.get(), b.get()))
 
     inputs = [(100, 10)]
@@ -61,11 +63,13 @@ def test_min():
     assert_output(app, [{"a": a, "b": b} for a, b in inputs], output)
 
 
-def test_max():
+def test_max() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def unit_test(
+        a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
         return output.set(math.Max(a.get(), b.get()))
 
     inputs = [(100, 10)]
@@ -74,11 +78,13 @@ def test_max():
     assert_output(app, [{"a": a, "b": b} for a, b in inputs], output)
 
 
-def test_div_ceil():
+def test_div_ceil() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def unit_test(
+        a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
         return output.set(math.DivCeil(a.get(), b.get()))
 
     inputs = [(100, 3)]
@@ -87,13 +93,13 @@ def test_div_ceil():
     assert_output(app, [{"a": a, "b": b} for a, b in inputs], output)
 
 
-def test_saturate():
+def test_saturate() -> None:
     app = UnitTestingApp()
 
     @app.external
     def unit_test(
         a: pt.abi.Uint64, b: pt.abi.Uint64, c: pt.abi.Uint64, *, output: pt.abi.Uint64
-    ):
+    ) -> pt.Expr:
         return output.set(math.Saturate(a.get(), b.get(), c.get()))
 
     inputs = [(50, 100, 20), (15, 100, 20), (150, 100, 20)]
@@ -102,11 +108,11 @@ def test_saturate():
     assert_output(app, [{"a": a, "b": b, "c": c} for a, b, c in inputs], output)
 
 
-def test_wide_factorial():
+def test_wide_factorial() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def unit_test(num: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(pt.Btoi(math.WideFactorial(num.encode())))
 
     num = 5
@@ -115,11 +121,13 @@ def test_wide_factorial():
     assert_output(app, [{"num": num} for num in inputs], output)
 
 
-def test_exponential():
+def test_exponential() -> None:
     app = UnitTestingApp()
 
     @app.external
-    def unit_test(num: pt.abi.Uint64, iters: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def unit_test(
+        num: pt.abi.Uint64, iters: pt.abi.Uint64, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
         return output.set(math.Exponential(num.get(), iters.get()))
 
     num = 10
@@ -135,25 +143,25 @@ def test_exponential():
     )
 
 
-# def test_ln():
+# def test_ln() -> None:
 #   num = 10
 #   expr = Log(Itob(ln(Int(num))))
 #   output = [logged_int(int(pymath.log(num)))]
 #   assert_output(expr, output, pad_budget=15)
 
-# def test_log2():
+# def test_log2() -> None:
 #   num = 17
 #   expr = Log(Itob(log2(Int(num))))
 #   output = [logged_int(int(pymath.log2(num)))]
 #   assert_output(expr, output, pad_budget=15)
 
-# def test_log10():
+# def test_log10() -> None:
 #    num = 123123123
 #    expr = Log(Itob(scaled_log10(Int(num))))
 #    output = [logged_int(int(pymath.log10(num)))]
 #    assert_output(expr, output)
 
-# def test_negative_power():
+# def test_negative_power() -> None:
 #    expr = Log(negative_power(Int(100), Int(3)))
 #    output = [logged_int(int(math.pow(100, -3)))]
 #    assert_output(expr, output)

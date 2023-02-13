@@ -39,24 +39,24 @@ def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application:
         build_options=BuildOptions(avm_version=version),
     )
 
-    @app.create(bare=True)
-    def create():
+    @app.create
+    def create() -> pt.Expr:
         return pt.Seq(
             app.initialize_application_state(),
             pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
             pt.Approve(),
         )
 
-    @app.update(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
-    def update():
+    @app.update(authorize=Authorize.only(pt.Global.creator_address()))
+    def update() -> pt.Expr:
         return pt.Approve()
 
-    @app.delete(authorize=Authorize.only(pt.Global.creator_address()), bare=True)
-    def delete():
+    @app.delete(authorize=Authorize.only(pt.Global.creator_address()))
+    def delete() -> pt.Expr:
         return pt.Approve()
 
-    @app.opt_in(bare=True)
-    def opt_in():
+    @app.opt_in
+    def opt_in() -> pt.Expr:
         return pt.Seq(
             app.initialize_account_state(),
             pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
@@ -64,19 +64,19 @@ def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application:
         )
 
     @app.clear_state
-    def clear_state():
+    def clear_state() -> pt.Expr:
         return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-    @app.close_out(bare=True)
-    def close_out():
+    @app.close_out
+    def close_out() -> pt.Expr:
         return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
     @app.external
-    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() + b.get())
 
     @app.external(read_only=True)
-    def dummy(*, output: pt.abi.String):
+    def dummy(*, output: pt.abi.String) -> pt.Expr:
         return output.set("deadbeef")
 
     return app
@@ -90,7 +90,7 @@ def sb_accts() -> SandboxAccounts:
     return [(acct.address, acct.private_key, acct.signer) for acct in get_accounts()]
 
 
-def test_app_client_create():
+def test_app_client_create() -> None:
     app = App()
     client = get_algod_client()
     ac = ApplicationClient(client, app)
@@ -107,7 +107,7 @@ def test_app_client_create():
         ac.get_sender(None, None)
 
 
-def test_app_prepare(sb_accts: SandboxAccounts):
+def test_app_prepare(sb_accts: SandboxAccounts) -> None:
     app = App()
     client = get_algod_client()
 
@@ -191,7 +191,7 @@ def test_app_prepare(sb_accts: SandboxAccounts):
     ), "We should have overwritten the app id in the new version"
 
 
-def expect_dict(actual: dict[str, Any], expected: dict[str, Any]):
+def expect_dict(actual: dict[str, Any], expected: dict[str, Any]) -> None:
     for k, v in expected.items():
         if type(v) is dict:
             expect_dict(actual[k], v)
@@ -199,7 +199,7 @@ def expect_dict(actual: dict[str, Any], expected: dict[str, Any]):
             assert actual[k] == v, f"for field {k}, expected {v} got {actual[k]}"
 
 
-def test_create(sb_accts: SandboxAccounts):
+def test_create(sb_accts: SandboxAccounts) -> None:
     app = App()
 
     addr, pk, signer = sb_accts[0]
@@ -265,7 +265,7 @@ def test_create(sb_accts: SandboxAccounts):
         ac.create(note="failmeplz")
 
 
-def test_update(sb_accts: SandboxAccounts):
+def test_update(sb_accts: SandboxAccounts) -> None:
     app = App()
 
     addr, pk, signer = sb_accts[0]
@@ -296,7 +296,7 @@ def test_update(sb_accts: SandboxAccounts):
         ac2.update()
 
 
-def test_delete(sb_accts: SandboxAccounts):
+def test_delete(sb_accts: SandboxAccounts) -> None:
     app = App()
     addr, pk, signer = sb_accts[0]
 
@@ -329,7 +329,7 @@ def test_delete(sb_accts: SandboxAccounts):
         ac2.delete()
 
 
-def test_opt_in(sb_accts: SandboxAccounts):
+def test_opt_in(sb_accts: SandboxAccounts) -> None:
     app = App()
 
     addr, pk, signer = sb_accts[0]
@@ -362,7 +362,7 @@ def test_opt_in(sb_accts: SandboxAccounts):
         newer_ac.opt_in(note="failmeplz")
 
 
-def test_close_out(sb_accts: SandboxAccounts):
+def test_close_out(sb_accts: SandboxAccounts) -> None:
 
     app = App()
 
@@ -399,7 +399,7 @@ def test_close_out(sb_accts: SandboxAccounts):
         newer_ac.close_out(note="failmeplz")
 
 
-def test_clear_state(sb_accts: SandboxAccounts):
+def test_clear_state(sb_accts: SandboxAccounts) -> None:
     app = App()
     addr, pk, signer = sb_accts[0]
 
@@ -428,7 +428,7 @@ def test_clear_state(sb_accts: SandboxAccounts):
     )
 
 
-def test_call(sb_accts: SandboxAccounts):
+def test_call(sb_accts: SandboxAccounts) -> None:
     app = App()
     addr, pk, signer = sb_accts[0]
 
@@ -467,7 +467,7 @@ def test_call(sb_accts: SandboxAccounts):
     )
 
 
-def test_add_method_call(sb_accts: SandboxAccounts):
+def test_add_method_call(sb_accts: SandboxAccounts) -> None:
     app = App()
 
     addr, pk, signer = sb_accts[0]
@@ -511,7 +511,7 @@ def test_add_method_call(sb_accts: SandboxAccounts):
     )
 
 
-def test_fund(sb_accts: SandboxAccounts):
+def test_fund(sb_accts: SandboxAccounts) -> None:
     app = App()
     addr, pk, signer = sb_accts[0]
     client = get_algod_client()
@@ -526,7 +526,7 @@ def test_fund(sb_accts: SandboxAccounts):
     assert info["amount"] == fund_amt, "Expected balance to equal fund_amt"
 
 
-def test_resolve(sb_accts: SandboxAccounts):
+def test_resolve(sb_accts: SandboxAccounts) -> None:
 
     app = App()
 
@@ -556,11 +556,11 @@ def test_resolve(sb_accts: SandboxAccounts):
     )
 
 
-def test_override_app_create(sb_accts: SandboxAccounts):
+def test_override_app_create(sb_accts: SandboxAccounts) -> None:
     sc = Application("SpecialCreate")
 
     @sc.create
-    def create(x: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    def create(x: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(x.get())
 
     sc.build()

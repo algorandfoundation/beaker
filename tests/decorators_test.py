@@ -7,7 +7,7 @@ from beaker.application import _default_argument_from_resolver
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
-def test_external_read_only():
+def test_external_read_only() -> None:
     app = Application("")
 
     @app.external(read_only=True)
@@ -20,7 +20,7 @@ def test_external_read_only():
     assert app.build().dictify()["hints"]["handleable"].get("read_only") is True
 
 
-def test_authorize_only():
+def test_authorize_only() -> None:
     auth_only = Authorize.only(pt.Global.creator_address())
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
@@ -30,7 +30,7 @@ def test_authorize_only():
         assert actual == expected
 
 
-def test_external_authorize():
+def test_external_authorize() -> None:
     app = Application("")
     cmt = "unauthorized"
     auth_only = Authorize.only(pt.Global.creator_address())
@@ -48,7 +48,7 @@ def test_external_authorize():
         assert actual == expected
 
 
-def test_authorize_holds_token():
+def test_authorize_holds_token() -> None:
 
     with pytest.raises(pt.TealTypeError):
         Authorize.only(pt.Int(1))
@@ -67,7 +67,7 @@ def test_authorize_holds_token():
         assert actual == expected
 
 
-def test_external_authorize_holds_token():
+def test_external_authorize_holds_token() -> None:
     cmt = "unauthorized"
     app = Application("")
     asset_id = pt.Int(123)
@@ -88,7 +88,7 @@ def test_external_authorize_holds_token():
         assert actual == expected
 
 
-def test_authorize_opted_in():
+def test_authorize_opted_in() -> None:
 
     with pytest.raises(pt.TealTypeError):
         Authorize.holds_token(pt.Bytes("abc"))
@@ -105,7 +105,7 @@ def test_authorize_opted_in():
         assert actual == expected
 
 
-def test_external_authorize_opted_in():
+def test_external_authorize_opted_in() -> None:
     app = Application("")
     cmt = "unauthorized"
     app_id = pt.Int(123)
@@ -124,7 +124,7 @@ def test_external_authorize_opted_in():
         assert actual == expected
 
 
-def test_authorize_bare_handler():
+def test_authorize_bare_handler() -> None:
     app = Application("")
     cmt = "unauthorized"
     auth_only = Authorize.only(pt.Global.creator_address())
@@ -146,25 +146,25 @@ def test_authorize_bare_handler():
     with pytest.raises(pt.TealInputError):
 
         @pt.Subroutine(pt.TealType.uint64)
-        def thing(a, b):
+        def thing(a: pt.Expr, b: pt.Expr) -> pt.Expr:
             return pt.Int(1)
 
         @app.external(authorize=thing)
-        def other_thing():
-            pass
+        def other_thing() -> pt.Expr:
+            return pt.Approve()
 
     with pytest.raises(pt.TealTypeError):
 
         @pt.Subroutine(pt.TealType.bytes)
-        def thing(x):
+        def thing(x: pt.Expr) -> pt.Expr:
             return pt.Bytes("fail")
 
         @app.external(authorize=thing)
-        def other_other_thing():
-            pass
+        def other_other_thing() -> pt.Expr:
+            return pt.Approve()
 
 
-def test_named_tuple():
+def test_named_tuple() -> None:
     class Order(pt.abi.NamedTuple):
         item: pt.abi.Field[pt.abi.String]
         count: pt.abi.Field[pt.abi.Uint64]
@@ -191,7 +191,7 @@ def test_named_tuple():
     "decorator_name",
     ["create", "no_op", "delete", "update", "opt_in", "close_out"],
 )
-def test_decorators_with_bare_signature(decorator_name: str):
+def test_decorators_with_bare_signature(decorator_name: str) -> None:
     app = Application("")
     decorator = getattr(app, decorator_name)
 
@@ -203,7 +203,7 @@ def test_decorators_with_bare_signature(decorator_name: str):
     assert "test" in app.bare_methods
 
 
-def test_bare_clear_state():
+def test_bare_clear_state() -> None:
     app = Application("clear_state")
 
     @app.clear_state
@@ -215,7 +215,7 @@ def test_bare_clear_state():
     assert app._clear_state_method is clear_state
 
 
-def test_bare_external():
+def test_bare_external() -> None:
     app = Application("bare_external")
 
     @app.external(bare=True, method_config=pt.MethodConfig(no_op=pt.CallConfig.ALL))
@@ -229,7 +229,7 @@ def test_bare_external():
 @pytest.mark.parametrize(
     "config", [pt.CallConfig.CREATE, pt.CallConfig.CALL, pt.CallConfig.ALL]
 )
-def test_external_method_config(config: pt.CallConfig):
+def test_external_method_config(config: pt.CallConfig) -> None:
     app = Application("")
 
     @app.external(method_config=pt.MethodConfig(no_op=config))
@@ -240,7 +240,7 @@ def test_external_method_config(config: pt.CallConfig):
     assert app_spec.hints["external"].config.no_op == config
 
 
-def test_account_state_resolvable():
+def test_account_state_resolvable() -> None:
     from beaker.state import AccountStateValue
 
     x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
@@ -248,7 +248,7 @@ def test_account_state_resolvable():
     assert r["source"] == "local-state"
 
 
-def test_reserved_account_state_resolvable():
+def test_reserved_account_state_resolvable() -> None:
     from beaker.state import ReservedAccountStateValue
 
     x = ReservedAccountStateValue(pt.TealType.uint64, max_keys=1)
@@ -256,7 +256,7 @@ def test_reserved_account_state_resolvable():
     assert r["source"] == "local-state"
 
 
-def test_application_state_resolvable():
+def test_application_state_resolvable() -> None:
     from beaker.state import ApplicationStateValue
 
     x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
@@ -264,7 +264,7 @@ def test_application_state_resolvable():
     assert r["source"] == "global-state"
 
 
-def test_reserved_application_state_resolvable():
+def test_reserved_application_state_resolvable() -> None:
     from beaker.state import (
         ReservedApplicationStateValue,
     )
@@ -274,11 +274,11 @@ def test_reserved_application_state_resolvable():
     assert r["source"] == "global-state"
 
 
-def test_abi_method_resolvable():
+def test_abi_method_resolvable() -> None:
     app = Application("")
 
     @app.external(read_only=True)
-    def x():
+    def x() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
     assert isinstance(x, pt.ABIReturnSubroutine)
@@ -286,11 +286,11 @@ def test_abi_method_resolvable():
     assert r["source"] == "abi-method"
 
 
-def test_bytes_constant_resolvable():
+def test_bytes_constant_resolvable() -> None:
     r = _default_argument_from_resolver(pt.Bytes("1"))
     assert r["source"] == "constant"
 
 
-def test_int_constant_resolvable():
+def test_int_constant_resolvable() -> None:
     r = _default_argument_from_resolver(pt.Int(1))
     assert r["source"] == "constant"

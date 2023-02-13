@@ -5,7 +5,7 @@ from beaker.application import Application
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
 
 
-def test_list():
+def test_list() -> None:
     l = List(pt.abi.Uint64, 100, name="l")
 
     assert l._elements == 100
@@ -37,18 +37,18 @@ def test_list():
         assert actual == expected
 
 
-def test_list_app():
+def test_list_app() -> None:
     class State:
         l = List(pt.abi.Uint64, 100)
 
     t = Application("T", state=State)
 
     @t.external
-    def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64):
+    def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64) -> pt.Expr:
         return State.l[idx.get()].store_into(output)
 
     @t.external
-    def set(idx: pt.abi.Uint16, val: pt.abi.Uint64):
+    def set(idx: pt.abi.Uint16, val: pt.abi.Uint64) -> pt.Expr:
         return State.l[idx.get()].set(val)
 
     compiled = t.build()

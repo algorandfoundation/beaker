@@ -11,20 +11,20 @@ from examples.simple.hello import hello_app
 from tests.conftest import check_application_artifacts_output_stability
 
 
-def test_calc():
+def test_calc() -> None:
     calc_demo()
 
 
-def test_count():
+def test_count() -> None:
     count_demo()
 
 
-def test_hello():
+def test_hello() -> None:
     hello_demo()
 
 
 @pytest.mark.parametrize(
     "app", [calculator_app, counter_app, hello_app, external_example_app]
 )
-def test_output_stability(app: Application):
+def test_output_stability(app: Application) -> None:
     check_application_artifacts_output_stability(app, dir_per_test_file=False)

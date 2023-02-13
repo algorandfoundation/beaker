@@ -28,7 +28,7 @@ affirmations = [
 ]
 
 
-def print_boxes(app_client: client.ApplicationClient):
+def print_boxes(app_client: client.ApplicationClient) -> None:
     boxes = app_client.get_box_names()
     print(f"{len(boxes)} boxes found")
     for box_name in boxes:

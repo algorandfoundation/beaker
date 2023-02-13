@@ -24,6 +24,7 @@ ACCOUNT_VAL_TESTS = [
     (pt.Bytes("k"), pt.TealType.bytes, pt.Int(1), pt.Bytes("abc"), pt.TealTypeError),
     (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealTypeError),
     (None, pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealInputError),
+    (pt.Bytes("k"), pt.TealType.anytype, pt.Int(1), pt.Int(1), ValueError),
 ]
 
 
@@ -54,11 +55,12 @@ RESERVED_ACCOUNT_VALUE_TESTS = [
     (pt.TealType.bytes, 1, None, pt.Bytes("abc"), pt.Int(1), pt.TealTypeError),
     (pt.TealType.uint64, 0, None, pt.Bytes("abc"), pt.Int(1), Exception),
     (pt.TealType.uint64, 17, None, pt.Bytes("abc"), pt.Int(1), Exception),
+    (pt.TealType.anytype, 1, None, pt.Bytes("abc"), pt.Int(1), ValueError),
 ]
 
 
 @pytest.mark.parametrize("key, stack_type, default, val, error", ACCOUNT_VAL_TESTS)
-def test_local_value(key, stack_type, default, val, error):
+def test_local_value(key, stack_type, default, val, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_lv_test(key, stack_type, default, val)
@@ -66,7 +68,7 @@ def test_local_value(key, stack_type, default, val, error):
         do_lv_test(key, stack_type, default, val)
 
 
-def do_lv_test(key, stack_type, default, val):
+def do_lv_test(key, stack_type, default, val):  # type: ignore
     lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
 
     assert lv.__str__() == f"AccountStateValue (Txn Sender) {key}"
@@ -141,7 +143,7 @@ def do_lv_test(key, stack_type, default, val):
 @pytest.mark.parametrize(
     "stack_type, max_keys, key_gen, key_seed, val, error", RESERVED_ACCOUNT_VALUE_TESTS
 )
-def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val)
@@ -149,7 +151,7 @@ def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, erro
         do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val)
 
 
-def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
+def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: ignore
     dlv = ReservedAccountStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
@@ -232,13 +234,14 @@ APPLICATION_VAL_TESTS = [
     (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealTypeError),
     (pt.Bytes("k"), pt.TealType.bytes, None, pt.Bytes("abc"), True, pt.TealInputError),
     (None, pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealInputError),
+    (pt.Bytes("k"), pt.TealType.anytype, pt.Int(1), pt.Int(1), False, ValueError),
 ]
 
 
 @pytest.mark.parametrize(
     "key, stack_type, default, val, static, error", APPLICATION_VAL_TESTS
 )
-def test_global_value(key, stack_type, default, val, static, error):
+def test_global_value(key, stack_type, default, val, static, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_gv_test(key, stack_type, default, val, static)
@@ -246,7 +249,7 @@ def test_global_value(key, stack_type, default, val, static, error):
         do_gv_test(key, stack_type, default, val, static)
 
 
-def do_gv_test(key, stack_type, default, val, static):
+def do_gv_test(key, stack_type, default, val, static):  # type: ignore
     lv = ApplicationStateValue(
         stack_type=stack_type, key=key, default=default, static=static
     )
@@ -373,6 +376,7 @@ RESERVED_APPLICATION_VALUE_TESTS = [
     (pt.TealType.bytes, 1, None, pt.Bytes("abc"), pt.Int(1), pt.TealTypeError),
     (pt.TealType.uint64, 0, None, pt.Bytes("abc"), pt.Int(1), Exception),
     (pt.TealType.uint64, 65, None, pt.Bytes("abc"), pt.Int(1), Exception),
+    (pt.TealType.anytype, 1, None, pt.Bytes("abc"), pt.Int(1), ValueError),
 ]
 
 
@@ -380,7 +384,7 @@ RESERVED_APPLICATION_VALUE_TESTS = [
     "stack_type, max_keys, key_gen, key_seed, val, error",
     RESERVED_APPLICATION_VALUE_TESTS,
 )
-def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val)
@@ -388,7 +392,7 @@ def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, err
         do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val)
 
 
-def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
+def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: ignore
     dlv = ReservedApplicationStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
@@ -472,19 +476,19 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
 
-def test_expr_impl_account():
+def test_expr_impl_account() -> None:
     asv = AccountStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
-def test_expr_impl_app():
+def test_expr_impl_app() -> None:
     asv = ApplicationStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
-def test_application_state_type():
+def test_application_state_type() -> None:
     class BaseState:
         a = ApplicationStateValue(pt.TealType.uint64)
 
@@ -503,7 +507,7 @@ def test_application_state_type():
         ApplicationStateAggregate(MyBigState)
 
 
-def test_application_state_instance():
+def test_application_state_instance() -> None:
     class BaseState:
         a = ApplicationStateValue(pt.TealType.uint64)
 
@@ -523,7 +527,7 @@ def test_application_state_instance():
         ApplicationStateAggregate(MyBigState())
 
 
-def test_account_state_type():
+def test_account_state_type() -> None:
     class BaseState:
         a = AccountStateValue(pt.TealType.uint64)
 
@@ -542,7 +546,7 @@ def test_account_state_type():
         AccountStateAggregate(MyBigState)
 
 
-def test_account_state_instance():
+def test_account_state_instance() -> None:
     class BaseState:
         a = AccountStateValue(pt.TealType.uint64)
 

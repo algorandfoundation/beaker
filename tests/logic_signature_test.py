@@ -2,20 +2,20 @@ import pyteal as pt
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 
 
-def test_simple_logic_signature():
+def test_simple_logic_signature() -> None:
     lsig = LogicSignature(pt.Reject())
     assert lsig.program
 
 
-def test_evaluate_logic_signature():
+def test_evaluate_logic_signature() -> None:
     lsig = LogicSignature(pt.Approve())
     assert lsig.program
 
 
-def test_handler_logic_signature():
-    def evaluate():
+def test_handler_logic_signature() -> None:
+    def evaluate() -> pt.Expr:
         @pt.Subroutine(pt.TealType.uint64)
-        def checked(s: pt.abi.String):
+        def checked(s: pt.abi.String) -> pt.Expr:
             return pt.Len(s.get()) > pt.Int(0)
 
         return pt.Seq(
@@ -29,9 +29,9 @@ def test_handler_logic_signature():
     assert len(lsig.program) > 0
 
 
-def test_templated_logic_signature():
+def test_templated_logic_signature() -> None:
     def Lsig() -> LogicSignatureTemplate:
-        def evaluate(pubkey: pt.Expr):
+        def evaluate(pubkey: pt.Expr) -> pt.Expr:
             return pt.Seq(
                 pt.Assert(pt.Len(pubkey)),
                 pt.Int(1),
@@ -49,9 +49,9 @@ def test_templated_logic_signature():
     assert "pushbytes TMPL_PUBKEY" in lsig.program
 
 
-def test_different_methods_logic_signature():
+def test_different_methods_logic_signature() -> None:
     @pt.ABIReturnSubroutine
-    def abi_tester(s: pt.abi.String, *, output: pt.abi.Uint64):
+    def abi_tester(s: pt.abi.String, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(pt.Len(s.get()))
 
     @pt.Subroutine(pt.TealType.uint64)
@@ -71,7 +71,7 @@ def test_different_methods_logic_signature():
         return x * y
 
     def Lsig() -> LogicSignature:
-        def evaluate():
+        def evaluate() -> pt.Expr:
             return pt.Seq(
                 (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
                 (o := pt.abi.Uint64()).set(abi_tester(s)),
@@ -88,7 +88,7 @@ def test_different_methods_logic_signature():
     assert len(lsig.program) > 0
 
 
-def test_lsig_template_ordering():
+def test_lsig_template_ordering() -> None:
     def Lsig() -> LogicSignatureTemplate:
         return LogicSignatureTemplate(
             pt.Approve(),

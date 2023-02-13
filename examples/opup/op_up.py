@@ -39,14 +39,14 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
     ).implement(unconditional_create_approval)
 
     @target_app.external(authorize=Authorize.only(Global.creator_address()))
-    def opup():
+    def opup() -> Expr:
         return Approve()
 
     #: The minimum balance required for this class
     min_balance: Final[Expr] = Algos(0.1)
 
     @app.external
-    def opup_bootstrap(ptxn: abi.PaymentTransaction, *, output: abi.Uint64):
+    def opup_bootstrap(ptxn: abi.PaymentTransaction, *, output: abi.Uint64) -> Expr:
         """initialize opup with bootstrap to create a target app"""
         return Seq(
             Assert(ptxn.get().amount() >= min_balance),
@@ -55,7 +55,7 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
         )
 
     @Subroutine(TealType.none)
-    def create_opup():
+    def create_opup() -> Expr:
         """internal method to create the target application"""
         #: The app to be created to receiver opup requests
         target = precompiled(target_app)

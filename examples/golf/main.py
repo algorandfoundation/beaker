@@ -105,6 +105,25 @@ def add_int(val: abi.Uint64, *, output: abi.DynamicArray[abi.Uint64]) -> Expr:
 
 @Subroutine(TealType.uint64)
 def binary_search(val: Expr, arr: Expr, start: Expr, end: Expr) -> Expr:
+    # Python equivalent:
+    # def binary_search(arr, val, start, end):
+    #     if start > end:
+    #         return start
+    #
+    #     if start == end:
+    #         if arr[start] > val:
+    #             return start
+    #         return start + 1
+    #
+    #     mid = (start + end) // 2
+    #
+    #     if arr[mid] < val:
+    #         return binary_search(arr, val, mid + 1, end)
+    #     elif arr[mid] > val:
+    #         return binary_search(arr, val, start, mid - 1)
+    #     else:
+    #         return mid
+
     return Seq(
         If(start > end, Return(start)),
         If(
@@ -153,7 +172,7 @@ def decode_int(b: str) -> int:
     return int.from_bytes(base64.b64decode(b), "big")
 
 
-def decode_budget(tx_info) -> int:
+def decode_budget(tx_info: dict) -> int:
     return decode_int(tx_info["logs"][0])
 
 

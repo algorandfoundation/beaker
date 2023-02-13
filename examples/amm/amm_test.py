@@ -23,6 +23,7 @@ from examples.amm.amm import (
     scale,
     fee,
 )
+from examples.amm.main import demo
 from tests.conftest import check_application_artifacts_output_stability
 from tests import helpers
 
@@ -127,7 +128,7 @@ def get_app_client_details(
     return app_addr, addr, signer
 
 
-def test_app_create(creator_app_client: client.ApplicationClient):
+def test_app_create(creator_app_client: client.ApplicationClient) -> None:
     creator_app_client.create()
     app_state = creator_app_client.get_application_state()
     sender = creator_app_client.get_sender()
@@ -153,7 +154,7 @@ def minimum_fee_for_txn_count(
     return s
 
 
-def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int):
+def assert_app_algo_balance(c: client.ApplicationClient, expected_algos: int) -> None:
     """
     Verifies the app's algo balance is not unexpectedly drained during
     app interaction (e.g. paying inner transaction fees).
@@ -214,7 +215,7 @@ def build_mint_transaction(
     pool_asset: int,
     a_amount: int,
     b_amount: int,
-):
+) -> dict[str, typing.Any]:
 
     app_addr, addr, signer = get_app_client_details(app_client)
 
@@ -242,7 +243,7 @@ def build_burn_transaction(
     assets: tuple[int, int],
     pool_asset: int,
     burn_amt: int,
-):
+) -> dict[str, typing.Any]:
 
     app_addr, addr, signer = get_app_client_details(app_client)
 
@@ -266,7 +267,7 @@ def build_swap_transaction(
     assets: tuple[int, int],
     swap_amt: int,
     swap_asset: int | None = None,
-):
+) -> dict[str, typing.Any]:
     app_addr, addr, signer = get_app_client_details(app_client)
 
     sp = app_client.get_suggested_params()
@@ -288,7 +289,7 @@ def build_swap_transaction(
 
 def test_app_set_governor(
     creator_app_client: client.ApplicationClient, user_acct: AcctInfo
-):
+) -> None:
     _, creator_addr, _ = get_app_client_details(creator_app_client)
 
     user_addr, _, user_signer = user_acct
@@ -322,7 +323,7 @@ def test_app_set_governor(
 
 def test_app_bootstrap(
     creator_app_client: client.ApplicationClient, assets: tuple[int, int]
-):
+) -> None:
 
     app_addr = creator_app_client.app_addr
     asset_a, asset_b = assets
@@ -357,7 +358,7 @@ def test_app_bootstrap(
     assert app_state[amm_app.state.asset_b.str_key()] == asset_b
 
 
-def test_app_fund(creator_app_client: ApplicationClient):
+def test_app_fund(creator_app_client: ApplicationClient) -> None:
     app_addr, addr, signer = get_app_client_details(creator_app_client)
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
@@ -392,7 +393,7 @@ def test_app_fund(creator_app_client: ApplicationClient):
     assert ratio == expected_ratio
 
 
-def test_mint(creator_app_client: ApplicationClient):
+def test_mint(creator_app_client: ApplicationClient) -> None:
     app_addr, addr, _ = get_app_client_details(creator_app_client)
 
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
@@ -427,7 +428,6 @@ def test_mint(creator_app_client: ApplicationClient):
         balances_before[app_addr][a_asset],
         b_amount,
         balances_before[app_addr][b_asset],
-        scale,
     )
     assert balance_deltas[addr][pool_asset] == int(expected_pool_tokens)
 
@@ -439,7 +439,7 @@ def test_mint(creator_app_client: ApplicationClient):
     assert actual_ratio == expected_ratio
 
 
-def test_burn(creator_app_client: ApplicationClient):
+def test_burn(creator_app_client: ApplicationClient) -> None:
     app_addr, addr, _ = get_app_client_details(creator_app_client)
     pool_asset, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
 
@@ -484,7 +484,7 @@ def test_burn(creator_app_client: ApplicationClient):
     assert ratio_after == expected_ratio
 
 
-def test_swap(creator_app_client: ApplicationClient):
+def test_swap(creator_app_client: ApplicationClient) -> None:
     app_addr, addr, _ = get_app_client_details(creator_app_client)
 
     _, a_asset, b_asset = _get_tokens_from_state(creator_app_client)
@@ -506,7 +506,7 @@ def test_swap(creator_app_client: ApplicationClient):
     a_supply = balances_before[app_addr][a_asset]
     b_supply = balances_before[app_addr][b_asset]
 
-    expected_b_tokens = _get_tokens_to_swap(swap_amt, a_supply, b_supply, scale, fee)
+    expected_b_tokens = _get_tokens_to_swap(swap_amt, a_supply, b_supply)
     assert balances_delta[addr][b_asset] == int(expected_b_tokens)
 
     assert_app_algo_balance(creator_app_client, app_algo_balance)
@@ -526,9 +526,12 @@ all_assert_groups = ["governor", "bootstrap", "mint", "burn", "swap"]
     params=all_assert_groups,
 )
 def grouped_assert_cases(
-    request, creator_app_client: client.ApplicationClient, user_acct: AcctInfo
+    request: pytest.FixtureRequest,
+    creator_app_client: client.ApplicationClient,
+    user_acct: AcctInfo,
 ) -> list[AssertTestCase]:
-    return _assert_cases(request.param, creator_app_client, user_acct)
+    group: str = request.param
+    return _assert_cases(group, creator_app_client, user_acct)
 
 
 @pytest.fixture(scope="session")
@@ -538,6 +541,9 @@ def all_assert_cases(
     return _assert_cases("all", creator_app_client, user_acct)
 
 
+XS: typing.TypeAlias = list[tuple[str, dict[str, typing.Any]]]
+
+
 def _assert_cases(
     group_key: str,
     creator_app_client: client.ApplicationClient,
@@ -545,7 +551,7 @@ def _assert_cases(
 ) -> list[AssertTestCase]:
     def cases(
         m: abi.Method | pyteal.ABIReturnSubroutine | str,
-        xs: list[tuple[str, dict[str, typing.Any]]],
+        xs: XS,
         client: client.ApplicationClient = creator_app_client,
     ) -> list[AssertTestCase]:
         return [(a, m, txn, client) for a, txn in xs]
@@ -597,8 +603,8 @@ def _assert_cases(
         typing.cast(transaction.AssetTransferTxn, d[key].txn).index = override
         return d
 
-    def set_governor_cases():
-        def set_governor(new_gov: str):
+    def set_governor_cases() -> list[AssertTestCase]:
+        def set_governor(new_gov: str) -> dict[str, typing.Any]:
             return build_set_governor_transaction(new_governor=new_gov)
 
         return cases(
@@ -607,11 +613,11 @@ def _assert_cases(
             fake_client,
         )
 
-    def bootstrap_cases():
+    def bootstrap_cases() -> list[AssertTestCase]:
         def bootstrap(
             app_client: client.ApplicationClient = creator_app_client,
             assets: tuple[int, int] = assets,
-        ):
+        ) -> dict[str, typing.Any]:
             return build_boostrap_transaction(app_client, assets)
 
         return cases(
@@ -633,7 +639,7 @@ def _assert_cases(
             ],
         ) + cases("bootstrap", [("unauthorized", bootstrap())], fake_client)
 
-    def mint_cases():
+    def mint_cases() -> list[AssertTestCase]:
         a_amt = 100000
         b_amt = a_amt // 10
 
@@ -643,7 +649,7 @@ def _assert_cases(
             pool_asset: int = pool_asset,
             a_amount: int = a_amt,
             b_amount: int = b_amt,
-        ):
+        ) -> dict[str, typing.Any]:
             return build_mint_transaction(
                 app_client, assets, pool_asset, a_amount, b_amount
             )
@@ -670,7 +676,7 @@ def _assert_cases(
             fake_client,
         )
 
-        def valid_asset_xfer(key: str):
+        def valid_asset_xfer(key: str) -> XS:
             if key not in ["a_xfer", "b_xfer"]:
                 raise Exception(f"Unexpected {key=}")
 
@@ -703,13 +709,13 @@ def _assert_cases(
 
         return well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer
 
-    def burn_cases():
+    def burn_cases() -> list[AssertTestCase]:
         def burn(
             app_client: client.ApplicationClient = creator_app_client,
             assets: tuple[int, int] = assets,
             pool_asset: int = pool_asset,
             burn_amt: int = 1,
-        ):
+        ) -> dict[str, typing.Any]:
             return build_burn_transaction(app_client, assets, pool_asset, burn_amt)
 
         well_formed_burn = cases(
@@ -748,13 +754,13 @@ def _assert_cases(
 
         return well_formed_burn + valid_pool_xfer
 
-    def swap_cases():
+    def swap_cases() -> list[AssertTestCase]:
         def swap(
             app_client: client.ApplicationClient = creator_app_client,
             assets: tuple[int, int] = assets,
             swap_amt: int = 1,
             swap_asset: int = a_asset,
-        ):
+        ) -> dict[str, typing.Any]:
             return build_swap_transaction(app_client, assets, swap_amt, swap_asset)
 
         well_formed_swap = cases(
@@ -807,7 +813,7 @@ def _assert_cases(
     return all_cases if group_key == "all" else key_to_group[group_key]
 
 
-def test_approval_asserts(grouped_assert_cases: list[AssertTestCase]):
+def test_approval_asserts(grouped_assert_cases: list[AssertTestCase]) -> None:
     """
     Confirms each logical grouping of assertions raises the expected error message.
     """
@@ -818,7 +824,7 @@ def test_approval_asserts(grouped_assert_cases: list[AssertTestCase]):
 
 def test_approval_assert_coverage(
     all_assert_cases: list[AssertTestCase], creator_app_client: client.ApplicationClient
-):
+) -> None:
     """
     Confirms `test_approval_asserts` exercises all app approval asserts.
 
@@ -841,7 +847,7 @@ def test_approval_assert_coverage(
 
 
 def _get_tokens_to_mint(
-    issued: int, a_amt: int, a_supply: int, b_amt: int, b_supply: int, scale: int
+    issued: int, a_amt: int, a_supply: int, b_amt: int, b_supply: int
 ) -> int:
     a_ratio = (a_amt * scale) / a_supply
     b_ratio = (b_amt * scale) / b_supply
@@ -852,20 +858,22 @@ def _get_tokens_to_mint(
     return int((b_ratio * issued) / scale)
 
 
-def _get_tokens_to_swap(in_amount, in_supply, out_supply, scale, fee) -> int:
+def _get_tokens_to_swap(in_amount: int, in_supply: int, out_supply: int) -> int:
     factor = scale - fee
     return int(
         (in_amount * factor * out_supply) / ((in_supply * scale) + (in_amount * factor))
     )
 
 
-def _get_tokens_to_burn(asset_supply, burn_amount, pool_issued):
+def _get_tokens_to_burn(asset_supply: int, burn_amount: int, pool_issued: int) -> int:
     return int((asset_supply * burn_amount) / pool_issued)
 
 
-def _get_ratio_from_state(creator_app_client: ApplicationClient):
+def _get_ratio_from_state(creator_app_client: ApplicationClient) -> int:
     app_state = creator_app_client.get_application_state()
-    return app_state[amm_app.state.ratio.str_key()]
+    result = app_state[amm_app.state.ratio.str_key()]
+    assert isinstance(result, int)
+    return result
 
 
 def _get_tokens_from_state(
@@ -879,11 +887,11 @@ def _get_tokens_from_state(
     )
 
 
-def _expect_ratio(a_sup, b_sup):
+def _expect_ratio(a_sup: int, b_sup: int) -> int:
     return int((a_sup * scale) / b_sup)
 
 
-def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int):
+def _opt_in_to_token(addr: str, signer: AccountTransactionSigner, id: int) -> None:
     sp = algod_client.suggested_params()
     atc = AtomicTransactionComposer()
     atc.add_transaction(
@@ -899,7 +907,11 @@ def _addr_to_hex(addr: str) -> str:
     return decode_address(addr).hex()
 
 
-def test_output_stability():
+def test_demo() -> None:
+    demo()
+
+
+def test_output_stability() -> None:
     check_application_artifacts_output_stability(
         amm_app, dir_name="artifacts", dir_per_test_file=False
     )

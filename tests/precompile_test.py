@@ -20,7 +20,7 @@ from beaker.precompile import (
 )
 
 
-def test_compile():
+def test_compile() -> None:
     version = 8
     app = Application("test_compile", build_options=BuildOptions(avm_version=version))
     client = get_algod_client()
@@ -48,9 +48,9 @@ def test_compile():
     assert len(clear_map.pc_to_line) > 0, "Should have valid mapping"
 
 
-def test_precompile_basic():
+def test_precompile_basic() -> None:
     def Lsig(version: int) -> LogicSignature:
-        def evaluate():
+        def evaluate() -> pt.Expr:
             return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
 
         return LogicSignature(evaluate, build_options=BuildOptions(avm_version=version))
@@ -60,7 +60,7 @@ def test_precompile_basic():
     lsig = Lsig(version=6)
 
     @app.external
-    def check_it():
+    def check_it() -> pt.Expr:
         lsig_pc = precompiled(lsig)
         return pt.Assert(pt.Txn.sender() == lsig_pc.address())
 
@@ -84,7 +84,7 @@ TMPL_BYTE_VALS = [
 
 
 @pytest.mark.parametrize("tmpl_val", TMPL_BYTE_VALS)
-def test_templated_bytes(tmpl_val: str):
+def test_templated_bytes(tmpl_val: str) -> None:
     def Lsig(version: int) -> LogicSignatureTemplate:
         return LogicSignatureTemplate(
             lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
@@ -126,7 +126,7 @@ TMPL_INT_VALS = [(10), (1000), (int(2.9e9))]
 
 
 @pytest.mark.parametrize("tmpl_val", TMPL_INT_VALS)
-def test_templated_ints(tmpl_val: int):
+def test_templated_ints(tmpl_val: int) -> None:
     def Lsig(version: int) -> LogicSignatureTemplate:
         def evaluate(tv: pt.Expr) -> pt.Seq:
             return pt.Seq(pt.Assert(tv), pt.Int(1))
@@ -174,7 +174,7 @@ def OuterApp() -> Application:
     app = Application("OuterApp")
 
     @app.external
-    def doit(nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64):
+    def doit(nonce: pt.abi.DynamicBytes, *, output: pt.abi.Uint64) -> pt.Expr:
         child = precompiled(inner_app)
         lsig = precompiled(inner_lsig)
         return pt.Seq(
@@ -193,7 +193,7 @@ def OuterApp() -> Application:
     return app
 
 
-def test_nested_precompile():
+def test_nested_precompile() -> None:
     oa = OuterApp()
 
     # Nothing is available until we build out the app and all its precompiles
@@ -217,7 +217,7 @@ def test_nested_precompile():
     assert len(lsig._template_values) == 1
 
 
-def test_build_recursive():
+def test_build_recursive() -> None:
     app = OuterApp()
     client = get_algod_client()
     pc = PrecompiledApplication(app, client)
@@ -231,19 +231,19 @@ def LargeApp() -> Application:
     app = Application(name="LargeApp").implement(unconditional_create_approval)
 
     @app.external
-    def compare_big_byte_strings():
+    def compare_big_byte_strings() -> pt.Expr:
         return pt.Assert(pt.Bytes(longBytes) != pt.Bytes(longBytes2))
 
     return app
 
 
-def test_large_app_create():
+def test_large_app_create() -> None:
     la = LargeApp()
 
     deployer = Application("LargeAppDeployer").implement(unconditional_create_approval)
 
     @deployer.external
-    def deploy_large_app(*, output: pt.abi.Uint64):
+    def deploy_large_app(*, output: pt.abi.Uint64) -> pt.Expr:
         large_app = precompiled(la)
         return pt.Seq(
             pt.InnerTxnBuilder.Execute(large_app.get_create_config()),
@@ -259,13 +259,13 @@ def test_large_app_create():
     print(result.return_value)
 
 
-def test_page_hash():
+def test_page_hash() -> None:
     app = Application("SmallApp")
     small_precompile = PrecompiledApplication(app, get_algod_client())
     _check_app_precompiles(app, small_precompile)
 
 
-def test_extra_page_population():
+def test_extra_page_population() -> None:
 
     app = LargeApp()
     app_precompile = PrecompiledApplication(app, get_algod_client())
@@ -287,7 +287,9 @@ def test_extra_page_population():
     assert recovered_clear_binary == app_precompile.clear_program.raw_binary
 
 
-def _check_app_precompiles(app: Application, app_precompile: PrecompiledApplication):
+def _check_app_precompiles(
+    app: Application, app_precompile: PrecompiledApplication
+) -> None:
     for lp in app._precompiled_lsigs.values():
         _check_lsig_precompiles(lp)
     for nested_app, app_pc in app._precompiled_apps.items():
@@ -297,7 +299,7 @@ def _check_app_precompiles(app: Application, app_precompile: PrecompiledApplicat
 
     assert app_precompile.approval_program.teal != ""
     assert app_precompile.approval_program.raw_binary is not None
-    assert app_precompile.approval_program.binary.byte_str != b""
+    assert app_precompile.approval_program.binary.byte_str != ""
     assert app_precompile.approval_program.source_map is not None
     assert app_precompile.approval_program.binary_hash is not None
 
@@ -305,16 +307,16 @@ def _check_app_precompiles(app: Application, app_precompile: PrecompiledApplicat
 
     assert app_precompile.clear_program.teal != ""
     assert app_precompile.clear_program.raw_binary is not None
-    assert app_precompile.clear_program.binary.byte_str != b""
+    assert app_precompile.clear_program.binary.byte_str != ""
     assert app_precompile.clear_program.source_map is not None
     assert app_precompile.clear_program.binary_hash is not None
     assert len(app_precompile.clear_program.pages) > 0
 
 
-def _check_lsig_precompiles(lsig_precompile: PrecompiledLogicSignature):
+def _check_lsig_precompiles(lsig_precompile: PrecompiledLogicSignature) -> None:
     assert lsig_precompile.logic_program.teal != ""
     assert lsig_precompile.logic_program.raw_binary is not None
-    assert lsig_precompile.logic_program.binary.byte_str != b""
+    assert lsig_precompile.logic_program.binary.byte_str != ""
     assert lsig_precompile.logic_program.source_map is not None
     assert lsig_precompile.logic_program.binary_hash is not None
     assert lsig_precompile.address()
@@ -323,10 +325,10 @@ def _check_lsig_precompiles(lsig_precompile: PrecompiledLogicSignature):
 def _check_lsig_template_precompiles(
     lsig_template: LogicSignatureTemplate,
     lsig_precompile: PrecompiledLogicSignatureTemplate,
-):
+) -> None:
     assert lsig_precompile.logic_program.teal != ""
     assert lsig_precompile.logic_program.raw_binary is not None
-    assert lsig_precompile.logic_program.binary.byte_str != b""
+    assert lsig_precompile.logic_program.binary.byte_str != ""
     assert lsig_precompile.logic_program.source_map is not None
     assert lsig_precompile.logic_program.binary_hash is not None
     assert (

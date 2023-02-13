@@ -63,6 +63,9 @@ class StateValue(Expr, StateStorage):
     ):
         super().__init__()
 
+        if stack_type not in (TealType.bytes, TealType.uint64):
+            raise ValueError(f"Invalid stack type: {stack_type}")
+
         self.stack_type = stack_type
         self.static = static
         self.descr = descr

@@ -65,9 +65,9 @@ class StateAggregate(Generic[ST]):
         return self.schema.num_uints + self.schema.num_byte_slices
 
 
-class ApplicationStateAggregate(StateAggregate):
+class ApplicationStateAggregate(StateAggregate[ApplicationStateStorage]):
     def __init__(self, namespace: Any):
-        super().__init__(namespace=namespace, storage_class=ApplicationStateStorage)
+        super().__init__(namespace=namespace, storage_class=ApplicationStateStorage)  # type: ignore[type-abstract]
 
         if self.total_keys > MAX_GLOBAL_STATE:
             raise ValueError(
@@ -79,9 +79,9 @@ class ApplicationStateAggregate(StateAggregate):
         return Seq(*filter(None, (f.initialize() for f in self._fields.values())))
 
 
-class AccountStateAggregate(StateAggregate):
+class AccountStateAggregate(StateAggregate[AccountStateStorage]):
     def __init__(self, namespace: Any):
-        super().__init__(namespace=namespace, storage_class=AccountStateStorage)
+        super().__init__(namespace=namespace, storage_class=AccountStateStorage)  # type: ignore[type-abstract]
 
         if self.total_keys > MAX_LOCAL_STATE:
             raise ValueError(

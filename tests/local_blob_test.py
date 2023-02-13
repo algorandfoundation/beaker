@@ -13,15 +13,15 @@ class LocalBlobTestState:
     blob = LocalBlob(keys=[x for x in range(10) if x % 2 == 0])
 
 
-def LocalBlobTest(name: str = "LB") -> bkr.Application:
-    return UnitTestingApp(name=name, state=LocalBlobTestState)
+def LocalBlobTest(name: str = "LB") -> bkr.Application[LocalBlobTestState]:
+    return UnitTestingApp(name=name, state=LocalBlobTestState())
 
 
-def test_local_blob_zero():
+def test_local_blob_zero() -> None:
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(),
             (s := pt.abi.String()).set(
@@ -34,11 +34,11 @@ def test_local_blob_zero():
     assert_output(app, [], [expected])
 
 
-def test_local_blob_write_read():
+def test_local_blob_write_read() -> None:
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(),
             LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
@@ -52,11 +52,11 @@ def test_local_blob_write_read():
     assert_output(app, [], [expected])
 
 
-def test_local_blob_write_read_boundary():
+def test_local_blob_write_read_boundary() -> None:
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(pt.Int(0)),
             LocalBlobTestState.blob.write(
@@ -72,11 +72,11 @@ def test_local_blob_write_read_boundary():
     assert_output(app, [], [expected])
 
 
-def test_local_blob_write_read_past_end():
+def test_local_blob_write_read_past_end() -> None:
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(),
             LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
@@ -94,13 +94,13 @@ def test_local_blob_write_read_past_end():
         assert_output(app, [], [expected])
 
 
-def test_local_blob_set_get():
+def test_local_blob_set_get() -> None:
     num = 123
 
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.Uint8):
+    def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(),
             LocalBlobTestState.blob.set_byte(pt.Int(32), pt.Int(num)),
@@ -111,13 +111,13 @@ def test_local_blob_set_get():
     assert_output(app, [], expected)
 
 
-def test_local_blob_set_past_end():
+def test_local_blob_set_past_end() -> None:
     num = 123
 
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.Uint8):
+    def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(),
             LocalBlobTestState.blob.set_byte(
@@ -132,11 +132,11 @@ def test_local_blob_set_past_end():
         assert_output(app, [], expected)
 
 
-def test_local_blob_single_subroutine():
+def test_local_blob_single_subroutine() -> None:
     app = LocalBlobTest()
 
     @app.external
-    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]):
+    def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
             LocalBlobTestState.blob.zero(),
             LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),

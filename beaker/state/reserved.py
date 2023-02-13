@@ -52,6 +52,8 @@ class ReservedStateValue(Generic[ST], StateStorage, ABC):
         *,
         prefix: str | None = None,
     ):
+        if stack_type not in (TealType.bytes, TealType.uint64):
+            raise ValueError(f"Invalid stack type: {stack_type}")
         if prefix is not None:
             if key_gen is not None:
                 raise ValueError("Only one of key_gen or prefix can be specified")

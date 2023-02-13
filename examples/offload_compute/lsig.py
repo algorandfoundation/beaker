@@ -34,7 +34,7 @@ def EthEcdsaVerify(version: int) -> LogicSignature:
     (65-byte signatures only)
     """
 
-    def evaluate():
+    def evaluate() -> Expr:
         return Seq(
             Assert(
                 # Don't let it be rekeyed

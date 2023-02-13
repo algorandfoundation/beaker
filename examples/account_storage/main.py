@@ -19,6 +19,7 @@ from pyteal import (
     Txn,
     abi,
     Global,
+    Expr,
 )
 from beaker import (
     AccountStateBlob,
@@ -67,7 +68,7 @@ disk_hungry = Application(
 # Add account during opt in  by checking the sender against the address
 # we expect given the precompile && nonce
 @disk_hungry.opt_in
-def add_account(nonce: abi.DynamicBytes):
+def add_account(nonce: abi.DynamicBytes) -> Expr:
     # Signal to beaker that this should be compiled
     # prior to compiling the main application
     tmpl_acct = precompiled(key_sig)
@@ -84,16 +85,16 @@ def add_account(nonce: abi.DynamicBytes):
 
 
 # Inline these
-def byte_idx(bit_idx) -> Int:
+def byte_idx(bit_idx: Expr) -> Int:
     return bit_idx / Int(8)
 
 
-def bit_in_byte_idx(bit_idx) -> Int:
+def bit_in_byte_idx(bit_idx: Expr) -> Int:
     return bit_idx % Int(8)
 
 
 @disk_hungry.external
-def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32):
+def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32) -> Expr:
     """
     Allows caller to flip a bit at a given index for some
     account that has already opted in
@@ -178,7 +179,7 @@ def create_and_opt_in_account(
     user_client: client.ApplicationClient,
     lsig_client: client.ApplicationClient,
     nonce: str,
-):
+) -> None:
     sp = user_client.get_suggested_params()
     lsig_address = cast(LogicSigTransactionSigner, lsig_client.signer).lsig.address()
 

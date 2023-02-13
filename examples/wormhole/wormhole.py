@@ -22,7 +22,7 @@ Bytes32 = abi.StaticBytes[Literal[32]]
 
 
 class ContractTransferVAA:
-    def __init__(self):
+    def __init__(self) -> None:
         #: Version of VAA
         self.version = abi.Uint8()
         #: Which guardian set to be validated against

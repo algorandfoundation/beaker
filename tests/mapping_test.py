@@ -7,7 +7,7 @@ from beaker.application import Application
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
 
 
-def test_mapping():
+def test_mapping() -> None:
     m = Mapping(pt.abi.Address, pt.abi.Uint64)
     assert m._key_type == pt.abi.Address
     assert m._key_type_spec == pt.abi.AddressTypeSpec()
@@ -53,13 +53,13 @@ def test_mapping():
         item.set(pt.abi.String())
 
 
-def test_app_mapping():
+def test_app_mapping() -> None:
     t = Application("T")
 
     m = Mapping(pt.abi.Address, pt.abi.Uint64)
 
     @t.external
-    def thing(name: pt.abi.Address, *, output: pt.abi.Uint64):
+    def thing(name: pt.abi.Address, *, output: pt.abi.Uint64) -> pt.Expr:
         return m[name].store_into(output)
 
     compiled = t.build()

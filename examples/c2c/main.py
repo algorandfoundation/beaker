@@ -15,6 +15,7 @@ from pyteal import (
     Log,
     Global,
     Subroutine,
+    Expr,
 )
 
 import beaker as bkr
@@ -43,7 +44,7 @@ sub_app = (
 
 
 @sub_app.external
-def opt_in_to_asset(asset: abi.Asset):
+def opt_in_to_asset(asset: abi.Asset) -> Expr:
     return InnerTxnBuilder.Execute(
         {
             TxnField.type_enum: TxnType.AssetTransfer,
@@ -56,7 +57,7 @@ def opt_in_to_asset(asset: abi.Asset):
 
 
 @sub_app.external
-def return_asset(asset: abi.Asset, addr: abi.Account):
+def return_asset(asset: abi.Asset, addr: abi.Account) -> Expr:
     return InnerTxnBuilder.Execute(
         {
             TxnField.type_enum: TxnType.AssetTransfer,
@@ -76,7 +77,7 @@ main_app = bkr.Application(
 
 
 @main_app.external
-def create_sub(*, output: abi.Uint64):
+def create_sub(*, output: abi.Uint64) -> Expr:
     # Create sub app to be precompiled before allowing TEAL generation
     sub_app_pc = precompiled(sub_app)
 
@@ -104,7 +105,7 @@ def create_sub(*, output: abi.Uint64):
 
 
 @Subroutine(TealType.uint64)
-def create_asset(name):
+def create_asset(name: Expr) -> Expr:
     return Seq(
         InnerTxnBuilder.Execute(
             {
@@ -120,7 +121,7 @@ def create_asset(name):
 
 
 @Subroutine(TealType.none)
-def trigger_opt_in_and_xfer(app_id, app_addr, asset_id):
+def trigger_opt_in_and_xfer(app_id: Expr, app_addr: Expr, asset_id: Expr) -> Expr:
     # Call the sub app to make it opt in and xfer it some tokens
     return Seq(
         InnerTxnBuilder.Begin(),
@@ -143,7 +144,7 @@ def trigger_opt_in_and_xfer(app_id, app_addr, asset_id):
 
 
 @Subroutine(TealType.none)
-def trigger_return(app_id, asset_id):
+def trigger_return(app_id: Expr, asset_id: Expr) -> Expr:
     # Create the group txn to ask sub app to opt in and send sub app 1 token
     # Tell the sub app to send me back the stuff i sent it
     return Seq(
@@ -160,7 +161,7 @@ def trigger_return(app_id, asset_id):
 @main_app.external
 def create_asset_and_send(
     name: abi.String, sub_app_ref: abi.Application, *, output: abi.Uint64
-):
+) -> Expr:
     return Seq(
         Assert(Len(name.get())),
         # Create the asset
@@ -179,7 +180,7 @@ def create_asset_and_send(
 
 
 @main_app.external
-def delete_asset(asset: abi.Asset):
+def delete_asset(asset: abi.Asset) -> Expr:
     return InnerTxnBuilder.Execute(
         {
             TxnField.type_enum: TxnType.AssetConfig,

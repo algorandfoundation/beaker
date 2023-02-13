@@ -109,7 +109,7 @@ fee_expr: Final[Int] = Int(fee)
 
 # Only the account set in app_state.governor may call this method
 @amm_app.external(authorize=Authorize.only(amm_app.state.governor))
-def set_governor(new_governor: abi.Account):
+def set_governor(new_governor: abi.Account) -> Expr:
     """sets the governor of the contract, may only be called by the current governor"""
     return amm_app.state.governor.set(new_governor.address())
 
@@ -122,7 +122,7 @@ def bootstrap(
     b_asset: abi.Asset,
     *,
     output: abi.Uint64,
-):
+) -> Expr:
     """bootstraps the contract by opting into the assets and creating the pool token.
 
     Note this method will fail if it is attempted more than once on the same contract since the assets and pool token
@@ -181,7 +181,7 @@ def mint(
     pool_asset: abi.Asset = amm_app.state.pool_token,  # type: ignore[assignment]
     a_asset: abi.Asset = amm_app.state.asset_a,  # type: ignore[assignment]
     b_asset: abi.Asset = amm_app.state.asset_b,  # type: ignore[assignment]
-):
+) -> Expr:
     """mint pool tokens given some amount of asset A and asset B.
 
     Given some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with
@@ -296,7 +296,7 @@ def burn(
     pool_asset: abi.Asset = amm_app.state.pool_token,  # type: ignore[assignment]
     a_asset: abi.Asset = amm_app.state.asset_a,  # type: ignore[assignment]
     b_asset: abi.Asset = amm_app.state.asset_b,  # type: ignore[assignment]
-):
+) -> Expr:
     """burn pool tokens to get back some amount of asset A and asset B
 
     Args:
@@ -389,7 +389,7 @@ def swap(
     swap_xfer: abi.AssetTransferTransaction,
     a_asset: abi.Asset = amm_app.state.asset_a,  # type: ignore[assignment]
     b_asset: abi.Asset = amm_app.state.asset_b,  # type: ignore[assignment]
-):
+) -> Expr:
     """Swap some amount of either asset A or asset B for the other
 
     Args:
@@ -480,7 +480,9 @@ def swap(
 
 
 @Subroutine(TealType.uint64)
-def tokens_to_mint(issued, a_supply, b_supply, a_amount, b_amount):
+def tokens_to_mint(
+    issued: Expr, a_supply: Expr, b_supply: Expr, a_amount: Expr, b_amount: Expr
+) -> Expr:
     return Seq(
         (a_rat := ScratchVar()).store(WideRatio([a_amount, scale_expr], [a_supply])),
         (b_rat := ScratchVar()).store(WideRatio([b_amount, scale_expr], [b_supply])),
@@ -495,17 +497,17 @@ def tokens_to_mint(issued, a_supply, b_supply, a_amount, b_amount):
 
 
 @Subroutine(TealType.uint64)
-def tokens_to_mint_initial(a_amount, b_amount):
+def tokens_to_mint_initial(a_amount: Expr, b_amount: Expr) -> Expr:
     return Sqrt(a_amount * b_amount) - scale_expr
 
 
 @Subroutine(TealType.uint64)
-def tokens_to_burn(issued, supply, amount):
+def tokens_to_burn(issued: Expr, supply: Expr, amount: Expr) -> Expr:
     return WideRatio([supply, amount], [issued])
 
 
 @Subroutine(TealType.uint64)
-def tokens_to_swap(in_amount, in_supply, out_supply):
+def tokens_to_swap(in_amount: Expr, in_supply: Expr, out_supply: Expr) -> Expr:
     factor = scale_expr - fee_expr
     return WideRatio(
         [in_amount, factor, out_supply],
@@ -519,7 +521,7 @@ def tokens_to_swap(in_amount, in_supply, out_supply):
 
 
 @Subroutine(TealType.none)
-def do_axfer(rx, aid, amt):
+def do_axfer(rx: Expr, aid: Expr, amt: Expr) -> Expr:
     return InnerTxnBuilder.Execute(
         {
             TxnField.type_enum: TxnType.AssetTransfer,
@@ -532,12 +534,12 @@ def do_axfer(rx, aid, amt):
 
 
 @Subroutine(TealType.none)
-def do_opt_in(aid):
+def do_opt_in(aid: Expr) -> Expr:
     return do_axfer(Global.current_application_address(), aid, Int(0))
 
 
 @Subroutine(TealType.uint64)
-def do_create_pool_token(a, b):
+def do_create_pool_token(a: Expr, b: Expr) -> Expr:
     return Seq(
         una := AssetParam.unitName(a),
         unb := AssetParam.unitName(b),
@@ -564,7 +566,7 @@ def do_create_pool_token(a, b):
 
 
 @Subroutine(TealType.uint64)
-def compute_ratio():
+def compute_ratio() -> Expr:
     return Seq(
         bal_a := AssetHolding.balance(
             Global.current_application_address(),

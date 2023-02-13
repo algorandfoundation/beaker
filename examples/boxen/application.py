@@ -112,7 +112,7 @@ def bootstrap(
     token_name: abi.String,
     *,
     output: abi.Uint64,
-):
+) -> Expr:
     """create membership token and receive initial seed payment"""
     return Seq(
         Assert(
@@ -143,7 +143,7 @@ def bootstrap(
 
 
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
-def remove_member(member: abi.Address):
+def remove_member(member: abi.Address) -> Expr:
     return Pop(membership_club_app.state.membership_records[member].delete())
 
 
@@ -151,7 +151,7 @@ def remove_member(member: abi.Address):
 def add_member(
     new_member: abi.Account,
     membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
-):
+) -> Expr:
     return Seq(
         (role := abi.Uint8()).set(Int(0)),
         (voted := abi.Bool()).set(consts.FALSE),
@@ -170,7 +170,7 @@ def add_member(
 
 
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
-def update_role(member: abi.Account, new_role: abi.Uint8):
+def update_role(member: abi.Account, new_role: abi.Uint8) -> Expr:
     return Seq(
         (mr := MembershipRecord()).decode(
             membership_club_app.state.membership_records[member.address()].get()
@@ -183,7 +183,7 @@ def update_role(member: abi.Account, new_role: abi.Uint8):
 
 
 @membership_club_app.external()
-def get_membership_record(member: abi.Address, *, output: MembershipRecord):
+def get_membership_record(member: abi.Address, *, output: MembershipRecord) -> Expr:
     return membership_club_app.state.membership_records[member].store_into(output)
 
 
@@ -194,7 +194,7 @@ def set_affirmation(
     idx: abi.Uint16,
     affirmation: Affirmation,
     membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
-):
+) -> Expr:
     return membership_club_app.state.affirmations[idx.get()].set(affirmation)
 
 
@@ -205,7 +205,7 @@ def get_affirmation(
     membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
     *,
     output: Affirmation,
-):
+) -> Expr:
     return output.set(
         membership_club_app.state.affirmations[
             Global.round() % membership_club_app.state.affirmations.elements
@@ -231,7 +231,7 @@ def app_member_bootstrap(
     seed: abi.PaymentTransaction,
     app_id: abi.Application,
     membership_token: abi.Asset,
-):
+) -> Expr:
     return Seq(
         # Set app id
         app_member_app.state.club_app_id.set(app_id.application_id()),
@@ -253,8 +253,7 @@ def app_member_bootstrap(
 def app_member_get_affirmation(
     member_token: abi.Asset = app_member_app.state.membership_token,  # type: ignore[assignment]
     club_app: abi.Application = app_member_app.state.club_app_id,  # type: ignore[assignment]
-):
-
+) -> Expr:
     return Seq(
         InnerTxnBuilder.ExecuteMethodCall(
             app_id=app_member_app.state.club_app_id,

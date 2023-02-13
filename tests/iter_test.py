@@ -4,7 +4,7 @@ from tests.helpers import UnitTestingApp, assert_output
 from beaker.lib.iter import Iterate
 
 
-def test_iterate():
+def test_iterate() -> None:
     ut = UnitTestingApp(
         pt.Seq(
             (buff := pt.ScratchVar()).store(pt.Bytes("")),
@@ -17,7 +17,7 @@ def test_iterate():
     assert_output(ut, [], output)
 
 
-def test_iterate_default_stack_var_is_unique():
+def test_iterate_default_stack_var_is_unique() -> None:
     inner_loop = 2
     outer_loop = 3
     ut = UnitTestingApp(
@@ -38,12 +38,12 @@ def test_iterate_default_stack_var_is_unique():
     assert_output(ut, [], output)
 
 
-def test_iterate_with_closure():
+def test_iterate_with_closure() -> None:
     i = pt.ScratchVar()
     buff = pt.ScratchVar()
 
     @pt.Subroutine(pt.TealType.none)
-    def concat_thing():
+    def concat_thing() -> pt.Expr:
         return buff.store(pt.Concat(buff.load(), pt.Itob(i.load())))
 
     ut = UnitTestingApp(
