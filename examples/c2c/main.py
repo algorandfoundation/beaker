@@ -35,7 +35,7 @@ class C2CSubState:
 sub_app = bkr.Application(
     "C2CSub",
     descr="Sub application who's only purpose is to opt into then close out of an asset",
-    state=C2CSubState,
+    state=C2CSubState(),
 )
 
 
@@ -92,7 +92,7 @@ def create_sub(*, output: abi.Uint64):
         # return the app id of the newly created app
         output.set(InnerTxn.created_application_id()),
         # Try to read the global state
-        sv := C2CSubState.asv.get_external(output.get()),
+        sv := sub_app.state.asv.get_external(output.get()),
         Log(sv.value()),
         # Opt in to the new app for funsies
         InnerTxnBuilder.Execute(
@@ -103,7 +103,7 @@ def create_sub(*, output: abi.Uint64):
             }
         ),
         # Try to read the local state
-        sv := C2CSubState.acsv[Global.current_application_address()].get_external(
+        sv := sub_app.state.acsv[Global.current_application_address()].get_external(
             output.get()
         ),
         Log(sv.value()),
