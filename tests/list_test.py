@@ -41,7 +41,7 @@ def test_list_app() -> None:
     class State:
         l = List(pt.abi.Uint64, 100)
 
-    t = Application("T", state=State)
+    t = Application("T", state=State())
 
     @t.external
     def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64) -> pt.Expr:

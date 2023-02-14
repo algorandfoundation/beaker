@@ -289,7 +289,7 @@ def test_state_init() -> None:
         # not-state
         not_a_state_var = pt.Int(1)
 
-    app = Application("TestStateInit", state=MyState)
+    app = Application("TestStateInit", state=MyState())
 
     @app.create
     def create() -> pt.Expr:
@@ -312,7 +312,7 @@ def test_default_param_state() -> None:
     class HintyState:
         asset_id = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(123))
 
-    h = Application("Hinty", state=HintyState)
+    h = Application("Hinty", state=HintyState())
 
     @h.external
     def hintymeth(
@@ -434,7 +434,7 @@ def _get_partial_app_spec() -> Application:
         decl_app_val = ApplicationStateValue(pt.TealType.uint64)
         decl_acct_val = AccountStateValue(pt.TealType.uint64)
 
-    app = Application("PartialSpec", state=SpecdState)
+    app = Application("PartialSpec", state=SpecdState())
 
     class Thing(pt.abi.NamedTuple):
         a: pt.abi.Field[pt.abi.Uint64]

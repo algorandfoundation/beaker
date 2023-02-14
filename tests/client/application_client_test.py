@@ -32,10 +32,10 @@ class AppState:
     acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
 
-def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application:
+def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application[AppState]:
     app = Application(
         "App",
-        state=AppState,
+        state=AppState(),
         build_options=BuildOptions(avm_version=version),
     )
 

@@ -36,7 +36,7 @@ from beaker import (
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
-pragma(compiler_version="^0.22.0")
+pragma(compiler_version="^0.23.0")
 
 
 def commented_assert(conditions: list[tuple[Expr, str]]) -> list[Expr]:
