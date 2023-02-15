@@ -1,6 +1,8 @@
 Application Client
 ===================
 
+.. warning:: Out of date, needs to be updated to 1.0
+
 .. currentmodule:: beaker.client
 
 

@@ -1,6 +1,8 @@
 Decorators
 ===========
 
+.. warning:: Out of date, needs to be updated to 1.0
+
 Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the ``Application`` class to know how to expose them.
 
 

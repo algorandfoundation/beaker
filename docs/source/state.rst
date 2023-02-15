@@ -1,6 +1,8 @@
 State
 =====
 
+.. warning:: Out of date, needs to be updated to 1.0
+
 .. currentmodule:: beaker.state
 
 Applications that need to maintain state can declare the state they need as part of the Application. 
