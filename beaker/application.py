@@ -216,7 +216,7 @@ class Application(Generic[TState]):
             case _:
                 raise TypeError("TODO write error message")
 
-    def register_abi_external(
+    def _register_abi_external(
         self,
         method: ABIReturnSubroutine,
         *,
@@ -258,7 +258,7 @@ class Application(Generic[TState]):
             _remove_first_match(self.abi_methods, lambda _, v: v is method)
         _remove_first_match(self._abi_externals, lambda _, v: v.method is method)
 
-    def register_bare_external(
+    def _register_bare_external(
         self,
         sub: SubroutineFnWrapper,
         *,
@@ -383,7 +383,7 @@ class Application(Generic[TState]):
                 if sub.subroutine.argument_count():
                     raise TypeError("Bare externals must take no method arguments")
 
-                self.register_bare_external(
+                self._register_bare_external(
                     sub,
                     python_func_name=python_func_name,
                     actions=actions,
@@ -399,7 +399,7 @@ class Application(Generic[TState]):
                 method = ABIReturnSubroutine(func, overriding_name=name)
                 setattr(method, "_read_only", read_only)
 
-                self.register_abi_external(
+                self._register_abi_external(
                     method,
                     python_func_name=python_func_name,
                     actions=actions,
