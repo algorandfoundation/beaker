@@ -540,14 +540,16 @@ def test_resolve(sb_accts: SandboxAccounts) -> None:
 
     assert ac.resolve(_default_argument_from_resolver(pt.Int(1))) == 1
     assert ac.resolve(_default_argument_from_resolver(pt.Bytes("stringy"))) == "stringy"
-    assert ac.resolve(_default_argument_from_resolver(AppState.app_state_val_int)) == 1
+    assert ac.resolve(_default_argument_from_resolver(app.state.app_state_val_int)) == 1
     assert (
-        ac.resolve(_default_argument_from_resolver(AppState.app_state_val_byte))
+        ac.resolve(_default_argument_from_resolver(app.state.app_state_val_byte))
         == b"test"
     )
-    assert ac.resolve(_default_argument_from_resolver(AppState.acct_state_val_int)) == 1
     assert (
-        ac.resolve(_default_argument_from_resolver(AppState.acct_state_val_byte))
+        ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_int)) == 1
+    )
+    assert (
+        ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_byte))
         == b"test"
     )
     assert (

@@ -23,10 +23,8 @@ def test_global_blob_zero() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            (s := pt.abi.String()).set(
-                GlobalBlobState.blob.read(pt.Int(0), pt.Int(64))
-            ),
+            app.state.blob.zero(),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(0), pt.Int(64))),
             output.decode(s.encode()),
         )
 
@@ -40,11 +38,9 @@ def test_global_blob_write_read() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            GlobalBlobState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            (s := pt.abi.String()).set(
-                GlobalBlobState.blob.read(pt.Int(32), pt.Int(40))
-            ),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(32), pt.Int(40))),
             output.decode(s.encode()),
         )
 
@@ -58,11 +54,9 @@ def test_global_blob_write_read_boundary() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            GlobalBlobState.blob.write(pt.Int(0), pt.BytesZero(pt.Int(381))),
-            (s := pt.abi.String()).set(
-                GlobalBlobState.blob.read(pt.Int(32), pt.Int(40))
-            ),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.BytesZero(pt.Int(381))),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(32), pt.Int(40))),
             output.decode(s.encode()),
         )
 
@@ -76,10 +70,10 @@ def test_global_blob_write_read_past_end() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            GlobalBlobState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
             (s := pt.abi.String()).set(
-                GlobalBlobState.blob.read(pt.Int(0), pt.Int(blob_page_size * 64))
+                app.state.blob.read(pt.Int(0), pt.Int(blob_page_size * 64))
             ),
             output.decode(s.encode()),
         )
@@ -98,9 +92,9 @@ def test_global_blob_set_get() -> None:
     @app.external
     def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            GlobalBlobState.blob.set_byte(pt.Int(32), pt.Int(num)),
-            output.set(GlobalBlobState.blob.get_byte(pt.Int(32))),
+            app.state.blob.zero(),
+            app.state.blob.set_byte(pt.Int(32), pt.Int(num)),
+            output.set(app.state.blob.get_byte(pt.Int(32))),
         )
 
     expected = [num]
@@ -115,9 +109,9 @@ def test_global_blob_set_past_end() -> None:
     @app.external
     def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            GlobalBlobState.blob.set_byte(pt.Int(blob_page_size * 64), pt.Int(num)),
-            output.set(GlobalBlobState.blob.get_byte(pt.Int(32))),
+            app.state.blob.zero(),
+            app.state.blob.set_byte(pt.Int(blob_page_size * 64), pt.Int(num)),
+            output.set(app.state.blob.get_byte(pt.Int(32))),
         )
 
     expected = [num]
@@ -132,15 +126,13 @@ def test_global_blob_single_subroutine() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            GlobalBlobState.blob.zero(),
-            GlobalBlobState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            GlobalBlobState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
             # Call read multiple times, in an earlier ver
-            pt.Pop(GlobalBlobState.blob.read(pt.Int(32), pt.Int(40))),
-            pt.Pop(GlobalBlobState.blob.read(pt.Int(32), pt.Int(40))),
-            (s := pt.abi.String()).set(
-                GlobalBlobState.blob.read(pt.Int(32), pt.Int(40))
-            ),
+            pt.Pop(app.state.blob.read(pt.Int(32), pt.Int(40))),
+            pt.Pop(app.state.blob.read(pt.Int(32), pt.Int(40))),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(32), pt.Int(40))),
             output.decode(s.encode()),
         )
 

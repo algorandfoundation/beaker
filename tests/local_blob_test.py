@@ -23,10 +23,8 @@ def test_local_blob_zero() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(),
-            (s := pt.abi.String()).set(
-                LocalBlobTestState.blob.read(pt.Int(0), pt.Int(64))
-            ),
+            app.state.blob.zero(),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(0), pt.Int(64))),
             output.decode(s.encode()),
         )
 
@@ -40,11 +38,9 @@ def test_local_blob_write_read() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(),
-            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            (s := pt.abi.String()).set(
-                LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))
-            ),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(32), pt.Int(40))),
             output.decode(s.encode()),
         )
 
@@ -58,13 +54,9 @@ def test_local_blob_write_read_boundary() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(pt.Int(0)),
-            LocalBlobTestState.blob.write(
-                pt.Int(0), pt.BytesZero(pt.Int(blob_page_size * 3))
-            ),
-            (s := pt.abi.String()).set(
-                LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))
-            ),
+            app.state.blob.zero(pt.Int(0)),
+            app.state.blob.write(pt.Int(0), pt.BytesZero(pt.Int(blob_page_size * 3))),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(32), pt.Int(40))),
             output.decode(s.encode()),
         )
 
@@ -78,12 +70,10 @@ def test_local_blob_write_read_past_end() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(),
-            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
             (s := pt.abi.String()).set(
-                LocalBlobTestState.blob.read(
-                    pt.Int(0), LocalBlobTestState.blob.max_bytes
-                )
+                app.state.blob.read(pt.Int(0), app.state.blob.max_bytes)
             ),
             output.decode(s.encode()),
         )
@@ -102,9 +92,9 @@ def test_local_blob_set_get() -> None:
     @app.external
     def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(),
-            LocalBlobTestState.blob.set_byte(pt.Int(32), pt.Int(num)),
-            output.set(LocalBlobTestState.blob.get_byte(pt.Int(32))),
+            app.state.blob.zero(),
+            app.state.blob.set_byte(pt.Int(32), pt.Int(num)),
+            output.set(app.state.blob.get_byte(pt.Int(32))),
         )
 
     expected = [num]
@@ -119,11 +109,9 @@ def test_local_blob_set_past_end() -> None:
     @app.external
     def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(),
-            LocalBlobTestState.blob.set_byte(
-                LocalBlobTestState.blob.max_bytes, pt.Int(num)
-            ),
-            output.set(LocalBlobTestState.blob.get_byte(pt.Int(32))),
+            app.state.blob.zero(),
+            app.state.blob.set_byte(app.state.blob.max_bytes, pt.Int(num)),
+            output.set(app.state.blob.get_byte(pt.Int(32))),
         )
 
     expected = [num]
@@ -138,13 +126,11 @@ def test_local_blob_single_subroutine() -> None:
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
         return pt.Seq(
-            LocalBlobTestState.blob.zero(),
-            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            LocalBlobTestState.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
-            pt.Pop(LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))),
-            (s := pt.abi.String()).set(
-                LocalBlobTestState.blob.read(pt.Int(32), pt.Int(40))
-            ),
+            app.state.blob.zero(),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            app.state.blob.write(pt.Int(0), pt.Bytes("deadbeef" * 8)),
+            pt.Pop(app.state.blob.read(pt.Int(32), pt.Int(40))),
+            (s := pt.abi.String()).set(app.state.blob.read(pt.Int(32), pt.Int(40))),
             output.decode(s.encode()),
         )
 

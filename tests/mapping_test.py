@@ -54,13 +54,14 @@ def test_mapping() -> None:
 
 
 def test_app_mapping() -> None:
-    t = Application("T")
+    class State:
+        m = Mapping(pt.abi.Address, pt.abi.Uint64)
 
-    m = Mapping(pt.abi.Address, pt.abi.Uint64)
+    t = Application("T", state=State())
 
     @t.external
     def thing(name: pt.abi.Address, *, output: pt.abi.Uint64) -> pt.Expr:
-        return m[name].store_into(output)
+        return t.state.m[name].store_into(output)
 
     compiled = t.build()
     assert compiled.approval_program

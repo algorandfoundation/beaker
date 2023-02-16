@@ -10,7 +10,6 @@ from beaker import (
     AccountStateBlob,
     BuildOptions,
     Application,
-    this_app,
 )
 from beaker.application_specification import ApplicationSpecification
 from beaker.blueprints import unconditional_create_approval
@@ -289,20 +288,18 @@ def test_state_init() -> None:
         # not-state
         not_a_state_var = pt.Int(1)
 
-    app = Application("TestStateInit", state=MyState())
-
-    @app.create
-    def create() -> pt.Expr:
-        return this_app().initialize_application_state()
+    app = Application("TestStateInit", state=MyState()).implement(
+        unconditional_create_approval, initialize_app_state=True
+    )
 
     @app.opt_in(allow_create=True)
     def opt_in() -> pt.Expr:
         return pt.Seq(
             pt.If(
                 pt.Txn.application_id() == pt.Int(0),
-                this_app().initialize_application_state(),
+                app.initialize_application_state(),
             ),
-            this_app().initialize_account_state(),
+            app.initialize_account_state(),
         )
 
     check_application_artifacts_output_stability(app)

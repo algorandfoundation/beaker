@@ -5,7 +5,6 @@ from pyteal import Bytes
 from beaker.application import (
     Application,
     precompiled,
-    this_app,
 )
 from beaker import BuildOptions
 from beaker.blueprints import unconditional_create_approval
@@ -49,15 +48,12 @@ def test_compile() -> None:
 
 
 def test_precompile_basic() -> None:
-    def Lsig(version: int) -> LogicSignature:
-        def evaluate() -> pt.Expr:
-            return pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1))
-
-        return LogicSignature(evaluate, build_options=BuildOptions(avm_version=version))
-
     app = Application("BasicPrecompile")
 
-    lsig = Lsig(version=6)
+    lsig = LogicSignature(
+        pt.Seq(pt.Assert(pt.Int(1)), pt.Int(1)),
+        build_options=BuildOptions(avm_version=6),
+    )
 
     @app.external
     def check_it() -> pt.Expr:
@@ -85,15 +81,12 @@ TMPL_BYTE_VALS = [
 
 @pytest.mark.parametrize("tmpl_val", TMPL_BYTE_VALS)
 def test_templated_bytes(tmpl_val: str) -> None:
-    def Lsig(version: int) -> LogicSignatureTemplate:
-        return LogicSignatureTemplate(
-            lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
-            runtime_template_variables={"tv": pt.TealType.bytes},
-            build_options=BuildOptions(avm_version=version),
-        )
-
     app = Application("App")
-    lsig = Lsig(version=6)
+    lsig = LogicSignatureTemplate(
+        lambda tv: pt.Seq(pt.Assert(pt.Len(tv)), pt.Int(1)),
+        runtime_template_variables={"tv": pt.TealType.bytes},
+        build_options=BuildOptions(avm_version=6),
+    )
 
     @app.external
     def check_it() -> pt.Expr:
@@ -127,22 +120,16 @@ TMPL_INT_VALS = [(10), (1000), (int(2.9e9))]
 
 @pytest.mark.parametrize("tmpl_val", TMPL_INT_VALS)
 def test_templated_ints(tmpl_val: int) -> None:
-    def Lsig(version: int) -> LogicSignatureTemplate:
-        def evaluate(tv: pt.Expr) -> pt.Seq:
-            return pt.Seq(pt.Assert(tv), pt.Int(1))
-
-        return LogicSignatureTemplate(
-            evaluate,
-            runtime_template_variables={"tv": pt.TealType.uint64},
-            build_options=BuildOptions(avm_version=version),
-        )
-
     app = Application("App")
-    lsig = Lsig(version=6)
+    lsig = LogicSignatureTemplate(
+        lambda tv: pt.Seq(pt.Assert(tv), pt.Int(1)),
+        runtime_template_variables={"tv": pt.TealType.uint64},
+        build_options=BuildOptions(avm_version=6),
+    )
 
     @app.external
     def check_it() -> pt.Expr:
-        lsig_pc = this_app().precompiled(lsig)
+        lsig_pc = precompiled(lsig)
         return pt.Assert(pt.Txn.sender() == lsig_pc.address(tv=pt.Int(tmpl_val)))
 
     assert app._precompiled_lsig_templates == {}

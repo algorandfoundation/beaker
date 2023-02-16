@@ -45,11 +45,11 @@ def test_list_app() -> None:
 
     @t.external
     def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64) -> pt.Expr:
-        return State.l[idx.get()].store_into(output)
+        return t.state.l[idx.get()].store_into(output)
 
     @t.external
     def set(idx: pt.abi.Uint16, val: pt.abi.Uint64) -> pt.Expr:
-        return State.l[idx.get()].set(val)
+        return t.state.l[idx.get()].set(val)
 
     compiled = t.build()
     assert compiled.approval_program
