@@ -1,7 +1,7 @@
 {
     "hints": {
         "opup_bootstrap": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -9,11 +9,10 @@
             "default_arguments": {
                 "opup_app": {
                     "source": "global-state",
-                    "data": "ouaid",
-                    "stack_type": "uint64"
+                    "data": "ouaid"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

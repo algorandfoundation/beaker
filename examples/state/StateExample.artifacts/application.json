@@ -1,71 +1,71 @@
 {
     "hints": {
         "write_acct_blob": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "read_acct_blob": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "write_app_blob": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "read_app_blob": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "set_app_state_val": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "get_app_state_val": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "set_reserved_app_state_val": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "get_reserved_app_state_val": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "set_account_state_val": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "incr_account_state_val": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "get_account_state_val": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "set_reserved_account_state_val": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "get_reserved_account_state_val": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

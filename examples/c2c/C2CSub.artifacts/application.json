@@ -1,12 +1,12 @@
 {
     "hints": {
         "opt_in_to_asset": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "return_asset": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

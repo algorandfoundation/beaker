@@ -935,7 +935,7 @@ def _capture_method_hints_and_remove_defaults(
 
     mh = MethodHints(
         read_only=read_only,
-        config=MethodConfig(**{str(k): v for k, v in actions.items()}),
+        call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
     )
 
     for name, param in params.items():
@@ -981,13 +981,11 @@ def _default_argument_from_resolver(
             return {
                 "source": "local-state",
                 "data": acct_sv.str_key(),
-                "stack_type": cast(Literal["uint64", "bytes"], acct_sv.stack_type.name),
             }
         case ApplicationStateValue() as app_sv:
             return {
                 "source": "global-state",
                 "data": app_sv.str_key(),
-                "stack_type": cast(Literal["uint64", "bytes"], app_sv.stack_type.name),
             }
         # FunctionType
         case ABIReturnSubroutine() as fn:

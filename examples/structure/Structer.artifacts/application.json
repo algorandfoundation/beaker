@@ -16,7 +16,7 @@
                     ]
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -37,7 +37,7 @@
                     ]
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -57,7 +57,7 @@
                     ]
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

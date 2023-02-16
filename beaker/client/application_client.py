@@ -71,7 +71,7 @@ class ApplicationClient:
             matching = [
                 method
                 for method in self.app.contract.methods
-                if predicate(self.app.hints[method.name].config)
+                if predicate(self.app.hints[method.name].call_config)
             ]
             if len(matching) == 1:
                 return matching[0]

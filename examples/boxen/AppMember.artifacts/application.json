@@ -1,7 +1,7 @@
 {
     "hints": {
         "bootstrap": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -9,16 +9,14 @@
             "default_arguments": {
                 "member_token": {
                     "source": "global-state",
-                    "data": "membership_token",
-                    "stack_type": "uint64"
+                    "data": "membership_token"
                 },
                 "club_app": {
                     "source": "global-state",
-                    "data": "club_app_id",
-                    "stack_type": "uint64"
+                    "data": "club_app_id"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

@@ -2,7 +2,7 @@
     "hints": {
         "get_asset_id": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -19,7 +19,7 @@
                     }
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -39,7 +39,7 @@
                     ]
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -47,11 +47,10 @@
             "default_arguments": {
                 "value": {
                     "source": "global-state",
-                    "data": "decl_app_val",
-                    "stack_type": "uint64"
+                    "data": "decl_app_val"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

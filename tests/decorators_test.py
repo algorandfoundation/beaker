@@ -237,7 +237,7 @@ def test_external_method_config(config: pt.CallConfig) -> None:
         return pt.Approve()
 
     app_spec = app.build()
-    assert app_spec.hints["external"].config.no_op == config
+    assert app_spec.hints["external"].call_config.no_op == config
 
 
 def test_account_state_resolvable() -> None:

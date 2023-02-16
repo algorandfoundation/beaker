@@ -20,12 +20,12 @@
                     ]
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "portal_transfer": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

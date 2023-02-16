@@ -1,17 +1,17 @@
 {
     "hints": {
         "create_sub": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "create_asset_and_send": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "delete_asset": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

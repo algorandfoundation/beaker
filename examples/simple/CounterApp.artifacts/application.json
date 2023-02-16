@@ -1,12 +1,12 @@
 {
     "hints": {
         "increment": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "decrement": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

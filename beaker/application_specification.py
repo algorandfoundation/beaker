@@ -31,11 +31,7 @@ DefaultArgumentType: TypeAlias = Literal[
 ]
 
 
-class DefaultArgumentDict_Optional(TypedDict, total=False):
-    stack_type: Literal["uint64", "bytes"]
-
-
-class DefaultArgumentDict(DefaultArgumentDict_Optional):
+class DefaultArgumentDict(TypedDict):
     """
     DefaultArgument is a container for any arguments that may
     be resolved prior to calling some target method
@@ -58,7 +54,7 @@ class MethodHints:
     default_arguments: dict[str, DefaultArgumentDict] = dataclasses.field(
         default_factory=dict
     )
-    config: MethodConfig = dataclasses.field(default_factory=MethodConfig)
+    call_config: MethodConfig = dataclasses.field(default_factory=MethodConfig)
 
     def empty(self) -> bool:
         return not self.dictify()
@@ -71,10 +67,10 @@ class MethodHints:
             d["default_arguments"] = self.default_arguments
         if self.structs:
             d["structs"] = self.structs
-        if not self.config.is_never():
-            d["config"] = {
+        if not self.call_config.is_never():
+            d["call_config"] = {
                 k: v.name
-                for k, v in self.config.__dict__.items()
+                for k, v in self.call_config.__dict__.items()
                 if v != CallConfig.NEVER
             }
         return d
@@ -167,7 +163,7 @@ class ApplicationSpecification:
 
 
 def _method_hints_from_json(method_hints: dict[str, Any]) -> MethodHints:
-    method_hints["config"] = MethodConfig(
-        **{k: CallConfig[v] for k, v in method_hints.get("config", {}).items()}
+    method_hints["call_config"] = MethodConfig(
+        **{k: CallConfig[v] for k, v in method_hints.get("call_config", {}).items()}
     )
     return MethodHints(**method_hints)

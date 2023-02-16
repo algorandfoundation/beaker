@@ -1,18 +1,18 @@
 {
     "hints": {
         "set_manager": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "set_nick": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "get_nick": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

@@ -1,7 +1,7 @@
 {
     "hints": {
         "handle": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

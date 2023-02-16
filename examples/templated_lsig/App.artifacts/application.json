@@ -1,7 +1,7 @@
 {
     "hints": {
         "check": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

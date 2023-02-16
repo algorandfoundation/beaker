@@ -1,12 +1,12 @@
 {
     "hints": {
         "add_int": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "box_create_test": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

@@ -1,34 +1,34 @@
 {
     "hints": {
         "create": {
-            "config": {
+            "call_config": {
                 "no_op": "CREATE"
             }
         },
         "do_rsvp": {
-            "config": {
+            "call_config": {
                 "opt_in": "CALL"
             }
         },
         "check_in": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "withdraw_external": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "read_rsvp": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "read_price": {
             "read_only": true,
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

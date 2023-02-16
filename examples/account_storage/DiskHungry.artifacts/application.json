@@ -1,12 +1,12 @@
 {
     "hints": {
         "add_account": {
-            "config": {
+            "call_config": {
                 "opt_in": "CALL"
             }
         },
         "flip_bit": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

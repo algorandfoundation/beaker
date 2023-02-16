@@ -1,12 +1,12 @@
 {
     "hints": {
         "bootstrap": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "remove_member": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -14,16 +14,15 @@
             "default_arguments": {
                 "membership_token": {
                     "source": "global-state",
-                    "data": "membership_token",
-                    "stack_type": "uint64"
+                    "data": "membership_token"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "update_role": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -43,7 +42,7 @@
                     ]
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -51,11 +50,10 @@
             "default_arguments": {
                 "membership_token": {
                     "source": "global-state",
-                    "data": "membership_token",
-                    "stack_type": "uint64"
+                    "data": "membership_token"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -63,11 +61,10 @@
             "default_arguments": {
                 "membership_token": {
                     "source": "global-state",
-                    "data": "membership_token",
-                    "stack_type": "uint64"
+                    "data": "membership_token"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

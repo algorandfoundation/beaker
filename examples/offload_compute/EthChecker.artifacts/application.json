@@ -1,7 +1,7 @@
 {
     "hints": {
         "check_eth_sig": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }

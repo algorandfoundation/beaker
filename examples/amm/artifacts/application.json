@@ -1,12 +1,12 @@
 {
     "hints": {
         "set_governor": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
         "bootstrap": {
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -14,21 +14,18 @@
             "default_arguments": {
                 "pool_asset": {
                     "source": "global-state",
-                    "data": "p",
-                    "stack_type": "uint64"
+                    "data": "p"
                 },
                 "a_asset": {
                     "source": "global-state",
-                    "data": "a",
-                    "stack_type": "uint64"
+                    "data": "a"
                 },
                 "b_asset": {
                     "source": "global-state",
-                    "data": "b",
-                    "stack_type": "uint64"
+                    "data": "b"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -36,21 +33,18 @@
             "default_arguments": {
                 "pool_asset": {
                     "source": "global-state",
-                    "data": "p",
-                    "stack_type": "uint64"
+                    "data": "p"
                 },
                 "a_asset": {
                     "source": "global-state",
-                    "data": "a",
-                    "stack_type": "uint64"
+                    "data": "a"
                 },
                 "b_asset": {
                     "source": "global-state",
-                    "data": "b",
-                    "stack_type": "uint64"
+                    "data": "b"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         },
@@ -58,16 +52,14 @@
             "default_arguments": {
                 "a_asset": {
                     "source": "global-state",
-                    "data": "a",
-                    "stack_type": "uint64"
+                    "data": "a"
                 },
                 "b_asset": {
                     "source": "global-state",
-                    "data": "b",
-                    "stack_type": "uint64"
+                    "data": "b"
                 }
             },
-            "config": {
+            "call_config": {
                 "no_op": "CALL"
             }
         }
