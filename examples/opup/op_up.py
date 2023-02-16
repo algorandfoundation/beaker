@@ -51,7 +51,7 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
         return Seq(
             Assert(ptxn.get().amount() >= min_balance),
             create_opup(),
-            output.set(OpUpState.opup_app_id),
+            output.set(app.state.opup_app_id),
         )
 
     @Subroutine(TealType.none)
@@ -69,14 +69,14 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
                 }
             ),
             InnerTxnBuilder.Submit(),
-            OpUpState.opup_app_id.set(InnerTxn.created_application_id()),
+            app.state.opup_app_id.set(InnerTxn.created_application_id()),
         )
 
     # No decorator, inline it
     def call_opup() -> Expr:
         """internal method to just return the method call to our target app"""
         return InnerTxnBuilder.ExecuteMethodCall(
-            app_id=OpUpState.opup_app_id,
+            app_id=app.state.opup_app_id,
             method_signature=opup.method_signature(),  # type: ignore[union-attr]
             args=[],
             extra_fields={TxnField.fee: Int(0)},
