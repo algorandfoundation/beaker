@@ -215,6 +215,16 @@ def test_bare_clear_state() -> None:
     assert app._clear_state_method is clear_state
 
 
+def test_non_bare_clear_state() -> None:
+    app = Application("clear_state")
+
+    with pytest.raises(TypeError):
+
+        @app.clear_state  # type: ignore
+        def clear_state(value: pt.abi.Uint64) -> pt.Expr:
+            return pt.Approve()
+
+
 def test_bare_external() -> None:
     app = Application("bare_external")
 
