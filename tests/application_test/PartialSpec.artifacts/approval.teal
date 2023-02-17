@@ -1,15 +1,19 @@
 #pragma version 8
 intcblock 0 1
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
 txna ApplicationArgs 0
 pushbytes 0xef5cdf8c // "struct_meth((uint64,uint32))void"
 ==
-bnz main_l4
+bnz main_l5
 txna ApplicationArgs 0
 pushbytes 0xecf9f1da // "default_app_state(uint64)void"
 ==
-bnz main_l3
+bnz main_l4
 err
-main_l3:
+main_l4:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -23,7 +27,7 @@ btoi
 callsub defaultappstate_1
 intc_1 // 1
 return
-main_l4:
+main_l5:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -34,6 +38,19 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 callsub structmeth_0
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_0 // 0
+==
+assert
 intc_1 // 1
 return
 

@@ -1,15 +1,19 @@
 #pragma version 8
 intcblock 1 0
+txn NumAppArgs
+intc_1 // 0
+==
+bnz main_l6
 txna ApplicationArgs 0
 pushbytes 0x129c92d5 // "handle(pay)void"
 ==
-bnz main_l4
+bnz main_l5
 txna ApplicationArgs 0
 pushbytes 0x20d5c862 // "handle(axfer)void"
 ==
-bnz main_l3
+bnz main_l4
 err
-main_l3:
+main_l4:
 txn OnCompletion
 intc_1 // NoOp
 ==
@@ -31,7 +35,7 @@ load 1
 callsub handle_1
 intc_0 // 1
 return
-main_l4:
+main_l5:
 txn OnCompletion
 intc_1 // NoOp
 ==
@@ -51,6 +55,19 @@ intc_0 // pay
 assert
 load 0
 callsub handle_0
+intc_0 // 1
+return
+main_l6:
+txn OnCompletion
+intc_1 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_1 // 0
+==
+assert
 intc_0 // 1
 return
 

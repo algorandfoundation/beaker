@@ -32,6 +32,7 @@ from pyteal import (
     MethodConfig,
     Bytes,
     Int,
+    Approve,
 )
 
 from beaker.application_specification import (
@@ -191,7 +192,7 @@ class Application(Generic[TState]):
             raise ValueError("precompiled() used in another apps context")
         if ctx.client is None:
             raise ValueError(
-                "beaker.precompiled(...) requires use of a client when calling Application.compile(...)"
+                "beaker.precompiled(...) requires use of a client when calling Application.build(...)"
             )
         client = ctx.client
         match value:
@@ -785,12 +786,9 @@ class Application(Generic[TState]):
         """
 
         with _set_ctx(app=self, client=client):
-            bare_calls = BareCallActions(
-                **cast(dict[str, OnCompleteAction], self._bare_externals)
-            )
             router = Router(
                 name=self.name,
-                bare_calls=bare_calls,
+                bare_calls=self._bare_calls(),
                 descr=self.descr,
                 clear_state=self._clear_state_method,
             )
@@ -823,6 +821,34 @@ class Application(Generic[TState]):
             app_state_schema=self._app_state.schema,
             account_state_schema=self._acct_state.schema,
         )
+
+    def _bare_calls(self) -> BareCallActions:
+        # turn self._bare_externals into a pyteal.BareCallActions,
+        # inserting a default create method if one is not found in self._bare_externals
+        # OR in self._abi_externals
+        bare_calls = {str(k): v for k, v in self._bare_externals.items()}
+        # check for a bare method with CallConfig.CREATE or CallConfig.ALL
+        if any(oca.call_config & CallConfig.CREATE for oca in bare_calls.values()):
+            pass
+        # else check for an ABI method with CallConfig.CREATE or CallConfig.ALL
+        elif any(
+            cc & CallConfig.CREATE
+            for ext in self._abi_externals.values()
+            for cc in ext.actions.values()
+        ):
+            pass
+        # else, try and insert an approval-on-create method
+        else:
+            if "no_op" in bare_calls:
+                raise Exception(
+                    f"Application {self.name} has no methods that can be invoked to create the contract, "
+                    f"but does have a NoOp bare method, so one couldn't be inserted. In order to deploy the contract, "
+                    f"either handle CallConfig.CREATE in the no_op bare method, or add an ABI method that handles create."
+                )
+            bare_calls["no_op"] = OnCompleteAction(
+                action=Approve(), call_config=CallConfig.CREATE
+            )
+        return BareCallActions(**bare_calls)
 
     def initialize_application_state(self) -> Expr:
         """
