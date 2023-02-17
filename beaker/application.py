@@ -414,35 +414,6 @@ class Application(Generic[TState]):
 
         return decorator(fn)
 
-    def _shortcut_external(
-        self,
-        *,
-        action: OnCompleteActionName,
-        allow_call: bool,
-        allow_create: bool,
-        name: str | None,
-        authorize: SubroutineFnWrapper | None,
-        bare: bool | None,
-        read_only: bool,
-        override: bool | None,
-    ) -> DecoratorFuncType:
-        if allow_call and allow_create:
-            call_config = CallConfig.ALL
-        elif allow_call:
-            call_config = CallConfig.CALL
-        elif allow_create:
-            call_config = CallConfig.CREATE
-        else:
-            raise ValueError("Require one of allow_call or allow_create to be True")
-        return self.external(
-            method_config={action: call_config},
-            name=name,
-            authorize=authorize,
-            bare=bare,
-            read_only=read_only,
-            override=override,
-        )
-
     @overload
     def create(
         self,
@@ -459,7 +430,6 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -472,17 +442,13 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="no_op",
-            allow_call=False,
-            allow_create=True,
+        decorator = self.external(
+            method_config={"no_op": CallConfig.CREATE},
             name=name,
             authorize=authorize,
             bare=bare,
-            read_only=read_only,
             override=override,
         )
         return decorator if fn is None else decorator(fn)
@@ -503,7 +469,6 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -516,17 +481,13 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="delete_application",
-            allow_call=True,
-            allow_create=False,
+        decorator = self.external(
+            method_config={"delete_application": CallConfig.CALL},
             name=name,
             authorize=authorize,
             bare=bare,
-            read_only=read_only,
             override=override,
         )
         return decorator if fn is None else decorator(fn)
@@ -547,7 +508,6 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -560,17 +520,13 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="update_application",
-            allow_call=True,
-            allow_create=False,
+        decorator = self.external(
+            method_config={"update_application": CallConfig.CALL},
             name=name,
             authorize=authorize,
             bare=bare,
-            read_only=read_only,
             override=override,
         )
         return decorator if fn is None else decorator(fn)
@@ -588,12 +544,10 @@ class Application(Generic[TState]):
         self,
         /,
         *,
-        allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -603,22 +557,19 @@ class Application(Generic[TState]):
         fn: HandlerFunc | None = None,
         /,
         *,
-        allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="opt_in",
-            allow_call=allow_call,
-            allow_create=allow_create,
+        decorator = self.external(
+            method_config={
+                "opt_in": CallConfig.ALL if allow_create else CallConfig.CALL
+            },
             name=name,
             authorize=authorize,
             bare=bare,
-            read_only=read_only,
             override=override,
         )
         return decorator if fn is None else decorator(fn)
@@ -681,7 +632,6 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -694,17 +644,13 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
         bare: bool | None = None,
-        read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="close_out",
-            allow_call=True,
-            allow_create=False,
+        decorator = self.external(
+            method_config={"close_out": CallConfig.CALL},
             name=name,
             authorize=authorize,
             bare=bare,
-            read_only=read_only,
             override=override,
         )
         return decorator if fn is None else decorator(fn)
@@ -745,10 +691,16 @@ class Application(Generic[TState]):
         read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self._shortcut_external(
-            action="no_op",
-            allow_call=allow_call,
-            allow_create=allow_create,
+        if allow_call and allow_create:
+            call_config = CallConfig.ALL
+        elif allow_call:
+            call_config = CallConfig.CALL
+        elif allow_create:
+            call_config = CallConfig.CREATE
+        else:
+            raise ValueError("Require one of allow_call or allow_create to be True")
+        decorator = self.external(
+            method_config={"no_op": call_config},
             name=name,
             authorize=authorize,
             bare=bare,
