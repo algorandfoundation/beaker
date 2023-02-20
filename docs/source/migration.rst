@@ -90,11 +90,11 @@ Key changes:
 1. The first parameter to ``Application()`` is the name of the app. This was taken from the name of the class in 0.x, so
    the above examples should be equivalent.
 2. All options that control TEAL generation are under ``build_options``, and ``version`` has been renamed to ``avm_version``.
-3. The ``desc`` field in the ARC-4 contract was taken from the doc-string of the class in 0.x (or a base class if no
+3. The ``desc`` field in the ARC-4 contract was taken from the doc-string of the class in ``0.x`` (or a base class if no
    doc-string was defined), this is now the ``descr`` parameter.
 
 Application.id and Application.address
-----
+--------------------------------------
 
 ``Application.id`` and ``Application.address`` have been removed. These shortcuts were potentially misleading for
 new developers - they always return the ID and Address of the currently executing application, not the application
@@ -145,7 +145,6 @@ The ``beaker.internal`` decorator is no longer required and has been removed. It
 |``@internal(None)``       |                                      |                             |
 +--------------------------+--------------------------------------+-----------------------------+
 
-
 .. note:: Due to a bug in ``0.x`` beaker, ``@internal`` decorators without a ``TealType`` were always inlined.
 
 For example in ``0.x``:
@@ -169,56 +168,29 @@ in ``1.0`` this becomes:
 bare_external
 ^^^^^^^^^^^^^
 
-The ``beaker.bare_external`` decorator has been removed, instead an equivalent decorator on an ``Application``
-instance can be used.
-
-====================================================== ======================================
-``0.x`` bare_external                                  Equivalent ``1.0`` decorator
-====================================================== ======================================
-``@bare_external(no_op=CallConfig.CALL)``              ``@app.no_op`` or ``@app.external(bare=True)``
-``@bare_external(opt_in=CallConfig.CALL)``             ``@app.opt_in``
-``@bare_external(delete_application=CallConfig.CALL)`` ``@app.delete``
-``@bare_external(update_application=CallConfig.CALL)`` ``@app.update``
-``@bare_external(close_out=CallConfig.CALL)``          ``@app.close_out``
-``@bare_external(clear_state=CallConfig.CALL)``        ``@app.clear_state``
-====================================================== ======================================
-
-Depending on the bare_external configuration specified, additional arguments may be required
-
-====================== =======================================
-``CallConfig`` value   Additional arguments in ``1.0``
-====================== =======================================
-``CallConfig.CALL``    None
-``CallConfig.CREATE``  ``allow_call=False, allow_create=True``
-``CallConfig.ALL``     ``allow_create=True``
-====================== =======================================
-
-.. note:: The ``no_op``, ``opt_in``, ``delete``, ``update`` and ``close_out`` decorators can also be expressed as
-          more general ``external`` decorators
-          e.g. ``@app.opt_in(bare=True)`` is equivalent to ``@app.external(bare=True, method_config={"opt_int": CallConfig.CALL})``
-
-2. If multiple actions are specified, then ``@app.external(bare=True, method_config={..})`` can be used.
+The ``beaker.bare_external`` decorator has been removed, but can be replaced with ``Application.external``
+by moving the parameters to ``method_config`` and adding ``bare=True``.
 
 For example in ``0.x``:
 
 .. code-block:: python
 
-   class MyApp(Application):
-        @beaker.bare_external(no_op=pyteal.CallConfig.CALL, update_application=pyteal.CallConfig.CALL)
-        def my_method(self):
+    class MyApp(beaker.Application):
+
+        @beaker.bare_external(opt_in=CallConfig.CREATE, no_op=CallConfig.CREATE)
+        def foo(self):
             ...
 
-
-in ``1.0`` this becomes:
+In ``1.0`` this becomes:
 
 .. code-block:: python
 
-   app = beaker.Application("MyApp")
+    app = beaker.Application("MyApp")
 
-   @app.external(bare=True, method_config={"no_op": pyteal.CallConfig.CALL, "update_application": pyteal.CallConfig.CALL})
-   def my_method():
+    @app.external(bare=True,
+        method_config=pyteal.MethodConfig(opt_in=CallConfig.CREATE, no_op=CallConfig.CREATE))
+    def foo():
         ...
-
 
 Blueprints
 ----------
@@ -277,7 +249,7 @@ it in the derived class. In ``1.0`` this instead can be achieved by removing the
 
 An example involving replacing a method with the same signature and replacing a method with a different signature
 
-In ``0.x`` when overriding a method with a new implementation with the same signature
+For example in ``0.x`` an override with the same signature:
 
 .. code-block:: python
 
@@ -293,7 +265,7 @@ In ``0.x`` when overriding a method with a new implementation with the same sign
         def same_signature(self, a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
             ...
 
-in ``1.0``
+In ``1.0`` this becomes:
 
 .. code-block:: python
 
@@ -308,7 +280,7 @@ in ``1.0``
     def same_signature(a: abi.Uint64, b: abi.Uint64):
         ...
 
-In ``0.x`` when overriding a method with a new method with a different signature
+For example in ``0.x`` an override with a different signature:
 
 .. code-block:: python
 
@@ -324,7 +296,7 @@ In ``0.x`` when overriding a method with a new method with a different signature
         def different_signature(self, a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, c: pyteal.abi.Uint64):
             ...
 
-in ``1.0``
+In ``1.0`` this becomes:
 
 .. code-block:: python
 
@@ -378,7 +350,42 @@ The key changes to note above:
 Templated Logic signatures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**TODO**
+With version ``1.0`` a template logic signature is no longer defined by inheriting ``beaker.LogicSignature``, instead
+``LogicSignatureTemplate`` is instantiated directly, and the PyTeal expression and a dictionary of template variables
+are passed as arguments.
+
+For example in ``0.x``:
+
+.. code-block:: python
+
+    class MySignature(beaker.LogicSignature):
+
+        some_value = beaker.TemplateVariable(pyteal.TealType.uint64)
+
+        def evaluate(self):
+            return self.some_value
+
+    my_signature = MySignature()
+
+in ``1.0`` this becomes:
+
+.. code-block:: python
+
+    def evaluate(some_value: pyteal.Expr):
+        return some_value
+
+    my_signature = beaker.LogicSignatureTemplate(
+        evaluate,
+        runtime_template_variables={"some_value": pyteal.TealType.uint64},
+    )
+
+The key changes to note are:
+
+1. There is no subclassing, instead a ``beaker.LogicSignatureTemplate`` instance is created
+2. A function returning a PyTeal expression is passed to ``LogicSignatureTemplate`` instead of implementing ``def evaluate(self)``
+3. A dictionary of template variable name and types is passed instead of instantiating ``beaker.TemplateVariable``
+   for each variable.
+4. The template variables are provided as arguments to the evaluation function
 
 Precompiled
 -----------
@@ -417,7 +424,80 @@ In ``1.0`` this becomes:
         precompiled = beaker.precompiled(my_logic_signature)
         return pyteal.Assert(pyteal.Txn.sender() == precompile.address())
 
-TODO: logic.hash() -> address() + others
+The following properties have been moved
+
++--------------------------------------+--------------------------------------+---------------------------------+
+|Type of precompile                    |``0.x``                               |``1.0``                          |
++======================================+======================================+=================================+
+|``PrecompiledApplication``            |``approval.program_pages[i].binary``  |``approval_program.pages[i]``    |
+|                                      +--------------------------------------+---------------------------------+
+|                                      |``approval.hash``                     |``approval_program.binary_hash`` |
+|                                      +--------------------------------------+---------------------------------+
+|                                      |``clear.program_pages[i].binary``     |``clear_program.pages[i]``       |
+|                                      +--------------------------------------+---------------------------------+
+|                                      |``clear.hash``                        |``clear_program.binary_hash``    |
++--------------------------------------+--------------------------------------+---------------------------------+
+| ``PrecompiledLogicSignature``        |``logic``                             |``logic_program``                |
+| ``PrecompiledLogicSignatureTemplate``+--------------------------------------+---------------------------------+
+|                                      |``logic.hash``                        |``address``                      |
++--------------------------------------+--------------------------------------+---------------------------------+
+
+.. note:: Properties for the source ``Application`` or ``LogicSignature`` have been removed.
+          ``PrecompiledApplication`` still has the ``get_create_config()`` method for use when creating precompiled
+          applications. ``PrecompiledLogicSignature`` and ``PrecompiledLogicSignatureTemplate`` have the ``address``
+          property for obtaining a Logic Signatures address.
+
+Signer
+^^^^^^
+
+In ``0.x`` the signer for logic signatures was on the precompiled reference. In ``1.0`` this has been removed,
+so to obtain the signer for use in the ``ApplicationClient`` the signer needs to be created.
+
+For example in ``0.x``:
+
+.. code-block:: python
+
+    class MySignature(beaker.LogicSignature):
+        ...
+    signature = MySignature()
+
+    class MyApp(beaker.Application)
+        precompiled_signature = beaker.LSigPrecompile(signature)
+        ...
+
+
+    account = sandbox.get_accounts().pop()
+    app = MyApp()
+    app_client = beaker.client.ApplicationClient(beaker.sandbox.get_algod_client(), app, signer=account.signer)
+    app_client.create()
+
+    signature_signer = app.precompiled_signature.template_signer(algosdk.encoding.decode_address(account.address))
+    signature_client = app_client.prepare(signer=signature_signer)
+
+In ``1.0`` this becomes:
+
+.. code-block:: python
+
+    signature = beaker.LogicSignatureTemplate(...)
+    app = beaker.Application("App")
+
+    @app.external
+    def foo():
+        precompiled_signature = beaker.precompile(my_signature)
+        ...
+
+    account = sandbox.get_accounts().pop()
+    app_client = beaker.client.ApplicationClient(beaker.sandbox.get_algod_client(), app, signer=account.signer)
+    app_client.create()
+
+    precompiled_signature = beaker.PrecompiledLogicSignatureTemplate(signature, app_client.client)
+    signature_signer = beaker.LogicSigTransactionSigner(
+        algosdk.transaction.LogicSigAccount(
+            precompiled_signature.populate_template(user_addr=decode_address(account.address))
+        )
+    )
+    signature_client = app_client.prepare(signer=signature_signer)
+
 
 Library functions
 -----------------
