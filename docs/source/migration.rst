@@ -391,10 +391,10 @@ Precompiled
 -----------
 
 In ``0.x`` logic signatures and applications could be precompiled by adding an ``AppPrecompile`` or
-``LSigPrecompile`` attribute to the application class and then it is available for use inside
-the applications PyTeal expressions.
+``LSigPrecompile`` attribute to the application class, making certain properties available for use inside
+the application's methods.
 
-In ``1.0`` this approach has changed to using the ``beaker.precompiled`` function.
+In ``1.0``, you do not need to reference any "precompile classes" directly, instead use the ``beaker.precompiled`` function.
 
 For example in ``0.x``:
 
@@ -420,32 +420,56 @@ In ``1.0`` this becomes:
     app = beaker.Application("MyApp")
 
     @app.external
-    def check_it(self):
-        precompiled = beaker.precompiled(my_logic_signature)
+    def check_it():
+        precompile = beaker.precompiled(my_logic_signature)
         return pyteal.Assert(pyteal.Txn.sender() == precompile.address())
 
-The following properties have been moved
+Note that `beaker.precompiled()` can only be used inside your applications methods. The application/logic signature will
+only be compiled once for each app that references it.
 
-+--------------------------------------+--------------------------------------+---------------------------------+
-|Type of precompile                    |``0.x``                               |``1.0``                          |
-+======================================+======================================+=================================+
-|``PrecompiledApplication``            |``approval.program_pages[i].binary``  |``approval_program.pages[i]``    |
-|                                      +--------------------------------------+---------------------------------+
-|                                      |``approval.hash``                     |``approval_program.binary_hash`` |
-|                                      +--------------------------------------+---------------------------------+
-|                                      |``clear.program_pages[i].binary``     |``clear_program.pages[i]``       |
-|                                      +--------------------------------------+---------------------------------+
-|                                      |``clear.hash``                        |``clear_program.binary_hash``    |
-+--------------------------------------+--------------------------------------+---------------------------------+
-| ``PrecompiledLogicSignature``        |``logic``                             |``logic_program``                |
-| ``PrecompiledLogicSignatureTemplate``+--------------------------------------+---------------------------------+
-|                                      |``logic.hash``                        |``address``                      |
-+--------------------------------------+--------------------------------------+---------------------------------+
+In addition, the interface of precompiled lsig objects has been simplified. As can be seen in the example above,
+obtaining the address is done via ``.address()`` instead of ``.logic.hash()`` for normal lsigs.
 
-.. note:: Properties for the source ``Application`` or ``LogicSignature`` have been removed.
-          ``PrecompiledApplication`` still has the ``get_create_config()`` method for use when creating precompiled
-          applications. ``PrecompiledLogicSignature`` and ``PrecompiledLogicSignatureTemplate`` have the ``address``
-          property for obtaining a Logic Signatures address.
+For templated lsigs, this was previously ``.logic.template_hash(...)`` and the argument values were expected to be in the
+correct order based on the order they were defined in the class. Now, you would use ``.address(...)`` but pass the values
+by keyword only, for example:
+
+.. code-block:: python
+
+    class Lsig(beaker.LogicSignature):
+         tv = beaker.TemplateVariable(pyteal.TealType.uint64)
+
+         def evaluate(self):
+             return pyteal.Seq(pyteal.Assert(self.tv), pyteal.Int(1))
+
+     class App(Application):
+         pc = beaker.LSigPrecompile(Lsig())
+
+         @external
+         def check_it(self):
+             return pt.Assert(
+                 pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(tmpl_val))
+             )
+
+Could become:
+
+.. code-block:: python
+
+    lsig = LogicSignatureTemplate(
+         lambda tv: pyteal.Seq(pyteal.Assert(tv), pyteal.Int(1)),
+         runtime_template_variables={"tv": pyteal.TealType.uint64},
+     )
+
+    app = beaker.Application("App")
+
+    @app.external
+     def check_it() -> ptyeal.Expr:
+         lsig_pc = beaker.precompiled(lsig)
+         return pyteal.Assert(pyteal.Txn.sender() == lsig_pc.address(tv=pyteal.Int(tmpl_val)))
+
+Note the ``tv=`` in the call to ``address``, versus the lack of the variable name in the call to ``template_hash`` previously.
+
+As a side-effect, the order the variables are passed in to ``address()`` does not matter, as long as they are all specified.
 
 Signer
 ^^^^^^
