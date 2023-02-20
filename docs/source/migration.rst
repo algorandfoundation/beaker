@@ -345,7 +345,6 @@ In ``1.0`` this becomes:
     def different_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, c: pyteal.abi.Uint64):
         ...
 
-
 Logic signatures
 ----------------
 
@@ -458,10 +457,10 @@ In ``1.0`` this becomes:
 Note that `beaker.precompiled()` can only be used inside your applications methods. The application/logic signature will
 only be compiled once for each app that references it.
 
-In addition, the interface of precompiled lsig objects has been simplified. As can be seen in the example above,
-obtaining the address is done via ``.address()`` instead of ``.logic.hash()`` for normal lsigs.
+In addition, the interface of precompiled logic signature objects has been simplified. As can be seen in the example above,
+obtaining the address is done via ``.address()`` instead of ``.logic.hash()`` for normal logic signatures.
 
-For templated lsigs, this was previously ``.logic.template_hash(...)`` and the argument values were expected to be in the
+For templated logic signatures, this was previously ``.logic.template_hash(...)`` and the argument values were expected to be in the
 correct order based on the order they were defined in the class. Now, you would use ``.address(...)`` but pass the values
 by keyword only, for example:
 
