@@ -192,28 +192,66 @@ In ``1.0`` this becomes:
     def foo():
         ...
 
-Blueprints
-----------
+Sharing code or config between contracts
+----------------------------------------
 
 In beaker ``0.x`` applications were composed via inheritance and functionality could be shared via base classes.
-In beaker ``1.0`` the concept of blueprints has been introduced, blueprints are used to add functionality to an app
-instance.
+In beaker ``1.0`` code or configuration needs to be shared via other means. The following will describe some alternative
+approaches
+
+Using inheritance for State classes (as a way of sharing a common structure) is fine and supported in ``1.0``.
+
+Any class constants used in ``0.x`` can be moved to module level constants in ``1.0``.
+
+Other usages of inheritance in ``0.x`` are often around sharing code between different smart contracts
+i.e. ``BaseApp`` contains some common functions and ``DerivedApp1`` and ``DerivedApp2`` can use those functions.
+In these cases, the shared function can just be regular python functions that each app calls as required
 
 For example in ``0.x``:
 
 .. code-block:: python
 
-    class Calculator(beaker.Application):
+    class BaseApp(Application):
 
-        @beaker.external
-        def add(self, a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-            output.set(a.get() + b.get())
+        def add(self, a: pyteal.Uint64, b: pyteal.Uint64) -> pyteal.Expr:
+            return a + b
 
-    # to use Calculator, MyApp inherits Calculator
-    class MyApp(Calculator)
-        ...
+    class DerivedApp1(BaseApp):
 
-In ``1.0`` the base class becomes a blueprint:
+        def add_1(self, a: pyteal.Uint64) -> Expr:
+            return self.add(a, pyteal.Int(1))
+
+    app1 = DerivedApp1()
+
+    class DerivedApp2(BaseApp):
+
+        def add_2(self, a: pyteal.Uint64) -> Expr:
+            return self.add(a, pyteal.Int(2))
+
+    app2 = DerivedApp2()
+
+In ``1.0`` this could be:
+
+.. code-block:: python
+
+    def add(a: pyteal.Uint64, b: pyteal.Uint64) -> pyteal.Expr:
+        return a + b
+
+    app1 = Application("DerivedApp1")
+
+    def add1(a: pyteal.Uint64):
+        return add(a, pyteal.Int(1))
+
+    app2 = Application("DerivedApp2")
+
+    def add2(a: pyteal.Uint64):
+        return add(a, pyteal.Int(2))
+
+There will be some scenarios where the above will not be sufficient, for example having the same ABI method across
+multiple apps.
+
+For these cases the blueprint pattern may be useful. For example, suppose two applications both need an ABI method
+that adds two numbers together named ``add``.
 
 .. code-block:: python
 
@@ -223,23 +261,12 @@ In ``1.0`` the base class becomes a blueprint:
         def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
             ...
 
-Or alternatively: (TODO: is this correct/recommended?)
+The blueprint can then be applied to the applications using ``app.implement``:
 
 .. code-block:: python
 
-    def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-        ...
-
-    def calculator_blueprint(app: Application) -> None:
-        app.external(add)
-
-The blueprint can then be added to an application using ``app.implement``:
-
-.. code-block:: python
-
-    app = beaker.Application("MyApp")
-    app.implement(calculator_blueprint)
-
+    app1 = Application("App1").implement(calculator_blueprint)
+    app2 = Application("App2").implement(calculator_blueprint)
 
 Overrides
 ---------
@@ -269,12 +296,15 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    def base_app(app: beaker.Application) -> None:
+    # this example uses the previously described blueprint pattern as generally the only scenario where overriding
+    # is needed is when using code that is not part of the current code base.
+
+    def a_blueprint(app: beaker.Application) -> None:
         @app.external
         def same_signature(a: abi.Uint64, b: abi.Uint64):
             ...
 
-    app = beaker.Application("DerivedApp").implement(base_app)
+    app = beaker.Application("DerivedApp").implement(a_blueprint)
 
     @app.external(override=True)
     def same_signature(a: abi.Uint64, b: abi.Uint64):
@@ -300,12 +330,12 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    def base_app(app: beaker.Application) -> None:
+    def a_blueprint(app: beaker.Application) -> None:
         @app.external
         def different_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
             ...
 
-    app = beaker.Application("DerivedApp").implement(base_app)
+    app = beaker.Application("DerivedApp").implement(a_blueprint)
 
     # remove method defined by a blueprint
     app.deregister_abi_method("different_signature")
@@ -363,7 +393,7 @@ For example in ``0.x``:
         some_value = beaker.TemplateVariable(pyteal.TealType.uint64)
 
         def evaluate(self):
-            return self.some_value
+            return pyteal.ReturnValue(self.some_value)
 
     my_signature = MySignature()
 
@@ -372,7 +402,7 @@ in ``1.0`` this becomes:
 .. code-block:: python
 
     def evaluate(some_value: pyteal.Expr):
-        return some_value
+        return pyteal.ReturnValue(some_value)
 
     my_signature = beaker.LogicSignatureTemplate(
         evaluate,
@@ -381,11 +411,12 @@ in ``1.0`` this becomes:
 
 The key changes to note are:
 
-1. There is no subclassing, instead a ``beaker.LogicSignatureTemplate`` instance is created
-2. A function returning a PyTeal expression is passed to ``LogicSignatureTemplate`` instead of implementing ``def evaluate(self)``
+1. There is no subclassing, instead a ``beaker.LogicSignatureTemplate`` instance is created.
+2. A function returning a PyTeal expression (or just an expression) is passed to ``LogicSignatureTemplate``
+   instead of implementing ``def evaluate(self)``.
 3. A dictionary of template variable name and types is passed instead of instantiating ``beaker.TemplateVariable``
    for each variable.
-4. The template variables are provided as arguments to the evaluation function
+4. The template variables are provided as arguments to the evaluation function.
 
 Precompiled
 -----------
@@ -579,6 +610,7 @@ specification later, which can then be used with ``ApplicationClient``
 
 
 .. code-block:: python
+
     from beaker import Application, ApplicationClient
     from beaker.sandbox import get_algod_client
 
