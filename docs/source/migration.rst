@@ -8,7 +8,7 @@ Application instantiation
 
 With version ``1.0`` of Beaker an application is no longer defined by inheriting ``Application``, instead
 ``Application`` is instantiated directly, state is separated from the class, and methods are
-add through decorators on the ``Application`` instance.
+added through decorators on the ``Application`` instance.
 
 For example in ``0.x``:
 
@@ -118,12 +118,12 @@ The following decorators are all now accessed through the ``Application`` instan
 * ``@beaker.no_op``
 * ``@beaker.clear_state``
 
-.. note:: There were recent changes in PyTeal to the way ``ClearState`` is handled, which were incorporated in beaker v0.5.1.
+.. note:: There were recent changes in PyTeal to the way ``ClearState`` is handled, which were incorporated in Beaker v0.5.1.
   In particular, ``ClearState`` handler methods must now take no arguments. Previously, this was considered valid PyTeal,
   however since the clear state program can not reject, there is no way to ensure these arguments are available, leading
   to silent failures.
 
-TODO: deocrated methods return ABIReturnSubroutine or SubroutineWrapperFn now, not the original method - it's unlikely
+TODO: decorated methods return ABIReturnSubroutine or SubroutineWrapperFn now, not the original method - it's unlikely
 people were using this according to Ben, but we should note that these will no longer be inlined.
 
 internal
@@ -145,7 +145,7 @@ The ``beaker.internal`` decorator is no longer required and has been removed. It
 |``@internal(None)``       |                                      |                             |
 +--------------------------+--------------------------------------+-----------------------------+
 
-.. note:: Due to a bug in ``0.x`` beaker, ``@internal`` decorators without a ``TealType`` were always inlined.
+.. note:: Due to a bug in ``0.x`` Beaker, ``@internal`` decorators without a ``TealType`` were always inlined.
 
 For example in ``0.x``:
 
@@ -195,9 +195,9 @@ In ``1.0`` this becomes:
 Sharing code or config between contracts
 ----------------------------------------
 
-In beaker ``0.x`` applications were composed via inheritance and functionality could be shared via base classes.
-In beaker ``1.0`` code or configuration needs to be shared via other means. The following will describe some alternative
-approaches
+In Beaker ``0.x`` applications were composed via inheritance and functionality could be shared via base classes.
+In Beaker ``1.0`` code or configuration needs to be shared via other means. The following will describe some alternative
+approaches.
 
 Using inheritance for State classes (as a way of sharing a common structure) is fine and supported in ``1.0``.
 
@@ -271,7 +271,7 @@ The blueprint can then be applied to the applications using ``app.implement``:
 Overrides
 ---------
 
-In beaker ``0.x`` because applications were composed by inheritance it was possible to override a method by redefining
+In Beaker ``0.x`` because applications were composed by inheritance it was possible to override a method by redefining
 it in the derived class. In ``1.0`` this instead can be achieved by removing the old reference from the app and adding a new one.
 
 An example involving replacing a method with the same signature and replacing a method with a different signature
@@ -607,7 +607,6 @@ serialized and deserialized using ``to_json()`` and ``from_json()`` respectively
 
 This allows building an ``Application``, serializing the specification to disk, and then deserializing the
 specification later, which can then be used with ``ApplicationClient``
-
 
 .. code-block:: python
 
