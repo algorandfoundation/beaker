@@ -690,11 +690,62 @@ In ``1.0`` this becomes:
         )
     )
 
+State related classes and methods
+---------------------------------
+
+Version ``1.0`` of Beaker renamed existing state related to classes to follow the naming conventions
+used more generally within existing Algorand and TEAL documentation. Generally the renames involved changing
+``Application`` to ``Global`` and ``Account`` to ``Local``.
+
+``beaker`` namespace changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+=========================================== ==============================
+``0.x`` Name                                ``1.0`` Name
+=========================================== ==============================
+``ApplicationStateValue``                   ``GlobalStateValue``
+``AccountStateValue``                       ``LocalStateValue``
+``ReservedApplicationStateValue``           ``ReservedGlobalStateValue``
+``ReservedAccountStateValue``               ``ReservedLocalStateValue``
+``ApplicationStateBlob``                    ``GlobalStateBlob``
+``AccountStateBlob``                        ``LocalStateBlob``
+=========================================== ==============================
+
+``beaker.Application`` changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+=================================== ============================
+``0.x`` Name                        ``1.0`` Name
+=================================== ============================
+``initialize_application_state``    ``initialize_global_state``
+``initialize_account_state``        ``initialize_local_state``
+=================================== ============================
+
+``beaker.client.ApplicationClient`` changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+=========================== ======================
+``0.x`` Name                ``1.0`` Name
+=========================== ======================
+``get_application_state``   ``get_global_state``
+``get_account_state``       ``get_local_state``
+=========================== ======================
+
+``beaker.lib.storage`` changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+=================== ======================
+``0.x`` Name        ``1.0`` Name
+=================== ======================
+``List``            ``BoxList``
+``ListElement``     ``BoxList.Element``
+``Mapping``         ``BoxMapping``
+``MapElement``      ``BoxMapping.Element``
+=================== ======================
 
 
 Library functions
 -----------------
-
 The ``beaker.lib`` functions used to create PyTeal expressions were renamed from ``snake_case`` style names
 to ``PascalCase`` style names so they were consistent with PyTeal's convention of using ``PascalCase`` for code
 that produces TEAL. The following is a list of functions affected.
