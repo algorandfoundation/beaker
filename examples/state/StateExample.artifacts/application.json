@@ -1,69 +1,69 @@
 {
     "hints": {
-        "write_local_blob": {
+        "write_local_blob(string)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "read_local_blob": {
+        "read_local_blob()byte[]": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "write_global_blob": {
+        "write_global_blob(string)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "read_global_blob": {
+        "read_global_blob()byte[]": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "set_global_state_val": {
+        "set_global_state_val(string)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_global_state_val": {
+        "get_global_state_val()string": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "set_reserved_global_state_val": {
+        "set_reserved_global_state_val(uint8,uint64)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_reserved_global_state_val": {
+        "get_reserved_global_state_val(uint8)uint64": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "set_local_state_val": {
+        "set_local_state_val(uint64)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "incr_local_state_val": {
+        "incr_local_state_val(uint64)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_local_state_val": {
+        "get_local_state_val()uint64": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "set_reserved_local_state_val": {
+        "set_reserved_local_state_val(uint8,string)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_reserved_local_state_val": {
+        "get_reserved_local_state_val(uint8)string": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
@@ -267,5 +267,9 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE",
+        "opt_in": "CALL"
     }
 }

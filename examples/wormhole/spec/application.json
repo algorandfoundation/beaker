@@ -1,6 +1,6 @@
 {
     "hints": {
-        "lookup": {
+        "lookup(uint64)(uint64,uint64,uint64)": {
             "structs": {
                 "output": {
                     "name": "OracleData",
@@ -24,7 +24,7 @@
                 "no_op": "CALL"
             }
         },
-        "portal_transfer": {
+        "portal_transfer(byte[])byte[]": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -93,5 +93,8 @@
         ],
         "networks": {},
         "desc": "\n    Stores price feed in application state keyed by timestamp\n\n    TODO: more than 64 vals lol\n    "
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

@@ -52,7 +52,13 @@ class ApplicationClient:
                 self.app = compiled_app
             case Application() as app:
                 self.app = app.build(client)
-            case str() | Path():
+            case Path() as path:
+                if path.is_dir():
+                    path = path / "application.json"
+                self.app = ApplicationSpecification.from_json(
+                    path.read_text(encoding="utf8")
+                )
+            case str():
                 self.app = ApplicationSpecification.from_json(app)
         self.app_id = app_id
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
@@ -71,7 +77,7 @@ class ApplicationClient:
             matching = [
                 method
                 for method in self.app.contract.methods
-                if predicate(self.app.hints[method.name].call_config)
+                if predicate(self._method_hints(method).call_config)
             ]
             if len(matching) == 1:
                 return matching[0]
@@ -420,7 +426,7 @@ class ApplicationClient:
         if isinstance(method, ABIReturnSubroutine):
             method = method.method_spec()
 
-        hints = self.method_hints(method.name)
+        hints = self._method_hints(method)
 
         if atc is None:
             atc = AtomicTransactionComposer()
@@ -570,7 +576,7 @@ class ApplicationClient:
         if isinstance(method, ABIReturnSubroutine):
             method = method.method_spec()
 
-        hints = self.method_hints(method.name)
+        hints = self._method_hints(method)
 
         args = []
         for method_arg in method.args:
@@ -724,10 +730,11 @@ class ApplicationClient:
             case _:
                 raise TypeError("Unable to interpret default argument specification")
 
-    def method_hints(self, method_name: str) -> MethodHints:
-        if method_name not in self.app.hints:
+    def _method_hints(self, method: abi.Method) -> MethodHints:
+        sig = method.get_signature()
+        if sig not in self.app.hints:
             return MethodHints()
-        return self.app.hints[method_name]
+        return self.app.hints[sig]
 
     def get_suggested_params(
         self,

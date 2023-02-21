@@ -1,11 +1,11 @@
 {
     "hints": {
-        "bootstrap": {
+        "bootstrap(pay,application,asset)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_affirmation": {
+        "get_affirmation(asset,application)void": {
             "default_arguments": {
                 "member_token": {
                     "source": "global-state",
@@ -102,5 +102,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

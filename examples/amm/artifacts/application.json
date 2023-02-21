@@ -1,16 +1,16 @@
 {
     "hints": {
-        "set_governor": {
+        "set_governor(account)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "bootstrap": {
+        "bootstrap(pay,asset,asset)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "mint": {
+        "mint(axfer,axfer,asset,asset,asset)void": {
             "default_arguments": {
                 "pool_asset": {
                     "source": "global-state",
@@ -29,7 +29,7 @@
                 "no_op": "CALL"
             }
         },
-        "burn": {
+        "burn(axfer,asset,asset,asset)void": {
             "default_arguments": {
                 "pool_asset": {
                     "source": "global-state",
@@ -48,7 +48,7 @@
                 "no_op": "CALL"
             }
         },
-        "swap": {
+        "swap(axfer,asset,asset)void": {
             "default_arguments": {
                 "a_asset": {
                     "source": "global-state",
@@ -244,5 +244,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

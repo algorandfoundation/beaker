@@ -28,5 +28,8 @@
         "name": "MinimalSpec",
         "methods": [],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

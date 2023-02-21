@@ -1,11 +1,11 @@
 {
     "hints": {
-        "add_account": {
+        "add_account(byte[])void": {
             "call_config": {
                 "opt_in": "CALL"
             }
         },
-        "flip_bit": {
+        "flip_bit(account,uint32)void": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -69,5 +69,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

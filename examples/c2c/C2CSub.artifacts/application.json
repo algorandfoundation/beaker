@@ -1,11 +1,11 @@
 {
     "hints": {
-        "opt_in_to_asset": {
+        "opt_in_to_asset(asset)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "return_asset": {
+        "return_asset(asset,account)void": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -93,5 +93,9 @@
         ],
         "networks": {},
         "desc": "Sub application who's only purpose is to opt into then close out of an asset"
+    },
+    "bare_call_config": {
+        "no_op": "CREATE",
+        "opt_in": "CALL"
     }
 }

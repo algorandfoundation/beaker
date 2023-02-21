@@ -1,16 +1,16 @@
 {
     "hints": {
-        "bootstrap": {
+        "bootstrap(pay,string)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "remove_member": {
+        "remove_member(address)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "add_member": {
+        "add_member(account,asset)void": {
             "default_arguments": {
                 "membership_token": {
                     "source": "global-state",
@@ -21,12 +21,12 @@
                 "no_op": "CALL"
             }
         },
-        "update_role": {
+        "update_role(account,uint8)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_membership_record": {
+        "get_membership_record(address)(uint8,bool)": {
             "structs": {
                 "output": {
                     "name": "MembershipRecord",
@@ -46,7 +46,7 @@
                 "no_op": "CALL"
             }
         },
-        "set_affirmation": {
+        "set_affirmation(uint16,byte[64],asset)void": {
             "default_arguments": {
                 "membership_token": {
                     "source": "global-state",
@@ -57,7 +57,7 @@
                 "no_op": "CALL"
             }
         },
-        "get_affirmation": {
+        "get_affirmation(asset)byte[64]": {
             "default_arguments": {
                 "membership_token": {
                     "source": "global-state",
@@ -209,5 +209,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

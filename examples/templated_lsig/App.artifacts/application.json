@@ -1,6 +1,6 @@
 {
     "hints": {
-        "check": {
+        "check(address,string,byte[64])void": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -55,5 +55,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

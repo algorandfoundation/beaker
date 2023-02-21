@@ -1,6 +1,6 @@
 {
     "hints": {
-        "create": {
+        "create(string)string": {
             "call_config": {
                 "no_op": "CREATE"
             }
@@ -47,5 +47,6 @@
             }
         ],
         "networks": {}
-    }
+    },
+    "bare_call_config": {}
 }

@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Any, TypedDict, TypeAlias, Literal
 
-from algosdk import transaction
 from algosdk.abi import Contract
 from algosdk.abi.method import MethodDict
 from algosdk.transaction import StateSchema
@@ -41,7 +40,12 @@ class DefaultArgumentDict(TypedDict):
     data: int | str | bytes | MethodDict
 
 
-@dataclasses.dataclass
+StateDict = TypedDict(
+    "StateDict", {"global": AppSpecStateDict, "local": AppSpecStateDict}
+)
+
+
+@dataclasses.dataclass(kw_only=True)
 class MethodHints:
     """MethodHints provides hints to the caller about how to call the method"""
 
@@ -68,82 +72,93 @@ class MethodHints:
         if self.structs:
             d["structs"] = self.structs
         if not self.call_config.is_never():
-            d["call_config"] = {
-                k: v.name
-                for k, v in self.call_config.__dict__.items()
-                if v != CallConfig.NEVER
-            }
+            d["call_config"] = _encode_method_config(self.call_config)
         return d
 
+    @staticmethod
+    def undictify(data: dict[str, Any]) -> "MethodHints":
+        return MethodHints(
+            read_only=data.get("read_only", False),
+            default_arguments=data.get("default_arguments", {}),
+            structs=data.get("structs", {}),
+            call_config=_decode_method_config(data.get("call_config", {})),
+        )
 
-@dataclasses.dataclass
+
+def _encode_method_config(mc: MethodConfig) -> dict[str, Any]:
+    return {k: v.name for k, v in mc.__dict__.items() if v != CallConfig.NEVER}
+
+
+def _decode_method_config(data: dict[str, Any]) -> MethodConfig:
+    return MethodConfig(**{k: CallConfig[v] for k, v in data.items()})
+
+
+def _encode_source(teal_text: str) -> str:
+    return base64.b64encode(teal_text.encode()).decode("utf8")
+
+
+def _decode_source(b64_text: str) -> str:
+    return base64.b64decode(b64_text).decode("utf8")
+
+
+def _encode_state_schema(schema: StateSchema) -> dict[str, int]:
+    return {
+        "num_byte_slices": schema.num_byte_slices,
+        "num_uints": schema.num_uints,
+    }
+
+
+def _decode_state_schema(data: dict[str, int]) -> StateSchema:
+    return StateSchema(
+        num_byte_slices=data.get("num_byte_slices", 0),
+        num_uints=data.get("num_uints", 0),
+    )
+
+
+@dataclasses.dataclass(kw_only=True)
 class ApplicationSpecification:
     approval_program: str
     clear_program: str
     contract: Contract
     hints: dict[str, MethodHints]
-    global_state: AppSpecStateDict
-    local_state: AppSpecStateDict
+    schema: StateDict
     global_state_schema: StateSchema
     local_state_schema: StateSchema
+    bare_call_config: MethodConfig
 
     def dictify(self) -> dict:
         return {
             "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
             "source": {
-                "approval": base64.b64encode(self.approval_program.encode()).decode(
-                    "utf8"
-                ),
-                "clear": base64.b64encode(self.clear_program.encode()).decode("utf8"),
+                "approval": _encode_source(self.approval_program),
+                "clear": _encode_source(self.clear_program),
             },
             "state": {
-                "global": {
-                    "num_byte_slices": self.global_state_schema.num_byte_slices,
-                    "num_uints": self.global_state_schema.num_uints,
-                },
-                "local": {
-                    "num_byte_slices": self.local_state_schema.num_byte_slices,
-                    "num_uints": self.local_state_schema.num_uints,
-                },
+                "global": _encode_state_schema(self.global_state_schema),
+                "local": _encode_state_schema(self.local_state_schema),
             },
-            "schema": {
-                "global": self.global_state,
-                "local": self.local_state,
-            },
+            "schema": self.schema,
             "contract": self.contract.dictify(),
+            "bare_call_config": _encode_method_config(self.bare_call_config),
         }
 
     def to_json(self) -> str:
         return json.dumps(self.dictify(), indent=4)
 
     @staticmethod
-    def from_json(application_spec: Path | str) -> "ApplicationSpecification":
-        if isinstance(application_spec, Path):
-            application_spec = application_spec.read_text()
-
-        application_json = json.loads(application_spec)
-        contract = Contract.undictify(application_json["contract"])
-        source = application_json["source"]
-        approval_program = base64.b64decode(source["approval"]).decode("utf8")
-        clear_program = base64.b64decode(source["clear"]).decode("utf8")
-        schema = application_json["schema"]
-        state = application_json["state"]
-        local_state = transaction.StateSchema(**state["local"])
-        global_state = transaction.StateSchema(**state["global"])
-
-        hints = {
-            k: _method_hints_from_json(v) for k, v in application_json["hints"].items()
-        }
-
+    def from_json(application_spec: str) -> "ApplicationSpecification":
+        json_spec = json.loads(application_spec)
         return ApplicationSpecification(
-            approval_program=approval_program,
-            clear_program=clear_program,
-            global_state=schema["global"],
-            local_state=schema["local"],
-            global_state_schema=global_state,
-            local_state_schema=local_state,
-            contract=contract,
-            hints=hints,
+            approval_program=_decode_source(json_spec["source"]["approval"]),
+            clear_program=_decode_source(json_spec["source"]["clear"]),
+            schema=json_spec["schema"],
+            global_state_schema=_decode_state_schema(json_spec["state"]["global"]),
+            local_state_schema=_decode_state_schema(json_spec["state"]["local"]),
+            contract=Contract.undictify(json_spec["contract"]),
+            hints={k: MethodHints.undictify(v) for k, v in json_spec["hints"].items()},
+            bare_call_config=_decode_method_config(
+                json_spec.get("bare_call_config", {})
+            ),
         )
 
     def export(self, directory: Path | str | None = None) -> None:
@@ -164,10 +179,3 @@ class ApplicationSpecification:
             json.dumps(self.contract.dictify(), indent=4)
         )
         (output_dir / "application.json").write_text(self.to_json())
-
-
-def _method_hints_from_json(method_hints: dict[str, Any]) -> MethodHints:
-    method_hints["call_config"] = MethodConfig(
-        **{k: CallConfig[v] for k, v in method_hints.get("call_config", {}).items()}
-    )
-    return MethodHints(**method_hints)

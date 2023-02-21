@@ -1,32 +1,32 @@
 {
     "hints": {
-        "create": {
+        "create(uint64)void": {
             "call_config": {
                 "no_op": "CREATE"
             }
         },
-        "do_rsvp": {
+        "do_rsvp(pay)void": {
             "call_config": {
                 "opt_in": "CALL"
             }
         },
-        "check_in": {
+        "check_in()void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "withdraw_external": {
+        "withdraw_external()void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "read_rsvp": {
+        "read_rsvp()uint64": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "read_price": {
+        "read_price()uint64": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
@@ -137,5 +137,9 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "close_out": "CALL",
+        "delete_application": "CALL"
     }
 }

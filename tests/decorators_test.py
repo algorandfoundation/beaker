@@ -17,7 +17,7 @@ def test_external_read_only() -> None:
     assert isinstance(handleable, pt.ABIReturnSubroutine)
     assert "handleable" in app.abi_methods
 
-    assert app.build().dictify()["hints"]["handleable"].get("read_only") is True
+    assert app.build().dictify()["hints"]["handleable()void"].get("read_only") is True
 
 
 def test_authorize_only() -> None:
@@ -177,7 +177,7 @@ def test_named_tuple() -> None:
 
     hints = app.build().hints
     assert hints is not None
-    thing_hints = hints.get("thing")
+    thing_hints = hints.get("thing((string,uint64))void")
     assert thing_hints is not None
     assert thing_hints.structs is not None
     o_hint = thing_hints.structs.get("o")
@@ -247,7 +247,7 @@ def test_external_method_config(config: pt.CallConfig) -> None:
         return pt.Approve()
 
     app_spec = app.build()
-    assert app_spec.hints["external"].call_config.no_op == config
+    assert app_spec.hints["external()void"].call_config.no_op == config
 
 
 def test_local_state_resolvable() -> None:

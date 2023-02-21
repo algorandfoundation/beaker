@@ -1,6 +1,6 @@
 {
     "hints": {
-        "check_eth_sig": {
+        "check_eth_sig(byte[32],byte[65])string": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -51,5 +51,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

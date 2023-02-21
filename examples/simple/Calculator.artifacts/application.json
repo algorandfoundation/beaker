@@ -1,21 +1,21 @@
 {
     "hints": {
-        "add": {
+        "add(uint64,uint64)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "mul": {
+        "mul(uint64,uint64)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "sub": {
+        "sub(uint64,uint64)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "div": {
+        "div(uint64,uint64)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -118,5 +118,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

@@ -1,6 +1,6 @@
 {
     "hints": {
-        "place_order": {
+        "place_order(uint8,(string,uint16))void": {
             "structs": {
                 "order": {
                     "name": "Order",
@@ -20,7 +20,7 @@
                 "no_op": "CALL"
             }
         },
-        "read_item": {
+        "read_item(uint8)(string,uint16)": {
             "read_only": true,
             "structs": {
                 "output": {
@@ -41,7 +41,7 @@
                 "no_op": "CALL"
             }
         },
-        "increase_quantity": {
+        "increase_quantity(uint8)(string,uint16)": {
             "structs": {
                 "output": {
                     "name": "Order",
@@ -137,5 +137,9 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE",
+        "opt_in": "CALL"
     }
 }

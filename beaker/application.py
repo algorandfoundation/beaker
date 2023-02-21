@@ -728,9 +728,10 @@ class Application(Generic[TState]):
         """
 
         with _set_ctx(app=self, client=client):
+            bare_calls = self._bare_calls()
             router = Router(
                 name=self.name,
-                bare_calls=self._bare_calls(),
+                bare_calls=bare_calls,
                 descr=self.descr,
                 clear_state=self._clear_state_method,
             )
@@ -744,7 +745,7 @@ class Application(Generic[TState]):
                         **cast(dict[str, CallConfig], abi_external.actions)
                     ),
                 )
-                hints[abi_external.method.name()] = abi_external.hints
+                hints[abi_external.method.method_signature()] = abi_external.hints
 
             # Compile approval and clear programs
             approval_program, clear_program, contract = router.compile_program(
@@ -758,10 +759,15 @@ class Application(Generic[TState]):
             clear_program=clear_program,
             contract=contract,
             hints=hints,
-            global_state=self._global_state.dictify(),
-            local_state=self._local_state.dictify(),
+            schema={
+                "global": self._global_state.dictify(),
+                "local": self._local_state.dictify(),
+            },
             global_state_schema=self._global_state.schema,
             local_state_schema=self._local_state.schema,
+            bare_call_config=MethodConfig(
+                **{k: v.call_config for k, v in bare_calls.asdict().items()}
+            ),
         )
 
     def _bare_calls(self) -> BareCallActions:

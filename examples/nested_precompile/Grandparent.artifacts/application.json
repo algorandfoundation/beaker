@@ -1,6 +1,6 @@
 {
     "hints": {
-        "create_parent": {
+        "create_parent()uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -43,5 +43,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

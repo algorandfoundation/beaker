@@ -1,16 +1,16 @@
 {
     "hints": {
-        "set_manager": {
+        "set_manager(address)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "set_nick": {
+        "set_nick(string)void": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "get_nick": {
+        "get_nick()string": {
             "read_only": true,
             "call_config": {
                 "no_op": "CALL"
@@ -89,5 +89,11 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE",
+        "opt_in": "CALL",
+        "close_out": "CALL",
+        "delete_application": "CALL"
     }
 }

@@ -1,6 +1,11 @@
 {
     "hints": {
-        "handle": {
+        "handle(pay)void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "handle(axfer)void": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -59,5 +64,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

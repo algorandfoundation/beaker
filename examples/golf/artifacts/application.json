@@ -1,11 +1,11 @@
 {
     "hints": {
-        "add_int": {
+        "add_int(uint64)uint64[]": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "box_create_test": {
+        "box_create_test()void": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -65,5 +65,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

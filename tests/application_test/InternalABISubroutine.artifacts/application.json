@@ -1,6 +1,6 @@
 {
     "hints": {
-        "doit": {
+        "doit()bool": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -42,5 +42,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

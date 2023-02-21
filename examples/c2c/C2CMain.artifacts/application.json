@@ -1,16 +1,16 @@
 {
     "hints": {
-        "create_sub": {
+        "create_sub()uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "create_asset_and_send": {
+        "create_asset_and_send(string,application)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "delete_asset": {
+        "delete_asset(asset)void": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -81,5 +81,8 @@
         ],
         "networks": {},
         "desc": "Main application that handles creation of the sub app and asset and calls it"
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

@@ -1,11 +1,11 @@
 {
     "hints": {
-        "increment": {
+        "increment()uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "decrement": {
+        "decrement()uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
@@ -62,5 +62,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

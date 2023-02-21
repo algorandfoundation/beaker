@@ -1,6 +1,6 @@
 {
     "hints": {
-        "struct_meth": {
+        "struct_meth((uint64,uint32))void": {
             "structs": {
                 "thing": {
                     "name": "Thing",
@@ -20,7 +20,7 @@
                 "no_op": "CALL"
             }
         },
-        "default_global_state": {
+        "default_global_state(uint64)void": {
             "default_arguments": {
                 "value": {
                     "source": "global-state",
@@ -97,5 +97,8 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

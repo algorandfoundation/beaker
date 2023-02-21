@@ -1,11 +1,11 @@
 {
     "hints": {
-        "opup_bootstrap": {
+        "opup_bootstrap(pay)uint64": {
             "call_config": {
                 "no_op": "CALL"
             }
         },
-        "hash_it": {
+        "hash_it(string,uint64,application)byte[32]": {
             "default_arguments": {
                 "opup_app": {
                     "source": "global-state",
@@ -86,5 +86,8 @@
         ],
         "networks": {},
         "desc": "Do expensive work to demonstrate implementing op_up blueprint"
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
     }
 }

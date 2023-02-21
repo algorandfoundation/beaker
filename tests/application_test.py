@@ -319,9 +319,10 @@ def test_default_param_state() -> None:
         return pt.Assert(aid.asset_id() == HintyState.asset_id)
 
     hints = h.build().hints
-    assert "hintymeth" in hints, "Expected a hint available for the method"
+    sig = hintymeth.method_signature()
+    assert sig in hints, "Expected a hint available for the method"
 
-    hint = hints["hintymeth"]
+    hint = hints[sig]
 
     assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
@@ -348,9 +349,10 @@ def test_default_param_const() -> None:
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
     hints = app.build().hints
-    assert "hintymeth" in hints, "Expected a hint available for the method"
+    sig = hintymeth.method_signature()
+    assert sig in hints, "Expected a hint available for the method"
 
-    hint = hints["hintymeth"]
+    hint = hints[sig]
 
     assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
@@ -377,9 +379,10 @@ def test_default_read_only_method() -> None:
         return pt.Assert(aid.asset_id() == pt.Int(const_val))
 
     hints = app.build().hints
-    assert "hintymeth" in hints, "Expected a hint available for the method"
+    sig = hintymeth.method_signature()
+    assert sig in hints, "Expected a hint available for the method"
 
-    hint = hints["hintymeth"]
+    hint = hints[sig]
 
     assert "aid" in hint.default_arguments, "Expected annotation available for param"
 
@@ -496,7 +499,7 @@ def test_struct_args() -> None:
     ret = Returns("void")
     assert Method("structy", [arg], ret) == structy.method_spec()
 
-    assert app.build().hints["structy"].structs == {
+    assert app.build().hints[structy.method_signature()].structs == {
         "user_record": {
             "name": "UserRecord",
             "elements": [
