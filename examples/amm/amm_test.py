@@ -806,7 +806,8 @@ def _assert_cases(
         "swap": swap_cases(),
     }
 
-    # Sanity check - Confirm additions to `key_to_group` are added to fixture parameterization.
+    # Sanity check - Confirm additions to `key_to_group` are added
+    # to fixture parameterization.
     assert sorted(key_to_group.keys()) == sorted(all_assert_groups)
 
     all_cases = list(itertools.chain.from_iterable(key_to_group.values()))

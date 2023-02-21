@@ -82,7 +82,8 @@ def demo() -> None:
     # Since we're using local state, opt in
     app_client.opt_in()
 
-    # Passing in a dict as an argument that should take a tuple according to the type spec
+    # Passing in a dict as an argument that should take a tuple
+    # according to the type spec
     order_number = 12
     order = {"quantity": 8, "item": "cubes"}
     app_client.call("place_order", order_number=order_number, order=order)
@@ -94,7 +95,8 @@ def demo() -> None:
     state_decoded = order_codec.decode(stored_order)
 
     print(
-        f"We can get the order we stored from local state of the sender: {state_decoded}"
+        "We can get the order we stored from local "
+        f"state of the sender: {state_decoded}"
     )
 
     # Or we could call the read-only method, passing the order number
@@ -106,7 +108,8 @@ def demo() -> None:
     result = app_client.call("increase_quantity", order_number=order_number)
     increased_decoded = order_codec.decode(result.raw_value)
     print(
-        f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"
+        "Let's add 1 to the struct, update state, and "
+        f"return the updated version: {increased_decoded}"
     )
 
     # And read it back out from state

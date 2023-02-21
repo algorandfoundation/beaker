@@ -130,12 +130,14 @@ def wormhole_transfer(
 
     Args:
         app: app to add to
-        handle_transfer: app specific logic that needs to be done on transfer - should take the decoded ContractTransferVAA, and an output parameter
+        handle_transfer: app specific logic that needs to be done on transfer - should
+            take the decoded ContractTransferVAA, and an output parameter
     """
 
     @app.external
     def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
-        """portal_transfer accepts a VAA containing information about the transfer and the payload.
+        """portal_transfer accepts a VAA containing information about the transfer
+        and the payload.
 
         Args:
             vaa: VAA encoded dynamic byte array
