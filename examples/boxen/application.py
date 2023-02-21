@@ -18,7 +18,7 @@ from pyteal import (
 
 from beaker import (
     Application,
-    ApplicationStateValue,
+    GlobalStateValue,
     Authorize,
     consts,
     unconditional_create_approval,
@@ -70,7 +70,7 @@ def clawback_axfer(
 
 
 class MembershipClubState:
-    membership_token = ApplicationStateValue(
+    membership_token = GlobalStateValue(
         TealType.uint64,
         static=True,
         descr="The asset that represents membership of this club",
@@ -214,9 +214,9 @@ def get_affirmation(
 
 
 class MemberState:
-    club_app_id = ApplicationStateValue(TealType.uint64)
-    last_affirmation = ApplicationStateValue(TealType.bytes)
-    membership_token = ApplicationStateValue(TealType.uint64)
+    club_app_id = GlobalStateValue(TealType.uint64)
+    last_affirmation = GlobalStateValue(TealType.bytes)
+    membership_token = GlobalStateValue(TealType.uint64)
 
 
 app_member_app = Application("AppMember", state=MemberState()).implement(

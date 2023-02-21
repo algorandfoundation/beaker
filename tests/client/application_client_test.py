@@ -18,18 +18,18 @@ from beaker.decorators import Authorize
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, _default_argument_from_resolver
 from beaker.build_options import BuildOptions
-from beaker.state import ApplicationStateValue, AccountStateValue
+from beaker.state import GlobalStateValue, LocalStateValue
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
 
 class AppState:
-    app_state_val_int = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(1))
-    app_state_val_byte = ApplicationStateValue(
+    global_state_val_int = GlobalStateValue(pt.TealType.uint64, default=pt.Int(1))
+    global_state_val_byte = GlobalStateValue(
         pt.TealType.bytes, default=pt.Bytes("test")
     )
-    acct_state_val_int = AccountStateValue(pt.TealType.uint64, default=pt.Int(1))
-    acct_state_val_byte = AccountStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
+    acct_state_val_int = LocalStateValue(pt.TealType.uint64, default=pt.Int(1))
+    acct_state_val_byte = LocalStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
 
 def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application[AppState]:
@@ -42,7 +42,7 @@ def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application[AppState]:
     @app.create
     def create() -> pt.Expr:
         return pt.Seq(
-            app.initialize_application_state(),
+            app.initialize_global_state(),
             pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
             pt.Approve(),
         )
@@ -58,7 +58,7 @@ def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application[AppState]:
     @app.opt_in
     def opt_in() -> pt.Expr:
         return pt.Seq(
-            app.initialize_account_state(),
+            app.initialize_local_state(),
             pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
             pt.Approve(),
         )
@@ -540,9 +540,11 @@ def test_resolve(sb_accts: SandboxAccounts) -> None:
 
     assert ac.resolve(_default_argument_from_resolver(pt.Int(1))) == 1
     assert ac.resolve(_default_argument_from_resolver(pt.Bytes("stringy"))) == "stringy"
-    assert ac.resolve(_default_argument_from_resolver(app.state.app_state_val_int)) == 1
     assert (
-        ac.resolve(_default_argument_from_resolver(app.state.app_state_val_byte))
+        ac.resolve(_default_argument_from_resolver(app.state.global_state_val_int)) == 1
+    )
+    assert (
+        ac.resolve(_default_argument_from_resolver(app.state.global_state_val_byte))
         == b"test"
     )
     assert (

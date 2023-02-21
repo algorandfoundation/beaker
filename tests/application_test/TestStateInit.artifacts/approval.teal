@@ -101,13 +101,13 @@ intc_0 // 0
 app_global_put
 optin_3_l2:
 txn Sender
-callsub zeroimpl_1
-txn Sender
-pushbytes 0x627974655f616363745f76616c // "byte_acct_val"
+pushbytes 0x627974655f6c6f63616c5f76616c // "byte_local_val"
 bytec_0 // ""
 app_local_put
 txn Sender
-pushbytes 0x75696e745f616363745f76616c // "uint_acct_val"
+callsub zeroimpl_1
+txn Sender
+pushbytes 0x75696e745f6c6f63616c5f76616c // "uint_local_val"
 intc_0 // 0
 app_local_put
 retsub

@@ -47,8 +47,8 @@ from beaker.precompile import (
     PrecompiledLogicSignature,
     PrecompiledLogicSignatureTemplate,
 )
-from beaker.state._aggregate import ApplicationStateAggregate, AccountStateAggregate
-from beaker.state.primitive import AccountStateValue, ApplicationStateValue
+from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
+from beaker.state.primitive import LocalStateValue, GlobalStateValue
 
 if typing.TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
@@ -151,8 +151,8 @@ class Application(Generic[TState]):
         ] = {}
         self._precompiled_apps: dict[Application, PrecompiledApplication] = {}
         self._abi_externals: dict[str, ABIExternal] = {}
-        self._acct_state = AccountStateAggregate(self._state)
-        self._app_state = ApplicationStateAggregate(self._state)
+        self._local_state = LocalStateAggregate(self._state)
+        self._global_state = GlobalStateAggregate(self._state)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
@@ -758,10 +758,10 @@ class Application(Generic[TState]):
             clear_program=clear_program,
             contract=contract,
             hints=hints,
-            app_state=self._app_state.dictify(),
-            account_state=self._acct_state.dictify(),
-            app_state_schema=self._app_state.schema,
-            account_state_schema=self._acct_state.schema,
+            global_state=self._global_state.dictify(),
+            local_state=self._local_state.dictify(),
+            global_state_schema=self._global_state.schema,
+            local_state_schema=self._local_state.schema,
         )
 
     def _bare_calls(self) -> BareCallActions:
@@ -792,26 +792,26 @@ class Application(Generic[TState]):
             )
         return BareCallActions(**bare_calls)
 
-    def initialize_application_state(self) -> Expr:
+    def initialize_global_state(self) -> Expr:
         """
-        Initialize any application state variables declared
+        Initialize any global state variables declared
 
         :return: The Expr to initialize the application state.
         :rtype: pyteal.Expr
         """
         self._check_context()
-        return self._app_state.initialize()
+        return self._global_state.initialize()
 
-    def initialize_account_state(self, addr: Expr = Txn.sender()) -> Expr:
+    def initialize_local_state(self, addr: Expr = Txn.sender()) -> Expr:
         """
-        Initialize any account state variables declared
+        Initialize any local state variables declared
 
         :param addr: Optional, address of account to initialize state for.
         :return: The Expr to initialize the account state.
         :rtype: pyteal.Expr
         """
         self._check_context()
-        return self._acct_state.initialize(addr)
+        return self._local_state.initialize(addr)
 
     def _check_context(self) -> None:
         if ctx := _ctx.get(None):
@@ -936,12 +936,12 @@ def _default_argument_from_resolver(
             return _default_argument_from_resolver(resolver.byte_str.replace('"', ""))
         case Int():
             return _default_argument_from_resolver(resolver.value)
-        case AccountStateValue() as acct_sv:
+        case LocalStateValue() as acct_sv:
             return {
                 "source": "local-state",
                 "data": acct_sv.str_key(),
             }
-        case ApplicationStateValue() as app_sv:
+        case GlobalStateValue() as app_sv:
             return {
                 "source": "global-state",
                 "data": app_sv.str_key(),

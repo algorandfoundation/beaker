@@ -9,7 +9,7 @@ pushbytes 0xef5cdf8c // "struct_meth((uint64,uint32))void"
 ==
 bnz main_l5
 txna ApplicationArgs 0
-pushbytes 0xecf9f1da // "default_app_state(uint64)void"
+pushbytes 0x3483cdd8 // "default_global_state(uint64)void"
 ==
 bnz main_l4
 err
@@ -24,7 +24,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub defaultappstate_1
+callsub defaultglobalstate_1
 intc_1 // 1
 return
 main_l5:
@@ -60,8 +60,8 @@ proto 1 0
 intc_1 // 1
 return
 
-// default_app_state
-defaultappstate_1:
+// default_global_state
+defaultglobalstate_1:
 proto 1 0
 intc_1 // 1
 return

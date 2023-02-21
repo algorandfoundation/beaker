@@ -9,8 +9,8 @@ from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
     StateStorage,
     AppSpecSchemaFragment,
-    ApplicationStateStorage,
-    AccountStateStorage,
+    GlobalStateStorage,
+    LocalStateStorage,
 )
 
 ST = TypeVar("ST", bound=StateStorage)
@@ -65,13 +65,13 @@ class StateAggregate(Generic[ST]):
         return self.schema.num_uints + self.schema.num_byte_slices
 
 
-class ApplicationStateAggregate(StateAggregate[ApplicationStateStorage]):
+class GlobalStateAggregate(StateAggregate[GlobalStateStorage]):
     def __init__(self, namespace: Any):
-        super().__init__(namespace=namespace, storage_class=ApplicationStateStorage)  # type: ignore[type-abstract]
+        super().__init__(namespace=namespace, storage_class=GlobalStateStorage)  # type: ignore[type-abstract]
 
         if self.total_keys > MAX_GLOBAL_STATE:
             raise ValueError(
-                f"Too much application state, expected {self.total_keys} <= {MAX_GLOBAL_STATE}"
+                f"Too much global state, expected {self.total_keys} <= {MAX_GLOBAL_STATE}"
             )
 
     def initialize(self) -> Expr:
@@ -79,13 +79,13 @@ class ApplicationStateAggregate(StateAggregate[ApplicationStateStorage]):
         return Seq(*filter(None, (f.initialize() for f in self._fields.values())))
 
 
-class AccountStateAggregate(StateAggregate[AccountStateStorage]):
+class LocalStateAggregate(StateAggregate[LocalStateStorage]):
     def __init__(self, namespace: Any):
-        super().__init__(namespace=namespace, storage_class=AccountStateStorage)  # type: ignore[type-abstract]
+        super().__init__(namespace=namespace, storage_class=LocalStateStorage)  # type: ignore[type-abstract]
 
         if self.total_keys > MAX_LOCAL_STATE:
             raise ValueError(
-                f"Too much account state, expected {self.total_keys} <= {MAX_LOCAL_STATE}"
+                f"Too much local state, expected {self.total_keys} <= {MAX_LOCAL_STATE}"
             )
 
     def initialize(self, acct: Expr = Txn.sender()) -> Expr:

@@ -11,7 +11,7 @@ from pyteal import (
 )
 
 from beaker import (
-    ApplicationStateValue,
+    GlobalStateValue,
     Application,
     LogicSignature,
     precompiled,
@@ -20,14 +20,14 @@ from beaker.blueprints import unconditional_create_approval
 
 
 class Child1State:
-    counter = ApplicationStateValue(
+    counter = GlobalStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
     )
 
 
 child1_app = Application("Child1", state=Child1State()).implement(
-    unconditional_create_approval, initialize_app_state=True
+    unconditional_create_approval, initialize_global_state=True
 )
 
 

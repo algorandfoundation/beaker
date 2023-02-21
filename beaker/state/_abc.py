@@ -23,13 +23,13 @@ class StateStorage(ABC):
         ...
 
 
-class ApplicationStateStorage(StateStorage):
+class GlobalStateStorage(StateStorage):
     @abstractmethod
     def initialize(self) -> Expr | None:
         ...
 
 
-class AccountStateStorage(StateStorage):
+class LocalStateStorage(StateStorage):
     @abstractmethod
     def initialize(self, acct: Expr) -> Expr | None:
         ...

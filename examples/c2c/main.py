@@ -25,11 +25,11 @@ algod_client = bkr.sandbox.get_algod_client()
 
 
 class C2CSubState:
-    rasv = bkr.ReservedApplicationStateValue(TealType.bytes, 1)
-    asv = bkr.ApplicationStateValue(TealType.bytes, default=Bytes("asv"))
+    rasv = bkr.ReservedGlobalStateValue(TealType.bytes, 1)
+    asv = bkr.GlobalStateValue(TealType.bytes, default=Bytes("asv"))
 
-    racsv = bkr.ReservedAccountStateValue(TealType.bytes, 1)
-    acsv = bkr.AccountStateValue(TealType.bytes, default=Bytes("acsv"))
+    racsv = bkr.ReservedLocalStateValue(TealType.bytes, 1)
+    acsv = bkr.LocalStateValue(TealType.bytes, default=Bytes("acsv"))
 
 
 sub_app = (
@@ -38,8 +38,8 @@ sub_app = (
         descr="Sub application who's only purpose is to opt into then close out of an asset",
         state=C2CSubState(),
     )
-    .implement(bkr.unconditional_create_approval, initialize_app_state=True)
-    .implement(bkr.unconditional_opt_in_approval, initialize_account_state=True)
+    .implement(bkr.unconditional_create_approval, initialize_global_state=True)
+    .implement(bkr.unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 

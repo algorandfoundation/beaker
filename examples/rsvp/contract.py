@@ -16,8 +16,8 @@ from pyteal import (
 )
 from beaker import (
     Application,
-    ApplicationStateValue,
-    AccountStateValue,
+    GlobalStateValue,
+    LocalStateValue,
     Authorize,
 )
 
@@ -51,19 +51,19 @@ def withdraw_funds() -> Expr:
 
 
 class EventRSVPState:
-    price = ApplicationStateValue(
+    price = GlobalStateValue(
         stack_type=TealType.uint64,
         default=Int(1_000_000),
         descr="The price of the event. Default price is 1 Algo",
     )
 
-    rsvp = ApplicationStateValue(
+    rsvp = GlobalStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
         descr="Number of people who RSVPed to the event",
     )
 
-    checked_in = AccountStateValue(
+    checked_in = LocalStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
         descr="0 = not checked in, 1 = checked in",
@@ -77,7 +77,7 @@ rsvp = Application("EventRSVP", state=EventRSVPState())
 def create(event_price: abi.Uint64) -> Expr:
     """Deploys the contract and initialze the app states"""
     return Seq(
-        rsvp.initialize_application_state(),
+        rsvp.initialize_global_state(),
         rsvp.state.price.set(event_price.get()),
     )
 
@@ -91,7 +91,7 @@ def do_rsvp(payment: abi.PaymentTransaction) -> Expr:
             payment.get().receiver() == Global.current_application_address(),
             payment.get().amount() == rsvp.state.price,
         ),
-        rsvp.initialize_account_state(),
+        rsvp.initialize_local_state(),
         rsvp.state.rsvp.increment(),
     )
 

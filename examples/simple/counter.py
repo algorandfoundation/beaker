@@ -4,21 +4,21 @@ from beaker import (
     sandbox,
     Application,
     Authorize,
-    ApplicationStateValue,
+    GlobalStateValue,
     unconditional_create_approval,
 )
 from beaker.client import ApplicationClient, LogicException
 
 
 class CounterState:
-    counter = ApplicationStateValue(
+    counter = GlobalStateValue(
         stack_type=TealType.uint64,
         descr="A counter for showing how to use application state",
     )
 
 
 counter_app = Application("CounterApp", state=CounterState()).implement(
-    unconditional_create_approval, initialize_app_state=True
+    unconditional_create_approval, initialize_global_state=True
 )
 
 

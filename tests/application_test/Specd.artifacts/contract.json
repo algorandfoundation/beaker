@@ -33,7 +33,7 @@
             }
         },
         {
-            "name": "default_app_state",
+            "name": "default_global_state",
             "args": [
                 {
                     "type": "uint64",

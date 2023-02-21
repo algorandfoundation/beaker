@@ -119,8 +119,8 @@ class ApplicationClient:
                 on_complete=on_complete,
                 approval_program=self.approval.raw_binary,
                 clear_program=self.clear.raw_binary,
-                global_schema=self.app.app_state_schema,
-                local_schema=self.app.account_state_schema,
+                global_schema=self.app.global_state_schema,
+                local_schema=self.app.local_state_schema,
                 extra_pages=extra_pages,
                 app_args=args,
                 **kwargs,
@@ -134,8 +134,8 @@ class ApplicationClient:
                         on_complete=on_complete,
                         approval_program=self.approval.raw_binary,
                         clear_program=self.clear.raw_binary,
-                        global_schema=self.app.app_state_schema,
-                        local_schema=self.app.account_state_schema,
+                        global_schema=self.app.global_state_schema,
+                        local_schema=self.app.local_state_schema,
                         extra_pages=extra_pages,
                         app_args=args,
                         **kwargs,
@@ -664,13 +664,15 @@ class ApplicationClient:
         self, raw: bool = False
     ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
-        app_state = self.client.application_info(self.app_id)
+        global_state = self.client.application_info(self.app_id)
         return cast(
             dict[bytes | str, bytes | str | int],
-            decode_state(app_state.get("params", {}).get("global-state", {}), raw=raw),
+            decode_state(
+                global_state.get("params", {}).get("global-state", {}), raw=raw
+            ),
         )
 
-    def get_account_state(
+    def get_local_state(
         self, account: str | None = None, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
@@ -693,8 +695,8 @@ class ApplicationClient:
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""
-        app_state = self.client.account_info(self.app_addr)
-        return app_state
+        global_state = self.client.account_info(self.app_addr)
+        return global_state
 
     def get_box_names(self) -> list[bytes]:
         box_resp = self.client.application_boxes(self.app_id)
@@ -709,10 +711,10 @@ class ApplicationClient:
             case {"source": "constant", "data": data}:
                 return data
             case {"source": "global-state", "data": str() as key}:
-                app_state = self.get_application_state(raw=True)
-                return app_state[key.encode()]
+                global_state = self.get_application_state(raw=True)
+                return global_state[key.encode()]
             case {"source": "local-state", "data": str() as key}:
-                acct_state = self.get_account_state(self.get_sender(), raw=True)
+                acct_state = self.get_local_state(self.get_sender(), raw=True)
                 return acct_state[key.encode()]
             case {"source": "abi-method", "data": dict() as method_dict}:
                 method = abi.Method.undictify(method_dict)

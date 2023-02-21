@@ -47,8 +47,8 @@ class PrecompiledApplication:
 
     def __init__(self, app: "Application", client: "AlgodClient"):
         app_spec = app.build(client)
-        self._global_schema = app_spec.app_state_schema
-        self._local_schema = app_spec.account_state_schema
+        self._global_schema = app_spec.global_state_schema
+        self._local_schema = app_spec.local_state_schema
 
         # at this point, we should have all the dependant logic built
         # so we can compile the app teal

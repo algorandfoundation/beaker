@@ -2,8 +2,8 @@ from pyteal import abi, TealType, Global, Approve, ABIReturnSubroutine, Expr
 
 from beaker import (
     Application,
-    AccountStateValue,
-    ApplicationStateValue,
+    LocalStateValue,
+    GlobalStateValue,
     Authorize,
     client,
     sandbox,
@@ -16,19 +16,19 @@ from beaker.client.logic_error import LogicException
 
 
 class ClientExampleState:
-    manager = ApplicationStateValue(
+    manager = GlobalStateValue(
         stack_type=TealType.bytes, default=Global.creator_address()
     )
 
-    nickname = AccountStateValue(
+    nickname = LocalStateValue(
         stack_type=TealType.bytes, descr="what this user prefers to be called"
     )
 
 
 my_app = (
     Application("ClientExample", state=ClientExampleState())
-    .implement(unconditional_create_approval, initialize_app_state=True)
-    .implement(unconditional_opt_in_approval, initialize_account_state=True)
+    .implement(unconditional_create_approval, initialize_global_state=True)
+    .implement(unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 
@@ -94,8 +94,8 @@ def demo() -> None:
     app_client2.call(set_nick, nick="second")
 
     # Get the local state for each account
-    print(app_client1.get_account_state())
-    print(app_client2.get_account_state())
+    print(app_client1.get_local_state())
+    print(app_client2.get_local_state())
 
     # Get the global state
     print(f"Current app state: {app_client1.get_application_state()}")

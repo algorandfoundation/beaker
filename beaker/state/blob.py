@@ -9,11 +9,11 @@ from beaker.lib.storage import LocalBlob, GlobalBlob
 
 __all__ = [
     "StateBlob",
-    "AccountStateBlob",
-    "ApplicationStateBlob",
+    "LocalStateBlob",
+    "GlobalStateBlob",
 ]
 
-from beaker.state._abc import AccountStateStorage, ApplicationStateStorage, StateStorage
+from beaker.state._abc import LocalStateStorage, GlobalStateStorage, StateStorage
 
 
 class StateBlob(StateStorage, ABC):
@@ -75,7 +75,7 @@ class StateBlob(StateStorage, ABC):
         ...
 
 
-class AccountStateBlob(AccountStateStorage, StateBlob):
+class LocalStateBlob(LocalStateStorage, StateBlob):
     def __init__(
         self, keys: int | list[int] = MAX_LOCAL_STATE, descr: str | None = None
     ):
@@ -89,7 +89,7 @@ class AccountStateBlob(AccountStateStorage, StateBlob):
     def initialize(self, acct: Expr) -> Expr:
         return self.blob.zero(acct=acct)
 
-    def __getitem__(self, acct: Expr) -> "AccountStateBlob":
+    def __getitem__(self, acct: Expr) -> "LocalStateBlob":
         asv = copy(self)
         asv.acct = acct
         return asv
@@ -107,7 +107,7 @@ class AccountStateBlob(AccountStateStorage, StateBlob):
         return self.blob.set_byte(idx, byte, acct=self.acct)
 
 
-class ApplicationStateBlob(ApplicationStateStorage, StateBlob):
+class GlobalStateBlob(GlobalStateStorage, StateBlob):
     def __init__(
         self, keys: int | list[int] = MAX_GLOBAL_STATE, descr: str | None = None
     ):

@@ -28,7 +28,7 @@ from pyteal import (
 
 from beaker import (
     consts,
-    ApplicationStateValue,
+    GlobalStateValue,
     Application,
     Authorize,
     unconditional_create_approval,
@@ -57,31 +57,31 @@ class ConstantProductAMMErrors:
 
 
 class ConstantProductAMMState:
-    asset_a = ApplicationStateValue(
+    asset_a = GlobalStateValue(
         stack_type=TealType.uint64,
         key="a",
         static=True,
         descr="The asset id of asset A",
     )
-    asset_b = ApplicationStateValue(
+    asset_b = GlobalStateValue(
         stack_type=TealType.uint64,
         key="b",
         static=True,
         descr="The asset id of asset B",
     )
-    governor = ApplicationStateValue(
+    governor = GlobalStateValue(
         stack_type=TealType.bytes,
         key="g",
         default=Global.creator_address(),
         descr="The current governor of this contract, allowed to do admin type actions",
     )
-    pool_token = ApplicationStateValue(
+    pool_token = GlobalStateValue(
         stack_type=TealType.uint64,
         key="p",
         static=True,
         descr="The asset id of the Pool Token, used to track share of pool the holder may recover",
     )
-    ratio = ApplicationStateValue(
+    ratio = GlobalStateValue(
         stack_type=TealType.uint64,
         key="r",
         descr="The ratio between assets (A/B)*Scale",
@@ -89,7 +89,7 @@ class ConstantProductAMMState:
 
 
 amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState()).implement(
-    unconditional_create_approval, initialize_app_state=True
+    unconditional_create_approval, initialize_global_state=True
 )
 ##############
 # Constants
@@ -107,14 +107,14 @@ fee: Final[int] = 5
 fee_expr: Final[Int] = Int(fee)
 
 
-# Only the account set in app_state.governor may call this method
+# Only the account set in global_state.governor may call this method
 @amm_app.external(authorize=Authorize.only(amm_app.state.governor))
 def set_governor(new_governor: abi.Account) -> Expr:
     """sets the governor of the contract, may only be called by the current governor"""
     return amm_app.state.governor.set(new_governor.address())
 
 
-# Only the account set in app_state.governor may call this method
+# Only the account set in global_state.governor may call this method
 @amm_app.external(authorize=Authorize.only(amm_app.state.governor))
 def bootstrap(
     seed: abi.PaymentTransaction,

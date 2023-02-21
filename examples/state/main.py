@@ -22,38 +22,38 @@ def demo() -> None:
     app_client.opt_in()
     print("Opted in")
 
-    app_client.call("set_account_state_val", v=123)
-    app_client.call("incr_account_state_val", v=1)
-    result = app_client.call("get_account_state_val")
+    app_client.call("set_local_state_val", v=123)
+    app_client.call("incr_local_state_val", v=1)
+    result = app_client.call("get_local_state_val")
     print(f"Set/get acct state result: {result.return_value}")
 
-    app_client.call("set_reserved_account_state_val", k=123, v="stuff")
-    result = app_client.call("get_reserved_account_state_val", k=123)
+    app_client.call("set_reserved_local_state_val", k=123, v="stuff")
+    result = app_client.call("get_reserved_local_state_val", k=123)
     print(f"Set/get dynamic acct state result: {result.return_value}")
 
     try:
-        app_client.call("set_app_state_val", v="Expect fail")
+        app_client.call("set_global_state_val", v="Expect fail")
     except LogicException as e:
         print(f"Task failed successfully: {e}")
-        result = app_client.call("get_app_state_val")
+        result = app_client.call("get_global_state_val")
         print(f"Set/get app state result: {result.return_value}")
 
-    app_client.call("set_reserved_app_state_val", k=15, v=123)
-    result = app_client.call("get_reserved_app_state_val", k=15)
+    app_client.call("set_reserved_global_state_val", k=15, v=123)
+    result = app_client.call("get_reserved_global_state_val", k=15)
     print(f"Set/get dynamic app state result: {result.return_value}")
 
     msg = "write this message please and make it readable"
 
     # Account state blob
-    app_client.call("write_acct_blob", v=msg)
-    result = app_client.call("read_acct_blob")
+    app_client.call("write_local_blob", v=msg)
+    result = app_client.call("read_local_blob")
     got_msg = bytes(result.return_value[: len(msg)]).decode()
     assert msg == got_msg
     print(f"wrote and read the message to account state {got_msg}")
 
     # App state blob
-    app_client.call("write_app_blob", v=msg)
-    # result = app_client.call("read_app_blob")
+    app_client.call("write_local_blob", v=msg)
+    # result = app_client.call("read_local_blob")
     # got_msg = bytes(result.return_value[: len(msg)]).decode()
     # assert msg == got_msg
     print(f"wrote and read the message to application state {got_msg}")

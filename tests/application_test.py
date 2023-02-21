@@ -6,8 +6,8 @@ from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
 
 from beaker import (
-    ApplicationStateBlob,
-    AccountStateBlob,
+    GlobalStateBlob,
+    LocalStateBlob,
     BuildOptions,
     Application,
 )
@@ -15,10 +15,10 @@ from beaker.application_specification import ApplicationSpecification
 from beaker.blueprints import unconditional_create_approval
 from beaker.lib.storage import List
 from beaker.state import (
-    ReservedApplicationStateValue,
-    ApplicationStateValue,
-    AccountStateValue,
-    ReservedAccountStateValue,
+    ReservedGlobalStateValue,
+    GlobalStateValue,
+    LocalStateValue,
+    ReservedLocalStateValue,
 )
 from tests.conftest import check_application_artifacts_output_stability
 
@@ -252,36 +252,36 @@ def test_state_init() -> None:
 
     class MyState:
         # global
-        blob = ApplicationStateBlob(keys=4, descr="blob_description")
-        byte_val = ApplicationStateValue(
+        blob = GlobalStateBlob(keys=4, descr="blob_description")
+        byte_val = GlobalStateValue(
             stack_type=pt.TealType.bytes, descr="byte_val_description"
         )
-        uint_val = ApplicationStateValue(
+        uint_val = GlobalStateValue(
             stack_type=pt.TealType.uint64, descr="uint_val_description"
         )
-        byte_dynamic = ReservedApplicationStateValue(
+        byte_dynamic = ReservedGlobalStateValue(
             stack_type=pt.TealType.bytes, max_keys=3, descr="byte_dynamic_description"
         )
-        uint_dynamic = ReservedApplicationStateValue(
+        uint_dynamic = ReservedGlobalStateValue(
             stack_type=pt.TealType.uint64, max_keys=3, descr="uint_dynamic_description"
         )
         # local
-        acct_blob = AccountStateBlob(keys=3, descr="acct_blob_description")
-        byte_acct_val = AccountStateValue(
-            stack_type=pt.TealType.bytes, descr="byte_acct_val_description"
+        local_blob = LocalStateBlob(keys=3, descr="local_blob_description")
+        byte_local_val = LocalStateValue(
+            stack_type=pt.TealType.bytes, descr="byte_local_val_description"
         )
-        uint_acct_val = AccountStateValue(
-            stack_type=pt.TealType.uint64, descr="uint_acct_val_description"
+        uint_local_val = LocalStateValue(
+            stack_type=pt.TealType.uint64, descr="uint_local_val_description"
         )
-        byte_acct_dynamic = ReservedAccountStateValue(
+        byte_local_dynamic = ReservedLocalStateValue(
             stack_type=pt.TealType.bytes,
             max_keys=2,
-            descr="byte_acct_dynamic_description",
+            descr="byte_local_dynamic_description",
         )
-        uint_acct_dynamic = ReservedAccountStateValue(
+        uint_local_dynamic = ReservedLocalStateValue(
             stack_type=pt.TealType.uint64,
             max_keys=2,
-            descr="uint_acct_dynamic_description",
+            descr="uint_local_dynamic_description",
         )
         # box
         lst = List(value_type=abi.Uint32, elements=5, name="lst_description")
@@ -289,7 +289,7 @@ def test_state_init() -> None:
         not_a_state_var = pt.Int(1)
 
     app = Application("TestStateInit", state=MyState()).implement(
-        unconditional_create_approval, initialize_app_state=True
+        unconditional_create_approval, initialize_global_state=True
     )
 
     @app.opt_in(allow_create=True)
@@ -297,9 +297,9 @@ def test_state_init() -> None:
         return pt.Seq(
             pt.If(
                 pt.Txn.application_id() == pt.Int(0),
-                app.initialize_application_state(),
+                app.initialize_global_state(),
             ),
-            app.initialize_account_state(),
+            app.initialize_local_state(),
         )
 
     check_application_artifacts_output_stability(app)
@@ -307,7 +307,7 @@ def test_state_init() -> None:
 
 def test_default_param_state() -> None:
     class HintyState:
-        asset_id = ApplicationStateValue(pt.TealType.uint64, default=pt.Int(123))
+        asset_id = GlobalStateValue(pt.TealType.uint64, default=pt.Int(123))
 
     h = Application("Hinty", state=HintyState())
 
@@ -394,8 +394,8 @@ def test_default_read_only_method() -> None:
 
 def _get_full_app_spec() -> Application:
     class SpecdState:
-        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
-        decl_acct_val = AccountStateValue(pt.TealType.uint64)
+        decl_global_val = GlobalStateValue(pt.TealType.uint64)
+        decl_local_val = LocalStateValue(pt.TealType.uint64)
 
     app = Application("Specd", state=SpecdState())
 
@@ -418,8 +418,8 @@ def _get_full_app_spec() -> Application:
         return pt.Approve()
 
     @app.external
-    def default_app_state(
-        value: pt.abi.Uint64 = SpecdState.decl_app_val,  # type: ignore[assignment]
+    def default_global_state(
+        value: pt.abi.Uint64 = SpecdState.decl_global_val,  # type: ignore[assignment]
     ) -> pt.Expr:
         return pt.Approve()
 
@@ -428,8 +428,8 @@ def _get_full_app_spec() -> Application:
 
 def _get_partial_app_spec() -> Application:
     class SpecdState:
-        decl_app_val = ApplicationStateValue(pt.TealType.uint64)
-        decl_acct_val = AccountStateValue(pt.TealType.uint64)
+        decl_global_val = GlobalStateValue(pt.TealType.uint64)
+        decl_local_val = LocalStateValue(pt.TealType.uint64)
 
     app = Application("PartialSpec", state=SpecdState())
 
@@ -442,8 +442,8 @@ def _get_partial_app_spec() -> Application:
         return pt.Approve()
 
     @app.external
-    def default_app_state(
-        value: pt.abi.Uint64 = SpecdState.decl_app_val,  # type: ignore[assignment]
+    def default_global_state(
+        value: pt.abi.Uint64 = SpecdState.decl_global_val,  # type: ignore[assignment]
     ) -> pt.Expr:
         return pt.Approve()
 

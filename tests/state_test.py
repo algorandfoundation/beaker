@@ -1,12 +1,12 @@
 import pytest
 import pyteal as pt
 from beaker.state import (
-    ReservedAccountStateValue,
-    ReservedApplicationStateValue,
-    ApplicationStateValue,
-    AccountStateValue,
+    ReservedLocalStateValue,
+    ReservedGlobalStateValue,
+    GlobalStateValue,
+    LocalStateValue,
 )
-from beaker.state._aggregate import ApplicationStateAggregate, AccountStateAggregate
+from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
 from beaker.state.primitive import _get_default_for_type
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
@@ -69,7 +69,7 @@ def test_local_value(key, stack_type, default, val, error):  # type: ignore
 
 
 def do_lv_test(key, stack_type, default, val):  # type: ignore
-    lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
+    lv = LocalStateValue(stack_type=stack_type, key=key, default=default)
 
     assert lv.__str__() == f"AccountStateValue (Txn Sender) {key}"
 
@@ -152,7 +152,7 @@ def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, erro
 
 
 def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: ignore
-    dlv = ReservedAccountStateValue(
+    dlv = ReservedLocalStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 
@@ -250,7 +250,7 @@ def test_global_value(key, stack_type, default, val, static, error):  # type: ig
 
 
 def do_gv_test(key, stack_type, default, val, static):  # type: ignore
-    lv = ApplicationStateValue(
+    lv = GlobalStateValue(
         stack_type=stack_type, key=key, default=default, static=static
     )
 
@@ -393,7 +393,7 @@ def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, err
 
 
 def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: ignore
-    dlv = ReservedApplicationStateValue(
+    dlv = ReservedGlobalStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 
@@ -477,90 +477,90 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: 
 
 
 def test_expr_impl_account() -> None:
-    asv = AccountStateValue(pt.TealType.uint64)
+    asv = LocalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
 def test_expr_impl_app() -> None:
-    asv = ApplicationStateValue(pt.TealType.uint64)
+    asv = GlobalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
 def test_application_state_type() -> None:
     class BaseState:
-        a = ApplicationStateValue(pt.TealType.uint64)
+        a = GlobalStateValue(pt.TealType.uint64)
 
     class MyState(BaseState):
-        b = ApplicationStateValue(pt.TealType.bytes)
+        b = GlobalStateValue(pt.TealType.bytes)
 
-    astate = ApplicationStateAggregate(MyState)
+    astate = GlobalStateAggregate(MyState)
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
 
     class MyBigState(MyState):
-        c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
+        c = ReservedGlobalStateValue(pt.TealType.uint64, max_keys=64)
 
     with pytest.raises(Exception):
-        ApplicationStateAggregate(MyBigState)
+        GlobalStateAggregate(MyBigState)
 
 
 def test_application_state_instance() -> None:
     class BaseState:
-        a = ApplicationStateValue(pt.TealType.uint64)
+        a = GlobalStateValue(pt.TealType.uint64)
 
     class MyState(BaseState):
         def __init__(self) -> None:
-            self.b = ApplicationStateValue(pt.TealType.bytes, key="b")
+            self.b = GlobalStateValue(pt.TealType.bytes, key="b")
 
-    astate = ApplicationStateAggregate(MyState())
+    astate = GlobalStateAggregate(MyState())
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
 
     class MyBigState(MyState):
-        c = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
+        c = ReservedGlobalStateValue(pt.TealType.uint64, max_keys=64)
 
     with pytest.raises(Exception):
-        ApplicationStateAggregate(MyBigState())
+        GlobalStateAggregate(MyBigState())
 
 
-def test_account_state_type() -> None:
+def test_local_state_type() -> None:
     class BaseState:
-        a = AccountStateValue(pt.TealType.uint64)
+        a = LocalStateValue(pt.TealType.uint64)
 
     class MyState(BaseState):
-        b = AccountStateValue(pt.TealType.bytes)
+        b = LocalStateValue(pt.TealType.bytes)
 
-    astate = AccountStateAggregate(MyState)
+    astate = LocalStateAggregate(MyState)
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
 
     class MyBigState(MyState):
-        c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
+        c = ReservedLocalStateValue(pt.TealType.uint64, max_keys=16)
 
     with pytest.raises(Exception):
-        AccountStateAggregate(MyBigState)
+        LocalStateAggregate(MyBigState)
 
 
-def test_account_state_instance() -> None:
+def test_local_state_instance() -> None:
     class BaseState:
-        a = AccountStateValue(pt.TealType.uint64)
+        a = LocalStateValue(pt.TealType.uint64)
 
     class MyState(BaseState):
         def __init__(self) -> None:
-            self.b = AccountStateValue(pt.TealType.bytes, key="b")
+            self.b = LocalStateValue(pt.TealType.bytes, key="b")
 
-    astate = AccountStateAggregate(MyState())
+    astate = LocalStateAggregate(MyState())
 
     assert astate.schema.num_byte_slices == 1
     assert astate.schema.num_uints == 1
 
     class MyBigState(MyState):
-        c = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
+        c = ReservedLocalStateValue(pt.TealType.uint64, max_keys=16)
 
     with pytest.raises(Exception):
-        AccountStateAggregate(MyBigState())
+        LocalStateAggregate(MyBigState())

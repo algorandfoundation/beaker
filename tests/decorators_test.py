@@ -250,36 +250,36 @@ def test_external_method_config(config: pt.CallConfig) -> None:
     assert app_spec.hints["external"].call_config.no_op == config
 
 
-def test_account_state_resolvable() -> None:
-    from beaker.state import AccountStateValue
+def test_local_state_resolvable() -> None:
+    from beaker.state import LocalStateValue
 
-    x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
+    x = LocalStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = _default_argument_from_resolver(x)
     assert r["source"] == "local-state"
 
 
-def test_reserved_account_state_resolvable() -> None:
-    from beaker.state import ReservedAccountStateValue
+def test_reserved_local_state_resolvable() -> None:
+    from beaker.state import ReservedLocalStateValue
 
-    x = ReservedAccountStateValue(pt.TealType.uint64, max_keys=1)
+    x = ReservedLocalStateValue(pt.TealType.uint64, max_keys=1)
     r = _default_argument_from_resolver(x[pt.Bytes("x")])
     assert r["source"] == "local-state"
 
 
 def test_application_state_resolvable() -> None:
-    from beaker.state import ApplicationStateValue
+    from beaker.state import GlobalStateValue
 
-    x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
+    x = GlobalStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
     r = _default_argument_from_resolver(x)
     assert r["source"] == "global-state"
 
 
 def test_reserved_application_state_resolvable() -> None:
     from beaker.state import (
-        ReservedApplicationStateValue,
+        ReservedGlobalStateValue,
     )
 
-    x = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=1)
+    x = ReservedGlobalStateValue(pt.TealType.uint64, max_keys=1)
     r = _default_argument_from_resolver(x[pt.Bytes("x")])
     assert r["source"] == "global-state"
 

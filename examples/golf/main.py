@@ -28,7 +28,7 @@ from pyteal import (
 
 from beaker import (
     Application,
-    ApplicationStateValue,
+    GlobalStateValue,
     sandbox,
     client,
     consts,
@@ -39,7 +39,7 @@ from beaker.lib.math import Max
 
 
 class SortedIntegersState:
-    elements = ApplicationStateValue(
+    elements = GlobalStateValue(
         stack_type=TealType.uint64,
         default=Int(0),
         descr="The number of elements in the array",

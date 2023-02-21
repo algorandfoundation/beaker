@@ -82,10 +82,10 @@ class ApplicationSpecification:
     clear_program: str
     contract: Contract
     hints: dict[str, MethodHints]
-    app_state: AppSpecStateDict
-    account_state: AppSpecStateDict
-    app_state_schema: StateSchema
-    account_state_schema: StateSchema
+    global_state: AppSpecStateDict
+    local_state: AppSpecStateDict
+    global_state_schema: StateSchema
+    local_state_schema: StateSchema
 
     def dictify(self) -> dict:
         return {
@@ -98,17 +98,17 @@ class ApplicationSpecification:
             },
             "state": {
                 "global": {
-                    "num_byte_slices": self.app_state_schema.num_byte_slices,
-                    "num_uints": self.app_state_schema.num_uints,
+                    "num_byte_slices": self.global_state_schema.num_byte_slices,
+                    "num_uints": self.global_state_schema.num_uints,
                 },
                 "local": {
-                    "num_byte_slices": self.account_state_schema.num_byte_slices,
-                    "num_uints": self.account_state_schema.num_uints,
+                    "num_byte_slices": self.local_state_schema.num_byte_slices,
+                    "num_uints": self.local_state_schema.num_uints,
                 },
             },
             "schema": {
-                "global": self.app_state,
-                "local": self.account_state,
+                "global": self.global_state,
+                "local": self.local_state,
             },
             "contract": self.contract.dictify(),
         }
@@ -138,10 +138,10 @@ class ApplicationSpecification:
         return ApplicationSpecification(
             approval_program=approval_program,
             clear_program=clear_program,
-            app_state=schema["global"],
-            account_state=schema["local"],
-            app_state_schema=global_state,
-            account_state_schema=local_state,
+            global_state=schema["global"],
+            local_state=schema["local"],
+            global_state_schema=global_state,
+            local_state_schema=local_state,
             contract=contract,
             hints=hints,
         )

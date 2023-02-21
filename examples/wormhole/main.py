@@ -45,8 +45,8 @@ def demo() -> None:
         )
 
     # Get the current app state
-    app_state = app_client.get_application_state(raw=True)
-    for v in app_state.values():
+    global_state = app_client.get_application_state(raw=True)
+    for v in global_state.values():
         assert isinstance(v, bytes)
         ts, price, confidence = oracle_data_codec.decode(v)
         print(f"ts: {ts}, price: {price}, confidence: {confidence}")

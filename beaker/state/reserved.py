@@ -6,23 +6,23 @@ from pyteal.ast import abi
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
-    ApplicationStateStorage,
-    AccountStateStorage,
+    GlobalStateStorage,
+    LocalStateStorage,
     StateStorage,
     AppSpecSchemaFragment,
 )
 from beaker.state.primitive import (
     StateValue,
-    ApplicationStateValue,
-    AccountStateValue,
+    GlobalStateValue,
+    LocalStateValue,
     prefix_key_gen,
     identity_key_gen,
 )
 
 __all__ = [
     "ReservedStateValue",
-    "ReservedApplicationStateValue",
-    "ReservedAccountStateValue",
+    "ReservedGlobalStateValue",
+    "ReservedLocalStateValue",
 ]
 
 
@@ -113,8 +113,8 @@ class ReservedStateValue(Generic[ST], StateStorage, ABC):
         )
 
 
-class ReservedApplicationStateValue(
-    ReservedStateValue[ApplicationStateValue], ApplicationStateStorage
+class ReservedGlobalStateValue(
+    ReservedStateValue[GlobalStateValue], GlobalStateStorage
 ):
     """Reserved Application State (global state)
 
@@ -144,16 +144,12 @@ class ReservedApplicationStateValue(
     def initialize(self) -> Expr | None:
         return None
 
-    def _get_state_for_key(self, key: Expr) -> ApplicationStateValue:
+    def _get_state_for_key(self, key: Expr) -> GlobalStateValue:
         """Method to access the state value with the key seed provided"""
-        return ApplicationStateValue(
-            stack_type=self.stack_type, key=key, descr=self.descr
-        )
+        return GlobalStateValue(stack_type=self.stack_type, key=key, descr=self.descr)
 
 
-class ReservedAccountStateValue(
-    ReservedStateValue[AccountStateValue], AccountStateStorage
-):
+class ReservedLocalStateValue(ReservedStateValue[LocalStateValue], LocalStateStorage):
     """Reserved Account State (local state)
 
     Used when there should be a number of reserved state fields but the keys are uncertain at build time.
@@ -182,6 +178,6 @@ class ReservedAccountStateValue(
     def initialize(self, acct: Expr) -> Expr | None:
         return None
 
-    def _get_state_for_key(self, key: Expr) -> AccountStateValue:
+    def _get_state_for_key(self, key: Expr) -> LocalStateValue:
         """Access AccountState value given key_seed"""
-        return AccountStateValue(stack_type=self.stack_type, key=key, descr=self.descr)
+        return LocalStateValue(stack_type=self.stack_type, key=key, descr=self.descr)

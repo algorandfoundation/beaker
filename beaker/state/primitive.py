@@ -26,15 +26,15 @@ from pyteal import (
 
 __all__ = [
     "StateValue",
-    "ApplicationStateValue",
-    "AccountStateValue",
+    "GlobalStateValue",
+    "LocalStateValue",
     "prefix_key_gen",
     "identity_key_gen",
 ]
 
 from beaker.state._abc import (
-    ApplicationStateStorage,
-    AccountStateStorage,
+    GlobalStateStorage,
+    LocalStateStorage,
     StateStorage,
     AppSpecSchemaFragment,
 )
@@ -172,7 +172,7 @@ class StateValue(Expr, StateStorage):
         """deletes the key from state, if the value is static it will be a compile time error"""
 
 
-class ApplicationStateValue(StateValue, ApplicationStateStorage):
+class GlobalStateValue(StateValue, GlobalStateStorage):
     """Allows storage of state values for an application (global state)
 
     Attributes:
@@ -252,7 +252,7 @@ class ApplicationStateValue(StateValue, ApplicationStateStorage):
         return App.globalDel(self.key)
 
 
-class AccountStateValue(StateValue, AccountStateStorage):
+class LocalStateValue(StateValue, LocalStateStorage):
     """Allows storage of keyed values for an account opted into an application (local state)
 
     Attributes:
@@ -358,7 +358,7 @@ class AccountStateValue(StateValue, AccountStateStorage):
 
         return App.localDel(self.acct, self.key)
 
-    def __getitem__(self, acct: Expr) -> "AccountStateValue":
+    def __getitem__(self, acct: Expr) -> "LocalStateValue":
         asv = copy(self)
         asv.acct = acct
         return asv

@@ -20,16 +20,14 @@ from beaker import (
     precompiled,
     unconditional_create_approval,
     Authorize,
-    ApplicationStateValue,
+    GlobalStateValue,
 )
 from beaker.consts import Algos
 
 
 class OpUpState:
     #: The id of the app created during `bootstrap`
-    opup_app_id = ApplicationStateValue(
-        stack_type=TealType.uint64, key="ouaid", static=True
-    )
+    opup_app_id = GlobalStateValue(stack_type=TealType.uint64, key="ouaid", static=True)
 
 
 def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:

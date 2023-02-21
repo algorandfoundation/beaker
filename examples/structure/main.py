@@ -3,7 +3,7 @@ from pyteal import abi, TealType, Int, Seq, Expr
 
 from beaker import (
     Application,
-    ReservedAccountStateValue,
+    ReservedLocalStateValue,
     sandbox,
     client,
     unconditional_create_approval,
@@ -18,7 +18,7 @@ class Order(abi.NamedTuple):
 
 
 class StructerState:
-    orders = ReservedAccountStateValue(
+    orders = ReservedLocalStateValue(
         stack_type=TealType.bytes,
         max_keys=16,
         prefix="",
@@ -28,7 +28,7 @@ class StructerState:
 structer_app = (
     Application("Structer", state=StructerState())
     .implement(unconditional_create_approval)
-    .implement(unconditional_opt_in_approval, initialize_account_state=True)
+    .implement(unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 
@@ -89,7 +89,7 @@ def demo() -> None:
 
     # Get the order from the state field
     state_key = order_number.to_bytes(1, "big")
-    stored_order = app_client.get_account_state(raw=True)[state_key]
+    stored_order = app_client.get_local_state(raw=True)[state_key]
     assert isinstance(stored_order, bytes)
     state_decoded = order_codec.decode(stored_order)
 
@@ -111,7 +111,7 @@ def demo() -> None:
 
     # And read it back out from state
     state_key = order_number.to_bytes(1, "big")
-    stored_order = app_client.get_account_state(raw=True)[state_key]
+    stored_order = app_client.get_local_state(raw=True)[state_key]
     assert isinstance(stored_order, bytes)
     state_decoded = order_codec.decode(stored_order)
     print(f"And it's been updated: {state_decoded}")

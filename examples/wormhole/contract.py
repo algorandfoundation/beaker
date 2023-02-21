@@ -1,7 +1,7 @@
 from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
 
 from beaker import (
-    ReservedApplicationStateValue,
+    ReservedGlobalStateValue,
     Application,
     unconditional_create_approval,
 )
@@ -15,7 +15,7 @@ class OracleData(abi.NamedTuple):
 
 
 class OracleState:
-    prices = ReservedApplicationStateValue(stack_type=TealType.bytes, max_keys=64)
+    prices = ReservedGlobalStateValue(stack_type=TealType.bytes, max_keys=64)
 
 
 oracle_data_cache_app = Application(

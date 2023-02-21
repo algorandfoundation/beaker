@@ -47,7 +47,7 @@ def demo() -> None:
 
     # Opt in to contract with event registration payment included
     app_client_guest1.opt_in(payment=ptxn2)
-    acct_state = app_client_guest1.get_account_state()
+    acct_state = app_client_guest1.get_local_state()
     checked_in_val = acct_state["checked_in"]
     assert isinstance(checked_in_val, int)
     print(f"Only RSVPed so checked_in should be 0 and the state is {checked_in_val}")
@@ -56,7 +56,7 @@ def demo() -> None:
     # Check in to the event
     print("Guest 1 checking in to the Event...")
     app_client_guest1.call("check_in")
-    acct_state = app_client_guest1.get_account_state()
+    acct_state = app_client_guest1.get_local_state()
     checked_in_val = acct_state["checked_in"]
     assert isinstance(checked_in_val, int)
     print(f"checked_in should be 1 and the state is {checked_in_val}")
@@ -79,7 +79,7 @@ def demo() -> None:
     )
     # Opt in to contract with event registration payment included
     app_client_guest2.opt_in(payment=ptxn2)
-    acct_state = app_client_guest2.get_account_state()
+    acct_state = app_client_guest2.get_local_state()
     checked_in_val = acct_state["checked_in"]
     assert isinstance(checked_in_val, int)
     print(f"Only RSVPed so checked_in should be 0 and the state is {checked_in_val}")
@@ -94,7 +94,7 @@ def demo() -> None:
     app_client_guest2.close_out()
 
     try:
-        app_client_guest2.get_account_state()
+        app_client_guest2.get_local_state()
     except AlgodHTTPError as e:
         print(f"Succesfully closed_out: {e}")
 

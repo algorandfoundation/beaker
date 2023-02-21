@@ -22,7 +22,7 @@ from pyteal import (
     Expr,
 )
 from beaker import (
-    AccountStateBlob,
+    LocalStateBlob,
     Application,
     client,
     consts,
@@ -55,7 +55,7 @@ key_sig = KeySig(version=8)
 # to get an extra 2k of storage for each account
 class DiskHungryState:
     # Reserve all 16 keys for the blob in local state
-    data = AccountStateBlob(keys=16)
+    data = LocalStateBlob(keys=16)
 
 
 disk_hungry = Application(
@@ -80,7 +80,7 @@ def add_account(nonce: abi.DynamicBytes) -> Expr:
             # and that its being rekeyed to us
             Txn.rekey_to() == Global.current_application_address(),
         ),
-        disk_hungry.initialize_account_state(),
+        disk_hungry.initialize_local_state(),
     )
 
 
@@ -159,7 +159,7 @@ def demo() -> None:
         app_client.call(flip_bit, nonce_acct=lsig_signer.lsig.address(), bit_idx=idx)
 
         # Get the full state for the lsig we used to store this bit
-        acct_state = app_client.get_account_state(lsig_signer.lsig.address(), raw=True)
+        acct_state = app_client.get_local_state(lsig_signer.lsig.address(), raw=True)
 
         # Make sure the blob is in the right order
         blob = b"".join(

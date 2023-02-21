@@ -47,7 +47,7 @@ def unit_test_app_blueprint(
     """
 
     app = app.implement(unconditional_create_approval).implement(
-        unconditional_opt_in_approval, initialize_account_state=True
+        unconditional_opt_in_approval, initialize_local_state=True
     )
 
     @app.delete
@@ -135,7 +135,7 @@ def assert_output(
     app_client.create()
 
     has_state = (
-        spec.account_state_schema.num_byte_slices or spec.account_state_schema.num_uints
+        spec.local_state_schema.num_byte_slices or spec.local_state_schema.num_uints
     )
 
     if has_state:
