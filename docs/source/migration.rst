@@ -13,6 +13,9 @@ With version ``1.0`` of Beaker an application is no longer defined by inheriting
 ``Application`` is instantiated directly, state is separated from the class, and methods are
 added through decorators on the ``Application`` instance.
 
+.. note:: The examples in this guide are assumed to have the following imports at the top, but have been
+          omitted for brevity ``import beaker`` and  ``import pyteal``
+
 For example in ``0.x``:
 
 .. code-block:: python
@@ -31,9 +34,11 @@ in ``1.0`` this becomes:
 .. code-block:: python
 
     class MyState:
-        my_value = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+        my_value = beaker.GlobalStateValue(pyteal.TealType.uint64)
+
 
     app = beaker.Application("MyApp", state=MyState())
+
 
     @app.external
     def set_value(new_value: pyteal.abi.Uint64) -> pyteal.Expr:
@@ -86,7 +91,9 @@ becomes this in ``1.0``:
 
     app = beaker.Application(
         "MyApp",
-        build_options=beaker.BuildOptions(avm_version=7, scratch_slots=False, frame_pointers=False),
+        build_options=beaker.BuildOptions(
+            avm_version=7, scratch_slots=False, frame_pointers=False
+        ),
         descr="This is my Beaker app. There are others like it, but this one is mine",
     )
 
@@ -145,10 +152,10 @@ specification later, which can then be used with ``ApplicationClient``.
     app_spec.export("output_dir")
 
     # later, potentially in another code-base, or running in CI/CD
-    client = beaker.ApplicationClient(client=..., app="output_dir/application.json")
+    client = beaker.client.ApplicationClient(client=..., app="output_dir/application.json")
 
     # as a shortcut, if the ApplicationClient is in the same codebase as the Application:
-    client = beaker.ApplicationClient(client=..., app=app)
+    client = beaker.client.ApplicationClient(client=..., app=app)
 
 
 .. note:: The result of ``beaker.Application().build(...)`` is not cached.
@@ -209,7 +216,7 @@ in ``1.0`` this becomes:
 
 .. code-block:: python
 
-    @pyteal.Subroutine(TealType.uint64)
+    @pyteal.Subroutine(pyteal.TealType.uint64)
     def add(a: pyteal.Expr, b: pyteal.Expr) -> pyteal.Expr:
         return a + b
 
@@ -237,6 +244,7 @@ In ``1.0`` this becomes:
 .. code-block:: python
 
     app = beaker.Application("MyApp")
+
 
     @app.external(
         bare=True,
@@ -272,15 +280,15 @@ For example in ``0.x``:
 
         base_state = beaker.ApplicationStateValue(pyteal.TealType.uint64)
 
-        def add(self, a: pyteal.Uint64, b: pyteal.Uint64) -> pyteal.Expr:
+        def add(self, a: pyteal.Expr, b: pyteal.Expr) -> pyteal.Expr:
             return a + b
 
     class DerivedApp1(BaseApp):
         state1 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
 
         @beaker.external
-        def add_1(self, a: pyteal.Uint64) -> Expr:
-            return self.add(a, pyteal.Int(1))
+        def add_1(self, a: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64) -> Expr:
+            return output.set(self.add(a.get(), pyteal.Int(1)))
 
     app1 = DerivedApp1()
 
@@ -288,8 +296,8 @@ For example in ``0.x``:
         state2 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
 
         @beaker.external
-        def add_2(self, a: pyteal.Uint64) -> Expr:
-            return self.add(a, pyteal.Int(2))
+        def add_2(self, a: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64) -> Expr:
+            return output.set(self.add(a.get(), pyteal.Int(2)))
 
     app2 = DerivedApp2()
 
@@ -297,31 +305,39 @@ In ``1.0`` this could be:
 
 .. code-block:: python
 
-    ZERO = Int(0)
+    ZERO = pyteal.Int(0)
+
 
     class BaseState:
-        base_state = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+        base_state = beaker.GlobalStateValue(pyteal.TealType.uint64)
+
 
     class App1State(BaseState):
-        state1 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+        state1 = beaker.GlobalStateValue(pyteal.TealType.uint64)
+
 
     class App2State(BaseState):
-        state2 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+        state2 = beaker.GlobalStateValue(pyteal.TealType.uint64)
 
-    def add(a: pyteal.Uint64, b: pyteal.Uint64) -> pyteal.Expr:
+
+    def add(a: pyteal.Expr, b: pyteal.Expr) -> pyteal.Expr:
         return a + b
 
-    app1 = Application("DerivedApp1", state=App1State())
+
+    app1 = beaker.Application("DerivedApp1", state=App1State())
+
 
     @app1.external
-    def add1(a: pyteal.Uint64):
-        return add(a, pyteal.Int(1))
+    def add1(a: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64) -> pyteal.Expr:
+        return output.set(add(a.get(), pyteal.Int(1)))
 
-    app2 = Application("DerivedApp2", state=App2State())
+
+    app2 = beaker.Application("DerivedApp2", state=App2State())
+
 
     @app2.external
-    def add2(a: pyteal.Uint64):
-        return add(a, pyteal.Int(2))
+    def add2(a: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64) -> pyteal.Expr:
+        return output.set(add(a.get(), pyteal.Int(2)))
 
 There will be some scenarios where the above will not be sufficient, for example having the same ABI method across
 multiple apps.
@@ -335,28 +351,28 @@ For example, suppose two applications both need an ABI method that adds two numb
 .. code-block:: python
 
     def calculator_blueprint(app: beaker.Application, fudge_factor: int = 0) -> None:
-
         @app.external
         def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-            return output.set(a.get() + b.get() + Int(fudge_factor))
+            return output.set(a.get() + b.get() + pyteal.Int(fudge_factor))
 
 The blueprint can then be applied to the applications using the shortcut ``app.implement``:
 
 .. code-block:: python
 
-    app = Application("App").implement(calculator_blueprint)
+    app = beaker.Application("App").implement(calculator_blueprint)
 
-    off_by_one_app = Application("OffByOne").implement(calculator_blueprint, fudge_factor=1)
-
+    off_by_one_app = beaker.Application("OffByOne").implement(
+        calculator_blueprint, fudge_factor=1
+    )
 
 Note that this is equivalent to:
 
 .. code-block:: python
 
-    app = Application("App")
+    app = beaker.Application("App")
     calculator_blueprint(app)
 
-    off_by_one_app = Application("OffByOne")
+    off_by_one_app = beaker.Application("OffByOne")
     calculator_blueprint(off_by_one_app, fudge_factor=1)
 
 
@@ -392,13 +408,15 @@ In ``1.0`` this becomes:
 
     def a_blueprint(app: beaker.Application) -> None:
         @app.external
-        def same_signature(a: abi.Uint64, b: abi.Uint64):
+        def same_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
             ...
+
 
     app = beaker.Application("DerivedApp").implement(a_blueprint)
 
+
     @app.external(override=True)
-    def same_signature(a: abi.Uint64, b: abi.Uint64):
+    def same_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
         ...
 
 For example in ``0.x`` an override with a different signature:
@@ -520,7 +538,7 @@ in ``1.0`` this becomes:
 .. code-block:: python
 
     def evaluate(some_value: pyteal.Expr):
-        return pyteal.ReturnValue(some_value)
+        return pyteal.Return(some_value)
 
     my_signature = beaker.LogicSignatureTemplate(
         evaluate,
@@ -569,6 +587,7 @@ In ``1.0`` this becomes:
 
     app = beaker.Application("MyApp")
 
+
     @app.external
     def check_it():
         precompile = beaker.precompiled(my_logic_signature)
@@ -598,24 +617,27 @@ by keyword only, for example:
          @external
          def check_it(self):
              return pt.Assert(
-                 pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(tmpl_val))
+                 pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(template_value))
              )
 
 Could become:
 
 .. code-block:: python
 
-    lsig = LogicSignatureTemplate(
-         lambda tv: pyteal.Seq(pyteal.Assert(tv), pyteal.Int(1)),
-         runtime_template_variables={"tv": pyteal.TealType.uint64},
-     )
+    lsig = beaker.LogicSignatureTemplate(
+        lambda tv: pyteal.Seq(pyteal.Assert(tv), pyteal.Int(1)),
+        runtime_template_variables={"tv": pyteal.TealType.uint64},
+    )
 
     app = beaker.Application("App")
 
+
     @app.external
-     def check_it() -> ptyeal.Expr:
-         lsig_pc = beaker.precompiled(lsig)
-         return pyteal.Assert(pyteal.Txn.sender() == lsig_pc.address(tv=pyteal.Int(tmpl_val)))
+    def check_it() -> pyteal.Expr:
+        lsig_pc = beaker.precompiled(lsig)
+        return pyteal.Assert(
+            pyteal.Txn.sender() == lsig_pc.address(tv=pyteal.Int(template_value))
+        )
 
 Note the ``tv=`` in the call to ``address``, versus the lack of the variable name in the call to ``template_hash`` previously.
 
@@ -646,13 +668,16 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
+    import beaker.precompile
+    import algosdk.atomic_transaction_composer
+
     signature = beaker.LogicSignature(...)
 
-    precompiled_signature = beaker.PrecompiledLogicSignature(signature, client=...)
+    precompiled_signature = beaker.precompile.PrecompiledLogicSignature(
+        signature, client=...
+    )
     signer = algosdk.atomic_transaction_composer.LogicSigTransactionSigner(
-        algosdk.transaction.LogicSigAccount(
-            precompiled_signature.logic_program.raw_binary
-        )
+        algosdk.transaction.LogicSigAccount(precompiled_signature.logic_program.raw_binary)
     )
 
 Templated Signer
@@ -678,16 +703,18 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
+    import beaker.precompile
+    import algosdk.atomic_transaction_composer
+
     signature = beaker.LogicSignatureTemplate(
-        lambda tv: ...,
-        runtime_template_variables={"tv": pyteal.TealType.uint64}
+        lambda tv: ..., runtime_template_variables={"tv": pyteal.TealType.uint64}
     )
 
-    precompiled_signature = beaker.PrecompiledLogicSignatureTemplate(signature, client=...)
+    precompiled_signature = beaker.precompile.PrecompiledLogicSignatureTemplate(
+        signature, client=...
+    )
     signer = algosdk.atomic_transaction_composer.LogicSigTransactionSigner(
-        algosdk.transaction.LogicSigAccount(
-            precompiled_signature.populate_template(tv=123)
-        )
+        algosdk.transaction.LogicSigAccount(precompiled_signature.populate_template(tv=123))
     )
 
 State related classes and methods
