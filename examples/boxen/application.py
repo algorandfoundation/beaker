@@ -23,7 +23,7 @@ from beaker import (
     consts,
     unconditional_create_approval,
 )
-from beaker.lib.storage import Mapping, List
+from beaker.lib.storage import BoxMapping, BoxList
 
 
 # Use a box per member to denote membership parameters
@@ -77,7 +77,7 @@ class MembershipClubState:
     )
 
     # A Listing is a simple list, initialized with some _static_ data type and a length
-    affirmations = List(Affirmation, 10)
+    affirmations = BoxList(Affirmation, 10)
 
     def __init__(self, *, max_members: int, record_type: type[abi.BaseType]):
         self.record_type = record_type
@@ -85,7 +85,7 @@ class MembershipClubState:
         # taking a data type for key and value
         # Only static types can provide information about the max
         # size (and thus min balance required) - dynamic types will fail at abi.size_of
-        self.membership_records = Mapping(abi.Address, record_type)
+        self.membership_records = BoxMapping(abi.Address, record_type)
 
         # Math for determining min balance based on expected size of boxes
         self.max_members = Int(max_members)

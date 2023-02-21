@@ -1,12 +1,12 @@
 import pyteal as pt
-from beaker.lib.storage import List
+from beaker.lib.storage import BoxList
 from beaker.application import Application
 
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
 
 
 def test_list() -> None:
-    l = List(pt.abi.Uint64, 100, name="l")
+    l = BoxList(pt.abi.Uint64, 100, name="l")
 
     assert l._elements == 100
     assert l._element_size == 8
@@ -39,7 +39,7 @@ def test_list() -> None:
 
 def test_list_app() -> None:
     class State:
-        l = List(pt.abi.Uint64, 100)
+        l = BoxList(pt.abi.Uint64, 100)
 
     t = Application("T", state=State())
 

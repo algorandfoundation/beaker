@@ -1,6 +1,6 @@
 import pytest
 import pyteal as pt
-from beaker.lib.storage.mapping import Mapping, MapElement
+from beaker.lib.storage import BoxMapping
 from beaker.application import Application
 
 
@@ -8,7 +8,7 @@ options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Applicatio
 
 
 def test_mapping() -> None:
-    m = Mapping(pt.abi.Address, pt.abi.Uint64)
+    m = BoxMapping(pt.abi.Address, pt.abi.Uint64)
     assert m._key_type == pt.abi.Address
     assert m._key_type_spec == pt.abi.AddressTypeSpec()
 
@@ -22,7 +22,7 @@ def test_mapping() -> None:
         m[pt.Int(1)]
 
     item = m[pt.Txn.sender()]
-    assert isinstance(item, MapElement)
+    assert isinstance(item, BoxMapping.Element)
 
     expected, _ = pt.Seq(
         bx := pt.BoxGet(pt.Txn.sender()), pt.Assert(bx.hasValue()), bx.value()
@@ -55,7 +55,7 @@ def test_mapping() -> None:
 
 def test_app_mapping() -> None:
     class State:
-        m = Mapping(pt.abi.Address, pt.abi.Uint64)
+        m = BoxMapping(pt.abi.Address, pt.abi.Uint64)
 
     t = Application("T", state=State())
 

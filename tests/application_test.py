@@ -13,7 +13,7 @@ from beaker import (
 )
 from beaker.application_specification import ApplicationSpecification
 from beaker.blueprints import unconditional_create_approval
-from beaker.lib.storage import List
+from beaker.lib.storage import BoxList
 from beaker.state import (
     ReservedGlobalStateValue,
     GlobalStateValue,
@@ -284,7 +284,7 @@ def test_state_init() -> None:
             descr="uint_local_dynamic_description",
         )
         # box
-        lst = List(value_type=abi.Uint32, elements=5, name="lst_description")
+        lst = BoxList(value_type=abi.Uint32, elements=5, name="lst_description")
         # not-state
         not_a_state_var = pt.Int(1)
 
