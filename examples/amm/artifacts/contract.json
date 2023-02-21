@@ -20,7 +20,7 @@
                 {
                     "type": "pay",
                     "name": "seed",
-                    "desc": "Initial Payment transaction to the app account so it can opt in to assets and create pool token."
+                    "desc": "Initial Payment transaction to the app account so it can opt in to assets  and create pool token."
                 },
                 {
                     "type": "asset",
@@ -37,7 +37,7 @@
                 "type": "uint64",
                 "desc": "The asset id of the pool token created."
             },
-            "desc": "bootstraps the contract by opting into the assets and creating the pool token.\nNote this method will fail if it is attempted more than once on the same contract since the assets and pool token application state values are marked as static and cannot be overridden."
+            "desc": "bootstraps the contract by opting into the assets and creating the pool token.\nNote this method will fail if it is attempted more than once on the same contract  since the assets and pool token application state values are marked as static and  cannot be overridden."
         },
         {
             "name": "mint",
@@ -45,12 +45,12 @@
                 {
                     "type": "axfer",
                     "name": "a_xfer",
-                    "desc": "Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens."
+                    "desc": "Asset Transfer Transaction of asset A as a deposit to the pool in  exchange for pool tokens."
                 },
                 {
                     "type": "axfer",
                     "name": "b_xfer",
-                    "desc": "Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens."
+                    "desc": "Asset Transfer Transaction of asset B as a deposit to the pool in  exchange for pool tokens."
                 },
                 {
                     "type": "asset",
@@ -71,7 +71,7 @@
             "returns": {
                 "type": "void"
             },
-            "desc": "mint pool tokens given some amount of asset A and asset B.\nGiven some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with the pools current balance and circulating supply of pool tokens."
+            "desc": "mint pool tokens given some amount of asset A and asset B.\nGiven some amount of Asset A and Asset B in the transfers, mint some number of pool  tokens commensurate with the pools current balance and circulating supply of  pool tokens."
         },
         {
             "name": "burn",
@@ -79,7 +79,7 @@
                 {
                     "type": "axfer",
                     "name": "pool_xfer",
-                    "desc": "Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem"
+                    "desc": "Asset Transfer Transaction of the pool token for the amount the  sender wishes to redeem"
                 },
                 {
                     "type": "asset",

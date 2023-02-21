@@ -79,7 +79,8 @@ class ConstantProductAMMState:
         stack_type=TealType.uint64,
         key="p",
         static=True,
-        descr="The asset id of the Pool Token, used to track share of pool the holder may recover",
+        descr="The asset id of the Pool Token, "
+        "used to track share of pool the holder may recover",
     )
     ratio = GlobalStateValue(
         stack_type=TealType.uint64,
@@ -88,9 +89,10 @@ class ConstantProductAMMState:
     )
 
 
-amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState()).implement(
-    unconditional_create_approval, initialize_global_state=True
-)
+amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState())
+
+# On create, init app state
+amm_app.implement(unconditional_create_approval, initialize_global_state=True)
 ##############
 # Constants
 ##############
@@ -125,11 +127,13 @@ def bootstrap(
 ) -> Expr:
     """bootstraps the contract by opting into the assets and creating the pool token.
 
-    Note this method will fail if it is attempted more than once on the same contract since the assets and pool token
-    application state values are marked as static and cannot be overridden.
+    Note this method will fail if it is attempted more than once on the same contract
+    since the assets and pool token application state values are marked as static and
+    cannot be overridden.
 
     Args:
-        seed: Initial Payment transaction to the app account so it can opt in to assets and create pool token.
+        seed: Initial Payment transaction to the app account so it can opt in to assets
+            and create pool token.
         a_asset: One of the two assets this pool should allow swapping between.
         b_asset: The other of the two assets this pool should allow swapping between.
 
@@ -184,12 +188,15 @@ def mint(
 ) -> Expr:
     """mint pool tokens given some amount of asset A and asset B.
 
-    Given some amount of Asset A and Asset B in the transfers, mint some number of pool tokens commensurate with
-    the pools current balance and circulating supply of pool tokens.
+    Given some amount of Asset A and Asset B in the transfers, mint some number of pool
+    tokens commensurate with the pools current balance and circulating supply of
+    pool tokens.
 
     Args:
-        a_xfer: Asset Transfer Transaction of asset A as a deposit to the pool in exchange for pool tokens.
-        b_xfer: Asset Transfer Transaction of asset B as a deposit to the pool in exchange for pool tokens.
+        a_xfer: Asset Transfer Transaction of asset A as a deposit to the pool in
+            exchange for pool tokens.
+        b_xfer: Asset Transfer Transaction of asset B as a deposit to the pool in
+            exchange for pool tokens.
         pool_asset: The asset ID of the pool token so that we may distribute it.
         a_asset: The asset ID of the Asset A so that we may inspect our balance.
         b_asset: The asset ID of the Asset B so that we may inspect our balance.
@@ -300,7 +307,8 @@ def burn(
     """burn pool tokens to get back some amount of asset A and asset B
 
     Args:
-        pool_xfer: Asset Transfer Transaction of the pool token for the amount the sender wishes to redeem
+        pool_xfer: Asset Transfer Transaction of the pool token for the amount the
+            sender wishes to redeem
         pool_asset: Asset ID of the pool token so we may inspect balance.
         a_asset: Asset ID of Asset A so we may inspect balance and distribute it
         b_asset: Asset ID of Asset B so we may inspect balance and distribute it
@@ -350,7 +358,8 @@ def burn(
             a_bal.hasValue(),
             b_bal.hasValue(),
         ),
-        # Get the total number of tokens issued (prior to receiving the current axfer of pool tokens)
+        # Get the total number of tokens issued
+        # !important: this happens prior to receiving the current axfer of pool tokens
         (issued := ScratchVar()).store(
             total_supply_expr - (pool_bal.value() - pool_xfer.get().asset_amount())
         ),

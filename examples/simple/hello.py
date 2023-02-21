@@ -3,13 +3,9 @@ from beaker import (
     sandbox,
     client,
     Application,
-    unconditional_create_approval,
-    BuildOptions,
 )
 
-hello_app = Application(
-    "HelloBeaker", build_options=BuildOptions(avm_version=8)
-).implement(unconditional_create_approval)
+hello_app = Application("HelloBeaker")
 
 
 @hello_app.external
@@ -23,7 +19,7 @@ def demo() -> None:
     app_client = client.ApplicationClient(
         # Get sandbox algod client
         client=sandbox.get_algod_client(),
-        # Instantiate app with the program version (default is MAX_TEAL_VERSION)
+        # Pass instance of app to client
         app=hello_app,
         # Get acct from sandbox and pass the signer
         signer=sandbox.get_accounts().pop().signer,
