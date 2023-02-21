@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from beaker import Application, sandbox, LogicSignature
+from beaker import Application, sandbox, LogicSignature, LogicSignatureTemplate
 
 
 def check_application_artifacts_output_stability(
@@ -71,16 +71,21 @@ def check_application_artifacts_output_stability(
         )
 
 
-def check_lsig_output_stability(lsig: LogicSignature) -> None:
+def check_lsig_output_stability(
+    lsig: LogicSignature | LogicSignatureTemplate, output_path: Path | None = None
+) -> None:
     assert lsig.program is not None
 
-    lsig_class = lsig.__class__
-    lsig_name = lsig_class.__qualname__
-    module_path = Path(inspect.getfile(lsig_class))
-    module_dir = module_path.parent
-    output_dir = module_dir / "lsig_teal"
-    output_dir.mkdir(exist_ok=True)
-    output_path = output_dir / f"{lsig_name}.teal"
+    if output_path is None:
+        lsig_class = lsig.__class__
+        lsig_name = lsig_class.__qualname__
+        module_path = Path(inspect.getfile(lsig_class))
+        module_dir = module_path.parent
+        output_dir = module_dir / "lsig_teal"
+        output_dir.mkdir(exist_ok=True)
+        output_path = output_dir / f"{lsig_name}.teal"
+    else:
+        output_path.parent.mkdir(exist_ok=True, parents=True)
 
     output_did_exist = output_path.is_file()
 
@@ -105,6 +110,6 @@ def check_lsig_output_stability(lsig: LogicSignature) -> None:
     # if first time running, fail in case of accidental change to output directory
     if not output_did_exist:
         pytest.fail(
-            f"New output file created at {output_path_str} from logic-signature {lsig_name} - "
+            f"New output file created at {output_path_str} from logic-signature - "
             "if this was intentional, please commit the file to the git repo"
         )

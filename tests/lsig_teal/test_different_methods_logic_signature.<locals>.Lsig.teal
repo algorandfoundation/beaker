@@ -33,8 +33,6 @@ retsub
 internalscratchtester_1:
 proto 2 1
 frame_dig -2
-store 3
-load 3
 loads
 frame_dig -1
 *

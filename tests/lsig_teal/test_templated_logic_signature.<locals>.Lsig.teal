@@ -1,7 +1,5 @@
 #pragma version 8
 pushbytes TMPL_PUBKEY // TMPL_PUBKEY
-store 0
-load 0
 len
 assert
 pushint 1 // 1

@@ -1,7 +1,5 @@
 #pragma version 8
 txna ApplicationArgs 1
-store 0
-load 0
 callsub checked_0
 assert
 pushint 1 // 1

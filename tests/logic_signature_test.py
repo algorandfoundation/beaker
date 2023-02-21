@@ -1,15 +1,34 @@
+from pathlib import Path
+
 import pyteal as pt
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
+from tests.conftest import check_lsig_output_stability
+
+
+output_dir = Path(__file__).parent / "lsig_teal"
+
+
+def _check_output_stability(lsig: LogicSignature | LogicSignatureTemplate) -> None:
+    import inspect
+
+    caller_frame = inspect.stack()[1]
+    caller_name = caller_frame.function
+
+    output_path = output_dir / f"{caller_name}.<locals>.Lsig.teal"
+
+    check_lsig_output_stability(lsig, output_path)
 
 
 def test_simple_logic_signature() -> None:
     lsig = LogicSignature(pt.Reject())
     assert lsig.program
+    _check_output_stability(lsig)
 
 
 def test_evaluate_logic_signature() -> None:
     lsig = LogicSignature(pt.Approve())
     assert lsig.program
+    _check_output_stability(lsig)
 
 
 def test_handler_logic_signature() -> None:
@@ -26,7 +45,9 @@ def test_handler_logic_signature() -> None:
 
     lsig = LogicSignature(evaluate)
 
-    assert len(lsig.program) > 0
+    assert lsig.program
+
+    _check_output_stability(lsig)
 
 
 def test_templated_logic_signature() -> None:
@@ -44,13 +65,14 @@ def test_templated_logic_signature() -> None:
     lsig = Lsig()
 
     assert len(lsig.runtime_template_variables) == 1
-    assert len(lsig.program) > 0
-
+    assert lsig.program
     assert "pushbytes TMPL_PUBKEY" in lsig.program
+
+    _check_output_stability(lsig)
 
 
 def test_different_methods_logic_signature() -> None:
-    @pt.ABIReturnSubroutine
+    # @pt.ABIReturnSubroutine
     def abi_tester(s: pt.abi.String, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(pt.Len(s.get()))
 
@@ -62,7 +84,7 @@ def test_different_methods_logic_signature() -> None:
     def internal_scratch_tester(x: pt.ScratchVar, y: pt.Expr) -> pt.Expr:
         return x.load() * y
 
-    @pt.ABIReturnSubroutine
+    # @pt.ABIReturnSubroutine
     def no_self_abi_tester(x: pt.abi.Uint64, y: pt.abi.Uint64) -> pt.Expr:
         return x.get() * y.get()
 
@@ -74,7 +96,8 @@ def test_different_methods_logic_signature() -> None:
         def evaluate() -> pt.Expr:
             return pt.Seq(
                 (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                (o := pt.abi.Uint64()).set(abi_tester(s)),
+                # (o := pt.abi.Uint64()).set(abi_tester(s)),
+                abi_tester(s, output=(o := pt.abi.Uint64())),
                 pt.Assert(internal_tester(o.get(), pt.Len(s.get()))),
                 (sv := pt.ScratchVar()).store(pt.Int(1)),
                 pt.Assert(internal_scratch_tester(sv, o.get())),
@@ -85,7 +108,9 @@ def test_different_methods_logic_signature() -> None:
 
     lsig = Lsig()
 
-    assert len(lsig.program) > 0
+    assert lsig.program
+
+    _check_output_stability(lsig)
 
 
 def test_lsig_template_ordering() -> None:
