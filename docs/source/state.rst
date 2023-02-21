@@ -26,9 +26,9 @@ Application State
 
 Application State holds the stateful values for the Application. Algorand refers to this state as ``Global State``. 
 
-The ``ApplicationState`` class is produced automatically by the ``Application``, there is no need to create it directly.
+The ``ApplicationStateStorage`` class is produced automatically by the ``Application``, there is no need to create it directly.
 
-.. autoclass:: ApplicationState
+.. autoclass:: ApplicationStateStorage
     :members:
 
 .. _application_state_value:
@@ -66,9 +66,9 @@ Account State
 If your application requires storage of state at the Account level, declare the state values at the ``class`` level and the Application class will detect them on initialization. 
 Algorand refers to Account state as `Local State`
 
-The ``AccountState`` class is produced automatically by the ``Application``, there is no need to create it directly.
+The ``AccountStateStorage`` class is produced automatically by the ``Application``, there is no need to create it directly.
 
-.. autoclass:: AccountState
+.. autoclass:: AccountStateStorage
     :members:
 
 .. _account_state_value:

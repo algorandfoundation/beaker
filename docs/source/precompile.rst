@@ -22,13 +22,10 @@ This can be done in two ways:
 
 .. module:: beaker.precompile 
 
-.. autoclass:: AppPrecompile
+.. autoclass:: PrecompiledApplication
     :members:
 
-.. autoclass:: LSigPrecompile
-    :members:
-
-.. autoclass:: Precompile
+.. autoclass:: PrecompiledLogicSignature
     :members:
 
 .. autoclass:: PrecompileTemplateValue

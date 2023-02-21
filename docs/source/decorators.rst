@@ -8,19 +8,6 @@ Beaker uses decorated methods to apply configurations to the methods they decora
 
 .. module:: beaker.decorators
 
-.. _external:
-
-ABI Method external
---------------------
-
-The ``external`` decorator is how we can add methods to be handled as ABI methods. 
-
-Tagging a method as ``external`` adds it to the internal ``Router`` with whatever configuration is passed, if any.
-
-.. autodecorator:: external
-
-
-
 .. _authorization:
 
 Authorization
@@ -85,16 +72,8 @@ But we can define our own
         return output.set("hello whale")
 
 
-
-.. _method_hints:
-
-Method Hints
-^^^^^^^^^^^^
-
-.. autoclass:: MethodHints
-    :members:
-
-
+Application decorators
+----------------------
 
 .. _read_only:
 
@@ -108,32 +87,44 @@ See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more detai
 
     count = ApplicationStateValue(stack_type=TealType.uint64) 
 
-    @external(read_only=True)
+    @app.external(read_only=True)
     def get_count(self, id_of_thing: abi.Uint8, *, output: abi.Uint64):
         return output.set(self.count)
 
 
 .. _internal_methods:
 
-Internal Methods
-----------------
+Subroutines
+-----------
 
 An Application will often need a number of internal ``utility`` type methods to handle common logic.  
 We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
 
 .. note:: 
-    If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@internal`` decorator and the expression will be inlined 
-
-
-.. autodecorator:: internal
+    If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@Subroutine`` decorator and the expression will be inlined
 
 .. code-block:: python
 
-    @internal(TealType.uint64)
+    @pyteal.Subroutine(TealType.uint64)
     def do_logic(self):
         return If(self.counter>10, self.send_asset())
 
+.. module:: beaker.application
+    :noindex:
 
+.. _external:
+
+ABI Method external
+--------------------
+
+The ``external`` decorator is how we can add methods to be handled as ABI methods.
+
+Tagging a method as ``external`` adds it to the internal ``Router`` with whatever configuration is passed, if any.
+
+.. autoclass:: Application
+    :noindex:
+    :special-members:
+    :members: external
 
 .. _oncomplete_externals:
 
@@ -146,12 +137,10 @@ If a method expects the ``ApplicationCallTransaction`` to have an  ``OnComplete`
 OnComplete Decorators 
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autodecorator:: create
-.. autodecorator:: delete 
-.. autodecorator:: update 
-.. autodecorator:: opt_in 
-.. autodecorator:: close_out 
-.. autodecorator:: clear_state 
+.. autoclass:: Application
+    :noindex:
+    :special-members:
+    :members: external, create, delete, update, opt_in, close_out, clear_state
 
 The ARC4 spec allows applications to define externals for ``bare`` methods, that is methods with no application arguments. 
 
@@ -163,6 +152,4 @@ The same handlers described above will also work for ``bare`` method calls but m
 Multiple Bare externals
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a method requires handling multiple ``OnComplete`` actions, use ``bare_external``
-
-.. autodecorator:: bare_external
+If a method requires handling multiple ``OnComplete`` actions, use ``Application.external`` with the parameter ``bare=True``

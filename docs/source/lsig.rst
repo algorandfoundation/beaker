@@ -14,7 +14,7 @@ This class should **not** be initialized directly.
 .. autoclass:: LogicSignature
     :members:
 
-.. autoclass:: TemplateVariable
+.. autoclass:: LogicSignatureTemplate
     :members:
 
 .. _lsig_example:
