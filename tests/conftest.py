@@ -45,7 +45,7 @@ def check_application_artifacts_output_stability(
     output_dir_did_exist = output_dir.is_dir()
 
     output_dir_str = str(output_dir.resolve())
-    spec.dump(output_dir)
+    spec.export(output_dir)
     assert output_dir.is_dir()
     git_diff = subprocess.run(
         [

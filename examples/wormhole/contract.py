@@ -64,4 +64,4 @@ oracle_data_cache_app.implement(wormhole_transfer, handle_transfer=handle_transf
 
 
 if __name__ == "__main__":
-    oracle_data_cache_app.dump("./spec")
+    oracle_data_cache_app.build().export("./spec")

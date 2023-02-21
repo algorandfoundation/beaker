@@ -3,8 +3,11 @@
 
 The following guide illustrates the changes in applications written with ``0.x`` version of Beaker compared to ``1.0``
 
+Application
+-----------
+
 Application instantiation
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With version ``1.0`` of Beaker an application is no longer defined by inheriting ``Application``, instead
 ``Application`` is instantiated directly, state is separated from the class, and methods are
@@ -62,7 +65,9 @@ The key changes to note above:
 
 
 Application() arguments
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The arguments that ``Application.__init__()`` takes have changed, the following in ``0.5.4``:
 
 .. code-block:: python
 
@@ -75,7 +80,7 @@ Application() arguments
         optimize_options=pyteal.OptimizeOptions(scratch_slots=False, frame_pointers=False),
     )
 
-in ``1.0`` this becomes:
+becomes this in ``1.0``:
 
 .. code-block:: python
 
@@ -87,23 +92,66 @@ in ``1.0`` this becomes:
 
 Key changes:
 
-1. The first parameter to ``Application()`` is the name of the app. This was taken from the name of the class in 0.x, so
-   the above examples should be equivalent.
+1. The first parameter to ``Application()`` is the name of the app. This was taken from the name of the class in ``0.x``,
+   so the above examples should be equivalent.
 2. All options that control TEAL generation are under ``build_options``, and ``version`` has been renamed to ``avm_version``.
 3. The ``desc`` field in the ARC-4 contract was taken from the doc-string of the class in ``0.x`` (or a base class if no
    doc-string was defined), this is now the ``descr`` parameter.
 
 Application.id and Application.address
---------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``Application.id`` and ``Application.address`` have been removed. These shortcuts were potentially misleading for
-new developers - they always return the ID and Address of the currently executing application, not the application
-which they were accessed through. In the case of multiple applications in a single code base, this could be misleading.
+``Application.id`` and ``Application.address`` have been removed. These shortcuts were potentially misleading - they
+always return the ID and Address of the currently executing application, not the application which they were accessed
+through. In the case of multiple applications in a single code base, this could be misleading.
 
 To migrate:
 
 1. Replace usages of ``self.address`` with ``Global.current_application_address()``.
 2. Replace usages of ``self.id`` with ``Global.current_application_id()``.
+
+
+Application.compile()
+^^^^^^^^^^^^^^^^^^^
+
+``Application.compile()`` has been renamed to ``build()`` and now returns an ``ApplicationSpecification``, which contains,
+among other things, the approval and clear program TEAL that was previously returned.
+
+In ``0.x``:
+
+.. code-block:: python
+
+    app = MyApp()
+    approval_program, clear_program = app.compile()
+    app.dump("output_dir")
+
+In ``1.0``:
+
+.. code-block:: python
+
+    app = beaker.Application("MyApp")
+    app_spec = app.build()
+    approval_program, clear_program = app_spec.approval_program, app_spec.clear_program
+    app_spec.export("output_dir")
+
+
+Importantly, this change allows building an ``Application``, serializing the specification to disk, and then deserializing the
+specification later, which can then be used with ``ApplicationClient``.
+
+.. code-block:: python
+
+    app = beaker.Application("MyApp")
+    app_spec = app.build()
+    app_spec.export("output_dir")
+
+    # later, potentially in another code-base, or running in CI/CD
+    client = beaker.ApplicationClient(client=..., app="output_dir/application.json")
+
+    # as a shortcut, if the ApplicationClient is in the same codebase as the Application:
+    client = beaker.ApplicationClient(client=..., app=app)
+
+
+.. note:: The result of ``beaker.Application().build(...)`` is not cached.
 
 Decorators
 ----------
@@ -123,27 +171,28 @@ The following decorators are all now accessed through the ``Application`` instan
   however since the clear state program can not reject, there is no way to ensure these arguments are available, leading
   to silent failures.
 
-TODO: decorated methods return ABIReturnSubroutine or SubroutineWrapperFn now, not the original method - it's unlikely
-people were using this according to Ben, but we should note that these will no longer be inlined.
+.. note:: Decorated methods now return ``ABIReturnSubroutine`` or ``SubroutineWrapperFn``, not the original method. This
+          should mostly be an internal change only, but if these methods were being invoked by other methods within the
+          contract, this will result in changes to TEAL output as they will no longer be inlined.
 
-internal
-^^^^^^^^
+@internal
+^^^^^^^^^
 
-The ``beaker.internal`` decorator is no longer required and has been removed. It can be replaced with one of the following
+The ``beaker.internal`` decorator is no longer required and has been removed. It can be replaced with one of the following:
 
-+--------------------------+--------------------------------------+-----------------------------+
-|``0.x`` internal          |Equivalent ``1.0`` decorator          |Notes                        |
-+==========================+======================================+=============================+
-|``@internal(TealType.*)`` |``@pyteal.Subroutine(TealType.*)``    |Creates a subroutine         |
-+--------------------------+--------------------------------------+-----------------------------+
-|``@internal``             |None                                  |Expression will be inlined,  |
-+--------------------------+                                      |matching previous behaviour. |
-|``@internal(None)``       |                                      |                             |
-+--------------------------+--------------------------------------+-----------------------------+
-|``@internal``             |``@pyteal.ABIReturnSubroutine``       |Creates an ABI subroutine,   |
-+--------------------------+                                      |matching expected behaviour. |
-|``@internal(None)``       |                                      |                             |
-+--------------------------+--------------------------------------+-----------------------------+
++--------------------------+--------------------------------------+--------------------------------+
+|``0.x`` internal          |Equivalent ``1.0`` decorator          |Notes                           |
++==========================+======================================+================================+
+|``@internal(TealType.*)`` |``@pyteal.Subroutine(TealType.*)``    |Creates a subroutine            |
++--------------------------+--------------------------------------+--------------------------------+
+|``@internal``             |None                                  | | Expression will be inlined,  |
++--------------------------+                                      | | matching previous behaviour. |
+|``@internal(None)``       |                                      |                                |
++--------------------------+--------------------------------------+--------------------------------+
+|``@internal``             |``@pyteal.ABIReturnSubroutine``       | | Creates an ABI subroutine,   |
++--------------------------+                                      | | matching expected behaviour. |
+|``@internal(None)``       |                                      |                                |
++--------------------------+--------------------------------------+--------------------------------+
 
 .. note:: Due to a bug in ``0.x`` Beaker, ``@internal`` decorators without a ``TealType`` were always inlined.
 
@@ -152,7 +201,6 @@ For example in ``0.x``:
 .. code-block:: python
 
     class MyApp(beaker.Application):
-
         @beaker.internal(TealType.uint64)
         def add(self, a: pyteal.Expr, b: pyteal.Expr) -> pyteal.Expr:
             return a + b
@@ -165,20 +213,23 @@ in ``1.0`` this becomes:
     def add(a: pyteal.Expr, b: pyteal.Expr) -> pyteal.Expr:
         return a + b
 
-bare_external
-^^^^^^^^^^^^^
+@bare_external
+^^^^^^^^^^^^^^
 
-The ``beaker.bare_external`` decorator has been removed, but can be replaced with ``Application.external``
-by moving the parameters to ``method_config`` and adding ``bare=True``.
+The functionality of ``beaker.bare_external`` decorator have been incorporated into ``@external``.
+``@beaker.bare_external`` in ``0.x`` can be replaced with ``Application.external`` by moving the parameters to
+``method_config`` and adding ``bare=True``.
 
 For example in ``0.x``:
 
 .. code-block:: python
 
     class MyApp(beaker.Application):
-
-        @beaker.bare_external(opt_in=CallConfig.CREATE, no_op=CallConfig.CREATE)
-        def foo(self):
+        @beaker.bare_external(
+            opt_in=pyteal.CallConfig.CREATE,
+            no_op=pyteal.CallConfig.CREATE,
+        )
+        def foo(self) -> pyteal.Expr:
             ...
 
 In ``1.0`` this becomes:
@@ -187,9 +238,14 @@ In ``1.0`` this becomes:
 
     app = beaker.Application("MyApp")
 
-    @app.external(bare=True,
-        method_config=pyteal.MethodConfig(opt_in=CallConfig.CREATE, no_op=CallConfig.CREATE))
-    def foo():
+    @app.external(
+        bare=True,
+        method_config=pyteal.MethodConfig(
+            opt_in=pyteal.CallConfig.CREATE,
+            no_op=pyteal.CallConfig.CREATE,
+        ),
+    )
+    def foo() -> pyteal.Expr:
         ...
 
 Sharing code or config between contracts
@@ -205,26 +261,33 @@ Any class constants used in ``0.x`` can be moved to module level constants in ``
 
 Other usages of inheritance in ``0.x`` are often around sharing code between different smart contracts
 i.e. ``BaseApp`` contains some common functions and ``DerivedApp1`` and ``DerivedApp2`` can use those functions.
-In these cases, the shared function can just be regular python functions that each app calls as required
+In these cases, the shared function can just be regular Python functions that each app calls as required
 
 For example in ``0.x``:
 
 .. code-block:: python
 
-    class BaseApp(Application):
+    class BaseApp(beaker.Application):
+        ZERO = Int(0)
+
+        base_state = beaker.ApplicationStateValue(pyteal.TealType.uint64)
 
         def add(self, a: pyteal.Uint64, b: pyteal.Uint64) -> pyteal.Expr:
             return a + b
 
     class DerivedApp1(BaseApp):
+        state1 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
 
+        @beaker.external
         def add_1(self, a: pyteal.Uint64) -> Expr:
             return self.add(a, pyteal.Int(1))
 
     app1 = DerivedApp1()
 
     class DerivedApp2(BaseApp):
+        state2 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
 
+        @beaker.external
         def add_2(self, a: pyteal.Uint64) -> Expr:
             return self.add(a, pyteal.Int(2))
 
@@ -234,47 +297,74 @@ In ``1.0`` this could be:
 
 .. code-block:: python
 
+    ZERO = Int(0)
+
+    class BaseState:
+        base_state = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+
+    class App1State(BaseState):
+        state1 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+
+    class App2State(BaseState):
+        state2 = beaker.ApplicationStateValue(pyteal.TealType.uint64)
+
     def add(a: pyteal.Uint64, b: pyteal.Uint64) -> pyteal.Expr:
         return a + b
 
-    app1 = Application("DerivedApp1")
+    app1 = Application("DerivedApp1", state=App1State())
 
+    @app1.external
     def add1(a: pyteal.Uint64):
         return add(a, pyteal.Int(1))
 
-    app2 = Application("DerivedApp2")
+    app2 = Application("DerivedApp2", state=App2State())
 
+    @app2.external
     def add2(a: pyteal.Uint64):
         return add(a, pyteal.Int(2))
 
 There will be some scenarios where the above will not be sufficient, for example having the same ABI method across
 multiple apps.
 
-For these cases the blueprint pattern may be useful. For example, suppose two applications both need an ABI method
-that adds two numbers together named ``add``.
+For these cases, the use of closure functions should be considered. This pattern is referred to in Beaker as "blueprints",
+but these are nothing more than Python functions which take an ``Application`` instance, and possibly some arguments, and
+modify the ``Application`` by adding methods to it.
+
+For example, suppose two applications both need an ABI method that adds two numbers together named ``add``.
 
 .. code-block:: python
 
-    def calculator_blueprint(app: beaker.Application) -> None:
+    def calculator_blueprint(app: beaker.Application, fudge_factor: int = 0) -> None:
 
         @app.external
         def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-            ...
+            return output.set(a.get() + b.get() + Int(fudge_factor))
 
-The blueprint can then be applied to the applications using ``app.implement``:
+The blueprint can then be applied to the applications using the shortcut ``app.implement``:
 
 .. code-block:: python
 
-    app1 = Application("App1").implement(calculator_blueprint)
-    app2 = Application("App2").implement(calculator_blueprint)
+    app = Application("App").implement(calculator_blueprint)
+
+    off_by_one_app = Application("OffByOne").implement(calculator_blueprint, fudge_factor=1)
+
+
+Note that this is equivalent to:
+
+.. code-block:: python
+
+    app = Application("App")
+    calculator_blueprint(app)
+
+    off_by_one_app = Application("OffByOne")
+    calculator_blueprint(off_by_one_app, fudge_factor=1)
+
 
 Overrides
 ---------
 
 In Beaker ``0.x`` because applications were composed by inheritance it was possible to override a method by redefining
 it in the derived class. In ``1.0`` this instead can be achieved by removing the old reference from the app and adding a new one.
-
-An example involving replacing a method with the same signature and replacing a method with a different signature
 
 For example in ``0.x`` an override with the same signature:
 
@@ -296,8 +386,9 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    # this example uses the previously described blueprint pattern as generally the only scenario where overriding
-    # is needed is when using code that is not part of the current code base.
+    # this example uses the previously described blueprint pattern,
+    # since generally the only scenario where overriding is needed
+    # is when using code that is not part of the current code base.
 
     def a_blueprint(app: beaker.Application) -> None:
         @app.external
@@ -317,13 +408,13 @@ For example in ``0.x`` an override with a different signature:
     class BaseApp(beaker.Application):
 
         @beaker.external
-        def different_signature(self, a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
+        def different_signature(self, a: pyteal.abi.Uint64):
             ...
 
     class DerivedApp(beaker.BaseApp):
 
         @beaker.external
-        def different_signature(self, a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, c: pyteal.abi.Uint64):
+        def different_signature(self, a: pyteal.abi.Uint32, b: pyteal.abi.Uint32):
             ...
 
 In ``1.0`` this becomes:
@@ -331,25 +422,47 @@ In ``1.0`` this becomes:
 .. code-block:: python
 
     def a_blueprint(app: beaker.Application) -> None:
-        @app.external
-        def different_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
+        @app.external(name="silly_walk")
+        def different_signature(a: pyteal.abi.Uint64):
             ...
 
     app = beaker.Application("DerivedApp").implement(a_blueprint)
 
     # remove method defined by a blueprint
+    # note that we use the name of the Python function here
     app.deregister_abi_method("different_signature")
 
     # add our new method
-    @app.external
-    def different_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, c: pyteal.abi.Uint64):
+    @app.external(name="silly_walk")
+    def different_signature(a: pyteal.abi.Uint32, b: pyteal.abi.Uint32):
         ...
+
+In the case of overriding a bare method to replace it with an ABI method:
+
+.. code-block:: python
+
+    def a_blueprint(app: beaker.Application) -> None:
+        @app.no_op(name="something_completely_different")
+        def different_signature():
+            ...
+
+    app = beaker.Application("DerivedApp").implement(a_blueprint)
+
+    # remove method defined by a blueprint
+    # note that we use the name of the Python function here
+    app.deregister_bare_method("different_signature")
+
+    # add our new method
+    @app.external(name="something_completely_different")
+    def different_signature(x: pyteal.abi.Uint32):
+        ...
+
 
 Logic signatures
 ----------------
 
 With version ``1.0`` a logic signature is no longer defined by inheriting ``beaker.LogicSignature``, instead
-``LogicSignature`` is instantiated directly, and the PyTeal expression is passed as an argument.
+``LogicSignature`` is instantiated directly, and the PyTeal expression - or a function returning an expression - is passed as an argument.
 
 For example in ``0.x``:
 
@@ -370,10 +483,16 @@ in ``1.0`` this becomes:
 
     my_signature = beaker.LogicSignature(evaluate)
 
+or equivalently:
+
+.. code-block:: python
+
+    my_signature = beaker.LogicSignature(pyteal.Approve())
+
 The key changes to note above:
 
 1. There is no subclassing, instead a ``beaker.LogicSignature`` instance is created.
-2. A function returning a PyTeal expression (or more simply just a PyTeal expression) is passed to ``LogicSignature``
+2. A function returning a PyTeal expression (or perhaps more simply just a PyTeal expression) is passed to ``LogicSignature``
    instead of implementing ``def evaluate(self)``
 
 Templated Logic signatures
@@ -415,7 +534,8 @@ The key changes to note are:
    instead of implementing ``def evaluate(self)``.
 3. A dictionary of template variable name and types is passed instead of instantiating ``beaker.TemplateVariable``
    for each variable.
-4. The template variables are provided as arguments to the evaluation function.
+4. The template variables are provided as arguments to the evaluation function. The function can omit these arguments
+   if they are not used.
 
 Precompiled
 -----------
@@ -454,7 +574,7 @@ In ``1.0`` this becomes:
         precompile = beaker.precompiled(my_logic_signature)
         return pyteal.Assert(pyteal.Txn.sender() == precompile.address())
 
-Note that `beaker.precompiled()` can only be used inside your applications methods. The application/logic signature will
+Note that ``beaker.precompiled(...)`` can only be used inside your applications methods. The application/logic signature will
 only be compiled once for each app that references it.
 
 In addition, the interface of precompiled logic signature objects has been simplified. As can be seen in the example above,
@@ -513,44 +633,63 @@ For example in ``0.x``:
 
     class MySignature(beaker.LogicSignature):
         ...
-    signature = MySignature()
 
     class MyApp(beaker.Application)
-        precompiled_signature = beaker.LSigPrecompile(signature)
+        precompiled_signature = beaker.LSigPrecompile(MySignature())
         ...
 
+    app.compile(client=...)
 
-    account = sandbox.get_accounts().pop()
-    app = MyApp()
-    app_client = beaker.client.ApplicationClient(beaker.sandbox.get_algod_client(), app, signer=account.signer)
-    app_client.create()
-
-    signature_signer = app.precompiled_signature.template_signer(algosdk.encoding.decode_address(account.address))
-    signature_client = app_client.prepare(signer=signature_signer)
+    signer = app.precompiled_signature.signer()
 
 In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    signature = beaker.LogicSignatureTemplate(...)
-    app = beaker.Application("App")
+    signature = beaker.LogicSignature(...)
 
-    @app.external
-    def foo():
-        precompiled_signature = beaker.precompile(my_signature)
-        ...
-
-    account = sandbox.get_accounts().pop()
-    app_client = beaker.client.ApplicationClient(beaker.sandbox.get_algod_client(), app, signer=account.signer)
-    app_client.create()
-
-    precompiled_signature = beaker.PrecompiledLogicSignatureTemplate(signature, app_client.client)
-    signature_signer = beaker.LogicSigTransactionSigner(
+    precompiled_signature = beaker.PrecompiledLogicSignature(signature, client=...)
+    signer = algosdk.atomic_transaction_composer.LogicSigTransactionSigner(
         algosdk.transaction.LogicSigAccount(
-            precompiled_signature.populate_template(user_addr=decode_address(account.address))
+            precompiled_signature.logic_program.raw_binary
         )
     )
-    signature_client = app_client.prepare(signer=signature_signer)
+
+Templated Signer
+^^^^^^^^^^^^^^^^
+
+In ``0.x``:
+
+.. code-block:: python
+
+    class MySignature(beaker.LogicSignature):
+         tv = beaker.TemplateVariable(pyteal.TealType.uint64)
+         ...
+
+    class MyApp(beaker.Application)
+        precompiled_signature = beaker.LSigPrecompile(MySignature())
+        ...
+
+    app.compile(client=...)
+
+    signer = app.precompiled_signature.template_signer(123)
+
+In ``1.0`` this becomes:
+
+.. code-block:: python
+
+    signature = beaker.LogicSignatureTemplate(
+        lambda tv: ...,
+        runtime_template_variables={"tv": pyteal.TealType.uint64}
+    )
+
+    precompiled_signature = beaker.PrecompiledLogicSignatureTemplate(signature, client=...)
+    signer = algosdk.atomic_transaction_composer.LogicSigTransactionSigner(
+        algosdk.transaction.LogicSigAccount(
+            precompiled_signature.populate_template(tv=123)
+        )
+    )
+
 
 
 Library functions
@@ -589,33 +728,13 @@ that produces TEAL. The following is a list of functions affected.
 Import paths
 ^^^^^^^^^^^^
 
-A number of internal modules in ``beaker.lib`` were removed. The following is a list of affected modules,
-their contents can now be found directly under ``beaker.lib``
+A number of internal modules in ``beaker.lib`` were collapsed. The following is a list of affected modules:
 
-* ``beaker.lib.inline.inline_asm``
-* ``beaker.lib.iter.iter``
-* ``beaker.lib.math.math``
-* ``beaker.lib.strings.string``
+* ``beaker.lib.inline.inline_asm.*`` -> ``beaker.lib.inline.*``
+* ``beaker.lib.iter.iter.*`` -> ``beaker.lib.iter.*``
+* ``beaker.lib.math.math.*`` -> ``beaker.lib.math.*``
+* ``beaker.lib.strings.string.*`` -> ``beaker.lib.string.*``
 
 
-Compile
--------
 
-``Application.compile`` has been renamed to ``build()`` and now returns an ``ApplicationSpecification`` which can be
-serialized and deserialized using ``to_json()`` and ``from_json()`` respectively.
-
-This allows building an ``Application``, serializing the specification to disk, and then deserializing the
-specification later, which can then be used with ``ApplicationClient``
-
-.. code-block:: python
-
-    from beaker import Application, ApplicationClient
-    from beaker.sandbox import get_algod_client
-
-    app = Application("MyApp")
-    #define application
-    ...
-
-    specification = app.build()
-    client = ApplicationClient(get_algod_client(), specification)
 
