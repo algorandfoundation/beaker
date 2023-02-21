@@ -48,6 +48,15 @@ LSIG_MAX_ARGS = 255
 #: The prefix used when hashing bytecode to produce a unique hash
 PROGRAM_DOMAIN_SEPARATOR = "Program"
 
+#: The min balance increase per box created
+BOX_FLAT_MIN_BALANCE = 2500
+
+#: The min balance increase per byte of boxes (key included)
+BOX_BYTE_MIN_BALANCE = 400
+
+#: The min balance increase for each asset opted into
+ASSET_MIN_BALANCE = 100000
+
 
 def num_extra_program_pages(approval: bytes, clear: bytes) -> int:
     return ceil(((len(approval) + len(clear)) - APP_PAGE_MAX_SIZE) / APP_PAGE_MAX_SIZE)
