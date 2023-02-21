@@ -35,7 +35,6 @@ def check_application_artifacts_output_stability(
 
     if output_dir is None:
         caller_frame = inspect.stack()[1]
-        # caller_name = caller_frame.function
         caller_path = Path(caller_frame.filename).resolve()
         caller_dir = caller_path.parent
         if dir_per_test_file:
@@ -76,16 +75,16 @@ def check_lsig_output_stability(
 ) -> None:
     assert lsig.program is not None
 
-    if output_path is None:
-        lsig_class = lsig.__class__
-        lsig_name = lsig_class.__qualname__
-        module_path = Path(inspect.getfile(lsig_class))
-        module_dir = module_path.parent
-        output_dir = module_dir / "lsig_teal"
-        output_dir.mkdir(exist_ok=True)
-        output_path = output_dir / f"{lsig_name}.teal"
-    else:
+    if output_path is not None:
         output_path.parent.mkdir(exist_ok=True, parents=True)
+    else:
+        caller_frame = inspect.stack()[1]
+        caller_name = caller_frame.function
+        caller_path = Path(caller_frame.filename).resolve()
+        caller_dir = caller_path.parent
+        output_dir = caller_dir / "lsig_teal"
+        output_dir.mkdir(exist_ok=True)
+        output_path = output_dir / f"{caller_name}.lsig.teal"
 
     output_did_exist = output_path.is_file()
 

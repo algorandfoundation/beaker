@@ -1,34 +1,18 @@
-from pathlib import Path
-
 import pyteal as pt
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from tests.conftest import check_lsig_output_stability
 
 
-output_dir = Path(__file__).parent / "lsig_teal"
-
-
-def _check_output_stability(lsig: LogicSignature | LogicSignatureTemplate) -> None:
-    import inspect
-
-    caller_frame = inspect.stack()[1]
-    caller_name = caller_frame.function
-
-    output_path = output_dir / f"{caller_name}.<locals>.Lsig.teal"
-
-    check_lsig_output_stability(lsig, output_path)
-
-
 def test_simple_logic_signature() -> None:
     lsig = LogicSignature(pt.Reject())
     assert lsig.program
-    _check_output_stability(lsig)
+    check_lsig_output_stability(lsig)
 
 
 def test_evaluate_logic_signature() -> None:
     lsig = LogicSignature(pt.Approve())
     assert lsig.program
-    _check_output_stability(lsig)
+    check_lsig_output_stability(lsig)
 
 
 def test_handler_logic_signature() -> None:
@@ -47,7 +31,7 @@ def test_handler_logic_signature() -> None:
 
     assert lsig.program
 
-    _check_output_stability(lsig)
+    check_lsig_output_stability(lsig)
 
 
 def test_templated_logic_signature() -> None:
@@ -68,7 +52,7 @@ def test_templated_logic_signature() -> None:
     assert lsig.program
     assert "pushbytes TMPL_PUBKEY" in lsig.program
 
-    _check_output_stability(lsig)
+    check_lsig_output_stability(lsig)
 
 
 def test_different_methods_logic_signature() -> None:
@@ -110,7 +94,7 @@ def test_different_methods_logic_signature() -> None:
 
     assert lsig.program
 
-    _check_output_stability(lsig)
+    check_lsig_output_stability(lsig)
 
 
 def test_lsig_template_ordering() -> None:
