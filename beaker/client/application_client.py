@@ -695,8 +695,7 @@ class ApplicationClient:
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""
-        global_state = self.client.account_info(self.app_addr)
-        return global_state
+        return self.client.account_info(self.app_addr)
 
     def get_box_names(self) -> list[bytes]:
         box_resp = self.client.application_boxes(self.app_id)
