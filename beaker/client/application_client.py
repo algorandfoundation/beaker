@@ -660,7 +660,7 @@ class ApplicationClient:
         atc.execute(self.client, 4)
         return atc.tx_ids.pop()
 
-    def get_application_state(
+    def get_global_state(
         self, raw: bool = False
     ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
@@ -711,7 +711,7 @@ class ApplicationClient:
             case {"source": "constant", "data": data}:
                 return data
             case {"source": "global-state", "data": str() as key}:
-                global_state = self.get_application_state(raw=True)
+                global_state = self.get_global_state(raw=True)
                 return global_state[key.encode()]
             case {"source": "local-state", "data": str() as key}:
                 acct_state = self.get_local_state(self.get_sender(), raw=True)

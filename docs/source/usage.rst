@@ -111,12 +111,12 @@ Lets write a new app with Application State (or `Global State <https://developer
 .. literalinclude:: ../../examples/simple/counter.py
     :lines: 12-38
 
-We've added an :ref:`ApplicationStateValue <application_state_value>` attribute to our class with several configuration options and we can reference it by name throughout our application.
+We've added an :ref:`GlobalStateValue <global_state_value>` attribute to our class with several configuration options and we can reference it by name throughout our application.
 
 .. note:: 
     The base ``Application`` class has several externals pre-defined, including ``create`` which performs ``ApplicationState`` initialization for us, setting the keys to default values.
 
-You may also define state values for applications, called :ref:`AccountState <account_state>` (or Local storage) and even allow for reserved state keys.
+You may also define state values for applications, called :ref:`LocalState <local_state>` (or Local storage) and even allow for reserved state keys.
 
 For more example usage see the example :ref:`here <state_example>`.
 

@@ -183,7 +183,7 @@ def demo() -> None:
     )
 
     # Read the affirmation out of the AppMembers app state
-    global_state = app_member_client.get_application_state()
+    global_state = app_member_client.get_global_state()
     last_affirmation = global_state["last_affirmation"]
     assert not isinstance(last_affirmation, bytes)
     print(f"Last affirmation received by app member: {last_affirmation}")

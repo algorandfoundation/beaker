@@ -130,7 +130,7 @@ def get_app_client_details(
 
 def test_app_create(creator_app_client: client.ApplicationClient) -> None:
     creator_app_client.create()
-    global_state = creator_app_client.get_application_state()
+    global_state = creator_app_client.get_global_state()
     sender = creator_app_client.get_sender()
 
     assert global_state[amm_app.state.governor.str_key()] == _addr_to_hex(
@@ -294,7 +294,7 @@ def test_app_set_governor(
 
     user_addr, _, user_signer = user_acct
 
-    state_before = creator_app_client.get_application_state()
+    state_before = creator_app_client.get_global_state()
 
     assert creator_addr is not None
     assert state_before[amm_app.state.governor.str_key()] == _addr_to_hex(creator_addr)
@@ -305,7 +305,7 @@ def test_app_set_governor(
         **build_set_governor_transaction(user_addr),
     )
 
-    state_after = creator_app_client.get_application_state()
+    state_after = creator_app_client.get_global_state()
     assert state_after[amm_app.state.governor.str_key()] == _addr_to_hex(user_addr)
 
     user_client = creator_app_client.prepare(signer=user_signer)
@@ -315,7 +315,7 @@ def test_app_set_governor(
         **build_set_governor_transaction(creator_addr),
     )
 
-    state_after_revert = creator_app_client.get_application_state()
+    state_after_revert = creator_app_client.get_global_state()
     assert state_after_revert[amm_app.state.governor.str_key()] == _addr_to_hex(
         creator_addr
     )
@@ -352,7 +352,7 @@ def test_app_bootstrap(
     assert len(ai["assets"]) == 3, "Should have 3 assets, A/B/Pool"
 
     # Make sure our state is updated
-    global_state = creator_app_client.get_application_state()
+    global_state = creator_app_client.get_global_state()
     assert global_state[amm_app.state.pool_token.str_key()] == pool_token
     assert global_state[amm_app.state.asset_a.str_key()] == asset_a
     assert global_state[amm_app.state.asset_b.str_key()] == asset_b
@@ -870,7 +870,7 @@ def _get_tokens_to_burn(asset_supply: int, burn_amount: int, pool_issued: int) -
 
 
 def _get_ratio_from_state(creator_app_client: ApplicationClient) -> int:
-    global_state = creator_app_client.get_application_state()
+    global_state = creator_app_client.get_global_state()
     result = global_state[amm_app.state.ratio.str_key()]
     assert isinstance(result, int)
     return result
@@ -879,7 +879,7 @@ def _get_ratio_from_state(creator_app_client: ApplicationClient) -> int:
 def _get_tokens_from_state(
     creator_app_client: ApplicationClient,
 ) -> tuple[int, int, int]:
-    global_state = creator_app_client.get_application_state()
+    global_state = creator_app_client.get_global_state()
     return (
         int(global_state[amm_app.state.pool_token.str_key()]),
         int(global_state[amm_app.state.asset_a.str_key()]),

@@ -112,7 +112,7 @@ To migrate:
 
 
 Application.compile()
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 ``Application.compile()`` has been renamed to ``build()`` and now returns an ``ApplicationSpecification``, which contains,
 among other things, the approval and clear program TEAL that was previously returned.
