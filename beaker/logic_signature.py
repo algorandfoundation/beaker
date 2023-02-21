@@ -82,7 +82,8 @@ class LogicSignatureTemplate:
             logic = expr_or_func
         else:
             params = inspect.signature(expr_or_func).parameters
-            if not (params.keys() <= runtime_template_variables.keys()):
+            print(params.keys(), runtime_template_variables.keys())
+            if not (len(params.keys()) <= len(runtime_template_variables.keys())):
                 raise ValueError(
                     "Logic signature methods should take no arguments, unless using runtime templates"
                 )

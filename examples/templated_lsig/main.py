@@ -20,7 +20,6 @@ from beaker import (
     consts,
     precompiled,
     Application,
-    unconditional_create_approval,
 )
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
@@ -32,8 +31,7 @@ def SigChecker() -> LogicSignatureTemplate:
 
     def evaluate(user_addr: Expr) -> Expr:
         return Seq(
-            # Borrow the msg and sig from the abi call arguments
-            # TODO: this kinda stinks, what do?
+            # Borrow the msg and sig from the app call arguments
             (msg := abi.String()).decode(Txn.application_args[2]),
             (sig := abi.make(Signature)).decode(Txn.application_args[3]),
             # Assert that the sig matches
@@ -49,12 +47,14 @@ def SigChecker() -> LogicSignatureTemplate:
 
 sig_checker = SigChecker()
 
-app = Application("App").implement(unconditional_create_approval)
+app = Application("SigCheckerApp")
 
 
 @app.external
 def check(signer_address: abi.Address, msg: abi.String, sig: Signature) -> Expr:
     sig_checker_pc = precompiled(sig_checker)
+    # The lsig will take care of verifying the signature
+    # all we need to do is check that its been used to sign this transaction
     return Assert(
         Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
     )
