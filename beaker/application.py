@@ -156,7 +156,7 @@ class Application(Generic[TState]):
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
-            "Subclassing beaker.Application is deprecated, please see the migration guide at: TODO",
+            "Subclassing beaker.Application is deprecated, please see the migration guide at: https://algorand-devrel.github.io/beaker/html/migration.html",
             DeprecationWarning,
         )
 
