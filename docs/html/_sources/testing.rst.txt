@@ -9,7 +9,7 @@ Unit Testing
 
 See the tests in lib directory to see different uses of these helpers.
 
-.. currentmodule:: beaker.testing
+.. currentmodule:: tests.helpers
 
 .. autoclass:: UnitTestingApp
     :members:
