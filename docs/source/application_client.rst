@@ -1,6 +1,8 @@
 Application Client
 ===================
 
+.. warning:: Out of date, needs to be updated to 1.0
+
 .. currentmodule:: beaker.client
 
 
@@ -31,9 +33,9 @@ If there are multiple signers or you want to re-use some suggested parameters, t
     .. automethod:: close_out 
     .. automethod:: clear_state 
     .. automethod:: fund
-    .. automethod:: get_application_state 
+    .. automethod:: get_global_state
     .. automethod:: get_application_account_info
-    .. automethod:: get_account_state 
+    .. automethod:: get_local_state
 
 
 .. _app_client_example:

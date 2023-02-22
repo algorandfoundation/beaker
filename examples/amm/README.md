@@ -30,7 +30,7 @@ A "Fixed" Swapping operation is allowed to convert some number of one token to t
 
 A Number of tests are implemented in `amm_test.py` for contract functionality but they are non-exhaustive. The remaining uncovered asserts for example are left as an exercise to the reader.
 
-There is also a `constant_product_amm.py` implementation in pure python to help sanity check.
+There is also a `constant_product_amm.ipynb` implementation in pure python to help sanity check.
 
 ## Operations
 
@@ -75,13 +75,11 @@ A user sends some amount of asset A or B to swap for the other Asset in the pair
 
 ## To run the example
 
-Make sure [sandbox](https://github.com/algorand/sandbox) is installed and running with a private node configuration (`./sandbox up release`)
+Make sure [algokit](https://github.com/algorandfoundation/algokit-cli) is installed and `localnet` is running (`algokit localnet start`)
 
-Create a virtual environment `python -m venv .venv`
+Install python requirements `poetry install`
 
-Install python requirements `pip install beaker-pyteal`
-
-Run the demo `python main.py`
+Run the demo `poetry run python main.py`
 
 ## Thank You
 

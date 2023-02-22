@@ -1,4 +1,3 @@
-from typing import Optional
 from pyteal import (
     Txn,
     App,
@@ -19,8 +18,9 @@ from pyteal import (
     Substring,
     TealType,
 )
-from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
+
 from beaker.consts import MAX_LOCAL_STATE
+from beaker.lib.storage.blob import BLOB_PAGE_SIZE, EMPTY_PAGE, Blob
 
 
 class LocalBlob(Blob):
@@ -32,16 +32,16 @@ class LocalBlob(Blob):
     of the local storage should be 16 bytes
     """
 
-    def __init__(self, /, *, keys: Optional[int | list[int]] = None):
-        super().__init__(MAX_LOCAL_STATE, keys=keys)
-        self.init_subroutines()
+    def __init__(self, *, keys: int | list[int] = MAX_LOCAL_STATE):
+        super().__init__(keys=keys)
 
-    def init_subroutines(self):
         @Subroutine(TealType.none)
         def zero_impl(acct: Expr) -> Expr:
             return Seq(
                 *[App.localPut(acct, Bytes(bk), EMPTY_PAGE) for bk in self.byte_keys]
             )
+
+        self._zero_impl = zero_impl
 
         @Subroutine(TealType.uint64)
         def get_byte_impl(acct: Expr, idx: Expr) -> Expr:
@@ -49,6 +49,8 @@ class LocalBlob(Blob):
                 App.localGet(acct, self._key(self._key_idx(idx))),
                 self._offset_for_idx(idx),
             )
+
+        self._get_byte_impl = get_byte_impl
 
         @Subroutine(TealType.none)
         def set_byte_impl(acct: Expr, idx: Expr, byte: Expr) -> Expr:
@@ -62,6 +64,8 @@ class LocalBlob(Blob):
                     ),
                 ),
             )
+
+        self._set_byte_impl = set_byte_impl
 
         @Subroutine(TealType.bytes)
         def read_impl(acct: Expr, bstart: Expr, bend: Expr) -> Expr:
@@ -107,6 +111,8 @@ class LocalBlob(Blob):
                 ),
                 buff.load(),
             )
+
+        self._read_impl = read_impl
 
         @Subroutine(TealType.none)
         def write_impl(acct: Expr, bstart: Expr, buff: Expr) -> Expr:
@@ -177,11 +183,7 @@ class LocalBlob(Blob):
                 ),
             )
 
-        self.write_impl = write_impl
-        self.read_impl = read_impl
-        self.set_byte_impl = set_byte_impl
-        self.get_byte_impl = get_byte_impl
-        self.zero_impl = zero_impl
+        self._write_impl = write_impl
 
     def zero(self, acct: Expr = Txn.sender()) -> Expr:
         """
@@ -190,28 +192,28 @@ class LocalBlob(Blob):
         This allows us to be lazy later and _assume_ all the strings are the same size
 
         """
-        return self.zero_impl(acct)
+        return self._zero_impl(acct)
 
     def get_byte(self, idx: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         Get a single byte from local storage of an account by index
         """
-        return self.get_byte_impl(acct, idx)
+        return self._get_byte_impl(acct, idx)
 
     def set_byte(self, idx: Expr, byte: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         Set a single byte from local storage of an account by index
         """
-        return self.set_byte_impl(acct, idx, byte)
+        return self._set_byte_impl(acct, idx, byte)
 
     def read(self, bstart: Expr, bend: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         read bytes between bstart and bend from local storage of an account by index
         """
-        return self.read_impl(acct, bstart, bend)
+        return self._read_impl(acct, bstart, bend)
 
     def write(self, bstart: Expr, buff: Expr, acct: Expr = Txn.sender()) -> Expr:
         """
         write bytes between bstart and len(buff) to local storage of an account
         """
-        return self.write_impl(acct, bstart, buff)
+        return self._write_impl(acct, bstart, buff)

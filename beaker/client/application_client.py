@@ -1,7 +1,12 @@
-from base64 import b64decode
 import copy
-from typing import Any, cast, Optional
+import dataclasses
+import warnings
+from base64 import b64decode
+from pathlib import Path
+from typing import Any, cast, Sequence, Callable
 
+import algosdk
+from algosdk import transaction, abi
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
     TransactionSigner,
@@ -12,39 +17,49 @@ from algosdk.atomic_transaction_composer import (
     ABIResult,
     ABI_RETURN_HASH,
     TransactionWithSigner,
-    abi,
     AtomicTransactionResponse,
 )
-from algosdk import transaction
 from algosdk.logic import get_application_address
-from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
+from pyteal import ABIReturnSubroutine, MethodConfig, CallConfig
 
-from beaker.application import Application, get_method_spec
-from beaker.consts import num_extra_program_pages
-from beaker.decorators import (
-    HandlerFunc,
+from beaker.application import Application
+from beaker.application_specification import (
+    ApplicationSpecification,
     MethodHints,
-    DefaultArgument,
-    DefaultArgumentClass,
+    DefaultArgumentDict,
 )
-from beaker.client.state_decode import decode_state
 from beaker.client.logic_error import LogicException, parse_logic_error
-from beaker.precompile import AppPrecompile, ProgramAssertion
+from beaker.client.state_decode import decode_state
+from beaker.compilation import Program
+from beaker.consts import num_extra_program_pages
 
 
 class ApplicationClient:
     def __init__(
         self,
         client: AlgodClient,
-        app: Application,
+        app: ApplicationSpecification | str | Path | Application,
         app_id: int = 0,
         signer: TransactionSigner | None = None,
         sender: str | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
     ):
         self.client = client
-        self.app = app
+        self.app: ApplicationSpecification
+        match app:
+            case ApplicationSpecification() as compiled_app:
+                self.app = compiled_app
+            case Application() as app:
+                self.app = app.build(client)
+            case Path() as path:
+                if path.is_dir():
+                    path = path / "application.json"
+                self.app = ApplicationSpecification.from_json(
+                    path.read_text(encoding="utf8")
+                )
+            case str():
+                self.app = ApplicationSpecification.from_json(app)
         self.app_id = app_id
         self.app_addr = get_application_address(app_id) if self.app_id != 0 else None
 
@@ -53,48 +68,31 @@ class ApplicationClient:
         if signer is not None and sender is None:
             self.sender = self.get_sender(sender, self.signer)
 
-        self.approval_program: str | None = self.app.approval_program
-        self.approval_binary: bytes | None = None
-        self.approval_src_map: SourceMap | None = None
-        self.approval_asserts: dict[int, ProgramAssertion] | None = None
-
-        self.clear_program: str | None = self.app.clear_program
-        self.clear_binary: bytes | None = None
-        self.clear_src_map: SourceMap | None = None
-        self.clear_asserts: dict[int, ProgramAssertion] | None = None
+        self.approval = Program(self.app.approval_program, self.client)
+        self.clear = Program(self.app.clear_program, self.client)
 
         self.suggested_params = suggested_params
 
-    def compile(
-        self, teal: str, source_map: bool = False
-    ) -> tuple[bytes, str, Optional[SourceMap]]:
-        result = self.client.compile(teal, source_map=source_map)
-        src_map = None
-        if source_map:
-            src_map = SourceMap(result["sourcemap"])
-        return (b64decode(result["result"]), result["hash"], src_map)
+        def find_method(predicate: Callable[[MethodConfig], bool]) -> abi.Method | None:
+            matching = [
+                method
+                for method in self.app.contract.methods
+                if predicate(self._method_hints(method).call_config)
+            ]
+            if len(matching) == 1:
+                return matching[0]
+            elif len(matching) > 1:
+                # TODO: warn?
+                pass
+            return None
 
-    def build(self) -> None:
-        """
-        Wraps the Application in an AppPrecompile before calling `compile` on the Precompile which
-        recursively compiles all the dependencies (depth first). The result is then used
-        to assign the approval and clear state program binaries and src maps.
-        """
-        if self.approval_binary is not None and self.clear_binary is not None:
-            return
-
-        compiled_app = AppPrecompile(self.app)
-        compiled_app.compile(self.client)
-
-        self.approval_program = compiled_app.approval._program
-        self.approval_binary = compiled_app.approval._binary
-        self.approval_src_map = compiled_app.approval._map
-        self.approval_asserts = compiled_app.approval._asserts
-
-        self.clear_program = compiled_app.clear._program
-        self.clear_binary = compiled_app.clear._binary
-        self.clear_src_map = compiled_app.clear._map
-        self.clear_asserts = compiled_app.clear._asserts
+        self.on_create = find_method(
+            lambda x: any([x & CallConfig.CREATE for x in dataclasses.astuple(x)])
+        )
+        self.on_update = find_method(lambda x: x.update_application != CallConfig.NEVER)
+        self.on_opt_in = find_method(lambda x: x.opt_in != CallConfig.NEVER)
+        self.on_close_out = find_method(lambda x: x.close_out != CallConfig.NEVER)
+        self.on_delete = find_method(lambda x: x.delete_application != CallConfig.NEVER)
 
     def create(
         self,
@@ -104,16 +102,13 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         extra_pages: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
-        self.build()
-        assert self.clear_binary is not None and self.approval_binary is not None
-
         if extra_pages is None:
             extra_pages = num_extra_program_pages(
-                self.approval_binary, self.clear_binary
+                self.approval.raw_binary, self.clear.raw_binary
             )
 
         sp = self.get_suggested_params(suggested_params)
@@ -121,17 +116,17 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        if self.app.on_create is not None:
+        if self.on_create is not None:
             self.add_method_call(
                 atc,
-                self.app.on_create,
+                self.on_create,
                 sender=sender,
                 suggested_params=sp,
                 on_complete=on_complete,
-                approval_program=self.approval_binary,
-                clear_program=self.clear_binary,
-                global_schema=self.app.app_state.schema(),
-                local_schema=self.app.acct_state.schema(),
+                approval_program=self.approval.raw_binary,
+                clear_program=self.clear.raw_binary,
+                global_schema=self.app.global_state_schema,
+                local_schema=self.app.local_state_schema,
                 extra_pages=extra_pages,
                 app_args=args,
                 **kwargs,
@@ -143,10 +138,10 @@ class ApplicationClient:
                         sender=sender,
                         sp=sp,
                         on_complete=on_complete,
-                        approval_program=self.approval_binary,
-                        clear_program=self.clear_binary,
-                        global_schema=self.app.app_state.schema(),
-                        local_schema=self.app.acct_state.schema(),
+                        approval_program=self.approval.raw_binary,
+                        clear_program=self.clear.raw_binary,
+                        global_schema=self.app.global_state_schema,
+                        local_schema=self.app.local_state_schema,
                         extra_pages=extra_pages,
                         app_args=args,
                         **kwargs,
@@ -174,27 +169,26 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
-        self.build()
 
         sp = self.get_suggested_params(suggested_params)
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        if self.app.on_update is not None:
+        if self.on_update is not None:
             self.add_method_call(
                 atc,
-                self.app.on_update,
+                self.on_update,
                 on_complete=transaction.OnComplete.UpdateApplicationOC,
                 sender=sender,
                 suggested_params=sp,
                 index=self.app_id,
-                approval_program=self.approval_binary,
-                clear_program=self.clear_binary,
+                approval_program=self.approval.raw_binary,
+                clear_program=self.clear.raw_binary,
                 app_args=args,
                 **kwargs,
             )
@@ -205,8 +199,8 @@ class ApplicationClient:
                         sender=sender,
                         sp=sp,
                         index=self.app_id,
-                        approval_program=self.approval_binary,
-                        clear_program=self.clear_binary,
+                        approval_program=self.approval.raw_binary,
+                        clear_program=self.clear.raw_binary,
                         app_args=args,
                         **kwargs,
                     ),
@@ -224,7 +218,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
 
@@ -233,10 +227,10 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        if self.app.on_opt_in is not None:
+        if self.on_opt_in is not None:
             self.add_method_call(
                 atc,
-                self.app.on_opt_in,
+                self.on_opt_in,
                 on_complete=transaction.OnComplete.OptInOC,
                 sender=sender,
                 suggested_params=sp,
@@ -269,7 +263,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
 
@@ -278,10 +272,10 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        if self.app.on_close_out is not None:
+        if self.on_close_out is not None:
             self.add_method_call(
                 atc,
-                self.app.on_close_out,
+                self.on_close_out,
                 on_complete=transaction.OnComplete.CloseOutOC,
                 sender=sender,
                 suggested_params=sp,
@@ -314,7 +308,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
 
         """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
@@ -347,7 +341,7 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
 
@@ -356,10 +350,10 @@ class ApplicationClient:
         sender = self.get_sender(sender, signer)
 
         atc = AtomicTransactionComposer()
-        if self.app.on_delete:
+        if self.on_delete:
             self.add_method_call(
                 atc,
-                self.app.on_delete,
+                self.on_delete,
                 on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
                 suggested_params=sp,
@@ -390,7 +384,7 @@ class ApplicationClient:
         self,
         signer: TransactionSigner | None = None,
         sender: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> "ApplicationClient":
 
         """makes a copy of the current ApplicationClient and the fields passed"""
@@ -403,7 +397,7 @@ class ApplicationClient:
 
     def call(
         self,
-        method: abi.Method | HandlerFunc,
+        method: abi.Method | ABIReturnSubroutine | str,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
@@ -416,20 +410,23 @@ class ApplicationClient:
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
-        boxes: list[tuple[int, bytes]] | None = None,
+        boxes: Sequence[tuple[int, bytes | bytearray | str | int]] | None = None,
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
         atc: AtomicTransactionComposer | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ABIResult:
 
         """Handles calling the application"""
 
-        if not isinstance(method, abi.Method):
-            method = get_method_spec(method)
+        if isinstance(method, str):
+            method = self.app.contract.get_method_by_name(method)
 
-        hints = self.method_hints(method.name)
+        if isinstance(method, ABIReturnSubroutine):
+            method = method.method_spec()
+
+        hints = self._method_hints(method)
 
         if atc is None:
             atc = AtomicTransactionComposer()
@@ -547,7 +544,7 @@ class ApplicationClient:
     def add_method_call(
         self,
         atc: AtomicTransactionComposer,
-        method: abi.Method | HandlerFunc,
+        method: abi.Method | ABIReturnSubroutine | str,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
@@ -560,12 +557,12 @@ class ApplicationClient:
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
-        boxes: list[tuple[int, bytes]] | None = None,
+        boxes: Sequence[tuple[int, bytes | bytearray | str | int]] | None = None,
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> AtomicTransactionComposer:
 
         """Adds a transaction to the AtomicTransactionComposer passed"""
 
@@ -573,23 +570,26 @@ class ApplicationClient:
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
-        if not isinstance(method, abi.Method):
-            method = get_method_spec(method)
+        if isinstance(method, str):
+            method = self.app.contract.get_method_by_name(method)
 
-        hints = self.method_hints(method.name)
+        if isinstance(method, ABIReturnSubroutine):
+            method = method.method_spec()
+
+        hints = self._method_hints(method)
 
         args = []
         for method_arg in method.args:
             name = method_arg.name
             if name in kwargs:
-                argument = kwargs[name]
-                if type(argument) is dict:
+                argument = kwargs.pop(name)
+                if isinstance(argument, dict):
                     if hints.structs is None or name not in hints.structs:
-                        raise Exception(f"Name {name} name in struct hints")
+                        raise Exception(
+                            f"Argument missing struct hint: {name}. Check argument name and type"
+                        )
 
-                    elems: list[tuple[str, str]] = cast(
-                        list[tuple[str, str]], hints.structs[name]["elements"]
-                    )
+                    elems = hints.structs[name]["elements"]
 
                     argument = [
                         argument[field_name] for field_name, field_type in elems
@@ -605,7 +605,15 @@ class ApplicationClient:
                     args.append(self.resolve(default_arg))
             else:
                 raise Exception(f"Unspecified argument: {name}")
-
+        if kwargs:
+            warnings.warn(f"Unused arguments specified: {', '.join(kwargs)}")
+        if boxes is not None:
+            # TODO: algosdk actually does this, but it's type hints say otherwise...
+            encoded_boxes = [
+                (id_, algosdk.encoding.encode_as_bytes(name)) for id_, name in boxes
+            ]
+        else:
+            encoded_boxes = None
         atc.add_method_call(
             self.app_id,
             method,
@@ -622,7 +630,7 @@ class ApplicationClient:
             accounts=accounts,
             foreign_apps=foreign_apps,
             foreign_assets=foreign_assets,
-            boxes=boxes,
+            boxes=encoded_boxes,
             note=note,
             lease=lease,
             rekey_to=rekey_to,
@@ -658,18 +666,19 @@ class ApplicationClient:
         atc.execute(self.client, 4)
         return atc.tx_ids.pop()
 
-    def get_application_state(self, raw=False) -> dict[bytes | str, bytes | str | int]:
+    def get_global_state(
+        self, raw: bool = False
+    ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
-        app_state = self.client.application_info(self.app_id)
-        if "params" not in app_state or "global-state" not in app_state["params"]:
-            return {}
-
+        global_state = self.client.application_info(self.app_id)
         return cast(
             dict[bytes | str, bytes | str | int],
-            decode_state(app_state["params"]["global-state"], raw=raw),
+            decode_state(
+                global_state.get("params", {}).get("global-state", {}), raw=raw
+            ),
         )
 
-    def get_account_state(
+    def get_local_state(
         self, account: str | None = None, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
@@ -692,8 +701,7 @@ class ApplicationClient:
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""
-        app_state = self.client.account_info(self.app_addr)
-        return app_state
+        return self.client.account_info(self.app_addr)
 
     def get_box_names(self) -> list[bytes]:
         box_resp = self.client.application_boxes(self.app_id)
@@ -703,28 +711,30 @@ class ApplicationClient:
         contents = self.client.application_box_by_name(self.app_id, name)
         return b64decode(contents["value"])
 
-    def resolve(self, to_resolve: DefaultArgument) -> Any:
-        if to_resolve.resolvable_class == DefaultArgumentClass.Constant:
-            return to_resolve.resolve_hint()
-        elif to_resolve.resolvable_class == DefaultArgumentClass.GlobalState:
-            key = to_resolve.resolve_hint()
-            app_state = self.get_application_state(raw=True)
-            return app_state[key.encode()]
-        elif to_resolve.resolvable_class == DefaultArgumentClass.LocalState:
-            key = to_resolve.resolve_hint()
-            acct_state = self.get_account_state(self.get_sender(), raw=True)
-            return acct_state[key.encode()]
-        elif to_resolve.resolvable_class == DefaultArgumentClass.ABIMethod:
-            method = abi.Method.undictify(to_resolve.resolve_hint())
-            result = self.call(method)
-            return result.return_value
-        else:
-            raise Exception(f"Unrecognized resolver: {to_resolve}")
+    def resolve(self, to_resolve: DefaultArgumentDict) -> Any:
+        match to_resolve:
+            case {"source": "constant", "data": data}:
+                return data
+            case {"source": "global-state", "data": str() as key}:
+                global_state = self.get_global_state(raw=True)
+                return global_state[key.encode()]
+            case {"source": "local-state", "data": str() as key}:
+                acct_state = self.get_local_state(self.get_sender(), raw=True)
+                return acct_state[key.encode()]
+            case {"source": "abi-method", "data": dict() as method_dict}:
+                method = abi.Method.undictify(method_dict)
+                result = self.call(method)
+                return result.return_value
+            case {"source": source}:
+                raise ValueError(f"Unrecognized default argument source: {source}")
+            case _:
+                raise TypeError("Unable to interpret default argument specification")
 
-    def method_hints(self, method_name: str) -> MethodHints:
-        if method_name not in self.app.hints:
+    def _method_hints(self, method: abi.Method) -> MethodHints:
+        sig = method.get_signature()
+        if sig not in self.app.hints:
             return MethodHints()
-        return self.app.hints[method_name]
+        return self.app.hints[sig]
 
     def get_suggested_params(
         self,
@@ -745,15 +755,13 @@ class ApplicationClient:
         try:
             return atc.execute(self.client, wait_rounds=wait_rounds)
         except Exception as ex:
-            if (src_map := self.approval_src_map) and (
-                program := self.approval_program
-            ):
+            if self.approval.source_map and self.approval.raw_binary:
                 logic_error_data = parse_logic_error(str(ex))
                 if logic_error_data is not None:
                     raise LogicException(
                         logic_error=ex,
-                        program=program,
-                        map=src_map,
+                        program=self.approval.teal,
+                        map=self.approval.source_map,
                         **logic_error_data,
                     ) from ex
             raise ex
@@ -778,12 +786,11 @@ class ApplicationClient:
 
         signer = self.get_signer(signer)
 
-        match signer:
-            case AccountTransactionSigner():  # type: ignore
-                return address_from_private_key(signer.private_key)
-            case MultisigTransactionSigner():  # type: ignore
-                return signer.msig.address()
-            case LogicSigTransactionSigner():  # type: ignore
-                return signer.lsig.address()
+        if isinstance(signer, AccountTransactionSigner):
+            return address_from_private_key(signer.private_key)
+        elif isinstance(signer, MultisigTransactionSigner):
+            return signer.msig.address()
+        elif isinstance(signer, LogicSigTransactionSigner):
+            return signer.lsig.address()
 
         raise Exception("No sender provided")

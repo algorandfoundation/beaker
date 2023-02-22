@@ -2,6 +2,19 @@
     "name": "ExpensiveApp",
     "methods": [
         {
+            "name": "opup_bootstrap",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "ptxn"
+                }
+            ],
+            "returns": {
+                "type": "uint64"
+            },
+            "desc": "initialize opup with bootstrap to create a target app"
+        },
+        {
             "name": "hash_it",
             "args": [
                 {
@@ -20,21 +33,8 @@
             "returns": {
                 "type": "byte[32]"
             }
-        },
-        {
-            "name": "opup_bootstrap",
-            "args": [
-                {
-                    "type": "pay",
-                    "name": "ptxn"
-                }
-            ],
-            "returns": {
-                "type": "uint64"
-            },
-            "desc": "initialize opup with bootstrap to create a target app"
         }
     ],
     "networks": {},
-    "desc": "Do expensive work to demonstrate inheriting from OpUp"
+    "desc": "Do expensive work to demonstrate implementing op_up blueprint"
 }

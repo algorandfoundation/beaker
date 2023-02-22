@@ -112,6 +112,7 @@ html_css_files = [
 
 html_logo = "../../beaker.png"
 
+autodoc_class_signature = "separated"
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

@@ -1,10 +1,10 @@
 import pyteal as pt
 
-from beaker.testing import UnitTestingApp, assert_output
+from tests.helpers import UnitTestingApp, assert_output
 from beaker.lib.inline import InlineAssembly
 
 
-def test_inline_assembly():
+def test_inline_assembly() -> None:
     get_uint8 = """
 extract 7 1
 """

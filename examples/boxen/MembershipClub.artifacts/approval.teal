@@ -47,9 +47,9 @@ txna ApplicationArgs 1
 intc_0 // 0
 getbyte
 callsub getaffirmation_13
-store 15
+store 21
 bytec_3 // 0x151f7c75
-load 15
+load 21
 concat
 log
 intc_1 // 1
@@ -66,17 +66,17 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 extract_uint16
-store 12
+store 18
 txna ApplicationArgs 2
-store 13
+store 19
 txna ApplicationArgs 3
 intc_0 // 0
 getbyte
-store 14
-load 12
-load 13
-load 14
-callsub setaffirmation_12
+store 20
+load 18
+load 19
+load 20
+callsub setaffirmation_11
 intc_1 // 1
 return
 main_l11:
@@ -89,10 +89,10 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub getmembershiprecord_11
-store 11
+callsub getmembershiprecord_9
+store 17
 bytec_3 // 0x151f7c75
-load 11
+load 17
 concat
 log
 intc_1 // 1
@@ -109,14 +109,14 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 9
+store 15
 txna ApplicationArgs 2
 intc_0 // 0
 getbyte
-store 10
-load 9
-load 10
-callsub updaterole_10
+store 16
+load 15
+load 16
+callsub updaterole_8
 intc_1 // 1
 return
 main_l13:
@@ -131,14 +131,14 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 7
+store 13
 txna ApplicationArgs 2
 intc_0 // 0
 getbyte
-store 8
-load 7
-load 8
-callsub addmember_9
+store 14
+load 13
+load 14
+callsub addmember_6
 intc_1 // 1
 return
 main_l14:
@@ -151,7 +151,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub removemember_8
+callsub removemember_4
 intc_1 // 1
 return
 main_l15:
@@ -164,22 +164,22 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-store 5
+store 11
 txn GroupIndex
 intc_1 // 1
 -
-store 4
-load 4
+store 10
+load 10
 gtxns TypeEnum
 intc_1 // pay
 ==
 assert
-load 4
-load 5
-callsub bootstrap_7
-store 6
+load 10
+load 11
+callsub bootstrap_2
+store 12
 bytec_3 // 0x151f7c75
-load 6
+load 12
 itob
 concat
 log
@@ -214,64 +214,8 @@ global CreatorAddress
 ==
 retsub
 
-// auth_only
-authonly_2:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
-// auth_only
-authonly_3:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
-// auth_only
-authonly_4:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
-// auth_holds_token
-authholdstoken_5:
-proto 1 1
-frame_dig -1
-bytec_0 // "membership_token"
-app_global_get
-asset_holding_get AssetBalance
-store 1
-store 0
-load 1
-load 0
-intc_0 // 0
->
-&&
-retsub
-
-// auth_holds_token
-authholdstoken_6:
-proto 1 1
-frame_dig -1
-bytec_0 // "membership_token"
-app_global_get
-asset_holding_get AssetBalance
-store 3
-store 2
-load 3
-load 2
-intc_0 // 0
->
-&&
-retsub
-
 // bootstrap
-bootstrap_7:
+bootstrap_2:
 proto 2 1
 intc_0 // 0
 txn Sender
@@ -318,9 +262,9 @@ itxn_submit
 intc_0 // 0
 bytec_0 // "membership_token"
 app_global_get_ex
-store 17
-store 16
-load 17
+store 1
+store 0
+load 1
 !
 assert
 bytec_0 // "membership_token"
@@ -331,11 +275,19 @@ app_global_get
 frame_bury 0
 retsub
 
+// auth_only
+authonly_3:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
 // remove_member
-removemember_8:
+removemember_4:
 proto 1 0
 txn Sender
-callsub authonly_2
+callsub authonly_3
 // unauthorized
 assert
 frame_dig -1
@@ -343,8 +295,16 @@ box_del
 pop
 retsub
 
+// auth_only
+authonly_5:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
 // add_member
-addmember_9:
+addmember_6:
 proto 2 0
 intc_0 // 0
 dup
@@ -354,7 +314,7 @@ dup
 bytec_1 // ""
 dup
 txn Sender
-callsub authonly_3
+callsub authonly_5
 // unauthorized
 assert
 intc_0 // 0
@@ -403,8 +363,16 @@ itxn_field AssetSender
 itxn_submit
 retsub
 
+// auth_only
+authonly_7:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
 // update_role
-updaterole_10:
+updaterole_8:
 proto 2 0
 bytec_1 // ""
 intc_0 // 0
@@ -412,17 +380,17 @@ dupn 2
 bytec_1 // ""
 dup
 txn Sender
-callsub authonly_4
+callsub authonly_7
 // unauthorized
 assert
 frame_dig -2
 txnas Accounts
 box_get
-store 19
-store 18
-load 19
+store 3
+store 2
+load 3
 assert
-load 18
+load 2
 frame_bury 0
 frame_dig 0
 pushint 8 // 8
@@ -449,24 +417,40 @@ box_put
 retsub
 
 // get_membership_record
-getmembershiprecord_11:
+getmembershiprecord_9:
 proto 1 1
 bytec_1 // ""
 frame_dig -1
 box_get
-store 21
-store 20
-load 21
+store 5
+store 4
+load 5
 assert
-load 20
+load 4
 frame_bury 0
 retsub
 
+// auth_holds_token
+authholdstoken_10:
+proto 1 1
+frame_dig -1
+bytec_0 // "membership_token"
+app_global_get
+asset_holding_get AssetBalance
+store 7
+store 6
+load 7
+load 6
+intc_0 // 0
+>
+&&
+retsub
+
 // set_affirmation
-setaffirmation_12:
+setaffirmation_11:
 proto 3 0
 txn Sender
-callsub authholdstoken_5
+callsub authholdstoken_10
 // unauthorized
 assert
 bytec 4 // "affirmations"
@@ -477,12 +461,28 @@ frame_dig -2
 box_replace
 retsub
 
+// auth_holds_token
+authholdstoken_12:
+proto 1 1
+frame_dig -1
+bytec_0 // "membership_token"
+app_global_get
+asset_holding_get AssetBalance
+store 9
+store 8
+load 9
+load 8
+intc_0 // 0
+>
+&&
+retsub
+
 // get_affirmation
 getaffirmation_13:
 proto 1 1
 bytec_1 // ""
 txn Sender
-callsub authholdstoken_6
+callsub authholdstoken_12
 // unauthorized
 assert
 bytec 4 // "affirmations"

@@ -1,4 +1,5 @@
-from typing import Literal
+import typing
+
 from pyteal import (
     Assert,
     Expr,
@@ -14,37 +15,239 @@ from pyteal import (
     TxnType,
     abi,
 )
-from beaker import Application, ApplicationStateValue, Authorize, consts, external
 
-from beaker.application import get_method_signature
-from beaker.lib.storage import Mapping, List
+from beaker import (
+    Application,
+    GlobalStateValue,
+    Authorize,
+    consts,
+    unconditional_create_approval,
+)
+from beaker.consts import BOX_BYTE_MIN_BALANCE, BOX_FLAT_MIN_BALANCE, ASSET_MIN_BALANCE
+from beaker.lib.storage import BoxMapping, BoxList
 
-# Use a box per member to denote membership parameters
+
+# NamedTuple we'll store in a box per member
 class MembershipRecord(abi.NamedTuple):
     role: abi.Field[abi.Uint8]
     voted: abi.Field[abi.Bool]
 
 
-Affirmation = abi.StaticBytes[Literal[64]]
-
-BoxFlatMinBalance = 2500
-BoxByteMinBalance = 400
-AssetMinBalance = 100000
+# Custom type alias
+Affirmation = abi.StaticBytes[typing.Literal[64]]
 
 
+class MembershipClubState:
+    membership_token = GlobalStateValue(
+        TealType.uint64,
+        static=True,
+        descr="The asset that represents membership of this club",
+    )
+
+    # A Listing is a simple list, initialized with some _static_ data type and a length
+    affirmations = BoxList(Affirmation, 10)
+
+    def __init__(self, *, max_members: int, record_type: type[abi.BaseType]):
+        self.record_type = record_type
+        # A Mapping will create a new box for every unique key,
+        # taking a data type for key and value
+        # Only static types can provide information about the max
+        # size (and thus min balance required) - dynamic types will fail at abi.size_of
+        self.membership_records = BoxMapping(abi.Address, record_type)
+
+        # Math for determining min balance based on expected size of boxes
+        self.max_members = Int(max_members)
+        self.minimum_balance = Int(
+            ASSET_MIN_BALANCE  # Cover min bal for member token
+            + (BOX_FLAT_MIN_BALANCE + (abi.size_of(record_type) * BOX_BYTE_MIN_BALANCE))
+            * max_members  # cover min bal for member record boxes we might create
+            + (
+                BOX_FLAT_MIN_BALANCE
+                + (self.affirmations.box_size.value * BOX_BYTE_MIN_BALANCE)
+            )  # cover min bal for affirmation box
+        )
+
+
+membership_club_app = Application(
+    "MembershipClub",
+    state=MembershipClubState(max_members=1000, record_type=MembershipRecord),
+)
+
+
+@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+def bootstrap(
+    seed: abi.PaymentTransaction,
+    token_name: abi.String,
+    *,
+    output: abi.Uint64,
+) -> Expr:
+    """create membership token and receive initial seed payment"""
+    return Seq(
+        Assert(
+            seed.get().receiver() == Global.current_application_address(),
+            comment="payment must be to app address",
+        ),
+        Assert(
+            seed.get().amount() >= membership_club_app.state.minimum_balance,
+            comment=f"payment must be for >= {membership_club_app.state.minimum_balance.value}",
+        ),
+        Pop(membership_club_app.state.affirmations.create()),
+        InnerTxnBuilder.Execute(
+            {
+                TxnField.type_enum: TxnType.AssetConfig,
+                TxnField.config_asset_name: token_name.get(),
+                TxnField.config_asset_total: membership_club_app.state.max_members,
+                TxnField.config_asset_default_frozen: Int(1),
+                TxnField.config_asset_manager: Global.current_application_address(),
+                TxnField.config_asset_clawback: Global.current_application_address(),
+                TxnField.config_asset_freeze: Global.current_application_address(),
+                TxnField.config_asset_reserve: Global.current_application_address(),
+                TxnField.fee: Int(0),
+            }
+        ),
+        membership_club_app.state.membership_token.set(InnerTxn.created_asset_id()),
+        output.set(membership_club_app.state.membership_token),
+    )
+
+
+@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+def remove_member(member: abi.Address) -> Expr:
+    return Pop(membership_club_app.state.membership_records[member].delete())
+
+
+@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+def add_member(
+    new_member: abi.Account,
+    membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
+) -> Expr:
+    return Seq(
+        (role := abi.Uint8()).set(Int(0)),
+        (voted := abi.Bool()).set(consts.FALSE),
+        (mr := MembershipRecord()).set(role, voted),
+        membership_club_app.state.membership_records[new_member.address()].set(mr),
+        InnerTxnBuilder.Execute(
+            clawback_axfer(
+                membership_club_app.state.membership_token,
+                Int(1),
+                new_member.address(),
+                Global.current_application_address(),
+                extra={TxnField.fee: Int(0)},
+            )
+        ),
+    )
+
+
+@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+def update_role(member: abi.Account, new_role: abi.Uint8) -> Expr:
+    return Seq(
+        (mr := MembershipRecord()).decode(
+            membership_club_app.state.membership_records[member.address()].get()
+        ),
+        # retain their voted status
+        (voted := abi.Bool()).set(mr.voted),
+        mr.set(new_role, voted),
+        membership_club_app.state.membership_records[member.address()].set(mr),
+    )
+
+
+@membership_club_app.external()
+def get_membership_record(member: abi.Address, *, output: MembershipRecord) -> Expr:
+    return membership_club_app.state.membership_records[member].store_into(output)
+
+
+@membership_club_app.external(
+    authorize=Authorize.holds_token(membership_club_app.state.membership_token)
+)
+def set_affirmation(
+    idx: abi.Uint16,
+    affirmation: Affirmation,
+    membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
+) -> Expr:
+    return membership_club_app.state.affirmations[idx.get()].set(affirmation)
+
+
+@membership_club_app.external(
+    authorize=Authorize.holds_token(membership_club_app.state.membership_token)
+)
+def get_affirmation(
+    membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
+    *,
+    output: Affirmation,
+) -> Expr:
+    return output.set(
+        membership_club_app.state.affirmations[
+            Global.round() % membership_club_app.state.affirmations.elements
+        ]
+    )
+
+
+class MemberState:
+    club_app_id = GlobalStateValue(TealType.uint64)
+    last_affirmation = GlobalStateValue(TealType.bytes)
+    membership_token = GlobalStateValue(TealType.uint64)
+
+
+app_member_app = Application("AppMember", state=MemberState()).implement(
+    unconditional_create_approval
+)
+
+
+@app_member_app.external(
+    authorize=Authorize.only(Global.creator_address()), name="bootstrap"
+)
+def app_member_bootstrap(
+    seed: abi.PaymentTransaction,
+    app_id: abi.Application,
+    membership_token: abi.Asset,
+) -> Expr:
+    return Seq(
+        # Set app id
+        app_member_app.state.club_app_id.set(app_id.application_id()),
+        # Set membership token
+        app_member_app.state.membership_token.set(membership_token.asset_id()),
+        # Opt in to membership token
+        InnerTxnBuilder.Execute(
+            axfer(
+                membership_token.asset_id(),
+                Int(0),
+                Global.current_application_address(),
+                extra={TxnField.fee: Int(0)},
+            )
+        ),
+    )
+
+
+@app_member_app.external(name="get_affirmation")
+def app_member_get_affirmation(
+    member_token: abi.Asset = app_member_app.state.membership_token,  # type: ignore[assignment]
+    club_app: abi.Application = app_member_app.state.club_app_id,  # type: ignore[assignment]
+) -> Expr:
+    return Seq(
+        InnerTxnBuilder.ExecuteMethodCall(
+            app_id=app_member_app.state.club_app_id,
+            method_signature=membership_club_app.abi_methods[
+                "get_affirmation"
+            ].method_signature(),
+            args=[member_token],
+        ),
+        app_member_app.state.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
+    )
+
+
+# Utility functions
 def axfer(
     asset_id: Expr,
     amount: Expr,
     receiver: Expr,
-    extra: dict[TxnField, Expr] | None = None,
-) -> dict[TxnField, Expr]:
-    extra = extra if extra is not None else {}
-    return {
+    extra: typing.Mapping[TxnField, Expr | list[Expr]] | None = None,
+) -> dict[TxnField, Expr | list[Expr]]:
+    base: dict[TxnField, Expr | list[Expr]] = {
         TxnField.type_enum: TxnType.AssetTransfer,
         TxnField.xfer_asset: asset_id,
         TxnField.asset_amount: amount,
         TxnField.asset_receiver: receiver,
-    } | extra
+    }
+    return base | (extra or {})
 
 
 def clawback_axfer(
@@ -52,187 +255,11 @@ def clawback_axfer(
     amount: Expr,
     receiver: Expr,
     clawback_addr: Expr,
-    extra: dict[TxnField, Expr] | None = None,
-) -> dict[TxnField, Expr]:
-    return axfer(asset_id, amount, receiver, extra) | {
-        TxnField.asset_sender: clawback_addr,
-    }
-
-
-class MembershipClub(Application):
-    ####
-    # Box abstractions
-
-    # A Mapping will create a new box for every unique key,
-    # taking a data type for key and value
-    # Only static types can provide information about the max
-    # size (and min balance required).
-    membership_records = Mapping(abi.Address, MembershipRecord)
-
-    # A Listing is a simple list, initialized with some _static_ data type and a length
-    affirmations = List(Affirmation, 10)
-
-    #####
-    # State vars
-
-    membership_token = ApplicationStateValue(
-        TealType.uint64,
-        static=True,
-        descr="The asset that represents membership of this club",
+    extra: dict[TxnField, Expr | list[Expr]] | None = None,
+) -> dict[TxnField, Expr | list[Expr]]:
+    return axfer(
+        asset_id,
+        amount,
+        receiver,
+        (extra or {}) | {TxnField.asset_sender: clawback_addr},
     )
-
-    #####
-    # Math for determining min balance based on expected size of boxes
-    _max_members = 1000
-    _member_box_size = abi.size_of(MembershipRecord)
-    _min_balance = (
-        AssetMinBalance  # Cover min bal for member token
-        + (BoxFlatMinBalance + (_member_box_size * BoxByteMinBalance))
-        * _max_members  # cover min bal for member record boxes we might create
-        + (
-            BoxFlatMinBalance + (affirmations._box_size * BoxByteMinBalance)
-        )  # cover min bal for affirmation box
-    )
-    ####
-
-    MaxMembers = Int(_max_members)
-    MinimumBalance = Int(_min_balance)
-
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def bootstrap(
-        self,
-        seed: abi.PaymentTransaction,
-        token_name: abi.String,
-        *,
-        output: abi.Uint64,
-    ):
-        """create membership token and receive initial seed payment"""
-        return Seq(
-            Assert(
-                seed.get().receiver() == self.address,
-                comment="payment must be to app address",
-            ),
-            Assert(
-                seed.get().amount() >= self.MinimumBalance,
-                comment=f"payment must be for >= {self._min_balance}",
-            ),
-            Pop(self.affirmations.create()),
-            InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.AssetConfig,
-                    TxnField.config_asset_name: token_name.get(),
-                    TxnField.config_asset_total: self.MaxMembers,
-                    TxnField.config_asset_default_frozen: Int(1),
-                    TxnField.config_asset_manager: self.address,
-                    TxnField.config_asset_clawback: self.address,
-                    TxnField.config_asset_freeze: self.address,
-                    TxnField.config_asset_reserve: self.address,
-                    TxnField.fee: Int(0),
-                }
-            ),
-            self.membership_token.set(InnerTxn.created_asset_id()),
-            output.set(self.membership_token),
-        )
-
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def remove_member(self, member: abi.Address):
-        return Pop(self.membership_records[member].delete())
-
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def add_member(
-        self,
-        new_member: abi.Account,
-        membership_token: abi.Asset = membership_token,  # type: ignore[assignment]
-    ):
-        return Seq(
-            (role := abi.Uint8()).set(Int(0)),
-            (voted := abi.Bool()).set(consts.FALSE),
-            (mr := MembershipRecord()).set(role, voted),
-            self.membership_records[new_member.address()].set(mr),
-            InnerTxnBuilder.Execute(
-                clawback_axfer(  # type: ignore
-                    self.membership_token,
-                    Int(1),
-                    new_member.address(),
-                    self.address,
-                    extra={TxnField.fee: Int(0)},
-                )
-            ),
-        )
-
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def update_role(self, member: abi.Account, new_role: abi.Uint8):
-        return Seq(
-            (mr := MembershipRecord()).decode(
-                self.membership_records[member.address()].get()
-            ),
-            # retain their voted status
-            (voted := abi.Bool()).set(mr.voted),
-            mr.set(new_role, voted),
-            self.membership_records[member.address()].set(mr),
-        )
-
-    @external()
-    def get_membership_record(self, member: abi.Address, *, output: MembershipRecord):
-        return self.membership_records[member].store_into(output)
-
-    @external(authorize=Authorize.holds_token(membership_token))
-    def set_affirmation(
-        self,
-        idx: abi.Uint16,
-        affirmation: Affirmation,
-        membership_token: abi.Asset = membership_token,  # type: ignore[assignment]
-    ):
-        return self.affirmations[idx.get()].set(affirmation)
-
-    @external(authorize=Authorize.holds_token(membership_token))
-    def get_affirmation(
-        self,
-        membership_token: abi.Asset = membership_token,  # type: ignore[assignment]
-        *,
-        output: Affirmation,
-    ):
-        return output.set(
-            self.affirmations[Global.round() % self.affirmations.elements]
-        )
-
-
-class AppMember(Application):
-
-    membership_token = ApplicationStateValue(TealType.uint64)
-    club_app_id = ApplicationStateValue(TealType.uint64)
-    last_affirmation = ApplicationStateValue(TealType.bytes)
-
-    @external(authorize=Authorize.only(Global.creator_address()))
-    def bootstrap(
-        self,
-        seed: abi.PaymentTransaction,
-        app_id: abi.Application,
-        membership_token: abi.Asset,
-    ):
-        return Seq(
-            # Set app id
-            self.club_app_id.set(app_id.application_id()),
-            # Set membership token
-            self.membership_token.set(membership_token.asset_id()),
-            # Opt in to membership token
-            InnerTxnBuilder.Execute(
-                axfer(membership_token.asset_id(), Int(0), self.address)  # type: ignore
-                | {TxnField.fee: Int(0)},
-            ),
-        )
-
-    @external
-    def get_affirmation(
-        self,
-        member_token: abi.Asset = membership_token,  # type: ignore[assignment]
-        club_app: abi.Application = club_app_id,  # type: ignore[assignment]
-    ):
-        return Seq(
-            InnerTxnBuilder.ExecuteMethodCall(
-                app_id=self.club_app_id,
-                method_signature=get_method_signature(MembershipClub.get_affirmation),
-                args=[member_token],
-            ),
-            self.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
-        )

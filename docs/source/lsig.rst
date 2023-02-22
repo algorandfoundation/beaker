@@ -1,6 +1,8 @@
 Logic Signatures
 ================
 
+.. warning:: Out of date, needs to be updated to 1.0
+
 .. module:: beaker.logic_signature
 
 This is the base class that all Beaker LogicSignatures should inherit from.
@@ -12,7 +14,7 @@ This class should **not** be initialized directly.
 .. autoclass:: LogicSignature
     :members:
 
-.. autoclass:: TemplateVariable
+.. autoclass:: LogicSignatureTemplate
     :members:
 
 .. _lsig_example:

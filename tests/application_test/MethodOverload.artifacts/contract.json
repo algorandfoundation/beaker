@@ -1,0 +1,30 @@
+{
+    "name": "MethodOverload",
+    "methods": [
+        {
+            "name": "handle",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "txn"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "handle",
+            "args": [
+                {
+                    "type": "axfer",
+                    "name": "txn"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

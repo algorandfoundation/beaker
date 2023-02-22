@@ -1,69 +1,66 @@
-from typing import Final, cast
 from Cryptodome.Hash import keccak
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
+    LogicSigTransactionSigner,
 )
-from algosdk.transaction import *
+from algosdk.transaction import PaymentTxn, LogicSigAccount
+from pyteal import Assert, Seq, Txn, abi, Expr
 
-from pyteal import Assert, Seq, Txn, abi
-from beaker import Application, client, consts, external, sandbox
-from beaker.precompile import LSigPrecompile
+from beaker import (
+    Application,
+    client,
+    consts,
+    sandbox,
+    precompiled,
+    unconditional_create_approval,
+)
+from beaker.precompile import PrecompiledLogicSignature
 
-if __name__ == "__main__":
-    from lsig import EthEcdsaVerify, HashValue, Signature  # type: ignore
-else:
-    from .lsig import EthEcdsaVerify, HashValue, Signature
+from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
 
 
-class EthChecker(Application):
+eth_checker = Application("EthChecker").implement(unconditional_create_approval)
 
+verify_lsig = EthEcdsaVerify(version=6)
+
+
+@eth_checker.external
+def check_eth_sig(hash: HashValue, signature: Signature, *, output: abi.String) -> Expr:
     # The lsig that will be responsible for validating the
     # incoming signature against the incoming hash
     # When passed to Precompile, it flags the init of the Application
     # to prevent building approval/clear programs until the precompile is
     # compiled so we have access to compiled information (its address for instance)
-    verifier: Final[LSigPrecompile] = LSigPrecompile(EthEcdsaVerify(version=6))
+    verifier = precompiled(verify_lsig)
 
-    @external
-    def check_eth_sig(
-        self, hash: HashValue, signature: Signature, *, output: abi.String
-    ):
-        return Seq(
-            # The precompiled lsig should have its address and binary available
-            # here so we can use it to make sure we've been called
-            # with the correct lsig
-            Assert(Txn.sender() == self.verifier.logic.hash()),
-            output.set("lsig validated"),
-        )
+    return Seq(
+        # The precompiled lsig should have its address and binary available
+        # here so we can use it to make sure we've been called
+        # with the correct lsig
+        Assert(Txn.sender() == verifier.address()),
+        output.set("lsig validated"),
+    )
 
 
-def demo():
+def demo() -> None:
     algod_client = sandbox.get_algod_client()
     acct = sandbox.get_accounts().pop()
 
     # Create app client
-    app_client = client.ApplicationClient(
-        algod_client, EthChecker(), signer=acct.signer
-    )
-
-    # shouldn't have an approval program yet, since
-    # the number of precompiles is > 0
-    assert app_client.app.approval_program is None
-
-    # This will first compile the precompiles, then compile the approval program
-    # with the precompiles in place
-    # not required to call manually since create/update will also do this
-    # if necessary
-    app_client.build()
+    app = eth_checker
+    app_client = client.ApplicationClient(algod_client, app, signer=acct.signer)
 
     # Now we should have the approval program available
-    assert app_client.app.approval_program is not None
+    assert app_client.approval.teal is not None
 
     app_client.create()
 
     # Create a new app client with the lsig signer
-    lsig_signer = cast(EthChecker, app_client.app).verifier.signer()
+    lsig_pc = PrecompiledLogicSignature(verify_lsig, algod_client)
+    lsig_signer = LogicSigTransactionSigner(
+        LogicSigAccount(lsig_pc.logic_program.raw_binary)
+    )
     lsig_client = app_client.prepare(signer=lsig_signer)
 
     atc = AtomicTransactionComposer()
@@ -94,7 +91,7 @@ def demo():
     signature = bytes.fromhex(hex_signature)
     atc = lsig_client.add_method_call(
         atc,
-        EthChecker.check_eth_sig,
+        check_eth_sig,
         hash=hash,
         signature=signature,
         suggested_params=sp_no_fee,
@@ -108,15 +105,15 @@ def demo():
     signature = bytes.fromhex(hex_signature)
     atc = lsig_client.add_method_call(
         atc,
-        EthChecker.check_eth_sig,
+        check_eth_sig,
         hash=hash,
         signature=signature,
         suggested_params=sp_no_fee,
     )
 
     result = atc.execute(algod_client, 4)
-    for result in result.abi_results:
-        print(result.return_value)
+    for rv in result.abi_results:
+        print(rv.return_value)
 
 
 if __name__ == "__main__":

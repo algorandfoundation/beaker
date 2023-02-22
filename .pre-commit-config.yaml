@@ -16,8 +16,7 @@ repos:
         language: system
         types: [ python ]
         require_serial: true
-        # TODO: expand this coverage to examples!
-        files: '^(beaker|tests)/'
+        files: '^(beaker|tests|examples)/'
       - id: mypy
         name: mypy
         description: '`mypy` will check Python types for correctness'
@@ -27,5 +26,4 @@ repos:
         require_serial: true
         additional_dependencies: [ ]
         minimum_pre_commit_version: '2.9.2'
-        # TODO: expand this coverage to examples!
-        files: '^beaker/'
+        files: '^(beaker|tests|examples)/'

@@ -1,0 +1,71 @@
+{
+    "hints": {
+        "handle(pay)void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "handle(axfer)void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDEgMAp0eG4gTnVtQXBwQXJncwppbnRjXzEgLy8gMAo9PQpibnogbWFpbl9sNgp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDEyOWM5MmQ1IC8vICJoYW5kbGUocGF5KXZvaWQiCj09CmJueiBtYWluX2w1CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4MjBkNWM4NjIgLy8gImhhbmRsZShheGZlcil2b2lkIgo9PQpibnogbWFpbl9sNAplcnIKbWFpbl9sNDoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzEgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzEgLy8gMAohPQomJgphc3NlcnQKdHhuIEdyb3VwSW5kZXgKaW50Y18wIC8vIDEKLQpzdG9yZSAxCmxvYWQgMQpndHhucyBUeXBlRW51bQpwdXNoaW50IDQgLy8gYXhmZXIKPT0KYXNzZXJ0CmxvYWQgMQpjYWxsc3ViIGhhbmRsZV8xCmludGNfMCAvLyAxCnJldHVybgptYWluX2w1Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMSAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMSAvLyAwCiE9CiYmCmFzc2VydAp0eG4gR3JvdXBJbmRleAppbnRjXzAgLy8gMQotCnN0b3JlIDAKbG9hZCAwCmd0eG5zIFR5cGVFbnVtCmludGNfMCAvLyBwYXkKPT0KYXNzZXJ0CmxvYWQgMApjYWxsc3ViIGhhbmRsZV8wCmludGNfMCAvLyAxCnJldHVybgptYWluX2w2Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMSAvLyBOb09wCj09CmJueiBtYWluX2w4CmVycgptYWluX2w4Ogp0eG4gQXBwbGljYXRpb25JRAppbnRjXzEgLy8gMAo9PQphc3NlcnQKaW50Y18wIC8vIDEKcmV0dXJuCgovLyBoYW5kbGUKaGFuZGxlXzA6CnByb3RvIDEgMAppbnRjXzAgLy8gMQpyZXR1cm4KCi8vIGhhbmRsZQpoYW5kbGVfMToKcHJvdG8gMSAwCmludGNfMCAvLyAxCnJldHVybg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {},
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "MethodOverload",
+        "methods": [
+            {
+                "name": "handle",
+                "args": [
+                    {
+                        "type": "pay",
+                        "name": "txn"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "handle",
+                "args": [
+                    {
+                        "type": "axfer",
+                        "name": "txn"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
+    }
+}

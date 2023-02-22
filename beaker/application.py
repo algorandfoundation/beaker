@@ -1,418 +1,965 @@
-import base64
-from inspect import getattr_static
-from typing import Final, Any, cast, Optional
-from algosdk.v2client.algod import AlgodClient
-from algosdk.abi import Method
-from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
+import dataclasses
+import inspect
+import typing
+import warnings
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import (
+    cast,
+    Callable,
+    TypeAlias,
+    Literal,
+    ParamSpec,
+    Concatenate,
+    TypeVar,
+    overload,
+    Iterator,
+    Generic,
+    MutableMapping,
+)
+
 from pyteal import (
     SubroutineFnWrapper,
-    TealInputError,
     Txn,
-    MAX_TEAL_VERSION,
     ABIReturnSubroutine,
     BareCallActions,
     Expr,
-    Global,
     OnCompleteAction,
-    OptimizeOptions,
     Router,
+    CallConfig,
+    TealType,
+    MethodConfig,
     Bytes,
+    Int,
     Approve,
 )
 
-from beaker.decorators import (
-    get_handler_config,
+from beaker.application_specification import (
+    ApplicationSpecification,
     MethodHints,
-    MethodConfig,
-    create,
-    HandlerFunc,
+    DefaultArgumentDict,
 )
-
-from beaker.state import (
-    AccountState,
-    AccountStateBlob,
-    ApplicationStateBlob,
-    ApplicationState,
-    ReservedAccountStateValue,
-    AccountStateValue,
-    ApplicationStateValue,
-    ReservedApplicationStateValue,
-    prefix_key_gen,
+from beaker.build_options import BuildOptions
+from beaker.decorators import authorize as authorize_decorator
+from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
+from beaker.precompile import (
+    PrecompiledApplication,
+    PrecompiledLogicSignature,
+    PrecompiledLogicSignatureTemplate,
 )
-from beaker.errors import BareOverwriteError
-from beaker.precompile import AppPrecompile, LSigPrecompile
-from beaker.lib.storage import List
+from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
+from beaker.state.primitive import LocalStateValue, GlobalStateValue
+
+if typing.TYPE_CHECKING:
+    from algosdk.v2client.algod import AlgodClient
+
+__all__ = [
+    "Application",
+    "this_app",
+    "precompiled",
+]
+
+OnCompleteActionName: TypeAlias = Literal[
+    "no_op",
+    "opt_in",
+    "close_out",
+    "update_application",
+    "delete_application",
+]
+
+MethodConfigDict: TypeAlias = dict[OnCompleteActionName, CallConfig]
+
+T = TypeVar("T")
+P = ParamSpec("P")
+TState = TypeVar("TState", covariant=True)
+
+HandlerFunc = Callable[..., Expr]
 
 
-def get_method_spec(fn: HandlerFunc) -> Method:
-    hc = get_handler_config(fn)
-    if hc.method_spec is None:
-        raise Exception("Expected argument to be an ABI method")
-    return hc.method_spec
+@dataclasses.dataclass
+class ABIExternal:
+    actions: MethodConfigDict
+    method: ABIReturnSubroutine
+    hints: MethodHints
 
 
-def get_method_signature(fn: HandlerFunc) -> str:
-    return get_method_spec(fn).get_signature()
+DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
+DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
 
 
-def get_method_selector(fn: HandlerFunc) -> bytes:
-    return get_method_spec(fn).get_selector()
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class BuildContext:
+    app: "Application"
+    client: "AlgodClient | None"
 
 
-class Application:
-    """Application contains logic to detect State Variables, Bare methods
-    ABI Methods and internal subroutines.
+_ctx: ContextVar[BuildContext] = ContextVar("beaker.build_context")
 
-    It should be subclassed to provide basic behavior to a custom application.
-    """
 
-    # Convenience constant fields
-    address: Final[Expr] = Global.current_application_address()
-    id: Final[Expr] = Global.current_application_id()
+@contextmanager
+def _set_ctx(app: "Application", client: "AlgodClient | None") -> Iterator[None]:
+    token = _ctx.set(BuildContext(app=app, client=client))
+    try:
+        yield
+    finally:
+        _ctx.reset(token)
+
+
+class Application(Generic[TState]):
+    @overload
+    def __init__(
+        self: "Application[None]",
+        name: str,
+        *,
+        descr: str | None = None,
+        build_options: BuildOptions | None = None,
+    ):
+        ...
+
+    @overload
+    def __init__(
+        self: "Application[TState]",
+        name: str,
+        *,
+        state: TState,
+        descr: str | None = None,
+        build_options: BuildOptions | None = None,
+    ):
+        ...
 
     def __init__(
         self,
-        version: int = MAX_TEAL_VERSION,
-        optimize_options: OptimizeOptions = OptimizeOptions(
-            scratch_slots=True, frame_pointers=True
-        ),
+        name: str,
+        *,
+        state: TState = cast(TState, None),
+        descr: str | None = None,
+        build_options: BuildOptions | None = None,
     ):
-        """
-        Initialize the Application, finding all the custom attributes and
-        initializing the Router
-        """
+        """<TODO>"""
+        self._state: TState = state
+        self.name = name
+        self.descr = descr
+        self.build_options = build_options or BuildOptions()
+        self.bare_methods: dict[str, SubroutineFnWrapper] = {}
+        self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
-        self.teal_version = version
+        self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
+        self._clear_state_method: SubroutineFnWrapper | None = None
+        self._precompiled_lsigs: dict[LogicSignature, PrecompiledLogicSignature] = {}
+        self._precompiled_lsig_templates: dict[
+            LogicSignatureTemplate, PrecompiledLogicSignatureTemplate
+        ] = {}
+        self._precompiled_apps: dict[Application, PrecompiledApplication] = {}
+        self._abi_externals: dict[str, ABIExternal] = {}
+        self._local_state = LocalStateAggregate(self._state)
+        self._global_state = GlobalStateAggregate(self._state)
 
-        if self.teal_version < FRAME_POINTERS_VERSION:
-            optimize_options = OptimizeOptions(
-                scratch_slots=optimize_options._scratch_slots, frame_pointers=False
+    def __init_subclass__(cls) -> None:
+        warnings.warn(
+            "Subclassing beaker.Application is deprecated, please see the migration guide at: TODO",
+            DeprecationWarning,
+        )
+
+    @property
+    def state(self) -> TState:
+        return self._state
+
+    @overload
+    def precompiled(self, value: "Application", /) -> PrecompiledApplication:
+        ...
+
+    @overload
+    def precompiled(self, value: LogicSignature, /) -> PrecompiledLogicSignature:
+        ...
+
+    @overload
+    def precompiled(
+        self, value: LogicSignatureTemplate, /  # noqa: W504
+    ) -> PrecompiledLogicSignatureTemplate:
+        ...
+
+    def precompiled(
+        self,
+        value: "Application | LogicSignature | LogicSignatureTemplate",
+        /,
+    ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+        try:
+            ctx = _ctx.get()
+        except LookupError:
+            raise LookupError("precompiled(...) should be called inside a function")
+        if ctx.app is not self:
+            raise ValueError("precompiled() used in another apps context")
+        if ctx.client is None:
+            raise ValueError(
+                "beaker.precompiled(...) requires use of a client when calling Application.build(...)"
             )
-
-        self.optimize_options = optimize_options
-
-        # Get initial list of all attrs declared
-        initial_attrs = {
-            m: (getattr(self, m), getattr_static(self, m))
-            for m in sorted(list(set(dir(self.__class__)) - set(dir(super()))))
-            if not m.startswith("__")
-        }
-
-        # Make sure we preserve the ordering of declaration
-        ordering = [
-            m for m in list(vars(self.__class__).keys()) if not m.startswith("__")
-        ]
-        self.attrs = {k: initial_attrs[k] for k in ordering} | initial_attrs
-
-        # Initialize these ahead of time, may not
-        # be set after init if len(precompiles)>0
-        self.approval_program: Optional[str] = None
-        self.clear_program: Optional[str] = None
-
-        all_creates = []
-        all_updates = []
-        all_deletes = []
-        all_opt_ins = []
-        all_close_outs = []
-
-        self.hints: dict[str, MethodHints] = {}
-        self.bare_externals: dict[str, OnCompleteAction] = {}
-        self.bare_clear_state: Optional[HandlerFunc] = None
-        self.methods: dict[str, tuple[ABIReturnSubroutine, Optional[MethodConfig]]] = {}
-        self.precompiles: dict[str, AppPrecompile | LSigPrecompile] = {}
-
-        acct_vals: dict[
-            str, AccountStateValue | ReservedAccountStateValue | AccountStateBlob
-        ] = {}
-        app_vals: dict[
-            str,
-            ApplicationStateValue
-            | ReservedApplicationStateValue
-            | ApplicationStateBlob,
-        ] = {}
-
-        for name, (bound_attr, static_attr) in self.attrs.items():
-            # Check for state vals
-            match bound_attr:
-
-                # Account state
-                case AccountStateValue():
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
-                    acct_vals[name] = bound_attr
-                case ReservedAccountStateValue():
-                    if bound_attr.key_generator is None:
-                        bound_attr.set_key_gen(prefix_key_gen(name))
-                    acct_vals[name] = bound_attr
-                case AccountStateBlob():
-                    acct_vals[name] = bound_attr
-
-                # App state
-                case ApplicationStateBlob():
-                    app_vals[name] = bound_attr
-                case ApplicationStateValue():
-                    if bound_attr.key is None:
-                        bound_attr.key = Bytes(name)
-                    app_vals[name] = bound_attr
-                case ReservedApplicationStateValue():
-                    if bound_attr.key_generator is None:
-                        bound_attr.set_key_gen(prefix_key_gen(name))
-                    app_vals[name] = bound_attr
-
-                # Precompiles
-                case LSigPrecompile() | AppPrecompile():
-                    self.precompiles[name] = bound_attr
-
-                # Boxes
-                case List():
-                    if bound_attr.name is None:
-                        bound_attr.name = Bytes(name)
-
-            # Already dealt with these, move on
-            if name in app_vals or name in acct_vals:
-                continue
-
-            # Check for externals and internal methods
-            handler_config = get_handler_config(bound_attr)
-
-            # Bare externals
-            if handler_config.bare_method is not None:
-                actions = {
-                    oc: cast(OnCompleteAction, action)
-                    for oc, action in handler_config.bare_method.__dict__.items()
-                    if action.action is not None
-                }
-
-                for oc, action in actions.items():
-                    if oc in self.bare_externals:
-                        raise BareOverwriteError(oc)
-
-                    # Swap the implementation with the bound version
-                    if handler_config.referenced_self:
-                        if not (
-                            isinstance(action.action, SubroutineFnWrapper)
-                            or isinstance(action.action, ABIReturnSubroutine)
-                        ):
-                            raise TealInputError(
-                                "Expected Subroutine or ABIReturnSubroutine, "
-                                f"for {oc} got {action.action}"
-                            )
-                        action.action.subroutine.implementation = bound_attr
-
-                    self.bare_externals[oc] = action
-
-            # Clear state
-            elif handler_config.clear_state is not None:
-                if self.bare_clear_state is not None:
-                    raise BareOverwriteError("clear_state")
-                if handler_config.referenced_self:
-                    handler_config.clear_state.subroutine.implementation = bound_attr
-                self.bare_clear_state = static_attr
-
-            # ABI externals
-            elif handler_config.method_spec is not None and not handler_config.internal:
-                # Create the ABIReturnSubroutine from the static attr
-                # but override the implementation with the bound version
-                abi_meth = ABIReturnSubroutine(
-                    static_attr, overriding_name=handler_config.method_spec.name
+        client = ctx.client
+        match value:
+            case Application() as app:
+                return _lazy_setdefault(
+                    self._precompiled_apps,
+                    app,
+                    lambda: PrecompiledApplication(app, client),
                 )
+            case LogicSignature() as lsig:
+                return _lazy_setdefault(
+                    self._precompiled_lsigs,
+                    lsig,
+                    lambda: PrecompiledLogicSignature(lsig, client),
+                )
+            case LogicSignatureTemplate() as lsig_template:
+                return _lazy_setdefault(
+                    self._precompiled_lsig_templates,
+                    lsig_template,
+                    lambda: PrecompiledLogicSignatureTemplate(lsig_template, client),
+                )
+            case _:
+                raise TypeError("TODO write error message")
 
-                if handler_config.referenced_self:
-                    abi_meth.subroutine.implementation = bound_attr
+    def _register_abi_external(
+        self,
+        method: ABIReturnSubroutine,
+        *,
+        python_func_name: str,
+        actions: MethodConfigDict,
+        hints: MethodHints,
+        override: bool | None,
+    ) -> None:
+        if any(cc == CallConfig.NEVER for cc in actions.values()):
+            raise ValueError("???")
+        method_sig = method.method_signature()
+        existing_method = self._abi_externals.get(method_sig)
+        if existing_method is None:
+            if override is True:
+                raise ValueError("override=True, but nothing to override")
+        else:
+            if override is False:
+                raise ValueError(
+                    "override=False, but method with matching signature already registered"
+                )
+            # TODO: should we warn if call config differs?
+            self.deregister_abi_method(existing_method.method)
+        self._abi_externals[method_sig] = ABIExternal(
+            actions=actions,
+            method=method,
+            hints=hints,
+        )
+        self.abi_methods[python_func_name] = method
 
-                self.methods[name] = (abi_meth, handler_config.method_config)
+    def deregister_abi_method(
+        self,
+        name_or_reference: str | ABIReturnSubroutine,
+        /,
+    ) -> None:
+        if isinstance(name_or_reference, str):
+            method = self.abi_methods.pop(name_or_reference)
+        else:
+            method = name_or_reference
+            _remove_first_match(self.abi_methods, lambda _, v: v is method)
+        _remove_first_match(self._abi_externals, lambda _, v: v.method is method)
 
-                if handler_config.is_create():
-                    all_creates.append(static_attr)
-                if handler_config.is_update():
-                    all_updates.append(static_attr)
-                if handler_config.is_delete():
-                    all_deletes.append(static_attr)
-                if handler_config.is_opt_in():
-                    all_opt_ins.append(static_attr)
-                if handler_config.is_close_out():
-                    all_close_outs.append(static_attr)
-
-                self.methods[name] = (abi_meth, handler_config.method_config)
-                self.hints[name] = handler_config.hints()
-
-            # Internal subroutines
-            elif handler_config.subroutine is not None:
-                if handler_config.referenced_self:
-                    setattr(self, name, handler_config.subroutine(bound_attr))
-                else:
-                    setattr(
-                        self.__class__,
-                        name,
-                        handler_config.subroutine(static_attr),
+    def _register_bare_external(
+        self,
+        sub: SubroutineFnWrapper,
+        *,
+        python_func_name: str,
+        actions: MethodConfigDict,
+        override: bool | None,
+    ) -> None:
+        if any(cc == CallConfig.NEVER for cc in actions.values()):
+            raise ValueError("???")
+        for for_action, call_config in actions.items():
+            existing_action = self._bare_externals.get(for_action)
+            if existing_action is None:
+                if override is True:
+                    raise ValueError("override=True, but nothing to override")
+            else:
+                if override is False:
+                    raise ValueError(
+                        f"override=False, but bare external for {for_action} already exists."
                     )
+                assert isinstance(existing_action.action, SubroutineFnWrapper)
+                self.deregister_bare_method(existing_action.action)
+            self._bare_externals[for_action] = OnCompleteAction(
+                action=sub, call_config=call_config
+            )
+        self.bare_methods[python_func_name] = sub
 
-        self.on_create: Optional[HandlerFunc] = (
-            all_creates.pop() if len(all_creates) == 1 else None
-        )
-        self.on_update: Optional[HandlerFunc] = (
-            all_updates.pop() if len(all_updates) == 1 else None
-        )
-        self.on_delete: Optional[HandlerFunc] = (
-            all_deletes.pop() if len(all_deletes) == 1 else None
-        )
-        self.on_opt_in: Optional[HandlerFunc] = (
-            all_opt_ins.pop() if len(all_opt_ins) == 1 else None
-        )
-        self.on_close_out: Optional[HandlerFunc] = (
-            all_close_outs.pop() if len(all_close_outs) == 1 else None
-        )
+    def deregister_bare_method(
+        self,
+        name_or_reference: str | SubroutineFnWrapper,
+        /,
+    ) -> None:
+        if isinstance(name_or_reference, str):
+            method = self.bare_methods.pop(name_or_reference)
+        else:
+            method = name_or_reference
+            _remove_first_match(self.bare_methods, lambda _, v: v is method)
+        _remove_first_match(self._bare_externals, lambda _, v: v.action is method)
 
-        self.acct_state = AccountState(acct_vals)
-        self.app_state = ApplicationState(app_vals)
+    @overload
+    def external(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> ABIReturnSubroutine:
+        ...
 
-        # If there are no precompiles, we can build the programs
-        # with what we already have and don't need to pass an
-        # algod client
-        if len(self.precompiles) == 0:
-            self.compile()
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict | None = None,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = False,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
 
-    def compile(self, client: Optional[AlgodClient] = None) -> tuple[str, str]:
-        """Fully compile the application to TEAL
-
-        Note: If the application has ``Precompile`` fields, the ``client`` must be
-        passed to compile them into bytecode.
+    def external(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict | None = None,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = False,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        """
+        Add the method decorated to be handled as an ABI method for the Application
 
         Args:
-            client (optional): An Algod client that can be passed to ``Precompile``
-            to have them fully compiled.
+            fn: The function being wrapped.
+            method_config:  <TODO>
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+                interpreted as allowed if the output>0.
+            bare:
+            read_only: Mark a method as callable with no fee using dryrun or simulate
+            override:
+
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
         """
-        if self.approval_program is not None and self.clear_program is not None:
-            return self.approval_program, self.clear_program
 
-        if len(self.precompiles) > 0:
-            # make sure all the precompiles are available
-            for precompile in self.precompiles.values():
-                precompile.compile(client)  # type: ignore
+        def decorator(func: HandlerFunc) -> SubroutineFnWrapper | ABIReturnSubroutine:
+            python_func_name = func.__name__
+            sig = inspect.signature(func)
+            nonlocal bare
+            if bare is None:
+                bare = not sig.parameters
 
-        cs_ast = (
-            get_handler_config(self.bare_clear_state).clear_state
-            if self.bare_clear_state
-            else None
+            if bare and read_only:
+                raise ValueError("read_only has no effect on bare methods")
+
+            actions: MethodConfigDict
+            match method_config:
+                case None:
+                    if bare:
+                        raise ValueError("bare requires method_config")
+                    else:
+                        actions = {"no_op": CallConfig.CALL}
+                case MethodConfig():
+                    actions = {
+                        cast(OnCompleteActionName, key): value
+                        for key, value in method_config.__dict__.items()
+                        if value != CallConfig.NEVER
+                    }
+                case _:
+                    actions = method_config
+
+            if authorize is not None:
+                func = authorize_decorator(authorize)(func)
+            if bare:
+                sub = SubroutineFnWrapper(func, return_type=TealType.none, name=name)
+                if sub.subroutine.argument_count():
+                    raise TypeError("Bare externals must take no method arguments")
+
+                self._register_bare_external(
+                    sub,
+                    python_func_name=python_func_name,
+                    actions=actions,
+                    override=override,
+                )
+                return sub
+            else:
+                hints = _capture_method_hints_and_remove_defaults(
+                    func,
+                    read_only=read_only,
+                    actions=actions,
+                )
+                method = ABIReturnSubroutine(func, overriding_name=name)
+                setattr(method, "_read_only", read_only)
+
+                self._register_abi_external(
+                    method,
+                    python_func_name=python_func_name,
+                    actions=actions,
+                    hints=hints,
+                    override=override,
+                )
+                return method
+
+        if fn is None:
+            return decorator
+
+        return decorator(fn)
+
+    @overload
+    def create(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def create(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self.external(
+            method_config={"no_op": CallConfig.CREATE},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            override=override,
         )
-        self.router = Router(
-            name=self.__class__.__name__,
-            bare_calls=BareCallActions(**self.bare_externals),
-            descr=self.__doc__,
-            clear_state=cs_ast,
-        )
+        return decorator if fn is None else decorator(fn)
 
-        # Add method externals
-        for _, method_tuple in self.methods.items():
-            method, method_config = method_tuple
-            self.router.add_method_handler(
-                method_call=method,
-                method_config=method_config,
-                overriding_name=method.name(),
+    @overload
+    def delete(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def delete(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self.external(
+            method_config={"delete_application": CallConfig.CALL},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def update(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def update(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self.external(
+            method_config={"update_application": CallConfig.CALL},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def opt_in(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def opt_in(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self.external(
+            method_config={
+                "opt_in": CallConfig.ALL if allow_create else CallConfig.CALL
+            },
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def clear_state(
+        self,
+        fn: Callable[[], Expr],
+        /,
+    ) -> SubroutineFnWrapper:
+        ...
+
+    @overload
+    def clear_state(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        override: bool | None = False,
+    ) -> Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
+        ...
+
+    def clear_state(
+        self,
+        fn: Callable[[], Expr] | None = None,
+        /,
+        *,
+        name: str | None = None,
+        override: bool | None = False,
+    ) -> SubroutineFnWrapper | Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
+        def decorator(fun: Callable[[], Expr]) -> SubroutineFnWrapper:
+            sub = SubroutineFnWrapper(fun, TealType.none, name=name)
+            if sub.subroutine.argument_count():
+                raise TypeError(
+                    "clear_state methods cannot fail, so cannot rely on the presence of arguments. "
+                    "TODO betterify this message!!"
+                )
+            if override is True and self._clear_state_method is None:
+                raise ValueError("override=True but no clear_state defined")
+            elif override is False and self._clear_state_method is not None:
+                raise ValueError("override=False but clear_state already defined")
+            self._clear_state_method = sub
+            return sub
+
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def close_out(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def close_out(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        decorator = self.external(
+            method_config={"close_out": CallConfig.CALL},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    @overload
+    def no_op(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> DecoratorResultType:
+        ...
+
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def no_op(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> DecoratorResultType | DecoratorFuncType:
+        if allow_call and allow_create:
+            call_config = CallConfig.ALL
+        elif allow_call:
+            call_config = CallConfig.CALL
+        elif allow_create:
+            call_config = CallConfig.CREATE
+        else:
+            raise ValueError("Require one of allow_call or allow_create to be True")
+        decorator = self.external(
+            method_config={"no_op": call_config},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else decorator(fn)
+
+    def implement(
+        self,
+        blueprint: Callable[Concatenate["Application[TState]", P], T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> "Application[TState]":
+        blueprint(self, *args, **kwargs)
+        return self
+
+    def build(self, client: "AlgodClient | None" = None) -> ApplicationSpecification:
+        """Build the application specification, including transpiling the application to TEAL, and fully compiling
+        any nested (i.e. precompiled) apps/lsigs to byte code.
+
+        Note: .
+
+        Args:
+            client (optional): An Algod client that is required if there are any ``precopiled`` so they can be fully compiled.
+        """
+
+        with _set_ctx(app=self, client=client):
+            bare_calls = self._bare_calls()
+            router = Router(
+                name=self.name,
+                bare_calls=bare_calls,
+                descr=self.descr,
+                clear_state=self._clear_state_method,
             )
 
-        # Compile approval and clear programs
-        (
-            self.approval_program,
-            self.clear_program,
-            self.contract,
-        ) = self.router.compile_program(
-            version=self.teal_version,
-            assemble_constants=True,
-            optimize=self.optimize_options,
-        )
+            # Add method externals
+            hints: dict[str, MethodHints] = {}
+            for abi_external in self._abi_externals.values():
+                router.add_method_handler(
+                    method_call=abi_external.method,
+                    method_config=MethodConfig(
+                        **cast(dict[str, CallConfig], abi_external.actions)
+                    ),
+                )
+                hints[abi_external.method.method_signature()] = abi_external.hints
 
-        return self.approval_program, self.clear_program
-
-    def application_spec(self) -> dict[str, Any]:
-        """returns a dictionary, helpful to provide to callers with
-        information about the application specification
-        """
-
-        if self.approval_program is None or self.clear_program is None:
-            raise Exception(
-                "approval or clear program are none, please build the programs first"
+            # Compile approval and clear programs
+            approval_program, clear_program, contract = router.compile_program(
+                version=self.build_options.avm_version,
+                assemble_constants=self.build_options.assemble_constants,
+                optimize=self.build_options.optimize_options,
             )
 
-        return {
-            "hints": {k: v.dictify() for k, v in self.hints.items() if not v.empty()},
-            "source": {
-                "approval": base64.b64encode(self.approval_program.encode()).decode(
-                    "utf8"
-                ),
-                "clear": base64.b64encode(self.clear_program.encode()).decode("utf8"),
+        return ApplicationSpecification(
+            approval_program=approval_program,
+            clear_program=clear_program,
+            contract=contract,
+            hints=hints,
+            schema={
+                "global": self._global_state.dictify(),
+                "local": self._local_state.dictify(),
             },
-            "schema": {
-                "local": self.acct_state.dictify(),
-                "global": self.app_state.dictify(),
-            },
-            "contract": self.contract.dictify(),
-        }
+            global_state_schema=self._global_state.schema,
+            local_state_schema=self._local_state.schema,
+            bare_call_config=MethodConfig(
+                **{k: v.call_config for k, v in bare_calls.asdict().items()}
+            ),
+        )
 
-    def initialize_application_state(self) -> Expr:
+    def _bare_calls(self) -> BareCallActions:
+        # turn self._bare_externals into a pyteal.BareCallActions,
+        # inserting a default create method if one is not found in self._bare_externals
+        # OR in self._abi_externals
+        bare_calls = {str(k): v for k, v in self._bare_externals.items()}
+        # check for a bare method with CallConfig.CREATE or CallConfig.ALL
+        if any(oca.call_config & CallConfig.CREATE for oca in bare_calls.values()):
+            pass
+        # else check for an ABI method with CallConfig.CREATE or CallConfig.ALL
+        elif any(
+            cc & CallConfig.CREATE
+            for ext in self._abi_externals.values()
+            for cc in ext.actions.values()
+        ):
+            pass
+        # else, try and insert an approval-on-create method
+        else:
+            if "no_op" in bare_calls:
+                raise Exception(
+                    f"Application {self.name} has no methods that can be invoked to create the contract, "
+                    f"but does have a NoOp bare method, so one couldn't be inserted. In order to deploy the contract, "
+                    f"either handle CallConfig.CREATE in the no_op bare method, or add an ABI method that handles create."
+                )
+            bare_calls["no_op"] = OnCompleteAction(
+                action=Approve(), call_config=CallConfig.CREATE
+            )
+        return BareCallActions(**bare_calls)
+
+    def initialize_global_state(self) -> Expr:
         """
-        Initialize any application state variables declared
+        Initialize any global state variables declared
 
         :return: The Expr to initialize the application state.
         :rtype: pyteal.Expr
         """
-        return self.app_state.initialize()
+        self._check_context()
+        return self._global_state.initialize()
 
-    def initialize_account_state(self, addr: Expr = Txn.sender()) -> Expr:
+    def initialize_local_state(self, addr: Expr = Txn.sender()) -> Expr:
         """
-        Initialize any account state variables declared
+        Initialize any local state variables declared
 
         :param addr: Optional, address of account to initialize state for.
         :return: The Expr to initialize the account state.
         :rtype: pyteal.Expr
         """
+        self._check_context()
+        return self._local_state.initialize(addr)
 
-        return self.acct_state.initialize(addr)
-
-    @create
-    def create(self) -> Expr:
-        """create is the only handler defined by default and only approves the transaction.
-
-        Override this method to define custom behavior.
-        """
-        return Approve()
-
-    def dump(self, directory: str = ".", client: Optional[AlgodClient] = None) -> None:
-        """write out the artifacts generated by the application to disk
-
-        Args:
-            directory (optional): str path to the directory where the artifacts
-                should be written
-            client (optional): AlgodClient to be passed to any precompiles
-        """
-        if self.approval_program is None:
-            if len(self.precompiles) > 0 and client is None:
-                raise Exception(
-                    "Approval program empty, if you have precompiles, pass an Algod "
-                    "client to build the precompiles"
+    def _check_context(self) -> None:
+        if ctx := _ctx.get(None):
+            # if inside a context (ie when an expression is being evaluated by PyTeal),
+            # raise a warning when attempting to access the state (or related methods) of a different app instance
+            if ctx.app is not self:
+                warnings.warn(
+                    f"Accessing state of Application {self.name} during compilation of Application {ctx.app.name}"
                 )
-            self.compile(client)
 
-        import json
-        import os
 
-        if not os.path.exists(directory):
-            os.mkdir(directory)
+def this_app() -> Application[TState]:
+    return _ctx.get().app
 
-        with open(os.path.join(directory, "approval.teal"), "w") as f:
-            if self.approval_program is None:
-                raise Exception("Approval program empty")
-            f.write(self.approval_program)
 
-        with open(os.path.join(directory, "clear.teal"), "w") as f:
-            if self.clear_program is None:
-                raise Exception("Clear program empty")
-            f.write(self.clear_program)
+@overload
+def precompiled(value: Application, /) -> PrecompiledApplication:
+    ...
 
-        with open(os.path.join(directory, "contract.json"), "w") as f:
-            if self.contract is None:
-                raise Exception("Contract empty")
-            f.write(json.dumps(self.contract.dictify(), indent=4))
 
-        with open(os.path.join(directory, "application.json"), "w") as f:
-            f.write(json.dumps(self.application_spec(), indent=4))
+@overload
+def precompiled(value: LogicSignature, /) -> PrecompiledLogicSignature:
+    ...
+
+
+@overload
+def precompiled(
+    value: LogicSignatureTemplate, /  # noqa: W504
+) -> PrecompiledLogicSignatureTemplate:
+    ...
+
+
+def precompiled(
+    value: Application | LogicSignature | LogicSignatureTemplate,
+    /,
+) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+    try:
+        ctx_app: Application = this_app()
+    except LookupError:
+        raise LookupError("beaker.precompiled(...) should be called inside a function")
+    if value is ctx_app:
+        raise ValueError("Attempted to precompile the current application")
+    return ctx_app.precompiled(value)
+
+
+TKey = TypeVar("TKey")
+TValue = TypeVar("TValue")
+
+
+def _remove_first_match(
+    m: MutableMapping[TKey, TValue], predicate: Callable[[TKey, TValue], bool]
+) -> None:
+    for k, v in m.items():
+        if predicate(k, v):
+            del m[k]
+            break
+
+
+def _lazy_setdefault(
+    m: MutableMapping[TKey, TValue], key: TKey, default_factory: Callable[[], TValue]
+) -> TValue:
+    try:
+        return m[key]
+    except KeyError:
+        pass
+    default = default_factory()
+    m[key] = default
+    return default
+
+
+def _capture_method_hints_and_remove_defaults(
+    fn: HandlerFunc,
+    read_only: bool,
+    actions: dict[OnCompleteActionName, CallConfig],
+) -> MethodHints:
+    from pyteal.ast import abi
+
+    sig = inspect.signature(fn)
+    params = sig.parameters.copy()
+
+    mh = MethodHints(
+        read_only=read_only,
+        call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
+    )
+
+    for name, param in params.items():
+        match param.default:
+            case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
+                mh.default_arguments[name] = _default_argument_from_resolver(
+                    param.default
+                )
+                params[name] = param.replace(default=inspect.Parameter.empty)
+        if inspect.isclass(param.annotation) and issubclass(
+            param.annotation, abi.NamedTuple
+        ):
+            mh.structs[name] = {
+                "name": str(param.annotation.__name__),
+                "elements": [
+                    [name, str(abi.algosdk_from_annotation(typ.__args__[0]))]
+                    for name, typ in param.annotation.__annotations__.items()
+                ],
+            }
+
+    if mh.default_arguments:
+        # Fix function sig/annotations
+        newsig = sig.replace(parameters=list(params.values()))
+        fn.__signature__ = newsig  # type: ignore[attr-defined]
+
+    return mh
+
+
+def _default_argument_from_resolver(
+    resolver: Expr | ABIReturnSubroutine | int | bytes | str,
+) -> DefaultArgumentDict:
+
+    match resolver:
+        # Native types
+        case int() | str() | bytes():
+            return {"source": "constant", "data": resolver}
+        # Expr types
+        case Bytes():
+            return _default_argument_from_resolver(resolver.byte_str.replace('"', ""))
+        case Int():
+            return _default_argument_from_resolver(resolver.value)
+        case LocalStateValue() as acct_sv:
+            return {
+                "source": "local-state",
+                "data": acct_sv.str_key(),
+            }
+        case GlobalStateValue() as app_sv:
+            return {
+                "source": "global-state",
+                "data": app_sv.str_key(),
+            }
+        # FunctionType
+        case ABIReturnSubroutine() as fn:
+            if not getattr(fn, "_read_only", None):
+                raise ValueError(
+                    "Only ABI methods with read_only=True should be used as default arguments to other ABI methods"
+                )
+            return {"source": "abi-method", "data": fn.method_spec().dictify()}
+        case _:
+            raise TypeError(
+                f"Unexpected type for a default argument to ABI method: {type(resolver)}"
+            )

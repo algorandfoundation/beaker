@@ -3,7 +3,7 @@ from base64 import b64decode
 
 
 def str_or_hex(v: bytes) -> str:
-    decoded: str = ""
+    decoded: str
     try:
         decoded = v.decode("utf-8")
     except Exception:
@@ -37,6 +37,8 @@ def decode_state(
                 val = sv["value"]["uint"]
             case 3:
                 val = None
+            case _:
+                raise NotImplementedError()
 
         decoded_state[key] = val
     return decoded_state

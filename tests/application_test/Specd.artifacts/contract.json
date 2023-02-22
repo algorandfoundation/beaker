@@ -1,0 +1,49 @@
+{
+    "name": "Specd",
+    "methods": [
+        {
+            "name": "get_asset_id",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            }
+        },
+        {
+            "name": "annotated_meth",
+            "args": [
+                {
+                    "type": "asset",
+                    "name": "aid"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "struct_meth",
+            "args": [
+                {
+                    "type": "(uint64,uint32)",
+                    "name": "thing"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "default_global_state",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "value"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

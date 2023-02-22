@@ -1,102 +1,26 @@
-import pytest
 import pyteal as pt
+import pytest
 
-from beaker.decorators import (
-    external,
-    get_handler_config,
-    DefaultArgument,
-    Authorize,
-    create,
-    clear_state,
-    close_out,
-    delete,
-    update,
-    no_op,
-    opt_in,
-)
+from beaker import Application, Authorize
+from beaker.application import _default_argument_from_resolver
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=pt.MAX_TEAL_VERSION)
 
 
-def test_handler_config():
-    @external
-    def handleable():
-        pass
+def test_external_read_only() -> None:
+    app = Application("")
 
-    hc = get_handler_config(handleable)
+    @app.external(read_only=True)
+    def handleable() -> pt.Expr:
+        return pt.Approve()
 
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    meth = hc.method_spec
-    assert len(meth.args) == 0, "Expected no args"
-    assert meth.name == "handleable", "Expected name to match"
+    assert isinstance(handleable, pt.ABIReturnSubroutine)
+    assert "handleable" in app.abi_methods
 
-    config_dict = hc.__dict__
-    del config_dict["method_spec"]
-
-    for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
-
-    ###
-
-    @external(read_only=True)
-    def handleable():
-        pass
-
-    hc = get_handler_config(handleable)
-
-    config_dict = hc.__dict__
-
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    del config_dict["method_spec"]
-
-    assert hc.read_only is True, "Expected read_only to be true"
-    del config_dict["read_only"]
-
-    for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
-
-    ###
-
-    @external(authorize=Authorize.only(pt.Global.creator_address()))
-    def handleable():
-        pass
-
-    hc = get_handler_config(handleable)
-
-    config_dict = hc.__dict__
-
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    del config_dict["method_spec"]
-    for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
-
-    ###
-
-    @external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
-    def handleable():
-        pass
-
-    hc = get_handler_config(handleable)
-
-    config_dict = hc.__dict__
-
-    assert hc.method_spec is not None, "Expected abi method to be created"
-    del config_dict["method_spec"]
-
-    assert hc.method_config is not None, "Expected method config to be set"
-    assert (
-        hc.method_config.opt_in == pt.CallConfig.CALL
-    ), "Expected method config opt in to be set to call"
-    del config_dict["method_config"]
-
-    for k, v in config_dict.items():
-        assert v is None or v is False, f"Expected {k} to be unset"
+    assert app.build().dictify()["hints"]["handleable()void"].get("read_only") is True
 
 
-def test_authorize():
-
-    cmt = "unauthorized"
-
+def test_authorize_only() -> None:
     auth_only = Authorize.only(pt.Global.creator_address())
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
@@ -105,17 +29,26 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    @external(authorize=auth_only)
-    def creator_only():
+
+def test_external_authorize() -> None:
+    app = Application("")
+    cmt = "unauthorized"
+    auth_only = Authorize.only(pt.Global.creator_address())
+
+    @app.external(authorize=auth_only)
+    def creator_only() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
-    actual = creator_only().__teal__(options)
+    actual = creator_only.subroutine.implementation().__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_authorize_holds_token() -> None:
 
     with pytest.raises(pt.TealTypeError):
         Authorize.only(pt.Int(1))
@@ -133,8 +66,15 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    @external(authorize=auth_holds_token)
-    def holds_token_only():
+
+def test_external_authorize_holds_token() -> None:
+    cmt = "unauthorized"
+    app = Application("")
+    asset_id = pt.Int(123)
+    auth_holds_token = Authorize.holds_token(asset_id)
+
+    @app.external(authorize=auth_holds_token)
+    def holds_token_only() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(
@@ -142,10 +82,13 @@ def test_authorize():
     )
 
     expected = expr.__teal__(options)
-    actual = holds_token_only().__teal__(options)
+    actual = holds_token_only.subroutine.implementation().__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_authorize_opted_in() -> None:
 
     with pytest.raises(pt.TealTypeError):
         Authorize.holds_token(pt.Bytes("abc"))
@@ -161,28 +104,39 @@ def test_authorize():
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    @external(authorize=auth_opted_in)
-    def opted_in_only():
+
+def test_external_authorize_opted_in() -> None:
+    app = Application("")
+    cmt = "unauthorized"
+    app_id = pt.Int(123)
+    auth_opted_in = Authorize.opted_in(app_id)
+
+    @app.external(authorize=auth_opted_in)
+    def opted_in_only() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
-    actual = opted_in_only().__teal__(options)
+    actual = opted_in_only.subroutine.implementation().__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    # Bare handler
 
-    @delete(authorize=auth_only)
-    def deleter():
+def test_authorize_bare_handler() -> None:
+    app = Application("")
+    cmt = "unauthorized"
+    auth_only = Authorize.only(pt.Global.creator_address())
+
+    @app.delete(authorize=auth_only)
+    def deleter() -> pt.Expr:
         return pt.Approve()
 
     expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
-    actual = deleter().__teal__(options)
+    actual = deleter.subroutine.implementation().__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
@@ -192,124 +146,161 @@ def test_authorize():
     with pytest.raises(pt.TealInputError):
 
         @pt.Subroutine(pt.TealType.uint64)
-        def thing(a, b):
+        def thing(a: pt.Expr, b: pt.Expr) -> pt.Expr:
             return pt.Int(1)
 
-        @external(authorize=thing)
-        def other_thing():
-            pass
+        @app.external(authorize=thing)
+        def other_thing() -> pt.Expr:
+            return pt.Approve()
 
     with pytest.raises(pt.TealTypeError):
 
         @pt.Subroutine(pt.TealType.bytes)
-        def thing(x):
+        def thing(x: pt.Expr) -> pt.Expr:
             return pt.Bytes("fail")
 
-        @external(authorize=thing)
-        def other_other_thing():
-            pass
+        @app.external(authorize=thing)
+        def other_other_thing() -> pt.Expr:
+            return pt.Approve()
 
 
-def test_named_tuple():
+def test_named_tuple() -> None:
     class Order(pt.abi.NamedTuple):
         item: pt.abi.Field[pt.abi.String]
         count: pt.abi.Field[pt.abi.Uint64]
 
-    @external
-    def thing(o: Order):
-        pass
+    app = Application("")
 
-    hc = get_handler_config(thing)
-    assert hc.structs["o"] is Order
+    @app.external
+    def thing(o: Order) -> pt.Expr:
+        return pt.Approve()
+
+    hints = app.build().hints
+    assert hints is not None
+    thing_hints = hints.get("thing((string,uint64))void")
+    assert thing_hints is not None
+    assert thing_hints.structs is not None
+    o_hint = thing_hints.structs.get("o")
+    assert o_hint == {
+        "name": "Order",
+        "elements": [["item", "string"], ["count", "uint64"]],
+    }
 
 
-def test_bare():
-    @create
-    def impl():
+@pytest.mark.parametrize(
+    "decorator_name",
+    ["create", "no_op", "delete", "update", "opt_in", "close_out"],
+)
+def test_decorators_with_bare_signature(decorator_name: str) -> None:
+    app = Application("")
+    decorator = getattr(app, decorator_name)
+
+    @decorator
+    def test() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.no_op.action.subroutine.implementation == impl
+    assert isinstance(test, pt.SubroutineFnWrapper)
+    assert "test" in app.bare_methods
 
-    @no_op
-    def impl():
+
+def test_bare_clear_state() -> None:
+    app = Application("clear_state")
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    hc = get_handler_config(impl)
-    assert hc.bare_method.no_op.action.subroutine.implementation == impl
-
-    @delete
-    def impl():
-        return pt.Assert(pt.Int(1))
-
-    hc = get_handler_config(impl)
-    assert hc.bare_method.delete_application.action.subroutine.implementation == impl
-
-    @update
-    def impl():
-        return pt.Assert(pt.Int(1))
-
-    hc = get_handler_config(impl)
-    assert hc.bare_method.update_application.action.subroutine.implementation == impl
-
-    @opt_in
-    def impl():
-        return pt.Assert(pt.Int(1))
-
-    hc = get_handler_config(impl)
-    assert hc.bare_method.opt_in.action.subroutine.implementation == impl
-
-    @close_out
-    def impl():
-        return pt.Assert(pt.Int(1))
-
-    hc = get_handler_config(impl)
-    assert hc.bare_method.close_out.action.subroutine.implementation == impl
+    assert isinstance(clear_state, pt.SubroutineFnWrapper)
+    assert "clear_state" not in app.bare_methods
+    assert app._clear_state_method is clear_state
 
 
-def test_clear_state():
-    @clear_state
-    def impl():
-        return pt.Assert(pt.Int(1))
+def test_non_bare_clear_state() -> None:
+    app = Application("clear_state")
 
-    hc = get_handler_config(impl)
-    assert hc.method_config is None
-    assert hc.clear_state.subroutine.implementation == impl
+    with pytest.raises(TypeError):
+
+        @app.clear_state  # type: ignore
+        def clear_state(value: pt.abi.Uint64) -> pt.Expr:
+            return pt.Approve()
 
 
-def test_resolvable():
+def test_bare_external() -> None:
+    app = Application("bare_external")
+
+    @app.external(bare=True, method_config=pt.MethodConfig(no_op=pt.CallConfig.ALL))
+    def external() -> pt.Expr:
+        return pt.Approve()
+
+    assert isinstance(external, pt.SubroutineFnWrapper)
+    assert "external" in app.bare_methods
+
+
+@pytest.mark.parametrize(
+    "config", [pt.CallConfig.CREATE, pt.CallConfig.CALL, pt.CallConfig.ALL]
+)
+def test_external_method_config(config: pt.CallConfig) -> None:
+    app = Application("")
+
+    @app.external(method_config=pt.MethodConfig(no_op=config))
+    def external() -> pt.Expr:
+        return pt.Approve()
+
+    app_spec = app.build()
+    assert app_spec.hints["external()void"].call_config.no_op == config
+
+
+def test_local_state_resolvable() -> None:
+    from beaker.state import LocalStateValue
+
+    x = LocalStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
+    r = _default_argument_from_resolver(x)
+    assert r["source"] == "local-state"
+
+
+def test_reserved_local_state_resolvable() -> None:
+    from beaker.state import ReservedLocalStateValue
+
+    x = ReservedLocalStateValue(pt.TealType.uint64, max_keys=1)
+    r = _default_argument_from_resolver(x[pt.Bytes("x")])
+    assert r["source"] == "local-state"
+
+
+def test_application_state_resolvable() -> None:
+    from beaker.state import GlobalStateValue
+
+    x = GlobalStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
+    r = _default_argument_from_resolver(x)
+    assert r["source"] == "global-state"
+
+
+def test_reserved_application_state_resolvable() -> None:
     from beaker.state import (
-        AccountStateValue,
-        ApplicationStateValue,
-        ReservedAccountStateValue,
-        ReservedApplicationStateValue,
+        ReservedGlobalStateValue,
     )
 
-    x = AccountStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = DefaultArgument(x)
-    assert r.resolvable_class == "local-state"
+    x = ReservedGlobalStateValue(pt.TealType.uint64, max_keys=1)
+    r = _default_argument_from_resolver(x[pt.Bytes("x")])
+    assert r["source"] == "global-state"
 
-    x = ReservedAccountStateValue(pt.TealType.uint64, max_keys=1)
-    r = DefaultArgument(x[pt.Bytes("x")])
-    assert r.resolvable_class == "local-state"
 
-    x = ApplicationStateValue(pt.TealType.uint64, key=pt.Bytes("x"))
-    r = DefaultArgument(x)
-    assert r.resolvable_class == "global-state"
+def test_abi_method_resolvable() -> None:
+    app = Application("")
 
-    x = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=1)
-    r = DefaultArgument(x[pt.Bytes("x")])
-    assert r.resolvable_class == "global-state"
-
-    @external(read_only=True)
-    def x():
+    @app.external(read_only=True)
+    def x() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 
-    r = DefaultArgument(x)
-    assert r.resolvable_class == "abi-method"
+    assert isinstance(x, pt.ABIReturnSubroutine)
+    r = _default_argument_from_resolver(x)
+    assert r["source"] == "abi-method"
 
-    r = DefaultArgument(pt.Bytes("1"))
-    assert r.resolvable_class == "constant"
 
-    r = DefaultArgument(pt.Int(1))
-    assert r.resolvable_class == "constant"
+def test_bytes_constant_resolvable() -> None:
+    r = _default_argument_from_resolver(pt.Bytes("1"))
+    assert r["source"] == "constant"
+
+
+def test_int_constant_resolvable() -> None:
+    r = _default_argument_from_resolver(pt.Int(1))
+    assert r["source"] == "constant"

@@ -1,0 +1,340 @@
+#pragma version 8
+intcblock 0 1 1000 100000
+bytecblock 0x72737670 0x7072696365 0x151f7c75 0x636865636b65645f696e
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l14
+txna ApplicationArgs 0
+pushbytes 0x240d2f67 // "create(uint64)void"
+==
+bnz main_l13
+txna ApplicationArgs 0
+pushbytes 0xe922be95 // "do_rsvp(pay)void"
+==
+bnz main_l12
+txna ApplicationArgs 0
+pushbytes 0x8fe25e05 // "check_in()void"
+==
+bnz main_l11
+txna ApplicationArgs 0
+pushbytes 0x4170c4c7 // "withdraw_external()void"
+==
+bnz main_l10
+txna ApplicationArgs 0
+pushbytes 0xef977255 // "read_rsvp()uint64"
+==
+bnz main_l9
+txna ApplicationArgs 0
+pushbytes 0x8a23ee21 // "read_price()uint64"
+==
+bnz main_l8
+err
+main_l8:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub readprice_11
+store 2
+bytec_2 // 0x151f7c75
+load 2
+itob
+concat
+log
+intc_1 // 1
+return
+main_l9:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub readrsvp_10
+store 1
+bytec_2 // 0x151f7c75
+load 1
+itob
+concat
+log
+intc_1 // 1
+return
+main_l10:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub withdrawexternal_6
+intc_1 // 1
+return
+main_l11:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub checkin_4
+intc_1 // 1
+return
+main_l12:
+txn OnCompletion
+intc_1 // OptIn
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txn GroupIndex
+intc_1 // 1
+-
+store 0
+load 0
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+load 0
+callsub dorsvp_2
+intc_1 // 1
+return
+main_l13:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+==
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub create_1
+intc_1 // 1
+return
+main_l14:
+txn OnCompletion
+pushint 2 // CloseOut
+==
+bnz main_l18
+txn OnCompletion
+pushint 5 // DeleteApplication
+==
+bnz main_l17
+err
+main_l17:
+txn ApplicationID
+intc_0 // 0
+!=
+assert
+callsub delete_8
+intc_1 // 1
+return
+main_l18:
+txn ApplicationID
+intc_0 // 0
+!=
+assert
+callsub refund_12
+intc_1 // 1
+return
+
+// withdraw_funds
+withdrawfunds_0:
+proto 0 0
+global CurrentApplicationAddress
+balance
+intc_3 // 100000
+intc_2 // 1000
++
+>
+assert
+itxn_begin
+intc_1 // pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+global CurrentApplicationAddress
+balance
+intc_3 // 100000
+intc_2 // 1000
++
+-
+itxn_field Amount
+itxn_submit
+retsub
+
+// create
+create_1:
+proto 1 0
+bytec_1 // "price"
+pushint 1000000 // 1000000
+app_global_put
+bytec_0 // "rsvp"
+intc_0 // 0
+app_global_put
+bytec_1 // "price"
+frame_dig -1
+app_global_put
+retsub
+
+// do_rsvp
+dorsvp_2:
+proto 1 0
+global GroupSize
+pushint 2 // 2
+==
+assert
+frame_dig -1
+gtxns Receiver
+global CurrentApplicationAddress
+==
+assert
+frame_dig -1
+gtxns Amount
+bytec_1 // "price"
+app_global_get
+==
+assert
+txn Sender
+bytec_3 // "checked_in"
+intc_0 // 0
+app_local_put
+bytec_0 // "rsvp"
+bytec_0 // "rsvp"
+app_global_get
+intc_1 // 1
++
+app_global_put
+retsub
+
+// auth_opted_in
+authoptedin_3:
+proto 1 1
+frame_dig -1
+global CurrentApplicationID
+app_opted_in
+retsub
+
+// check_in
+checkin_4:
+proto 0 0
+txn Sender
+callsub authoptedin_3
+// unauthorized
+assert
+txn Sender
+bytec_3 // "checked_in"
+intc_1 // 1
+app_local_put
+retsub
+
+// auth_only
+authonly_5:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
+// withdraw_external
+withdrawexternal_6:
+proto 0 0
+txn Sender
+callsub authonly_5
+// unauthorized
+assert
+callsub withdrawfunds_0
+retsub
+
+// auth_only
+authonly_7:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
+// delete
+delete_8:
+proto 0 0
+txn Sender
+callsub authonly_7
+// unauthorized
+assert
+global CurrentApplicationAddress
+balance
+intc_3 // 100000
+intc_2 // 1000
++
+>
+bz delete_8_l2
+callsub withdrawfunds_0
+delete_8_l2:
+retsub
+
+// auth_only
+authonly_9:
+proto 1 1
+frame_dig -1
+global CreatorAddress
+==
+retsub
+
+// read_rsvp
+readrsvp_10:
+proto 0 1
+intc_0 // 0
+txn Sender
+callsub authonly_9
+// unauthorized
+assert
+bytec_0 // "rsvp"
+app_global_get
+frame_bury 0
+retsub
+
+// read_price
+readprice_11:
+proto 0 1
+intc_0 // 0
+bytec_1 // "price"
+app_global_get
+frame_bury 0
+retsub
+
+// refund
+refund_12:
+proto 0 0
+itxn_begin
+intc_1 // pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+bytec_1 // "price"
+app_global_get
+intc_2 // 1000
+-
+itxn_field Amount
+itxn_submit
+bytec_0 // "rsvp"
+bytec_0 // "rsvp"
+app_global_get
+intc_1 // 1
+-
+app_global_put
+retsub

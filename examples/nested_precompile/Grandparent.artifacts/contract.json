@@ -1,0 +1,14 @@
+{
+    "name": "Grandparent",
+    "methods": [
+        {
+            "name": "create_parent",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            },
+            "desc": "Create a new parent app."
+        }
+    ],
+    "networks": {}
+}

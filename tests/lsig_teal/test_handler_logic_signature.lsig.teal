@@ -1,0 +1,16 @@
+#pragma version 8
+txna ApplicationArgs 1
+callsub checked_0
+assert
+pushint 1 // 1
+return
+
+// checked
+checked_0:
+proto 1 1
+frame_dig -1
+extract 2 0
+len
+pushint 0 // 0
+>
+retsub

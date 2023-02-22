@@ -12,36 +12,29 @@ While ``PyTeal`` provides the basic tools for working with boxes, ``Beaker`` pro
 .. _mapping:
 
 
-Mapping
---------
+BoxMapping
+----------
 
-A ``Mapping`` provides a way to store data with a given key. 
+A ``BoxMapping`` provides a way to store data with a given key. 
 
 .. warning::
-    Care should be taken to ensure if multiple ``Mapping`` types are used, there is no overlap with keys. If there may be overlap, a ``prefix`` argument *MUST* be set in order to provide a unique namespace. 
+    Care should be taken to ensure if multiple ``BoxMapping`` types are used, there is no overlap with keys. If there may be overlap, a ``prefix`` argument *MUST* be set in order to provide a unique namespace. 
 
-.. autoclass:: Mapping
-    :members:
-
-.. autoclass:: MapElement
+.. autoclass:: BoxMapping
     :members:
 
 .. _listing:
 
-List
-----
+BoxList
+-------
 
-A List provides a way to store some number of some _static_ abi type. 
+A ``BoxList`` provides a way to store some number of some _static_ abi type. 
 
 .. note::
-    Since the ``List`` uses the size of the element to compute the offset into the box, the data type *MUST* be static.
+    Since the ``BoxList`` uses the size of the element to compute the offset into the box, the data type *MUST* be static.
 
-.. autoclass:: List
+.. autoclass:: BoxList
     :members:
-
-.. autoclass:: ListElement
-    :members:
-
 
 .. _box_example:
 

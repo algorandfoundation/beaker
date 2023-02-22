@@ -1,16 +1,16 @@
 #pragma version 8
 intcblock 0 1 6
-bytecblock 0x6f75616964 0x151f7c75 0x4c6bea72
+bytecblock 0x6f75616964 0x151f7c75
 txn NumAppArgs
 intc_0 // 0
 ==
 bnz main_l6
 txna ApplicationArgs 0
-pushbytes 0x6228c682 // "hash_it(string,uint64,application)byte[32]"
+pushbytes 0x101cea00 // "opup_bootstrap(pay)uint64"
 ==
 bnz main_l5
 txna ApplicationArgs 0
-pushbytes 0x101cea00 // "opup_bootstrap(pay)uint64"
+pushbytes 0x6228c682 // "hash_it(string,uint64,application)byte[32]"
 ==
 bnz main_l4
 err
@@ -23,21 +23,22 @@ intc_0 // 0
 !=
 &&
 assert
-txn GroupIndex
-intc_1 // 1
--
-store 4
-load 4
-gtxns TypeEnum
-intc_1 // pay
-==
-assert
-load 4
-callsub opupbootstrap_4
-store 5
+txna ApplicationArgs 1
+store 7
+txna ApplicationArgs 2
+btoi
+store 8
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+store 9
+load 7
+load 8
+load 9
+callsub hashit_3
+store 10
 bytec_1 // 0x151f7c75
-load 5
-itob
+load 10
 concat
 log
 intc_1 // 1
@@ -51,22 +52,21 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-store 0
-txna ApplicationArgs 2
-btoi
-store 1
-txna ApplicationArgs 3
-intc_0 // 0
-getbyte
-store 2
-load 0
-load 1
-load 2
-callsub hashit_1
-store 3
+txn GroupIndex
+intc_1 // 1
+-
+store 5
+load 5
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+load 5
+callsub opupbootstrap_1
+store 6
 bytec_1 // 0x151f7c75
-load 3
+load 6
+itob
 concat
 log
 intc_1 // 1
@@ -92,88 +92,23 @@ proto 0 0
 intc_1 // 1
 return
 
-// hash_it
-hashit_1:
-proto 3 1
-pushbytes 0x // ""
+// opup_bootstrap
+opupbootstrap_1:
+proto 1 1
+intc_0 // 0
 frame_dig -1
-txnas Applications
+gtxns Amount
+pushint 100000 // 100000
+>=
+assert
+callsub createopup_2
 bytec_0 // "ouaid"
 app_global_get
-==
-assert
-pushint 255 // 255
-callsub callopup_2
-frame_dig -3
-extract 2 0
-store 6
-intc_0 // 0
-store 7
-hashit_1_l1:
-load 7
-frame_dig -2
-<
-bz hashit_1_l3
-load 6
-sha256
-store 6
-load 7
-intc_1 // 1
-+
-store 7
-b hashit_1_l1
-hashit_1_l3:
-load 6
 frame_bury 0
 retsub
 
-// call_opup
-callopup_2:
-proto 1 0
-frame_dig -1
-intc_1 // 1
-==
-bnz callopup_2_l4
-intc_0 // 0
-store 8
-callopup_2_l2:
-load 8
-frame_dig -1
-<
-bz callopup_2_l5
-itxn_begin
-intc_2 // appl
-itxn_field TypeEnum
-bytec_0 // "ouaid"
-app_global_get
-itxn_field ApplicationID
-bytec_2 // "opup()void"
-itxn_field ApplicationArgs
-intc_0 // 0
-itxn_field Fee
-itxn_submit
-load 8
-intc_1 // 1
-+
-store 8
-b callopup_2_l2
-callopup_2_l4:
-itxn_begin
-intc_2 // appl
-itxn_field TypeEnum
-bytec_0 // "ouaid"
-app_global_get
-itxn_field ApplicationID
-bytec_2 // "opup()void"
-itxn_field ApplicationArgs
-intc_0 // 0
-itxn_field Fee
-itxn_submit
-callopup_2_l5:
-retsub
-
 // create_opup
-createopup_3:
+createopup_2:
 proto 0 0
 itxn_begin
 intc_2 // appl
@@ -188,9 +123,9 @@ itxn_submit
 intc_0 // 0
 bytec_0 // "ouaid"
 app_global_get_ex
-store 10
-store 9
-load 10
+store 1
+store 0
+load 1
 !
 assert
 bytec_0 // "ouaid"
@@ -198,17 +133,59 @@ itxn CreatedApplicationID
 app_global_put
 retsub
 
-// opup_bootstrap
-opupbootstrap_4:
-proto 1 1
-intc_0 // 0
+// hash_it
+hashit_3:
+proto 3 1
+pushbytes 0x // ""
 frame_dig -1
-gtxns Amount
-pushint 100000 // 100000
->=
-assert
-callsub createopup_3
+txnas Applications
 bytec_0 // "ouaid"
 app_global_get
+==
+assert
+intc_0 // 0
+store 2
+hashit_3_l1:
+load 2
+pushint 255 // 255
+<
+bnz hashit_3_l5
+frame_dig -3
+extract 2 0
+store 3
+intc_0 // 0
+store 4
+hashit_3_l3:
+load 4
+frame_dig -2
+<
+bz hashit_3_l6
+load 3
+sha256
+store 3
+load 4
+intc_1 // 1
++
+store 4
+b hashit_3_l3
+hashit_3_l5:
+itxn_begin
+intc_2 // appl
+itxn_field TypeEnum
+bytec_0 // "ouaid"
+app_global_get
+itxn_field ApplicationID
+pushbytes 0x4c6bea72 // "opup()void"
+itxn_field ApplicationArgs
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+load 2
+intc_1 // 1
++
+store 2
+b hashit_3_l1
+hashit_3_l6:
+load 3
 frame_bury 0
 retsub
