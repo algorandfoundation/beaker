@@ -1,3 +1,4 @@
+import algosdk.error
 import pyteal
 import pytest
 import pyteal as pt
@@ -14,6 +15,7 @@ from algosdk.atomic_transaction_composer import (
     LogicSigTransactionSigner,
 )
 
+import beaker
 from beaker.decorators import Authorize
 from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import Application, _default_argument_from_resolver
@@ -585,3 +587,138 @@ def test_override_app_create(sb_accts: SandboxAccounts) -> None:
 
     retlog = b64decode(txinfo["logs"][0])
     assert retlog[4:] == val.to_bytes(8, "big")
+
+
+def test_abi_update(sb_accts: SandboxAccounts) -> None:
+    class State:
+        app_value = beaker.GlobalStateValue(pt.TealType.uint64)
+
+    app = Application("ABIUpdate", state=State())
+
+    @app.update
+    def do_it(x: pt.abi.Uint64) -> pt.Expr:
+        return app.state.app_value.set(x.get())
+
+    @app.external
+    def get(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(app.state.app_value.get())
+
+    specification = app.build()
+
+    _, _, signer = sb_accts[0]
+
+    client = get_algod_client()
+    app_client = ApplicationClient(client, specification, signer=signer)
+    assert app_client.on_update
+
+    app_id, _, _ = app_client.create()
+
+    before = app_client.call("get").return_value
+
+    assert before == 0
+
+    value = 3
+    app_client.update(x=value)
+
+    after = app_client.call("get").return_value
+
+    assert after == value
+
+
+def test_abi_opt_in(sb_accts: SandboxAccounts) -> None:
+    class State:
+        app_value = beaker.GlobalStateValue(pt.TealType.uint64)
+
+    app = Application("ABIUpdate", state=State())
+
+    @app.opt_in
+    def do_it(x: pt.abi.Uint64) -> pt.Expr:
+        return app.state.app_value.set(x.get())
+
+    @app.external
+    def get(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(app.state.app_value.get())
+
+    specification = app.build()
+
+    _, _, signer = sb_accts[0]
+
+    client = get_algod_client()
+    app_client = ApplicationClient(client, specification, signer=signer)
+    assert app_client.on_opt_in
+
+    app_id, _, _ = app_client.create()
+
+    before = app_client.call("get").return_value
+
+    assert before == 0
+
+    value = 3
+    app_client.opt_in(x=value)
+
+    after = app_client.call("get").return_value
+
+    assert after == value
+
+
+def test_abi_delete(sb_accts: SandboxAccounts) -> None:
+    app = Application("ABIUpdate")
+
+    do_delete = 7
+
+    @app.delete
+    def do_it(x: pt.abi.Uint64) -> pt.Expr:
+        return pt.If(pt.Eq(x.get(), pt.Int(do_delete)), pt.Approve(), pt.Reject())
+
+    specification = app.build()
+
+    _, _, signer = sb_accts[0]
+
+    client = get_algod_client()
+    app_client = ApplicationClient(client, specification, signer=signer)
+    assert app_client.on_delete
+
+    app_client.create()
+
+    with pytest.raises(algosdk.error.AlgodHTTPError) as exc_info:
+        app_client.delete(x=do_delete + 1)
+    assert len(exc_info.value.args) > 0
+    exception_message = exc_info.value.args[0]
+    assert isinstance(exception_message, str)
+    assert exception_message.endswith("transaction rejected by ApprovalProgram"), (
+        "Unexpected error: " + exception_message
+    )
+
+    app_client.delete(x=do_delete)
+
+
+def test_abi_close_out(sb_accts: SandboxAccounts) -> None:
+    app = Application("ABIUpdate").implement(beaker.unconditional_opt_in_approval)
+
+    do_close_out = 7
+
+    @app.close_out
+    def do_it(x: pt.abi.Uint64) -> pt.Expr:
+        return pt.If(pt.Eq(x.get(), pt.Int(do_close_out)), pt.Approve(), pt.Reject())
+
+    specification = app.build()
+
+    _, _, signer = sb_accts[0]
+
+    client = get_algod_client()
+    app_client = ApplicationClient(client, specification, signer=signer)
+    assert app_client.on_close_out
+
+    app_client.create()
+    app_client.opt_in()
+
+    with pytest.raises(algosdk.error.AlgodHTTPError) as exc_info:
+        app_client.close_out(x=do_close_out + 1)
+    assert len(exc_info.value.args) > 0
+    exception_message = exc_info.value.args[0]
+    assert isinstance(exception_message, str)
+    assert exception_message.endswith("transaction rejected by ApprovalProgram"), (
+        "Unexpected error: " + exception_message
+    )
+
+    app_client.close_out(x=do_close_out)
