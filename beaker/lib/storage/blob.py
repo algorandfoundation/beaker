@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Iterable
+from collections.abc import Iterable
 
-from pyteal import BytesZero, Int, Expr, Extract, Bytes
+from pyteal import Bytes, BytesZero, Expr, Extract, Int
 
 blob_page_size = 128 - 1  # need 1 byte for key
 BLOB_PAGE_SIZE = Int(blob_page_size)
@@ -21,7 +21,7 @@ class Blob(ABC):
         if isinstance(keys, int):
             _keys = list(range(keys))
         else:
-            _keys = list(sorted(keys))
+            _keys = sorted(keys)
 
         if not _keys:
             raise ValueError("keys sequence must not be empty")

@@ -1,7 +1,7 @@
 import pyteal as pt
 
-from tests.helpers import UnitTestingApp, assert_output
 from beaker.lib.inline import InlineAssembly
+from tests.helpers import UnitTestingApp, assert_output
 
 
 def test_inline_assembly() -> None:

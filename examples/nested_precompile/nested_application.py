@@ -1,18 +1,18 @@
 from pyteal import (
-    abi,
+    Approve,
+    Expr,
     InnerTxn,
     InnerTxnBuilder,
     Int,
     Seq,
     TealType,
-    Expr,
-    Approve,
     TxnField,
+    abi,
 )
 
 from beaker import (
-    GlobalStateValue,
     Application,
+    GlobalStateValue,
     LogicSignature,
     precompiled,
 )

@@ -1,7 +1,31 @@
 1.0 Migration Guide
 ===================
 
-The following guide illustrates the changes in applications written with ``0.x`` version of Beaker compared to ``1.0``
+The following guide illustrates the changes in applications written with ``0.x`` version of Beaker compared to ``1.0``.
+The rationale behind these changes is described by the `AlgoKit Beaker productionisation review architecture decision record <https://github.com/algorandfoundation/algokit-cli/blob/main/docs/architecture-decisions/2023-01-11_beaker_productionisation_review.md>`_.
+
+The goal of these changes is to create a Beaker experience that is easier to use, less surprising and resolves some key bugs that were identified.
+
+Recommended migration approach
+------------------------------
+
+Any migration effort requires careful consideration to ensure it doesn't result in breaking changes.
+We have carefully articulated all considerations in this document that should be evaluated to perform a
+successful migration of a ``0.x`` Beaker contract/signature to a ``1.0`` compatible one.
+
+While there are a number of considerations to work through, care was taken to ensure that the migration
+effort should be relatively straightforward. If you have any problems or questions about a migration feel
+free to send messages to the `algokit channel in Algorand Discord <https://discord.com/channels/491256308461207573/1065320801970180168>`_.
+
+In order to de-risk the migration effort we recommend you test for output stability of the TEAL code
+that is generated from your Beaker code. This involves storing the current TEAL and application spec output from calling
+``.dump()`` on your Beaker contract (now: ``.build().export()``) and then doing a diff after performing the migration. We expect there will be
+minor re-ordering changes that PyTEAL generates, but outside of that the TEAL output should be the same and similarly there may
+be some re-ordering and also some extra detail added to the application spec file.
+
+You can `see an example here <https://gist.github.com/robdmoore/ffa1cd7aced58f788ef68ac497249ea6>`_ of such a diff as part of the migration
+of the Beaker examples to ``1.0``.
+
 
 Application
 -----------
@@ -10,13 +34,13 @@ Application instantiation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With version ``1.0`` of Beaker an application is no longer defined by inheriting ``Application``, instead
-``Application`` is instantiated directly, state is separated from the class, and methods are
+``Application`` is instantiated directly, state is separated into its own class, and methods are
 added through decorators on the ``Application`` instance.
 
 .. note:: The examples in this guide are assumed to have the following imports at the top, but have been
           omitted for brevity ``import beaker`` and  ``import pyteal``
 
-For example in ``0.x``:
+For example, in ``0.x``:
 
 .. code-block:: python
 
@@ -29,7 +53,7 @@ For example in ``0.x``:
 
    app = MyApp()
 
-in ``1.0`` this becomes:
+becomes the following in ``1.0``:
 
 .. code-block:: python
 
@@ -47,15 +71,14 @@ in ``1.0`` this becomes:
 
 The key changes to note above:
 
-1. There is no subclassing, instead a ``beaker.Application`` instance is created.
+1. There is no sub-classing, instead a ``beaker.Application`` instance is created (i.e. ``app = beaker.Application("MyApp", ...)``).
 2. Application and account state remain in a class, an instance of which is passed to ``beaker.Application(state=...)``.
-   This is then accessible through the ``.state`` property on the ``Application`` instance.
+   This is then accessible through the ``.state`` property on the ``Application`` instance (e.g. ``app.state.my_value.set(...)``).
 
     .. note:: There are additional ways to organize state in ``1.0``, but the above is the most straight forward conversion.
 
-3. Method decorators exist on the ``Application`` instance, rather than being in the ``beaker`` namespace.
-4. There is no longer a ``self`` parameter in ``my_method``. The method belongs to this specific ``app`` instance, rather than
-   belonging to any class.
+3. Method decorators exist on the ``Application`` instance, rather than being in the ``beaker`` namespace (e.g. ``@app.external ...``).
+4. There is no longer a ``self`` parameter needed when defining methods.
 
 .. note:: In the following examples, we will continue to assign the app instance to a variable named ``app``,
           but you can call that variable whatever you want, for example:
@@ -66,13 +89,13 @@ The key changes to note above:
 
     @awesome_app.external
     def say_hello(*, output: pyteal.abi.String) -> pyteal.Expr:
-        return output.set(pyteal.Bytes("Hello I'm Awesome"))
+        return output.set(pyteal.Bytes("Hello, I'm An Awesome App!"))
 
 
 Application() arguments
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The arguments that ``Application.__init__()`` takes have changed, the following in ``0.5.4``:
+The arguments that ``Application.__init__()`` takes have changed too. For instance, the following in ``0.5.4``:
 
 .. code-block:: python
 
@@ -85,7 +108,7 @@ The arguments that ``Application.__init__()`` takes have changed, the following 
         optimize_options=pyteal.OptimizeOptions(scratch_slots=False, frame_pointers=False),
     )
 
-becomes this in ``1.0``:
+Then becomes the following in ``1.0``:
 
 .. code-block:: python
 
@@ -121,10 +144,10 @@ To migrate:
 Application.compile()
 ^^^^^^^^^^^^^^^^^^^^^
 
-``Application.compile()`` has been renamed to ``build()`` and now returns an ``ApplicationSpecification``, which contains,
+``Application.compile()`` has been renamed to ``build()``, which is a more accurate description of what happens at that step, and now returns an ``ApplicationSpecification``, which contains,
 among other things, the approval and clear program TEAL that was previously returned.
 
-In ``0.x``:
+This code in ``0.x``:
 
 .. code-block:: python
 
@@ -132,7 +155,7 @@ In ``0.x``:
     approval_program, clear_program = app.compile()
     app.dump("output_dir")
 
-In ``1.0``:
+Becomes this in ``1.0``:
 
 .. code-block:: python
 
@@ -143,7 +166,7 @@ In ``1.0``:
 
 
 Importantly, this change allows building an ``Application``, serializing the specification to disk, and then deserializing the
-specification later, which can then be used with ``ApplicationClient``.
+specification later, which can then be used with ``ApplicationClient`` or a similar client in any other programming language. For example:
 
 .. code-block:: python
 
@@ -223,11 +246,11 @@ in ``1.0`` this becomes:
 @bare_external
 ^^^^^^^^^^^^^^
 
-The functionality of ``beaker.bare_external`` decorator have been incorporated into ``@external``.
-``@beaker.bare_external`` in ``0.x`` can be replaced with ``Application.external`` by moving the parameters to
+The functionality of the ``beaker.bare_external`` decorator has been incorporated into ``@external``.
+``@beaker.bare_external`` in ``0.x`` can be replaced with ``Application.external`` in ``1.0`` by moving the parameters to
 ``method_config`` and adding ``bare=True``.
 
-For example in ``0.x``:
+For example, the following code in ``0.x``:
 
 .. code-block:: python
 
@@ -239,7 +262,7 @@ For example in ``0.x``:
         def foo(self) -> pyteal.Expr:
             ...
 
-In ``1.0`` this becomes:
+Becomes this in ``1.0``:
 
 .. code-block:: python
 
@@ -350,10 +373,10 @@ For example, suppose two applications both need an ABI method that adds two numb
 
 .. code-block:: python
 
-    def calculator_blueprint(app: beaker.Application, fudge_factor: int = 0) -> None:
+    def calculator_blueprint(app: beaker.Application, offset: int = 0) -> None:
         @app.external
         def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-            return output.set(a.get() + b.get() + pyteal.Int(fudge_factor))
+            return output.set(a.get() + b.get() + pyteal.Int(offset))
 
 The blueprint can then be applied to the applications using the shortcut ``app.implement``:
 
@@ -362,7 +385,7 @@ The blueprint can then be applied to the applications using the shortcut ``app.i
     app = beaker.Application("App").implement(calculator_blueprint)
 
     off_by_one_app = beaker.Application("OffByOne").implement(
-        calculator_blueprint, fudge_factor=1
+        calculator_blueprint, offset=1
     )
 
 Note that this is equivalent to:
@@ -373,7 +396,7 @@ Note that this is equivalent to:
     calculator_blueprint(app)
 
     off_by_one_app = beaker.Application("OffByOne")
-    calculator_blueprint(off_by_one_app, fudge_factor=1)
+    calculator_blueprint(off_by_one_app, offset=1)
 
 
 Overrides
@@ -382,7 +405,7 @@ Overrides
 In Beaker ``0.x`` because applications were composed by inheritance it was possible to override a method by redefining
 it in the derived class. In ``1.0`` this instead can be achieved by removing the old reference from the app and adding a new one.
 
-For example in ``0.x`` an override with the same signature:
+For example in ``0.x`` an override with the same signature looks like this:
 
 .. code-block:: python
 
@@ -419,7 +442,7 @@ In ``1.0`` this becomes:
     def same_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
         ...
 
-For example in ``0.x`` an override with a different signature:
+For example in ``0.x`` an override with a different signature looks like this:
 
 .. code-block:: python
 
@@ -446,9 +469,9 @@ In ``1.0`` this becomes:
 
     app = beaker.Application("DerivedApp").implement(a_blueprint)
 
-    # remove method defined by a blueprint
-    # note that we use the name of the Python function here
-    app.deregister_abi_method("different_signature")
+    # remove method defined by the blueprint
+    # note that we use the method signature here
+    app.deregister_abi_method("silly_walk(uint64)")
 
     # add our new method
     @app.external(name="silly_walk")
@@ -467,8 +490,8 @@ In the case of overriding a bare method to replace it with an ABI method:
     app = beaker.Application("DerivedApp").implement(a_blueprint)
 
     # remove method defined by a blueprint
-    # note that we use the name of the Python function here
-    app.deregister_bare_method("different_signature")
+    # note that we use the completion type here
+    app.deregister_bare_method("no_op")
 
     # add our new method
     @app.external(name="something_completely_different")
@@ -482,7 +505,7 @@ Logic signatures
 With version ``1.0`` a logic signature is no longer defined by inheriting ``beaker.LogicSignature``, instead
 ``LogicSignature`` is instantiated directly, and the PyTeal expression - or a function returning an expression - is passed as an argument.
 
-For example in ``0.x``:
+For example in ``0.x`` this code:
 
 .. code-block:: python
 
@@ -492,7 +515,7 @@ For example in ``0.x``:
 
     my_signature = MySignature()
 
-in ``1.0`` this becomes:
+Becomes the following in ``1.0``:
 
 .. code-block:: python
 
@@ -509,18 +532,20 @@ or equivalently:
 
 The key changes to note above:
 
-1. There is no subclassing, instead a ``beaker.LogicSignature`` instance is created.
+1. There is no sub-classing, instead a ``beaker.LogicSignature`` instance is created.
 2. A function returning a PyTeal expression (or perhaps more simply just a PyTeal expression) is passed to ``LogicSignature``
-   instead of implementing ``def evaluate(self)``
+   instead of implementing ``def evaluate(self)``.
 
-Templated Logic signatures
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Runtime Templated Logic signatures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With version ``1.0`` a template logic signature is no longer defined by inheriting ``beaker.LogicSignature``, instead
+In ``0.x`` logic signatures could be created with the ability to substitute templated variables on-chain at runtime using ``beaker.TemplateVariable``.
+
+With version ``1.0`` a logic signature with a runtime templated value is no longer defined by inheriting ``beaker.LogicSignature``, instead
 ``LogicSignatureTemplate`` is instantiated directly, and the PyTeal expression and a dictionary of template variables
 are passed as arguments.
 
-For example in ``0.x``:
+For example in ``0.x`` this code:
 
 .. code-block:: python
 
@@ -529,11 +554,11 @@ For example in ``0.x``:
         some_value = beaker.TemplateVariable(pyteal.TealType.uint64)
 
         def evaluate(self):
-            return pyteal.ReturnValue(self.some_value)
+            return pyteal.Return(self.some_value)
 
     my_signature = MySignature()
 
-in ``1.0`` this becomes:
+Becomes this in ``1.0``:
 
 .. code-block:: python
 
@@ -547,7 +572,7 @@ in ``1.0`` this becomes:
 
 The key changes to note are:
 
-1. There is no subclassing, instead a ``beaker.LogicSignatureTemplate`` instance is created.
+1. There is no sub-classing, instead a ``beaker.LogicSignatureTemplate`` instance is created.
 2. A function returning a PyTeal expression (or just an expression) is passed to ``LogicSignatureTemplate``
    instead of implementing ``def evaluate(self)``.
 3. A dictionary of template variable name and types is passed instead of instantiating ``beaker.TemplateVariable``
@@ -555,16 +580,16 @@ The key changes to note are:
 4. The template variables are provided as arguments to the evaluation function. The function can omit these arguments
    if they are not used.
 
-Precompiled
------------
+Precompiled signatures and applications
+---------------------------------------
 
 In ``0.x`` logic signatures and applications could be precompiled by adding an ``AppPrecompile`` or
 ``LSigPrecompile`` attribute to the application class, making certain properties available for use inside
-the application's methods.
+the application's methods like the logic hash and the TEAL code.
 
-In ``1.0``, you do not need to reference any "precompile classes" directly, instead use the ``beaker.precompiled`` function.
+In ``1.0``, you do not need to reference any "precompile classes" directly, instead you must use the ``beaker.precompiled`` function.
 
-For example in ``0.x``:
+For example in ``0.x``, a precompile might look like this:
 
 .. code-block:: python
 
@@ -601,7 +626,7 @@ obtaining the address is done via ``.address()`` instead of ``.logic.hash()`` fo
 
 For templated logic signatures, this was previously ``.logic.template_hash(...)`` and the argument values were expected to be in the
 correct order based on the order they were defined in the class. Now, you would use ``.address(...)`` but pass the values
-by keyword only, for example:
+by keyword only, for example this code in ``0.x``:
 
 .. code-block:: python
 
@@ -620,7 +645,7 @@ by keyword only, for example:
                  pt.Txn.sender() == self.pc.logic.template_hash(pt.Int(template_value))
              )
 
-Could become:
+Could be expressed like this in ``1.0``:
 
 .. code-block:: python
 
@@ -720,9 +745,11 @@ In ``1.0`` this becomes:
 State related classes and methods
 ---------------------------------
 
-Version ``1.0`` of Beaker renamed existing state related to classes to follow the naming conventions
+Version ``1.0`` of Beaker renames existing state related to classes to follow the naming conventions
 used more generally within existing Algorand and TEAL documentation. Generally the renames involved changing
-``Application`` to ``Global`` and ``Account`` to ``Local``.
+``Application`` to ``Global`` and ``Account`` to ``Local``. While ``Application`` and ``Account`` more accurately
+reflect the use of those state values, the deviance to the rest of the Algorand ecosystem was felt to be a bigger
+usability and understandability issue.
 
 ``beaker`` namespace changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -806,13 +833,9 @@ that produces TEAL. The following is a list of functions affected.
 Import paths
 ^^^^^^^^^^^^
 
-A number of internal modules in ``beaker.lib`` were collapsed. The following is a list of affected modules:
+A number of internal modules in ``beaker.lib`` were collapsed for simplicity. The following is a list of affected modules:
 
 * ``beaker.lib.inline.inline_asm.*`` -> ``beaker.lib.inline.*``
 * ``beaker.lib.iter.iter.*`` -> ``beaker.lib.iter.*``
 * ``beaker.lib.math.math.*`` -> ``beaker.lib.math.*``
 * ``beaker.lib.strings.string.*`` -> ``beaker.lib.string.*``
-
-
-
-

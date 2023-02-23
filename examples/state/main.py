@@ -1,6 +1,5 @@
 from beaker.client import ApplicationClient, LogicException
-from beaker.sandbox import get_algod_client, get_accounts
-
+from beaker.sandbox import get_accounts, get_algod_client
 from examples.state.contract import app
 
 

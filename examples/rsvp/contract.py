@@ -1,24 +1,25 @@
 from pyteal import (
-    TxnType,
-    Subroutine,
-    InnerTxnBuilder,
-    abi,
-    Txn,
-    Int,
-    TealType,
-    Global,
     Assert,
-    Expr,
     Balance,
+    Expr,
+    Global,
     If,
+    InnerTxnBuilder,
+    Int,
     Seq,
+    Subroutine,
+    TealType,
+    Txn,
     TxnField,
+    TxnType,
+    abi,
 )
+
 from beaker import (
     Application,
+    Authorize,
     GlobalStateValue,
     LocalStateValue,
-    Authorize,
 )
 
 ############

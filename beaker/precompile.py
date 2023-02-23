@@ -1,22 +1,23 @@
+from collections.abc import KeysView
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, KeysView
+from typing import TYPE_CHECKING
 
 from pyteal import (
-    Seq,
+    Addr,
     Bytes,
-    Expr,
-    ScratchVar,
-    TealType,
-    TealTypeError,
-    Int,
     Concat,
+    Expr,
+    Int,
     Len,
+    ScratchVar,
+    Seq,
+    Sha512_256,
     Substring,
     Suffix,
-    Sha512_256,
+    TealType,
+    TealTypeError,
     TxnField,
     TxnType,
-    Addr,
 )
 
 from beaker.compilation import Program
@@ -25,6 +26,7 @@ from beaker.lib.strings import EncodeUVarInt
 
 if TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
+
     from beaker.application import Application
     from beaker.logic_signature import (
         LogicSignature,

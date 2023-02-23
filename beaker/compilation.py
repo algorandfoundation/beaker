@@ -73,6 +73,6 @@ def _gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssert
         if not line_before.startswith("//"):
             continue
 
-        asserts[pc] = ProgramAssertion(idx, line_before.strip("// "))
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("/ "))
 
     return asserts

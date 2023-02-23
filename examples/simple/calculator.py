@@ -1,6 +1,6 @@
-from pyteal import abi, Expr
+from pyteal import Expr, abi
 
-from beaker import sandbox, Application
+from beaker import Application, sandbox
 from beaker.client import ApplicationClient
 
 calculator_app = Application("Calculator")

@@ -1,17 +1,17 @@
 import inspect
-from typing import Callable
+from collections.abc import Callable
 
 from pyteal import (
     CompileOptions,
-    TealType,
-    Tmpl,
     Expr,
-    Seq,
-    compileTeal,
     Mode,
     ScratchVar,
+    Seq,
     TealBlock,
     TealSimpleBlock,
+    TealType,
+    Tmpl,
+    compileTeal,
 )
 
 from beaker.build_options import BuildOptions
@@ -82,8 +82,14 @@ class LogicSignatureTemplate:
             logic = expr_or_func
         else:
             params = inspect.signature(expr_or_func).parameters
-            print(params.keys(), runtime_template_variables.keys())
-            if not (len(params.keys()) <= len(runtime_template_variables.keys())):
+            # check that the arguments names the function takes
+            # is equal to or a subset of the runtime variable names
+            # - ie, the function should not take any arguments other than ones
+            # we can provide (runtime template variables), but it can omit
+            # some (or all) arguments if it chooses. This is useful to avoid an
+            # "unused variable" warning if the purpose of the template variable
+            # is just to change the logic signature address
+            if not (params.keys() <= runtime_template_variables.keys()):
                 raise ValueError(
                     "Logic signature methods should take no arguments, unless using runtime templates"
                 )

@@ -1,15 +1,14 @@
-import pytest
 import pyteal as pt
+import pytest
 from pyteal import Bytes
 
+from beaker import BuildOptions
 from beaker.application import (
     Application,
     precompiled,
 )
-from beaker import BuildOptions
 from beaker.blueprints import unconditional_create_approval
 from beaker.client import ApplicationClient
-from beaker.sandbox import get_accounts, get_algod_client
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
     PrecompiledApplication,
@@ -17,6 +16,7 @@ from beaker.precompile import (
     PrecompiledLogicSignatureTemplate,
     _py_encode_uvarint,
 )
+from beaker.sandbox import get_accounts, get_algod_client
 
 
 def test_compile() -> None:
@@ -212,14 +212,14 @@ def test_build_recursive() -> None:
 
 
 def LargeApp() -> Application:
-    longBytes = 4092 * b"A"
-    longBytes2 = 2048 * b"A"
+    long_bytes = 4092 * b"A"
+    long_bytes2 = 2048 * b"A"
 
     app = Application(name="LargeApp").implement(unconditional_create_approval)
 
     @app.external
     def compare_big_byte_strings() -> pt.Expr:
-        return pt.Assert(pt.Bytes(longBytes) != pt.Bytes(longBytes2))
+        return pt.Assert(pt.Bytes(long_bytes) != pt.Bytes(long_bytes2))
 
     return app
 

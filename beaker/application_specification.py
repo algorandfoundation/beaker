@@ -2,7 +2,7 @@ import base64
 import dataclasses
 import json
 from pathlib import Path
-from typing import Any, TypedDict, TypeAlias, Literal
+from typing import Any, Literal, TypeAlias, TypedDict
 
 from algosdk.abi import Contract
 from algosdk.abi.method import MethodDict
@@ -40,7 +40,7 @@ class DefaultArgumentDict(TypedDict):
     data: int | str | bytes | MethodDict
 
 
-StateDict = TypedDict(
+StateDict = TypedDict(  # noqa: UP013  # can't convert as "global" is a reserved keyword
     "StateDict", {"global": AppSpecStateDict, "local": AppSpecStateDict}
 )
 

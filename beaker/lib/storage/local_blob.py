@@ -1,5 +1,4 @@
 from pyteal import (
-    Txn,
     App,
     Bytes,
     Concat,
@@ -17,6 +16,7 @@ from pyteal import (
     Subroutine,
     Substring,
     TealType,
+    Txn,
 )
 
 from beaker.consts import MAX_LOCAL_STATE

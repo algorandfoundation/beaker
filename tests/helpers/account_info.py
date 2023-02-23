@@ -1,4 +1,5 @@
 from typing import Any
+
 from algosdk.v2client.algod import AlgodClient
 
 

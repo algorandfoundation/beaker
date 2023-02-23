@@ -6,26 +6,26 @@ import pyteal
 import pytest
 from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
+    AccountTransactionSigner,
     AtomicTransactionComposer,
     TransactionWithSigner,
-    AccountTransactionSigner,
     abi,
 )
 from algosdk.encoding import decode_address
 from algosdk.v2client.algod import AlgodClient
 
-from beaker import client, sandbox, consts
+from beaker import client, consts, sandbox
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 from examples.amm.amm import (
     ConstantProductAMMErrors,
     amm_app,
-    scale,
     fee,
+    scale,
 )
 from examples.amm.main import demo
-from tests.conftest import check_application_artifacts_output_stability
 from tests import helpers
+from tests.conftest import check_application_artifacts_output_stability
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()
@@ -66,7 +66,7 @@ def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
                 sp,
                 TOTAL_ASSET_TOKENS,
                 0,
-                False,
+                default_frozen=False,
                 asset_name="asset a",
                 unit_name="A",
             ),
@@ -75,7 +75,7 @@ def assets(creator_acct: AcctInfo, user_acct: AcctInfo) -> tuple[int, int]:
                 sp,
                 TOTAL_ASSET_TOKENS,
                 0,
-                False,
+                default_frozen=False,
                 asset_name="asset b",
                 unit_name="B",
             ),
@@ -530,7 +530,7 @@ def grouped_assert_cases(
     creator_app_client: client.ApplicationClient,
     user_acct: AcctInfo,
 ) -> list[AssertTestCase]:
-    group: str = request.param  # type: ignore
+    group: str = request.param
     return _assert_cases(group, creator_app_client, user_acct)
 
 

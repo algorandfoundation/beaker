@@ -18,13 +18,13 @@ from pyteal import (
 
 from beaker import (
     Application,
-    GlobalStateValue,
     Authorize,
+    GlobalStateValue,
     consts,
     unconditional_create_approval,
 )
-from beaker.consts import BOX_BYTE_MIN_BALANCE, BOX_FLAT_MIN_BALANCE, ASSET_MIN_BALANCE
-from beaker.lib.storage import BoxMapping, BoxList
+from beaker.consts import ASSET_MIN_BALANCE, BOX_BYTE_MIN_BALANCE, BOX_FLAT_MIN_BALANCE
+from beaker.lib.storage import BoxList, BoxMapping
 
 
 # NamedTuple we'll store in a box per member
@@ -225,9 +225,7 @@ def app_member_get_affirmation(
     return Seq(
         InnerTxnBuilder.ExecuteMethodCall(
             app_id=app_member_app.state.club_app_id,
-            method_signature=membership_club_app.abi_methods[
-                "get_affirmation"
-            ].method_signature(),
+            method_signature=get_affirmation.method_signature(),  # type: ignore[union-attr]
             args=[member_token],
         ),
         app_member_app.state.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),

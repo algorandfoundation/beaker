@@ -1,7 +1,7 @@
 import contextlib
+from collections.abc import Iterator
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Iterator
 
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
 from algosdk.kmd import KMDClient
@@ -97,7 +97,7 @@ def wallet_handle_by_name(
     try:
         wallet_id = next(iter(w["id"] for w in wallets if w["name"] == wallet_name))
     except StopIteration:
-        raise Exception("Wallet not found: {}".format(wallet_name))
+        raise Exception(f"Wallet not found: {wallet_name}") from None
 
     wallet_handle = kmd.init_wallet_handle(wallet_id, wallet_password)
     try:

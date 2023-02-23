@@ -1,8 +1,9 @@
-from pyteal import Concat, Bytes, Expr, abi
+from pyteal import Bytes, Concat, Expr, abi
+
 from beaker import (
-    sandbox,
-    client,
     Application,
+    client,
+    sandbox,
 )
 
 hello_app = Application("HelloBeaker")

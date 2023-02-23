@@ -1,10 +1,11 @@
-import pytest
 import pyteal as pt
+import pytest
+
 from beaker.state import (
-    ReservedLocalStateValue,
-    ReservedGlobalStateValue,
     GlobalStateValue,
     LocalStateValue,
+    ReservedGlobalStateValue,
+    ReservedLocalStateValue,
 )
 from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
 from beaker.state.primitive import _get_default_for_type

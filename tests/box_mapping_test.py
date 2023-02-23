@@ -1,8 +1,8 @@
-import pytest
 import pyteal as pt
-from beaker.lib.storage import BoxMapping
-from beaker.application import Application
+import pytest
 
+from beaker.application import Application
+from beaker.lib.storage import BoxMapping
 
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
 

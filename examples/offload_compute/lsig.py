@@ -1,25 +1,27 @@
 from typing import Literal
+
 from pyteal import (
-    EcdsaVerify,
-    EcdsaRecover,
-    TxnType,
-    BytesLe,
-    Subroutine,
-    abi,
-    Extract,
-    EcdsaCurve,
-    Txn,
-    Global,
-    Int,
-    TealType,
-    Bytes,
     Assert,
     Btoi,
+    Bytes,
+    BytesLe,
+    EcdsaCurve,
+    EcdsaRecover,
+    EcdsaVerify,
     Expr,
+    Extract,
+    Global,
+    Int,
     Len,
     Seq,
+    Subroutine,
+    TealType,
+    Txn,
+    TxnType,
+    abi,
 )
-from beaker import LogicSignature, BuildOptions
+
+from beaker import BuildOptions, LogicSignature
 
 HashValue = abi.StaticBytes[Literal[32]]
 Signature = abi.StaticBytes[Literal[65]]

@@ -1,6 +1,6 @@
-from tests.conftest import check_application_artifacts_output_stability
-from examples.boxen.application import membership_club_app, app_member_app
+from examples.boxen.application import app_member_app, membership_club_app
 from examples.boxen.main import demo
+from tests.conftest import check_application_artifacts_output_stability
 
 
 def test_demo() -> None:

@@ -1,7 +1,7 @@
 import pyteal as pt
-from tests.helpers import UnitTestingApp, assert_output
 
 from beaker.lib.iter import Iterate
+from tests.helpers import UnitTestingApp, assert_output
 
 
 def test_iterate() -> None:

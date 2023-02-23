@@ -2,9 +2,8 @@ import math as pymath
 
 import pyteal as pt
 
-from tests.helpers import UnitTestingApp, assert_output
-
 from beaker.lib import math
+from tests.helpers import UnitTestingApp, assert_output
 
 
 def test_even() -> None:

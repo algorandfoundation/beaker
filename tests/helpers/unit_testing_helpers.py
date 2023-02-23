@@ -6,10 +6,10 @@ from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 from beaker import (
     Application,
+    BuildOptions,
     client,
     sandbox,
     unconditional_opt_in_approval,
-    BuildOptions,
 )
 from beaker.blueprints import unconditional_create_approval
 
@@ -121,14 +121,15 @@ def assert_output(
     if sandbox_accounts is None:
         sandbox_accounts = sandbox.get_accounts()
 
+    spec = app.build(algod_client)
+
     try:
-        unit_test_method = app.abi_methods["unit_test"]
-    except KeyError:
+        spec.contract.get_method_by_name("unit_test")
+    except KeyError as err:
         raise Exception(
             "Expression undefined. Either pass the expr to test or implement unit_test method"
-        )
+        ) from err
 
-    spec = app.build(algod_client)
     app_client = client.ApplicationClient(
         algod_client, app=spec, signer=sandbox_accounts[0].signer
     )
@@ -148,17 +149,15 @@ def assert_output(
             if opups > 0:
                 atc = AtomicTransactionComposer()
 
-                app_client.add_method_call(atc, unit_test_method, **input)
+                app_client.add_method_call(atc, "unit_test", **input)
                 for x in range(opups):
-                    app_client.add_method_call(
-                        atc, app.abi_methods["opup"], note=str(x).encode()
-                    )
+                    app_client.add_method_call(atc, "opup", note=str(x).encode())
 
                 results = app_client._execute_atc(atc, wait_rounds=2)
 
                 assert results.abi_results[0].return_value == output
             else:
-                result = app_client.call(unit_test_method, **input)
+                result = app_client.call("unit_test", **input)
                 assert result.return_value == output
     except Exception as e:
         raise e

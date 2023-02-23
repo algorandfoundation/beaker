@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import Literal
 
-from pyteal import Expr, Txn, TealType
+from pyteal import Expr, TealType, Txn
 
-from beaker.consts import MAX_LOCAL_STATE, MAX_GLOBAL_STATE
-from beaker.lib.storage import LocalBlob, GlobalBlob
+from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
+from beaker.lib.storage import GlobalBlob, LocalBlob
 
 __all__ = [
     "StateBlob",
@@ -13,7 +13,7 @@ __all__ = [
     "GlobalStateBlob",
 ]
 
-from beaker.state._abc import LocalStateStorage, GlobalStateStorage, StateStorage
+from beaker.state._abc import GlobalStateStorage, LocalStateStorage, StateStorage
 
 
 class StateBlob(StateStorage, ABC):

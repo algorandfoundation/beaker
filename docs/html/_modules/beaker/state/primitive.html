@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>beaker.state.primitive &mdash; Beaker  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> Beaker
+            <img src="../../../_static/beaker.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lsig.html">Logic Signatures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sandbox.html">Sandbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../precompile.html">Precompile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration.html">1.0 Migration Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Beaker</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>beaker.state.primitive</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for beaker.state.primitive</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TealTypeError</span><span class="p">,</span>
+    <span class="n">CompileOptions</span><span class="p">,</span>
+    <span class="n">TealBlock</span><span class="p">,</span>
+    <span class="n">TealSimpleBlock</span><span class="p">,</span>
+    <span class="n">Bytes</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">MaybeValue</span><span class="p">,</span>
+    <span class="n">TealInputError</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">App</span><span class="p">,</span>
+    <span class="n">Assert</span><span class="p">,</span>
+    <span class="n">Not</span><span class="p">,</span>
+    <span class="n">If</span><span class="p">,</span>
+    <span class="n">Txn</span><span class="p">,</span>
+    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
+    <span class="n">Subroutine</span><span class="p">,</span>
+    <span class="n">Concat</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;StateValue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ApplicationStateValue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AccountStateValue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prefix_key_gen&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;identity_key_gen&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="kn">from</span> <span class="nn">beaker.state._abc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ApplicationStateStorage</span><span class="p">,</span>
+    <span class="n">AccountStateStorage</span><span class="p">,</span>
+    <span class="n">StateStorage</span><span class="p">,</span>
+    <span class="n">AppSpecSchemaFragment</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">StateValue</span><span class="p">(</span><span class="n">Expr</span><span class="p">,</span> <span class="n">StateStorage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base Class for state values</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type: The type of the state value</span>
+<span class="sd">            (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        key: key to use to store the the value, default is name of class variable</span>
+<span class="sd">        default: Default value for the state value</span>
+<span class="sd">        static: Boolean flag to denote that this state value can</span>
+<span class="sd">            only be set once and not deleted.</span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">stack_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">static</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">stack_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid stack type: </span><span class="si">{</span><span class="n">stack_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">=</span> <span class="n">stack_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">static</span> <span class="o">=</span> <span class="n">static</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">descr</span> <span class="o">=</span> <span class="n">descr</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">default</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">default</span><span class="o">.</span><span class="n">type_of</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">default</span>
+
+    <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">Bytes</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="c1"># Required methods for `Expr subclass`</span>
+    <span class="k">def</span> <span class="nf">has_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TealType</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span>
+
+    <span class="k">def</span> <span class="nf">__teal__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">CompileOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TealBlock</span><span class="p">,</span> <span class="n">TealSimpleBlock</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">__teal__</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">str_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns the string held by the key Bytes object&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Bytes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">byte_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cnt</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;helper to increment a counter&quot;&quot;&quot;</span>
+        <span class="n">check_is_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">cnt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">decrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cnt</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;helper to decrement a counter&quot;&quot;&quot;</span>
+        <span class="n">check_is_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">-</span> <span class="n">cnt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_default</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;sets the default value if one is provided, if</span>
+<span class="sd">        none provided sets the zero value for its type&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">_get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">is_default</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;checks to see if the value set equals the default value&quot;&quot;&quot;</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="n">_get_default_for_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">==</span> <span class="n">default</span>
+
+    <span class="k">def</span> <span class="nf">num_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">value_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span>
+
+    <span class="k">def</span> <span class="nf">app_spec_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppSpecSchemaFragment</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AppSpecSchemaFragment</span><span class="p">(</span>
+            <span class="s2">&quot;declared&quot;</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_type</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">str_key</span><span class="p">(),</span>
+                <span class="s2">&quot;descr&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">descr</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;sets the value to the argument passed&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the value stored for this state value&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;gets a MaybeValue that can be used for existence check&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the value stored at the key. if none is stored, Assert out of the program&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the value stored at the key. if none is stored, return the value passed&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;checks if the value is set (to whatever value. Returns Int(1) if value is set, Int(0) otherwise.&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;deletes the key from state, if the value is static it will be a compile time error&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="ApplicationStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ApplicationStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">,</span> <span class="n">ApplicationStateStorage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allows storage of state values for an application (global state)</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        key: key to use to store the the value, default is name of class variable</span>
+<span class="sd">        default: Default value for the state value</span>
+<span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_default</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="ApplicationStateValue.set"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+                <span class="n">v</span> <span class="o">:=</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">),</span>
+                <span class="n">Assert</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())),</span>
+                <span class="n">App</span><span class="o">.</span><span class="n">globalPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ApplicationStateValue.get"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ApplicationStateValue.get_maybe"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ApplicationStateValue.get_must"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">Assert</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">()),</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="ApplicationStateValue.get_else"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get_else">[docs]</a>    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">v</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">If</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">hasValue</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="n">val</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">get_external</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ApplicationStateValue.exists"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="ApplicationStateValue.delete"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalDel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AccountStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">AccountStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">,</span> <span class="n">AccountStateStorage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allows storage of keyed values for an account opted into an application (local state)</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        stack_type: The type of the state value (either TealType.bytes or TealType.uint64)</span>
+<span class="sd">        key: key to use to store the the value, default is name of class variable</span>
+<span class="sd">        default: Default value for the state value</span>
+<span class="sd">        static: Boolean flag to denote that this state value can only be set once and not deleted.</span>
+<span class="sd">        descr: Description of the state value to provide some information to clients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AccountStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">stack_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">static</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">static</span><span class="p">,</span> <span class="n">descr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">acct</span><span class="p">]</span><span class="o">.</span><span class="n">set_default</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="AccountStateValue.set"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+                <span class="n">v</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span>
+                <span class="n">Assert</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())),</span>
+                <span class="n">App</span><span class="o">.</span><span class="n">localPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AccountStateValue.get"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AccountStateValue.get_maybe"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGetEx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AccountStateValue.get_must"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">Assert</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">()),</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="AccountStateValue.get_else"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get_else">[docs]</a>    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">v</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">If</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">hasValue</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="n">val</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">get_external</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">app_id</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGetEx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AccountStateValue.exists"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="AccountStateValue.delete"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no account defined&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localDel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AccountStateValue&quot;</span><span class="p">:</span>
+        <span class="n">asv</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">asv</span><span class="o">.</span><span class="n">acct</span> <span class="o">=</span> <span class="n">acct</span>
+        <span class="k">return</span> <span class="n">asv</span></div>
+
+
+<span class="k">def</span> <span class="nf">prefix_key_gen</span><span class="p">(</span><span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
+    <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">prefix_key_gen</span><span class="p">(</span><span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Concat</span><span class="p">(</span><span class="n">Bytes</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="n">key_seed</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">prefix_key_gen</span>
+
+
+<span class="k">def</span> <span class="nf">identity_key_gen</span><span class="p">(</span><span class="n">key_seed</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">key_seed</span>
+
+
+<span class="k">def</span> <span class="nf">check_not_static</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">StateValue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">sv</span><span class="o">.</span><span class="n">static</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="n">sv</span><span class="si">}</span><span class="s2"> is static&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_is_int</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">StateValue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">sv</span><span class="o">.</span><span class="n">stack_type</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;StateValue </span><span class="si">{</span><span class="n">sv</span><span class="si">}</span><span class="s2"> is not integer type&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_match_type</span><span class="p">(</span><span class="n">sv</span><span class="p">:</span> <span class="n">StateValue</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">in_type</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">type_of</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">in_type</span> <span class="o">!=</span> <span class="n">sv</span><span class="o">.</span><span class="n">stack_type</span> <span class="ow">and</span> <span class="n">in_type</span> <span class="o">!=</span> <span class="n">TealType</span><span class="o">.</span><span class="n">anytype</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">TealTypeError</span><span class="p">(</span><span class="n">in_type</span><span class="p">,</span> <span class="n">sv</span><span class="o">.</span><span class="n">stack_type</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_default_for_type</span><span class="p">(</span><span class="n">stack_type</span><span class="p">:</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span>
+
+    <span class="k">if</span> <span class="n">stack_type</span> <span class="o">==</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Algorand.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

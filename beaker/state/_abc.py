@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Literal, NamedTuple
 
-from pyteal import TealType, Expr
+from pyteal import Expr, TealType
 
 
 class AppSpecSchemaFragment(NamedTuple):

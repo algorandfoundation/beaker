@@ -1,10 +1,9 @@
 from algosdk.abi import ABIType
-from algosdk.encoding import encode_address, decode_address
 from algosdk.atomic_transaction_composer import TransactionWithSigner
-from algosdk.transaction import PaymentTxn, AssetOptInTxn
+from algosdk.encoding import decode_address, encode_address
+from algosdk.transaction import AssetOptInTxn, PaymentTxn
 
 from beaker import client, consts, sandbox
-
 from examples.boxen.application import (
     MembershipRecord,
     app_member_app,

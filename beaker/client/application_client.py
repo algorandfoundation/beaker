@@ -2,32 +2,33 @@ import copy
 import dataclasses
 import warnings
 from base64 import b64decode
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, cast, Sequence, Callable
+from typing import Any, cast
 
 import algosdk
-from algosdk import transaction, abi
+from algosdk import abi, transaction
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
-    TransactionSigner,
-    AccountTransactionSigner,
-    MultisigTransactionSigner,
-    LogicSigTransactionSigner,
-    AtomicTransactionComposer,
-    ABIResult,
     ABI_RETURN_HASH,
-    TransactionWithSigner,
+    ABIResult,
+    AccountTransactionSigner,
+    AtomicTransactionComposer,
     AtomicTransactionResponse,
+    LogicSigTransactionSigner,
+    MultisigTransactionSigner,
+    TransactionSigner,
+    TransactionWithSigner,
 )
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
-from pyteal import ABIReturnSubroutine, MethodConfig, CallConfig
+from pyteal import ABIReturnSubroutine, CallConfig, MethodConfig
 
 from beaker.application import Application
 from beaker.application_specification import (
     ApplicationSpecification,
-    MethodHints,
     DefaultArgumentDict,
+    MethodHints,
 )
 from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.client.state_decode import decode_state
@@ -98,7 +99,6 @@ class ApplicationClient:
         self,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
-        args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         extra_pages: int | None = None,
@@ -128,7 +128,6 @@ class ApplicationClient:
                 global_schema=self.app.global_state_schema,
                 local_schema=self.app.local_state_schema,
                 extra_pages=extra_pages,
-                app_args=args,
                 **kwargs,
             )
         else:
@@ -143,7 +142,6 @@ class ApplicationClient:
                         global_schema=self.app.global_state_schema,
                         local_schema=self.app.local_state_schema,
                         extra_pages=extra_pages,
-                        app_args=args,
                         **kwargs,
                     ),
                     signer=signer,
@@ -167,11 +165,9 @@ class ApplicationClient:
         self,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
-        args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         **kwargs: Any,
     ) -> str:
-
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
 
         sp = self.get_suggested_params(suggested_params)
@@ -186,10 +182,8 @@ class ApplicationClient:
                 on_complete=transaction.OnComplete.UpdateApplicationOC,
                 sender=sender,
                 suggested_params=sp,
-                index=self.app_id,
                 approval_program=self.approval.raw_binary,
                 clear_program=self.clear.raw_binary,
-                app_args=args,
                 **kwargs,
             )
         else:
@@ -201,7 +195,6 @@ class ApplicationClient:
                         index=self.app_id,
                         approval_program=self.approval.raw_binary,
                         clear_program=self.clear.raw_binary,
-                        app_args=args,
                         **kwargs,
                     ),
                     signer=signer,
@@ -216,7 +209,6 @@ class ApplicationClient:
         self,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
-        args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         **kwargs: Any,
     ) -> str:
@@ -234,8 +226,6 @@ class ApplicationClient:
                 on_complete=transaction.OnComplete.OptInOC,
                 sender=sender,
                 suggested_params=sp,
-                index=self.app_id,
-                app_args=args,
                 signer=signer,
                 **kwargs,
             )
@@ -246,7 +236,6 @@ class ApplicationClient:
                         sender=sender,
                         sp=sp,
                         index=self.app_id,
-                        app_args=args,
                         **kwargs,
                     ),
                     signer=signer,
@@ -261,7 +250,6 @@ class ApplicationClient:
         self,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
-        args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         **kwargs: Any,
     ) -> str:
@@ -279,8 +267,6 @@ class ApplicationClient:
                 on_complete=transaction.OnComplete.CloseOutOC,
                 sender=sender,
                 suggested_params=sp,
-                index=self.app_id,
-                app_args=args,
                 signer=signer,
                 **kwargs,
             )
@@ -291,7 +277,6 @@ class ApplicationClient:
                         sender=sender,
                         sp=sp,
                         index=self.app_id,
-                        app_args=args,
                         **kwargs,
                     ),
                     signer=signer,
@@ -306,11 +291,9 @@ class ApplicationClient:
         self,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
-        args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         **kwargs: Any,
     ) -> str:
-
         """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
 
         sp = self.get_suggested_params(suggested_params)
@@ -324,7 +307,6 @@ class ApplicationClient:
                     sender=sender,
                     sp=sp,
                     index=self.app_id,
-                    app_args=args,
                     **kwargs,
                 ),
                 signer=signer,
@@ -339,7 +321,6 @@ class ApplicationClient:
         self,
         sender: str | None = None,
         signer: TransactionSigner | None = None,
-        args: list[Any] | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         **kwargs: Any,
     ) -> str:
@@ -357,8 +338,6 @@ class ApplicationClient:
                 on_complete=transaction.OnComplete.DeleteApplicationOC,
                 sender=sender,
                 suggested_params=sp,
-                index=self.app_id,
-                app_args=args,
                 signer=signer,
                 **kwargs,
             )
@@ -369,7 +348,6 @@ class ApplicationClient:
                         sender=sender,
                         sp=sp,
                         index=self.app_id,
-                        app_args=args,
                         **kwargs,
                     ),
                     signer=signer,
@@ -420,12 +398,7 @@ class ApplicationClient:
 
         """Handles calling the application"""
 
-        if isinstance(method, str):
-            method = self.app.contract.get_method_by_name(method)
-
-        if isinstance(method, ABIReturnSubroutine):
-            method = method.method_spec()
-
+        method = self._resolve_abi_method(method)
         hints = self._method_hints(method)
 
         if atc is None:
@@ -570,12 +543,7 @@ class ApplicationClient:
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
-        if isinstance(method, str):
-            method = self.app.contract.get_method_by_name(method)
-
-        if isinstance(method, ABIReturnSubroutine):
-            method = method.method_spec()
-
+        method = self._resolve_abi_method(method)
         hints = self._method_hints(method)
 
         args = []
@@ -637,6 +605,26 @@ class ApplicationClient:
         )
 
         return atc
+
+    def _resolve_abi_method(
+        self, method: abi.Method | ABIReturnSubroutine | str
+    ) -> abi.Method:
+        if isinstance(method, ABIReturnSubroutine):
+            return method.method_spec()
+        elif isinstance(method, str):
+            try:
+                return next(
+                    iter(
+                        m
+                        for m in self.app.contract.methods
+                        if m.get_signature() == method
+                    )
+                )
+            except StopIteration:
+                pass
+            return self.app.contract.get_method_by_name(method)
+        else:
+            return method
 
     def add_transaction(
         self, atc: AtomicTransactionComposer, txn: transaction.Transaction
