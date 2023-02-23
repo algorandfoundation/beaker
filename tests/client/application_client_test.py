@@ -16,11 +16,15 @@ from algosdk.atomic_transaction_composer import (
 )
 
 import beaker
-from beaker.decorators import Authorize
+from beaker import (
+    Authorize,
+    Application,
+    BuildOptions,
+    GlobalStateValue,
+    LocalStateValue,
+)
 from beaker.sandbox import get_accounts, get_algod_client
-from beaker.application import Application, _default_argument_from_resolver
-from beaker.build_options import BuildOptions
-from beaker.state import GlobalStateValue, LocalStateValue
+from beaker.application import _default_argument_from_resolver
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
 
@@ -34,54 +38,59 @@ class AppState:
     acct_state_val_byte = LocalStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
 
 
-def App(version: int = pyteal.MAX_PROGRAM_VERSION) -> Application[AppState]:
-    app = Application(
-        "App",
-        state=AppState(),
-        build_options=BuildOptions(avm_version=version),
+app = Application(
+    "App",
+    state=AppState(),
+    build_options=BuildOptions(avm_version=pyteal.MAX_PROGRAM_VERSION),
+)
+
+
+@app.create
+def create() -> pt.Expr:
+    return pt.Seq(
+        app.initialize_global_state(),
+        pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+        pt.Approve(),
     )
 
-    @app.create
-    def create() -> pt.Expr:
-        return pt.Seq(
-            app.initialize_global_state(),
-            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
-            pt.Approve(),
-        )
 
-    @app.update(authorize=Authorize.only(pt.Global.creator_address()))
-    def update() -> pt.Expr:
-        return pt.Approve()
+@app.update(authorize=Authorize.only(pt.Global.creator_address()))
+def update() -> pt.Expr:
+    return pt.Approve()
 
-    @app.delete(authorize=Authorize.only(pt.Global.creator_address()))
-    def delete() -> pt.Expr:
-        return pt.Approve()
 
-    @app.opt_in
-    def opt_in() -> pt.Expr:
-        return pt.Seq(
-            app.initialize_local_state(),
-            pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
-            pt.Approve(),
-        )
+@app.delete(authorize=Authorize.only(pt.Global.creator_address()))
+def delete() -> pt.Expr:
+    return pt.Approve()
 
-    @app.clear_state
-    def clear_state() -> pt.Expr:
-        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-    @app.close_out
-    def close_out() -> pt.Expr:
-        return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+@app.opt_in
+def opt_in() -> pt.Expr:
+    return pt.Seq(
+        app.initialize_local_state(),
+        pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)),
+        pt.Approve(),
+    )
 
-    @app.external
-    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
-        return output.set(a.get() + b.get())
 
-    @app.external(read_only=True)
-    def dummy(*, output: pt.abi.String) -> pt.Expr:
-        return output.set("deadbeef")
+@app.clear_state
+def clear_state() -> pt.Expr:
+    return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
 
-    return app
+
+@app.close_out
+def close_out() -> pt.Expr:
+    return pt.Seq(pt.Assert(pt.Len(pt.Txn.note()) == pt.Int(0)), pt.Approve())
+
+
+@app.external
+def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+    return output.set(a.get() + b.get())
+
+
+@app.external(read_only=True)
+def dummy(*, output: pt.abi.String) -> pt.Expr:
+    return output.set("deadbeef")
 
 
 SandboxAccounts = list[tuple[str, str, AccountTransactionSigner]]
@@ -93,7 +102,6 @@ def sb_accts() -> SandboxAccounts:
 
 
 def test_app_client_create() -> None:
-    app = App()
     client = get_algod_client()
     ac = ApplicationClient(client, app)
     assert ac.signer is None, "Should not have a signer"
@@ -110,7 +118,6 @@ def test_app_client_create() -> None:
 
 
 def test_app_prepare(sb_accts: SandboxAccounts) -> None:
-    app = App()
     client = get_algod_client()
 
     (addr, sk, signer) = sb_accts[0]
@@ -202,7 +209,6 @@ def expect_dict(actual: dict[str, Any], expected: dict[str, Any]) -> None:
 
 
 def test_create(sb_accts: SandboxAccounts) -> None:
-    app = App()
 
     addr, pk, signer = sb_accts[0]
 
@@ -268,7 +274,6 @@ def test_create(sb_accts: SandboxAccounts) -> None:
 
 
 def test_update(sb_accts: SandboxAccounts) -> None:
-    app = App()
 
     addr, pk, signer = sb_accts[0]
 
@@ -299,7 +304,6 @@ def test_update(sb_accts: SandboxAccounts) -> None:
 
 
 def test_delete(sb_accts: SandboxAccounts) -> None:
-    app = App()
     addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
@@ -332,7 +336,6 @@ def test_delete(sb_accts: SandboxAccounts) -> None:
 
 
 def test_opt_in(sb_accts: SandboxAccounts) -> None:
-    app = App()
 
     addr, pk, signer = sb_accts[0]
 
@@ -365,8 +368,6 @@ def test_opt_in(sb_accts: SandboxAccounts) -> None:
 
 
 def test_close_out(sb_accts: SandboxAccounts) -> None:
-
-    app = App()
 
     addr, pk, signer = sb_accts[0]
 
@@ -402,7 +403,6 @@ def test_close_out(sb_accts: SandboxAccounts) -> None:
 
 
 def test_clear_state(sb_accts: SandboxAccounts) -> None:
-    app = App()
     addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
@@ -431,21 +431,24 @@ def test_clear_state(sb_accts: SandboxAccounts) -> None:
 
 
 def test_call(sb_accts: SandboxAccounts) -> None:
-    app = App()
     addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
-    ac = ApplicationClient(client, app, signer=signer)
+    app_spec = app.build(client)
+    ac = ApplicationClient(client, app_spec, signer=signer)
     app_id, _, _ = ac.create()
 
-    method_add = app.abi_methods["add"]
-    result = ac.call(method_add, a=1, b=1)
+    result = ac.call("add", a=1, b=1)
     assert result.return_value == 2
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = method_add.method_spec().get_selector()
-    raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
+    method_add = app_spec.contract.get_method_by_name("add")
+    raw_args = [
+        method_add.get_selector(),
+        (1).to_bytes(8, "big"),
+        (1).to_bytes(8, "big"),
+    ]
 
     return_prefix = 0x151F7C75
     log_msg = b64encode(
@@ -470,15 +473,15 @@ def test_call(sb_accts: SandboxAccounts) -> None:
 
 
 def test_add_method_call(sb_accts: SandboxAccounts) -> None:
-    app = App()
 
     addr, pk, signer = sb_accts[0]
 
     client = get_algod_client()
-    ac = ApplicationClient(client, app, signer=signer)
+    app_spec = app.build(client)
+    ac = ApplicationClient(client, app_spec, signer=signer)
     app_id, _, _ = ac.create()
 
-    method_add = app.abi_methods["add"]
+    method_add = app_spec.contract.get_method_by_name("add")
     atc = AtomicTransactionComposer()
     ac.add_method_call(atc, method_add, a=1, b=1)
     atc_result = atc.execute(client, 4)
@@ -488,7 +491,7 @@ def test_add_method_call(sb_accts: SandboxAccounts) -> None:
     assert result.decode_error is None
     assert result.raw_value == (2).to_bytes(8, "big")
 
-    ms = method_add.method_spec().get_selector()
+    ms = method_add.get_selector()
     raw_args = [ms, (1).to_bytes(8, "big"), (1).to_bytes(8, "big")]
 
     return_prefix = 0x151F7C75
@@ -514,7 +517,6 @@ def test_add_method_call(sb_accts: SandboxAccounts) -> None:
 
 
 def test_fund(sb_accts: SandboxAccounts) -> None:
-    app = App()
     addr, pk, signer = sb_accts[0]
     client = get_algod_client()
 
@@ -529,8 +531,6 @@ def test_fund(sb_accts: SandboxAccounts) -> None:
 
 
 def test_resolve(sb_accts: SandboxAccounts) -> None:
-
-    app = App()
 
     addr, pk, signer = sb_accts[0]
 
@@ -556,10 +556,7 @@ def test_resolve(sb_accts: SandboxAccounts) -> None:
         ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_byte))
         == b"test"
     )
-    assert (
-        ac.resolve(_default_argument_from_resolver(app.abi_methods["dummy"]))
-        == "deadbeef"
-    )
+    assert ac.resolve({"source": "abi-method", "data": dummy.method_spec().dictify()}) == "deadbeef"  # type: ignore[union-attr]
 
 
 def test_override_app_create(sb_accts: SandboxAccounts) -> None:

@@ -140,17 +140,16 @@ class Application(Generic[TState]):
         self.name = name
         self.descr = descr
         self.build_options = build_options or BuildOptions()
-        self.bare_methods: dict[str, SubroutineFnWrapper] = {}
-        self.abi_methods: dict[str, ABIReturnSubroutine] = {}
 
-        self._bare_externals: dict[OnCompleteActionName, OnCompleteAction] = {}
+        self.bare_actions: dict[OnCompleteActionName, OnCompleteAction] = {}
+        self.abi_externals: dict[str, ABIExternal] = {}
+
         self._clear_state_method: SubroutineFnWrapper | None = None
         self._precompiled_lsigs: dict[LogicSignature, PrecompiledLogicSignature] = {}
         self._precompiled_lsig_templates: dict[
             LogicSignatureTemplate, PrecompiledLogicSignatureTemplate
         ] = {}
         self._precompiled_apps: dict[Application, PrecompiledApplication] = {}
-        self._abi_externals: dict[str, ABIExternal] = {}
         self._local_state = LocalStateAggregate(self._state)
         self._global_state = GlobalStateAggregate(self._state)
 
@@ -220,15 +219,13 @@ class Application(Generic[TState]):
         self,
         method: ABIReturnSubroutine,
         *,
-        python_func_name: str,
         actions: MethodConfigDict,
         hints: MethodHints,
         override: bool | None,
     ) -> None:
-        if any(cc == CallConfig.NEVER for cc in actions.values()):
-            raise ValueError("???")
+        assert all(cc != CallConfig.NEVER for cc in actions.values())
         method_sig = method.method_signature()
-        existing_method = self._abi_externals.get(method_sig)
+        existing_method = self.abi_externals.get(method_sig)
         if existing_method is None:
             if override is True:
                 raise ValueError("override=True, but nothing to override")
@@ -239,37 +236,32 @@ class Application(Generic[TState]):
                 )
             # TODO: should we warn if call config differs?
             self.deregister_abi_method(existing_method.method)
-        self._abi_externals[method_sig] = ABIExternal(
+        self.abi_externals[method_sig] = ABIExternal(
             actions=actions,
             method=method,
             hints=hints,
         )
-        self.abi_methods[python_func_name] = method
 
     def deregister_abi_method(
         self,
-        name_or_reference: str | ABIReturnSubroutine,
+        method_signature_or_reference: str | ABIReturnSubroutine,
         /,
     ) -> None:
-        if isinstance(name_or_reference, str):
-            method = self.abi_methods.pop(name_or_reference)
+        if isinstance(method_signature_or_reference, str):
+            self.abi_externals.pop(method_signature_or_reference)
         else:
-            method = name_or_reference
-            _remove_first_match(self.abi_methods, lambda _, v: v is method)
-        _remove_first_match(self._abi_externals, lambda _, v: v.method is method)
+            self.abi_externals.pop(method_signature_or_reference.method_signature())
 
     def _register_bare_external(
         self,
         sub: SubroutineFnWrapper,
         *,
-        python_func_name: str,
         actions: MethodConfigDict,
         override: bool | None,
     ) -> None:
-        if any(cc == CallConfig.NEVER for cc in actions.values()):
-            raise ValueError("???")
+        assert all(cc != CallConfig.NEVER for cc in actions.values())
         for for_action, call_config in actions.items():
-            existing_action = self._bare_externals.get(for_action)
+            existing_action = self.bare_actions.get(for_action)
             if existing_action is None:
                 if override is True:
                     raise ValueError("override=True, but nothing to override")
@@ -280,22 +272,20 @@ class Application(Generic[TState]):
                     )
                 assert isinstance(existing_action.action, SubroutineFnWrapper)
                 self.deregister_bare_method(existing_action.action)
-            self._bare_externals[for_action] = OnCompleteAction(
+            self.bare_actions[for_action] = OnCompleteAction(
                 action=sub, call_config=call_config
             )
-        self.bare_methods[python_func_name] = sub
 
     def deregister_bare_method(
         self,
-        name_or_reference: str | SubroutineFnWrapper,
+        action_name_or_reference: OnCompleteActionName | SubroutineFnWrapper,
         /,
     ) -> None:
-        if isinstance(name_or_reference, str):
-            method = self.bare_methods.pop(name_or_reference)
+        if isinstance(action_name_or_reference, str):
+            self.bare_actions.pop(cast(OnCompleteActionName, action_name_or_reference))
         else:
-            method = name_or_reference
-            _remove_first_match(self.bare_methods, lambda _, v: v is method)
-        _remove_first_match(self._bare_externals, lambda _, v: v.action is method)
+            method = action_name_or_reference
+            _remove_first_match(self.bare_actions, lambda _, v: v.action is method)
 
     @overload
     def external(
@@ -351,7 +341,6 @@ class Application(Generic[TState]):
         """
 
         def decorator(func: HandlerFunc) -> SubroutineFnWrapper | ABIReturnSubroutine:
-            python_func_name = func.__name__
             sig = inspect.signature(func)
             nonlocal bare
             if bare is None:
@@ -385,23 +374,20 @@ class Application(Generic[TState]):
 
                 self._register_bare_external(
                     sub,
-                    python_func_name=python_func_name,
                     actions=actions,
                     override=override,
                 )
                 return sub
             else:
-                hints = _capture_method_hints_and_remove_defaults(
+                hints = self._capture_method_hints_and_remove_defaults(
                     func,
                     read_only=read_only,
                     actions=actions,
                 )
                 method = ABIReturnSubroutine(func, overriding_name=name)
-                setattr(method, "_read_only", read_only)
 
                 self._register_abi_external(
                     method,
-                    python_func_name=python_func_name,
                     actions=actions,
                     hints=hints,
                     override=override,
@@ -738,7 +724,7 @@ class Application(Generic[TState]):
 
             # Add method externals
             hints: dict[str, MethodHints] = {}
-            for abi_external in self._abi_externals.values():
+            for abi_external in self.abi_externals.values():
                 router.add_method_handler(
                     method_call=abi_external.method,
                     method_config=MethodConfig(
@@ -774,14 +760,14 @@ class Application(Generic[TState]):
         # turn self._bare_externals into a pyteal.BareCallActions,
         # inserting a default create method if one is not found in self._bare_externals
         # OR in self._abi_externals
-        bare_calls = {str(k): v for k, v in self._bare_externals.items()}
+        bare_calls = {str(k): v for k, v in self.bare_actions.items()}
         # check for a bare method with CallConfig.CREATE or CallConfig.ALL
         if any(oca.call_config & CallConfig.CREATE for oca in bare_calls.values()):
             pass
         # else check for an ABI method with CallConfig.CREATE or CallConfig.ALL
         elif any(
             cc & CallConfig.CREATE
-            for ext in self._abi_externals.values()
+            for ext in self.abi_externals.values()
             for cc in ext.actions.values()
         ):
             pass
@@ -827,6 +813,94 @@ class Application(Generic[TState]):
                 warnings.warn(
                     f"Accessing state of Application {self.name} during compilation of Application {ctx.app.name}"
                 )
+
+    def _capture_method_hints_and_remove_defaults(
+        self,
+        fn: HandlerFunc,
+        read_only: bool,
+        actions: dict[OnCompleteActionName, CallConfig],
+    ) -> MethodHints:
+        from pyteal.ast import abi
+
+        sig = inspect.signature(fn)
+        params = sig.parameters.copy()
+
+        mh = MethodHints(
+            read_only=read_only,
+            call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
+        )
+
+        for name, param in params.items():
+            match param.default:
+                case ABIReturnSubroutine():
+                    foo = next(
+                        iter(
+                            ext
+                            for ext in self.abi_externals.values()
+                            if ext.method is param.default
+                        )
+                    )
+                    mh.default_arguments[name] = _default_argument_from_resolver(foo)
+                    params[name] = param.replace(default=inspect.Parameter.empty)
+                case (Expr() | int() | str() | bytes() | ABIExternal()) as value:
+                    mh.default_arguments[name] = _default_argument_from_resolver(value)
+                    params[name] = param.replace(default=inspect.Parameter.empty)
+            if inspect.isclass(param.annotation) and issubclass(
+                param.annotation, abi.NamedTuple
+            ):
+                mh.structs[name] = {
+                    "name": str(param.annotation.__name__),
+                    "elements": [
+                        [name, str(abi.algosdk_from_annotation(typ.__args__[0]))]
+                        for name, typ in param.annotation.__annotations__.items()
+                    ],
+                }
+
+        if mh.default_arguments:
+            # Fix function sig/annotations
+            newsig = sig.replace(parameters=list(params.values()))
+            fn.__signature__ = newsig  # type: ignore[attr-defined]
+
+        return mh
+
+
+def _default_argument_from_resolver(
+    resolver: Expr | ABIExternal | int | bytes | str,
+) -> DefaultArgumentDict:
+
+    match resolver:
+        # Native types
+        case int() | str() | bytes():
+            return {"source": "constant", "data": resolver}
+        # Expr types
+        case Bytes():
+            return _default_argument_from_resolver(resolver.byte_str.replace('"', ""))
+        case Int():
+            return _default_argument_from_resolver(resolver.value)
+        case LocalStateValue() as acct_sv:
+            return {
+                "source": "local-state",
+                "data": acct_sv.str_key(),
+            }
+        case GlobalStateValue() as app_sv:
+            return {
+                "source": "global-state",
+                "data": app_sv.str_key(),
+            }
+        # FunctionType
+        case ABIExternal() as ext:
+            if not ext.hints.read_only:
+                raise ValueError(
+                    "Only ABI methods with read_only=True should be used as default arguments to other ABI methods"
+                )
+            return {
+                "source": "abi-method",
+                "data": ext.method.method_spec().dictify(),
+            }
+        case _:
+            raise TypeError(
+                f"Unexpected type for a default argument to ABI method: {type(resolver)}"
+            )
 
 
 def this_app() -> Application[TState]:
@@ -886,80 +960,3 @@ def _lazy_setdefault(
     default = default_factory()
     m[key] = default
     return default
-
-
-def _capture_method_hints_and_remove_defaults(
-    fn: HandlerFunc,
-    read_only: bool,
-    actions: dict[OnCompleteActionName, CallConfig],
-) -> MethodHints:
-    from pyteal.ast import abi
-
-    sig = inspect.signature(fn)
-    params = sig.parameters.copy()
-
-    mh = MethodHints(
-        read_only=read_only,
-        call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
-    )
-
-    for name, param in params.items():
-        match param.default:
-            case Expr() | int() | str() | bytes() | ABIReturnSubroutine():
-                mh.default_arguments[name] = _default_argument_from_resolver(
-                    param.default
-                )
-                params[name] = param.replace(default=inspect.Parameter.empty)
-        if inspect.isclass(param.annotation) and issubclass(
-            param.annotation, abi.NamedTuple
-        ):
-            mh.structs[name] = {
-                "name": str(param.annotation.__name__),
-                "elements": [
-                    [name, str(abi.algosdk_from_annotation(typ.__args__[0]))]
-                    for name, typ in param.annotation.__annotations__.items()
-                ],
-            }
-
-    if mh.default_arguments:
-        # Fix function sig/annotations
-        newsig = sig.replace(parameters=list(params.values()))
-        fn.__signature__ = newsig  # type: ignore[attr-defined]
-
-    return mh
-
-
-def _default_argument_from_resolver(
-    resolver: Expr | ABIReturnSubroutine | int | bytes | str,
-) -> DefaultArgumentDict:
-
-    match resolver:
-        # Native types
-        case int() | str() | bytes():
-            return {"source": "constant", "data": resolver}
-        # Expr types
-        case Bytes():
-            return _default_argument_from_resolver(resolver.byte_str.replace('"', ""))
-        case Int():
-            return _default_argument_from_resolver(resolver.value)
-        case LocalStateValue() as acct_sv:
-            return {
-                "source": "local-state",
-                "data": acct_sv.str_key(),
-            }
-        case GlobalStateValue() as app_sv:
-            return {
-                "source": "global-state",
-                "data": app_sv.str_key(),
-            }
-        # FunctionType
-        case ABIReturnSubroutine() as fn:
-            if not getattr(fn, "_read_only", None):
-                raise ValueError(
-                    "Only ABI methods with read_only=True should be used as default arguments to other ABI methods"
-                )
-            return {"source": "abi-method", "data": fn.method_spec().dictify()}
-        case _:
-            raise TypeError(
-                f"Unexpected type for a default argument to ABI method: {type(resolver)}"
-            )

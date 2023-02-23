@@ -198,7 +198,7 @@ def create_and_opt_in_account(
     # Add opt in method call on behalf of lsig
     lsig_client.add_method_call(
         atc,
-        disk_hungry.abi_methods["add_account"],
+        "add_account",
         suggested_params=sp,
         nonce=nonce.encode(),
         rekey_to=lsig_client.app_addr,

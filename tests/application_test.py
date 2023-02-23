@@ -73,7 +73,7 @@ def test_method_overload() -> None:
     def handle_asa(txn: AssetTransferTransaction) -> pt.Expr:
         return pt.Approve()
 
-    assert app.abi_methods == {"handle_algo": handle_algo, "handle_asa": handle_asa}
+    assert {x.method for x in app.abi_externals.values()} == {handle_algo, handle_asa}
     compiled = app.build()
     assert compiled.contract
     assert isinstance(handle_algo, pt.ABIReturnSubroutine)
@@ -101,7 +101,7 @@ def test_bare() -> None:
     def delete() -> pt.Expr:
         return pt.Approve()
 
-    assert len(app.bare_methods) == 3, "Expected 3 bare externals: create,update,delete"
+    assert len(app.bare_actions) == 3, "Expected 3 bare externals: create,update,delete"
 
 
 def test_mixed_bares() -> None:
@@ -115,8 +115,8 @@ def test_mixed_bares() -> None:
     def opt_in(s: pt.abi.String) -> pt.Expr:
         return pt.Assert(pt.Len(s.get()))
 
-    assert len(app.bare_methods) == 1
-    assert len(app.abi_methods) == 1
+    assert len(app.bare_actions) == 1
+    assert len(app.abi_externals) == 1
 
 
 def test_application_external_override_true() -> None:
@@ -135,7 +135,7 @@ def test_application_external_override_true() -> None:
 
     assert isinstance(handle_2, pt.ABIReturnSubroutine)
 
-    assert list(app.abi_methods) == ["handle_2"]
+    assert list(app.abi_externals) == ["handle()void"]
     assert (
         compiled.contract.get_method_by_name("handle") == handle_2.method_spec()
     ), "Expected contract method to match method spec"
@@ -178,7 +178,7 @@ def test_application_external_override_none(create_existing_handle: bool) -> Non
     assert (
         contract.get_method_by_name("handle") == handle_2.method_spec()
     ), "Expected contract method to match method spec"
-    assert list(app.abi_methods) == ["handle_2"]
+    assert list(app.abi_externals) == ["handle()void"]
 
 
 def test_application_bare_override_true() -> None:
@@ -198,7 +198,7 @@ def test_application_bare_override_true() -> None:
         return pt.Assert(pt.Int(1))
 
     app.build()
-    assert list(app.bare_methods) == ["handle_2"]
+    assert list(app.bare_actions) == ["opt_in"]
 
 
 def test_application_bare_override_false() -> None:
@@ -244,7 +244,7 @@ def test_application_bare_override_none(create_existing_handle: bool) -> None:
         return pt.Assert(pt.Int(1))
 
     app.build()
-    assert list(app.bare_methods) == ["handle_2"]
+    assert list(app.bare_actions) == ["opt_in"]
 
 
 def test_state_init() -> None:

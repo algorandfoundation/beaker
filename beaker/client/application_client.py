@@ -397,12 +397,7 @@ class ApplicationClient:
 
         """Handles calling the application"""
 
-        if isinstance(method, str):
-            method = self.app.contract.get_method_by_name(method)
-
-        if isinstance(method, ABIReturnSubroutine):
-            method = method.method_spec()
-
+        method = self._resolve_abi_method(method)
         hints = self._method_hints(method)
 
         if atc is None:
@@ -547,12 +542,7 @@ class ApplicationClient:
         signer = self.get_signer(signer)
         sender = self.get_sender(sender, signer)
 
-        if isinstance(method, str):
-            method = self.app.contract.get_method_by_name(method)
-
-        if isinstance(method, ABIReturnSubroutine):
-            method = method.method_spec()
-
+        method = self._resolve_abi_method(method)
         hints = self._method_hints(method)
 
         args = []
@@ -614,6 +604,26 @@ class ApplicationClient:
         )
 
         return atc
+
+    def _resolve_abi_method(
+        self, method: abi.Method | ABIReturnSubroutine | str
+    ) -> abi.Method:
+        if isinstance(method, ABIReturnSubroutine):
+            return method.method_spec()
+        elif isinstance(method, str):
+            try:
+                return next(
+                    iter(
+                        m
+                        for m in self.app.contract.methods
+                        if m.get_signature() == method
+                    )
+                )
+            except StopIteration:
+                pass
+            return self.app.contract.get_method_by_name(method)
+        else:
+            return method
 
     def add_transaction(
         self, atc: AtomicTransactionComposer, txn: transaction.Transaction
