@@ -5,21 +5,21 @@ from typing import Literal
 from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
-    TransactionWithSigner,
     LogicSigTransactionSigner,
+    TransactionWithSigner,
 )
 from algosdk.encoding import decode_address
 from algosdk.transaction import LogicSigAccount
 from nacl.signing import SigningKey
-from pyteal import Assert, Expr, abi, Txn, Ed25519Verify_Bare, Seq, Int, TealType
+from pyteal import Assert, Ed25519Verify_Bare, Expr, Int, Seq, TealType, Txn, abi
 
 from beaker import (
-    sandbox,
-    client,
+    Application,
     LogicSignatureTemplate,
+    client,
     consts,
     precompiled,
-    Application,
+    sandbox,
 )
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 

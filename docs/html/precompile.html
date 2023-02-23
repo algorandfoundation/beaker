@@ -99,7 +99,7 @@ locally as compiled bytes to create the app directly in program logic.</p>
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">precompile</span></code> function may _only_ be called inside a function.</p>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">c2_app_precompiled</span> <span class="o">=</span> <span class="n">precompiled</span><span class="p">(</span><span class="n">child2_app</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </section>
@@ -184,9 +184,7 @@ can be used to compare with a sender given some arguments.</p>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p id="offload-compute-example">Using Precompile for offloading compute</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">eth_checker</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;EthChecker&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
-
-<span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
 
 
 <span class="nd">@eth_checker</span><span class="o">.</span><span class="n">external</span>
@@ -205,24 +203,31 @@ can be used to compare with a sender given some arguments.</p>
         <span class="n">Assert</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">verifier</span><span class="o">.</span><span class="n">address</span><span class="p">()),</span>
         <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;lsig validated&quot;</span><span class="p">),</span>
     <span class="p">)</span>
+
+
 </pre></div>
 </div>
 <p id="sub-app-example">Using Precompile for a child Application</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">abi</span><span class="p">,</span>
+    <span class="n">Approve</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
     <span class="n">InnerTxn</span><span class="p">,</span>
     <span class="n">InnerTxnBuilder</span><span class="p">,</span>
     <span class="n">Int</span><span class="p">,</span>
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">TealType</span><span class="p">,</span>
+<span class="o">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span> <span class="n">HEAD</span>
     <span class="n">Expr</span><span class="p">,</span>
     <span class="n">Approve</span><span class="p">,</span>
+<span class="o">=======</span>
     <span class="n">TxnField</span><span class="p">,</span>
+    <span class="n">abi</span><span class="p">,</span>
+<span class="o">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span> <span class="n">v1</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">GlobalStateValue</span><span class="p">,</span>
     <span class="n">Application</span><span class="p">,</span>
+    <span class="n">GlobalStateValue</span><span class="p">,</span>
     <span class="n">LogicSignature</span><span class="p">,</span>
     <span class="n">precompiled</span><span class="p">,</span>
 <span class="p">)</span>

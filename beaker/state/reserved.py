@@ -1,22 +1,23 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeAlias, TypeVar, Generic, Literal
+from collections.abc import Callable
+from typing import Generic, Literal, TypeAlias, TypeVar
 
-from pyteal import TealType, SubroutineFnWrapper, TealTypeError, Expr
+from pyteal import Expr, SubroutineFnWrapper, TealType, TealTypeError
 from pyteal.ast import abi
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
+    AppSpecSchemaFragment,
     GlobalStateStorage,
     LocalStateStorage,
     StateStorage,
-    AppSpecSchemaFragment,
 )
 from beaker.state.primitive import (
-    StateValue,
     GlobalStateValue,
     LocalStateValue,
-    prefix_key_gen,
+    StateValue,
     identity_key_gen,
+    prefix_key_gen,
 )
 
 __all__ = [

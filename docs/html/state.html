@@ -252,7 +252,7 @@ For example if <code class="docutils literal notranslate"><span class="pre">Rese
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.ReservedGlobalStateValue.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~pyteal.SubroutineFnWrapper,</span> <span class="pre">~typing.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedGlobalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedGlobalStateValue.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~pyteal.SubroutineFnWrapper,</span> <span class="pre">~collections.abc.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedGlobalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedGlobalStateValue.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -480,7 +480,7 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.ReservedLocalStateValue.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~pyteal.SubroutineFnWrapper,</span> <span class="pre">~typing.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedLocalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedLocalStateValue.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~pyteal.SubroutineFnWrapper,</span> <span class="pre">~collections.abc.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedLocalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedLocalStateValue.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -561,18 +561,19 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 </section>
 <section id="full-example">
 <span id="state-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Bytes</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Txn</span><span class="p">,</span> <span class="n">abi</span>
+
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Application</span><span class="p">,</span>
-    <span class="n">GlobalStateValue</span><span class="p">,</span>
-    <span class="n">ReservedGlobalStateValue</span><span class="p">,</span>
-    <span class="n">LocalStateValue</span><span class="p">,</span>
-    <span class="n">ReservedLocalStateValue</span><span class="p">,</span>
-    <span class="n">LocalStateBlob</span><span class="p">,</span>
     <span class="n">GlobalStateBlob</span><span class="p">,</span>
+    <span class="n">GlobalStateValue</span><span class="p">,</span>
+    <span class="n">LocalStateBlob</span><span class="p">,</span>
+    <span class="n">LocalStateValue</span><span class="p">,</span>
+    <span class="n">ReservedGlobalStateValue</span><span class="p">,</span>
+    <span class="n">ReservedLocalStateValue</span><span class="p">,</span>
     <span class="n">unconditional_create_approval</span><span class="p">,</span>
     <span class="n">unconditional_opt_in_approval</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">abi</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Bytes</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Txn</span><span class="p">,</span> <span class="n">Expr</span>
 
 
 <span class="k">class</span> <span class="nc">ExampleState</span><span class="p">:</span>

@@ -47,7 +47,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
+<<<<<<< HEAD
 <li class="toctree-l1"><a class="reference internal" href="../../../boxes.html">Boxes</a></li>
+=======
+>>>>>>> v1
 <li class="toctree-l1"><a class="reference internal" href="../../../migration.html">1.0 Migration Guide</a></li>
 </ul>
 
@@ -125,7 +128,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
+<<<<<<< HEAD
         <span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_local_state</span><span class="o">=</span><span class="kc">True</span>
+=======
+        <span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_account_state</span><span class="o">=</span><span class="kc">True</span>
+>>>>>>> v1
     <span class="p">)</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">delete</span>
@@ -213,7 +220,11 @@
     <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="n">has_state</span> <span class="o">=</span> <span class="p">(</span>
+<<<<<<< HEAD
         <span class="n">spec</span><span class="o">.</span><span class="n">local_state_schema</span><span class="o">.</span><span class="n">num_byte_slices</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">local_state_schema</span><span class="o">.</span><span class="n">num_uints</span>
+=======
+        <span class="n">spec</span><span class="o">.</span><span class="n">account_state_schema</span><span class="o">.</span><span class="n">num_byte_slices</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">account_state_schema</span><span class="o">.</span><span class="n">num_uints</span>
+>>>>>>> v1
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">has_state</span><span class="p">:</span>

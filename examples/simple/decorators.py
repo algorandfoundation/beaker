@@ -1,6 +1,6 @@
-from pyteal import abi, Expr
-from beaker import sandbox, client, Application
+from pyteal import Expr, abi
 
+from beaker import Application, client, sandbox
 
 external_example_app = Application("ExternalExample")
 

@@ -1,4 +1,5 @@
 from enum import Enum
+
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 

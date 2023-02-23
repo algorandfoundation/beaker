@@ -129,6 +129,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">compiled_app</span>
             <span class="k">case</span> <span class="n">Application</span><span class="p">()</span> <span class="k">as</span> <span class="n">app</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<<<<<<< HEAD
             <span class="k">case</span> <span class="n">Path</span><span class="p">()</span> <span class="k">as</span> <span class="n">path</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
                     <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">/</span> <span class="s2">&quot;application.json&quot;</span>
@@ -136,6 +137,9 @@
                     <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="k">case</span> <span class="nb">str</span><span class="p">():</span>
+=======
+            <span class="k">case</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="n">Path</span><span class="p">():</span>
+>>>>>>> v1
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">app_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_addr</span> <span class="o">=</span> <span class="n">get_application_address</span><span class="p">(</span><span class="n">app_id</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
@@ -154,7 +158,11 @@
             <span class="n">matching</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">method</span>
                 <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span>
+<<<<<<< HEAD
                 <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_method_hints</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">call_config</span><span class="p">)</span>
+=======
+                <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">call_config</span><span class="p">)</span>
+>>>>>>> v1
             <span class="p">]</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">matching</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -778,7 +786,12 @@
 
 <div class="viewcode-block" id="ApplicationClient.get_application_account_info"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.get_application_account_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_account_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the account info for the application account&quot;&quot;&quot;</span>
+<<<<<<< HEAD
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">account_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_addr</span><span class="p">)</span></div>
+=======
+        <span class="n">global_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">account_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_addr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">global_state</span></div>
+>>>>>>> v1
 
     <span class="k">def</span> <span class="nf">get_box_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
         <span class="n">box_resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">application_boxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span>
@@ -807,9 +820,14 @@
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Unable to interpret default argument specification&quot;</span><span class="p">)</span>
 
+<<<<<<< HEAD
     <span class="k">def</span> <span class="nf">_method_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodHints</span><span class="p">:</span>
         <span class="n">sig</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">get_signature</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">sig</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
+=======
+    <span class="k">def</span> <span class="nf">method_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodHints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">method_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
+>>>>>>> v1
             <span class="k">return</span> <span class="n">MethodHints</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">sig</span><span class="p">]</span>
 

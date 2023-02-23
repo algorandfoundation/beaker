@@ -1,4 +1,4 @@
-from examples.templated_lsig.main import demo, app
+from examples.templated_lsig.main import app, demo
 from tests.conftest import check_application_artifacts_output_stability
 
 

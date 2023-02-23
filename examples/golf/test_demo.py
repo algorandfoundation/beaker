@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from examples.golf.main import sorted_ints_app, demo
+from examples.golf.main import demo, sorted_ints_app
 from tests.conftest import check_application_artifacts_output_stability
 
 

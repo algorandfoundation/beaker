@@ -51,6 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="boxes.html">Boxes</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">1.0 Migration Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#recommended-migration-approach">Recommended migration approach</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#application">Application</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#application-instantiation">Application instantiation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#application-arguments">Application() arguments</a></li>
@@ -66,10 +67,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#sharing-code-or-config-between-contracts">Sharing code or config between contracts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#overrides">Overrides</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logic-signatures">Logic signatures</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#templated-logic-signatures">Templated Logic signatures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#runtime-templated-logic-signatures">Runtime Templated Logic signatures</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#precompiled">Precompiled</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#precompiled-signatures-and-applications">Precompiled signatures and applications</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#signer">Signer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#templated-signer">Templated Signer</a></li>
 </ul>
@@ -115,20 +116,38 @@
              
   <section id="migration-guide">
 <h1>1.0 Migration Guide<a class="headerlink" href="#migration-guide" title="Permalink to this heading"></a></h1>
-<p>The following guide illustrates the changes in applications written with <code class="docutils literal notranslate"><span class="pre">0.x</span></code> version of Beaker compared to <code class="docutils literal notranslate"><span class="pre">1.0</span></code></p>
+<p>The following guide illustrates the changes in applications written with <code class="docutils literal notranslate"><span class="pre">0.x</span></code> version of Beaker compared to <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.
+The rationale behind these changes is described by the <a class="reference external" href="https://github.com/algorandfoundation/algokit-cli/blob/main/docs/architecture-decisions/2023-01-11_beaker_productionisation_review.md">AlgoKit Beaker productionisation review architecture decision record</a>.</p>
+<p>The goal of these changes is to create a Beaker experience that is easier to use, less surprising and resolves some key bugs that were identified.</p>
+<section id="recommended-migration-approach">
+<h2>Recommended migration approach<a class="headerlink" href="#recommended-migration-approach" title="Permalink to this heading"></a></h2>
+<p>Any migration effort requires careful consideration to ensure it doesn’t result in breaking changes.
+We have carefully articulated all considerations in this document that should be evaluated to perform a
+successful migration of a <code class="docutils literal notranslate"><span class="pre">0.x</span></code> Beaker contract/signature to a <code class="docutils literal notranslate"><span class="pre">1.0</span></code> compatible one.</p>
+<p>While there are a number of considerations to work through, care was taken to ensure that the migration
+effort should be relatively straightforward. If you have any problems or questions about a migration feel
+free to send messages to the <a class="reference external" href="https://discord.com/channels/491256308461207573/1065320801970180168">algokit channel in Algorand Discord</a>.</p>
+<p>In order to de-risk the migration effort we recommend you test for output stability of the TEAL code
+that is generated from your Beaker code. This involves storing the current TEAL and application spec output from calling
+<code class="docutils literal notranslate"><span class="pre">.dump()</span></code> on your Beaker contract (now: <code class="docutils literal notranslate"><span class="pre">.build().export()</span></code>) and then doing a diff after performing the migration. We expect there will be
+minor re-ordering changes that PyTEAL generates, but outside of that the TEAL output should be the same and similarly there may
+be some re-ordering and also some extra detail added to the application spec file.</p>
+<p>You can <a class="reference external" href="https://gist.github.com/robdmoore/ffa1cd7aced58f788ef68ac497249ea6">see an example here</a> of such a diff as part of the migration
+of the Beaker examples to <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p>
+</section>
 <section id="application">
 <h2>Application<a class="headerlink" href="#application" title="Permalink to this heading"></a></h2>
 <section id="application-instantiation">
 <h3>Application instantiation<a class="headerlink" href="#application-instantiation" title="Permalink to this heading"></a></h3>
 <p>With version <code class="docutils literal notranslate"><span class="pre">1.0</span></code> of Beaker an application is no longer defined by inheriting <code class="docutils literal notranslate"><span class="pre">Application</span></code>, instead
-<code class="docutils literal notranslate"><span class="pre">Application</span></code> is instantiated directly, state is separated from the class, and methods are
+<code class="docutils literal notranslate"><span class="pre">Application</span></code> is instantiated directly, state is separated into its own class, and methods are
 added through decorators on the <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The examples in this guide are assumed to have the following imports at the top, but have been
 omitted for brevity <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">beaker</span></code> and  <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">pyteal</span></code></p>
 </div>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+<p>For example, in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyApp</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
      <span class="n">my_value</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">ApplicationStateValue</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
@@ -139,7 +158,7 @@ omitted for brevity <code class="docutils literal notranslate"><span class="pre"
 <span class="n">app</span> <span class="o">=</span> <span class="n">MyApp</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>in <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this becomes:</p>
+<p>becomes the following in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyState</span><span class="p">:</span>
     <span class="n">my_value</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
@@ -154,9 +173,9 @@ omitted for brevity <code class="docutils literal notranslate"><span class="pre"
 </div>
 <p>The key changes to note above:</p>
 <ol class="arabic">
-<li><p>There is no subclassing, instead a <code class="docutils literal notranslate"><span class="pre">beaker.Application</span></code> instance is created.</p></li>
+<li><p>There is no sub-classing, instead a <code class="docutils literal notranslate"><span class="pre">beaker.Application</span></code> instance is created (i.e. <code class="docutils literal notranslate"><span class="pre">app</span> <span class="pre">=</span> <span class="pre">beaker.Application(&quot;MyApp&quot;,</span> <span class="pre">...)</span></code>).</p></li>
 <li><p>Application and account state remain in a class, an instance of which is passed to <code class="docutils literal notranslate"><span class="pre">beaker.Application(state=...)</span></code>.
-This is then accessible through the <code class="docutils literal notranslate"><span class="pre">.state</span></code> property on the <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance.</p>
+This is then accessible through the <code class="docutils literal notranslate"><span class="pre">.state</span></code> property on the <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance (e.g. <code class="docutils literal notranslate"><span class="pre">app.state.my_value.set(...)</span></code>).</p>
 <blockquote>
 <div><div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -164,9 +183,8 @@ This is then accessible through the <code class="docutils literal notranslate"><
 </div>
 </div></blockquote>
 </li>
-<li><p>Method decorators exist on the <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance, rather than being in the <code class="docutils literal notranslate"><span class="pre">beaker</span></code> namespace.</p></li>
-<li><p>There is no longer a <code class="docutils literal notranslate"><span class="pre">self</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">my_method</span></code>. The method belongs to this specific <code class="docutils literal notranslate"><span class="pre">app</span></code> instance, rather than
-belonging to any class.</p></li>
+<li><p>Method decorators exist on the <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance, rather than being in the <code class="docutils literal notranslate"><span class="pre">beaker</span></code> namespace (e.g. <code class="docutils literal notranslate"><span class="pre">&#64;app.external</span> <span class="pre">...</span></code>).</p></li>
+<li><p>There is no longer a <code class="docutils literal notranslate"><span class="pre">self</span></code> parameter needed when defining methods.</p></li>
 </ol>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -177,13 +195,13 @@ but you can call that variable whatever you want, for example:</p>
 
 <span class="nd">@awesome_app</span><span class="o">.</span><span class="n">external</span>
 <span class="k">def</span> <span class="nf">say_hello</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;Hello I&#39;m Awesome&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">Bytes</span><span class="p">(</span><span class="s2">&quot;Hello, I&#39;m An Awesome App!&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
 <section id="application-arguments">
 <h3>Application() arguments<a class="headerlink" href="#application-arguments" title="Permalink to this heading"></a></h3>
-<p>The arguments that <code class="docutils literal notranslate"><span class="pre">Application.__init__()</span></code> takes have changed, the following in <code class="docutils literal notranslate"><span class="pre">0.5.4</span></code>:</p>
+<p>The arguments that <code class="docutils literal notranslate"><span class="pre">Application.__init__()</span></code> takes have changed too. For instance, the following in <code class="docutils literal notranslate"><span class="pre">0.5.4</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyApp</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is my Beaker app. There are others like it, but this one is mine&quot;&quot;&quot;</span>
     <span class="o">...</span>
@@ -194,7 +212,7 @@ but you can call that variable whatever you want, for example:</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>becomes this in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
+<p>Then becomes the following in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span>
     <span class="s2">&quot;MyApp&quot;</span><span class="p">,</span>
     <span class="n">build_options</span><span class="o">=</span><span class="n">beaker</span><span class="o">.</span><span class="n">BuildOptions</span><span class="p">(</span>
@@ -226,15 +244,15 @@ through. In the case of multiple applications in a single code base, this could 
 </section>
 <section id="application-compile">
 <h3>Application.compile()<a class="headerlink" href="#application-compile" title="Permalink to this heading"></a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">Application.compile()</span></code> has been renamed to <code class="docutils literal notranslate"><span class="pre">build()</span></code> and now returns an <code class="docutils literal notranslate"><span class="pre">ApplicationSpecification</span></code>, which contains,
+<p><code class="docutils literal notranslate"><span class="pre">Application.compile()</span></code> has been renamed to <code class="docutils literal notranslate"><span class="pre">build()</span></code>, which is a more accurate description of what happens at that step, and now returns an <code class="docutils literal notranslate"><span class="pre">ApplicationSpecification</span></code>, which contains,
 among other things, the approval and clear program TEAL that was previously returned.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+<p>This code in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">MyApp</span><span class="p">()</span>
 <span class="n">approval_program</span><span class="p">,</span> <span class="n">clear_program</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
 <span class="n">app</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s2">&quot;output_dir&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
+<p>Becomes this in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
 <span class="n">app_spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 <span class="n">approval_program</span><span class="p">,</span> <span class="n">clear_program</span> <span class="o">=</span> <span class="n">app_spec</span><span class="o">.</span><span class="n">approval_program</span><span class="p">,</span> <span class="n">app_spec</span><span class="o">.</span><span class="n">clear_program</span>
@@ -242,7 +260,7 @@ among other things, the approval and clear program TEAL that was previously retu
 </pre></div>
 </div>
 <p>Importantly, this change allows building an <code class="docutils literal notranslate"><span class="pre">Application</span></code>, serializing the specification to disk, and then deserializing the
-specification later, which can then be used with <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code>.</p>
+specification later, which can then be used with <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> or a similar client in any other programming language. For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
 <span class="n">app_spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 <span class="n">app_spec</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;output_dir&quot;</span><span class="p">)</span>
@@ -347,10 +365,10 @@ contract, this will result in changes to TEAL output as they will no longer be i
 </section>
 <section id="bare-external">
 <h3>&#64;bare_external<a class="headerlink" href="#bare-external" title="Permalink to this heading"></a></h3>
-<p>The functionality of <code class="docutils literal notranslate"><span class="pre">beaker.bare_external</span></code> decorator have been incorporated into <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code>.
-<code class="docutils literal notranslate"><span class="pre">&#64;beaker.bare_external</span></code> in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> can be replaced with <code class="docutils literal notranslate"><span class="pre">Application.external</span></code> by moving the parameters to
+<p>The functionality of the <code class="docutils literal notranslate"><span class="pre">beaker.bare_external</span></code> decorator has been incorporated into <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code>.
+<code class="docutils literal notranslate"><span class="pre">&#64;beaker.bare_external</span></code> in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> can be replaced with <code class="docutils literal notranslate"><span class="pre">Application.external</span></code> in <code class="docutils literal notranslate"><span class="pre">1.0</span></code> by moving the parameters to
 <code class="docutils literal notranslate"><span class="pre">method_config</span></code> and adding <code class="docutils literal notranslate"><span class="pre">bare=True</span></code>.</p>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+<p>For example, the following code in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyApp</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
     <span class="nd">@beaker</span><span class="o">.</span><span class="n">bare_external</span><span class="p">(</span>
         <span class="n">opt_in</span><span class="o">=</span><span class="n">pyteal</span><span class="o">.</span><span class="n">CallConfig</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span>
@@ -360,7 +378,7 @@ contract, this will result in changes to TEAL output as they will no longer be i
         <span class="o">...</span>
 </pre></div>
 </div>
-<p>In <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this becomes:</p>
+<p>Becomes this in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
 
 
@@ -457,17 +475,17 @@ multiple apps.</p>
 but these are nothing more than Python functions which take an <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance, and possibly some arguments, and
 modify the <code class="docutils literal notranslate"><span class="pre">Application</span></code> by adding methods to it.</p>
 <p>For example, suppose two applications both need an ABI method that adds two numbers together named <code class="docutils literal notranslate"><span class="pre">add</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calculator_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">,</span> <span class="n">fudge_factor</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calculator_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">fudge_factor</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">offset</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The blueprint can then be applied to the applications using the shortcut <code class="docutils literal notranslate"><span class="pre">app.implement</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;App&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">calculator_blueprint</span><span class="p">)</span>
 
 <span class="n">off_by_one_app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;OffByOne&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
-    <span class="n">calculator_blueprint</span><span class="p">,</span> <span class="n">fudge_factor</span><span class="o">=</span><span class="mi">1</span>
+    <span class="n">calculator_blueprint</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -476,7 +494,7 @@ modify the <code class="docutils literal notranslate"><span class="pre">Applicat
 <span class="n">calculator_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
 <span class="n">off_by_one_app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;OffByOne&quot;</span><span class="p">)</span>
-<span class="n">calculator_blueprint</span><span class="p">(</span><span class="n">off_by_one_app</span><span class="p">,</span> <span class="n">fudge_factor</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">calculator_blueprint</span><span class="p">(</span><span class="n">off_by_one_app</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -484,7 +502,7 @@ modify the <code class="docutils literal notranslate"><span class="pre">Applicat
 <h2>Overrides<a class="headerlink" href="#overrides" title="Permalink to this heading"></a></h2>
 <p>In Beaker <code class="docutils literal notranslate"><span class="pre">0.x</span></code> because applications were composed by inheritance it was possible to override a method by redefining
 it in the derived class. In <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this instead can be achieved by removing the old reference from the app and adding a new one.</p>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> an override with the same signature:</p>
+<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> an override with the same signature looks like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">BaseApp</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
 
     <span class="nd">@beaker</span><span class="o">.</span><span class="n">external</span>
@@ -517,7 +535,7 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
     <span class="o">...</span>
 </pre></div>
 </div>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> an override with a different signature:</p>
+<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> an override with a different signature looks like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">BaseApp</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
 
     <span class="nd">@beaker</span><span class="o">.</span><span class="n">external</span>
@@ -539,9 +557,9 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 
 <span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">a_blueprint</span><span class="p">)</span>
 
-<span class="c1"># remove method defined by a blueprint</span>
-<span class="c1"># note that we use the name of the Python function here</span>
-<span class="n">app</span><span class="o">.</span><span class="n">deregister_abi_method</span><span class="p">(</span><span class="s2">&quot;different_signature&quot;</span><span class="p">)</span>
+<span class="c1"># remove method defined by the blueprint</span>
+<span class="c1"># note that we use the method signature here</span>
+<span class="n">app</span><span class="o">.</span><span class="n">deregister_abi_method</span><span class="p">(</span><span class="s2">&quot;silly_walk(uint64)&quot;</span><span class="p">)</span>
 
 <span class="c1"># add our new method</span>
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;silly_walk&quot;</span><span class="p">)</span>
@@ -558,8 +576,8 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 <span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">a_blueprint</span><span class="p">)</span>
 
 <span class="c1"># remove method defined by a blueprint</span>
-<span class="c1"># note that we use the name of the Python function here</span>
-<span class="n">app</span><span class="o">.</span><span class="n">deregister_bare_method</span><span class="p">(</span><span class="s2">&quot;different_signature&quot;</span><span class="p">)</span>
+<span class="c1"># note that we use the completion type here</span>
+<span class="n">app</span><span class="o">.</span><span class="n">deregister_bare_method</span><span class="p">(</span><span class="s2">&quot;no_op&quot;</span><span class="p">)</span>
 
 <span class="c1"># add our new method</span>
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;something_completely_different&quot;</span><span class="p">)</span>
@@ -572,7 +590,7 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 <h2>Logic signatures<a class="headerlink" href="#logic-signatures" title="Permalink to this heading"></a></h2>
 <p>With version <code class="docutils literal notranslate"><span class="pre">1.0</span></code> a logic signature is no longer defined by inheriting <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignature</span></code>, instead
 <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> is instantiated directly, and the PyTeal expression - or a function returning an expression - is passed as an argument.</p>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> this code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MySignature</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Approve</span><span class="p">()</span>
@@ -580,7 +598,7 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 <span class="n">my_signature</span> <span class="o">=</span> <span class="n">MySignature</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>in <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this becomes:</p>
+<p>Becomes the following in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">evaluate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Approve</span><span class="p">()</span>
 
@@ -593,27 +611,28 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 </div>
 <p>The key changes to note above:</p>
 <ol class="arabic simple">
-<li><p>There is no subclassing, instead a <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignature</span></code> instance is created.</p></li>
+<li><p>There is no sub-classing, instead a <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignature</span></code> instance is created.</p></li>
 <li><p>A function returning a PyTeal expression (or perhaps more simply just a PyTeal expression) is passed to <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code>
-instead of implementing <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">evaluate(self)</span></code></p></li>
+instead of implementing <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">evaluate(self)</span></code>.</p></li>
 </ol>
-<section id="templated-logic-signatures">
-<h3>Templated Logic signatures<a class="headerlink" href="#templated-logic-signatures" title="Permalink to this heading"></a></h3>
-<p>With version <code class="docutils literal notranslate"><span class="pre">1.0</span></code> a template logic signature is no longer defined by inheriting <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignature</span></code>, instead
+<section id="runtime-templated-logic-signatures">
+<h3>Runtime Templated Logic signatures<a class="headerlink" href="#runtime-templated-logic-signatures" title="Permalink to this heading"></a></h3>
+<p>In <code class="docutils literal notranslate"><span class="pre">0.x</span></code> logic signatures could be created with the ability to substitute templated variables on-chain at runtime using <code class="docutils literal notranslate"><span class="pre">beaker.TemplateVariable</span></code>.</p>
+<p>With version <code class="docutils literal notranslate"><span class="pre">1.0</span></code> a logic signature with a runtime templated value is no longer defined by inheriting <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignature</span></code>, instead
 <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code> is instantiated directly, and the PyTeal expression and a dictionary of template variables
 are passed as arguments.</p>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code> this code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MySignature</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">):</span>
 
     <span class="n">some_value</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">TemplateVariable</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">ReturnValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">some_value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">some_value</span><span class="p">)</span>
 
 <span class="n">my_signature</span> <span class="o">=</span> <span class="n">MySignature</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>in <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this becomes:</p>
+<p>Becomes this in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">some_value</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Return</span><span class="p">(</span><span class="n">some_value</span><span class="p">)</span>
 
@@ -625,7 +644,7 @@ are passed as arguments.</p>
 </div>
 <p>The key changes to note are:</p>
 <ol class="arabic simple">
-<li><p>There is no subclassing, instead a <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignatureTemplate</span></code> instance is created.</p></li>
+<li><p>There is no sub-classing, instead a <code class="docutils literal notranslate"><span class="pre">beaker.LogicSignatureTemplate</span></code> instance is created.</p></li>
 <li><p>A function returning a PyTeal expression (or just an expression) is passed to <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code>
 instead of implementing <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">evaluate(self)</span></code>.</p></li>
 <li><p>A dictionary of template variable name and types is passed instead of instantiating <code class="docutils literal notranslate"><span class="pre">beaker.TemplateVariable</span></code>
@@ -635,13 +654,13 @@ if they are not used.</p></li>
 </ol>
 </section>
 </section>
-<section id="precompiled">
-<h2>Precompiled<a class="headerlink" href="#precompiled" title="Permalink to this heading"></a></h2>
+<section id="precompiled-signatures-and-applications">
+<h2>Precompiled signatures and applications<a class="headerlink" href="#precompiled-signatures-and-applications" title="Permalink to this heading"></a></h2>
 <p>In <code class="docutils literal notranslate"><span class="pre">0.x</span></code> logic signatures and applications could be precompiled by adding an <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> or
 <code class="docutils literal notranslate"><span class="pre">LSigPrecompile</span></code> attribute to the application class, making certain properties available for use inside
-the application’s methods.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">1.0</span></code>, you do not need to reference any “precompile classes” directly, instead use the <code class="docutils literal notranslate"><span class="pre">beaker.precompiled</span></code> function.</p>
-<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+the application’s methods like the logic hash and the TEAL code.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">1.0</span></code>, you do not need to reference any “precompile classes” directly, instead you must use the <code class="docutils literal notranslate"><span class="pre">beaker.precompiled</span></code> function.</p>
+<p>For example in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>, a precompile might look like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyLogicSignature</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Approve</span><span class="p">()</span>
@@ -672,7 +691,7 @@ only be compiled once for each app that references it.</p>
 obtaining the address is done via <code class="docutils literal notranslate"><span class="pre">.address()</span></code> instead of <code class="docutils literal notranslate"><span class="pre">.logic.hash()</span></code> for normal logic signatures.</p>
 <p>For templated logic signatures, this was previously <code class="docutils literal notranslate"><span class="pre">.logic.template_hash(...)</span></code> and the argument values were expected to be in the
 correct order based on the order they were defined in the class. Now, you would use <code class="docutils literal notranslate"><span class="pre">.address(...)</span></code> but pass the values
-by keyword only, for example:</p>
+by keyword only, for example this code in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Lsig</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">):</span>
      <span class="n">tv</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">TemplateVariable</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
@@ -689,7 +708,7 @@ by keyword only, for example:</p>
          <span class="p">)</span>
 </pre></div>
 </div>
-<p>Could become:</p>
+<p>Could be expressed like this in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lsig</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignatureTemplate</span><span class="p">(</span>
     <span class="k">lambda</span> <span class="n">tv</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span><span class="n">pyteal</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span><span class="n">tv</span><span class="p">),</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
     <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tv&quot;</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">},</span>
@@ -776,9 +795,11 @@ so to obtain the signer for use in the <code class="docutils literal notranslate
 </section>
 <section id="state-related-classes-and-methods">
 <h2>State related classes and methods<a class="headerlink" href="#state-related-classes-and-methods" title="Permalink to this heading"></a></h2>
-<p>Version <code class="docutils literal notranslate"><span class="pre">1.0</span></code> of Beaker renamed existing state related to classes to follow the naming conventions
+<p>Version <code class="docutils literal notranslate"><span class="pre">1.0</span></code> of Beaker renames existing state related to classes to follow the naming conventions
 used more generally within existing Algorand and TEAL documentation. Generally the renames involved changing
-<code class="docutils literal notranslate"><span class="pre">Application</span></code> to <code class="docutils literal notranslate"><span class="pre">Global</span></code> and <code class="docutils literal notranslate"><span class="pre">Account</span></code> to <code class="docutils literal notranslate"><span class="pre">Local</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">Application</span></code> to <code class="docutils literal notranslate"><span class="pre">Global</span></code> and <code class="docutils literal notranslate"><span class="pre">Account</span></code> to <code class="docutils literal notranslate"><span class="pre">Local</span></code>. While <code class="docutils literal notranslate"><span class="pre">Application</span></code> and <code class="docutils literal notranslate"><span class="pre">Account</span></code> more accurately
+reflect the use of those state values, the deviance to the rest of the Algorand ecosystem was felt to be a bigger
+usability and understandability issue.</p>
 <section id="beaker-namespace-changes">
 <h3><code class="docutils literal notranslate"><span class="pre">beaker</span></code> namespace changes<a class="headerlink" href="#beaker-namespace-changes" title="Permalink to this heading"></a></h3>
 <table class="docutils align-default">
@@ -969,7 +990,7 @@ that produces TEAL. The following is a list of functions affected.</p>
 </table>
 <section id="import-paths">
 <h3>Import paths<a class="headerlink" href="#import-paths" title="Permalink to this heading"></a></h3>
-<p>A number of internal modules in <code class="docutils literal notranslate"><span class="pre">beaker.lib</span></code> were collapsed. The following is a list of affected modules:</p>
+<p>A number of internal modules in <code class="docutils literal notranslate"><span class="pre">beaker.lib</span></code> were collapsed for simplicity. The following is a list of affected modules:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">beaker.lib.inline.inline_asm.*</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">beaker.lib.inline.*</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beaker.lib.iter.iter.*</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">beaker.lib.iter.*</span></code></p></li>

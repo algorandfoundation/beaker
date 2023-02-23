@@ -1,13 +1,14 @@
-from typing import Literal, Callable
+from collections.abc import Callable
+from typing import Literal
 
 from mypy_extensions import NamedArg
 from pyteal import (
-    abi,
     Expr,
-    Seq,
-    ScratchVar,
     Int,
+    ScratchVar,
+    Seq,
     Suffix,
+    abi,
 )
 
 from beaker import Application
@@ -120,7 +121,7 @@ class ContractTransferVAA:
 def wormhole_transfer(
     app: Application,
     handle_transfer: Callable[
-        [ContractTransferVAA, NamedArg(abi.DynamicBytes, "output")], Expr  # noqa: F821
+        [ContractTransferVAA, NamedArg(abi.DynamicBytes, "output")], Expr
     ],
 ) -> Application:
     """Implement Wormhole Payload3 Message handler

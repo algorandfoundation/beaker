@@ -1,15 +1,18 @@
 import random
 import string
 from typing import cast
+
 import algosdk.transaction as txns
 from algosdk.atomic_transaction_composer import (
-    LogicSigTransactionSigner,
     AtomicTransactionComposer,
+    LogicSigTransactionSigner,
 )
 from pyteal import (
     Approve,
     Assert,
+    Expr,
     GetBit,
+    Global,
     Int,
     Not,
     ScratchVar,
@@ -18,18 +21,17 @@ from pyteal import (
     TealType,
     Txn,
     abi,
-    Global,
-    Expr,
 )
+
 from beaker import (
-    LocalStateBlob,
     Application,
+    BuildOptions,
+    LocalStateBlob,
+    LogicSignatureTemplate,
     client,
     consts,
-    sandbox,
     precompiled,
-    LogicSignatureTemplate,
-    BuildOptions,
+    sandbox,
 )
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
@@ -197,7 +199,7 @@ def create_and_opt_in_account(
     # Add opt in method call on behalf of lsig
     lsig_client.add_method_call(
         atc,
-        disk_hungry.abi_methods["add_account"],
+        "add_account",
         suggested_params=sp,
         nonce=nonce.encode(),
         rekey_to=lsig_client.app_addr,

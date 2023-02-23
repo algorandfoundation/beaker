@@ -51,7 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorator Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="boxes.html">Boxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration.html">1.0 Migration Guide</a></li>
@@ -85,7 +85,9 @@
 <span id="logic-signatures"></span><h1>Logic Signatures<a class="headerlink" href="#module-beaker.logic_signature" title="Permalink to this heading"></a></h1>
 <p>This is the class that should be initialized to provide a LogicSignature.</p>
 <p>A <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> is intialized with either a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSignature</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+
+<span class="k">def</span> <span class="nf">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSignature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This Lsig has a single method  `eth_ecdsa_validate` that takes two application arguments:</span>
 <span class="sd">      hash, signature</span>
@@ -108,12 +110,15 @@
             <span class="p">),</span>
             <span class="n">eth_ecdsa_validate</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
         <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">LogicSignature</span><span class="p">(</span><span class="n">evaluate</span><span class="p">,</span> <span class="n">build_options</span><span class="o">=</span><span class="n">BuildOptions</span><span class="p">(</span><span class="n">avm_version</span><span class="o">=</span><span class="n">version</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>A <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code> is initialized by passing a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> _and_ a dictionary of template variables that should be provided at runtime.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignatureTemplate</span>
+
+<span class="n">Signature</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
+
+
+<span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>
     <span class="c1"># Simple program to check an ed25519 signature given a message and signature</span>
 
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">user_addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
@@ -125,11 +130,6 @@
             <span class="n">Assert</span><span class="p">(</span><span class="n">Ed25519Verify_Bare</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">sig</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">user_addr</span><span class="p">)),</span>
             <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
         <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">LogicSignatureTemplate</span><span class="p">(</span>
-        <span class="n">evaluate</span><span class="p">,</span>
-        <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_addr&quot;</span><span class="p">:</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">},</span>
-    <span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py class">
@@ -141,7 +141,7 @@
 to call the necessary logic.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.logic_signature.LogicSignature.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr_or_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">BuildOptions</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignature.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignature.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr_or_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.11)"><span class="pre">collections.abc.Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pyteal.Expr</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pyteal.Expr</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">BuildOptions</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignature.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignature.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -155,7 +155,7 @@ to call the necessary logic.</p>
 to call the necessary logic.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.logic_signature.LogicSignatureTemplate.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr_or_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><span class="pre">Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime_template_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pyteal.TealType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">BuildOptions</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignatureTemplate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignatureTemplate.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr_or_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.11)"><span class="pre">collections.abc.Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pyteal.Expr</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pyteal.Expr</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime_template_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pyteal.TealType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">BuildOptions</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/logic_signature.html#LogicSignatureTemplate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.logic_signature.LogicSignatureTemplate.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>initialize the logic signature and identify relevant attributes</p>
 </dd></dl>
 
@@ -190,21 +190,26 @@ need some hardcoded well defined behavior.</p>
 <span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
-    <span class="n">TransactionWithSigner</span><span class="p">,</span>
     <span class="n">LogicSigTransactionSigner</span><span class="p">,</span>
+    <span class="n">TransactionWithSigner</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">algosdk.encoding</span> <span class="kn">import</span> <span class="n">decode_address</span>
 <span class="kn">from</span> <span class="nn">algosdk.transaction</span> <span class="kn">import</span> <span class="n">LogicSigAccount</span>
 <span class="kn">from</span> <span class="nn">nacl.signing</span> <span class="kn">import</span> <span class="n">SigningKey</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Assert</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">abi</span><span class="p">,</span> <span class="n">Txn</span><span class="p">,</span> <span class="n">Ed25519Verify_Bare</span><span class="p">,</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">TealType</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Assert</span><span class="p">,</span> <span class="n">Ed25519Verify_Bare</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Txn</span><span class="p">,</span> <span class="n">abi</span>
 
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">sandbox</span><span class="p">,</span>
-    <span class="n">client</span><span class="p">,</span>
+    <span class="n">Application</span><span class="p">,</span>
     <span class="n">LogicSignatureTemplate</span><span class="p">,</span>
+    <span class="n">client</span><span class="p">,</span>
     <span class="n">consts</span><span class="p">,</span>
     <span class="n">precompiled</span><span class="p">,</span>
+<span class="o">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span> <span class="n">HEAD</span>
     <span class="n">Application</span><span class="p">,</span>
+<span class="o">=======</span>
+    <span class="n">sandbox</span><span class="p">,</span>
+    <span class="n">unconditional_create_approval</span><span class="p">,</span>
+<span class="o">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span> <span class="n">v1</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignatureTemplate</span>
 
@@ -241,7 +246,7 @@ need some hardcoded well defined behavior.</p>
     <span class="c1"># The lsig will take care of verifying the signature</span>
     <span class="c1"># all we need to do is check that its been used to sign this transaction</span>
     <span class="k">return</span> <span class="n">Assert</span><span class="p">(</span>
-        <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">sig_checker_pc</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">user_aaddr</span><span class="o">=</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">sig_checker_pc</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">user_addr</span><span class="o">=</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
     <span class="p">)</span>
 
 

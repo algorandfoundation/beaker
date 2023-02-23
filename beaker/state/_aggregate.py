@@ -1,16 +1,16 @@
 from functools import cached_property
-from typing import TypeVar, Any, Generic
+from typing import Any, Generic, TypeVar
 
 from algosdk.transaction import StateSchema
-from pyteal import TealType, Expr, Seq, Txn
+from pyteal import Expr, Seq, TealType, Txn
 
 from beaker.application_specification import AppSpecStateDict
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
-    StateStorage,
     AppSpecSchemaFragment,
     GlobalStateStorage,
     LocalStateStorage,
+    StateStorage,
 )
 
 ST = TypeVar("ST", bound=StateStorage)

@@ -1,24 +1,22 @@
-from Cryptodome.Hash import keccak
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
-    TransactionWithSigner,
     LogicSigTransactionSigner,
+    TransactionWithSigner,
 )
-from algosdk.transaction import PaymentTxn, LogicSigAccount
-from pyteal import Assert, Seq, Txn, abi, Expr
+from algosdk.transaction import LogicSigAccount, PaymentTxn
+from Cryptodome.Hash import keccak
+from pyteal import Assert, Expr, Seq, Txn, abi
 
 from beaker import (
     Application,
     client,
     consts,
-    sandbox,
     precompiled,
+    sandbox,
     unconditional_create_approval,
 )
 from beaker.precompile import PrecompiledLogicSignature
-
 from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
-
 
 eth_checker = Application("EthChecker").implement(unconditional_create_approval)
 

@@ -1,6 +1,7 @@
 import pyteal as pt
-from beaker.lib.storage import BoxList
+
 from beaker.application import Application
+from beaker.lib.storage import BoxList
 
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
 

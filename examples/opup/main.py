@@ -1,15 +1,14 @@
 from hashlib import sha256
+
+from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     TransactionWithSigner,
 )
-from algosdk import transaction
 
 from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
-from beaker.sandbox import get_algod_client, get_accounts
-
+from beaker.sandbox import get_accounts, get_algod_client
 from examples.opup.contract import expensive_app
-
 
 client = get_algod_client()
 

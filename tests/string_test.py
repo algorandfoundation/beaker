@@ -1,14 +1,13 @@
-import pytest
 import pyteal as pt
-import beaker as bkr
+import pytest
 
+import beaker as bkr
+from beaker.lib.strings import Atoi, EncodeUVarInt, Head, Itoa, Prefix, Suffix, Tail
 from tests.helpers import (
     UnitTestingApp,
     assert_output,
     returned_int_as_bytes,
 )
-
-from beaker.lib.strings import Atoi, EncodeUVarInt, Head, Itoa, Prefix, Suffix, Tail
 
 
 def test_atoi() -> None:

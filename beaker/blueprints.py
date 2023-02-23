@@ -1,4 +1,4 @@
-from pyteal import Expr, Approve
+from pyteal import Approve, Expr
 
 from beaker import Application
 

@@ -3,11 +3,10 @@ from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
+
 from beaker import consts
-
-from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
-
+from beaker.sandbox import get_accounts, get_algod_client
 from examples.amm.amm import ConstantProductAMMState, amm_app, scale
 
 # Take first account from sandbox
@@ -151,7 +150,13 @@ def create_asset(addr: str, pk: str, unitname: str) -> int:
     sp = client.suggested_params()
     # Create the transaction
     create_txn = transaction.AssetCreateTxn(
-        addr, sp, 1000000, 0, False, asset_name="asset", unit_name=unitname
+        addr,
+        sp,
+        1000000,
+        0,
+        default_frozen=False,
+        asset_name="asset",
+        unit_name=unitname,
     )
     # Ship it
     txid = client.send_transaction(create_txn.sign(pk))

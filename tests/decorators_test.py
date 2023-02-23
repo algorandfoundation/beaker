@@ -15,7 +15,7 @@ def test_external_read_only() -> None:
         return pt.Approve()
 
     assert isinstance(handleable, pt.ABIReturnSubroutine)
-    assert "handleable" in app.abi_methods
+    assert "handleable()void" in app.abi_externals
 
     assert app.build().dictify()["hints"]["handleable()void"].get("read_only") is True
 
@@ -188,10 +188,17 @@ def test_named_tuple() -> None:
 
 
 @pytest.mark.parametrize(
-    "decorator_name",
-    ["create", "no_op", "delete", "update", "opt_in", "close_out"],
+    "decorator_name,action_name",
+    [
+        ("create", "no_op"),
+        ("no_op", "no_op"),
+        ("delete", "delete_application"),
+        ("update", "update_application"),
+        ("opt_in", "opt_in"),
+        ("close_out", "close_out"),
+    ],
 )
-def test_decorators_with_bare_signature(decorator_name: str) -> None:
+def test_decorators_with_bare_signature(decorator_name: str, action_name: str) -> None:
     app = Application("")
     decorator = getattr(app, decorator_name)
 
@@ -200,7 +207,7 @@ def test_decorators_with_bare_signature(decorator_name: str) -> None:
         return pt.Assert(pt.Int(1))
 
     assert isinstance(test, pt.SubroutineFnWrapper)
-    assert "test" in app.bare_methods
+    assert action_name in app.bare_actions
 
 
 def test_bare_clear_state() -> None:
@@ -211,7 +218,7 @@ def test_bare_clear_state() -> None:
         return pt.Assert(pt.Int(1))
 
     assert isinstance(clear_state, pt.SubroutineFnWrapper)
-    assert "clear_state" not in app.bare_methods
+    assert "clear_state" not in app.bare_actions
     assert app._clear_state_method is clear_state
 
 
@@ -233,7 +240,7 @@ def test_bare_external() -> None:
         return pt.Approve()
 
     assert isinstance(external, pt.SubroutineFnWrapper)
-    assert "external" in app.bare_methods
+    assert "no_op" in app.bare_actions
 
 
 @pytest.mark.parametrize(
@@ -288,12 +295,20 @@ def test_abi_method_resolvable() -> None:
     app = Application("")
 
     @app.external(read_only=True)
-    def x() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
+    def x(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(pt.Int(1))
 
-    assert isinstance(x, pt.ABIReturnSubroutine)
-    r = _default_argument_from_resolver(x)
-    assert r["source"] == "abi-method"
+    @app.external
+    def y(
+        x_val: pt.abi.Uint64 = x,  # type: ignore[assignment]
+    ) -> pt.Expr:
+        return pt.Assert(x_val.get() == pt.Int(1))
+
+    app_spec = app.build()
+    assert (
+        app_spec.hints[y.method_signature()].default_arguments["x_val"]["source"]
+        == "abi-method"
+    )
 
 
 def test_bytes_constant_resolvable() -> None:
