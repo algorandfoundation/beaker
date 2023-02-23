@@ -67,7 +67,8 @@ class LogicSignatureTemplate:
         """initialize the logic signature and identify relevant attributes"""
         if not runtime_template_variables:
             raise ValueError(
-                "No runtime template variables supplied - use LogicSignature instead if that was intentional"
+                "No runtime template variables supplied - use LogicSignature instead "
+                "if that was intentional"
             )
 
         build_options = build_options or BuildOptions()
@@ -81,13 +82,21 @@ class LogicSignatureTemplate:
         if not callable(expr_or_func):
             logic = expr_or_func
         else:
-            params = inspect.signature(expr_or_func).parameters
-            print(params.keys(), runtime_template_variables.keys())
-            if not (len(params.keys()) <= len(runtime_template_variables.keys())):
+            param_keys = inspect.signature(expr_or_func).parameters.keys()
+            template_keys = runtime_template_variables.keys()
+            if len(param_keys) == 0 and len(template_keys) > 0:
                 raise ValueError(
-                    "Logic signature methods should take no arguments, unless using runtime templates"
+                    "Logic signature methods should take no arguments, "
+                    "unless using runtime templates"
                 )
-            forward_args = list(params.keys())
+
+            if not (param_keys <= template_keys):
+                raise ValueError(
+                    f"Logic signature expected ({','.join(param_keys)}), "
+                    f"got ({','.join(template_keys)})"
+                )
+
+            forward_args = list(param_keys)
             logic = expr_or_func(
                 *[self.runtime_template_variables[name] for name in forward_args]
             )

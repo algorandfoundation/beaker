@@ -75,6 +75,8 @@ TState = TypeVar("TState", covariant=True)
 
 HandlerFunc = Callable[..., Expr]
 
+Blueprint = Callable["Application[TState]", T]  # type: ignore
+
 
 @dataclasses.dataclass
 class ABIExternal:
@@ -113,6 +115,7 @@ class Application(Generic[TState]):
         *,
         descr: str | None = None,
         build_options: BuildOptions | None = None,
+        include: list[Blueprint] | None = None,
     ):
         ...
 
@@ -124,6 +127,7 @@ class Application(Generic[TState]):
         state: TState,
         descr: str | None = None,
         build_options: BuildOptions | None = None,
+        include: list[Blueprint] | None = None,
     ):
         ...
 
@@ -134,6 +138,7 @@ class Application(Generic[TState]):
         state: TState = cast(TState, None),
         descr: str | None = None,
         build_options: BuildOptions | None = None,
+        include: list[Blueprint] | None = None,
     ):
         """<TODO>"""
         self._state: TState = state
@@ -153,6 +158,10 @@ class Application(Generic[TState]):
         self._abi_externals: dict[str, ABIExternal] = {}
         self._local_state = LocalStateAggregate(self._state)
         self._global_state = GlobalStateAggregate(self._state)
+
+        if include is not None:
+            for i in include:
+                self.include(i)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
@@ -707,6 +716,15 @@ class Application(Generic[TState]):
             override=override,
         )
         return decorator if fn is None else decorator(fn)
+
+    def include(
+        self,
+        blueprint: Callable[Concatenate["Application[TState]", P], T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> "Application[TState]":
+        blueprint(self, *args, **kwargs)
+        return self
 
     def implement(
         self,

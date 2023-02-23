@@ -96,9 +96,7 @@
 </div>
 <p>Lets write a simple calculator app.  <a class="reference external" href="https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py">Full source here</a>.</p>
 <p>First, create an instance of the <code class="docutils literal notranslate"><span class="pre">Application</span></code> class to represent our application.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-<span class="n">calculator_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Calculator&quot;</span><span class="p">)</span>
-
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">calculator_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Calculator&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This is a full application, though it doesn’t do much.</p>
@@ -145,6 +143,7 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <p>The python method __must__ return an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> of some kind, invoked when the external is called.</p>
 <p>Lets now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">sandbox</span>
+
     <span class="c1"># Here we use `sandbox` but beaker.client.api_providers can also be used</span>
     <span class="c1"># with something like ``AlgoNode(Network.TestNet).algod()``</span>
     <span class="n">algod_client</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">()</span>
@@ -159,7 +158,6 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
     <span class="c1"># Create the application on chain, implicitly sets the app id for the app client</span>
     <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created App with id: </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> and address addr: </span><span class="si">{</span><span class="n">app_addr</span><span class="si">}</span><span class="s2"> in tx: </span><span class="si">{</span><span class="n">txid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
 </pre></div>
 </div>
 <p>Thats it!</p>
@@ -167,17 +165,17 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <blockquote>
 <div><ul>
 <li><dl class="simple">
-<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By instantiating a new <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding <code class="docutils literal notranslate"><span class="pre">external</span></code> methods</p>
+<dt>Wrote an application using Beaker and PyTeal</dt><dd><p>By instantiating a new <code class="docutils literal notranslate"><span class="pre">Application</span></code> and adding <code class="docutils literal notranslate"><span class="pre">external</span></code> methods.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Built the smart contract, converting it to TEAL</dt><dd><p>Done by calling the <code class="docutils literal notranslate"><span class="pre">build</span></code> method on by the <code class="docutils literal notranslate"><span class="pre">Application</span></code> class</p>
+<dt>Built the smart contract, converting it to TEAL</dt><dd><p>Done by calling the <code class="docutils literal notranslate"><span class="pre">build</span></code> method on by the <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Assembled the TEAL to binary</dt><dd><p>Done automatically by the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> by sending the TEAL to the algod <code class="docutils literal notranslate"><span class="pre">compile</span></code> endpoint</p>
+<dt>Assembled the TEAL to binary</dt><dd><p>Done automatically by the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> during initialization by sending the TEAL to the algod <code class="docutils literal notranslate"><span class="pre">compile</span></code> endpoint.</p>
 </dd>
 </dl>
 </li>
@@ -186,7 +184,7 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Once created, subsequent calls to the app_client are directed to the <code class="docutils literal notranslate"><span class="pre">app_id</span></code>.
-The constructor may also be passed an app_id directly if one is already deployed.</p>
+The constructor may also be passed an <code class="docutils literal notranslate"><span class="pre">app_id</span></code> directly if one is already deployed.</p>
 </div>
 </dd>
 </dl>
@@ -374,7 +372,7 @@ Upon finding a resolvable it will look up the state value, call the method. The 
     <span class="c1"># The lsig will take care of verifying the signature</span>
     <span class="c1"># all we need to do is check that its been used to sign this transaction</span>
     <span class="k">return</span> <span class="n">Assert</span><span class="p">(</span>
-        <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">sig_checker_pc</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">user_addr</span><span class="o">=</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">sig_checker_pc</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">user_aaddr</span><span class="o">=</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
     <span class="p">)</span>
 </pre></div>
 </div>

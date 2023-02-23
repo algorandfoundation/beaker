@@ -19,9 +19,7 @@ class OracleState:
 
 oracle_data_cache_app = Application(
     "OracleDataCache",
-    descr="""
-    Stores price feed in application state keyed by timestamp
-    """,
+    descr="Stores price feed in application state keyed by timestamp",
     state=OracleState(),
 )
 

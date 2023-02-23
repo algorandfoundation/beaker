@@ -15,14 +15,14 @@ Lets write a simple calculator app.  `Full source here <https://github.com/algor
 First, create an instance of the ``Application`` class to represent our application. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
-    :lines: 4-6
+    :lines: 5-5
 
 This is a full application, though it doesn't do much.  
 
 Build it and take a look at some of the resulting fields. 
 
 .. literalinclude:: ../../examples/simple/calculator.py 
-    :lines: 65-68
+    :lines: 66-69
 
 
 Nice!  This is already enough to provide the TEAL programs and ABI specification.
@@ -53,17 +53,17 @@ Thats it!
 To summarize, we:
 
  * Wrote an application using Beaker and PyTeal
-    By instantiating a new ``Application`` and adding ``external`` methods
+    By instantiating a new ``Application`` and adding ``external`` methods.
  * Built the smart contract, converting it to TEAL 
-    Done by calling the ``build`` method on by the ``Application`` class
+    Done by calling the ``build`` method on by the ``Application`` instance.
  * Assembled the TEAL to binary
-    Done automatically by the ``ApplicationClient`` by sending the TEAL to the algod ``compile`` endpoint
+    Done automatically by the ``ApplicationClient`` during initialization by sending the TEAL to the algod ``compile`` endpoint.
  * Deployed the application on-chain
     Done by invoking the ``app_client.create``, which submits an ``ApplicationCallTransaction`` including our compiled programs.
 
     .. note:: 
         Once created, subsequent calls to the app_client are directed to the ``app_id``. 
-        The constructor may also be passed an app_id directly if one is already deployed.
+        The constructor may also be passed an ``app_id`` directly if one is already deployed.
 
  * Called the method we defined
     Using ``app_client.call``, passing the method defined in our class and args the method specified (by name). 
@@ -108,9 +108,9 @@ For more example usage see the example :ref:`here <state_example>`.
 Code Reuse 
 -----------
 
-What about extending our Application with some other functionality that we've already written?
+What about extending our Application with some functionality that already exists?
 
-.. literalinclude:: ../../examples/opup/contract.py
+.. literalinclude:: ../../examples/wormhole/contract.py
     :lines: 18-26
 
 Here we call a method ``op_up_blueprint`` passing our application instance. This method attaches some extra handlers to our app and returns a method that can be called in our app. 
