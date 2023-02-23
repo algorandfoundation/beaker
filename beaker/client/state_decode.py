@@ -1,5 +1,5 @@
-from typing import Any
 from base64 import b64decode
+from typing import Any
 
 
 def str_or_hex(v: bytes) -> str:

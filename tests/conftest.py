@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from beaker import Application, sandbox, LogicSignature, LogicSignatureTemplate
+from beaker import Application, LogicSignature, LogicSignatureTemplate, sandbox
 
 
 def check_application_artifacts_output_stability(

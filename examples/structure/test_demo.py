@@ -1,4 +1,4 @@
-from examples.structure.main import structer_app, demo
+from examples.structure.main import demo, structer_app
 from tests.conftest import check_application_artifacts_output_stability
 
 

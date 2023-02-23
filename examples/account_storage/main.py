@@ -1,15 +1,18 @@
 import random
 import string
 from typing import cast
+
 import algosdk.transaction as txns
 from algosdk.atomic_transaction_composer import (
-    LogicSigTransactionSigner,
     AtomicTransactionComposer,
+    LogicSigTransactionSigner,
 )
 from pyteal import (
     Approve,
     Assert,
+    Expr,
     GetBit,
+    Global,
     Int,
     Not,
     ScratchVar,
@@ -18,18 +21,17 @@ from pyteal import (
     TealType,
     Txn,
     abi,
-    Global,
-    Expr,
 )
+
 from beaker import (
-    LocalStateBlob,
     Application,
+    BuildOptions,
+    LocalStateBlob,
+    LogicSignatureTemplate,
     client,
     consts,
-    sandbox,
     precompiled,
-    LogicSignatureTemplate,
-    BuildOptions,
+    sandbox,
     unconditional_create_approval,
 )
 from beaker.precompile import PrecompiledLogicSignatureTemplate

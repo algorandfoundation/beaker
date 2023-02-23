@@ -6,10 +6,10 @@ from algosdk.atomic_transaction_composer import AtomicTransactionComposer
 
 from beaker import (
     Application,
+    BuildOptions,
     client,
     sandbox,
     unconditional_opt_in_approval,
-    BuildOptions,
 )
 from beaker.blueprints import unconditional_create_approval
 
@@ -125,10 +125,10 @@ def assert_output(
 
     try:
         spec.contract.get_method_by_name("unit_test")
-    except KeyError:
+    except KeyError as err:
         raise Exception(
             "Expression undefined. Either pass the expr to test or implement unit_test method"
-        )
+        ) from err
 
     app_client = client.ApplicationClient(
         algod_client, app=spec, signer=sandbox_accounts[0].signer

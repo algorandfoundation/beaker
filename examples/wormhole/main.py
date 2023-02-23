@@ -1,8 +1,9 @@
 import json
-from algosdk.abi import ABIType
-from beaker import client, sandbox
 
-from examples.wormhole.contract import oracle_data_cache_app, OracleData
+from algosdk.abi import ABIType
+
+from beaker import client, sandbox
+from examples.wormhole.contract import OracleData, oracle_data_cache_app
 
 base_vaa = bytes.fromhex(
     "010000000001008049340af360a47103a962108cb57b9deebcc99e8e6ddeca1a"

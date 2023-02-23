@@ -1,20 +1,21 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from pyteal import (
+    And,
+    App,
+    Assert,
+    AssetHolding,
     Expr,
+    Global,
+    Int,
+    Seq,
+    Subroutine,
     SubroutineFnWrapper,
+    TealInputError,
     TealType,
     TealTypeError,
-    Subroutine,
-    Seq,
-    AssetHolding,
-    And,
-    Int,
-    Global,
-    App,
-    TealInputError,
-    Assert,
     Txn,
 )
 

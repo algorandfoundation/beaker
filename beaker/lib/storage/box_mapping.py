@@ -1,15 +1,15 @@
 from pyteal import (
-    abi,
-    TealType,
-    Expr,
-    TealTypeError,
-    Seq,
     Assert,
-    BoxPut,
     BoxDelete,
     BoxGet,
-    Pop,
+    BoxPut,
     Concat,
+    Expr,
+    Pop,
+    Seq,
+    TealType,
+    TealTypeError,
+    abi,
 )
 
 

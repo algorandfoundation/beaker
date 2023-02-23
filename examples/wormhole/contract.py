@@ -1,8 +1,8 @@
 from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
 
 from beaker import (
-    ReservedGlobalStateValue,
     Application,
+    ReservedGlobalStateValue,
     unconditional_create_approval,
 )
 from examples.wormhole.wormhole import ContractTransferVAA, wormhole_transfer

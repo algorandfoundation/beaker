@@ -1,17 +1,17 @@
 import inspect
-from typing import Callable
+from collections.abc import Callable
 
 from pyteal import (
     CompileOptions,
-    TealType,
-    Tmpl,
     Expr,
-    Seq,
-    compileTeal,
     Mode,
     ScratchVar,
+    Seq,
     TealBlock,
     TealSimpleBlock,
+    TealType,
+    Tmpl,
+    compileTeal,
 )
 
 from beaker.build_options import BuildOptions

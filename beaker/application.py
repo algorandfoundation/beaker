@@ -2,42 +2,40 @@ import dataclasses
 import inspect
 import typing
 import warnings
+from collections.abc import Callable, Iterator, MutableMapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import (
-    cast,
-    Callable,
-    TypeAlias,
+    Concatenate,
+    Generic,
     Literal,
     ParamSpec,
-    Concatenate,
+    TypeAlias,
     TypeVar,
+    cast,
     overload,
-    Iterator,
-    Generic,
-    MutableMapping,
 )
 
 from pyteal import (
-    SubroutineFnWrapper,
-    Txn,
     ABIReturnSubroutine,
+    Approve,
     BareCallActions,
+    Bytes,
+    CallConfig,
     Expr,
+    Int,
+    MethodConfig,
     OnCompleteAction,
     Router,
-    CallConfig,
+    SubroutineFnWrapper,
     TealType,
-    MethodConfig,
-    Bytes,
-    Int,
-    Approve,
+    Txn,
 )
 
 from beaker.application_specification import (
     ApplicationSpecification,
-    MethodHints,
     DefaultArgumentDict,
+    MethodHints,
 )
 from beaker.build_options import BuildOptions
 from beaker.decorators import authorize as authorize_decorator
@@ -48,7 +46,7 @@ from beaker.precompile import (
     PrecompiledLogicSignatureTemplate,
 )
 from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
-from beaker.state.primitive import LocalStateValue, GlobalStateValue
+from beaker.state.primitive import GlobalStateValue, LocalStateValue
 
 if typing.TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
@@ -173,7 +171,7 @@ class Application(Generic[TState]):
 
     @overload
     def precompiled(
-        self, value: LogicSignatureTemplate, /  # noqa: W504
+        self, value: LogicSignatureTemplate, /
     ) -> PrecompiledLogicSignatureTemplate:
         ...
 
@@ -184,8 +182,10 @@ class Application(Generic[TState]):
     ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
         try:
             ctx = _ctx.get()
-        except LookupError:
-            raise LookupError("precompiled(...) should be called inside a function")
+        except LookupError as err:
+            raise LookupError(
+                "precompiled(...) should be called inside a function"
+            ) from err
         if ctx.app is not self:
             raise ValueError("precompiled() used in another apps context")
         if ctx.client is None:
@@ -918,9 +918,7 @@ def precompiled(value: LogicSignature, /) -> PrecompiledLogicSignature:
 
 
 @overload
-def precompiled(
-    value: LogicSignatureTemplate, /  # noqa: W504
-) -> PrecompiledLogicSignatureTemplate:
+def precompiled(value: LogicSignatureTemplate, /) -> PrecompiledLogicSignatureTemplate:
     ...
 
 
@@ -930,8 +928,10 @@ def precompiled(
 ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
     try:
         ctx_app: Application = this_app()
-    except LookupError:
-        raise LookupError("beaker.precompiled(...) should be called inside a function")
+    except LookupError as err:
+        raise LookupError(
+            "beaker.precompiled(...) should be called inside a function"
+        ) from err
     if value is ctx_app:
         raise ValueError("Attempted to precompile the current application")
     return ctx_app.precompiled(value)

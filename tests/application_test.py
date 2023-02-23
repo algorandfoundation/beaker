@@ -1,23 +1,23 @@
-from typing import Callable
+from collections.abc import Callable
 
 import pyteal as pt
 import pytest
 from Cryptodome.Hash import SHA512
-from pyteal.ast.abi import PaymentTransaction, AssetTransferTransaction
+from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
 
 from beaker import (
+    Application,
+    BuildOptions,
     GlobalStateBlob,
     LocalStateBlob,
-    BuildOptions,
-    Application,
 )
 from beaker.application_specification import ApplicationSpecification
 from beaker.blueprints import unconditional_create_approval
 from beaker.lib.storage import BoxList
 from beaker.state import (
-    ReservedGlobalStateValue,
     GlobalStateValue,
     LocalStateValue,
+    ReservedGlobalStateValue,
     ReservedLocalStateValue,
 )
 from tests.conftest import check_application_artifacts_output_stability
@@ -482,7 +482,7 @@ def test_app_spec_from_json(app_factory: Callable[[], Application]) -> None:
 
 
 def test_struct_args() -> None:
-    from algosdk.abi import Method, Argument, Returns
+    from algosdk.abi import Argument, Method, Returns
 
     class UserRecord(pt.abi.NamedTuple):
         addr: pt.abi.Field[pt.abi.Address]

@@ -1,19 +1,18 @@
 from typing import Literal
 
 from pyteal import (
-    abi,
+    Assert,
+    Expr,
+    For,
+    Int,
     ScratchVar,
     Seq,
-    Assert,
-    Int,
-    For,
     Sha256,
-    Expr,
+    abi,
 )
 
-from beaker import sandbox, Application, unconditional_create_approval
-from examples.opup.op_up import op_up_blueprint, OpUpState
-
+from beaker import Application, sandbox, unconditional_create_approval
+from examples.opup.op_up import OpUpState, op_up_blueprint
 
 expensive_app = Application(
     name="ExpensiveApp",

@@ -18,12 +18,12 @@ from pyteal import (
 
 from beaker import (
     Application,
-    GlobalStateValue,
     Authorize,
+    GlobalStateValue,
     consts,
     unconditional_create_approval,
 )
-from beaker.lib.storage import BoxMapping, BoxList
+from beaker.lib.storage import BoxList, BoxMapping
 
 
 # Use a box per member to denote membership parameters

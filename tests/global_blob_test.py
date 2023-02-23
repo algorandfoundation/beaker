@@ -1,11 +1,10 @@
-import pytest
 import pyteal as pt
+import pytest
+
 import beaker as bkr
-
-from tests.helpers import UnitTestingApp, assert_output
-
-from beaker.lib.storage.global_blob import GlobalBlob
 from beaker.lib.storage.blob import blob_page_size
+from beaker.lib.storage.global_blob import GlobalBlob
+from tests.helpers import UnitTestingApp, assert_output
 
 
 class GlobalBlobState:

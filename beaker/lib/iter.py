@@ -5,7 +5,7 @@ __all__ = [
 ]
 
 
-def Iterate(sub: Expr, n: Int, i: ScratchVar | None = None) -> Expr:  # noqa: N802
+def Iterate(sub: Expr, n: Int, i: ScratchVar | None = None) -> Expr:
     """Iterate provides a convenience method for calling a method n times
 
     Args:

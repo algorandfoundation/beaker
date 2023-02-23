@@ -1,32 +1,32 @@
+from base64 import b64decode, b64encode
+from typing import Any
+
 import algosdk.error
 import pyteal
-import pytest
 import pyteal as pt
-from typing import Any
-from base64 import b64decode, b64encode
-
+import pytest
 from algosdk.account import generate_account
-from algosdk.logic import get_application_address
-from algosdk.transaction import Multisig, LogicSigAccount, OnComplete
 from algosdk.atomic_transaction_composer import (
-    AtomicTransactionComposer,
     AccountTransactionSigner,
-    MultisigTransactionSigner,
+    AtomicTransactionComposer,
     LogicSigTransactionSigner,
+    MultisigTransactionSigner,
 )
+from algosdk.logic import get_application_address
+from algosdk.transaction import LogicSigAccount, Multisig, OnComplete
 
 import beaker
 from beaker import (
-    Authorize,
     Application,
+    Authorize,
     BuildOptions,
     GlobalStateValue,
     LocalStateValue,
 )
-from beaker.sandbox import get_accounts, get_algod_client
 from beaker.application import _default_argument_from_resolver
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
+from beaker.sandbox import get_accounts, get_algod_client
 
 
 class AppState:

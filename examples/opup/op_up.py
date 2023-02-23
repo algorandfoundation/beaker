@@ -1,26 +1,27 @@
-from typing import Final, Callable
+from collections.abc import Callable
+from typing import Final
 
 from pyteal import (
-    Global,
-    TealType,
-    abi,
-    InnerTxnBuilder,
-    Seq,
-    InnerTxn,
-    TxnField,
+    Approve,
     Assert,
     Expr,
+    Global,
+    InnerTxn,
+    InnerTxnBuilder,
     Int,
-    Approve,
+    Seq,
     Subroutine,
+    TealType,
+    TxnField,
+    abi,
 )
 
 from beaker import (
     Application,
-    precompiled,
-    unconditional_create_approval,
     Authorize,
     GlobalStateValue,
+    precompiled,
+    unconditional_create_approval,
 )
 from beaker.consts import Algos
 

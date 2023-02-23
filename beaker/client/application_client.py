@@ -2,32 +2,33 @@ import copy
 import dataclasses
 import warnings
 from base64 import b64decode
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, cast, Sequence, Callable
+from typing import Any, cast
 
 import algosdk
-from algosdk import transaction, abi
+from algosdk import abi, transaction
 from algosdk.account import address_from_private_key
 from algosdk.atomic_transaction_composer import (
-    TransactionSigner,
-    AccountTransactionSigner,
-    MultisigTransactionSigner,
-    LogicSigTransactionSigner,
-    AtomicTransactionComposer,
-    ABIResult,
     ABI_RETURN_HASH,
-    TransactionWithSigner,
+    ABIResult,
+    AccountTransactionSigner,
+    AtomicTransactionComposer,
     AtomicTransactionResponse,
+    LogicSigTransactionSigner,
+    MultisigTransactionSigner,
+    TransactionSigner,
+    TransactionWithSigner,
 )
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
-from pyteal import ABIReturnSubroutine, MethodConfig, CallConfig
+from pyteal import ABIReturnSubroutine, CallConfig, MethodConfig
 
 from beaker.application import Application
 from beaker.application_specification import (
     ApplicationSpecification,
-    MethodHints,
     DefaultArgumentDict,
+    MethodHints,
 )
 from beaker.client.logic_error import LogicException, parse_logic_error
 from beaker.client.state_decode import decode_state
