@@ -93,12 +93,12 @@
 <span id="id1"></span><h2>Authorization<a class="headerlink" href="#authorization" title="Permalink to this heading"></a></h2>
 <p>Often, we would like to restrict the accounts that may call certain methods.</p>
 <p>Lets add a parameter to the external to allow only the app creator to call this method.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Authorize</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">Authorize</span>
 
 <span class="c1">#...</span>
 
-<span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
-<span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+<span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
         <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">)</span>
@@ -107,12 +107,12 @@
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">authorize</span></code> parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.</p>
 <p>Now lets write a new method to allow any account that is opted in to call it:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">Authorize</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">Authorize</span>
 
 <span class="c1"># ...</span>
 
-<span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">opted_in</span><span class="p">())</span>
-<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">approve</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">):</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">opted_in</span><span class="p">())</span>
+<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="n">approve</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">):</span>
     <span class="c1"># ...</span>
 </pre></div>
 </div>
@@ -138,14 +138,17 @@ already opted-in to a given app id</p>
 </dd></dl>
 
 <p>But we can define our own</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">Algos</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Subroutine</span>
+<span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">Algos</span>
 
 <span class="nd">@Subroutine</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">is_whale</span><span class="p">(</span><span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">):</span>
     <span class="c1"># Only allow accounts with 1mm algos</span>
     <span class="k">return</span> <span class="n">Balance</span><span class="p">(</span><span class="n">acct</span><span class="p">)</span><span class="o">&gt;</span><span class="n">Algos</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">)</span>
 
-<span class="nd">@external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">is_whale</span><span class="p">)</span>
+<span class="c1"># ...</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">is_whale</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">greet</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hello whale&quot;</span><span class="p">)</span>
 </pre></div>
@@ -155,11 +158,14 @@ already opted-in to a given app id</p>
 <span id="id2"></span><h2>Read Only<a class="headerlink" href="#read-only" title="Permalink to this heading"></a></h2>
 <p>Methods that are meant to only produce information, having no side effects, should be flagged as read only.</p>
 <p>See <a class="reference external" href="https://arc.algorand.foundation/ARCs/arc-0022">ARC22</a> for more details.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">count</span> <span class="o">=</span> <span class="n">ApplicationStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ROAppState</span><span class="p">:</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">ApplicationStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;CoolApp&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">ROAppState</span><span class="p">())</span>
 
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">get_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_of_thing</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_count</span><span class="p">(</span><span class="n">id_of_thing</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
