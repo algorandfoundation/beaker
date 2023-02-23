@@ -530,7 +530,7 @@ def grouped_assert_cases(
     creator_app_client: client.ApplicationClient,
     user_acct: AcctInfo,
 ) -> list[AssertTestCase]:
-    group: str = request.param  # type: ignore
+    group: str = request.param
     return _assert_cases(group, creator_app_client, user_acct)
 
 
