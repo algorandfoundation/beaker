@@ -45,7 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorator Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="boxes.html">Boxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration.html">1.0 Migration Guide</a></li>
@@ -91,6 +91,7 @@
  | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
@@ -108,8 +109,6 @@
       <ul>
         <li><a href="application_client.html#beaker.client.ApplicationClient.__init__">(beaker.client.ApplicationClient method)</a>
 </li>
-        <li><a href="decorators.html#beaker.decorators.Authorize.__init__">(beaker.decorators.Authorize method)</a>
-</li>
         <li><a href="boxes.html#beaker.lib.storage.BoxList.__init__">(beaker.lib.storage.BoxList method)</a>
 </li>
         <li><a href="boxes.html#beaker.lib.storage.BoxList.Element.__init__">(beaker.lib.storage.BoxList.Element method)</a>
@@ -121,6 +120,8 @@
         <li><a href="lsig.html#beaker.logic_signature.LogicSignature.__init__">(beaker.logic_signature.LogicSignature method)</a>
 </li>
         <li><a href="lsig.html#beaker.logic_signature.LogicSignatureTemplate.__init__">(beaker.logic_signature.LogicSignatureTemplate method)</a>
+</li>
+        <li><a href="lsig.html#beaker.logic_signature.RuntimeTemplateVariable.__init__">(beaker.logic_signature.RuntimeTemplateVariable method)</a>
 </li>
         <li><a href="precompile.html#beaker.precompile.PrecompiledApplication.__init__">(beaker.precompile.PrecompiledApplication method)</a>
 </li>
@@ -142,14 +143,6 @@
 </li>
       </ul></li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.__new__">__new__() (beaker.client.ApplicationClient method)</a>
-
-      <ul>
-        <li><a href="decorators.html#beaker.decorators.Authorize.__new__">(beaker.decorators.Authorize method)</a>
-</li>
-      </ul></li>
-  </ul></td>
 </tr></table>
 
 <h2 id="A">A</h2>
@@ -161,17 +154,15 @@
 </li>
       <li><a href="sandbox.html#beaker.sandbox.SandboxAccount.address">address (beaker.sandbox.SandboxAccount attribute)</a>
 </li>
-      <li><a href="precompile.html#beaker.precompile.PrecompiledLogicSignature.address">address() (beaker.precompile.PrecompiledLogicSignature method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="precompile.html#beaker.precompile.PrecompiledLogicSignature.address">address() (beaker.precompile.PrecompiledLogicSignature method)</a>
+</li>
       <li><a href="application.html#beaker.application.Application">Application (class in beaker.application)</a>
 </li>
       <li><a href="application_client.html#beaker.client.ApplicationClient">ApplicationClient (class in beaker.client)</a>
 </li>
       <li><a href="testing.html#tests.helpers.assert_output">assert_output() (in module tests.helpers)</a>
-</li>
-      <li><a href="decorators.html#beaker.decorators.Authorize">Authorize (class in beaker.decorators)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -190,7 +181,7 @@
     beaker.application
 
       <ul>
-        <li><a href="application.html#module-beaker.application">module</a>
+        <li><a href="application.html#module-beaker.application">module</a>, <a href="decorators.html#module-beaker.application">[1]</a>
 </li>
       </ul></li>
       <li>
@@ -234,15 +225,25 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="application_client.html#beaker.client.ApplicationClient.call">call() (beaker.client.ApplicationClient method)</a>
 </li>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.clear_state">clear_state() (beaker.client.ApplicationClient method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.close_out">close_out() (beaker.client.ApplicationClient method)</a>
-</li>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.create">create() (beaker.client.ApplicationClient method)</a>
+      <li><a href="application.html#beaker.application.Application.clear_state">clear_state() (beaker.application.Application method)</a>
 
       <ul>
+        <li><a href="application_client.html#beaker.client.ApplicationClient.clear_state">(beaker.client.ApplicationClient method)</a>
+</li>
+      </ul></li>
+      <li><a href="application.html#beaker.application.Application.close_out">close_out() (beaker.application.Application method)</a>
+
+      <ul>
+        <li><a href="application_client.html#beaker.client.ApplicationClient.close_out">(beaker.client.ApplicationClient method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="application.html#beaker.application.Application.create">create() (beaker.application.Application method)</a>
+
+      <ul>
+        <li><a href="application_client.html#beaker.client.ApplicationClient.create">(beaker.client.ApplicationClient method)</a>
+</li>
         <li><a href="boxes.html#beaker.lib.storage.BoxList.create">(beaker.lib.storage.BoxList method)</a>
 </li>
       </ul></li>
@@ -258,9 +259,11 @@
         <li><a href="state.html#beaker.state.LocalStateValue.default">(beaker.state.LocalStateValue attribute)</a>
 </li>
       </ul></li>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.delete">delete() (beaker.client.ApplicationClient method)</a>
+      <li><a href="application.html#beaker.application.Application.delete">delete() (beaker.application.Application method)</a>
 
       <ul>
+        <li><a href="application_client.html#beaker.client.ApplicationClient.delete">(beaker.client.ApplicationClient method)</a>
+</li>
         <li><a href="boxes.html#beaker.lib.storage.BoxMapping.Element.delete">(beaker.lib.storage.BoxMapping.Element method)</a>
 </li>
         <li><a href="state.html#beaker.state.GlobalStateValue.delete">(beaker.state.GlobalStateValue method)</a>
@@ -384,10 +387,14 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="application.html#beaker.application.Application.initialize_global_state">initialize_global_state() (beaker.application.Application method)</a>
+      <li><a href="application.html#beaker.application.Application.implement">implement() (beaker.application.Application method)</a>
+</li>
+      <li><a href="application.html#beaker.application.Application.include">include() (beaker.application.Application method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="application.html#beaker.application.Application.initialize_global_state">initialize_global_state() (beaker.application.Application method)</a>
+</li>
       <li><a href="application.html#beaker.application.Application.initialize_local_state">initialize_local_state() (beaker.application.Application method)</a>
 </li>
       <li><a href="precompile.html#beaker.precompile.PrecompileTemplateValue.is_bytes">is_bytes (beaker.precompile.PrecompileTemplateValue attribute)</a>
@@ -450,7 +457,7 @@
       <ul>
         <li><a href="index.html#module-beaker">beaker</a>
 </li>
-        <li><a href="application.html#module-beaker.application">beaker.application</a>
+        <li><a href="application.html#module-beaker.application">beaker.application</a>, <a href="decorators.html#module-beaker.application">[1]</a>
 </li>
         <li><a href="decorators.html#module-beaker.decorators">beaker.decorators</a>
 </li>
@@ -462,15 +469,27 @@
   </ul></td>
 </tr></table>
 
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="application.html#beaker.application.Application.no_op">no_op() (beaker.application.Application method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="decorators.html#beaker.decorators.Authorize.only">only() (beaker.decorators.Authorize static method)</a>
 </li>
+      <li><a href="application.html#beaker.application.Application.opt_in">opt_in() (beaker.application.Application method)</a>
+
+      <ul>
+        <li><a href="application_client.html#beaker.client.ApplicationClient.opt_in">(beaker.client.ApplicationClient method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.opt_in">opt_in() (beaker.client.ApplicationClient method)</a>
-</li>
       <li><a href="decorators.html#beaker.decorators.Authorize.opted_in">opted_in() (beaker.decorators.Authorize static method)</a>
 </li>
   </ul></td>
@@ -516,6 +535,8 @@
       <li><a href="state.html#beaker.state.ReservedGlobalStateValue">ReservedGlobalStateValue (class in beaker.state)</a>
 </li>
       <li><a href="state.html#beaker.state.ReservedLocalStateValue">ReservedLocalStateValue (class in beaker.state)</a>
+</li>
+      <li><a href="lsig.html#beaker.logic_signature.RuntimeTemplateVariable">RuntimeTemplateVariable (class in beaker.logic_signature)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -565,6 +586,10 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="lsig.html#beaker.logic_signature.RuntimeTemplateVariable.token">token (beaker.logic_signature.RuntimeTemplateVariable property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="boxes.html#beaker.lib.storage.BoxList.Element.type_of">type_of() (beaker.lib.storage.BoxList.Element method)</a>
 </li>
   </ul></td>
@@ -577,8 +602,12 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="application_client.html#beaker.client.ApplicationClient.update">update() (beaker.client.ApplicationClient method)</a>
+      <li><a href="application.html#beaker.application.Application.update">update() (beaker.application.Application method)</a>
+
+      <ul>
+        <li><a href="application_client.html#beaker.client.ApplicationClient.update">(beaker.client.ApplicationClient method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

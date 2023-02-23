@@ -1,4 +1,4 @@
-from pyteal import Expr, abi, Sqrt
+from pyteal import Expr, abi, Sqrt, Int
 from beaker import (
     sandbox,
     client,
@@ -13,6 +13,21 @@ def add_blueprint(app: Application) -> None:
     def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
         return output.set(a.get() + b.get())
 
+
+# Pass the blueprint method in the init of our app
+app = Application("BlueprintExampleNoArgs", include=[add_blueprint])
+
+# Or
+
+# A blueprint that adds a method named `addN` to the external
+# methods of the Application passed
+def addN_blueprint(app: Application, n: int) -> None:
+    @app.external
+    def addN(a: abi.Uint64, *, output: abi.Uint64) -> Expr:
+        return output.set(a.get() + Int(n))
+
+
+app = Application("BlueprintExampleWithArgs").include(addN_blueprint, n=2)
 
 # A blueprint that adds a method named `div` to the external
 # methods of the Application passed

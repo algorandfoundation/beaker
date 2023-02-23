@@ -22,21 +22,7 @@ If there is an application already deployed, the ``app_id`` can be passed during
 If there are multiple signers or you want to re-use some suggested parameters, the ``prepare`` method may be called with the different arguments and a copy of the client is returned with the updated parameters.
 
 .. autoclass:: ApplicationClient
-
-    .. automethod:: call 
-    .. automethod:: add_method_call
-    .. automethod:: prepare
-    .. automethod:: create
-    .. automethod:: delete
-    .. automethod:: update 
-    .. automethod:: opt_in 
-    .. automethod:: close_out 
-    .. automethod:: clear_state 
-    .. automethod:: fund
-    .. automethod:: get_global_state
-    .. automethod:: get_application_account_info
-    .. automethod:: get_local_state
-
+    :members:
 
 .. _app_client_example:
 

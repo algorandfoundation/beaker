@@ -249,19 +249,39 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 </section>
 <section id="code-reuse">
 <span id="id2"></span><h2>Code Reuse<a class="headerlink" href="#code-reuse" title="Permalink to this heading"></a></h2>
-<p>What about extending our Application with some other functionality that we’ve already written?</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">expensive_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ExpensiveApp&quot;</span><span class="p">,</span>
-    <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;Do expensive work to demonstrate implementing op_up blueprint&quot;</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="n">OpUpState</span><span class="p">(),</span>
-<span class="p">)</span>
+<p>What about extending our Application with some functionality that already exists? For example, what if we wanted to provide the correct interface for a specific ARC?</p>
+<p>We can use a <code class="docutils literal notranslate"><span class="pre">blueprint</span></code> to include things like method handlers to our application!</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># A blueprint that adds a method named `add` to the external</span>
+<span class="c1"># methods of the Application passed</span>
+<span class="k">def</span> <span class="nf">add_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
 
-<span class="c1"># Create a callable method after passing the</span>
-<span class="c1"># instance of the app to have methods added</span>
-<span class="n">call_opup</span> <span class="o">=</span> <span class="n">op_up_blueprint</span><span class="p">(</span><span class="n">expensive_app</span><span class="p">)</span>
+<span class="c1"># Pass the blueprint method in the init of our app</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleNoArgs&quot;</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="n">add_blueprint</span><span class="p">])</span>
+
+<span class="c1"># Or</span>
+
+<span class="c1"># A blueprint that adds a method named `addN` to the external</span>
+<span class="c1"># methods of the Application passed</span>
+<span class="k">def</span> <span class="nf">addN_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+    <span class="k">def</span> <span class="nf">addN</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleWithArgs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">include</span><span class="p">(</span><span class="n">addN_blueprint</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Here we call a method <code class="docutils literal notranslate"><span class="pre">op_up_blueprint</span></code> passing our application instance. This method attaches some extra handlers to our app and returns a method that can be called in our app.</p>
+<p>Here we add a method handler for an abi method <code class="docutils literal notranslate"><span class="pre">add</span></code> to our application in two ways.</p>
+<p>If the blueprint only accepts an <code class="docutils literal notranslate"><span class="pre">Application</span></code> and returns <code class="docutils literal notranslate"><span class="pre">None</span></code>, we can pass it directly in the initialization of our Application</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleNoArgs&quot;</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="n">add_blueprint</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>If the blueprint requires some arguments, we can use the <code class="docutils literal notranslate"><span class="pre">include</span></code> method to add it by passing the additional arguments the blueprint expects</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleWithArgs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">include</span><span class="p">(</span><span class="n">addN_blueprint</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="parameter-default-values">
 <span id="parameter-default"></span><h2>Parameter Default Values<a class="headerlink" href="#parameter-default-values" title="Permalink to this heading"></a></h2>

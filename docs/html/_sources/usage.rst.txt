@@ -108,12 +108,24 @@ For more example usage see the example :ref:`here <state_example>`.
 Code Reuse 
 -----------
 
-What about extending our Application with some other functionality that we've already written?
+What about extending our Application with some functionality that already exists? For example, what if we wanted to provide the correct interface for a specific ARC?
 
-.. literalinclude:: ../../examples/opup/contract.py
-    :lines: 18-26
+We can use a ``blueprint`` to include things like method handlers to our application! 
 
-Here we call a method ``op_up_blueprint`` passing our application instance. This method attaches some extra handlers to our app and returns a method that can be called in our app. 
+.. literalinclude:: ../../examples/blueprint/main.py
+    :lines: 9-28
+
+Here we add a method handler for an abi method ``add`` to our application in two ways.
+
+If the blueprint only accepts an ``Application`` and returns ``None``, we can pass it directly in the initialization of our Application
+
+.. literalinclude:: ../../examples/blueprint/main.py
+    :lines: 17-17
+
+If the blueprint requires some arguments, we can use the ``include`` method to add it by passing the additional arguments the blueprint expects
+
+.. literalinclude:: ../../examples/blueprint/main.py
+    :lines: 28-28
 
 
 .. _parameter_default:

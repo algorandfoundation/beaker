@@ -1,9 +1,7 @@
-Decorators
-===========
+Decorator Parameters
+=====================
 
-.. warning:: Out of date, needs to be updated to 1.0
-
-Beaker uses decorated methods to apply configurations to the methods they decorate.  The configuration allows the ``Application`` class to know how to expose them.
+Beaker Application decorators accept parameters that apply configurations to the methods they decorate.
 
 
 .. module:: beaker.decorators
@@ -11,11 +9,10 @@ Beaker uses decorated methods to apply configurations to the methods they decora
 .. _authorization:
 
 Authorization
-^^^^^^^^^^^^^
+-------------
 
 Often, we would like to restrict the accounts that may call certain methods. 
 
-.. autoclass:: Authorize
 
 
 Lets add a parameter to the external to allow only the app creator to call this method.
@@ -71,17 +68,14 @@ But we can define our own
     def greet(*, output: abi.String):
         return output.set("hello whale")
 
-
-Application decorators
-----------------------
-
 .. _read_only:
 
-**Read Only**
+Read Only
+----------
 
 Methods that are meant to only produce information, having no side effects, should be flagged as read only. 
 
-See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more details.
+See `ARC22 <https://arc.algorand.foundation/ARCs/arc-0022>`_ for more details.
 
 .. code-block:: python
 
@@ -92,59 +86,22 @@ See `ARC22 <https://github.com/algorandfoundation/ARCs/pull/79>`_ for more detai
         return output.set(self.count)
 
 
-.. _internal_methods:
+.. _oncomplete_settings:
 
-Subroutines
+On Complete
 -----------
 
-An Application will often need a number of internal ``utility`` type methods to handle common logic.  
-We don't want to expose these methods to the ABI but we do want to allow them to access any instance variables.
-
-.. note:: 
-    If you want some method to return the expression only and not be triggered with ``callsub``, omit the ``@Subroutine`` decorator and the expression will be inlined
-
-.. code-block:: python
-
-    @pyteal.Subroutine(TealType.uint64)
-    def do_logic(self):
-        return If(self.counter>10, self.send_asset())
+If a method expects the ``ApplicationCallTransaction`` to have a certain  ``OnComplete`` other than ``NoOp``, one of the other ``OnComplete`` decorators may be used instead of ``external`` with a method config set.
 
 .. module:: beaker.application
-    :noindex:
-
-.. _external:
-
-ABI Method external
---------------------
-
-The ``external`` decorator is how we can add methods to be handled as ABI methods.
-
-Tagging a method as ``external`` adds it to the internal ``Router`` with whatever configuration is passed, if any.
-
-.. autoclass:: Application
-    :noindex:
-    :special-members:
-    :members: external
-
-.. _oncomplete_externals:
-
-OnComplete Externals 
----------------------
-
-If a method expects the ``ApplicationCallTransaction`` to have an  ``OnComplete`` other than ``NoOp``, one of the other ``OnComplete`` decorators may be used instead of ``external`` with a method config set.
-
-
-OnComplete Decorators 
-^^^^^^^^^^^^^^^^^^^^^
-
 .. autoclass:: Application
     :noindex:
     :special-members:
     :members: external, create, delete, update, opt_in, close_out, clear_state
 
-The ARC4 spec allows applications to define externals for ``bare`` methods, that is methods with no application arguments. 
+The `ARC4 <https://arc.algorand.foundation/ARCs/arc-0022>`_ spec allows applications to define externals for ``bare`` methods, that is, methods with no application arguments. 
 
-Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a Create transaction.
+Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a create transaction, not based on the method selector as non-bare methods.
 
 The same handlers described above will also work for ``bare`` method calls but multiple ``OnComplete`` values can be handled with the ``bare_external`` decorator.
 

@@ -1,20 +1,29 @@
 Logic Signatures
 ================
 
-.. warning:: Out of date, needs to be updated to 1.0
-
 .. module:: beaker.logic_signature
 
-This is the base class that all Beaker LogicSignatures should inherit from.
+This is the class that should be initialized to provide a LogicSignature.
 
-This class should **not** be initialized directly.
+A ``LogicSignature`` is intialized with either a PyTeal ``Expr`` or a function that returns an ``Expr``.
 
-:ref:`Full Example <lsig_example>`
+.. literalinclude:: ../../examples/offload_compute/lsig.py
+    :lines: 28-52
+
+A ``LogicSignatureTemplate`` is initialized by passing a PyTeal ``Expr`` or a function that returns an ``Expr`` _and_ a dictionary of template variables that should be provided at runtime.
+
+
+.. literalinclude:: ../../examples/templated_lsig/main.py
+    :lines: 29-45
+
 
 .. autoclass:: LogicSignature
     :members:
 
 .. autoclass:: LogicSignatureTemplate
+    :members:
+
+.. autoclass:: RuntimeTemplateVariable
     :members:
 
 .. _lsig_example:
