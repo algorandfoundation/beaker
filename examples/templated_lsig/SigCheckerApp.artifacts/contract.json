@@ -1,0 +1,26 @@
+{
+    "name": "SigCheckerApp",
+    "methods": [
+        {
+            "name": "check",
+            "args": [
+                {
+                    "type": "address",
+                    "name": "signer_address"
+                },
+                {
+                    "type": "string",
+                    "name": "msg"
+                },
+                {
+                    "type": "byte[64]",
+                    "name": "sig"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}
