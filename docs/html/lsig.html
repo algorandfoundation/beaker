@@ -113,12 +113,7 @@
 </pre></div>
 </div>
 <p>A <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code> is initialized by passing a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> _and_ a dictionary of template variables that should be provided at runtime.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignatureTemplate</span>
-
-<span class="n">Signature</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
-
-
-<span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>
     <span class="c1"># Simple program to check an ed25519 signature given a message and signature</span>
 
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">user_addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
@@ -130,6 +125,11 @@
             <span class="n">Assert</span><span class="p">(</span><span class="n">Ed25519Verify_Bare</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">sig</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">user_addr</span><span class="p">)),</span>
             <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
         <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">LogicSignatureTemplate</span><span class="p">(</span>
+        <span class="n">evaluate</span><span class="p">,</span>
+        <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_addr&quot;</span><span class="p">:</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">},</span>
+    <span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py class">
@@ -204,12 +204,7 @@ need some hardcoded well defined behavior.</p>
     <span class="n">client</span><span class="p">,</span>
     <span class="n">consts</span><span class="p">,</span>
     <span class="n">precompiled</span><span class="p">,</span>
-<span class="o">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span> <span class="n">HEAD</span>
-    <span class="n">Application</span><span class="p">,</span>
-<span class="o">=======</span>
     <span class="n">sandbox</span><span class="p">,</span>
-    <span class="n">unconditional_create_approval</span><span class="p">,</span>
-<span class="o">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span> <span class="n">v1</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignatureTemplate</span>
 

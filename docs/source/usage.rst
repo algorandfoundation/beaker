@@ -31,7 +31,7 @@ Nice!  This is already enough to provide the TEAL programs and ABI specification
     The ``Application.export`` method can be used to write the ``approval.teal``, ``clear.teal``, ``contract.json``, and ``application.json`` to the local file system.
 
 Lets add some methods to be handled by an incoming `ApplicationCallTransaction <https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction>`_.  
-We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine>`_ method with with the :ref:`external <external>` decorator. 
+We can do this by tagging a `PyTeal ABI <https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine>`_ method with with the``external`` decorator. 
 
 
 .. literalinclude:: ../../examples/simple/calculator.py
@@ -80,9 +80,9 @@ Decorators
 
 Above, we used the decorator ``@external`` to mark a method as being exposed in the ABI and available to be called from off-chain.
 
-The ``@external`` decorator can take parameters to change how it may be called or what accounts may call it, see examples :ref:`here <external>`.
+The ``@external`` decorator can take parameters to change how it may be called or what accounts may call it.
 
-It is also possible to use one of the :ref:`OnComplete <oncomplete_externals>` decorators (e.g. ``create``, ``opt_in``, etc...) to specify a single ``OnComplete`` type the contract expects. 
+It is also possible to use one of the ``OnComplete`` decorators (e.g. ``create``, ``opt_in``, etc...) to specify a single ``OnComplete`` type the contract expects. 
 
 
 .. _manage_state:

@@ -99,7 +99,7 @@ locally as compiled bytes to create the app directly in program logic.</p>
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">precompile</span></code> function may _only_ be called inside a function.</p>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
 </pre></div>
 </div>
 </section>
@@ -216,13 +216,7 @@ can be used to compare with a sender given some arguments.</p>
     <span class="n">Int</span><span class="p">,</span>
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">TealType</span><span class="p">,</span>
-<span class="o">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span> <span class="n">HEAD</span>
-    <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">Approve</span><span class="p">,</span>
-<span class="o">=======</span>
-    <span class="n">TxnField</span><span class="p">,</span>
     <span class="n">abi</span><span class="p">,</span>
-<span class="o">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span> <span class="n">v1</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
