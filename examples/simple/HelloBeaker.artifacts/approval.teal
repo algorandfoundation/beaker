@@ -19,7 +19,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub hello_1
+callsub hello_0
 store 0
 pushbytes 0x151f7c75 // 0x151f7c75
 load 0
@@ -38,18 +38,11 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
-intc_1 // 1
-return
-
-// create
-create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // hello
-hello_1:
+hello_0:
 proto 1 1
 pushbytes 0x // ""
 pushbytes 0x48656c6c6f2c20 // "Hello, "

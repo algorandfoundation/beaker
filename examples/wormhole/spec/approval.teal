@@ -24,7 +24,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub portaltransfer_3
+callsub portaltransfer_2
 store 5
 bytec_1 // 0x151f7c75
 load 5
@@ -43,7 +43,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub lookup_2
+callsub lookup_1
 store 4
 bytec_1 // 0x151f7c75
 load 4
@@ -62,7 +62,6 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_1
 intc_1 // 1
 return
 
@@ -74,14 +73,8 @@ frame_dig -1
 concat
 retsub
 
-// create
-create_1:
-proto 0 0
-intc_1 // 1
-return
-
 // lookup
-lookup_2:
+lookup_1:
 proto 1 1
 bytec_0 // ""
 intc_0 // 0
@@ -98,7 +91,7 @@ frame_bury 0
 retsub
 
 // portal_transfer
-portaltransfer_3:
+portaltransfer_2:
 proto 1 1
 bytec_0 // ""
 intc_0 // 0

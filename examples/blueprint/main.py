@@ -15,7 +15,7 @@ def add_blueprint(app: Application) -> None:
 
 
 # Pass the blueprint method in the init of our app
-app = Application("BlueprintExampleNoArgs", include=[add_blueprint])
+# app = Application("BlueprintExampleNoArgs", include=[add_blueprint])
 
 # Or
 
@@ -27,7 +27,7 @@ def addN_blueprint(app: Application, n: int) -> None:
         return output.set(a.get() + Int(n))
 
 
-app = Application("BlueprintExampleWithArgs").include(addN_blueprint, n=2)
+app = Application("BlueprintExampleWithArgs").implement(addN_blueprint, n=2)
 
 # A blueprint that adds a method named `div` to the external
 # methods of the Application passed
@@ -69,17 +69,17 @@ def sqrt_blueprint(app: Application) -> None:
 # create an instance of Application
 extended_app = Application("ExtendAppWithBlueprints")
 # include the handlers from our calculator blueprint
-extended_app.include(calculator_blueprint)
+extended_app.implement(calculator_blueprint)
 
 # OR
 
 # create an instance of Application, passing the list of blueprints we want to include
-extended_app = Application(
-    "ExtendAppWithBlueprints",
-    include=[calculator_blueprint],
-)
+# extended_app = Application(
+#    "ExtendAppWithBlueprints",
+#    include=[calculator_blueprint],
+# )
 # we can also include more after init
-extended_app.include(sqrt_blueprint)
+# extended_app.include(sqrt_blueprint)
 
 
 def demo() -> None:
@@ -100,9 +100,9 @@ def demo() -> None:
     result = app_client.call("div", a=6, b=2)
     print(result.return_value)  # 3
 
-    # Call the `div` method we added with the blueprint
-    result = app_client.call("sqrt", a=9)
-    print(result.return_value)  # 3
+    # Call the `sqrt` method we added with the blueprint
+    # result = app_client.call("sqrt", a=9)
+    # print(result.return_value)  # 3
 
 
 if __name__ == "__main__":

@@ -26,9 +26,9 @@
                 "type": "byte[]",
                 "desc": "Undefined byte array"
             },
-            "desc": "portal_transfer accepts a VAA containing information about the transfer and the payload."
+            "desc": "portal_transfer accepts a VAA containing information about the transfer\nand the payload."
         }
     ],
     "networks": {},
-    "desc": "\n    Stores price feed in application state keyed by timestamp\n\n    TODO: more than 64 vals lol\n    "
+    "desc": "Stores price feed in application state keyed by timestamp"
 }

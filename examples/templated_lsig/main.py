@@ -56,7 +56,7 @@ def check(signer_address: abi.Address, msg: abi.String, sig: Signature) -> Expr:
     # The lsig will take care of verifying the signature
     # all we need to do is check that its been used to sign this transaction
     return Assert(
-        Txn.sender() == sig_checker_pc.address(user_aaddr=signer_address.get())
+        Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
     )
 
 
