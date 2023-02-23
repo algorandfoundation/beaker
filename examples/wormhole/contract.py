@@ -26,9 +26,8 @@ oracle_data_cache_app = Application(
     TODO: more than 64 vals lol
     """,
     state=OracleState(),
+    include=[unconditional_create_approval],
 )
-
-oracle_data_cache_app.implement(unconditional_create_approval)
 
 
 @oracle_data_cache_app.external
@@ -60,7 +59,7 @@ def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> 
     )
 
 
-oracle_data_cache_app.implement(wormhole_transfer, handle_transfer=handle_transfer)
+oracle_data_cache_app.include(wormhole_transfer, handle_transfer=handle_transfer)
 
 
 if __name__ == "__main__":

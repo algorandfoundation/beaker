@@ -70,8 +70,9 @@ MethodConfigDict: TypeAlias = dict[OnCompleteActionName, CallConfig]
 T = TypeVar("T")
 P = ParamSpec("P")
 TState = TypeVar("TState", covariant=True)
-
 HandlerFunc = Callable[..., Expr]
+
+AppOnlyBlueprint = Callable[["Application[TState]"], None]
 
 
 @dataclasses.dataclass
@@ -111,6 +112,7 @@ class Application(Generic[TState]):
         *,
         descr: str | None = None,
         build_options: BuildOptions | None = None,
+        include: list[AppOnlyBlueprint] | None = None,
     ):
         ...
 
@@ -122,6 +124,7 @@ class Application(Generic[TState]):
         state: TState,
         descr: str | None = None,
         build_options: BuildOptions | None = None,
+        include: list[AppOnlyBlueprint] | None = None,
     ):
         ...
 
@@ -132,6 +135,7 @@ class Application(Generic[TState]):
         state: TState = cast(TState, None),
         descr: str | None = None,
         build_options: BuildOptions | None = None,
+        include: list[AppOnlyBlueprint] | None = None,
     ):
         """<TODO>"""
         self._state: TState = state
@@ -150,6 +154,10 @@ class Application(Generic[TState]):
         self._precompiled_apps: dict[Application, PrecompiledApplication] = {}
         self._local_state = LocalStateAggregate(self._state)
         self._global_state = GlobalStateAggregate(self._state)
+
+        if include is not None:
+            for bp in include:
+                self.implement(bp)
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
@@ -282,7 +290,7 @@ class Application(Generic[TState]):
         /,
     ) -> None:
         if isinstance(action_name_or_reference, str):
-            self.bare_actions.pop(cast(OnCompleteActionName, action_name_or_reference))
+            self.bare_actions.pop(action_name_or_reference)
         else:
             method = action_name_or_reference
             _remove_first_match(self.bare_actions, lambda _, v: v.action is method)
@@ -693,6 +701,15 @@ class Application(Generic[TState]):
             override=override,
         )
         return decorator if fn is None else decorator(fn)
+
+    def include(
+        self,
+        blueprint: Callable[Concatenate["Application[TState]", P], T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> "Application[TState]":
+        blueprint(self, *args, **kwargs)
+        return self
 
     def implement(
         self,

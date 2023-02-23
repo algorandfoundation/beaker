@@ -11,7 +11,7 @@ from pyteal import (
     abi,
 )
 
-from beaker import Application
+from beaker.application import Application, AppOnlyBlueprint
 
 
 def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
@@ -123,7 +123,7 @@ def wormhole_transfer(
     handle_transfer: Callable[
         [ContractTransferVAA, NamedArg(abi.DynamicBytes, "output")], Expr
     ],
-) -> Application:
+) -> None:
     """Implement Wormhole Payload3 Message handler
 
     A Message transfer from another chain to Algorand  using the Wormhole protocol
@@ -151,4 +151,20 @@ def wormhole_transfer(
             handle_transfer(ctvaa, output=output),
         )
 
-    return app
+
+# Does this make _any_ sense as a pattern for blueprints with args?
+# use like `app.include(wormhole_blueprint(handler))` or `app = Application(..., include=[wormhole_blueprint(handler)])`
+# as opposed to `app.include(wormhole_transfer, handle_transfer=xxx)`
+
+# In this case its probably unhelpful since the handle_transfer method
+# needs to reference the state of the app, so the benefit of allowing it to be
+# passed in the init cannot be realized
+def wormhole_blueprint(
+    handle_transfer: Callable[
+        [ContractTransferVAA, NamedArg(abi.DynamicBytes, "output")], Expr
+    ]
+) -> AppOnlyBlueprint:
+    def _impl(app: Application) -> None:
+        return wormhole_transfer(app, handle_transfer)
+
+    return _impl
