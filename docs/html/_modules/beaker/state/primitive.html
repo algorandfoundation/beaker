@@ -45,8 +45,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../precompile.html">Precompile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorator Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../boxes.html">Boxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../migration.html">1.0 Migration Guide</a></li>
 </ul>
 
@@ -77,53 +78,43 @@
   <h1>Source code for beaker.state.primitive</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">TealTypeError</span><span class="p">,</span>
-    <span class="n">CompileOptions</span><span class="p">,</span>
-    <span class="n">TealBlock</span><span class="p">,</span>
-    <span class="n">TealSimpleBlock</span><span class="p">,</span>
-    <span class="n">Bytes</span><span class="p">,</span>
-    <span class="n">Int</span><span class="p">,</span>
-    <span class="n">MaybeValue</span><span class="p">,</span>
-    <span class="n">TealInputError</span><span class="p">,</span>
-    <span class="n">Seq</span><span class="p">,</span>
     <span class="n">App</span><span class="p">,</span>
     <span class="n">Assert</span><span class="p">,</span>
-    <span class="n">Not</span><span class="p">,</span>
-    <span class="n">If</span><span class="p">,</span>
-    <span class="n">Txn</span><span class="p">,</span>
-    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
-    <span class="n">Subroutine</span><span class="p">,</span>
+    <span class="n">Bytes</span><span class="p">,</span>
+    <span class="n">CompileOptions</span><span class="p">,</span>
     <span class="n">Concat</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">If</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">MaybeValue</span><span class="p">,</span>
+    <span class="n">Not</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">Subroutine</span><span class="p">,</span>
+    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
+    <span class="n">TealBlock</span><span class="p">,</span>
+    <span class="n">TealInputError</span><span class="p">,</span>
+    <span class="n">TealSimpleBlock</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TealTypeError</span><span class="p">,</span>
+    <span class="n">Txn</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;StateValue&quot;</span><span class="p">,</span>
-<<<<<<< HEAD
     <span class="s2">&quot;GlobalStateValue&quot;</span><span class="p">,</span>
     <span class="s2">&quot;LocalStateValue&quot;</span><span class="p">,</span>
-=======
-    <span class="s2">&quot;ApplicationStateValue&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;AccountStateValue&quot;</span><span class="p">,</span>
->>>>>>> v1
     <span class="s2">&quot;prefix_key_gen&quot;</span><span class="p">,</span>
     <span class="s2">&quot;identity_key_gen&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="kn">from</span> <span class="nn">beaker.state._abc</span> <span class="kn">import</span> <span class="p">(</span>
-<<<<<<< HEAD
+    <span class="n">AppSpecSchemaFragment</span><span class="p">,</span>
     <span class="n">GlobalStateStorage</span><span class="p">,</span>
     <span class="n">LocalStateStorage</span><span class="p">,</span>
-=======
-    <span class="n">ApplicationStateStorage</span><span class="p">,</span>
-    <span class="n">AccountStateStorage</span><span class="p">,</span>
->>>>>>> v1
     <span class="n">StateStorage</span><span class="p">,</span>
-    <span class="n">AppSpecSchemaFragment</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -259,11 +250,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;deletes the key from state, if the value is static it will be a compile time error&quot;&quot;&quot;</span>
 
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue">[docs]</a><span class="k">class</span> <span class="nc">GlobalStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">,</span> <span class="n">GlobalStateStorage</span><span class="p">):</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ApplicationStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">,</span> <span class="n">ApplicationStateStorage</span><span class="p">):</span>
->>>>>>> v1
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Allows storage of state values for an application (global state)</span>
 
 <span class="sd">    Attributes:</span>
@@ -282,11 +269,7 @@
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue.set"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue.set"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -301,41 +284,25 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue.get"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue.get"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue.get_maybe"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue.get_maybe"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue.get_must"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue.get_must"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">Assert</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">()),</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue.get_else"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.get_else">[docs]</a>    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue.get_else"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.get_else">[docs]</a>    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -351,17 +318,10 @@
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ApplicationStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalGetEx</span><span class="p">(</span><span class="n">app_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="GlobalStateValue.exists"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="GlobalStateValue.delete"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="ApplicationStateValue.exists"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
-
-<div class="viewcode-block" id="ApplicationStateValue.delete"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="n">check_not_static</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -370,11 +330,7 @@
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">globalDel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div></div>
 
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue">[docs]</a><span class="k">class</span> <span class="nc">LocalStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">,</span> <span class="n">LocalStateStorage</span><span class="p">):</span>
-=======
-<div class="viewcode-block" id="AccountStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">AccountStateValue</span><span class="p">(</span><span class="n">StateValue</span><span class="p">,</span> <span class="n">AccountStateStorage</span><span class="p">):</span>
->>>>>>> v1
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Allows storage of keyed values for an account opted into an application (local state)</span>
 
 <span class="sd">    Attributes:</span>
@@ -385,11 +341,7 @@
 <span class="sd">        descr: Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
->>>>>>> v1
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span>
         <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -408,11 +360,7 @@
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.set"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.set"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -430,11 +378,7 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localPut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.get"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.get"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
@@ -443,11 +387,7 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.get_maybe"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.get_maybe"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get_maybe">[docs]</a>    <span class="k">def</span> <span class="nf">get_maybe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaybeValue</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
 
@@ -456,11 +396,7 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGetEx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.get_must"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.get_must"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get_must">[docs]</a>    <span class="k">def</span> <span class="nf">get_must</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -468,11 +404,7 @@
 
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">Assert</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">()),</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.get_else"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.get_else">[docs]</a>    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.get_else"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.get_else">[docs]</a>    <span class="k">def</span> <span class="nf">get_else</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="n">check_match_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -493,17 +425,10 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localGetEx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
 
-<<<<<<< HEAD
 <div class="viewcode-block" id="LocalStateValue.exists"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="LocalStateValue.delete"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-=======
-<div class="viewcode-block" id="AccountStateValue.exists"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">hasValue</span><span class="p">())</span></div>
-
-<div class="viewcode-block" id="AccountStateValue.delete"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateValue.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
->>>>>>> v1
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TealInputError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AccountStateValue </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> has no key defined&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acct</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -511,11 +436,7 @@
 
         <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">localDel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
-<<<<<<< HEAD
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;LocalStateValue&quot;</span><span class="p">:</span>
-=======
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AccountStateValue&quot;</span><span class="p">:</span>
->>>>>>> v1
         <span class="n">asv</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">asv</span><span class="o">.</span><span class="n">acct</span> <span class="o">=</span> <span class="n">acct</span>
         <span class="k">return</span> <span class="n">asv</span></div>

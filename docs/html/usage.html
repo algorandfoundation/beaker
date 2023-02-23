@@ -251,7 +251,8 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 <span id="id2"></span><h2>Code Reuse<a class="headerlink" href="#code-reuse" title="Permalink to this heading"></a></h2>
 <p>What about extending our Application with some functionality that already exists? For example, what if we wanted to provide the correct interface for a specific ARC?</p>
 <p>We can use a <code class="docutils literal notranslate"><span class="pre">blueprint</span></code> to include things like method handlers to our application!</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># A blueprint that adds a method named `add` to the external</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="c1"># A blueprint that adds a method named `add` to the external</span>
 <span class="c1"># methods of the Application passed</span>
 <span class="k">def</span> <span class="nf">add_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
@@ -270,16 +271,15 @@ The constructor may also be passed an <code class="docutils literal notranslate"
     <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
     <span class="k">def</span> <span class="nf">addN</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
-
 </pre></div>
 </div>
 <p>Here we add a method handler for an abi method <code class="docutils literal notranslate"><span class="pre">add</span></code> to our application in two ways.</p>
 <p>If the blueprint only accepts an <code class="docutils literal notranslate"><span class="pre">Application</span></code> and returns <code class="docutils literal notranslate"><span class="pre">None</span></code>, we can pass it directly in the initialization of our Application</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pass the blueprint method in the init of our app</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 <p>If the blueprint requires some arguments, we can use the <code class="docutils literal notranslate"><span class="pre">include</span></code> method to add it by passing the additional arguments the blueprint expects</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">Int</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
