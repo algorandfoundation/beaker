@@ -68,7 +68,6 @@ becomes the following in ``1.0``:
     def set_value(new_value: pyteal.abi.Uint64) -> pyteal.Expr:
         return app.state.my_value.set(new_value.get())
 
-
 The key changes to note above:
 
 1. There is no sub-classing, instead a ``beaker.Application`` instance is created (i.e. ``app = beaker.Application("MyApp", ...)``).
@@ -164,9 +163,14 @@ Becomes this in ``1.0``:
     approval_program, clear_program = app_spec.approval_program, app_spec.clear_program
     app_spec.export("output_dir")
 
+.. note:: The result of ``beaker.Application().build(...)`` is not cached.
 
-Importantly, this change allows building an ``Application``, serializing the specification to disk, and then deserializing the
-specification later, which can then be used with ``ApplicationClient`` or a similar client in any other programming language. For example:
+Application Client
+------------------
+
+``ApplicationClient`` has been changed to no longer depend directly on an ``Application`` instance, this allows
+building an ``Application``, serializing the specification to disk, and then deserializing the specification later
+for use with ``ApplicationClient`` or a similar client in any other programming language. For example:
 
 .. code-block:: python
 
@@ -180,8 +184,46 @@ specification later, which can then be used with ``ApplicationClient`` or a simi
     # as a shortcut, if the ApplicationClient is in the same codebase as the Application:
     client = beaker.client.ApplicationClient(client=..., app=app)
 
+Due to the changes in how methods are defined, when using ``ApplicationClient.call`` the way methods are referenced
+has changed.
 
-.. note:: The result of ``beaker.Application().build(...)`` is not cached.
+For example, in ``0.x``:
+
+.. code-block:: python
+
+   class MyApp(beaker.Application):
+
+        @beaker.external(name="foo")
+        def do_something(self, x: pyteal.abi.Uint64) -> pyteal.Expr:
+            ...
+
+   app = MyApp()
+
+   client = beaker.client.ClientApplication(client=..., app=app)
+   client.call(MyApp.do_something, x=42)
+
+becomes the following in ``1.0``:
+
+.. code-block:: python
+
+    app = beaker.Application("MyApp")
+
+    @app.external(name="foo")
+    def do_something(x: pyteal.abi.Uint64) -> pyteal.Expr:
+        ...
+
+    app_spec = app.build()
+    client = beaker.client.ClientApplication(client=..., app=app_spec)
+
+    # if in the same code base the method can be referenced directly OR,
+    client.call(do_something, x=42)
+
+    # the method can be referenced by contract name OR,
+    client.call("foo", x=42)
+
+    # the method can be referenced by method signature,
+    # which is useful if there are overloaded signatures
+    client.call("foo(uint64)", x=42)
 
 Decorators
 ----------

@@ -124,7 +124,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
-        <span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_account_state</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_local_state</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">delete</span>
@@ -198,21 +198,22 @@
     <span class="k">if</span> <span class="n">sandbox_accounts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">sandbox_accounts</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
 
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">algod_client</span><span class="p">)</span>
+
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">unit_test_method</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">abi_methods</span><span class="p">[</span><span class="s2">&quot;unit_test&quot;</span><span class="p">]</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">get_method_by_name</span><span class="p">(</span><span class="s2">&quot;unit_test&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
             <span class="s2">&quot;Expression undefined. Either pass the expr to test or implement unit_test method&quot;</span>
         <span class="p">)</span>
 
-    <span class="n">spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">algod_client</span><span class="p">)</span>
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
         <span class="n">algod_client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">sandbox_accounts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">signer</span>
     <span class="p">)</span>
     <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
     <span class="n">has_state</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">spec</span><span class="o">.</span><span class="n">account_state_schema</span><span class="o">.</span><span class="n">num_byte_slices</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">account_state_schema</span><span class="o">.</span><span class="n">num_uints</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">local_state_schema</span><span class="o">.</span><span class="n">num_byte_slices</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">local_state_schema</span><span class="o">.</span><span class="n">num_uints</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">has_state</span><span class="p">:</span>
@@ -225,17 +226,15 @@
             <span class="k">if</span> <span class="n">opups</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
 
-                <span class="n">app_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span><span class="n">atc</span><span class="p">,</span> <span class="n">unit_test_method</span><span class="p">,</span> <span class="o">**</span><span class="nb">input</span><span class="p">)</span>
+                <span class="n">app_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span><span class="n">atc</span><span class="p">,</span> <span class="s2">&quot;unit_test&quot;</span><span class="p">,</span> <span class="o">**</span><span class="nb">input</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">opups</span><span class="p">):</span>
-                    <span class="n">app_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
-                        <span class="n">atc</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">abi_methods</span><span class="p">[</span><span class="s2">&quot;opup&quot;</span><span class="p">],</span> <span class="n">note</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
-                    <span class="p">)</span>
+                    <span class="n">app_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span><span class="n">atc</span><span class="p">,</span> <span class="s2">&quot;opup&quot;</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
 
                 <span class="n">results</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">_execute_atc</span><span class="p">(</span><span class="n">atc</span><span class="p">,</span> <span class="n">wait_rounds</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
                 <span class="k">assert</span> <span class="n">results</span><span class="o">.</span><span class="n">abi_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">return_value</span> <span class="o">==</span> <span class="n">output</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">unit_test_method</span><span class="p">,</span> <span class="o">**</span><span class="nb">input</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;unit_test&quot;</span><span class="p">,</span> <span class="o">**</span><span class="nb">input</span><span class="p">)</span>
                 <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">return_value</span> <span class="o">==</span> <span class="n">output</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">e</span>
