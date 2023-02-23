@@ -470,8 +470,8 @@ In ``1.0`` this becomes:
     app = beaker.Application("DerivedApp").implement(a_blueprint)
 
     # remove method defined by the blueprint
-    # note that we use the name of the Python function here
-    app.deregister_abi_method("different_signature")
+    # note that we use the method signature here
+    app.deregister_abi_method("silly_walk(uint64)")
 
     # add our new method
     @app.external(name="silly_walk")
@@ -490,8 +490,8 @@ In the case of overriding a bare method to replace it with an ABI method:
     app = beaker.Application("DerivedApp").implement(a_blueprint)
 
     # remove method defined by a blueprint
-    # note that we use the name of the Python function here
-    app.deregister_bare_method("different_signature")
+    # note that we use the completion type here
+    app.deregister_bare_method("no_op")
 
     # add our new method
     @app.external(name="something_completely_different")
