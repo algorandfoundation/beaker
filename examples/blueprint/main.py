@@ -1,8 +1,9 @@
-from pyteal import Expr, abi, Sqrt, Int
+from pyteal import Expr, Int, Sqrt, abi
+
 from beaker import (
-    sandbox,
-    client,
     Application,
+    client,
+    sandbox,
 )
 
 
