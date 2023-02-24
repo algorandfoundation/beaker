@@ -27,7 +27,7 @@ from beaker.precompile import PrecompiledLogicSignatureTemplate
 Signature = abi.StaticBytes[Literal[64]]
 
 
-def SigChecker() -> LogicSignatureTemplate:
+def SigChecker() -> LogicSignatureTemplate:  # noqa: N802
     # Simple program to check an ed25519 signature given a message and signature
 
     def evaluate(user_addr: Expr) -> Expr:

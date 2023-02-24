@@ -60,11 +60,7 @@ markers = [
 select = ["E", "F", "ANN", "UP", "N", "C", "B", "YTT", "W", "FBT", "Q", "RUF", "I"]
 ignore = [
     "ANN101", # missing type for self parameter
-    "B008", # function calls in argument defaults
     "E501", # line too long - black takes care of this for us
-    "FBT001", # bool positional arg in function definition
-    "FBT002", # bool default value in function definition
-    "N802", # lowercase function names
 ]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -85,8 +81,8 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 target-version = "py310"
 
 [tool.ruff.per-file-ignores]
-"tests/state_test.py" = ["ANN001", "ANN401"]
+"tests/state_test.py" = ["ANN001", "ANN201", "ANN401"]
+"beaker/lib/*.py" = ["N802"]  # lowercase function names
 
 [tool.ruff.flake8-annotations]
-allow-star-arg-any = true
-suppress-none-returning = true
+mypy-init-return = true

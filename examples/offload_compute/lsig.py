@@ -27,7 +27,7 @@ HashValue = abi.StaticBytes[Literal[32]]
 Signature = abi.StaticBytes[Literal[65]]
 
 
-def EthEcdsaVerify(version: int) -> LogicSignature:
+def EthEcdsaVerify(version: int) -> LogicSignature:  # noqa: N802
     """
     This Lsig has a single method  `eth_ecdsa_validate` that takes two application arguments:
       hash, signature

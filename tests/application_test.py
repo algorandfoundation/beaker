@@ -156,7 +156,9 @@ def test_application_external_override_false() -> None:
 
 
 @pytest.mark.parametrize("create_existing_handle", [True, False])
-def test_application_external_override_none(create_existing_handle: bool) -> None:
+def test_application_external_override_none(
+    create_existing_handle: bool,  # noqa: FBT001
+) -> None:
     app = Application(
         f"ExternalOverrideNone{'With' if create_existing_handle else 'Without'}Existing"
     )
@@ -221,7 +223,9 @@ def test_application_bare_override_false() -> None:
 
 
 @pytest.mark.parametrize("create_existing_handle", [True, False])
-def test_application_bare_override_none(create_existing_handle: bool) -> None:
+def test_application_bare_override_none(
+    create_existing_handle: bool,  # noqa: FBT001
+) -> None:
     app = Application(
         f"BareOverrideNone{'With' if create_existing_handle else 'Without'}Existing"
     )
@@ -512,7 +516,7 @@ def test_struct_args() -> None:
 
 
 def test_closure_vars() -> None:
-    def Inst(value: str) -> Application:
+    def make_app(value: str) -> Application:
         app = Application("InAClosure")
 
         v = pt.Bytes(value)
@@ -531,11 +535,11 @@ def test_closure_vars() -> None:
 
         return app
 
-    i1 = Inst("first")
+    i1 = make_app("first")
     i1_approval_program = i1.build().approval_program
     assert i1_approval_program
 
-    i2 = Inst("second")
+    i2 = make_app("second")
     i2_approval_program = i2.build().approval_program
     assert i2_approval_program
 

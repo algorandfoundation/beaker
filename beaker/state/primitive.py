@@ -58,7 +58,7 @@ class StateValue(Expr, StateStorage):
         stack_type: Literal[TealType.bytes, TealType.uint64],
         key: Expr | str | None = None,
         default: Expr | None = None,
-        static: bool = False,
+        static: bool = False,  # noqa: FBT001, FBT002
         descr: str | None = None,
     ):
         super().__init__()
@@ -102,14 +102,14 @@ class StateValue(Expr, StateStorage):
         """returns the string held by the key Bytes object"""
         return cast(Bytes, self.key).byte_str.replace('"', "")
 
-    def increment(self, cnt: Expr = Int(1)) -> Expr:
+    def increment(self, cnt: Expr = Int(1)) -> Expr:  # noqa: B008
         """helper to increment a counter"""
         check_is_int(self)
         check_not_static(self)
 
         return self.set(self.get() + cnt)
 
-    def decrement(self, cnt: Expr = Int(1)) -> Expr:
+    def decrement(self, cnt: Expr = Int(1)) -> Expr:  # noqa: B008
         """helper to decrement a counter"""
         check_is_int(self)
         check_not_static(self)
@@ -268,7 +268,7 @@ class LocalStateValue(StateValue, LocalStateStorage):
         stack_type: Literal[TealType.bytes, TealType.uint64],
         key: Expr | str | None = None,
         default: Expr | None = None,
-        static: bool = False,
+        static: bool = False,  # noqa: FBT001, FBT002
         descr: str | None = None,
     ):
         super().__init__(stack_type, key, default, static, descr)

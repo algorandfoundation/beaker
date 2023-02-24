@@ -37,18 +37,15 @@ def test_handler_logic_signature() -> None:
 
 
 def test_templated_logic_signature() -> None:
-    def Lsig() -> LogicSignatureTemplate:
-        def evaluate(pubkey: pt.Expr) -> pt.Expr:
-            return pt.Seq(
-                pt.Assert(pt.Len(pubkey)),
-                pt.Int(1),
-            )
-
-        return LogicSignatureTemplate(
-            evaluate, runtime_template_variables={"pubkey": pt.TealType.bytes}
+    def evaluate(pubkey: pt.Expr) -> pt.Expr:
+        return pt.Seq(
+            pt.Assert(pt.Len(pubkey)),
+            pt.Int(1),
         )
 
-    lsig = Lsig()
+    lsig = LogicSignatureTemplate(
+        evaluate, runtime_template_variables={"pubkey": pt.TealType.bytes}
+    )
 
     assert len(lsig.runtime_template_variables) == 1
     assert lsig.program
@@ -78,20 +75,16 @@ def test_different_methods_logic_signature() -> None:
     def no_self_internal_tester(x: pt.Expr, y: pt.Expr) -> pt.Expr:
         return x * y
 
-    def Lsig() -> LogicSignature:
-        def evaluate() -> pt.Expr:
-            return pt.Seq(
-                (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                (o := pt.abi.Uint64()).set(abi_tester(s)),
-                pt.Assert(internal_tester(o.get(), pt.Len(s.get()))),
-                (sv := pt.ScratchVar()).store(pt.Int(1)),
-                pt.Assert(internal_scratch_tester(sv, o.get())),
-                pt.Int(1),
-            )
-
-        return LogicSignature(evaluate)
-
-    lsig = Lsig()
+    lsig = LogicSignature(
+        pt.Seq(
+            (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
+            (o := pt.abi.Uint64()).set(abi_tester(s)),
+            pt.Assert(internal_tester(o.get(), pt.Len(s.get()))),
+            (sv := pt.ScratchVar()).store(pt.Int(1)),
+            pt.Assert(internal_scratch_tester(sv, o.get())),
+            pt.Int(1),
+        )
+    )
 
     assert lsig.program
 

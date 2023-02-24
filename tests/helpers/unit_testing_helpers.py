@@ -79,7 +79,7 @@ def unit_test_app_blueprint(
     return app
 
 
-def UnitTestingApp(
+def UnitTestingApp(  # noqa: N802
     expr_to_test: pt.Expr | None = None,
     name: str = "UnitTestingApp",
     version: int = pt.MAX_PROGRAM_VERSION,

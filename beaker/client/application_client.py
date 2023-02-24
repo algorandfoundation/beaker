@@ -102,7 +102,7 @@ class ApplicationClient:
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
         extra_pages: int | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> tuple[int, str, str]:
         """Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed"""
 
@@ -166,7 +166,7 @@ class ApplicationClient:
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed"""
 
@@ -210,7 +210,7 @@ class ApplicationClient:
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to OptIn"""
 
@@ -251,7 +251,7 @@ class ApplicationClient:
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut"""
 
@@ -292,7 +292,7 @@ class ApplicationClient:
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to ClearState"""
 
@@ -322,7 +322,7 @@ class ApplicationClient:
         sender: str | None = None,
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> str:
         """Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication"""
 
@@ -362,7 +362,7 @@ class ApplicationClient:
         self,
         signer: TransactionSigner | None = None,
         sender: str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> "ApplicationClient":
 
         """makes a copy of the current ApplicationClient and the fields passed"""
@@ -393,7 +393,7 @@ class ApplicationClient:
         lease: bytes | None = None,
         rekey_to: str | None = None,
         atc: AtomicTransactionComposer | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> ABIResult:
 
         """Handles calling the application"""
@@ -534,7 +534,7 @@ class ApplicationClient:
         note: bytes | None = None,
         lease: bytes | None = None,
         rekey_to: str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> AtomicTransactionComposer:
 
         """Adds a transaction to the AtomicTransactionComposer passed"""
@@ -655,7 +655,7 @@ class ApplicationClient:
         return atc.tx_ids.pop()
 
     def get_global_state(
-        self, raw: bool = False
+        self, *, raw: bool = False
     ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         global_state = self.client.application_info(self.app_id)
@@ -667,7 +667,7 @@ class ApplicationClient:
         )
 
     def get_local_state(
-        self, account: str | None = None, raw: bool = False
+        self, account: str | None = None, *, raw: bool = False
     ) -> dict[str | bytes, bytes | str | int]:
 
         """gets the local state info for the app id set and the account specified"""

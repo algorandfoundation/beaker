@@ -2,7 +2,7 @@ from functools import cached_property
 from typing import Any, Generic, TypeVar
 
 from algosdk.transaction import StateSchema
-from pyteal import Expr, Seq, TealType, Txn
+from pyteal import Expr, Seq, TealType
 
 from beaker.application_specification import AppSpecStateDict
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
@@ -88,7 +88,7 @@ class LocalStateAggregate(StateAggregate[LocalStateStorage]):
                 f"Too much local state, expected {self.total_keys} <= {MAX_LOCAL_STATE}"
             )
 
-    def initialize(self, acct: Expr = Txn.sender()) -> Expr:
+    def initialize(self, acct: Expr) -> Expr:
         """Generate expression from state values to initialize a default value"""
         return Seq(
             *filter(None, (f.initialize(acct=acct) for f in self._fields.values()))

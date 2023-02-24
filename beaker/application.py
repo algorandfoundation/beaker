@@ -129,7 +129,7 @@ class Application(Generic[TState]):
         self,
         name: str,
         *,
-        state: TState = cast(TState, None),
+        state: TState = cast(TState, None),  # noqa: B008
         descr: str | None = None,
         build_options: BuildOptions | None = None,
     ):
@@ -794,16 +794,16 @@ class Application(Generic[TState]):
         self._check_context()
         return self._global_state.initialize()
 
-    def initialize_local_state(self, addr: Expr = Txn.sender()) -> Expr:
+    def initialize_local_state(self, addr: Expr | None = None) -> Expr:
         """
         Initialize any local state variables declared
 
-        :param addr: Optional, address of account to initialize state for.
+        :param addr: Optional, address of account to initialize state for (defaults to Txn.sender()).
         :return: The Expr to initialize the account state.
         :rtype: pyteal.Expr
         """
         self._check_context()
-        return self._local_state.initialize(addr)
+        return self._local_state.initialize(addr or Txn.sender())
 
     def _check_context(self) -> None:
         if ctx := _ctx.get(None):
@@ -817,6 +817,7 @@ class Application(Generic[TState]):
     def _capture_method_hints_and_remove_defaults(
         self,
         fn: HandlerFunc,
+        *,
         read_only: bool,
         actions: dict[OnCompleteActionName, CallConfig],
     ) -> MethodHints:

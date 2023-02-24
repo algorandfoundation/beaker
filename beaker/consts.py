@@ -15,12 +15,12 @@ Algo: Final[Int] = Int(algo)
 MilliAlgo: Final[Int] = Int(milli_algo)
 
 #: Used for shorthand for Int(10*algo) like Algos(10)
-def Algos(v: int | float) -> Int:
+def Algos(v: int | float) -> Int:  # noqa: N802
     return Int(int(v * algo))
 
 
 #: Used for shorthand for Int(10*milli_algo) like MilliAlgos(10)
-def MilliAlgos(v: int | float) -> Int:
+def MilliAlgos(v: int | float) -> Int:  # noqa: N802
     return Int(int(v * milli_algo))
 
 
