@@ -90,8 +90,11 @@ class LogicSignatureTemplate:
             # "unused variable" warning if the purpose of the template variable
             # is just to change the logic signature address
             if not (params.keys() <= runtime_template_variables.keys()):
+                invalid_args = set(params.keys()) - set(
+                    runtime_template_variables.keys()
+                )
                 raise ValueError(
-                    "Logic signature methods should take no arguments, unless using runtime templates"
+                    f"Logic signature template got unexpected arguments: {', '.join(invalid_args)}."
                 )
             forward_args = list(params.keys())
             logic = expr_or_func(

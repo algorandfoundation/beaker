@@ -1,4 +1,5 @@
 import pyteal as pt
+import pytest
 
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from tests.conftest import check_lsig_output_stability
@@ -114,3 +115,14 @@ def test_lsig_template_ordering() -> None:
     l = Lsig()
     for idx, tv in enumerate(l.runtime_template_variables.values()):
         assert tv.name == expected[idx]
+
+
+def test_templated_logic_signature_bad_args() -> None:
+    with pytest.raises(ValueError, match="got unexpected arguments: bad_arg.$"):
+        LogicSignatureTemplate(
+            lambda good_arg, bad_arg: pt.Approve(),
+            runtime_template_variables={
+                "good_arg": pt.TealType.bytes,
+                "missing_arg": pt.TealType.uint64,
+            },
+        )
