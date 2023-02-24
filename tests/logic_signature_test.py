@@ -99,22 +99,21 @@ def test_different_methods_logic_signature() -> None:
 
 
 def test_lsig_template_ordering() -> None:
-    def Lsig() -> LogicSignatureTemplate:
-        return LogicSignatureTemplate(
-            pt.Approve(),
-            runtime_template_variables={
-                "f": pt.TealType.uint64,
-                "a": pt.TealType.uint64,
-                "b": pt.TealType.uint64,
-                "c": pt.TealType.uint64,
-            },
-        )
-
-    expected = ["f", "a", "b", "c"]
-
-    l = Lsig()
-    for idx, tv in enumerate(l.runtime_template_variables.values()):
-        assert tv.name == expected[idx]
+    lsig = LogicSignatureTemplate(
+        pt.Approve(),
+        runtime_template_variables={
+            "f": pt.TealType.uint64,
+            "a": pt.TealType.uint64,
+            "b": pt.TealType.uint64,
+            "c": pt.TealType.uint64,
+        },
+    )
+    assert [rtt_var.name for rtt_var in lsig.runtime_template_variables.values()] == [
+        "f",
+        "a",
+        "b",
+        "c",
+    ]
 
 
 def test_templated_logic_signature_bad_args() -> None:

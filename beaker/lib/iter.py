@@ -20,5 +20,5 @@ def Iterate(sub: Expr, n: Int, i: ScratchVar | None = None) -> Expr:
     i = i or ScratchVar()
     init = i.store(Int(0))
     cond = i.load() < n
-    iter = i.store(i.load() + Int(1))
-    return For(init, cond, iter).Do(sub)
+    step = i.store(i.load() + Int(1))
+    return For(init, cond, step).Do(sub)

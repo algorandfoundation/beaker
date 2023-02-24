@@ -699,7 +699,7 @@ class ApplicationClient:
         contents = self.client.application_box_by_name(self.app_id, name)
         return b64decode(contents["value"])
 
-    def resolve(self, to_resolve: DefaultArgumentDict) -> Any:
+    def resolve(self, to_resolve: DefaultArgumentDict) -> Any:  # noqa: ANN401
         match to_resolve:
             case {"source": "constant", "data": data}:
                 return data
