@@ -16,7 +16,7 @@ First, create a class to represent our application as a subclass of the beaker `
 
 .. code-block:: python
 
-    from beaker import Application
+    beaker.application import Application
 
     class Calculator(Application):
         pass 
