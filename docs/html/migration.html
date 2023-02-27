@@ -334,8 +334,8 @@ has changed.</p>
 <p class="admonition-title">Note</p>
 <p>There were recent changes in PyTeal to the way <code class="docutils literal notranslate"><span class="pre">ClearState</span></code> is handled, which were incorporated in Beaker v0.5.1.
 In particular, <code class="docutils literal notranslate"><span class="pre">ClearState</span></code> handler methods must now take no arguments. Previously, this was considered valid PyTeal,
-however since the clear state program can not reject, there is no way to ensure these arguments are available, leading
-to silent failures.</p>
+however since a clear state program reject will not prevent the accounts local state from being cleared,
+special care needs to be taken to allow as few conditions that might lead to rejection as possible.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

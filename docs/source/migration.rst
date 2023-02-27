@@ -240,8 +240,8 @@ The following decorators are all now accessed through the ``Application`` instan
 
 .. note:: There were recent changes in PyTeal to the way ``ClearState`` is handled, which were incorporated in Beaker v0.5.1.
   In particular, ``ClearState`` handler methods must now take no arguments. Previously, this was considered valid PyTeal,
-  however since the clear state program can not reject, there is no way to ensure these arguments are available, leading
-  to silent failures.
+  however since a clear state program reject will not prevent the accounts local state from being cleared,
+  special care needs to be taken to allow as few conditions that might lead to rejection as possible.
 
 .. note:: Decorated methods now return ``ABIReturnSubroutine`` or ``SubroutineWrapperFn``, not the original method. This
           should mostly be an internal change only, but if these methods were being invoked by other methods within the
