@@ -710,7 +710,7 @@ class Application(Generic[TState]):
         Note: .
 
         Args:
-            client (optional): An Algod client that is required if there are any ``precopiled`` so they can be fully compiled.
+            client (optional): An Algod client that is required if there are any ``precompiled`` so they can be fully compiled.
         """
 
         with _set_ctx(app=self, client=client):
