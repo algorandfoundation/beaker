@@ -49,7 +49,7 @@ def SigChecker() -> LogicSignatureTemplate:  # noqa: N802
 
 sig_checker = SigChecker()
 
-app = Application("App").implement(unconditional_create_approval)
+app = Application("App").apply(unconditional_create_approval)
 
 
 @app.external

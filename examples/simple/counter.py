@@ -17,7 +17,7 @@ class CounterState:
     )
 
 
-counter_app = Application("CounterApp", state=CounterState()).implement(
+counter_app = Application("CounterApp", state=CounterState()).apply(
     unconditional_create_approval, initialize_global_state=True
 )
 

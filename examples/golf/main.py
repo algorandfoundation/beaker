@@ -57,7 +57,7 @@ sorted_ints_app = Application(
     "SortedIntegers",
     build_options=BuildOptions(avm_version=8),
     state=SortedIntegersState(),
-).implement(unconditional_create_approval)
+).apply(unconditional_create_approval)
 
 
 @sorted_ints_app.external

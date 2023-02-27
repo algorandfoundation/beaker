@@ -59,7 +59,7 @@ disk_hungry = Application(
     "DiskHungry",
     build_options=BuildOptions(avm_version=8),
     state=DiskHungryState(),
-).implement(unconditional_create_approval)
+).apply(unconditional_create_approval)
 
 
 # Add account during opt in  by checking the sender against the address

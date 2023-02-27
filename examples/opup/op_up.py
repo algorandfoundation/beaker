@@ -35,7 +35,7 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
     target_app = Application(
         name="TargetApp",
         descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
-    ).implement(unconditional_create_approval)
+    ).apply(unconditional_create_approval)
 
     @target_app.external(authorize=Authorize.only(Global.creator_address()))
     def opup() -> Expr:

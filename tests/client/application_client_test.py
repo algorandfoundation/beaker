@@ -690,7 +690,7 @@ def test_abi_delete(sb_accts: SandboxAccounts) -> None:
 
 
 def test_abi_close_out(sb_accts: SandboxAccounts) -> None:
-    app = Application("ABIUpdate").implement(beaker.unconditional_opt_in_approval)
+    app = Application("ABIUpdate").apply(beaker.unconditional_opt_in_approval)
 
     do_close_out = 7
 

@@ -8,9 +8,9 @@ from beaker import (
     unconditional_create_approval,
 )
 
-hello_app = Application(
-    "HelloBeaker", build_options=BuildOptions(avm_version=8)
-).implement(unconditional_create_approval)
+hello_app = Application("HelloBeaker", build_options=BuildOptions(avm_version=8)).apply(
+    unconditional_create_approval
+)
 
 
 @hello_app.external

@@ -27,8 +27,8 @@ class ClientExampleState:
 
 my_app = (
     Application("ClientExample", state=ClientExampleState())
-    .implement(unconditional_create_approval, initialize_global_state=True)
-    .implement(unconditional_opt_in_approval, initialize_local_state=True)
+    .apply(unconditional_create_approval, initialize_global_state=True)
+    .apply(unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 

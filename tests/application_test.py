@@ -9,17 +9,15 @@ from beaker import (
     Application,
     BuildOptions,
     GlobalStateBlob,
-    LocalStateBlob,
-)
-from beaker.application_specification import ApplicationSpecification
-from beaker.blueprints import unconditional_create_approval
-from beaker.lib.storage import BoxList
-from beaker.state import (
     GlobalStateValue,
+    LocalStateBlob,
     LocalStateValue,
     ReservedGlobalStateValue,
     ReservedLocalStateValue,
+    unconditional_create_approval,
 )
+from beaker.application_specification import ApplicationSpecification
+from beaker.lib.storage import BoxList
 from tests.conftest import check_application_artifacts_output_stability
 
 
@@ -29,7 +27,7 @@ def test_empty_application() -> None:
 
 
 def test_unconditional_create_approval() -> None:
-    app = Application("OnlyCreate").implement(unconditional_create_approval)
+    app = Application("OnlyCreate").apply(unconditional_create_approval)
     check_application_artifacts_output_stability(app)
 
 
@@ -292,7 +290,7 @@ def test_state_init() -> None:
         # not-state
         not_a_state_var = pt.Int(1)
 
-    app = Application("TestStateInit", state=MyState()).implement(
+    app = Application("TestStateInit", state=MyState()).apply(
         unconditional_create_approval, initialize_global_state=True
     )
 

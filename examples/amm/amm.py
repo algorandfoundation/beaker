@@ -89,7 +89,7 @@ class ConstantProductAMMState:
     )
 
 
-amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState()).implement(
+amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState()).apply(
     unconditional_create_approval, initialize_global_state=True
 )
 ##############

@@ -30,7 +30,7 @@ oracle_data_cache_app = Application(
     TODO: more than 64 vals lol
     """,
     state=OracleState(),
-).implement(unconditional_create_approval)
+).apply(unconditional_create_approval)
 
 
 @oracle_data_cache_app.external
@@ -72,7 +72,7 @@ class MyStrategy(WormholeStrategy):
         )
 
 
-oracle_data_cache_app.implement(wormhole_transfer, strategy=MyStrategy())
+oracle_data_cache_app.apply(wormhole_transfer, strategy=MyStrategy())
 
 
 if __name__ == "__main__":

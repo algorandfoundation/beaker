@@ -3,7 +3,7 @@ from pyteal import Expr, abi
 from beaker import Application, sandbox, unconditional_create_approval
 from beaker.client import ApplicationClient
 
-calculator_app = Application("Calculator").implement(unconditional_create_approval)
+calculator_app = Application("Calculator").apply(unconditional_create_approval)
 
 
 @calculator_app.external

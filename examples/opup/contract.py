@@ -16,9 +16,9 @@ from examples.opup.op_up import OpUpState, op_up_blueprint
 
 expensive_app = Application(
     name="ExpensiveApp",
-    descr="""Do expensive work to demonstrate implementing op_up blueprint""",
+    descr="Do expensive work to demonstrate implementing op_up blueprint",
     state=OpUpState(),
-).implement(unconditional_create_approval)
+).apply(unconditional_create_approval)
 
 call_opup = op_up_blueprint(expensive_app)
 

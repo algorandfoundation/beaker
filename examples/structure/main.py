@@ -27,8 +27,8 @@ class StructerState:
 
 structer_app = (
     Application("Structer", state=StructerState())
-    .implement(unconditional_create_approval)
-    .implement(unconditional_opt_in_approval, initialize_local_state=True)
+    .apply(unconditional_create_approval)
+    .apply(unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 

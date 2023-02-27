@@ -55,6 +55,8 @@ __all__ = [
     "Application",
     "this_app",
     "precompiled",
+    "unconditional_create_approval",
+    "unconditional_opt_in_approval",
 ]
 
 OnCompleteActionName: TypeAlias = Literal[
@@ -694,13 +696,13 @@ class Application(Generic[TState]):
         )
         return decorator if fn is None else decorator(fn)
 
-    def implement(
+    def apply(
         self,
-        blueprint: Callable[Concatenate["Application[TState]", P], T],
+        func: Callable[Concatenate["Application[TState]", P], T],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> "Application[TState]":
-        blueprint(self, *args, **kwargs)
+        func(self, *args, **kwargs)
         return self
 
     def build(self, client: "AlgodClient | None" = None) -> ApplicationSpecification:
@@ -936,6 +938,34 @@ def precompiled(
     if value is ctx_app:
         raise ValueError("Attempted to precompile the current application")
     return ctx_app.precompiled(value)
+
+
+def unconditional_create_approval(
+    app: Application,
+    *,
+    initialize_global_state: bool = False,
+    bare: bool = True,
+) -> None:
+    """"""
+
+    @app.create(bare=bare)
+    def create() -> Expr:
+        if initialize_global_state:
+            return app.initialize_global_state()
+        return Approve()
+
+
+def unconditional_opt_in_approval(
+    app: Application,
+    *,
+    initialize_local_state: bool = False,
+    bare: bool = True,
+) -> None:
+    @app.opt_in(bare=bare)
+    def opt_in() -> Expr:
+        if initialize_local_state:
+            return app.initialize_local_state()
+        return Approve()
 
 
 TKey = TypeVar("TKey")

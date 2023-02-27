@@ -103,7 +103,7 @@ class MembershipClubState:
 membership_club_app = Application(
     "MembershipClub",
     state=MembershipClubState(max_members=1000, record_type=MembershipRecord),
-).implement(unconditional_create_approval)
+).apply(unconditional_create_approval)
 
 
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
@@ -219,7 +219,7 @@ class MemberState:
     membership_token = GlobalStateValue(TealType.uint64)
 
 
-app_member_app = Application("AppMember", state=MemberState()).implement(
+app_member_app = Application("AppMember", state=MemberState()).apply(
     unconditional_create_approval
 )
 
