@@ -73,7 +73,6 @@ Or from github directly (no promises on stability):
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
-
 # Dev Environment 
 
 Requires a local [sandbox](https://github.com/algorand/sandbox) with latest stable tag minimum.
