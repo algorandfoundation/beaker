@@ -38,6 +38,7 @@ jobs:
         with:
           # Fetch entire repository history so we can determine version number from it
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_GH_TOKEN }}
 
       - name: Install poetry
         run: pipx install poetry
