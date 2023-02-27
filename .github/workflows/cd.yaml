@@ -69,7 +69,7 @@ jobs:
             publish
           gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
 
       - name: Create Continuous Deployment - Production
         if: steps.get_branch.outputs.branch == 'master' && inputs.production_release
