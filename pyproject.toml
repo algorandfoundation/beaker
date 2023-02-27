@@ -30,6 +30,7 @@ pre-commit = "^2.20.0"
 flake8-tidy-imports = "^4.8.0"
 python-semantic-release = "^7.32.2"
 pip-audit = "^2.4.12"
+markdown-it-py = ">=2.2.0"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "~5.0.2"
