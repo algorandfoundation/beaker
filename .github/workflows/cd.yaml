@@ -82,6 +82,6 @@ jobs:
             --define=patch_without_tag=true \
             publish
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
