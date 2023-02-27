@@ -828,30 +828,32 @@ class Application(Generic[TState]):
         sig = inspect.signature(fn)
         params = sig.parameters.copy()
 
-        mh = MethodHints(
+        hints = MethodHints(
             read_only=read_only,
             call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
         )
 
         for name, param in params.items():
-            match param.default:
-                case ABIReturnSubroutine():
-                    foo = next(
-                        iter(
-                            ext
-                            for ext in self.abi_externals.values()
-                            if ext.method is param.default
-                        )
-                    )
-                    mh.default_arguments[name] = _default_argument_from_resolver(foo)
-                    params[name] = param.replace(default=inspect.Parameter.empty)
-                case (Expr() | int() | str() | bytes() | ABIExternal()) as value:
-                    mh.default_arguments[name] = _default_argument_from_resolver(value)
-                    params[name] = param.replace(default=inspect.Parameter.empty)
+            if param.default is not inspect.Parameter.empty:
+                # delete the default value from the signature, for PyTeal's benefit
+                params[name] = param.replace(default=inspect.Parameter.empty)
+
+                if isinstance(param.default, ABIReturnSubroutine):
+                    # we need to look up the ABIExternal to resolve
+                    to_resolve = self.abi_externals[param.default.method_signature()]
+                else:
+                    # note that we don't need to check the type here - if it's invalid,
+                    # then _default_argument_from_resolver will raise an appropriate error
+                    to_resolve = param.default
+                # add the default value resolution data to the hints
+                hints.default_arguments[name] = _default_argument_from_resolver(
+                    to_resolve
+                )
+
             if inspect.isclass(param.annotation) and issubclass(
                 param.annotation, abi.NamedTuple
             ):
-                mh.structs[name] = {
+                hints.structs[name] = {
                     "name": str(param.annotation.__name__),
                     "elements": [
                         [name, str(abi.algosdk_from_annotation(typ.__args__[0]))]
@@ -859,12 +861,12 @@ class Application(Generic[TState]):
                     ],
                 }
 
-        if mh.default_arguments:
+        if hints.default_arguments:
             # Fix function sig/annotations
             newsig = sig.replace(parameters=list(params.values()))
             fn.__signature__ = newsig  # type: ignore[attr-defined]
 
-        return mh
+        return hints
 
 
 def _default_argument_from_resolver(
