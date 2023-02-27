@@ -59,7 +59,7 @@ __all__ = [
     "unconditional_opt_in_approval",
 ]
 
-OnCompleteActionName: TypeAlias = Literal[
+OnCompleteActionName = Literal[
     "no_op",
     "opt_in",
     "close_out",
@@ -250,9 +250,10 @@ class Application(Generic[TState]):
         /,
     ) -> None:
         if isinstance(method_signature_or_reference, str):
-            self.abi_externals.pop(method_signature_or_reference)
+            sig = method_signature_or_reference
         else:
-            self.abi_externals.pop(method_signature_or_reference.method_signature())
+            sig = method_signature_or_reference.method_signature()
+        del self.abi_externals[sig]
 
     def _register_bare_external(
         self,
@@ -280,14 +281,23 @@ class Application(Generic[TState]):
 
     def deregister_bare_method(
         self,
-        action_name_or_reference: OnCompleteActionName | SubroutineFnWrapper,
+        action_name_or_reference: OnCompleteActionName
+        | Literal["clear_state"]
+        | SubroutineFnWrapper,
         /,
     ) -> None:
-        if isinstance(action_name_or_reference, str):
-            self.bare_actions.pop(cast(OnCompleteActionName, action_name_or_reference))
-        else:
+        if isinstance(action_name_or_reference, SubroutineFnWrapper):
             method = action_name_or_reference
             _remove_first_match(self.bare_actions, lambda _, v: v.action is method)
+        else:
+            if action_name_or_reference == "clear_state":
+                if self._clear_state_method is None:
+                    # not really any reason for this, other than to match behaviour
+                    # of other bare actions
+                    raise KeyError("No clear_state method defined")
+                self._clear_state_method = None
+            else:
+                del self.bare_actions[action_name_or_reference]
 
     @overload
     def external(
@@ -344,17 +354,18 @@ class Application(Generic[TState]):
 
         def decorator(func: HandlerFunc) -> SubroutineFnWrapper | ABIReturnSubroutine:
             sig = inspect.signature(func)
-            nonlocal bare
             if bare is None:
-                bare = not sig.parameters
+                bare_ = not sig.parameters
+            else:
+                bare_ = bare
 
-            if bare and read_only:
+            if bare_ and read_only:
                 raise ValueError("read_only has no effect on bare methods")
 
             actions: MethodConfigDict
             match method_config:
                 case None:
-                    if bare:
+                    if bare_:
                         raise ValueError("bare requires method_config")
                     else:
                         actions = {"no_op": CallConfig.CALL}
@@ -369,7 +380,7 @@ class Application(Generic[TState]):
 
             if authorize is not None:
                 func = authorize_decorator(authorize)(func)
-            if bare:
+            if bare_:
                 sub = SubroutineFnWrapper(func, return_type=TealType.none, name=name)
                 if sub.subroutine.argument_count():
                     raise TypeError("Bare externals must take no method arguments")
