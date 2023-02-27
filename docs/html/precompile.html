@@ -172,11 +172,9 @@ should be fully compiled prior to constructing its own program.</p>
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p id="offload-compute-example">Using Precompile for offloading compute</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignature</span>
-
 <span class="kn">from</span> <span class="nn">examples.offload_compute.lsig</span> <span class="kn">import</span> <span class="n">EthEcdsaVerify</span><span class="p">,</span> <span class="n">HashValue</span><span class="p">,</span> <span class="n">Signature</span>
 
-
-<span class="n">eth_checker</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;EthChecker&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
+<span class="n">eth_checker</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;EthChecker&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
 
 <span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
 
@@ -193,28 +191,30 @@ should be fully compiled prior to constructing its own program.</p>
     <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
         <span class="c1"># The precompiled lsig should have its address and binary available</span>
         <span class="c1"># here so we can use it to make sure we&#39;ve been called</span>
+        <span class="c1"># with the correct lsig</span>
+        <span class="n">Assert</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">verifier</span><span class="o">.</span><span class="n">address</span><span class="p">()),</span>
 </pre></div>
 </div>
 <p id="sub-app-example">Using Precompile for a child Application</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">abi</span><span class="p">,</span>
+    <span class="n">Approve</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
     <span class="n">InnerTxn</span><span class="p">,</span>
     <span class="n">InnerTxnBuilder</span><span class="p">,</span>
     <span class="n">Int</span><span class="p">,</span>
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">Approve</span><span class="p">,</span>
     <span class="n">TxnField</span><span class="p">,</span>
+    <span class="n">abi</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">GlobalStateValue</span><span class="p">,</span>
     <span class="n">Application</span><span class="p">,</span>
+    <span class="n">GlobalStateValue</span><span class="p">,</span>
     <span class="n">LogicSignature</span><span class="p">,</span>
     <span class="n">precompiled</span><span class="p">,</span>
+    <span class="n">unconditional_create_approval</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">beaker.blueprints</span> <span class="kn">import</span> <span class="n">unconditional_create_approval</span>
 
 
 <span class="k">class</span> <span class="nc">Child1State</span><span class="p">:</span>
@@ -224,7 +224,7 @@ should be fully compiled prior to constructing its own program.</p>
     <span class="p">)</span>
 
 
-<span class="n">child1_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Child1&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">Child1State</span><span class="p">())</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
+<span class="n">child1_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Child1&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">Child1State</span><span class="p">())</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
     <span class="n">unconditional_create_approval</span><span class="p">,</span> <span class="n">initialize_global_state</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 
@@ -238,7 +238,7 @@ should be fully compiled prior to constructing its own program.</p>
     <span class="p">)</span>
 
 
-<span class="n">child2_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Child2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
+<span class="n">child2_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Child2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
 <span class="n">lsig</span> <span class="o">=</span> <span class="n">LogicSignature</span><span class="p">(</span><span class="n">Approve</span><span class="p">())</span>
 
 
@@ -247,7 +247,7 @@ should be fully compiled prior to constructing its own program.</p>
     <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">precompiled</span><span class="p">(</span><span class="n">lsig</span><span class="p">)</span><span class="o">.</span><span class="n">address</span><span class="p">())</span>
 
 
-<span class="n">parent_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Parent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
+<span class="n">parent_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Parent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
 
 
 <span class="nd">@parent_app</span><span class="o">.</span><span class="n">external</span>
@@ -273,7 +273,7 @@ should be fully compiled prior to constructing its own program.</p>
     <span class="p">)</span>
 
 
-<span class="n">grand_parent_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Grandparent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
+<span class="n">grand_parent_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Grandparent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
 
 
 <span class="nd">@grand_parent_app</span><span class="o">.</span><span class="n">external</span>

@@ -79,42 +79,40 @@
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">typing</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">MutableMapping</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">contextvars</span> <span class="kn">import</span> <span class="n">ContextVar</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">cast</span><span class="p">,</span>
-    <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">TypeAlias</span><span class="p">,</span>
+    <span class="n">Concatenate</span><span class="p">,</span>
+    <span class="n">Generic</span><span class="p">,</span>
     <span class="n">Literal</span><span class="p">,</span>
     <span class="n">ParamSpec</span><span class="p">,</span>
-    <span class="n">Concatenate</span><span class="p">,</span>
+    <span class="n">TypeAlias</span><span class="p">,</span>
     <span class="n">TypeVar</span><span class="p">,</span>
+    <span class="n">cast</span><span class="p">,</span>
     <span class="n">overload</span><span class="p">,</span>
-    <span class="n">Iterator</span><span class="p">,</span>
-    <span class="n">Generic</span><span class="p">,</span>
-    <span class="n">MutableMapping</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
-    <span class="n">Txn</span><span class="p">,</span>
     <span class="n">ABIReturnSubroutine</span><span class="p">,</span>
+    <span class="n">Approve</span><span class="p">,</span>
     <span class="n">BareCallActions</span><span class="p">,</span>
+    <span class="n">Bytes</span><span class="p">,</span>
+    <span class="n">CallConfig</span><span class="p">,</span>
     <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">MethodConfig</span><span class="p">,</span>
     <span class="n">OnCompleteAction</span><span class="p">,</span>
     <span class="n">Router</span><span class="p">,</span>
-    <span class="n">CallConfig</span><span class="p">,</span>
+    <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
     <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">MethodConfig</span><span class="p">,</span>
-    <span class="n">Bytes</span><span class="p">,</span>
-    <span class="n">Int</span><span class="p">,</span>
-    <span class="n">Approve</span><span class="p">,</span>
+    <span class="n">Txn</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application_specification</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ApplicationSpecification</span><span class="p">,</span>
-    <span class="n">MethodHints</span><span class="p">,</span>
     <span class="n">DefaultArgumentDict</span><span class="p">,</span>
+    <span class="n">MethodHints</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.build_options</span> <span class="kn">import</span> <span class="n">BuildOptions</span>
 <span class="kn">from</span> <span class="nn">beaker.decorators</span> <span class="kn">import</span> <span class="n">authorize</span> <span class="k">as</span> <span class="n">authorize_decorator</span>
@@ -125,7 +123,7 @@
     <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.state._aggregate</span> <span class="kn">import</span> <span class="n">GlobalStateAggregate</span><span class="p">,</span> <span class="n">LocalStateAggregate</span>
-<span class="kn">from</span> <span class="nn">beaker.state.primitive</span> <span class="kn">import</span> <span class="n">LocalStateValue</span><span class="p">,</span> <span class="n">GlobalStateValue</span>
+<span class="kn">from</span> <span class="nn">beaker.state.primitive</span> <span class="kn">import</span> <span class="n">GlobalStateValue</span><span class="p">,</span> <span class="n">LocalStateValue</span>
 
 <span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
@@ -134,6 +132,8 @@
     <span class="s2">&quot;Application&quot;</span><span class="p">,</span>
     <span class="s2">&quot;this_app&quot;</span><span class="p">,</span>
     <span class="s2">&quot;precompiled&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unconditional_create_approval&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unconditional_opt_in_approval&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">OnCompleteActionName</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
@@ -208,7 +208,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">TState</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">TState</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">TState</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">TState</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>  <span class="c1"># noqa: B008</span>
         <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">build_options</span><span class="p">:</span> <span class="n">BuildOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -250,7 +250,7 @@
 
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">precompiled</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">LogicSignatureTemplate</span><span class="p">,</span> <span class="o">/</span>  <span class="c1"># noqa: W504</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">LogicSignatureTemplate</span><span class="p">,</span> <span class="o">/</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">:</span>
         <span class="o">...</span>
 
@@ -261,8 +261,10 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrecompiledApplication</span> <span class="o">|</span> <span class="n">PrecompiledLogicSignature</span> <span class="o">|</span> <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">ctx</span> <span class="o">=</span> <span class="n">_ctx</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">LookupError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s2">&quot;precompiled(...) should be called inside a function&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">LookupError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span>
+                <span class="s2">&quot;precompiled(...) should be called inside a function&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span> <span class="nn">err</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;precompiled() used in another apps context&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -771,13 +773,13 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">implement</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">blueprint</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="s2">&quot;Application[TState]&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span>
+        <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="s2">&quot;Application[TState]&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span>
         <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Application[TState]&quot;</span><span class="p">:</span>
-        <span class="n">blueprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="Application.build"><a class="viewcode-back" href="../../application.html#beaker.application.Application.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;AlgodClient | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApplicationSpecification</span><span class="p">:</span>
@@ -871,16 +873,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_context</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Application.initialize_local_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_local_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_local_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<div class="viewcode-block" id="Application.initialize_local_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_local_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_local_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize any local state variables declared</span>
 
-<span class="sd">        :param addr: Optional, address of account to initialize state for.</span>
+<span class="sd">        :param addr: Optional, address of account to initialize state for (defaults to Txn.sender()).</span>
 <span class="sd">        :return: The Expr to initialize the account state.</span>
 <span class="sd">        :rtype: pyteal.Expr</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_context</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">addr</span> <span class="ow">or</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span></div>
 
     <span class="k">def</span> <span class="nf">_check_context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">ctx</span> <span class="o">:=</span> <span class="n">_ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>
@@ -894,6 +896,7 @@
     <span class="k">def</span> <span class="nf">_capture_method_hints_and_remove_defaults</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
         <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">actions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">OnCompleteActionName</span><span class="p">,</span> <span class="n">CallConfig</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodHints</span><span class="p">:</span>
@@ -995,9 +998,7 @@
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">precompiled</span><span class="p">(</span>
-    <span class="n">value</span><span class="p">:</span> <span class="n">LogicSignatureTemplate</span><span class="p">,</span> <span class="o">/</span>  <span class="c1"># noqa: W504</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">precompiled</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">LogicSignatureTemplate</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">:</span>
     <span class="o">...</span>
 
 
@@ -1007,11 +1008,41 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrecompiledApplication</span> <span class="o">|</span> <span class="n">PrecompiledLogicSignature</span> <span class="o">|</span> <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">ctx_app</span><span class="p">:</span> <span class="n">Application</span> <span class="o">=</span> <span class="n">this_app</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">LookupError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s2">&quot;beaker.precompiled(...) should be called inside a function&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">LookupError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span>
+            <span class="s2">&quot;beaker.precompiled(...) should be called inside a function&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span> <span class="nn">err</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">ctx_app</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempted to precompile the current application&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ctx_app</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">unconditional_create_approval</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">initialize_global_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">initialize_global_state</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">initialize_global_state</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">unconditional_opt_in_approval</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">initialize_local_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">opt_in</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">initialize_local_state</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">initialize_local_state</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
 
 
 <span class="n">TKey</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TKey&quot;</span><span class="p">)</span>

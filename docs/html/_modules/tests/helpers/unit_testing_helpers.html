@@ -83,12 +83,12 @@
 
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Application</span><span class="p">,</span>
+    <span class="n">BuildOptions</span><span class="p">,</span>
     <span class="n">client</span><span class="p">,</span>
     <span class="n">sandbox</span><span class="p">,</span>
+    <span class="n">unconditional_create_approval</span><span class="p">,</span>
     <span class="n">unconditional_opt_in_approval</span><span class="p">,</span>
-    <span class="n">BuildOptions</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">beaker.blueprints</span> <span class="kn">import</span> <span class="n">unconditional_create_approval</span>
 
 <span class="n">algod_client</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="n">sandbox_accounts</span> <span class="o">=</span> <span class="kc">None</span>
@@ -123,7 +123,7 @@
 <span class="sd">    the return value against what you expect.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
         <span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_local_state</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
 
@@ -156,7 +156,7 @@
     <span class="k">return</span> <span class="n">app</span>
 
 
-<div class="viewcode-block" id="UnitTestingApp"><a class="viewcode-back" href="../../../testing.html#tests.helpers.UnitTestingApp">[docs]</a><span class="k">def</span> <span class="nf">UnitTestingApp</span><span class="p">(</span>
+<div class="viewcode-block" id="UnitTestingApp"><a class="viewcode-back" href="../../../testing.html#tests.helpers.UnitTestingApp">[docs]</a><span class="k">def</span> <span class="nf">UnitTestingApp</span><span class="p">(</span>  <span class="c1"># noqa: N802</span>
     <span class="n">expr_to_test</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;UnitTestingApp&quot;</span><span class="p">,</span>
     <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">MAX_PROGRAM_VERSION</span><span class="p">,</span>
@@ -166,7 +166,7 @@
         <span class="n">name</span><span class="p">,</span>
         <span class="n">build_options</span><span class="o">=</span><span class="n">BuildOptions</span><span class="p">(</span><span class="n">avm_version</span><span class="o">=</span><span class="n">version</span><span class="p">),</span>
         <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unit_test_app_blueprint</span><span class="p">,</span> <span class="n">expr_to_test</span><span class="o">=</span><span class="n">expr_to_test</span><span class="p">)</span></div>
+    <span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unit_test_app_blueprint</span><span class="p">,</span> <span class="n">expr_to_test</span><span class="o">=</span><span class="n">expr_to_test</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="assert_output"><a class="viewcode-back" href="../../../testing.html#tests.helpers.assert_output">[docs]</a><span class="k">def</span> <span class="nf">assert_output</span><span class="p">(</span>
@@ -202,10 +202,10 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">spec</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">get_method_by_name</span><span class="p">(</span><span class="s2">&quot;unit_test&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
             <span class="s2">&quot;Expression undefined. Either pass the expr to test or implement unit_test method&quot;</span>
-        <span class="p">)</span>
+        <span class="p">)</span> <span class="kn">from</span> <span class="nn">err</span>
 
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
         <span class="n">algod_client</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">sandbox_accounts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">signer</span>

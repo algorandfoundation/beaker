@@ -407,39 +407,38 @@ In ``1.0`` this could be:
 There will be some scenarios where the above will not be sufficient, for example having the same ABI method across
 multiple apps.
 
-For these cases, the use of closure functions should be considered. This pattern is referred to in Beaker as "blueprints",
-but these are nothing more than Python functions which take an ``Application`` instance, and possibly some arguments, and
-modify the ``Application`` by adding methods to it.
+For these cases, you might want to instead add the same methods to multiple apps by writing a function to do so.
 
 For example, suppose two applications both need an ABI method that adds two numbers together named ``add``.
 
 .. code-block:: python
 
-    def calculator_blueprint(app: beaker.Application, offset: int = 0) -> None:
+    def implement_addition(app: beaker.Application, free_bananas: int = 0) -> None:
         @app.external
         def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-            return output.set(a.get() + b.get() + pyteal.Int(offset))
+            return output.set(a.get() + b.get() + pyteal.Int(free_bananas))
 
-The blueprint can then be applied to the applications using the shortcut ``app.implement``:
+The function can be applied to the applications using the shortcut ``app.apply``:
 
 .. code-block:: python
 
-    app = beaker.Application("App").implement(calculator_blueprint)
+    app = beaker.Application("App").apply(implement_addition)
 
-    off_by_one_app = beaker.Application("OffByOne").implement(
-        calculator_blueprint, offset=1
-    )
+    banana_app = beaker.Application("BananaApp").apply(implement_addition, free_bananas=1)
 
-Note that this is equivalent to:
+Note that this is exactly equivalent to:
 
 .. code-block:: python
 
     app = beaker.Application("App")
-    calculator_blueprint(app)
+    implement_addition(app)
 
-    off_by_one_app = beaker.Application("OffByOne")
-    calculator_blueprint(off_by_one_app, offset=1)
+    banana_app = beaker.Application("BananaApp")
+    implement_addition(banana_app, free_bananas=1)
 
+
+The main advantage to using the `.apply` method is that it can be chained together, since the result of `.apply` is always
+the `Application` instance it was called on. You can use whichever method you find clearer or more convenient.
 
 Overrides
 ---------
@@ -467,17 +466,17 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    # this example uses the previously described blueprint pattern,
-    # since generally the only scenario where overriding is needed
-    # is when using code that is not part of the current code base.
+    # this example uses the previously described pattern of adding
+    # common methods with a function, since generally the only scenario where
+    # overriding is needed is when using code that is not part of the current code base.
 
-    def a_blueprint(app: beaker.Application) -> None:
+    def base_app_methods(app: beaker.Application) -> None:
         @app.external
         def same_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
             ...
 
 
-    app = beaker.Application("DerivedApp").implement(a_blueprint)
+    app = beaker.Application("DerivedApp").apply(base_app_methods)
 
 
     @app.external(override=True)
@@ -504,14 +503,14 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    def a_blueprint(app: beaker.Application) -> None:
+    def base_app_methods(app: beaker.Application) -> None:
         @app.external(name="silly_walk")
         def different_signature(a: pyteal.abi.Uint64):
             ...
 
-    app = beaker.Application("DerivedApp").implement(a_blueprint)
+    app = beaker.Application("DerivedApp").apply(base_app_methods)
 
-    # remove method defined by the blueprint
+    # remove method defined by base_app_methods
     # note that we use the method signature here
     app.deregister_abi_method("silly_walk(uint64)")
 
@@ -524,14 +523,14 @@ In the case of overriding a bare method to replace it with an ABI method:
 
 .. code-block:: python
 
-    def a_blueprint(app: beaker.Application) -> None:
+    def base_app_methods(app: beaker.Application) -> None:
         @app.no_op(name="something_completely_different")
         def different_signature():
             ...
 
-    app = beaker.Application("DerivedApp").implement(a_blueprint)
+    app = beaker.Application("DerivedApp").apply(base_app_methods)
 
-    # remove method defined by a blueprint
+    # remove method defined by a base_app_methods
     # note that we use the completion type here
     app.deregister_bare_method("no_op")
 

@@ -76,19 +76,19 @@
              
   <h1>Source code for beaker.logic_signature</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">CompileOptions</span><span class="p">,</span>
-    <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">Tmpl</span><span class="p">,</span>
     <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">Seq</span><span class="p">,</span>
-    <span class="n">compileTeal</span><span class="p">,</span>
     <span class="n">Mode</span><span class="p">,</span>
     <span class="n">ScratchVar</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
     <span class="n">TealBlock</span><span class="p">,</span>
     <span class="n">TealSimpleBlock</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">Tmpl</span><span class="p">,</span>
+    <span class="n">compileTeal</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker.build_options</span> <span class="kn">import</span> <span class="n">BuildOptions</span>
@@ -167,8 +167,11 @@
             <span class="c1"># &quot;unused variable&quot; warning if the purpose of the template variable</span>
             <span class="c1"># is just to change the logic signature address</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">runtime_template_variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="n">invalid_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="n">runtime_template_variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="p">)</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;Logic signature methods should take no arguments, unless using runtime templates&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Logic signature template got unexpected arguments: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">invalid_args</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
                 <span class="p">)</span>
             <span class="n">forward_args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="n">logic</span> <span class="o">=</span> <span class="n">expr_or_func</span><span class="p">(</span>

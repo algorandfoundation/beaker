@@ -78,7 +78,7 @@
 <span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Expr</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">TealType</span>
 
 
 <span class="k">class</span> <span class="nc">AppSpecSchemaFragment</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -100,13 +100,13 @@
         <span class="o">...</span>
 
 
-<div class="viewcode-block" id="ApplicationStateStorage"><a class="viewcode-back" href="../../../state.html#beaker.state.ApplicationStateStorage">[docs]</a><span class="k">class</span> <span class="nc">ApplicationStateStorage</span><span class="p">(</span><span class="n">StateStorage</span><span class="p">):</span>
+<div class="viewcode-block" id="GlobalStateStorage"><a class="viewcode-back" href="../../../state.html#beaker.state.GlobalStateStorage">[docs]</a><span class="k">class</span> <span class="nc">GlobalStateStorage</span><span class="p">(</span><span class="n">StateStorage</span><span class="p">):</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="o">...</span></div>
 
 
-<div class="viewcode-block" id="AccountStateStorage"><a class="viewcode-back" href="../../../state.html#beaker.state.AccountStateStorage">[docs]</a><span class="k">class</span> <span class="nc">AccountStateStorage</span><span class="p">(</span><span class="n">StateStorage</span><span class="p">):</span>
+<div class="viewcode-block" id="LocalStateStorage"><a class="viewcode-back" href="../../../state.html#beaker.state.LocalStateStorage">[docs]</a><span class="k">class</span> <span class="nc">LocalStateStorage</span><span class="p">(</span><span class="n">StateStorage</span><span class="p">):</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="o">...</span></div>
