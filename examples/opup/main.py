@@ -8,7 +8,7 @@ from algosdk.atomic_transaction_composer import (
 from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_accounts, get_algod_client
-from examples.opup.contract import expensive_app
+from examples.opup.contract import expensive_app, hash_it
 
 client = get_algod_client()
 
@@ -44,7 +44,7 @@ def demo() -> None:
     # app_client.add_method_call(atc, app.hash_it, input=input, iters=iters)
     # result = atc.execute(client, 4)
 
-    result = app_client.call("hash_it", input=input, iters=iters)
+    result = app_client.call(hash_it, input=input, iters=iters)
     result_hash = bytes(result.return_value)
 
     local_hash = input.encode()

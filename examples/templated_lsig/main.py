@@ -114,7 +114,7 @@ def demo() -> None:
     # Add the call to the `check` method to be signed by the populated template logic
     lsig_client.add_method_call(
         atc,
-        "check",
+        check,
         suggested_params=free_sp,
         signer_address=acct.address,
         msg=msg,

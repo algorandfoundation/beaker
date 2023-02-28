@@ -236,7 +236,7 @@ def test_large_app_create() -> None:
 
     ac.create()
     ac.fund(1_000_000)
-    result = ac.call("deploy_large_app")
+    result = ac.call(deploy_large_app)
     assert result.return_value >= 0
 
 

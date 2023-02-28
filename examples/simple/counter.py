@@ -56,13 +56,13 @@ def demo() -> None:
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    app_client.call("increment")
-    app_client.call("increment")
-    app_client.call("increment")
-    result = app_client.call("increment")
+    app_client.call(increment)
+    app_client.call(increment)
+    app_client.call(increment)
+    result = app_client.call(increment)
     print(f"Currrent counter value: {result.return_value}")
 
-    result = app_client.call("decrement")
+    result = app_client.call(decrement)
     print(f"Currrent counter value: {result.return_value}")
 
     try:
@@ -70,7 +70,7 @@ def demo() -> None:
         # since we have the auth check
         other_acct = accts.pop()
         other_client = app_client.prepare(signer=other_acct.signer)
-        other_client.call("increment")
+        other_client.call(increment)
     except LogicException as e:
         print("App call failed as expected.")
         print(e)

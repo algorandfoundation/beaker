@@ -85,7 +85,7 @@ def demo() -> None:
     # Passing in a dict as an argument that should take a tuple according to the type spec
     order_number = 12
     order = {"quantity": 8, "item": "cubes"}
-    app_client.call("place_order", order_number=order_number, order=order)
+    app_client.call(place_order, order_number=order_number, order=order)
 
     # Get the order from the state field
     state_key = order_number.to_bytes(1, "big")
@@ -98,12 +98,12 @@ def demo() -> None:
     )
 
     # Or we could call the read-only method, passing the order number
-    result = app_client.call("read_item", order_number=order_number)
+    result = app_client.call(read_item, order_number=order_number)
     abi_decoded = order_codec.decode(result.raw_value)
     print(f"Decoded result: {abi_decoded}")
 
     # Update the order to increase the quantity
-    result = app_client.call("increase_quantity", order_number=order_number)
+    result = app_client.call(increase_quantity, order_number=order_number)
     increased_decoded = order_codec.decode(result.raw_value)
     print(
         f"Let's add 1 to the struct, update state, and return the updated version: {increased_decoded}"
