@@ -27,17 +27,17 @@ class ClientExampleState:
 
 my_app = (
     Application("ClientExample", state=ClientExampleState())
-    .implement(unconditional_create_approval, initialize_global_state=True)
-    .implement(unconditional_opt_in_approval, initialize_local_state=True)
+    .apply(unconditional_create_approval, initialize_global_state=True)
+    .apply(unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 
-@my_app.close_out
+@my_app.close_out(bare=True)
 def close_out() -> Expr:
     return Approve()
 
 
-@my_app.delete(authorize=Authorize.only(my_app.state.manager))
+@my_app.delete(bare=True, authorize=Authorize.only(my_app.state.manager))
 def delete() -> Expr:
     return Approve()
 

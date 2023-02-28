@@ -7,14 +7,14 @@ options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Applicatio
 
 
 def test_list() -> None:
-    l = BoxList(pt.abi.Uint64, 100, name="l")
+    lst = BoxList(pt.abi.Uint64, 100, name="l")
 
-    assert l._elements == 100
-    assert l._element_size == 8
-    assert l._box_size == 8 * 100
-    assert l.value_type == pt.abi.Uint64TypeSpec()
+    assert lst._elements == 100
+    assert lst._element_size == 8
+    assert lst._box_size == 8 * 100
+    assert lst.value_type == pt.abi.Uint64TypeSpec()
 
-    item = l[pt.Int(10)]
+    item = lst[pt.Int(10)]
     with pt.TealComponent.Context.ignoreExprEquality():
         assert item.name.__teal__(options) == pt.Bytes("l").__teal__(options)
         assert item.element_size.__teal__(options) == pt.Int(8).__teal__(options)
@@ -40,17 +40,17 @@ def test_list() -> None:
 
 def test_list_app() -> None:
     class State:
-        l = BoxList(pt.abi.Uint64, 100)
+        lst = BoxList(pt.abi.Uint64, 100)
 
     t = Application("T", state=State())
 
     @t.external
     def get(idx: pt.abi.Uint16, *, output: pt.abi.Uint64) -> pt.Expr:
-        return t.state.l[idx.get()].store_into(output)
+        return t.state.lst[idx.get()].store_into(output)
 
     @t.external
     def set(idx: pt.abi.Uint16, val: pt.abi.Uint64) -> pt.Expr:
-        return t.state.l[idx.get()].set(val)
+        return t.state.lst[idx.get()].set(val)
 
     compiled = t.build()
     assert compiled.approval_program

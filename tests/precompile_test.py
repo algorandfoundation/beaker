@@ -7,7 +7,6 @@ from beaker.application import (
     Application,
     precompiled,
 )
-from beaker.blueprints import unconditional_create_approval
 from beaker.client import ApplicationClient
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
@@ -149,14 +148,12 @@ def test_templated_ints(tmpl_val: int) -> None:
     )
 
 
-inner_app = Application("InnerApp").implement(unconditional_create_approval)
-inner_lsig = LogicSignatureTemplate(
-    pt.Approve(),
-    runtime_template_variables={"nonce": pt.TealType.bytes},
-)
-
-
-def OuterApp() -> Application:
+def make_app_with_precompiles() -> Application:
+    inner_app = Application("InnerApp")
+    inner_lsig = LogicSignatureTemplate(
+        pt.Approve(),
+        runtime_template_variables={"nonce": pt.TealType.bytes},
+    )
 
     app = Application("OuterApp")
 
@@ -181,7 +178,7 @@ def OuterApp() -> Application:
 
 
 def test_nested_precompile() -> None:
-    oa = OuterApp()
+    oa = make_app_with_precompiles()
 
     # Nothing is available until we build out the app and all its precompiles
     assert oa._precompiled_apps == {}
@@ -192,9 +189,9 @@ def test_nested_precompile() -> None:
 
     assert precompile.approval_program.raw_binary
 
-    child = oa._precompiled_apps.get(inner_app)
+    (child,) = oa._precompiled_apps.values()
     assert child is not None
-    lsig = oa._precompiled_lsig_templates.get(inner_lsig)
+    (lsig,) = oa._precompiled_lsig_templates.values()
     assert lsig is not None
 
     assert child.approval_program.raw_binary is not None
@@ -205,29 +202,26 @@ def test_nested_precompile() -> None:
 
 
 def test_build_recursive() -> None:
-    app = OuterApp()
+    app = make_app_with_precompiles()
     client = get_algod_client()
     pc = PrecompiledApplication(app, client)
     _check_app_precompiles(app, pc)
 
 
-def LargeApp() -> Application:
-    long_bytes = 4092 * b"A"
-    long_bytes2 = 2048 * b"A"
-
-    app = Application(name="LargeApp").implement(unconditional_create_approval)
+def make_large_app() -> Application:
+    app = Application(name="LargeApp")
 
     @app.external
     def compare_big_byte_strings() -> pt.Expr:
-        return pt.Assert(pt.Bytes(long_bytes) != pt.Bytes(long_bytes2))
+        return pt.Assert(pt.Bytes(4092 * b"A") != pt.Bytes(2048 * b"A"))
 
     return app
 
 
 def test_large_app_create() -> None:
-    la = LargeApp()
+    la = make_large_app()
 
-    deployer = Application("LargeAppDeployer").implement(unconditional_create_approval)
+    deployer = Application("LargeAppDeployer")
 
     @deployer.external
     def deploy_large_app(*, output: pt.abi.Uint64) -> pt.Expr:
@@ -242,8 +236,8 @@ def test_large_app_create() -> None:
 
     ac.create()
     ac.fund(1_000_000)
-    result = ac.call("deploy_large_app")
-    print(result.return_value)
+    result = ac.call(deploy_large_app)
+    assert result.return_value >= 0
 
 
 def test_page_hash() -> None:
@@ -254,7 +248,7 @@ def test_page_hash() -> None:
 
 def test_extra_page_population() -> None:
 
-    app = LargeApp()
+    app = make_large_app()
     app_precompile = PrecompiledApplication(app, get_algod_client())
     _check_app_precompiles(app, app_precompile)
 

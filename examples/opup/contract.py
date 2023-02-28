@@ -46,7 +46,7 @@ def hash_it(
     )
 
 
-def Repeat(n: int, expr: Expr) -> Expr:
+def Repeat(n: int, expr: Expr) -> Expr:  # noqa: N802
     """internal method to issue transactions against the target app"""
     if n < 0:
         raise ValueError("n < 0")

@@ -76,30 +76,31 @@
              
   <h1>Source code for beaker.state.reserved</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">SubroutineFnWrapper</span><span class="p">,</span> <span class="n">TealTypeError</span><span class="p">,</span> <span class="n">Expr</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">SubroutineFnWrapper</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">TealTypeError</span>
 <span class="kn">from</span> <span class="nn">pyteal.ast</span> <span class="kn">import</span> <span class="n">abi</span>
 
 <span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">MAX_GLOBAL_STATE</span><span class="p">,</span> <span class="n">MAX_LOCAL_STATE</span>
 <span class="kn">from</span> <span class="nn">beaker.state._abc</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ApplicationStateStorage</span><span class="p">,</span>
-    <span class="n">AccountStateStorage</span><span class="p">,</span>
-    <span class="n">StateStorage</span><span class="p">,</span>
     <span class="n">AppSpecSchemaFragment</span><span class="p">,</span>
+    <span class="n">GlobalStateStorage</span><span class="p">,</span>
+    <span class="n">LocalStateStorage</span><span class="p">,</span>
+    <span class="n">StateStorage</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.state.primitive</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GlobalStateValue</span><span class="p">,</span>
+    <span class="n">LocalStateValue</span><span class="p">,</span>
     <span class="n">StateValue</span><span class="p">,</span>
-    <span class="n">ApplicationStateValue</span><span class="p">,</span>
-    <span class="n">AccountStateValue</span><span class="p">,</span>
-    <span class="n">prefix_key_gen</span><span class="p">,</span>
     <span class="n">identity_key_gen</span><span class="p">,</span>
+    <span class="n">prefix_key_gen</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;ReservedStateValue&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ReservedApplicationStateValue&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ReservedAccountStateValue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ReservedGlobalStateValue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ReservedLocalStateValue&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -190,8 +191,8 @@
         <span class="p">)</span>
 
 
-<div class="viewcode-block" id="ReservedApplicationStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedApplicationStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedApplicationStateValue</span><span class="p">(</span>
-    <span class="n">ReservedStateValue</span><span class="p">[</span><span class="n">ApplicationStateValue</span><span class="p">],</span> <span class="n">ApplicationStateStorage</span>
+<div class="viewcode-block" id="ReservedGlobalStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedGlobalStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedGlobalStateValue</span><span class="p">(</span>
+    <span class="n">ReservedStateValue</span><span class="p">[</span><span class="n">GlobalStateValue</span><span class="p">],</span> <span class="n">GlobalStateStorage</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reserved Application State (global state)</span>
 
@@ -204,7 +205,7 @@
 <span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ReservedApplicationStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedApplicationStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="ReservedGlobalStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedGlobalStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -221,16 +222,12 @@
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_get_state_for_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApplicationStateValue</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_get_state_for_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GlobalStateValue</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to access the state value with the key seed provided&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">ApplicationStateValue</span><span class="p">(</span>
-            <span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">descr</span>
-        <span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">descr</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ReservedAccountStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedAccountStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedAccountStateValue</span><span class="p">(</span>
-    <span class="n">ReservedStateValue</span><span class="p">[</span><span class="n">AccountStateValue</span><span class="p">],</span> <span class="n">AccountStateStorage</span>
-<span class="p">):</span>
+<div class="viewcode-block" id="ReservedLocalStateValue"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedLocalStateValue">[docs]</a><span class="k">class</span> <span class="nc">ReservedLocalStateValue</span><span class="p">(</span><span class="n">ReservedStateValue</span><span class="p">[</span><span class="n">LocalStateValue</span><span class="p">],</span> <span class="n">LocalStateStorage</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reserved Account State (local state)</span>
 
 <span class="sd">    Used when there should be a number of reserved state fields but the keys are uncertain at build time.</span>
@@ -242,7 +239,7 @@
 <span class="sd">        descr (str): Description of the state value to provide some information to clients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ReservedAccountStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedAccountStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="ReservedLocalStateValue.__init__"><a class="viewcode-back" href="../../../state.html#beaker.state.ReservedLocalStateValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stack_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">],</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -259,9 +256,9 @@
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acct</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_get_state_for_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccountStateValue</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_get_state_for_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LocalStateValue</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Access AccountState value given key_seed&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">AccountStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">descr</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">LocalStateValue</span><span class="p">(</span><span class="n">stack_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stack_type</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">descr</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

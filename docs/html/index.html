@@ -101,18 +101,19 @@
 </section>
 <section id="hello-beaker">
 <span id="id2"></span><h2>Hello, Beaker<a class="headerlink" href="#hello-beaker" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Concat</span><span class="p">,</span> <span class="n">Bytes</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">abi</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Bytes</span><span class="p">,</span> <span class="n">Concat</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">abi</span>
+
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">sandbox</span><span class="p">,</span>
-    <span class="n">client</span><span class="p">,</span>
     <span class="n">Application</span><span class="p">,</span>
-    <span class="n">unconditional_create_approval</span><span class="p">,</span>
     <span class="n">BuildOptions</span><span class="p">,</span>
+    <span class="n">client</span><span class="p">,</span>
+    <span class="n">sandbox</span><span class="p">,</span>
+    <span class="n">unconditional_create_approval</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">hello_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span>
-    <span class="s2">&quot;HelloBeaker&quot;</span><span class="p">,</span> <span class="n">build_options</span><span class="o">=</span><span class="n">BuildOptions</span><span class="p">(</span><span class="n">avm_version</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-<span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
+<span class="n">hello_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;HelloBeaker&quot;</span><span class="p">,</span> <span class="n">build_options</span><span class="o">=</span><span class="n">BuildOptions</span><span class="p">(</span><span class="n">avm_version</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+    <span class="n">unconditional_create_approval</span>
+<span class="p">)</span>
 
 
 <span class="nd">@hello_app</span><span class="o">.</span><span class="n">external</span>

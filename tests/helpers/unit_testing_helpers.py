@@ -9,9 +9,9 @@ from beaker import (
     BuildOptions,
     client,
     sandbox,
+    unconditional_create_approval,
     unconditional_opt_in_approval,
 )
-from beaker.blueprints import unconditional_create_approval
 
 algod_client = None
 sandbox_accounts = None
@@ -46,7 +46,7 @@ def unit_test_app_blueprint(
     the return value against what you expect.
     """
 
-    app = app.implement(unconditional_create_approval).implement(
+    app = app.apply(unconditional_create_approval).apply(
         unconditional_opt_in_approval, initialize_local_state=True
     )
 
@@ -79,7 +79,7 @@ def unit_test_app_blueprint(
     return app
 
 
-def UnitTestingApp(
+def UnitTestingApp(  # noqa: N802
     expr_to_test: pt.Expr | None = None,
     name: str = "UnitTestingApp",
     version: int = pt.MAX_PROGRAM_VERSION,
@@ -89,7 +89,7 @@ def UnitTestingApp(
         name,
         build_options=BuildOptions(avm_version=version),
         state=state,
-    ).implement(unit_test_app_blueprint, expr_to_test=expr_to_test)
+    ).apply(unit_test_app_blueprint, expr_to_test=expr_to_test)
 
 
 def assert_output(

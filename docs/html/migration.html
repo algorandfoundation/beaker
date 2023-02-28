@@ -58,6 +58,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#application-compile">Application.compile()</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#application-client">Application Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#decorators">Decorators</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#internal">&#64;internal</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#bare-external">&#64;bare_external</a></li>
@@ -258,8 +259,17 @@ among other things, the approval and clear program TEAL that was previously retu
 <span class="n">app_spec</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;output_dir&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Importantly, this change allows building an <code class="docutils literal notranslate"><span class="pre">Application</span></code>, serializing the specification to disk, and then deserializing the
-specification later, which can then be used with <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> or a similar client in any other programming language. For example:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The result of <code class="docutils literal notranslate"><span class="pre">beaker.Application().build(...)</span></code> is not cached.</p>
+</div>
+</section>
+</section>
+<section id="application-client">
+<h2>Application Client<a class="headerlink" href="#application-client" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> has been changed to no longer depend directly on an <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance, this allows
+building an <code class="docutils literal notranslate"><span class="pre">Application</span></code>, serializing the specification to disk, and then deserializing the specification later
+for use with <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> or a similar client in any other programming language. For example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
 <span class="n">app_spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 <span class="n">app_spec</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;output_dir&quot;</span><span class="p">)</span>
@@ -271,11 +281,42 @@ specification later, which can then be used with <code class="docutils literal n
 <span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The result of <code class="docutils literal notranslate"><span class="pre">beaker.Application().build(...)</span></code> is not cached.</p>
+<p>Due to the changes in how methods are defined, when using <code class="docutils literal notranslate"><span class="pre">ApplicationClient.call</span></code> the way methods are referenced
+has changed.</p>
+<p>For example, in <code class="docutils literal notranslate"><span class="pre">0.x</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyApp</span><span class="p">(</span><span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
+
+     <span class="nd">@beaker</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+     <span class="k">def</span> <span class="nf">do_something</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+         <span class="o">...</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">MyApp</span><span class="p">()</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ClientApplication</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">MyApp</span><span class="o">.</span><span class="n">do_something</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
 </div>
-</section>
+<p>becomes the following in <code class="docutils literal notranslate"><span class="pre">1.0</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">do_something</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+    <span class="o">...</span>
+
+<span class="n">app_spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ClientApplication</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app_spec</span><span class="p">)</span>
+
+<span class="c1"># if in the same code base the method can be referenced directly OR,</span>
+<span class="n">client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">do_something</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="c1"># the method can be referenced by contract name OR,</span>
+<span class="n">client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="c1"># the method can be referenced by method signature,</span>
+<span class="c1"># which is useful if there are overloaded signatures</span>
+<span class="n">client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;foo(uint64)&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="decorators">
 <h2>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading"></a></h2>
@@ -289,19 +330,20 @@ specification later, which can then be used with <code class="docutils literal n
 <li><p><code class="docutils literal notranslate"><span class="pre">&#64;beaker.no_op</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&#64;beaker.clear_state</span></code></p></li>
 </ul>
+<p>Previously, all of these decorators except <code class="docutils literal notranslate"><span class="pre">external</span></code> would make a bare method (rather than an ABI method) if the
+function they were decorating took no arguments (other than <code class="docutils literal notranslate"><span class="pre">self</span></code>). In <code class="docutils literal notranslate"><span class="pre">1.0</span></code>, bare methods must be requested
+explicitly with <code class="docutils literal notranslate"><span class="pre">bare=True</span></code>. To avoid making changes to existing contracts, you should add <code class="docutils literal notranslate"><span class="pre">bare=True</span></code> to any decorators
+other than <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> if and only if the function takes no arguments.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>There were recent changes in PyTeal to the way <code class="docutils literal notranslate"><span class="pre">ClearState</span></code> is handled, which were incorporated in Beaker v0.5.1.
 In particular, <code class="docutils literal notranslate"><span class="pre">ClearState</span></code> handler methods must now take no arguments. Previously, this was considered valid PyTeal,
-however since the clear state program can not reject, there is no way to ensure these arguments are available, leading
-to silent failures.</p>
+however since a clear state program reject will not prevent the accounts local state from being cleared,
+special care needs to be taken to allow as few conditions that might lead to rejection as possible.</p>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
 <p>Decorated methods now return <code class="docutils literal notranslate"><span class="pre">ABIReturnSubroutine</span></code> or <code class="docutils literal notranslate"><span class="pre">SubroutineWrapperFn</span></code>, not the original method. This
 should mostly be an internal change only, but if these methods were being invoked by other methods within the
 contract, this will result in changes to TEAL output as they will no longer be inlined.</p>
-</div>
 <section id="internal">
 <h3>&#64;internal<a class="headerlink" href="#internal" title="Permalink to this heading"></a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">beaker.internal</span></code> decorator is no longer required and has been removed. It can be replaced with one of the following:</p>
@@ -470,32 +512,30 @@ In these cases, the shared function can just be regular Python functions that ea
 </div>
 <p>There will be some scenarios where the above will not be sufficient, for example having the same ABI method across
 multiple apps.</p>
-<p>For these cases, the use of closure functions should be considered. This pattern is referred to in Beaker as “blueprints”,
-but these are nothing more than Python functions which take an <code class="docutils literal notranslate"><span class="pre">Application</span></code> instance, and possibly some arguments, and
-modify the <code class="docutils literal notranslate"><span class="pre">Application</span></code> by adding methods to it.</p>
+<p>For these cases, you might want to instead add the same methods to multiple apps by writing a function to do so.</p>
 <p>For example, suppose two applications both need an ABI method that adds two numbers together named <code class="docutils literal notranslate"><span class="pre">add</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calculator_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">implement_addition</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">,</span> <span class="n">free_bananas</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">offset</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="o">+</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">free_bananas</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The blueprint can then be applied to the applications using the shortcut <code class="docutils literal notranslate"><span class="pre">app.implement</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;App&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">calculator_blueprint</span><span class="p">)</span>
+<p>The function can be applied to the applications using the shortcut <code class="docutils literal notranslate"><span class="pre">app.apply</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;App&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">implement_addition</span><span class="p">)</span>
 
-<span class="n">off_by_one_app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;OffByOne&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
-    <span class="n">calculator_blueprint</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span>
-<span class="p">)</span>
+<span class="n">banana_app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BananaApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">implement_addition</span><span class="p">,</span> <span class="n">free_bananas</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note that this is equivalent to:</p>
+<p>Note that this is exactly equivalent to:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;App&quot;</span><span class="p">)</span>
-<span class="n">calculator_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="n">implement_addition</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
-<span class="n">off_by_one_app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;OffByOne&quot;</span><span class="p">)</span>
-<span class="n">calculator_blueprint</span><span class="p">(</span><span class="n">off_by_one_app</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">banana_app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BananaApp&quot;</span><span class="p">)</span>
+<span class="n">implement_addition</span><span class="p">(</span><span class="n">banana_app</span><span class="p">,</span> <span class="n">free_bananas</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>The main advantage to using the <cite>.apply</cite> method is that it can be chained together, since the result of <cite>.apply</cite> is always
+the <cite>Application</cite> instance it was called on. You can use whichever method you find clearer or more convenient.</p>
 </section>
 <section id="overrides">
 <h2>Overrides<a class="headerlink" href="#overrides" title="Permalink to this heading"></a></h2>
@@ -516,17 +556,17 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 </pre></div>
 </div>
 <p>In <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this becomes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># this example uses the previously described blueprint pattern,</span>
-<span class="c1"># since generally the only scenario where overriding is needed</span>
-<span class="c1"># is when using code that is not part of the current code base.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># this example uses the previously described pattern of adding</span>
+<span class="c1"># common methods with a function, since generally the only scenario where</span>
+<span class="c1"># overriding is needed is when using code that is not part of the current code base.</span>
 
-<span class="k">def</span> <span class="nf">a_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">base_app_methods</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
     <span class="k">def</span> <span class="nf">same_signature</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="o">...</span>
 
 
-<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">a_blueprint</span><span class="p">)</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">base_app_methods</span><span class="p">)</span>
 
 
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">override</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -549,16 +589,16 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 </pre></div>
 </div>
 <p>In <code class="docutils literal notranslate"><span class="pre">1.0</span></code> this becomes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">a_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">base_app_methods</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;silly_walk&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">different_signature</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">):</span>
         <span class="o">...</span>
 
-<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">a_blueprint</span><span class="p">)</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">base_app_methods</span><span class="p">)</span>
 
-<span class="c1"># remove method defined by the blueprint</span>
-<span class="c1"># note that we use the name of the Python function here</span>
-<span class="n">app</span><span class="o">.</span><span class="n">deregister_abi_method</span><span class="p">(</span><span class="s2">&quot;different_signature&quot;</span><span class="p">)</span>
+<span class="c1"># remove method defined by base_app_methods</span>
+<span class="c1"># note that we use the method signature here</span>
+<span class="n">app</span><span class="o">.</span><span class="n">deregister_abi_method</span><span class="p">(</span><span class="s2">&quot;silly_walk(uint64)&quot;</span><span class="p">)</span>
 
 <span class="c1"># add our new method</span>
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;silly_walk&quot;</span><span class="p">)</span>
@@ -567,16 +607,16 @@ it in the derived class. In <code class="docutils literal notranslate"><span cla
 </pre></div>
 </div>
 <p>In the case of overriding a bare method to replace it with an ABI method:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">a_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">base_app_methods</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nd">@app</span><span class="o">.</span><span class="n">no_op</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;something_completely_different&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">different_signature</span><span class="p">():</span>
         <span class="o">...</span>
 
-<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">a_blueprint</span><span class="p">)</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;DerivedApp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">base_app_methods</span><span class="p">)</span>
 
-<span class="c1"># remove method defined by a blueprint</span>
-<span class="c1"># note that we use the name of the Python function here</span>
-<span class="n">app</span><span class="o">.</span><span class="n">deregister_bare_method</span><span class="p">(</span><span class="s2">&quot;different_signature&quot;</span><span class="p">)</span>
+<span class="c1"># remove method defined by a base_app_methods</span>
+<span class="c1"># note that we use the completion type here</span>
+<span class="n">app</span><span class="o">.</span><span class="n">deregister_bare_method</span><span class="p">(</span><span class="s2">&quot;no_op&quot;</span><span class="p">)</span>
 
 <span class="c1"># add our new method</span>
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;something_completely_different&quot;</span><span class="p">)</span>

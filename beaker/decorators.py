@@ -62,7 +62,9 @@ class Authorize:
         return _impl
 
     @staticmethod
-    def opted_in(app_id: Expr = Global.current_application_id()) -> SubroutineFnWrapper:
+    def opted_in(
+        app_id: Expr = Global.current_application_id(),  # noqa: B008
+    ) -> SubroutineFnWrapper:
         """require that the sender of the app call has
         already opted-in to a given app id"""
 

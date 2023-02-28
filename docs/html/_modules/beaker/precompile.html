@@ -75,25 +75,26 @@
            <div itemprop="articleBody">
              
   <h1>Source code for beaker.precompile</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">KeysView</span>
+<span></span><span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">KeysView</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">Addr</span><span class="p">,</span>
     <span class="n">Bytes</span><span class="p">,</span>
-    <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">ScratchVar</span><span class="p">,</span>
-    <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">TealTypeError</span><span class="p">,</span>
-    <span class="n">Int</span><span class="p">,</span>
     <span class="n">Concat</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
     <span class="n">Len</span><span class="p">,</span>
+    <span class="n">ScratchVar</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">Sha512_256</span><span class="p">,</span>
     <span class="n">Substring</span><span class="p">,</span>
     <span class="n">Suffix</span><span class="p">,</span>
-    <span class="n">Sha512_256</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TealTypeError</span><span class="p">,</span>
     <span class="n">TxnField</span><span class="p">,</span>
     <span class="n">TxnType</span><span class="p">,</span>
-    <span class="n">Addr</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">beaker.compilation</span> <span class="kn">import</span> <span class="n">Program</span>
@@ -102,6 +103,7 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
+
     <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span>
     <span class="kn">from</span> <span class="nn">beaker.logic_signature</span> <span class="kn">import</span> <span class="p">(</span>
         <span class="n">LogicSignature</span><span class="p">,</span>
@@ -124,8 +126,8 @@
 
 <div class="viewcode-block" id="PrecompiledApplication.__init__"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.PrecompiledApplication.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="s2">&quot;Application&quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;AlgodClient&quot;</span><span class="p">):</span>
         <span class="n">app_spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_global_schema</span> <span class="o">=</span> <span class="n">app_spec</span><span class="o">.</span><span class="n">app_state_schema</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_local_schema</span> <span class="o">=</span> <span class="n">app_spec</span><span class="o">.</span><span class="n">account_state_schema</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_schema</span> <span class="o">=</span> <span class="n">app_spec</span><span class="o">.</span><span class="n">global_state_schema</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_local_schema</span> <span class="o">=</span> <span class="n">app_spec</span><span class="o">.</span><span class="n">local_state_schema</span>
 
         <span class="c1"># at this point, we should have all the dependant logic built</span>
         <span class="c1"># so we can compile the app teal</span>
@@ -181,11 +183,11 @@
 
 <div class="viewcode-block" id="PrecompileTemplateValue"><a class="viewcode-back" href="../../precompile.html#beaker.precompile.PrecompileTemplateValue">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">PrecompileTemplateValue</span><span class="p">:</span>
-    <span class="c1"># Whether or not this variable is bytes (if false, its uint64)</span>
+    <span class="c1">#: Whether or not this variable is bytes (if false, its uint64)</span>
     <span class="n">is_bytes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># The line number in the source TEAL this variable is present</span>
+    <span class="c1">#: The line number in the source TEAL this variable is present</span>
     <span class="n">line</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># The pc of the variable in the assembled bytecode</span>
+    <span class="c1">#: The pc of the variable in the assembled bytecode</span>
     <span class="n">pc</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
 
 

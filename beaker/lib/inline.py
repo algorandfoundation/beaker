@@ -46,7 +46,7 @@ class InlineAssembly(LeafExpr):
     """
 
     def __init__(
-        self, opcode: str, *args: "Expr", type: TealType = TealType.none
+        self, opcode: str, *args: Expr, type: TealType = TealType.none
     ) -> None:
         super().__init__()
         opcode_with_args = opcode.split(" ")

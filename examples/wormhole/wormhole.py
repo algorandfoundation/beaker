@@ -1,7 +1,6 @@
-from collections.abc import Callable
+from abc import ABC, abstractmethod
 from typing import Literal
 
-from mypy_extensions import NamedArg
 from pyteal import (
     Expr,
     Int,
@@ -118,12 +117,18 @@ class ContractTransferVAA:
         return Seq(*ops)
 
 
+class WormholeStrategy(ABC):
+    @abstractmethod
+    def handle_transfer(
+        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
+    ) -> Expr:
+        ...
+
+
 def wormhole_transfer(
     app: Application,
-    handle_transfer: Callable[
-        [ContractTransferVAA, NamedArg(abi.DynamicBytes, "output")], Expr
-    ],
-) -> Application:
+    strategy: WormholeStrategy,
+) -> None:
     """Implement Wormhole Payload3 Message handler
 
     A Message transfer from another chain to Algorand  using the Wormhole protocol
@@ -131,8 +136,7 @@ def wormhole_transfer(
 
     Args:
         app: app to add to
-        handle_transfer: app specific logic that needs to be done on transfer - should
-            take the decoded ContractTransferVAA, and an output parameter
+        strategy: app specific logic that needs to be done on transfer
     """
 
     @app.external
@@ -150,7 +154,5 @@ def wormhole_transfer(
         """
         return Seq(
             (ctvaa := ContractTransferVAA()).decode(vaa.get()),
-            handle_transfer(ctvaa, output=output),
+            strategy.handle_transfer(ctvaa, output=output),
         )
-
-    return app

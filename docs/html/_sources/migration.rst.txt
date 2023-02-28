@@ -68,7 +68,6 @@ becomes the following in ``1.0``:
     def set_value(new_value: pyteal.abi.Uint64) -> pyteal.Expr:
         return app.state.my_value.set(new_value.get())
 
-
 The key changes to note above:
 
 1. There is no sub-classing, instead a ``beaker.Application`` instance is created (i.e. ``app = beaker.Application("MyApp", ...)``).
@@ -164,9 +163,14 @@ Becomes this in ``1.0``:
     approval_program, clear_program = app_spec.approval_program, app_spec.clear_program
     app_spec.export("output_dir")
 
+.. note:: The result of ``beaker.Application().build(...)`` is not cached.
 
-Importantly, this change allows building an ``Application``, serializing the specification to disk, and then deserializing the
-specification later, which can then be used with ``ApplicationClient`` or a similar client in any other programming language. For example:
+Application Client
+------------------
+
+``ApplicationClient`` has been changed to no longer depend directly on an ``Application`` instance, this allows
+building an ``Application``, serializing the specification to disk, and then deserializing the specification later
+for use with ``ApplicationClient`` or a similar client in any other programming language. For example:
 
 .. code-block:: python
 
@@ -180,8 +184,46 @@ specification later, which can then be used with ``ApplicationClient`` or a simi
     # as a shortcut, if the ApplicationClient is in the same codebase as the Application:
     client = beaker.client.ApplicationClient(client=..., app=app)
 
+Due to the changes in how methods are defined, when using ``ApplicationClient.call`` the way methods are referenced
+has changed.
 
-.. note:: The result of ``beaker.Application().build(...)`` is not cached.
+For example, in ``0.x``:
+
+.. code-block:: python
+
+   class MyApp(beaker.Application):
+
+        @beaker.external(name="foo")
+        def do_something(self, x: pyteal.abi.Uint64) -> pyteal.Expr:
+            ...
+
+   app = MyApp()
+
+   client = beaker.client.ClientApplication(client=..., app=app)
+   client.call(MyApp.do_something, x=42)
+
+becomes the following in ``1.0``:
+
+.. code-block:: python
+
+    app = beaker.Application("MyApp")
+
+    @app.external(name="foo")
+    def do_something(x: pyteal.abi.Uint64) -> pyteal.Expr:
+        ...
+
+    app_spec = app.build()
+    client = beaker.client.ClientApplication(client=..., app=app_spec)
+
+    # if in the same code base the method can be referenced directly OR,
+    client.call(do_something, x=42)
+
+    # the method can be referenced by contract name OR,
+    client.call("foo", x=42)
+
+    # the method can be referenced by method signature,
+    # which is useful if there are overloaded signatures
+    client.call("foo(uint64)", x=42)
 
 Decorators
 ----------
@@ -196,14 +238,19 @@ The following decorators are all now accessed through the ``Application`` instan
 * ``@beaker.no_op``
 * ``@beaker.clear_state``
 
+Previously, all of these decorators except ``external`` would make a bare method (rather than an ABI method) if the
+function they were decorating took no arguments (other than ``self``). In ``1.0``, bare methods must be requested
+explicitly with ``bare=True``. To avoid making changes to existing contracts, you should add ``bare=True`` to any decorators
+other than ``@external`` if and only if the function takes no arguments.
+
 .. note:: There were recent changes in PyTeal to the way ``ClearState`` is handled, which were incorporated in Beaker v0.5.1.
   In particular, ``ClearState`` handler methods must now take no arguments. Previously, this was considered valid PyTeal,
-  however since the clear state program can not reject, there is no way to ensure these arguments are available, leading
-  to silent failures.
+  however since a clear state program reject will not prevent the accounts local state from being cleared,
+  special care needs to be taken to allow as few conditions that might lead to rejection as possible.
 
-.. note:: Decorated methods now return ``ABIReturnSubroutine`` or ``SubroutineWrapperFn``, not the original method. This
-          should mostly be an internal change only, but if these methods were being invoked by other methods within the
-          contract, this will result in changes to TEAL output as they will no longer be inlined.
+Decorated methods now return ``ABIReturnSubroutine`` or ``SubroutineWrapperFn``, not the original method. This
+should mostly be an internal change only, but if these methods were being invoked by other methods within the
+contract, this will result in changes to TEAL output as they will no longer be inlined.
 
 @internal
 ^^^^^^^^^
@@ -365,39 +412,38 @@ In ``1.0`` this could be:
 There will be some scenarios where the above will not be sufficient, for example having the same ABI method across
 multiple apps.
 
-For these cases, the use of closure functions should be considered. This pattern is referred to in Beaker as "blueprints",
-but these are nothing more than Python functions which take an ``Application`` instance, and possibly some arguments, and
-modify the ``Application`` by adding methods to it.
+For these cases, you might want to instead add the same methods to multiple apps by writing a function to do so.
 
 For example, suppose two applications both need an ABI method that adds two numbers together named ``add``.
 
 .. code-block:: python
 
-    def calculator_blueprint(app: beaker.Application, offset: int = 0) -> None:
+    def implement_addition(app: beaker.Application, free_bananas: int = 0) -> None:
         @app.external
         def add(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64):
-            return output.set(a.get() + b.get() + pyteal.Int(offset))
+            return output.set(a.get() + b.get() + pyteal.Int(free_bananas))
 
-The blueprint can then be applied to the applications using the shortcut ``app.implement``:
+The function can be applied to the applications using the shortcut ``app.apply``:
 
 .. code-block:: python
 
-    app = beaker.Application("App").implement(calculator_blueprint)
+    app = beaker.Application("App").apply(implement_addition)
 
-    off_by_one_app = beaker.Application("OffByOne").implement(
-        calculator_blueprint, offset=1
-    )
+    banana_app = beaker.Application("BananaApp").apply(implement_addition, free_bananas=1)
 
-Note that this is equivalent to:
+Note that this is exactly equivalent to:
 
 .. code-block:: python
 
     app = beaker.Application("App")
-    calculator_blueprint(app)
+    implement_addition(app)
 
-    off_by_one_app = beaker.Application("OffByOne")
-    calculator_blueprint(off_by_one_app, offset=1)
+    banana_app = beaker.Application("BananaApp")
+    implement_addition(banana_app, free_bananas=1)
 
+
+The main advantage to using the `.apply` method is that it can be chained together, since the result of `.apply` is always
+the `Application` instance it was called on. You can use whichever method you find clearer or more convenient.
 
 Overrides
 ---------
@@ -425,17 +471,17 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    # this example uses the previously described blueprint pattern,
-    # since generally the only scenario where overriding is needed
-    # is when using code that is not part of the current code base.
+    # this example uses the previously described pattern of adding
+    # common methods with a function, since generally the only scenario where
+    # overriding is needed is when using code that is not part of the current code base.
 
-    def a_blueprint(app: beaker.Application) -> None:
+    def base_app_methods(app: beaker.Application) -> None:
         @app.external
         def same_signature(a: pyteal.abi.Uint64, b: pyteal.abi.Uint64):
             ...
 
 
-    app = beaker.Application("DerivedApp").implement(a_blueprint)
+    app = beaker.Application("DerivedApp").apply(base_app_methods)
 
 
     @app.external(override=True)
@@ -462,16 +508,16 @@ In ``1.0`` this becomes:
 
 .. code-block:: python
 
-    def a_blueprint(app: beaker.Application) -> None:
+    def base_app_methods(app: beaker.Application) -> None:
         @app.external(name="silly_walk")
         def different_signature(a: pyteal.abi.Uint64):
             ...
 
-    app = beaker.Application("DerivedApp").implement(a_blueprint)
+    app = beaker.Application("DerivedApp").apply(base_app_methods)
 
-    # remove method defined by the blueprint
-    # note that we use the name of the Python function here
-    app.deregister_abi_method("different_signature")
+    # remove method defined by base_app_methods
+    # note that we use the method signature here
+    app.deregister_abi_method("silly_walk(uint64)")
 
     # add our new method
     @app.external(name="silly_walk")
@@ -482,16 +528,16 @@ In the case of overriding a bare method to replace it with an ABI method:
 
 .. code-block:: python
 
-    def a_blueprint(app: beaker.Application) -> None:
+    def base_app_methods(app: beaker.Application) -> None:
         @app.no_op(name="something_completely_different")
         def different_signature():
             ...
 
-    app = beaker.Application("DerivedApp").implement(a_blueprint)
+    app = beaker.Application("DerivedApp").apply(base_app_methods)
 
-    # remove method defined by a blueprint
-    # note that we use the name of the Python function here
-    app.deregister_bare_method("different_signature")
+    # remove method defined by a base_app_methods
+    # note that we use the completion type here
+    app.deregister_bare_method("no_op")
 
     # add our new method
     @app.external(name="something_completely_different")

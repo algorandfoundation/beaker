@@ -187,7 +187,7 @@ class MemberState:
     membership_token = GlobalStateValue(TealType.uint64)
 
 
-app_member_app = Application("AppMember", state=MemberState()).implement(
+app_member_app = Application("AppMember", state=MemberState()).apply(
     unconditional_create_approval
 )
 
@@ -225,7 +225,7 @@ def app_member_get_affirmation(
     return Seq(
         InnerTxnBuilder.ExecuteMethodCall(
             app_id=app_member_app.state.club_app_id,
-            method_signature=get_affirmation.method_signature(),  # type: ignore[union-attr]
+            method_signature=get_affirmation.method_signature(),
             args=[member_token],
         ),
         app_member_app.state.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),

@@ -4,22 +4,21 @@ import pyteal as pt
 import pytest
 from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
+from typing_extensions import assert_type
 
 from beaker import (
     Application,
     BuildOptions,
     GlobalStateBlob,
-    LocalStateBlob,
-)
-from beaker.application_specification import ApplicationSpecification
-from beaker.blueprints import unconditional_create_approval
-from beaker.lib.storage import BoxList
-from beaker.state import (
     GlobalStateValue,
+    LocalStateBlob,
     LocalStateValue,
     ReservedGlobalStateValue,
     ReservedLocalStateValue,
+    unconditional_create_approval,
 )
+from beaker.application_specification import ApplicationSpecification
+from beaker.lib.storage import BoxList
 from tests.conftest import check_application_artifacts_output_stability
 
 
@@ -29,7 +28,7 @@ def test_empty_application() -> None:
 
 
 def test_unconditional_create_approval() -> None:
-    app = Application("OnlyCreate").implement(unconditional_create_approval)
+    app = Application("OnlyCreate").apply(unconditional_create_approval)
     check_application_artifacts_output_stability(app)
 
 
@@ -86,28 +85,59 @@ def test_method_overload() -> None:
     check_application_artifacts_output_stability(app)
 
 
-def test_bare() -> None:
+def test_bare_true() -> None:
+    app = Application("Bare")
+
+    @app.create(bare=True)
+    def create() -> pt.Expr:
+        return pt.Approve()
+
+    assert_type(create, pt.SubroutineFnWrapper)
+
+    @app.update(bare=True)
+    def update() -> pt.Expr:
+        return pt.Approve()
+
+    assert_type(update, pt.SubroutineFnWrapper)
+
+    @app.delete(bare=True)
+    def delete() -> pt.Expr:
+        return pt.Approve()
+
+    assert_type(delete, pt.SubroutineFnWrapper)
+
+    assert len(app.bare_actions) == 3, "Expected 3 bare externals: create,update,delete"
+
+
+def test_bare_default() -> None:
     app = Application("Bare")
 
     @app.create
     def create() -> pt.Expr:
         return pt.Approve()
 
+    assert_type(create, pt.ABIReturnSubroutine)
+
     @app.update
     def update() -> pt.Expr:
         return pt.Approve()
+
+    assert_type(update, pt.ABIReturnSubroutine)
 
     @app.delete
     def delete() -> pt.Expr:
         return pt.Approve()
 
-    assert len(app.bare_actions) == 3, "Expected 3 bare externals: create,update,delete"
+    assert_type(delete, pt.ABIReturnSubroutine)
+
+    assert len(app.bare_actions) == 0, "Expected no bare externals"
+    assert len(app.abi_externals) == 3, "Expected 3 ABI externals"
 
 
 def test_mixed_bares() -> None:
     app = Application("MixedBares")
 
-    @app.create
+    @app.create(bare=True)
     def create() -> pt.Expr:
         return pt.Approve()
 
@@ -156,7 +186,9 @@ def test_application_external_override_false() -> None:
 
 
 @pytest.mark.parametrize("create_existing_handle", [True, False])
-def test_application_external_override_none(create_existing_handle: bool) -> None:
+def test_application_external_override_none(
+    create_existing_handle: bool,  # noqa: FBT001
+) -> None:
     app = Application(
         f"ExternalOverrideNone{'With' if create_existing_handle else 'Without'}Existing"
     )
@@ -221,7 +253,9 @@ def test_application_bare_override_false() -> None:
 
 
 @pytest.mark.parametrize("create_existing_handle", [True, False])
-def test_application_bare_override_none(create_existing_handle: bool) -> None:
+def test_application_bare_override_none(
+    create_existing_handle: bool,  # noqa: FBT001
+) -> None:
     app = Application(
         f"BareOverrideNone{'With' if create_existing_handle else 'Without'}Existing"
     )
@@ -288,11 +322,11 @@ def test_state_init() -> None:
         # not-state
         not_a_state_var = pt.Int(1)
 
-    app = Application("TestStateInit", state=MyState()).implement(
+    app = Application("TestStateInit", state=MyState()).apply(
         unconditional_create_approval, initialize_global_state=True
     )
 
-    @app.opt_in(allow_create=True)
+    @app.opt_in(bare=True, allow_create=True)
     def opt_in() -> pt.Expr:
         return pt.Seq(
             pt.If(
@@ -512,7 +546,7 @@ def test_struct_args() -> None:
 
 
 def test_closure_vars() -> None:
-    def Inst(value: str) -> Application:
+    def make_app(value: str) -> Application:
         app = Application("InAClosure")
 
         v = pt.Bytes(value)
@@ -531,11 +565,11 @@ def test_closure_vars() -> None:
 
         return app
 
-    i1 = Inst("first")
+    i1 = make_app("first")
     i1_approval_program = i1.build().approval_program
     assert i1_approval_program
 
-    i2 = Inst("second")
+    i2 = make_app("second")
     i2_approval_program = i2.build().approval_program
     assert i2_approval_program
 

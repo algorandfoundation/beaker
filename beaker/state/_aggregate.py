@@ -2,7 +2,7 @@ from functools import cached_property
 from typing import Any, Generic, TypeVar
 
 from algosdk.transaction import StateSchema
-from pyteal import Expr, Seq, TealType, Txn
+from pyteal import Expr, Seq, TealType
 
 from beaker.application_specification import AppSpecStateDict
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
@@ -17,7 +17,7 @@ ST = TypeVar("ST", bound=StateStorage)
 T = TypeVar("T")
 
 
-def _get_attrs_of_type(namespace: Any, type_: type[T]) -> dict[str, T]:
+def _get_attrs_of_type(namespace: Any, type_: type[T]) -> dict[str, T]:  # noqa: ANN401
     result = {}
     for name in dir(namespace):
         if not name.startswith("__"):
@@ -31,7 +31,7 @@ def _get_attrs_of_type(namespace: Any, type_: type[T]) -> dict[str, T]:
 
 
 class StateAggregate(Generic[ST]):
-    def __init__(self, namespace: Any, storage_class: type[ST]):
+    def __init__(self, namespace: Any, storage_class: type[ST]):  # noqa: ANN401
         self._fields = _get_attrs_of_type(namespace, storage_class)
 
     def dictify(self) -> AppSpecStateDict:
@@ -66,7 +66,7 @@ class StateAggregate(Generic[ST]):
 
 
 class GlobalStateAggregate(StateAggregate[GlobalStateStorage]):
-    def __init__(self, namespace: Any):
+    def __init__(self, namespace: Any):  # noqa: ANN401
         super().__init__(namespace=namespace, storage_class=GlobalStateStorage)  # type: ignore[type-abstract]
 
         if self.total_keys > MAX_GLOBAL_STATE:
@@ -80,7 +80,7 @@ class GlobalStateAggregate(StateAggregate[GlobalStateStorage]):
 
 
 class LocalStateAggregate(StateAggregate[LocalStateStorage]):
-    def __init__(self, namespace: Any):
+    def __init__(self, namespace: Any):  # noqa: ANN401
         super().__init__(namespace=namespace, storage_class=LocalStateStorage)  # type: ignore[type-abstract]
 
         if self.total_keys > MAX_LOCAL_STATE:
@@ -88,7 +88,7 @@ class LocalStateAggregate(StateAggregate[LocalStateStorage]):
                 f"Too much local state, expected {self.total_keys} <= {MAX_LOCAL_STATE}"
             )
 
-    def initialize(self, acct: Expr = Txn.sender()) -> Expr:
+    def initialize(self, acct: Expr) -> Expr:
         """Generate expression from state values to initialize a default value"""
         return Seq(
             *filter(None, (f.initialize(acct=acct) for f in self._fields.values()))

@@ -79,32 +79,33 @@
 <span class="kn">import</span> <span class="nn">dataclasses</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span> <span class="nn">algosdk</span>
-<span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">transaction</span><span class="p">,</span> <span class="n">abi</span>
+<span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">abi</span><span class="p">,</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">algosdk.account</span> <span class="kn">import</span> <span class="n">address_from_private_key</span>
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">TransactionSigner</span><span class="p">,</span>
-    <span class="n">AccountTransactionSigner</span><span class="p">,</span>
-    <span class="n">MultisigTransactionSigner</span><span class="p">,</span>
-    <span class="n">LogicSigTransactionSigner</span><span class="p">,</span>
-    <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
-    <span class="n">ABIResult</span><span class="p">,</span>
     <span class="n">ABI_RETURN_HASH</span><span class="p">,</span>
-    <span class="n">TransactionWithSigner</span><span class="p">,</span>
+    <span class="n">ABIResult</span><span class="p">,</span>
+    <span class="n">AccountTransactionSigner</span><span class="p">,</span>
+    <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
     <span class="n">AtomicTransactionResponse</span><span class="p">,</span>
+    <span class="n">LogicSigTransactionSigner</span><span class="p">,</span>
+    <span class="n">MultisigTransactionSigner</span><span class="p">,</span>
+    <span class="n">TransactionSigner</span><span class="p">,</span>
+    <span class="n">TransactionWithSigner</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">algosdk.logic</span> <span class="kn">import</span> <span class="n">get_application_address</span>
 <span class="kn">from</span> <span class="nn">algosdk.v2client.algod</span> <span class="kn">import</span> <span class="n">AlgodClient</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">MethodConfig</span><span class="p">,</span> <span class="n">CallConfig</span>
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">CallConfig</span><span class="p">,</span> <span class="n">MethodConfig</span>
 
 <span class="kn">from</span> <span class="nn">beaker.application</span> <span class="kn">import</span> <span class="n">Application</span>
 <span class="kn">from</span> <span class="nn">beaker.application_specification</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ApplicationSpecification</span><span class="p">,</span>
-    <span class="n">MethodHints</span><span class="p">,</span>
     <span class="n">DefaultArgumentDict</span><span class="p">,</span>
+    <span class="n">MethodHints</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span><span class="p">,</span> <span class="n">parse_logic_error</span>
 <span class="kn">from</span> <span class="nn">beaker.client.state_decode</span> <span class="kn">import</span> <span class="n">decode_state</span>
@@ -129,7 +130,13 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">compiled_app</span>
             <span class="k">case</span> <span class="n">Application</span><span class="p">()</span> <span class="k">as</span> <span class="n">app</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-            <span class="k">case</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="n">Path</span><span class="p">():</span>
+            <span class="k">case</span> <span class="n">Path</span><span class="p">()</span> <span class="k">as</span> <span class="n">path</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">/</span> <span class="s2">&quot;application.json&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span>
+                    <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="nb">str</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">app_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_addr</span> <span class="o">=</span> <span class="n">get_application_address</span><span class="p">(</span><span class="n">app_id</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
@@ -148,7 +155,7 @@
             <span class="n">matching</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">method</span>
                 <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span>
-                <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">call_config</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_method_hints</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">call_config</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">matching</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -169,11 +176,10 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_complete</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span> <span class="o">=</span> <span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">NoOpOC</span><span class="p">,</span>
         <span class="n">extra_pages</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with application id == 0 and the schema and source from the Application passed&quot;&quot;&quot;</span>
 
@@ -199,7 +205,6 @@
                 <span class="n">global_schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">global_state_schema</span><span class="p">,</span>
                 <span class="n">local_schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">local_state_schema</span><span class="p">,</span>
                 <span class="n">extra_pages</span><span class="o">=</span><span class="n">extra_pages</span><span class="p">,</span>
-                <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -214,7 +219,6 @@
                         <span class="n">global_schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">global_state_schema</span><span class="p">,</span>
                         <span class="n">local_schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">local_state_schema</span><span class="p">,</span>
                         <span class="n">extra_pages</span><span class="o">=</span><span class="n">extra_pages</span><span class="p">,</span>
-                        <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                     <span class="p">),</span>
                     <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
@@ -238,11 +242,9 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with OnComplete set to UpdateApplication and source from the Application passed&quot;&quot;&quot;</span>
 
         <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_suggested_params</span><span class="p">(</span><span class="n">suggested_params</span><span class="p">)</span>
@@ -257,10 +259,8 @@
                 <span class="n">on_complete</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">UpdateApplicationOC</span><span class="p">,</span>
                 <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                 <span class="n">suggested_params</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
-                <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
                 <span class="n">approval_program</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">raw_binary</span><span class="p">,</span>
                 <span class="n">clear_program</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">raw_binary</span><span class="p">,</span>
-                <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -272,7 +272,6 @@
                         <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
                         <span class="n">approval_program</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">approval</span><span class="o">.</span><span class="n">raw_binary</span><span class="p">,</span>
                         <span class="n">clear_program</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="o">.</span><span class="n">raw_binary</span><span class="p">,</span>
-                        <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                     <span class="p">),</span>
                     <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
@@ -287,9 +286,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with OnComplete set to OptIn&quot;&quot;&quot;</span>
 
@@ -305,8 +303,6 @@
                 <span class="n">on_complete</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">OptInOC</span><span class="p">,</span>
                 <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                 <span class="n">suggested_params</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
-                <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                 <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
@@ -317,7 +313,6 @@
                         <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                         <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
                         <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                        <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                     <span class="p">),</span>
                     <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
@@ -332,9 +327,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with OnComplete set to CloseOut&quot;&quot;&quot;</span>
 
@@ -350,8 +344,6 @@
                 <span class="n">on_complete</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">CloseOutOC</span><span class="p">,</span>
                 <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                 <span class="n">suggested_params</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
-                <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                 <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
@@ -362,7 +354,6 @@
                         <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                         <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
                         <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                        <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                     <span class="p">),</span>
                     <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
@@ -377,11 +368,9 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with OnComplete set to ClearState&quot;&quot;&quot;</span>
 
         <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_suggested_params</span><span class="p">(</span><span class="n">suggested_params</span><span class="p">)</span>
@@ -395,7 +384,6 @@
                     <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                     <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
                     <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                    <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                 <span class="p">),</span>
                 <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
@@ -410,9 +398,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">suggested_params</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">SuggestedParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submits a signed ApplicationCallTransaction with OnComplete set to DeleteApplication&quot;&quot;&quot;</span>
 
@@ -428,8 +415,6 @@
                 <span class="n">on_complete</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">OnComplete</span><span class="o">.</span><span class="n">DeleteApplicationOC</span><span class="p">,</span>
                 <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                 <span class="n">suggested_params</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
-                <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                 <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
@@ -440,7 +425,6 @@
                         <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
                         <span class="n">sp</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span>
                         <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-                        <span class="n">app_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
                     <span class="p">),</span>
                     <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span>
@@ -455,7 +439,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ApplicationClient&quot;</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;makes a copy of the current ApplicationClient and the fields passed&quot;&quot;&quot;</span>
@@ -486,18 +470,13 @@
         <span class="n">lease</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rekey_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">atc</span><span class="p">:</span> <span class="n">AtomicTransactionComposer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIResult</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handles calling the application&quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">get_method_by_name</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">):</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">method_spec</span><span class="p">()</span>
-
-        <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_hints</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_abi_method</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+        <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method_hints</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">atc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
@@ -632,7 +611,7 @@
         <span class="n">note</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">lease</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rekey_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AtomicTransactionComposer</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a transaction to the AtomicTransactionComposer passed&quot;&quot;&quot;</span>
@@ -641,13 +620,8 @@
         <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signer</span><span class="p">(</span><span class="n">signer</span><span class="p">)</span>
         <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">signer</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">get_method_by_name</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">):</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">method_spec</span><span class="p">()</span>
-
-        <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_hints</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_abi_method</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+        <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method_hints</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">method_arg</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
@@ -709,6 +683,26 @@
 
         <span class="k">return</span> <span class="n">atc</span></div>
 
+    <span class="k">def</span> <span class="nf">_resolve_abi_method</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span> <span class="o">|</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">method</span><span class="o">.</span><span class="n">method_spec</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="nb">iter</span><span class="p">(</span>
+                        <span class="n">m</span>
+                        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">methods</span>
+                        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">get_signature</span><span class="p">()</span> <span class="o">==</span> <span class="n">method</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">get_method_by_name</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">method</span>
+
     <span class="k">def</span> <span class="nf">add_transaction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">atc</span><span class="p">:</span> <span class="n">AtomicTransactionComposer</span><span class="p">,</span> <span class="n">txn</span><span class="p">:</span> <span class="n">transaction</span><span class="o">.</span><span class="n">Transaction</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AtomicTransactionComposer</span><span class="p">:</span>
@@ -738,7 +732,7 @@
         <span class="k">return</span> <span class="n">atc</span><span class="o">.</span><span class="n">tx_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ApplicationClient.get_global_state"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.get_global_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_global_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the global state info for the app id set&quot;&quot;&quot;</span>
         <span class="n">global_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">application_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span>
@@ -750,7 +744,7 @@
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ApplicationClient.get_local_state"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.get_local_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_local_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the local state info for the app id set and the account specified&quot;&quot;&quot;</span>
@@ -772,8 +766,7 @@
 
 <div class="viewcode-block" id="ApplicationClient.get_application_account_info"><a class="viewcode-back" href="../../../application_client.html#beaker.client.ApplicationClient.get_application_account_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_application_account_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;gets the account info for the application account&quot;&quot;&quot;</span>
-        <span class="n">global_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">account_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_addr</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">global_state</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">account_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_addr</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">get_box_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
         <span class="n">box_resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">application_boxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span>
@@ -783,7 +776,7 @@
         <span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">application_box_by_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_resolve</span><span class="p">:</span> <span class="n">DefaultArgumentDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_resolve</span><span class="p">:</span> <span class="n">DefaultArgumentDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># noqa: ANN401</span>
         <span class="k">match</span> <span class="n">to_resolve</span><span class="p">:</span>
             <span class="k">case</span> <span class="p">{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">}:</span>
                 <span class="k">return</span> <span class="n">data</span>
@@ -802,10 +795,11 @@
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Unable to interpret default argument specification&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">method_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodHints</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">method_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_method_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Method</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodHints</span><span class="p">:</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">get_signature</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">sig</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">MethodHints</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">method_name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">hints</span><span class="p">[</span><span class="n">sig</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_suggested_params</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

@@ -185,7 +185,7 @@ class LocalBlob(Blob):
 
         self._write_impl = write_impl
 
-    def zero(self, acct: Expr = Txn.sender()) -> Expr:
+    def zero(self, acct: Expr = Txn.sender()) -> Expr:  # noqa: B008
         """
         initializes local state of an account to all zero bytes
 
@@ -194,25 +194,40 @@ class LocalBlob(Blob):
         """
         return self._zero_impl(acct)
 
-    def get_byte(self, idx: Expr, acct: Expr = Txn.sender()) -> Expr:
+    def get_byte(self, idx: Expr, acct: Expr = Txn.sender()) -> Expr:  # noqa: B008
         """
         Get a single byte from local storage of an account by index
         """
         return self._get_byte_impl(acct, idx)
 
-    def set_byte(self, idx: Expr, byte: Expr, acct: Expr = Txn.sender()) -> Expr:
+    def set_byte(
+        self,
+        idx: Expr,
+        byte: Expr,
+        acct: Expr = Txn.sender(),  # noqa: B008
+    ) -> Expr:
         """
         Set a single byte from local storage of an account by index
         """
         return self._set_byte_impl(acct, idx, byte)
 
-    def read(self, bstart: Expr, bend: Expr, acct: Expr = Txn.sender()) -> Expr:
+    def read(
+        self,
+        bstart: Expr,
+        bend: Expr,
+        acct: Expr = Txn.sender(),  # noqa: B008
+    ) -> Expr:
         """
         read bytes between bstart and bend from local storage of an account by index
         """
         return self._read_impl(acct, bstart, bend)
 
-    def write(self, bstart: Expr, buff: Expr, acct: Expr = Txn.sender()) -> Expr:
+    def write(
+        self,
+        bstart: Expr,
+        buff: Expr,
+        acct: Expr = Txn.sender(),  # noqa: B008
+    ) -> Expr:
         """
         write bytes between bstart and len(buff) to local storage of an account
         """
