@@ -70,6 +70,7 @@ jobs:
             publish
           gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
 
