@@ -140,7 +140,9 @@
         <span class="k">return</span> <span class="n">_impl</span></div>
 
 <div class="viewcode-block" id="Authorize.opted_in"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize.opted_in">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">opted_in</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_id</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">opted_in</span><span class="p">(</span>
+        <span class="n">app_id</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_id</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;require that the sender of the app call has</span>
 <span class="sd">        already opted-in to a given app id&quot;&quot;&quot;</span>
 

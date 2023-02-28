@@ -12,12 +12,8 @@ class LocalBlobTestState:
     blob = LocalBlob(keys=[x for x in range(10) if x % 2 == 0])
 
 
-def LocalBlobTest(name: str = "LB") -> bkr.Application[LocalBlobTestState]:
-    return UnitTestingApp(name=name, state=LocalBlobTestState())
-
-
 def test_local_blob_zero() -> None:
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
@@ -32,7 +28,7 @@ def test_local_blob_zero() -> None:
 
 
 def test_local_blob_write_read() -> None:
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
@@ -48,7 +44,7 @@ def test_local_blob_write_read() -> None:
 
 
 def test_local_blob_write_read_boundary() -> None:
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
@@ -64,7 +60,7 @@ def test_local_blob_write_read_boundary() -> None:
 
 
 def test_local_blob_write_read_past_end() -> None:
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:
@@ -86,7 +82,7 @@ def test_local_blob_write_read_past_end() -> None:
 def test_local_blob_set_get() -> None:
     num = 123
 
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
@@ -103,7 +99,7 @@ def test_local_blob_set_get() -> None:
 def test_local_blob_set_past_end() -> None:
     num = 123
 
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.Uint8) -> pt.Expr:
@@ -120,7 +116,7 @@ def test_local_blob_set_past_end() -> None:
 
 
 def test_local_blob_single_subroutine() -> None:
-    app = LocalBlobTest()
+    app = UnitTestingApp(name="LB", state=LocalBlobTestState())
 
     @app.external
     def unit_test(*, output: pt.abi.DynamicArray[pt.abi.Byte]) -> pt.Expr:

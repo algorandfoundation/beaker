@@ -1,4 +1,5 @@
 import pyteal as pt
+import pytest
 
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from tests.conftest import check_lsig_output_stability
@@ -36,18 +37,15 @@ def test_handler_logic_signature() -> None:
 
 
 def test_templated_logic_signature() -> None:
-    def Lsig() -> LogicSignatureTemplate:
-        def evaluate(pubkey: pt.Expr) -> pt.Expr:
-            return pt.Seq(
-                pt.Assert(pt.Len(pubkey)),
-                pt.Int(1),
-            )
-
-        return LogicSignatureTemplate(
-            evaluate, runtime_template_variables={"pubkey": pt.TealType.bytes}
+    def evaluate(pubkey: pt.Expr) -> pt.Expr:
+        return pt.Seq(
+            pt.Assert(pt.Len(pubkey)),
+            pt.Int(1),
         )
 
-    lsig = Lsig()
+    lsig = LogicSignatureTemplate(
+        evaluate, runtime_template_variables={"pubkey": pt.TealType.bytes}
+    )
 
     assert len(lsig.runtime_template_variables) == 1
     assert lsig.program
@@ -77,20 +75,16 @@ def test_different_methods_logic_signature() -> None:
     def no_self_internal_tester(x: pt.Expr, y: pt.Expr) -> pt.Expr:
         return x * y
 
-    def Lsig() -> LogicSignature:
-        def evaluate() -> pt.Expr:
-            return pt.Seq(
-                (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                (o := pt.abi.Uint64()).set(abi_tester(s)),
-                pt.Assert(internal_tester(o.get(), pt.Len(s.get()))),
-                (sv := pt.ScratchVar()).store(pt.Int(1)),
-                pt.Assert(internal_scratch_tester(sv, o.get())),
-                pt.Int(1),
-            )
-
-        return LogicSignature(evaluate)
-
-    lsig = Lsig()
+    lsig = LogicSignature(
+        pt.Seq(
+            (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
+            (o := pt.abi.Uint64()).set(abi_tester(s)),
+            pt.Assert(internal_tester(o.get(), pt.Len(s.get()))),
+            (sv := pt.ScratchVar()).store(pt.Int(1)),
+            pt.Assert(internal_scratch_tester(sv, o.get())),
+            pt.Int(1),
+        )
+    )
 
     assert lsig.program
 
@@ -98,19 +92,29 @@ def test_different_methods_logic_signature() -> None:
 
 
 def test_lsig_template_ordering() -> None:
-    def Lsig() -> LogicSignatureTemplate:
-        return LogicSignatureTemplate(
-            pt.Approve(),
+    lsig = LogicSignatureTemplate(
+        pt.Approve(),
+        runtime_template_variables={
+            "f": pt.TealType.uint64,
+            "a": pt.TealType.uint64,
+            "b": pt.TealType.uint64,
+            "c": pt.TealType.uint64,
+        },
+    )
+    assert [rtt_var.name for rtt_var in lsig.runtime_template_variables.values()] == [
+        "f",
+        "a",
+        "b",
+        "c",
+    ]
+
+
+def test_templated_logic_signature_bad_args() -> None:
+    with pytest.raises(ValueError, match="got unexpected arguments: bad_arg.$"):
+        LogicSignatureTemplate(
+            lambda good_arg, bad_arg: pt.Approve(),
             runtime_template_variables={
-                "f": pt.TealType.uint64,
-                "a": pt.TealType.uint64,
-                "b": pt.TealType.uint64,
-                "c": pt.TealType.uint64,
+                "good_arg": pt.TealType.bytes,
+                "missing_arg": pt.TealType.uint64,
             },
         )
-
-    expected = ["f", "a", "b", "c"]
-
-    l = Lsig()
-    for idx, tv in enumerate(l.runtime_template_variables.values()):
-        assert tv.name == expected[idx]

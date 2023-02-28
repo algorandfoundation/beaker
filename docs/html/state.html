@@ -615,8 +615,8 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 
 <span class="n">app</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;StateExample&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">ExampleState</span><span class="p">())</span>
-    <span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">,</span> <span class="n">initialize_global_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">implement</span><span class="p">(</span><span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_local_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">,</span> <span class="n">initialize_global_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_local_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="p">)</span>
 
 

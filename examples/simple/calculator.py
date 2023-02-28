@@ -48,16 +48,16 @@ def demo() -> None:
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    result = app_client.call("add", a=2, b=2)
+    result = app_client.call(add, a=2, b=2)
     print(f"add result: {result.return_value}")
 
-    result = app_client.call("mul", a=2, b=2)
+    result = app_client.call(mul, a=2, b=2)
     print(f"mul result: {result.return_value}")
 
-    result = app_client.call("sub", a=6, b=2)
+    result = app_client.call(sub, a=6, b=2)
     print(f"sub result: {result.return_value}")
 
-    result = app_client.call("div", a=16, b=4)
+    result = app_client.call(div, a=16, b=4)
     print(f"div result: {result.return_value}")
 
 

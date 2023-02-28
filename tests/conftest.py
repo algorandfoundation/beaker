@@ -11,6 +11,7 @@ def check_application_artifacts_output_stability(
     app: Application,
     dir_name: str | None = None,
     output_dir: Path | None = None,
+    *,
     dir_per_test_file: bool = True,
 ) -> None:
     """Test that the contract output hasn't changed for an Application, using git diff

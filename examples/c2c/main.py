@@ -38,8 +38,8 @@ sub_app = (
         descr="Sub application who's only purpose is to opt into then close out of an asset",
         state=C2CSubState(),
     )
-    .implement(bkr.unconditional_create_approval, initialize_global_state=True)
-    .implement(bkr.unconditional_opt_in_approval, initialize_local_state=True)
+    .apply(bkr.unconditional_create_approval, initialize_global_state=True)
+    .apply(bkr.unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 
@@ -73,7 +73,7 @@ def return_asset(asset: abi.Asset, addr: abi.Account) -> Expr:
 main_app = bkr.Application(
     "C2CMain",
     descr="Main application that handles creation of the sub app and asset and calls it",
-).implement(bkr.unconditional_create_approval)
+).apply(bkr.unconditional_create_approval)
 
 
 @main_app.external

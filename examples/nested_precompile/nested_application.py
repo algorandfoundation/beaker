@@ -14,8 +14,8 @@ from beaker import (
     GlobalStateValue,
     LogicSignature,
     precompiled,
+    unconditional_create_approval,
 )
-from beaker.blueprints import unconditional_create_approval
 
 
 class Child1State:
@@ -25,7 +25,7 @@ class Child1State:
     )
 
 
-child1_app = Application("Child1", state=Child1State()).implement(
+child1_app = Application("Child1", state=Child1State()).apply(
     unconditional_create_approval, initialize_global_state=True
 )
 
@@ -39,7 +39,7 @@ def increment_counter(*, output: abi.Uint64) -> Expr:
     )
 
 
-child2_app = Application("Child2").implement(unconditional_create_approval)
+child2_app = Application("Child2").apply(unconditional_create_approval)
 lsig = LogicSignature(Approve())
 
 
@@ -48,7 +48,7 @@ def get_lsig_addr(*, output: abi.Address) -> Expr:
     return output.set(precompiled(lsig).address())
 
 
-parent_app = Application("Parent").implement(unconditional_create_approval)
+parent_app = Application("Parent").apply(unconditional_create_approval)
 
 
 @parent_app.external
@@ -71,7 +71,7 @@ def create_child_2(*, output: abi.Uint64) -> Expr:
     )
 
 
-grand_parent_app = Application("Grandparent").implement(unconditional_create_approval)
+grand_parent_app = Application("Grandparent").apply(unconditional_create_approval)
 
 
 @grand_parent_app.external

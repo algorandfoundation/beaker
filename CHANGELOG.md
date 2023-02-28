@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.6.1 (2023-02-27)
+### Fix
+* Prevent blob from duplicating subroutine body ([#174](https://github.com/algorand-devrel/beaker/issues/174)) ([`39e93ff`](https://github.com/algorand-devrel/beaker/commit/39e93ff2e6d02cf9b12b4c63b6dfb10376c2857c))
+
 # 0.4.1
 
  ## BugFix

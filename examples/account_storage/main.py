@@ -35,20 +35,15 @@ from beaker import (
 )
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
-
 # Simple logic sig, will approve _any_ transaction
 # Used to expand our apps available state by
 # creating unique account that will do whatever we need.
 # In this case, we need it to opt in and rekey to the app address
-def KeySig(version: int) -> LogicSignatureTemplate:
-    return LogicSignatureTemplate(
-        Approve(),
-        runtime_template_variables={"nonce": TealType.bytes},
-        build_options=BuildOptions(avm_version=version),
-    )
-
-
-key_sig = KeySig(version=8)
+key_sig = LogicSignatureTemplate(
+    Approve(),
+    runtime_template_variables={"nonce": TealType.bytes},
+    build_options=BuildOptions(avm_version=8),
+)
 
 # App that needs lots of storage so we use the local storage of
 # unique lsig accounts that have been rekeyed to the app address.
@@ -199,7 +194,7 @@ def create_and_opt_in_account(
     # Add opt in method call on behalf of lsig
     lsig_client.add_method_call(
         atc,
-        "add_account",
+        add_account,
         suggested_params=sp,
         nonce=nonce.encode(),
         rekey_to=lsig_client.app_addr,

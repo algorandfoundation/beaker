@@ -4,7 +4,11 @@ from beaker import (
     Application,
     ReservedGlobalStateValue,
 )
-from examples.wormhole.wormhole import ContractTransferVAA, wormhole_transfer
+from examples.wormhole.wormhole import (
+    ContractTransferVAA,
+    WormholeStrategy,
+    wormhole_transfer,
+)
 
 
 class OracleData(abi.NamedTuple):
@@ -29,31 +33,41 @@ def lookup(ts: abi.Uint64, *, output: OracleData) -> Expr:
     return output.decode(oracle_data_cache_app.state.prices[ts].get_must())
 
 
-def handle_transfer(ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes) -> Expr:
-    """
-    invoked from parent class `portal_transfer` after parsing the VAA into
-    abi vars
-    """
-    return Seq(
-        # TODO: assert foreign sender? Should be in provided contract?
-        # Do this once, since `get`` incurs a couple op penalty over `load`
-        (payload := ScratchVar()).store(ctvaa.payload.get()),
-        # Read vals from json
-        (timestamp := abi.Uint64()).set(JsonRef.as_uint64(payload.load(), Bytes("ts"))),
-        (price := abi.Uint64()).set(JsonRef.as_uint64(payload.load(), Bytes("price"))),
-        (confidence := abi.Uint64()).set(
-            JsonRef.as_uint64(payload.load(), Bytes("confidence"))
-        ),
-        # Construct named tuple for storage
-        (od := abi.make(OracleData)).set(timestamp, price, confidence),
-        # Write to app state
-        oracle_data_cache_app.state.prices[timestamp].set(od.encode()),
-        # echo the payload
-        output.set(ctvaa.payload),
-    )
+class MyStrategy(WormholeStrategy):
+    def handle_transfer(
+        self,
+        ctvaa: ContractTransferVAA,
+        *,
+        output: abi.DynamicBytes,
+    ) -> Expr:
+        """
+        invoked from blueprint method `portal_transfer` after parsing the VAA into
+        abi vars
+        """
+        return Seq(
+            # TODO: assert foreign sender? Should be in provided contract?
+            # Do this once, since `get`` incurs a couple op penalty over `load`
+            (payload := ScratchVar()).store(ctvaa.payload.get()),
+            # Read vals from json
+            (timestamp := abi.Uint64()).set(
+                JsonRef.as_uint64(payload.load(), Bytes("ts"))
+            ),
+            (price := abi.Uint64()).set(
+                JsonRef.as_uint64(payload.load(), Bytes("price"))
+            ),
+            (confidence := abi.Uint64()).set(
+                JsonRef.as_uint64(payload.load(), Bytes("confidence"))
+            ),
+            # Construct named tuple for storage
+            (od := abi.make(OracleData)).set(timestamp, price, confidence),
+            # Write to app state
+            oracle_data_cache_app.state.prices[timestamp].set(od.encode()),
+            # echo the payload
+            output.set(ctvaa.payload),
+        )
 
 
-oracle_data_cache_app.implement(wormhole_transfer, handle_transfer=handle_transfer)
+oracle_data_cache_app.apply(wormhole_transfer, strategy=MyStrategy())
 
 
 if __name__ == "__main__":

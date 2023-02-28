@@ -45,7 +45,7 @@ app = Application(
 )
 
 
-@app.create
+@app.create(bare=True)
 def create() -> pt.Expr:
     return pt.Seq(
         app.initialize_global_state(),
@@ -556,7 +556,10 @@ def test_resolve(sb_accts: SandboxAccounts) -> None:
         ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_byte))
         == b"test"
     )
-    assert ac.resolve({"source": "abi-method", "data": dummy.method_spec().dictify()}) == "deadbeef"  # type: ignore[union-attr]
+    assert (
+        ac.resolve({"source": "abi-method", "data": dummy.method_spec().dictify()})
+        == "deadbeef"
+    )
 
 
 def test_override_app_create(sb_accts: SandboxAccounts) -> None:
@@ -690,7 +693,7 @@ def test_abi_delete(sb_accts: SandboxAccounts) -> None:
 
 
 def test_abi_close_out(sb_accts: SandboxAccounts) -> None:
-    app = Application("ABIUpdate").implement(beaker.unconditional_opt_in_approval)
+    app = Application("ABIUpdate").apply(beaker.unconditional_opt_in_approval)
 
     do_close_out = 7
 

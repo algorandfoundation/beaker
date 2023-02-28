@@ -362,7 +362,7 @@ Upon finding a resolvable it will look up the state value, call the method. The 
 </pre></div>
 </div>
 <p>Additionally, if the <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> needs one or more <code class="docutils literal notranslate"><span class="pre">TemplateVariables</span></code> the <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code> is used and functions similarly, by passing the named template arguments to the call to get the <code class="docutils literal notranslate"><span class="pre">address</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>  <span class="c1"># noqa: N802</span>
     <span class="c1"># Simple program to check an ed25519 signature given a message and signature</span>
 
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">user_addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>

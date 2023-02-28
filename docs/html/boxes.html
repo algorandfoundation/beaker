@@ -434,7 +434,7 @@
     <span class="n">membership_token</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
 
 
-<span class="n">app_member_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;AppMember&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">MemberState</span><span class="p">())</span><span class="o">.</span><span class="n">implement</span><span class="p">(</span>
+<span class="n">app_member_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;AppMember&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">MemberState</span><span class="p">())</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
     <span class="n">unconditional_create_approval</span>
 <span class="p">)</span>
 
@@ -472,7 +472,7 @@
     <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
         <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">ExecuteMethodCall</span><span class="p">(</span>
             <span class="n">app_id</span><span class="o">=</span><span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">club_app_id</span><span class="p">,</span>
-            <span class="n">method_signature</span><span class="o">=</span><span class="n">get_affirmation</span><span class="o">.</span><span class="n">method_signature</span><span class="p">(),</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">method_signature</span><span class="o">=</span><span class="n">get_affirmation</span><span class="o">.</span><span class="n">method_signature</span><span class="p">(),</span>
             <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">member_token</span><span class="p">],</span>
         <span class="p">),</span>
         <span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">last_affirmation</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Suffix</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">last_log</span><span class="p">(),</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">))),</span>

@@ -202,7 +202,7 @@ def test_decorators_with_bare_signature(decorator_name: str, action_name: str) -
     app = Application("")
     decorator = getattr(app, decorator_name)
 
-    @decorator
+    @decorator(bare=True)
     def test() -> pt.Expr:
         return pt.Assert(pt.Int(1))
 

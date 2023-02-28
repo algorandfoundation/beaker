@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beaker-pyteal"
-version = "0.5.4"
+version = "0.6.1"
 description = "A Framework for building PyTeal Applications"
 license = "MIT"
 authors = ["Ben Guidarelli <ben@algorand.com>"]
@@ -26,7 +26,6 @@ mypy = "^1.0.0"
 black = {extras = ["d"], version = "^22.12.0"}
 pytest-cov = "^4.0.0"
 pre-commit = "^2.20.0"
-flake8-tidy-imports = "^4.8.0"
 python-semantic-release = "^7.32.2"
 pip-audit = "^2.4.12"
 pytest-xdist = "^3.1.0"
@@ -45,7 +44,7 @@ version_toml = "pyproject.toml:tool.poetry.version"
 remove_dist = false
 build_command = "poetry build --format wheel"
 version_source = "tag"
-major_on_zero = false
+major_on_zero = true
 upload_to_repository = false
 tag_commit = true
 branch = "master"
@@ -60,16 +59,8 @@ markers = [
 [tool.ruff]
 select = ["E", "F", "ANN", "UP", "N", "C", "B", "YTT", "W", "FBT", "Q", "RUF", "I"]
 ignore = [
-    "ANN001",
-    "ANN101",
-    "ANN401",
-    "B008",
-    "C901",
-    "E501",
-    "E741",
-    "FBT001",
-    "FBT002",
-    "N802",
+    "ANN101", # missing type for self parameter
+    "E501", # line too long - black takes care of this for us
 ]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -90,8 +81,8 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 target-version = "py310"
 
 [tool.ruff.per-file-ignores]
-"*/__init__.py" = ["F401", "I252"]
+"tests/state_test.py" = ["ANN001", "ANN201", "ANN401"]
+"beaker/lib/*.py" = ["N802"]  # lowercase function names
 
 [tool.ruff.flake8-annotations]
-allow-star-arg-any = true
-suppress-none-returning = true
+mypy-init-return = true

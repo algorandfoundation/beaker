@@ -55,9 +55,11 @@ __all__ = [
     "Application",
     "this_app",
     "precompiled",
+    "unconditional_create_approval",
+    "unconditional_opt_in_approval",
 ]
 
-OnCompleteActionName: TypeAlias = Literal[
+OnCompleteActionName = Literal[
     "no_op",
     "opt_in",
     "close_out",
@@ -71,6 +73,7 @@ T = TypeVar("T")
 P = ParamSpec("P")
 TState = TypeVar("TState", covariant=True)
 
+BareHandlerFunc = Callable[[], Expr]
 HandlerFunc = Callable[..., Expr]
 
 
@@ -81,8 +84,10 @@ class ABIExternal:
     hints: MethodHints
 
 
-DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
-DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
+ABIDecoratorFuncType = Callable[[HandlerFunc], ABIReturnSubroutine]
+BareDecoratorFuncType = Callable[[BareHandlerFunc], SubroutineFnWrapper]
+
+DecoratorFuncType: TypeAlias = ABIDecoratorFuncType | BareDecoratorFuncType  # type: ignore
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -129,7 +134,7 @@ class Application(Generic[TState]):
         self,
         name: str,
         *,
-        state: TState = cast(TState, None),
+        state: TState = cast(TState, None),  # noqa: B008
         descr: str | None = None,
         build_options: BuildOptions | None = None,
     ):
@@ -248,9 +253,10 @@ class Application(Generic[TState]):
         /,
     ) -> None:
         if isinstance(method_signature_or_reference, str):
-            self.abi_externals.pop(method_signature_or_reference)
+            sig = method_signature_or_reference
         else:
-            self.abi_externals.pop(method_signature_or_reference.method_signature())
+            sig = method_signature_or_reference.method_signature()
+        del self.abi_externals[sig]
 
     def _register_bare_external(
         self,
@@ -278,15 +284,25 @@ class Application(Generic[TState]):
 
     def deregister_bare_method(
         self,
-        action_name_or_reference: OnCompleteActionName | SubroutineFnWrapper,
+        action_name_or_reference: OnCompleteActionName
+        | Literal["clear_state"]
+        | SubroutineFnWrapper,
         /,
     ) -> None:
-        if isinstance(action_name_or_reference, str):
-            self.bare_actions.pop(cast(OnCompleteActionName, action_name_or_reference))
-        else:
+        if isinstance(action_name_or_reference, SubroutineFnWrapper):
             method = action_name_or_reference
             _remove_first_match(self.bare_actions, lambda _, v: v.action is method)
+        else:
+            if action_name_or_reference == "clear_state":
+                if self._clear_state_method is None:
+                    # not really any reason for this, other than to match behaviour
+                    # of other bare actions
+                    raise KeyError("No clear_state method defined")
+                self._clear_state_method = None
+            else:
+                del self.bare_actions[action_name_or_reference]
 
+    # case 1: no-args
     @overload
     def external(
         self,
@@ -295,6 +311,7 @@ class Application(Generic[TState]):
     ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def external(
         self,
@@ -303,7 +320,50 @@ class Application(Generic[TState]):
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = False,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict | None = None,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict | None = None,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -317,10 +377,10 @@ class Application(Generic[TState]):
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = False,
+        bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled as an ABI method for the Application
 
@@ -340,37 +400,33 @@ class Application(Generic[TState]):
             :code:`__handler_config__` attribute
         """
 
-        def decorator(func: HandlerFunc) -> SubroutineFnWrapper | ABIReturnSubroutine:
-            sig = inspect.signature(func)
-            nonlocal bare
-            if bare is None:
-                bare = not sig.parameters
+        if bare:
+            if method_config is None:
+                raise ValueError("@external(bare=True, ...) requires method_config")
+            if read_only:
+                raise ValueError("read_only=True has no effect on bare methods")
 
-            if bare and read_only:
-                raise ValueError("read_only has no effect on bare methods")
+        actions: MethodConfigDict
+        match method_config:
+            case None:
+                actions = {"no_op": CallConfig.CALL}
+            case MethodConfig():
+                actions = {
+                    cast(OnCompleteActionName, key): value
+                    for key, value in method_config.__dict__.items()
+                    if value != CallConfig.NEVER
+                }
+            case _:
+                actions = method_config
 
-            actions: MethodConfigDict
-            match method_config:
-                case None:
-                    if bare:
-                        raise ValueError("bare requires method_config")
-                    else:
-                        actions = {"no_op": CallConfig.CALL}
-                case MethodConfig():
-                    actions = {
-                        cast(OnCompleteActionName, key): value
-                        for key, value in method_config.__dict__.items()
-                        if value != CallConfig.NEVER
-                    }
-                case _:
-                    actions = method_config
+        if bare:
 
-            if authorize is not None:
-                func = authorize_decorator(authorize)(func)
-            if bare:
+            def bare_decorator(func: BareHandlerFunc) -> SubroutineFnWrapper:
+                if authorize is not None:
+                    func = authorize_decorator(authorize)(func)
                 sub = SubroutineFnWrapper(func, return_type=TealType.none, name=name)
                 if sub.subroutine.argument_count():
-                    raise TypeError("Bare externals must take no method arguments")
+                    raise TypeError("Bare methods must take no method arguments")
 
                 self._register_bare_external(
                     sub,
@@ -378,7 +434,14 @@ class Application(Generic[TState]):
                     override=override,
                 )
                 return sub
-            else:
+
+            return bare_decorator
+
+        else:
+
+            def decorator(func: HandlerFunc) -> ABIReturnSubroutine:
+                if authorize is not None:
+                    func = authorize_decorator(authorize)(func)
                 hints = self._capture_method_hints_and_remove_defaults(
                     func,
                     read_only=read_only,
@@ -394,19 +457,21 @@ class Application(Generic[TState]):
                 )
                 return method
 
-        if fn is None:
-            return decorator
+            if fn is None:
+                return decorator
 
-        return decorator(fn)
+            return decorator(fn)
 
+    # case 1: no-args
     @overload
     def create(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def create(
         self,
@@ -414,7 +479,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -426,9 +529,9 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled during Application create
 
@@ -453,16 +556,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def delete(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def delete(
         self,
@@ -470,7 +575,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -482,9 +625,9 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled during Application deletion
 
@@ -501,6 +644,7 @@ class Application(Generic[TState]):
             The original method with additional elements set in it's
             :code:`__handler_config__` attribute
         """
+
         decorator = self.external(
             method_config={"delete_application": CallConfig.CALL},
             name=name,
@@ -508,16 +652,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def update(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def update(
         self,
@@ -525,7 +671,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -537,9 +721,9 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled during Application update
 
@@ -563,16 +747,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def opt_in(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def opt_in(
         self,
@@ -581,7 +767,48 @@ class Application(Generic[TState]):
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -594,9 +821,9 @@ class Application(Generic[TState]):
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled during Application opt-in
 
@@ -622,71 +849,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
-    @overload
-    def clear_state(
-        self,
-        fn: Callable[[], Expr],
-        /,
-    ) -> SubroutineFnWrapper:
-        ...
-
-    @overload
-    def clear_state(
-        self,
-        /,
-        *,
-        name: str | None = None,
-        override: bool | None = False,
-    ) -> Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
-        ...
-
-    def clear_state(
-        self,
-        fn: Callable[[], Expr] | None = None,
-        /,
-        *,
-        name: str | None = None,
-        override: bool | None = False,
-    ) -> SubroutineFnWrapper | Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
-        """
-        Add the method decorated to be handled during Application clear-state
-
-        Args:
-            fn: The function being wrapped.
-            name: Name of ABI method. If not set, name of the python method will be used.
-                Useful for method overriding.
-            override:
-        Returns:
-            The original method with additional elements set in it's
-            :code:`__handler_config__` attribute
-        """
-
-        def decorator(fun: Callable[[], Expr]) -> SubroutineFnWrapper:
-            sub = SubroutineFnWrapper(fun, TealType.none, name=name)
-            if sub.subroutine.argument_count():
-                raise TypeError(
-                    "clear_state methods cannot fail, so cannot rely on the presence of arguments. "
-                    "TODO betterify this message!!"
-                )
-            if override is True and self._clear_state_method is None:
-                raise ValueError("override=True but no clear_state defined")
-            elif override is False and self._clear_state_method is not None:
-                raise ValueError("override=False but clear_state already defined")
-            self._clear_state_method = sub
-            return sub
-
-        return decorator if fn is None else decorator(fn)
-
+    # case 1: no-args
     @overload
     def close_out(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def close_out(
         self,
@@ -694,7 +868,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -706,9 +918,9 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled during Application close-out
 
@@ -730,16 +942,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def no_op(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def no_op(
         self,
@@ -749,7 +963,53 @@ class Application(Generic[TState]):
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -764,10 +1024,10 @@ class Application(Generic[TState]):
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled as an ABI method for the Application
 
@@ -802,11 +1062,53 @@ class Application(Generic[TState]):
             read_only=read_only,
             override=override,
         )
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
+
+    @overload
+    def clear_state(
+        self,
+        fn: Callable[[], Expr],
+        /,
+    ) -> SubroutineFnWrapper:
+        ...
+
+    @overload
+    def clear_state(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        override: bool | None = False,
+    ) -> Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
+        ...
+
+    def clear_state(
+        self,
+        fn: Callable[[], Expr] | None = None,
+        /,
+        *,
+        name: str | None = None,
+        override: bool | None = False,
+    ) -> SubroutineFnWrapper | Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
+        def decorator(fun: Callable[[], Expr]) -> SubroutineFnWrapper:
+            sub = SubroutineFnWrapper(fun, TealType.none, name=name)
+            if sub.subroutine.argument_count():
+                raise TypeError(
+                    "clear_state methods cannot fail, so cannot rely on the presence of arguments. "
+                    "TODO betterify this message!!"
+                )
+            if override is True and self._clear_state_method is None:
+                raise ValueError("override=True but no clear_state defined")
+            elif override is False and self._clear_state_method is not None:
+                raise ValueError("override=False but clear_state already defined")
+            self._clear_state_method = sub
+            return sub
+
         return decorator if fn is None else decorator(fn)
 
-    def implement(
+    def apply(
         self,
-        blueprint: Callable[Concatenate["Application[TState]", P], T],
+        func: Callable[Concatenate["Application[TState]", P], T],
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> "Application[TState]":
@@ -819,7 +1121,7 @@ class Application(Generic[TState]):
         Returns:
             :code:`Application`
         """
-        blueprint(self, *args, **kwargs)
+        func(self, *args, **kwargs)
         return self
 
     def build(self, client: "AlgodClient | None" = None) -> ApplicationSpecification:
@@ -829,7 +1131,7 @@ class Application(Generic[TState]):
         Note: .
 
         Args:
-            client (optional): An Algod client that is required if there are any ``precopiled`` so they can be fully compiled.
+            client (optional): An Algod client that is required if there are any ``precompiled`` so they can be fully compiled.
         """
 
         with _set_ctx(app=self, client=client):
@@ -913,16 +1215,16 @@ class Application(Generic[TState]):
         self._check_context()
         return self._global_state.initialize()
 
-    def initialize_local_state(self, addr: Expr = Txn.sender()) -> Expr:
+    def initialize_local_state(self, addr: Expr | None = None) -> Expr:
         """
         Initialize any local state variables declared
 
-        :param addr: Optional, address of account to initialize state for.
+        :param addr: Optional, address of account to initialize state for (defaults to Txn.sender()).
         :return: The Expr to initialize the account state.
         :rtype: pyteal.Expr
         """
         self._check_context()
-        return self._local_state.initialize(addr)
+        return self._local_state.initialize(addr or Txn.sender())
 
     def _check_context(self) -> None:
         if ctx := _ctx.get(None):
@@ -936,6 +1238,7 @@ class Application(Generic[TState]):
     def _capture_method_hints_and_remove_defaults(
         self,
         fn: HandlerFunc,
+        *,
         read_only: bool,
         actions: dict[OnCompleteActionName, CallConfig],
     ) -> MethodHints:
@@ -944,30 +1247,32 @@ class Application(Generic[TState]):
         sig = inspect.signature(fn)
         params = sig.parameters.copy()
 
-        mh = MethodHints(
+        hints = MethodHints(
             read_only=read_only,
             call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
         )
 
         for name, param in params.items():
-            match param.default:
-                case ABIReturnSubroutine():
-                    foo = next(
-                        iter(
-                            ext
-                            for ext in self.abi_externals.values()
-                            if ext.method is param.default
-                        )
-                    )
-                    mh.default_arguments[name] = _default_argument_from_resolver(foo)
-                    params[name] = param.replace(default=inspect.Parameter.empty)
-                case (Expr() | int() | str() | bytes() | ABIExternal()) as value:
-                    mh.default_arguments[name] = _default_argument_from_resolver(value)
-                    params[name] = param.replace(default=inspect.Parameter.empty)
+            if param.default is not inspect.Parameter.empty:
+                # delete the default value from the signature, for PyTeal's benefit
+                params[name] = param.replace(default=inspect.Parameter.empty)
+
+                if isinstance(param.default, ABIReturnSubroutine):
+                    # we need to look up the ABIExternal to resolve
+                    to_resolve = self.abi_externals[param.default.method_signature()]
+                else:
+                    # note that we don't need to check the type here - if it's invalid,
+                    # then _default_argument_from_resolver will raise an appropriate error
+                    to_resolve = param.default
+                # add the default value resolution data to the hints
+                hints.default_arguments[name] = _default_argument_from_resolver(
+                    to_resolve
+                )
+
             if inspect.isclass(param.annotation) and issubclass(
                 param.annotation, abi.NamedTuple
             ):
-                mh.structs[name] = {
+                hints.structs[name] = {
                     "name": str(param.annotation.__name__),
                     "elements": [
                         [name, str(abi.algosdk_from_annotation(typ.__args__[0]))]
@@ -975,12 +1280,12 @@ class Application(Generic[TState]):
                     ],
                 }
 
-        if mh.default_arguments:
+        if hints.default_arguments:
             # Fix function sig/annotations
             newsig = sig.replace(parameters=list(params.values()))
             fn.__signature__ = newsig  # type: ignore[attr-defined]
 
-        return mh
+        return hints
 
 
 def _default_argument_from_resolver(
@@ -1054,6 +1359,34 @@ def precompiled(
     if value is ctx_app:
         raise ValueError("Attempted to precompile the current application")
     return ctx_app.precompiled(value)
+
+
+def unconditional_create_approval(
+    app: Application,
+    *,
+    initialize_global_state: bool = False,
+    bare: bool = True,
+) -> None:
+    """"""
+
+    @app.create(bare=bare)
+    def create() -> Expr:
+        if initialize_global_state:
+            return app.initialize_global_state()
+        return Approve()
+
+
+def unconditional_opt_in_approval(
+    app: Application,
+    *,
+    initialize_local_state: bool = False,
+    bare: bool = True,
+) -> None:
+    @app.opt_in(bare=bare)
+    def opt_in() -> Expr:
+        if initialize_local_state:
+            return app.initialize_local_state()
+        return Approve()
 
 
 TKey = TypeVar("TKey")

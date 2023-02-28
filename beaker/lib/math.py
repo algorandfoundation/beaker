@@ -266,10 +266,10 @@ def BytesToInt(x: Expr) -> Expr:
 @Subroutine(TealType.bytes)
 def StackToWide() -> Expr:
     """StackToWide returns the combination of the high and low integers returned from a wide math operation as bytes"""
-    h = ScratchSlot()
-    l = ScratchSlot()
+    hi = ScratchSlot()
+    lo = ScratchSlot()
     return Seq(
-        l.store(),
-        h.store(),  # Take the low and high ints off the stack and combine them
-        Concat(Itob(h.load()), Itob(l.load())),
+        lo.store(),
+        hi.store(),  # Take the low and high ints off the stack and combine them
+        Concat(Itob(hi.load()), Itob(lo.load())),
     )

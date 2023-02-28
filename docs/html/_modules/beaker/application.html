@@ -133,9 +133,11 @@
     <span class="s2">&quot;Application&quot;</span><span class="p">,</span>
     <span class="s2">&quot;this_app&quot;</span><span class="p">,</span>
     <span class="s2">&quot;precompiled&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unconditional_create_approval&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unconditional_opt_in_approval&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">OnCompleteActionName</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+<span class="n">OnCompleteActionName</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
     <span class="s2">&quot;no_op&quot;</span><span class="p">,</span>
     <span class="s2">&quot;opt_in&quot;</span><span class="p">,</span>
     <span class="s2">&quot;close_out&quot;</span><span class="p">,</span>
@@ -149,6 +151,7 @@
 <span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
 <span class="n">TState</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TState&quot;</span><span class="p">,</span> <span class="n">covariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+<span class="n">BareHandlerFunc</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]</span>
 <span class="n">HandlerFunc</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Expr</span><span class="p">]</span>
 
 
@@ -159,8 +162,10 @@
     <span class="n">hints</span><span class="p">:</span> <span class="n">MethodHints</span>
 
 
-<span class="n">DecoratorResultType</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">ABIReturnSubroutine</span>
-<span class="n">DecoratorFuncType</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">HandlerFunc</span><span class="p">],</span> <span class="n">DecoratorResultType</span><span class="p">]</span>
+<span class="n">ABIDecoratorFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">HandlerFunc</span><span class="p">],</span> <span class="n">ABIReturnSubroutine</span><span class="p">]</span>
+<span class="n">BareDecoratorFuncType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">BareHandlerFunc</span><span class="p">],</span> <span class="n">SubroutineFnWrapper</span><span class="p">]</span>
+
+<span class="n">DecoratorFuncType</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">ABIDecoratorFuncType</span> <span class="o">|</span> <span class="n">BareDecoratorFuncType</span>
 
 
 <span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -207,7 +212,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">TState</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">TState</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">TState</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">TState</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>  <span class="c1"># noqa: B008</span>
         <span class="n">descr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">build_options</span><span class="p">:</span> <span class="n">BuildOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -326,9 +331,10 @@
         <span class="o">/</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method_signature_or_reference</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">abi_externals</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">method_signature_or_reference</span><span class="p">)</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">method_signature_or_reference</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">abi_externals</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">method_signature_or_reference</span><span class="o">.</span><span class="n">method_signature</span><span class="p">())</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">method_signature_or_reference</span><span class="o">.</span><span class="n">method_signature</span><span class="p">()</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">abi_externals</span><span class="p">[</span><span class="n">sig</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_register_bare_external</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -356,15 +362,25 @@
 
     <span class="k">def</span> <span class="nf">deregister_bare_method</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">action_name_or_reference</span><span class="p">:</span> <span class="n">OnCompleteActionName</span> <span class="o">|</span> <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
+        <span class="n">action_name_or_reference</span><span class="p">:</span> <span class="n">OnCompleteActionName</span>
+        <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;clear_state&quot;</span><span class="p">]</span>
+        <span class="o">|</span> <span class="n">SubroutineFnWrapper</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">action_name_or_reference</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">bare_actions</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">OnCompleteActionName</span><span class="p">,</span> <span class="n">action_name_or_reference</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">action_name_or_reference</span><span class="p">,</span> <span class="n">SubroutineFnWrapper</span><span class="p">):</span>
             <span class="n">method</span> <span class="o">=</span> <span class="n">action_name_or_reference</span>
             <span class="n">_remove_first_match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bare_actions</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">action</span> <span class="ow">is</span> <span class="n">method</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">action_name_or_reference</span> <span class="o">==</span> <span class="s2">&quot;clear_state&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># not really any reason for this, other than to match behaviour</span>
+                    <span class="c1"># of other bare actions</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;No clear_state method defined&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">bare_actions</span><span class="p">[</span><span class="n">action_name_or_reference</span><span class="p">]</span>
 
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">external</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -373,6 +389,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">external</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -381,7 +398,50 @@
         <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">|</span> <span class="n">MethodConfigDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">external</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">|</span> <span class="n">MethodConfigDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">external</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">|</span> <span class="n">MethodConfigDict</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">external</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">|</span> <span class="n">MethodConfigDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
@@ -395,10 +455,10 @@
         <span class="n">method_config</span><span class="p">:</span> <span class="n">MethodConfig</span> <span class="o">|</span> <span class="n">MethodConfigDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled as an ABI method for the Application</span>
 
@@ -418,37 +478,33 @@
 <span class="sd">            :code:`__handler_config__` attribute</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
-            <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-            <span class="k">nonlocal</span> <span class="n">bare</span>
-            <span class="k">if</span> <span class="n">bare</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">bare</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="k">if</span> <span class="n">bare</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">method_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;@external(bare=True, ...) requires method_config&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">read_only</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;read_only=True has no effect on bare methods&quot;</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">bare</span> <span class="ow">and</span> <span class="n">read_only</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;read_only has no effect on bare methods&quot;</span><span class="p">)</span>
+        <span class="n">actions</span><span class="p">:</span> <span class="n">MethodConfigDict</span>
+        <span class="k">match</span> <span class="n">method_config</span><span class="p">:</span>
+            <span class="n">case</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">actions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;no_op&quot;</span><span class="p">:</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">}</span>
+            <span class="k">case</span> <span class="n">MethodConfig</span><span class="p">():</span>
+                <span class="n">actions</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">cast</span><span class="p">(</span><span class="n">OnCompleteActionName</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span> <span class="n">value</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">method_config</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
+                <span class="p">}</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="n">actions</span> <span class="o">=</span> <span class="n">method_config</span>
 
-            <span class="n">actions</span><span class="p">:</span> <span class="n">MethodConfigDict</span>
-            <span class="k">match</span> <span class="n">method_config</span><span class="p">:</span>
-                <span class="n">case</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">bare</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bare requires method_config&quot;</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">actions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;no_op&quot;</span><span class="p">:</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">}</span>
-                <span class="k">case</span> <span class="n">MethodConfig</span><span class="p">():</span>
-                    <span class="n">actions</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="n">cast</span><span class="p">(</span><span class="n">OnCompleteActionName</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span> <span class="n">value</span>
-                        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">method_config</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">NEVER</span>
-                    <span class="p">}</span>
-                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-                    <span class="n">actions</span> <span class="o">=</span> <span class="n">method_config</span>
+        <span class="k">if</span> <span class="n">bare</span><span class="p">:</span>
 
-            <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">func</span> <span class="o">=</span> <span class="n">authorize_decorator</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">bare</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">bare_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">BareHandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">func</span> <span class="o">=</span> <span class="n">authorize_decorator</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
                 <span class="n">sub</span> <span class="o">=</span> <span class="n">SubroutineFnWrapper</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">return_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">argument_count</span><span class="p">():</span>
-                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Bare externals must take no method arguments&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Bare methods must take no method arguments&quot;</span><span class="p">)</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">_register_bare_external</span><span class="p">(</span>
                     <span class="n">sub</span><span class="p">,</span>
@@ -456,7 +512,14 @@
                     <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="n">sub</span>
-            <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">return</span> <span class="n">bare_decorator</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">authorize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">func</span> <span class="o">=</span> <span class="n">authorize_decorator</span><span class="p">(</span><span class="n">authorize</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
                 <span class="n">hints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capture_method_hints_and_remove_defaults</span><span class="p">(</span>
                     <span class="n">func</span><span class="p">,</span>
                     <span class="n">read_only</span><span class="o">=</span><span class="n">read_only</span><span class="p">,</span>
@@ -472,19 +535,21 @@
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="n">method</span>
 
-        <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">decorator</span>
+            <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">decorator</span>
 
-        <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -492,7 +557,45 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
         <span class="o">...</span>
@@ -504,9 +607,9 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled during Application create</span>
 
@@ -531,16 +634,18 @@
             <span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">,</span>
             <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span></div>
 
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -548,7 +653,45 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
         <span class="o">...</span>
@@ -560,9 +703,9 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled during Application deletion</span>
 
@@ -579,6 +722,7 @@
 <span class="sd">            The original method with additional elements set in it&#39;s</span>
 <span class="sd">            :code:`__handler_config__` attribute</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">decorator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">external</span><span class="p">(</span>
             <span class="n">method_config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;delete_application&quot;</span><span class="p">:</span> <span class="n">CallConfig</span><span class="o">.</span><span class="n">CALL</span><span class="p">},</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -586,16 +730,18 @@
             <span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">,</span>
             <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span></div>
 
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -603,7 +749,45 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
         <span class="o">...</span>
@@ -615,9 +799,9 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled during Application update</span>
 
@@ -641,16 +825,18 @@
             <span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">,</span>
             <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span></div>
 
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -659,7 +845,48 @@
         <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
         <span class="o">...</span>
@@ -672,9 +899,9 @@
         <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled during Application opt-in</span>
 
@@ -700,71 +927,18 @@
             <span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">,</span>
             <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span></div>
 
-    <span class="nd">@overload</span>
-    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">],</span>
-        <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
-        <span class="o">...</span>
-
-    <span class="nd">@overload</span>
-    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="o">/</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]],</span> <span class="n">SubroutineFnWrapper</span><span class="p">]:</span>
-        <span class="o">...</span>
-
-<div class="viewcode-block" id="Application.clear_state"><a class="viewcode-back" href="../../decorators.html#beaker.application.Application.clear_state">[docs]</a>    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">/</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]],</span> <span class="n">SubroutineFnWrapper</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Add the method decorated to be handled during Application clear-state</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            fn: The function being wrapped.</span>
-<span class="sd">            name: Name of ABI method. If not set, name of the python method will be used.</span>
-<span class="sd">                Useful for method overriding.</span>
-<span class="sd">            override:</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The original method with additional elements set in it&#39;s</span>
-<span class="sd">            :code:`__handler_config__` attribute</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
-            <span class="n">sub</span> <span class="o">=</span> <span class="n">SubroutineFnWrapper</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">argument_count</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="s2">&quot;clear_state methods cannot fail, so cannot rely on the presence of arguments. &quot;</span>
-                    <span class="s2">&quot;TODO betterify this message!!&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">override</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;override=True but no clear_state defined&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">override</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;override=False but clear_state already defined&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="o">=</span> <span class="n">sub</span>
-            <span class="k">return</span> <span class="n">sub</span>
-
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
-
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -772,7 +946,45 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">close_out</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
         <span class="o">...</span>
@@ -784,9 +996,9 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled during Application close-out</span>
 
@@ -808,16 +1020,18 @@
             <span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">,</span>
             <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span></div>
 
+    <span class="c1"># case 1: no-args</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
         <span class="o">/</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span><span class="p">:</span>
         <span class="o">...</span>
 
+    <span class="c1"># case 2: bare arg omitted</span>
     <span class="nd">@overload</span>
     <span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -827,7 +1041,53 @@
         <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 3: bare=False</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">allow_call</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 4: bare=True</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">allow_call</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BareDecoratorFuncType</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="c1"># case 5: bare is a variable</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">no_op</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">allow_call</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
@@ -842,10 +1102,10 @@
         <span class="n">allow_create</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">authorize</span><span class="p">:</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecoratorResultType</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ABIReturnSubroutine</span> <span class="o">|</span> <span class="n">DecoratorFuncType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add the method decorated to be handled as an ABI method for the Application</span>
 
@@ -880,11 +1140,53 @@
             <span class="n">read_only</span><span class="o">=</span><span class="n">read_only</span><span class="p">,</span>
             <span class="n">override</span><span class="o">=</span><span class="n">override</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cast</span><span class="p">(</span><span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Application.implement"><a class="viewcode-back" href="../../application.html#beaker.application.Application.implement">[docs]</a>    <span class="k">def</span> <span class="nf">implement</span><span class="p">(</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">blueprint</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="s2">&quot;Application[TState]&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">],</span>
+        <span class="o">/</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]],</span> <span class="n">SubroutineFnWrapper</span><span class="p">]:</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">clear_state</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">]],</span> <span class="n">SubroutineFnWrapper</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Expr</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SubroutineFnWrapper</span><span class="p">:</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">SubroutineFnWrapper</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">argument_count</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;clear_state methods cannot fail, so cannot rely on the presence of arguments. &quot;</span>
+                    <span class="s2">&quot;TODO betterify this message!!&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">override</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;override=True but no clear_state defined&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">override</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;override=False but clear_state already defined&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clear_state_method</span> <span class="o">=</span> <span class="n">sub</span>
+            <span class="k">return</span> <span class="n">sub</span>
+
+        <span class="k">return</span> <span class="n">decorator</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Application.apply"><a class="viewcode-back" href="../../application.html#beaker.application.Application.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="s2">&quot;Application[TState]&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span>
         <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Application[TState]&quot;</span><span class="p">:</span>
@@ -897,7 +1199,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            :code:`Application`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">blueprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="Application.build"><a class="viewcode-back" href="../../application.html#beaker.application.Application.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;AlgodClient | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApplicationSpecification</span><span class="p">:</span>
@@ -907,7 +1209,7 @@
 <span class="sd">        Note: .</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            client (optional): An Algod client that is required if there are any ``precopiled`` so they can be fully compiled.</span>
+<span class="sd">            client (optional): An Algod client that is required if there are any ``precompiled`` so they can be fully compiled.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">with</span> <span class="n">_set_ctx</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">):</span>
@@ -991,16 +1293,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_context</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Application.initialize_local_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_local_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_local_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">=</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<div class="viewcode-block" id="Application.initialize_local_state"><a class="viewcode-back" href="../../application.html#beaker.application.Application.initialize_local_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_local_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize any local state variables declared</span>
 
-<span class="sd">        :param addr: Optional, address of account to initialize state for.</span>
+<span class="sd">        :param addr: Optional, address of account to initialize state for (defaults to Txn.sender()).</span>
 <span class="sd">        :return: The Expr to initialize the account state.</span>
 <span class="sd">        :rtype: pyteal.Expr</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_context</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_state</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">addr</span> <span class="ow">or</span> <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">())</span></div>
 
     <span class="k">def</span> <span class="nf">_check_context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">ctx</span> <span class="o">:=</span> <span class="n">_ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>
@@ -1014,6 +1316,7 @@
     <span class="k">def</span> <span class="nf">_capture_method_hints_and_remove_defaults</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn</span><span class="p">:</span> <span class="n">HandlerFunc</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
         <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">actions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">OnCompleteActionName</span><span class="p">,</span> <span class="n">CallConfig</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodHints</span><span class="p">:</span>
@@ -1022,30 +1325,32 @@
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="n">mh</span> <span class="o">=</span> <span class="n">MethodHints</span><span class="p">(</span>
+        <span class="n">hints</span> <span class="o">=</span> <span class="n">MethodHints</span><span class="p">(</span>
             <span class="n">read_only</span><span class="o">=</span><span class="n">read_only</span><span class="p">,</span>
             <span class="n">call_config</span><span class="o">=</span><span class="n">MethodConfig</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">actions</span><span class="o">.</span><span class="n">items</span><span class="p">()}),</span>
         <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">match</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
-                <span class="k">case</span> <span class="n">ABIReturnSubroutine</span><span class="p">():</span>
-                    <span class="n">foo</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-                        <span class="nb">iter</span><span class="p">(</span>
-                            <span class="n">ext</span>
-                            <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">abi_externals</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                            <span class="k">if</span> <span class="n">ext</span><span class="o">.</span><span class="n">method</span> <span class="ow">is</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="n">mh</span><span class="o">.</span><span class="n">default_arguments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_default_argument_from_resolver</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span>
-                    <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span>
-                <span class="k">case</span> <span class="p">(</span><span class="n">Expr</span><span class="p">()</span> <span class="o">|</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">str</span><span class="p">()</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">()</span> <span class="o">|</span> <span class="n">ABIExternal</span><span class="p">())</span> <span class="k">as</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="n">mh</span><span class="o">.</span><span class="n">default_arguments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_default_argument_from_resolver</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                    <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="c1"># delete the default value from the signature, for PyTeal&#39;s benefit</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">):</span>
+                    <span class="c1"># we need to look up the ABIExternal to resolve</span>
+                    <span class="n">to_resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abi_externals</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">method_signature</span><span class="p">()]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># note that we don&#39;t need to check the type here - if it&#39;s invalid,</span>
+                    <span class="c1"># then _default_argument_from_resolver will raise an appropriate error</span>
+                    <span class="n">to_resolve</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span>
+                <span class="c1"># add the default value resolution data to the hints</span>
+                <span class="n">hints</span><span class="o">.</span><span class="n">default_arguments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_default_argument_from_resolver</span><span class="p">(</span>
+                    <span class="n">to_resolve</span>
+                <span class="p">)</span>
+
             <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span>
                 <span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">abi</span><span class="o">.</span><span class="n">NamedTuple</span>
             <span class="p">):</span>
-                <span class="n">mh</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">hints</span><span class="o">.</span><span class="n">structs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>
                     <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="p">[</span>
                         <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">algosdk_from_annotation</span><span class="p">(</span><span class="n">typ</span><span class="o">.</span><span class="n">__args__</span><span class="p">[</span><span class="mi">0</span><span class="p">]))]</span>
@@ -1053,12 +1358,12 @@
                     <span class="p">],</span>
                 <span class="p">}</span>
 
-        <span class="k">if</span> <span class="n">mh</span><span class="o">.</span><span class="n">default_arguments</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">hints</span><span class="o">.</span><span class="n">default_arguments</span><span class="p">:</span>
             <span class="c1"># Fix function sig/annotations</span>
             <span class="n">newsig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
             <span class="n">fn</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">newsig</span>  <span class="c1"># type: ignore[attr-defined]</span>
 
-        <span class="k">return</span> <span class="n">mh</span></div>
+        <span class="k">return</span> <span class="n">hints</span></div>
 
 
 <span class="k">def</span> <span class="nf">_default_argument_from_resolver</span><span class="p">(</span>
@@ -1132,6 +1437,34 @@
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">ctx_app</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempted to precompile the current application&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ctx_app</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">unconditional_create_approval</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">initialize_global_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">initialize_global_state</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">initialize_global_state</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">unconditional_opt_in_approval</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">initialize_local_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">bare</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nd">@app</span><span class="o">.</span><span class="n">opt_in</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="n">bare</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">opt_in</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">initialize_local_state</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">initialize_local_state</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
 
 
 <span class="n">TKey</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TKey&quot;</span><span class="p">)</span>
