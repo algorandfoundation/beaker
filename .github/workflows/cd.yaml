@@ -38,7 +38,8 @@ jobs:
         with:
           # Fetch entire repository history so we can determine version number from it
           fetch-depth: 0
-          token: ${{ secrets.RELEASE_GH_TOKEN }}
+          # use release token for production_release, standard token otherwise
+          token: ${{ inputs.production_release && secrets.RELEASE_GH_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Install poetry
         run: pipx install poetry
@@ -70,7 +71,7 @@ jobs:
             publish
           gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Continuous Deployment - Production
         if: steps.get_branch.outputs.branch == 'master' && inputs.production_release
