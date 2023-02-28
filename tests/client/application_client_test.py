@@ -45,7 +45,7 @@ app = Application(
 )
 
 
-@app.create
+@app.create(bare=True)
 def create() -> pt.Expr:
     return pt.Seq(
         app.initialize_global_state(),
@@ -556,7 +556,10 @@ def test_resolve(sb_accts: SandboxAccounts) -> None:
         ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_byte))
         == b"test"
     )
-    assert ac.resolve({"source": "abi-method", "data": dummy.method_spec().dictify()}) == "deadbeef"  # type: ignore[union-attr]
+    assert (
+        ac.resolve({"source": "abi-method", "data": dummy.method_spec().dictify()})
+        == "deadbeef"
+    )
 
 
 def test_override_app_create(sb_accts: SandboxAccounts) -> None:

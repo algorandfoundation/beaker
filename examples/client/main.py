@@ -32,12 +32,12 @@ my_app = (
 )
 
 
-@my_app.close_out
+@my_app.close_out(bare=True)
 def close_out() -> Expr:
     return Approve()
 
 
-@my_app.delete(authorize=Authorize.only(my_app.state.manager))
+@my_app.delete(bare=True, authorize=Authorize.only(my_app.state.manager))
 def delete() -> Expr:
     return Approve()
 

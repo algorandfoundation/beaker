@@ -76,7 +76,7 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
         """internal method to just return the method call to our target app"""
         return InnerTxnBuilder.ExecuteMethodCall(
             app_id=app.state.opup_app_id,
-            method_signature=opup.method_signature(),  # type: ignore[union-attr]
+            method_signature=opup.method_signature(),
             args=[],
             extra_fields={TxnField.fee: Int(0)},
         )

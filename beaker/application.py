@@ -73,6 +73,7 @@ T = TypeVar("T")
 P = ParamSpec("P")
 TState = TypeVar("TState", covariant=True)
 
+BareHandlerFunc = Callable[[], Expr]
 HandlerFunc = Callable[..., Expr]
 
 
@@ -83,8 +84,10 @@ class ABIExternal:
     hints: MethodHints
 
 
-DecoratorResultType: TypeAlias = SubroutineFnWrapper | ABIReturnSubroutine
-DecoratorFuncType: TypeAlias = Callable[[HandlerFunc], DecoratorResultType]
+ABIDecoratorFuncType = Callable[[HandlerFunc], ABIReturnSubroutine]
+BareDecoratorFuncType = Callable[[BareHandlerFunc], SubroutineFnWrapper]
+
+DecoratorFuncType: TypeAlias = ABIDecoratorFuncType | BareDecoratorFuncType
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -299,6 +302,7 @@ class Application(Generic[TState]):
             else:
                 del self.bare_actions[action_name_or_reference]
 
+    # case 1: no-args
     @overload
     def external(
         self,
@@ -307,6 +311,7 @@ class Application(Generic[TState]):
     ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def external(
         self,
@@ -315,7 +320,50 @@ class Application(Generic[TState]):
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = False,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict | None = None,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def external(
+        self,
+        /,
+        *,
+        method_config: MethodConfig | MethodConfigDict | None = None,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         read_only: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -329,10 +377,10 @@ class Application(Generic[TState]):
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = False,
+        bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         """
         Add the method decorated to be handled as an ABI method for the Application
 
@@ -352,38 +400,33 @@ class Application(Generic[TState]):
             :code:`__handler_config__` attribute
         """
 
-        def decorator(func: HandlerFunc) -> SubroutineFnWrapper | ABIReturnSubroutine:
-            sig = inspect.signature(func)
-            if bare is None:
-                bare_ = not sig.parameters
-            else:
-                bare_ = bare
+        if bare:
+            if method_config is None:
+                raise ValueError("@external(bare=True, ...) requires method_config")
+            if read_only:
+                raise ValueError("read_only=True has no effect on bare methods")
 
-            if bare_ and read_only:
-                raise ValueError("read_only has no effect on bare methods")
+        actions: MethodConfigDict
+        match method_config:
+            case None:
+                actions = {"no_op": CallConfig.CALL}
+            case MethodConfig():
+                actions = {
+                    cast(OnCompleteActionName, key): value
+                    for key, value in method_config.__dict__.items()
+                    if value != CallConfig.NEVER
+                }
+            case _:
+                actions = method_config
 
-            actions: MethodConfigDict
-            match method_config:
-                case None:
-                    if bare_:
-                        raise ValueError("bare requires method_config")
-                    else:
-                        actions = {"no_op": CallConfig.CALL}
-                case MethodConfig():
-                    actions = {
-                        cast(OnCompleteActionName, key): value
-                        for key, value in method_config.__dict__.items()
-                        if value != CallConfig.NEVER
-                    }
-                case _:
-                    actions = method_config
+        if bare:
 
-            if authorize is not None:
-                func = authorize_decorator(authorize)(func)
-            if bare_:
+            def bare_decorator(func: BareHandlerFunc) -> SubroutineFnWrapper:
+                if authorize is not None:
+                    func = authorize_decorator(authorize)(func)
                 sub = SubroutineFnWrapper(func, return_type=TealType.none, name=name)
                 if sub.subroutine.argument_count():
-                    raise TypeError("Bare externals must take no method arguments")
+                    raise TypeError("Bare methods must take no method arguments")
 
                 self._register_bare_external(
                     sub,
@@ -391,7 +434,14 @@ class Application(Generic[TState]):
                     override=override,
                 )
                 return sub
-            else:
+
+            return bare_decorator
+
+        else:
+
+            def decorator(func: HandlerFunc) -> ABIReturnSubroutine:
+                if authorize is not None:
+                    func = authorize_decorator(authorize)(func)
                 hints = self._capture_method_hints_and_remove_defaults(
                     func,
                     read_only=read_only,
@@ -407,19 +457,21 @@ class Application(Generic[TState]):
                 )
                 return method
 
-        if fn is None:
-            return decorator
+            if fn is None:
+                return decorator
 
-        return decorator(fn)
+            return decorator(fn)
 
+    # case 1: no-args
     @overload
     def create(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def create(
         self,
@@ -427,7 +479,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def create(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -439,9 +529,9 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         decorator = self.external(
             method_config={"no_op": CallConfig.CREATE},
             name=name,
@@ -449,16 +539,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def delete(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def delete(
         self,
@@ -466,7 +558,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def delete(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -478,9 +608,10 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
+
         decorator = self.external(
             method_config={"delete_application": CallConfig.CALL},
             name=name,
@@ -488,16 +619,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def update(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def update(
         self,
@@ -505,7 +638,45 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def update(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -517,9 +688,9 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         decorator = self.external(
             method_config={"update_application": CallConfig.CALL},
             name=name,
@@ -527,16 +698,18 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
+    # case 1: no-args
     @overload
     def opt_in(
         self,
         fn: HandlerFunc,
         /,
-    ) -> DecoratorResultType:
+    ) -> ABIReturnSubroutine:
         ...
 
+    # case 2: bare arg omitted
     @overload
     def opt_in(
         self,
@@ -545,7 +718,48 @@ class Application(Generic[TState]):
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def opt_in(
+        self,
+        /,
+        *,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
         ...
@@ -558,9 +772,9 @@ class Application(Generic[TState]):
         allow_create: bool = False,
         name: str | None = None,
         authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
+        bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
         decorator = self.external(
             method_config={
                 "opt_in": CallConfig.ALL if allow_create else CallConfig.CALL
@@ -570,7 +784,188 @@ class Application(Generic[TState]):
             bare=bare,
             override=override,
         )
-        return decorator if fn is None else decorator(fn)
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
+
+    # case 1: no-args
+    @overload
+    def close_out(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> ABIReturnSubroutine:
+        ...
+
+    # case 2: bare arg omitted
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def close_out(
+        self,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def close_out(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool = False,
+        override: bool | None = False,
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
+        decorator = self.external(
+            method_config={"close_out": CallConfig.CALL},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            override=override,
+        )
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
+
+    # case 1: no-args
+    @overload
+    def no_op(
+        self,
+        fn: HandlerFunc,
+        /,
+    ) -> ABIReturnSubroutine:
+        ...
+
+    # case 2: bare arg omitted
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 3: bare=False
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[False],
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIDecoratorFuncType:
+        ...
+
+    # case 4: bare=True
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: Literal[True],
+        override: bool | None = False,
+    ) -> BareDecoratorFuncType:
+        ...
+
+    # case 5: bare is a variable
+    @overload
+    def no_op(
+        self,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> DecoratorFuncType:
+        ...
+
+    def no_op(
+        self,
+        fn: HandlerFunc | None = None,
+        /,
+        *,
+        allow_call: bool = True,
+        allow_create: bool = False,
+        name: str | None = None,
+        authorize: SubroutineFnWrapper | None = None,
+        bare: bool = False,
+        read_only: bool = False,
+        override: bool | None = False,
+    ) -> ABIReturnSubroutine | DecoratorFuncType:
+        if allow_call and allow_create:
+            call_config = CallConfig.ALL
+        elif allow_call:
+            call_config = CallConfig.CALL
+        elif allow_create:
+            call_config = CallConfig.CREATE
+        else:
+            raise ValueError("Require one of allow_call or allow_create to be True")
+        decorator = self.external(
+            method_config={"no_op": call_config},
+            name=name,
+            authorize=authorize,
+            bare=bare,
+            read_only=read_only,
+            override=override,
+        )
+        return decorator if fn is None else cast(ABIReturnSubroutine, decorator(fn))
 
     @overload
     def clear_state(
@@ -612,99 +1007,6 @@ class Application(Generic[TState]):
             self._clear_state_method = sub
             return sub
 
-        return decorator if fn is None else decorator(fn)
-
-    @overload
-    def close_out(
-        self,
-        fn: HandlerFunc,
-        /,
-    ) -> DecoratorResultType:
-        ...
-
-    @overload
-    def close_out(
-        self,
-        /,
-        *,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
-
-    def close_out(
-        self,
-        fn: HandlerFunc | None = None,
-        /,
-        *,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
-        decorator = self.external(
-            method_config={"close_out": CallConfig.CALL},
-            name=name,
-            authorize=authorize,
-            bare=bare,
-            override=override,
-        )
-        return decorator if fn is None else decorator(fn)
-
-    @overload
-    def no_op(
-        self,
-        fn: HandlerFunc,
-        /,
-    ) -> DecoratorResultType:
-        ...
-
-    @overload
-    def no_op(
-        self,
-        /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
-
-    def no_op(
-        self,
-        fn: HandlerFunc | None = None,
-        /,
-        *,
-        allow_call: bool = True,
-        allow_create: bool = False,
-        name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
-        bare: bool | None = None,
-        read_only: bool = False,
-        override: bool | None = False,
-    ) -> DecoratorResultType | DecoratorFuncType:
-        if allow_call and allow_create:
-            call_config = CallConfig.ALL
-        elif allow_call:
-            call_config = CallConfig.CALL
-        elif allow_create:
-            call_config = CallConfig.CREATE
-        else:
-            raise ValueError("Require one of allow_call or allow_create to be True")
-        decorator = self.external(
-            method_config={"no_op": call_config},
-            name=name,
-            authorize=authorize,
-            bare=bare,
-            read_only=read_only,
-            override=override,
-        )
         return decorator if fn is None else decorator(fn)
 
     def apply(

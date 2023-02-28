@@ -4,6 +4,7 @@ import pyteal as pt
 import pytest
 from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
+from typing_extensions import assert_type
 
 from beaker import (
     Application,
@@ -84,28 +85,59 @@ def test_method_overload() -> None:
     check_application_artifacts_output_stability(app)
 
 
-def test_bare() -> None:
+def test_bare_true() -> None:
+    app = Application("Bare")
+
+    @app.create(bare=True)
+    def create() -> pt.Expr:
+        return pt.Approve()
+
+    assert_type(create, pt.SubroutineFnWrapper)
+
+    @app.update(bare=True)
+    def update() -> pt.Expr:
+        return pt.Approve()
+
+    assert_type(update, pt.SubroutineFnWrapper)
+
+    @app.delete(bare=True)
+    def delete() -> pt.Expr:
+        return pt.Approve()
+
+    assert_type(delete, pt.SubroutineFnWrapper)
+
+    assert len(app.bare_actions) == 3, "Expected 3 bare externals: create,update,delete"
+
+
+def test_bare_default() -> None:
     app = Application("Bare")
 
     @app.create
     def create() -> pt.Expr:
         return pt.Approve()
 
+    assert_type(create, pt.ABIReturnSubroutine)
+
     @app.update
     def update() -> pt.Expr:
         return pt.Approve()
+
+    assert_type(update, pt.ABIReturnSubroutine)
 
     @app.delete
     def delete() -> pt.Expr:
         return pt.Approve()
 
-    assert len(app.bare_actions) == 3, "Expected 3 bare externals: create,update,delete"
+    assert_type(delete, pt.ABIReturnSubroutine)
+
+    assert len(app.bare_actions) == 0, "Expected no bare externals"
+    assert len(app.abi_externals) == 3, "Expected 3 ABI externals"
 
 
 def test_mixed_bares() -> None:
     app = Application("MixedBares")
 
-    @app.create
+    @app.create(bare=True)
     def create() -> pt.Expr:
         return pt.Approve()
 
@@ -294,7 +326,7 @@ def test_state_init() -> None:
         unconditional_create_approval, initialize_global_state=True
     )
 
-    @app.opt_in(allow_create=True)
+    @app.opt_in(bare=True, allow_create=True)
     def opt_in() -> pt.Expr:
         return pt.Seq(
             pt.If(

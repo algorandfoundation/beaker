@@ -109,7 +109,7 @@ def withdraw_external() -> Expr:
     return withdraw_funds()
 
 
-@rsvp.delete(authorize=Authorize.only(Global.creator_address()))
+@rsvp.delete(bare=True, authorize=Authorize.only(Global.creator_address()))
 def delete() -> Expr:
     """Let event creator delete the contract. Withdraws remaining funds"""
     return If(
@@ -151,7 +151,7 @@ def _do_refund() -> Expr:
     )
 
 
-@rsvp.close_out(name="refund")
+@rsvp.close_out(bare=True, name="refund")
 def close_out() -> Expr:
     return _do_refund()
 
