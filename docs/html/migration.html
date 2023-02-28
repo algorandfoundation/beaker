@@ -330,6 +330,10 @@ has changed.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">&#64;beaker.no_op</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&#64;beaker.clear_state</span></code></p></li>
 </ul>
+<p>Previously, all of these decorators except <code class="docutils literal notranslate"><span class="pre">external</span></code> would make a bare method (rather than an ABI method) if the
+function they were decorating took no arguments (other than <code class="docutils literal notranslate"><span class="pre">self</span></code>). In <code class="docutils literal notranslate"><span class="pre">1.0</span></code>, bare methods must be requested
+explicitly with <code class="docutils literal notranslate"><span class="pre">bare=True</span></code>. To avoid making changes to existing contracts, you should add <code class="docutils literal notranslate"><span class="pre">bare=True</span></code> to any decorators
+other than <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> if and only if the function takes no arguments.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>There were recent changes in PyTeal to the way <code class="docutils literal notranslate"><span class="pre">ClearState</span></code> is handled, which were incorporated in Beaker v0.5.1.
@@ -337,12 +341,9 @@ In particular, <code class="docutils literal notranslate"><span class="pre">Clea
 however since a clear state program reject will not prevent the accounts local state from being cleared,
 special care needs to be taken to allow as few conditions that might lead to rejection as possible.</p>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
 <p>Decorated methods now return <code class="docutils literal notranslate"><span class="pre">ABIReturnSubroutine</span></code> or <code class="docutils literal notranslate"><span class="pre">SubroutineWrapperFn</span></code>, not the original method. This
 should mostly be an internal change only, but if these methods were being invoked by other methods within the
 contract, this will result in changes to TEAL output as they will no longer be inlined.</p>
-</div>
 <section id="internal">
 <h3>&#64;internal<a class="headerlink" href="#internal" title="Permalink to this heading"></a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">beaker.internal</span></code> decorator is no longer required and has been removed. It can be replaced with one of the following:</p>

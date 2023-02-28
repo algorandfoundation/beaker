@@ -224,12 +224,12 @@
 <span class="p">)</span>
 
 
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">close_out</span>
+<span class="nd">@my_app</span><span class="o">.</span><span class="n">close_out</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">close_out</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
 
 
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">manager</span><span class="p">))</span>
+<span class="nd">@my_app</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">manager</span><span class="p">))</span>
 <span class="k">def</span> <span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
 

@@ -238,14 +238,19 @@ The following decorators are all now accessed through the ``Application`` instan
 * ``@beaker.no_op``
 * ``@beaker.clear_state``
 
+Previously, all of these decorators except ``external`` would make a bare method (rather than an ABI method) if the
+function they were decorating took no arguments (other than ``self``). In ``1.0``, bare methods must be requested
+explicitly with ``bare=True``. To avoid making changes to existing contracts, you should add ``bare=True`` to any decorators
+other than ``@external`` if and only if the function takes no arguments.
+
 .. note:: There were recent changes in PyTeal to the way ``ClearState`` is handled, which were incorporated in Beaker v0.5.1.
   In particular, ``ClearState`` handler methods must now take no arguments. Previously, this was considered valid PyTeal,
   however since a clear state program reject will not prevent the accounts local state from being cleared,
   special care needs to be taken to allow as few conditions that might lead to rejection as possible.
 
-.. note:: Decorated methods now return ``ABIReturnSubroutine`` or ``SubroutineWrapperFn``, not the original method. This
-          should mostly be an internal change only, but if these methods were being invoked by other methods within the
-          contract, this will result in changes to TEAL output as they will no longer be inlined.
+Decorated methods now return ``ABIReturnSubroutine`` or ``SubroutineWrapperFn``, not the original method. This
+should mostly be an internal change only, but if these methods were being invoked by other methods within the
+contract, this will result in changes to TEAL output as they will no longer be inlined.
 
 @internal
 ^^^^^^^^^
