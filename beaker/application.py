@@ -87,7 +87,7 @@ class ABIExternal:
 ABIDecoratorFuncType = Callable[[HandlerFunc], ABIReturnSubroutine]
 BareDecoratorFuncType = Callable[[BareHandlerFunc], SubroutineFnWrapper]
 
-DecoratorFuncType: TypeAlias = ABIDecoratorFuncType | BareDecoratorFuncType  # type: ignore
+DecoratorFuncType: TypeAlias = ABIDecoratorFuncType | BareDecoratorFuncType
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
