@@ -141,7 +141,8 @@ def wormhole_transfer(
 
     @app.external
     def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
-        """portal_transfer accepts a VAA containing information about the transfer and the payload.
+        """portal_transfer accepts a VAA containing information about the transfer
+        and the payload.
 
         Args:
             vaa: VAA encoded dynamic byte array

@@ -3,7 +3,6 @@ from pyteal import Bytes, Expr, JsonRef, ScratchVar, Seq, TealType, abi
 from beaker import (
     Application,
     ReservedGlobalStateValue,
-    unconditional_create_approval,
 )
 from examples.wormhole.wormhole import (
     ContractTransferVAA,
@@ -26,11 +25,9 @@ oracle_data_cache_app = Application(
     "OracleDataCache",
     descr="""
     Stores price feed in application state keyed by timestamp
-
-    TODO: more than 64 vals lol
     """,
     state=OracleState(),
-).apply(unconditional_create_approval)
+)
 
 
 @oracle_data_cache_app.external

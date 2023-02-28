@@ -11,15 +11,17 @@ from pyteal import (
     abi,
 )
 
-from beaker import Application, sandbox, unconditional_create_approval
+from beaker import Application, sandbox
 from examples.opup.op_up import OpUpState, op_up_blueprint
 
 expensive_app = Application(
     name="ExpensiveApp",
     descr="Do expensive work to demonstrate implementing op_up blueprint",
     state=OpUpState(),
-).apply(unconditional_create_approval)
+)
 
+# Create a callable method after passing the
+# instance of the app to have methods added
 call_opup = op_up_blueprint(expensive_app)
 
 

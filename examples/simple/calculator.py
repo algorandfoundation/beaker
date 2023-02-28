@@ -1,9 +1,9 @@
 from pyteal import Expr, abi
 
-from beaker import Application, sandbox, unconditional_create_approval
+from beaker import Application, sandbox
 from beaker.client import ApplicationClient
 
-calculator_app = Application("Calculator").apply(unconditional_create_approval)
+calculator_app = Application("Calculator")
 
 
 @calculator_app.external
@@ -42,7 +42,7 @@ def demo() -> None:
         client=algod_client, app=calculator_app, signer=acct.signer
     )
 
-    # Create the application on chain, set the app id for the app client
+    # Create the application on chain, implicitly sets the app id for the app client
     app_id, app_addr, txid = app_client.create()
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
@@ -65,7 +65,6 @@ if __name__ == "__main__":
     calc = calculator_app.build()
     print(calc.approval_program)
     print(calc.clear_program)
-    assert calc.contract
     print(json.dumps(calc.contract.dictify()))
 
     demo()

@@ -5,7 +5,6 @@ from beaker import (
     Authorize,
     GlobalStateValue,
     sandbox,
-    unconditional_create_approval,
 )
 from beaker.client import ApplicationClient, LogicException
 
@@ -17,9 +16,7 @@ class CounterState:
     )
 
 
-counter_app = Application("CounterApp", state=CounterState()).apply(
-    unconditional_create_approval, initialize_global_state=True
-)
+counter_app = Application("CounterApp", state=CounterState())
 
 
 AuthorizeCreatorOnly = Authorize.only(Global.creator_address())
@@ -72,8 +69,8 @@ def demo() -> None:
         other_client = app_client.prepare(signer=other_acct.signer)
         other_client.call(increment)
     except LogicException as e:
-        print("App call failed as expected.")
         print(e)
+        print("App call failed as expected.")
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ extract_uint32
 store 7
 load 6
 load 7
-callsub flipbit_6
+callsub flipbit_5
 intc_2 // 1
 return
 main_l5:
@@ -46,7 +46,7 @@ intc_1 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub addaccount_5
+callsub addaccount_4
 intc_2 // 1
 return
 main_l6:
@@ -60,7 +60,6 @@ txn ApplicationID
 intc_1 // 0
 ==
 assert
-callsub create_4
 intc_2 // 1
 return
 
@@ -219,14 +218,8 @@ setbyte
 app_local_put
 retsub
 
-// create
-create_4:
-proto 0 0
-intc_2 // 1
-return
-
 // add_account
-addaccount_5:
+addaccount_4:
 proto 1 0
 txn Sender
 pushbytes 0x50726f6772616d // "Program"
@@ -289,7 +282,7 @@ callsub zeroimpl_1
 retsub
 
 // flip_bit
-flipbit_6:
+flipbit_5:
 proto 2 0
 frame_dig -2
 txnas Accounts

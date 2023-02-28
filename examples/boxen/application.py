@@ -23,50 +23,18 @@ from beaker import (
     consts,
     unconditional_create_approval,
 )
+from beaker.consts import ASSET_MIN_BALANCE, BOX_BYTE_MIN_BALANCE, BOX_FLAT_MIN_BALANCE
 from beaker.lib.storage import BoxList, BoxMapping
 
 
-# Use a box per member to denote membership parameters
+# NamedTuple we'll store in a box per member
 class MembershipRecord(abi.NamedTuple):
     role: abi.Field[abi.Uint8]
     voted: abi.Field[abi.Bool]
 
 
+# Custom type alias
 Affirmation = abi.StaticBytes[typing.Literal[64]]
-
-BoxFlatMinBalance = 2500
-BoxByteMinBalance = 400
-AssetMinBalance = 100000
-
-
-def axfer(
-    asset_id: Expr,
-    amount: Expr,
-    receiver: Expr,
-    extra: typing.Mapping[TxnField, Expr | list[Expr]] | None = None,
-) -> dict[TxnField, Expr | list[Expr]]:
-    base: dict[TxnField, Expr | list[Expr]] = {
-        TxnField.type_enum: TxnType.AssetTransfer,
-        TxnField.xfer_asset: asset_id,
-        TxnField.asset_amount: amount,
-        TxnField.asset_receiver: receiver,
-    }
-    return base | (extra or {})
-
-
-def clawback_axfer(
-    asset_id: Expr,
-    amount: Expr,
-    receiver: Expr,
-    clawback_addr: Expr,
-    extra: dict[TxnField, Expr | list[Expr]] | None = None,
-) -> dict[TxnField, Expr | list[Expr]]:
-    return axfer(
-        asset_id,
-        amount,
-        receiver,
-        (extra or {}) | {TxnField.asset_sender: clawback_addr},
-    )
 
 
 class MembershipClubState:
@@ -90,12 +58,12 @@ class MembershipClubState:
         # Math for determining min balance based on expected size of boxes
         self.max_members = Int(max_members)
         self.minimum_balance = Int(
-            AssetMinBalance  # Cover min bal for member token
-            + (BoxFlatMinBalance + (abi.size_of(record_type) * BoxByteMinBalance))
+            ASSET_MIN_BALANCE  # Cover min bal for member token
+            + (BOX_FLAT_MIN_BALANCE + (abi.size_of(record_type) * BOX_BYTE_MIN_BALANCE))
             * max_members  # cover min bal for member record boxes we might create
             + (
-                BoxFlatMinBalance
-                + (self.affirmations.box_size.value * BoxByteMinBalance)
+                BOX_FLAT_MIN_BALANCE
+                + (self.affirmations.box_size.value * BOX_BYTE_MIN_BALANCE)
             )  # cover min bal for affirmation box
         )
 
@@ -103,7 +71,7 @@ class MembershipClubState:
 membership_club_app = Application(
     "MembershipClub",
     state=MembershipClubState(max_members=1000, record_type=MembershipRecord),
-).apply(unconditional_create_approval)
+)
 
 
 @membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
@@ -261,4 +229,35 @@ def app_member_get_affirmation(
             args=[member_token],
         ),
         app_member_app.state.last_affirmation.set(Suffix(InnerTxn.last_log(), Int(4))),
+    )
+
+
+# Utility functions
+def axfer(
+    asset_id: Expr,
+    amount: Expr,
+    receiver: Expr,
+    extra: typing.Mapping[TxnField, Expr | list[Expr]] | None = None,
+) -> dict[TxnField, Expr | list[Expr]]:
+    base: dict[TxnField, Expr | list[Expr]] = {
+        TxnField.type_enum: TxnType.AssetTransfer,
+        TxnField.xfer_asset: asset_id,
+        TxnField.asset_amount: amount,
+        TxnField.asset_receiver: receiver,
+    }
+    return base | (extra or {})
+
+
+def clawback_axfer(
+    asset_id: Expr,
+    amount: Expr,
+    receiver: Expr,
+    clawback_addr: Expr,
+    extra: dict[TxnField, Expr | list[Expr]] | None = None,
+) -> dict[TxnField, Expr | list[Expr]]:
+    return axfer(
+        asset_id,
+        amount,
+        receiver,
+        (extra or {}) | {TxnField.asset_sender: clawback_addr},
     )

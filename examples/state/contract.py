@@ -19,7 +19,8 @@ class ExampleState:
         default=Bytes(
             "A declared state value that is protected with the `static` flag"
         ),
-        descr="A static declared variable, nothing at the protocol level protects it, only the methods defined on ApplicationState do",
+        descr="A static declared variable, nothing at the protocol level protects it, "
+        "only the methods defined on ApplicationState do",
         static=True,
     )
 
@@ -42,7 +43,8 @@ class ExampleState:
     reserved_local_value = ReservedLocalStateValue(
         stack_type=TealType.bytes,
         max_keys=8,
-        descr="A reserved state value, allowing 8 keys to be reserved, in this case byte type",
+        descr="A reserved state value, allowing 8 keys to be reserved, "
+        "in this case byte type",
     )
 
     local_blob = LocalStateBlob(keys=3)
@@ -83,7 +85,8 @@ def read_global_blob(*, output: abi.DynamicBytes) -> Expr:
 
 @app.external
 def set_global_state_val(v: abi.String) -> Expr:
-    # This will fail, since it was declared as `static` and initialized to a default value during create
+    # This will fail, since it was declared as `static` and initialized to
+    # a default value during create
     return app.state.declared_global_value.set(v.get())
 
 

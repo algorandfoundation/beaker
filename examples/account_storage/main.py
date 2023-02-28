@@ -32,7 +32,6 @@ from beaker import (
     consts,
     precompiled,
     sandbox,
-    unconditional_create_approval,
 )
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
@@ -59,14 +58,14 @@ disk_hungry = Application(
     "DiskHungry",
     build_options=BuildOptions(avm_version=8),
     state=DiskHungryState(),
-).apply(unconditional_create_approval)
+)
 
 
 # Add account during opt in  by checking the sender against the address
 # we expect given the precompile && nonce
 @disk_hungry.opt_in
 def add_account(nonce: abi.DynamicBytes) -> Expr:
-    # Signal to beaker that this should be compiled
+    # Signal that this should be compiled
     # prior to compiling the main application
     tmpl_acct = precompiled(key_sig)
 
@@ -79,15 +78,6 @@ def add_account(nonce: abi.DynamicBytes) -> Expr:
         ),
         disk_hungry.initialize_local_state(),
     )
-
-
-# Inline these
-def byte_idx(bit_idx: Expr) -> Int:
-    return bit_idx / Int(8)
-
-
-def bit_in_byte_idx(bit_idx: Expr) -> Int:
-    return bit_idx % Int(8)
 
 
 @disk_hungry.external
@@ -117,6 +107,15 @@ def flip_bit(nonce_acct: abi.Account, bit_idx: abi.Uint32) -> Expr:
             byte_idx(bit_idx.get()), byte.load()
         ),
     )
+
+
+# no decorator, these are inlined
+def byte_idx(bit_idx: Expr) -> Int:
+    return bit_idx / Int(8)
+
+
+def bit_in_byte_idx(bit_idx: Expr) -> Int:
+    return bit_idx % Int(8)
 
 
 def demo() -> None:
