@@ -22,13 +22,13 @@ def add_blueprint(app: Application) -> None:
 
 # A blueprint that adds a method named `addN` to the external
 # methods of the Application passed
-def addN_blueprint(app: Application, n: int) -> None:
+def add_n_blueprint(app: Application, n: int) -> None:
     @app.external
-    def addN(a: abi.Uint64, *, output: abi.Uint64) -> Expr:
+    def add_n(a: abi.Uint64, *, output: abi.Uint64) -> Expr:
         return output.set(a.get() + Int(n))
 
 
-app = Application("BlueprintExampleWithArgs").implement(addN_blueprint, n=2)
+app = Application("BlueprintExampleWithArgs").apply(add_n_blueprint, n=2)
 
 # A blueprint that adds a method named `div` to the external
 # methods of the Application passed
@@ -70,7 +70,7 @@ def sqrt_blueprint(app: Application) -> None:
 # create an instance of Application
 extended_app = Application("ExtendAppWithBlueprints")
 # include the handlers from our calculator blueprint
-extended_app.implement(calculator_blueprint)
+extended_app.apply(calculator_blueprint)
 
 # OR
 
