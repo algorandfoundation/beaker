@@ -1,6 +1,5 @@
 import pyteal as pt
 import pytest
-from pyteal import Bytes
 
 from beaker import BuildOptions
 from beaker.application import (
@@ -10,6 +9,7 @@ from beaker.application import (
 from beaker.client import ApplicationClient
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
+    PrecompileContextError,
     PrecompiledApplication,
     PrecompiledLogicSignature,
     PrecompiledLogicSignatureTemplate,
@@ -256,12 +256,12 @@ def test_extra_page_population() -> None:
     assert app_precompile.clear_program.pages is not None
     recovered_approval_binary = b""
     for approval_page in app_precompile.approval_program.pages:
-        assert isinstance(approval_page, Bytes)
+        assert isinstance(approval_page, pt.Bytes)
         recovered_approval_binary += bytes.fromhex(approval_page.byte_str)
 
     recovered_clear_binary = b""
     for clear_page in app_precompile.clear_program.pages:
-        assert isinstance(clear_page, Bytes)
+        assert isinstance(clear_page, pt.Bytes)
         recovered_clear_binary += bytes.fromhex(clear_page.byte_str)
 
     assert recovered_approval_binary == app_precompile.approval_program.raw_binary
@@ -316,3 +316,66 @@ def _check_lsig_template_precompiles(
         lsig_precompile._template_values.keys()
         == lsig_template.runtime_template_variables.keys()
     )
+
+
+def test_precompile_outside_function() -> None:
+    app = Application("App")
+    another_app = Application("AnotherApp")
+
+    with pytest.raises(
+        PrecompileContextError,
+        match="precompiled must be called within a function used by an Application",
+    ):
+        precompiled(another_app)
+
+    with pytest.raises(
+        PrecompileContextError,
+        match="precompiled must be called within a function used by an Application",
+    ):
+        app.precompiled(another_app)
+
+
+def test_precompile_current_app() -> None:
+    app = Application("App")
+
+    @app.external
+    def method() -> pt.Expr:
+        precompiled(app)
+        return pt.Approve()
+
+    with pytest.raises(
+        PrecompileContextError, match="Attempted to precompile current Application"
+    ):
+        app.build(client=get_algod_client())
+
+
+def test_precompile_called_on_another_app() -> None:
+    app = Application("App")
+    another_app = Application("AnotherApp")
+
+    @app.external
+    def method() -> pt.Expr:
+        another_app.precompiled(app)
+        return pt.Approve()
+
+    with pytest.raises(
+        PrecompileContextError,
+        match='Application.precompiled called for app "AnotherApp" inside of a function of app "App"',
+    ):
+        app.build(client=get_algod_client())
+
+
+def test_precompile_without_client() -> None:
+    app = Application("App")
+    another_app = Application("AnotherApp")
+
+    @app.external
+    def method() -> pt.Expr:
+        precompiled(another_app)
+        return pt.Approve()
+
+    with pytest.raises(
+        PrecompileContextError,
+        match="Precompilation requires use of a client when calling Application.build",
+    ):
+        app.build()

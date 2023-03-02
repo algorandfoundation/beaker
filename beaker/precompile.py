@@ -38,6 +38,7 @@ __all__ = [
     "PrecompiledApplication",
     "PrecompiledLogicSignature",
     "PrecompiledLogicSignatureTemplate",
+    "PrecompileContextError",
 ]
 
 
@@ -268,6 +269,10 @@ class PrecompiledLogicSignatureTemplate:
             offset += len(curr_val) - 1
 
         return bytes(populated_binary)
+
+
+class PrecompileContextError(Exception):
+    pass
 
 
 def _py_encode_uvarint(integer: int) -> bytes:

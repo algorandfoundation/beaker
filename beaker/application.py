@@ -41,6 +41,7 @@ from beaker.build_options import BuildOptions
 from beaker.decorators import authorize as authorize_decorator
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
+    PrecompileContextError,
     PrecompiledApplication,
     PrecompiledLogicSignature,
     PrecompiledLogicSignatureTemplate,
@@ -185,17 +186,21 @@ class Application(Generic[TState]):
         value: "Application | LogicSignature | LogicSignatureTemplate",
         /,
     ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+        if value is self:
+            raise PrecompileContextError("Attempted to precompile current Application")
         try:
             ctx = _ctx.get()
         except LookupError as err:
-            raise LookupError(
-                "precompiled(...) should be called inside a function"
+            raise PrecompileContextError(
+                "precompiled must be called within a function used by an Application"
             ) from err
         if ctx.app is not self:
-            raise ValueError("precompiled() used in another apps context")
+            raise PrecompileContextError(
+                f'Application.precompiled called for app "{self.name}" inside of a function of app "{ctx.app.name}"'
+            )
         if ctx.client is None:
-            raise ValueError(
-                "beaker.precompiled(...) requires use of a client when calling Application.build(...)"
+            raise PrecompileContextError(
+                "Precompilation requires use of a client when calling Application.build"
             )
         client = ctx.client
         match value:
@@ -218,7 +223,9 @@ class Application(Generic[TState]):
                     lambda: PrecompiledLogicSignatureTemplate(lsig_template, client),
                 )
             case _:
-                raise TypeError("TODO write error message")
+                raise TypeError(
+                    f"Expected an Application, LogicSignature, or LogicSignatureTemplate, but got a {type(value)}"
+                )
 
     def _register_abi_external(
         self,
@@ -396,8 +403,7 @@ class Application(Generic[TState]):
             override:
 
         Returns:
-            The original method with additional elements set in it's
-            :code:`__handler_config__` attribute
+            An ABIReturnSubroutine or SubroutineFnWrapper
         """
 
         if bare:
@@ -1247,11 +1253,9 @@ def precompiled(
     try:
         ctx_app: Application = this_app()
     except LookupError as err:
-        raise LookupError(
-            "beaker.precompiled(...) should be called inside a function"
+        raise PrecompileContextError(
+            "precompiled must be called within a function used by an Application"
         ) from err
-    if value is ctx_app:
-        raise ValueError("Attempted to precompile the current application")
     return ctx_app.precompiled(value)
 
 
