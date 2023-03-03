@@ -345,6 +345,80 @@ def test_bare_override_true_nothing_to_override() -> None:
             return pt.Approve()
 
 
+def test_clear_state_override_true_nothing_to_override() -> None:
+    app = Application("")
+
+    with pytest.raises(ValueError, match="override=True, but no clear_state defined"):
+
+        @app.clear_state(override=True)
+        def handle() -> pt.Expr:
+            return pt.Approve()
+
+
+def test_clear_state_prevent_accidental_override() -> None:
+    app = Application("")
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
+
+    with pytest.raises(
+        ValueError, match="override=False, but clear_state already defined"
+    ):
+
+        @app.clear_state
+        def handle() -> pt.Expr:
+            return pt.Approve()
+
+
+def test_abi_external_prevent_accidental_override() -> None:
+    app = Application("")
+
+    @app.external
+    def method() -> pt.Expr:
+        return pt.Approve()
+
+    with pytest.raises(
+        ValueError,
+        match="override=False, but method with matching signature already registered",
+    ):
+
+        @app.external(name="method")
+        def handle() -> pt.Expr:
+            return pt.Approve()
+
+
+def test_bare_external_prevent_accidental_override() -> None:
+    app = Application("")
+
+    @app.create(bare=True)
+    def method() -> pt.Expr:
+        return pt.Approve()
+
+    with pytest.raises(
+        ValueError,
+        match="override=False, but bare external for no_op already exists",
+    ):
+
+        @app.create(bare=True)
+        def handle() -> pt.Expr:
+            return pt.Approve()
+
+
+def test_clear_state_override() -> None:
+    app = Application("")
+
+    @app.clear_state
+    def old() -> pt.Expr:
+        return pt.Approve()
+
+    @app.clear_state(override=True)
+    def new() -> pt.Expr:
+        return pt.Approve()
+
+    assert app._clear_state_method is new
+
+
 def test_bare_external_invalid_options() -> None:
     app = Application("")
     with pytest.raises(

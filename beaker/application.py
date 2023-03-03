@@ -280,7 +280,7 @@ class Application(Generic[TState]):
             else:
                 if override is False:
                     raise ValueError(
-                        f"override=False, but bare external for {for_action} already exists."
+                        f"override=False, but bare external for {for_action} already exists"
                     )
                 assert isinstance(existing_action.action, SubroutineFnWrapper)
                 self.deregister_bare_method(existing_action.action)
@@ -1015,9 +1015,9 @@ class Application(Generic[TState]):
                     "TODO betterify this message!!"
                 )
             if override is True and self._clear_state_method is None:
-                raise ValueError("override=True but no clear_state defined")
+                raise ValueError("override=True, but no clear_state defined")
             elif override is False and self._clear_state_method is not None:
-                raise ValueError("override=False but clear_state already defined")
+                raise ValueError("override=False, but clear_state already defined")
             self._clear_state_method = sub
             return sub
 
