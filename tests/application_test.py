@@ -896,9 +896,17 @@ def test_app_state_variance() -> None:
     def blueprint_y(y: Application[BaseStateY]) -> None:
         assert_type(y.state.bytes_val, LocalStateValue)
 
+    def blueprint_any_state(z: Application) -> None:
+        assert z
+
     class MyState(BaseStateX, BaseStateY):
         blob = GlobalStateBlob(keys=1)
 
-    app = Application("App", state=MyState()).apply(blueprint_x).apply(blueprint_y)
+    app = (
+        Application("App", state=MyState())
+        .apply(blueprint_x)
+        .apply(blueprint_y)
+        .apply(blueprint_any_state)
+    )
     assert_type(app, Application[MyState])
     assert_type(app.state.blob, GlobalStateBlob)
