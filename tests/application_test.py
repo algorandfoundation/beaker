@@ -881,3 +881,24 @@ def test_app_spec_export_defaults_to_cwd(
         monkeypatch.chdir(tmp_path)
         app.build().export()
     assert app_spec_output_path.is_file()
+
+
+def test_app_state_variance() -> None:
+    class BaseStateX:
+        uint_val = GlobalStateValue(pt.TealType.uint64)
+
+    def blueprint_x(x: Application[BaseStateX]) -> None:
+        assert_type(x.state.uint_val, GlobalStateValue)
+
+    class BaseStateY:
+        bytes_val = LocalStateValue(pt.TealType.bytes)
+
+    def blueprint_y(y: Application[BaseStateY]) -> None:
+        assert_type(y.state.bytes_val, LocalStateValue)
+
+    class MyState(BaseStateX, BaseStateY):
+        blob = GlobalStateBlob(keys=1)
+
+    app = Application("App", state=MyState()).apply(blueprint_x).apply(blueprint_y)
+    assert_type(app, Application[MyState])
+    assert_type(app.state.blob, GlobalStateBlob)
