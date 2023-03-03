@@ -196,6 +196,12 @@ class PrecompiledLogicSignatureTemplate:
             # Add expressions to encode the values and insert
             # them into the working buffer
             arg = kwargs[name]
+            if tv.is_bytes:
+                if arg.type_of() != TealType.bytes:
+                    raise TealTypeError(arg.type_of(), TealType.bytes)
+            else:
+                if arg.type_of() != TealType.uint64:
+                    raise TealTypeError(arg.type_of(), TealType.uint64)
             populate_program += [
                 curr_val.store(Concat(EncodeUVarInt(Len(arg)), arg))
                 if tv.is_bytes

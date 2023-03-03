@@ -1,3 +1,5 @@
+from typing import Any
+
 import pyteal as pt
 import pytest
 from algosdk.constants import APP_PAGE_MAX_SIZE
@@ -512,3 +514,64 @@ def test_deploy_inner_app_state() -> None:
         "local_uint": 123,
     }
     assert inner_client.get_global_state() == {"bytes_val": "hello", "uint_val": 42}
+
+
+def test_lsig_template_with_bad_arg_name_set() -> None:
+    lsig_tmpl = LogicSignatureTemplate(
+        pt.Approve(), runtime_template_variables={"nonce": pt.TealType.uint64}
+    )
+
+    pc = PrecompiledLogicSignatureTemplate(lsig_tmpl, client=get_algod_client())
+
+    f: Any
+    for f in pc.populate_template, pc.address, pc.populate_template_expr:
+        with pytest.raises(
+            ValueError, match="Expected arguments named: nonce but got: "
+        ):
+            f()
+        with pytest.raises(
+            ValueError, match="Expected arguments named: nonce but got: nunce"
+        ):
+            f(nunce=1)
+        with pytest.raises(
+            ValueError, match="Expected arguments named: nonce but got: nonce, believe"
+        ):
+            f(nonce=1, believe=True)
+
+
+def test_lsig_template_arg_type_checking_with_int() -> None:
+    lsig_tmpl = LogicSignatureTemplate(
+        pt.Approve(), runtime_template_variables={"nonce": pt.TealType.uint64}
+    )
+
+    pc = PrecompiledLogicSignatureTemplate(lsig_tmpl, client=get_algod_client())
+
+    with pytest.raises(pt.TealTypeError):
+        pc.address(nonce=pt.Bytes(b"1"))
+    with pytest.raises(pt.TealTypeError):
+        pc.populate_template_expr(nonce=pt.Bytes(b"1"))
+    with pytest.raises(pt.TealTypeError):
+        pc.populate_template(nonce=b"1")
+
+    pc.address(nonce=pt.Int(1))
+    pc.populate_template_expr(nonce=pt.Int(1))
+    pc.populate_template(nonce=1)
+
+
+def test_lsig_template_arg_type_checking_with_bytes() -> None:
+    lsig_tmpl = LogicSignatureTemplate(
+        pt.Approve(), runtime_template_variables={"nonce": pt.TealType.bytes}
+    )
+
+    pc = PrecompiledLogicSignatureTemplate(lsig_tmpl, client=get_algod_client())
+
+    with pytest.raises(pt.TealTypeError):
+        pc.address(nonce=pt.Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pc.populate_template_expr(nonce=pt.Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pc.populate_template(nonce=1)
+
+    pc.address(nonce=pt.Bytes(b"1"))
+    pc.populate_template_expr(nonce=pt.Bytes(b"1"))
+    pc.populate_template(nonce=b"1")
