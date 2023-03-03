@@ -118,3 +118,11 @@ def test_templated_logic_signature_bad_args() -> None:
                 "missing_arg": pt.TealType.uint64,
             },
         )
+
+
+def test_templated_logic_signature_no_rtt_vars() -> None:
+    with pytest.raises(
+        ValueError,
+        match="No runtime template variables supplied - use LogicSignature instead if that was intentional",
+    ):
+        LogicSignatureTemplate(lambda: pt.Approve(), runtime_template_variables={})

@@ -3,6 +3,8 @@ from collections.abc import Callable
 
 import pyteal as pt
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.tmpdir import TempPathFactory
 from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
 from typing_extensions import assert_type
@@ -865,3 +867,15 @@ def test_application_subclass_warning() -> None:
 
         class MyApp(Application):
             pass
+
+
+def test_app_spec_export_defaults_to_cwd(
+    tmp_path_factory: TempPathFactory, monkeypatch: MonkeyPatch
+) -> None:
+    app = Application("App")
+    tmp_working_dir = tmp_path_factory.mktemp("test123")
+    app_spec_output_path = tmp_working_dir / "application.json"
+    assert not app_spec_output_path.exists()
+    monkeypatch.chdir(tmp_working_dir)
+    app.build().export()
+    assert app_spec_output_path.is_file()
