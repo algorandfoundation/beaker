@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable
 
 import pyteal as pt
@@ -722,3 +723,145 @@ def test_multi_optin() -> None:
         return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
     test.build()
+
+
+def test_bare_no_op_no_create() -> None:
+    app = Application("")
+
+    @app.no_op(bare=True)
+    def method() -> pt.Expr:
+        return pt.Approve()
+
+    with pytest.raises(
+        Exception,
+        match="either handle CallConfig.CREATE in the no_op bare method, or add an ABI method that handles create",
+    ):
+        app.build()
+
+
+def test_initialise_another_apps_global_state() -> None:
+    class State1:
+        uint_val = GlobalStateValue(stack_type=pt.TealType.uint64)
+
+    class State2:
+        bytes_val = GlobalStateValue(stack_type=pt.TealType.bytes)
+
+    app1 = Application("App1", state=State1())
+    app2 = Application("App2", state=State2())
+
+    @app2.create
+    def create() -> pt.Expr:
+        return app1.initialize_global_state()
+
+    with pytest.warns(
+        match="Accessing state of Application App1 during compilation of Application App2"
+    ):
+        app2.build()
+
+
+def test_initialise_another_apps_local_state() -> None:
+    class State1:
+        uint_val = LocalStateValue(stack_type=pt.TealType.uint64)
+
+    class State2:
+        bytes_val = LocalStateValue(stack_type=pt.TealType.bytes)
+
+    app1 = Application("App1", state=State1())
+    app2 = Application("App2", state=State2())
+
+    @app2.opt_in
+    def opt_in() -> pt.Expr:
+        return app1.initialize_local_state()
+
+    with pytest.warns(
+        match="Accessing state of Application App1 during compilation of Application App2"
+    ):
+        app2.build()
+
+
+def test_default_arg_external_requires_read_only() -> None:
+    app = Application("")
+
+    @app.external
+    def roll_dice(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(4)  # chosen by fair dice roll. guaranteed to be random
+
+    with pytest.raises(
+        ValueError,
+        match="Only ABI methods with read_only=True should be used as default arguments to other ABI methods",
+    ):
+
+        @app.external
+        def rng(
+            seed: pt.abi.Uint64 = roll_dice,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(seed.get())
+
+
+def test_default_arg_external_only_allows_current_app() -> None:
+    other_app = Application("Other")
+
+    @other_app.external(read_only=True)
+    def other_app_ro(*, output: pt.abi.String) -> pt.Expr:
+        return output.set("other")
+
+    app = Application("App")
+
+    @app.external(read_only=True)
+    def this_app_ro(*, output: pt.abi.String) -> pt.Expr:
+        return output.set("self")
+
+    with pytest.raises(KeyError, match=re.escape("other_app_ro()string")):
+
+        @app.external
+        def method(
+            ident: pt.abi.String = other_app_ro,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(ident.length())
+
+    with pytest.raises(
+        ValueError, match="Can not use another app's method as a default value"
+    ):
+        (external_ref,) = other_app.abi_externals.values()
+
+        @app.external
+        def sneaky_method(
+            ident: pt.abi.String = external_ref,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(ident.length())
+
+
+def test_default_arg_unknown_type() -> None:
+    app = Application("")
+
+    with pytest.raises(
+        TypeError,
+        match="Unexpected type for a default argument to ABI method: <class 'float'>",
+    ):
+
+        @app.external
+        def method(
+            value: pt.abi.Uint64 = 123.456,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(value.get())
+
+
+def test_application_subclass_warning() -> None:
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            "Subclassing beaker.Application is deprecated, "
+            "please see the migration guide at: https://algorand-devrel.github.io/beaker/html/migration.html"
+        ),
+    ):
+
+        class MyApp(Application):
+            pass

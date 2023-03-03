@@ -1172,6 +1172,11 @@ class Application(Generic[TState]):
                     # note that we don't need to check the type here - if it's invalid,
                     # then _default_argument_from_resolver will raise an appropriate error
                     to_resolve = param.default
+                    if isinstance(to_resolve, ABIExternal):
+                        if to_resolve not in self.abi_externals.values():
+                            raise ValueError(
+                                "Can not use another app's method as a default value"
+                            )
                 # add the default value resolution data to the hints
                 hints.default_arguments[name] = _default_argument_from_resolver(
                     to_resolve
