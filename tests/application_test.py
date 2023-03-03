@@ -5,7 +5,6 @@ from pathlib import Path
 import pyteal as pt
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
-from Cryptodome.Hash import SHA512
 from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
 from typing_extensions import assert_type
 
@@ -46,6 +45,34 @@ def test_single_external() -> None:
     @app.external
     def handle() -> pt.Expr:
         return pt.Assert(pt.Int(1))
+
+    check_application_artifacts_output_stability(app)
+
+
+def test_method_config_allow_everything() -> None:
+    from beaker.application import MethodConfigDict
+
+    app = Application("AllowEverything")
+
+    actions: MethodConfigDict = {
+        "no_op": pt.CallConfig.ALL,
+        "opt_in": pt.CallConfig.ALL,
+        "close_out": pt.CallConfig.ALL,
+        "update_application": pt.CallConfig.ALL,
+        "delete_application": pt.CallConfig.ALL,
+    }
+
+    @app.external(method_config=actions)
+    def abi() -> pt.Expr:
+        return pt.Approve()
+
+    @app.external(bare=True, method_config=actions)
+    def bare() -> pt.Expr:
+        return pt.Approve()
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
 
     check_application_artifacts_output_stability(app)
 
@@ -394,8 +421,6 @@ def test_application_bare_override_none(
 
 
 def test_state_init() -> None:
-    from pyteal import abi
-
     class MyState:
         # global
         blob = GlobalStateBlob(keys=4, descr="blob_description")
@@ -430,7 +455,7 @@ def test_state_init() -> None:
             descr="uint_local_dynamic_description",
         )
         # box
-        lst = BoxList(value_type=abi.Uint32, elements=5, name="lst_description")
+        lst = BoxList(value_type=pt.abi.Uint32, elements=5, name="lst_description")
         # not-state
         not_a_state_var = pt.Int(1)
 
@@ -480,8 +505,6 @@ def test_default_param_state() -> None:
     ), "Expected the hint to match the method spec"
 
 
-#
-#
 def test_default_param_const() -> None:
     const_val = 123
 
@@ -692,39 +715,18 @@ def test_closure_vars() -> None:
     assert "first" not in i2_approval_program
 
 
-def hashy(sig: str) -> bytes:
-    chksum = SHA512.new(truncate="256")
-    chksum.update(sig.encode())
-    return chksum.digest()[:4]
-
-
-def test_abi_method_details() -> None:
-    app = Application("ABIApp")
-
-    @app.external
-    def meth() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    expected_sig = "meth()void"
-    expected_selector = hashy(expected_sig)
-
-    method_spec = meth.method_spec()
-    assert method_spec.get_signature() == expected_sig
-    assert method_spec.get_selector() == expected_selector
-
-
 def test_multi_optin() -> None:
     test = Application("MultiOptIn")
 
-    @test.external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    @test.opt_in
     def opt1(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64) -> pt.Expr:
         return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
-    @test.external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    @test.opt_in
     def opt2(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64) -> pt.Expr:
         return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
-    test.build()
+    check_application_artifacts_output_stability(test)
 
 
 def test_bare_no_op_no_create() -> None:

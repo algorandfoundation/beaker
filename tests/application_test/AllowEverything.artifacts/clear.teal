@@ -1,0 +1,11 @@
+#pragma version 8
+intcblock 1
+callsub clearstate_0
+intc_0 // 1
+return
+
+// clear_state
+clearstate_0:
+proto 0 0
+intc_0 // 1
+return
