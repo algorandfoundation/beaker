@@ -57,7 +57,7 @@ markers = [
 ]
 
 [tool.coverage.report]
-exclude_lines = ["pragma: not covered", "@overload"]
+exclude_lines = ["pragma: not covered", "@overload", "if TYPE_CHECKING:"]
 
 [tool.ruff]
 select = ["E", "F", "ANN", "UP", "N", "C", "B", "YTT", "W", "FBT", "Q", "RUF", "I"]

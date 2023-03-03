@@ -1,11 +1,11 @@
 import dataclasses
 import inspect
-import typing
 import warnings
 from collections.abc import Callable, Iterator, MutableMapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import (
+    TYPE_CHECKING,
     Concatenate,
     Generic,
     Literal,
@@ -47,9 +47,8 @@ from beaker.precompile import (
     PrecompiledLogicSignatureTemplate,
 )
 from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
-from beaker.state.primitive import GlobalStateValue, LocalStateValue
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
 
 __all__ = [
@@ -1200,6 +1199,7 @@ class Application(Generic[TState]):
 def _default_argument_from_resolver(
     resolver: Expr | ABIExternal | int | bytes | str,
 ) -> DefaultArgumentDict:
+    from beaker.state.primitive import GlobalStateValue, LocalStateValue
 
     match resolver:
         # Native types

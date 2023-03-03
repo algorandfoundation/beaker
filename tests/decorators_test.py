@@ -1,3 +1,7 @@
+import contextlib
+import re
+from typing import Any
+
 import pyteal as pt
 import pytest
 
@@ -339,3 +343,71 @@ def test_bare_override_true_nothing_to_override() -> None:
         @app.opt_in(override=True, bare=True)
         def handle() -> pt.Expr:
             return pt.Approve()
+
+
+def test_bare_external_invalid_options() -> None:
+    app = Application("")
+    with pytest.raises(
+        ValueError, match=re.escape("@external(bare=True, ...) requires method_config")
+    ):
+
+        @app.external(bare=True)
+        def method() -> pt.Expr:
+            return pt.Approve()
+
+    with pytest.raises(
+        ValueError, match="read_only=True has no effect on bare methods"
+    ):
+
+        @app.external(
+            bare=True, method_config={"no_op": pt.CallConfig.CALL}, read_only=True
+        )
+        def method2() -> pt.Expr:
+            return pt.Approve()
+
+    with pytest.raises(TypeError, match="Bare methods must take no method arguments"):
+
+        @app.external(bare=True, method_config={"no_op": pt.CallConfig.CALL})  # type: ignore[arg-type]
+        def method3(a: pt.Expr) -> pt.Expr:
+            return pt.Assert(a)
+
+
+def test_no_op_call_config_permutations() -> None:
+    app = Application("")
+
+    @app.no_op
+    def no_op_default() -> pt.Expr:
+        return pt.Approve()
+
+    for allow_call in (True, False):
+        for allow_create in (True, False):
+            if not (allow_call or allow_create):
+                ctx: Any = pytest.raises(
+                    ValueError,
+                    match="Require one of allow_call or allow_create to be True",
+                )
+            else:
+                ctx = contextlib.nullcontext()
+            with ctx:
+
+                @app.no_op(
+                    allow_call=allow_call,
+                    allow_create=allow_create,
+                    name=f"no_op_allow_call={allow_call}_allow_create={allow_create}",
+                )
+                def no_op_() -> pt.Expr:
+                    return pt.Approve()
+
+    app_spec = app.build()
+    assert app_spec.dictify()["hints"] == {
+        "no_op_default()void": {"call_config": {"no_op": "CALL"}},
+        "no_op_allow_call=True_allow_create=True()void": {
+            "call_config": {"no_op": "ALL"}
+        },
+        "no_op_allow_call=True_allow_create=False()void": {
+            "call_config": {"no_op": "CALL"}
+        },
+        "no_op_allow_call=False_allow_create=True()void": {
+            "call_config": {"no_op": "CREATE"}
+        },
+    }
