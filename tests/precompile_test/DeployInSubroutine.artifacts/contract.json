@@ -1,0 +1,13 @@
+{
+    "name": "DeployInSubroutine",
+    "methods": [
+        {
+            "name": "deploy",
+            "args": [],
+            "returns": {
+                "type": "uint64"
+            }
+        }
+    ],
+    "networks": {}
+}

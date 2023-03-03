@@ -16,6 +16,7 @@ from beaker.precompile import (
     _py_encode_uvarint,
 )
 from beaker.sandbox import get_accounts, get_algod_client
+from tests.conftest import check_application_artifacts_output_stability
 
 
 def test_compile() -> None:
@@ -379,3 +380,39 @@ def test_precompile_without_client() -> None:
         match="Precompilation requires use of a client when calling Application.build",
     ):
         app.build()
+
+
+def test_precompile_bad_type() -> None:
+    app = Application("App")
+
+    @app.external
+    def method() -> pt.Expr:
+        precompiled(pt.ScratchVar())  # type: ignore[call-overload]
+        return pt.Approve()
+
+    with pytest.raises(
+        TypeError,
+        match="Expected an Application, LogicSignature, or LogicSignatureTemplate, but got a <class 'pyteal.ScratchVar'>",
+    ):
+        app.build(client=get_algod_client())
+
+
+def test_precompile_in_subroutine() -> None:
+    app_to_deploy = Application("InnerApp")
+
+    @pt.Subroutine(pt.TealType.uint64)
+    def deploy_app() -> pt.Expr:
+        pc = precompiled(app_to_deploy)
+        return pt.Seq(
+            pt.InnerTxnBuilder.Execute(pc.get_create_config()),
+            # return the app id of the newly created app
+            pt.InnerTxn.created_application_id(),
+        )
+
+    app = Application("DeployInSubroutine")
+
+    @app.external
+    def deploy(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(deploy_app())
+
+    check_application_artifacts_output_stability(app)
