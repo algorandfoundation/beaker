@@ -1,13 +1,18 @@
 import pyteal as pt
 import pytest
+from algosdk.constants import APP_PAGE_MAX_SIZE
 
-from beaker import BuildOptions
-from beaker.application import (
+from beaker import (
     Application,
+    BuildOptions,
+    GlobalStateValue,
+    LocalStateValue,
+    LogicSignature,
+    LogicSignatureTemplate,
+    consts,
     precompiled,
 )
 from beaker.client import ApplicationClient
-from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
     PrecompileContextError,
     PrecompiledApplication,
@@ -416,3 +421,94 @@ def test_precompile_in_subroutine() -> None:
         return output.set(deploy_app())
 
     check_application_artifacts_output_stability(app)
+
+
+def test_precompile_get_create_config_single_page() -> None:
+    large_app_one_page_each = Application("LargeAppOnePageEach")
+
+    silly_expr = pt.Assert(pt.Bytes(b"A" * (APP_PAGE_MAX_SIZE // 2)) != pt.Bytes(b""))
+
+    @large_app_one_page_each.external
+    def foo() -> pt.Expr:
+        return silly_expr
+
+    @large_app_one_page_each.clear_state
+    def bar() -> pt.Expr:
+        return silly_expr
+
+    deployer_app = Application("Deployer")
+
+    @deployer_app.external
+    def deploy(*, output: pt.abi.Uint64) -> pt.Expr:
+        pc = precompiled(large_app_one_page_each)
+        return pt.Seq(
+            pt.InnerTxnBuilder.Execute(pc.get_create_config()),
+            # return the app id of the newly created app
+            output.set(pt.InnerTxn.created_application_id()),
+        )
+
+    acct, *_ = get_accounts()
+    client = ApplicationClient(
+        client=get_algod_client(), app=deployer_app, signer=acct.signer
+    )
+    app_id, *_ = client.create()
+    assert app_id > 0
+    client.fund(1 * consts.algo)
+    result = client.call(deploy)
+    assert result.return_value > app_id
+
+
+def test_deploy_inner_app_state() -> None:
+    class InnerAppState:
+        uint_val = GlobalStateValue(pt.TealType.uint64, default=pt.Int(42))
+        bytes_val = GlobalStateValue(pt.TealType.bytes, default=pt.Bytes(b"hello"))
+
+        local_uint = LocalStateValue(pt.TealType.uint64, default=pt.Int(123))
+        local_bytes = LocalStateValue(pt.TealType.bytes, default=pt.Bytes(b"goodbye"))
+
+    inner_app = Application("InnerApp", state=InnerAppState())
+
+    @inner_app.opt_in(bare=True, allow_create=True)
+    def opt_in() -> pt.Expr:
+        return pt.Seq(
+            pt.If(
+                pt.Txn.application_id() == pt.Int(0),
+                inner_app.initialize_global_state(),
+            ),
+            inner_app.initialize_local_state(),
+        )
+
+    deployer = Application("Deployer")
+
+    @deployer.external
+    def deploy(*, output: pt.abi.Uint64) -> pt.Expr:
+        pc = precompiled(inner_app)
+        return pt.Seq(
+            pt.InnerTxnBuilder.Execute(
+                {
+                    **pc.get_create_config(),
+                    pt.TxnField.on_completion: pt.OnComplete.OptIn,
+                }
+            ),
+            # return the app id of the newly created app
+            output.set(pt.InnerTxn.created_application_id()),
+        )
+
+    acct, *_ = get_accounts()
+    client = ApplicationClient(
+        client=get_algod_client(), app=deployer, signer=acct.signer
+    )
+    client.create()
+    client.fund(1 * consts.algo)
+    result = client.call(deploy)
+    inner_client = ApplicationClient(
+        client=get_algod_client(),
+        app=inner_app,
+        app_id=result.return_value,
+        signer=acct.signer,
+    )
+    assert inner_client.get_local_state(account=client.app_addr) == {
+        "local_bytes": "goodbye",
+        "local_uint": 123,
+    }
+    assert inner_client.get_global_state() == {"bytes_val": "hello", "uint_val": 42}

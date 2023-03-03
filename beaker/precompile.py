@@ -66,19 +66,20 @@ class PrecompiledApplication:
         result: dict[TxnField, Expr | list[Expr]] = {
             TxnField.type_enum: TxnType.ApplicationCall,
         }
+        extra_pages = num_extra_program_pages(
+            self.approval_program.raw_binary, self.clear_program.raw_binary
+        )
         approval_pages = self.approval_program.pages
         clear_pages = self.clear_program.pages
-        if len(approval_pages) == 1 and len(clear_pages) == 1:
+        if extra_pages == 0:
+            assert len(approval_pages) == 1
+            assert len(clear_pages) == 1
             result[TxnField.approval_program] = approval_pages[0]
             result[TxnField.clear_state_program] = clear_pages[0]
         else:
             result[TxnField.approval_program_pages] = approval_pages
             result[TxnField.clear_state_program_pages] = clear_pages
-            result[TxnField.extra_program_pages] = Int(
-                num_extra_program_pages(
-                    self.approval_program.raw_binary, self.clear_program.raw_binary
-                )
-            )
+            result[TxnField.extra_program_pages] = Int(extra_pages)
 
         if l_nbs := self._local_schema.num_byte_slices:
             result[TxnField.local_num_byte_slices] = Int(l_nbs)
