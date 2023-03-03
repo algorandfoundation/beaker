@@ -297,8 +297,17 @@ class Application(Generic[TState]):
         /,
     ) -> None:
         if isinstance(action_name_or_reference, SubroutineFnWrapper):
-            method = action_name_or_reference
-            _remove_first_match(self.bare_actions, lambda _, v: v.action is method)
+            if action_name_or_reference is self._clear_state_method:
+                self._clear_state_method = None
+            else:
+                for k, v in self.bare_actions.items():
+                    if v.action is action_name_or_reference:
+                        del self.bare_actions[k]
+                        break
+                else:
+                    raise LookupError(
+                        f'Not a registered bare method: "{action_name_or_reference.name()}"'
+                    )
         else:
             if action_name_or_reference == "clear_state":
                 if self._clear_state_method is None:
@@ -1289,15 +1298,6 @@ def unconditional_opt_in_approval(
 
 TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
-
-
-def _remove_first_match(
-    m: MutableMapping[TKey, TValue], predicate: Callable[[TKey, TValue], bool]
-) -> None:
-    for k, v in m.items():
-        if predicate(k, v):
-            del m[k]
-            break
 
 
 def _lazy_setdefault(

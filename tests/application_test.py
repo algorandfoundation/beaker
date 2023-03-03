@@ -171,6 +171,115 @@ def test_application_external_override_true() -> None:
     ), "Expected contract method to match method spec"
 
 
+def test_deregister_abi_by_signature() -> None:
+    app = Application("")
+
+    @app.external
+    def handle(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(42)
+
+    assert app.abi_externals
+    app.deregister_abi_method("handle()uint64")
+    assert not app.abi_externals
+
+
+def test_deregister_abi_by_reference() -> None:
+    app = Application("")
+
+    @app.external
+    def handle(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(42)
+
+    assert app.abi_externals
+    app.deregister_abi_method(handle)
+    assert not app.abi_externals
+
+
+def test_deregister_bare_by_action_name() -> None:
+    app = Application("")
+
+    @app.opt_in(bare=True)
+    def opt_in() -> pt.Expr:
+        return pt.Approve()
+
+    assert app.bare_actions
+    app.deregister_bare_method("opt_in")
+    assert not app.bare_actions
+
+
+def test_deregister_bare_by_reference() -> None:
+    app = Application("")
+
+    @app.opt_in(bare=True)
+    def opt_in() -> pt.Expr:
+        return pt.Approve()
+
+    assert app.bare_actions
+    app.deregister_bare_method(opt_in)
+    assert not app.bare_actions
+
+
+def test_deregister_clear_state_by_action_name() -> None:
+    app = Application("")
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
+
+    assert app._clear_state_method
+    app.deregister_bare_method("clear_state")
+    assert not app._clear_state_method
+
+
+def test_deregister_clear_state_by_reference() -> None:
+    app = Application("")
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
+
+    assert app._clear_state_method
+    app.deregister_bare_method(clear_state)
+    assert not app._clear_state_method
+
+
+def test_deregister_clear_state_not_found() -> None:
+    app = Application("")
+
+    with pytest.raises(KeyError):
+        app.deregister_bare_method("clear_state")
+
+
+def test_deregister_opt_in_not_found() -> None:
+    app = Application("")
+
+    with pytest.raises(KeyError):
+        app.deregister_bare_method("opt_in")
+
+
+def test_deregister_bare_method_not_found() -> None:
+    @pt.Subroutine(pt.TealType.uint64)
+    def foo() -> pt.Expr:
+        return pt.Int(1)
+
+    app = Application("")
+    with pytest.raises(LookupError, match='Not a registered bare method: "foo"'):
+        app.deregister_bare_method(foo)
+
+
+def test_deregister_abi_method_not_found() -> None:
+    @pt.ABIReturnSubroutine
+    def foo(x: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(x.get())
+
+    app = Application("")
+    with pytest.raises(KeyError):
+        app.deregister_abi_method(foo)
+
+    with pytest.raises(KeyError):
+        app.deregister_abi_method(foo.method_signature())
+
+
 def test_application_external_override_false() -> None:
     app = Application("ExternalOverrideFalse")
 

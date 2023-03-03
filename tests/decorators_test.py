@@ -319,3 +319,23 @@ def test_bytes_constant_resolvable() -> None:
 def test_int_constant_resolvable() -> None:
     r = _default_argument_from_resolver(pt.Int(1))
     assert r["source"] == "constant"
+
+
+def test_abi_override_true_nothing_to_override() -> None:
+    app = Application("")
+
+    with pytest.raises(ValueError, match="override=True, but nothing to override"):
+
+        @app.external(override=True)
+        def handle() -> pt.Expr:
+            return pt.Assert(pt.Int(1))
+
+
+def test_bare_override_true_nothing_to_override() -> None:
+    app = Application("")
+
+    with pytest.raises(ValueError, match="override=True, but nothing to override"):
+
+        @app.opt_in(override=True, bare=True)
+        def handle() -> pt.Expr:
+            return pt.Approve()
