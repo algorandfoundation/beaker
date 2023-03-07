@@ -15,9 +15,9 @@ from pyteal import (
     SubroutineFnWrapper,
     TealInputError,
     TealType,
-    TealTypeError,
     Txn,
 )
+from pyteal.types import require_type
 
 __all__ = [
     "Authorize",
@@ -36,8 +36,7 @@ class Authorize:
     def only(addr: Expr) -> SubroutineFnWrapper:
         """require that the sender of the app call match exactly the address passed"""
 
-        if addr.type_of() != TealType.bytes:
-            raise TealTypeError(addr.type_of(), TealType.bytes)
+        require_type(addr, TealType.bytes)
 
         @Subroutine(TealType.uint64, name="auth_only")
         def _impl(sender: Expr) -> Expr:
@@ -49,8 +48,7 @@ class Authorize:
     def holds_token(asset_id: Expr) -> SubroutineFnWrapper:
         """require that the sender of the app call holds >0 of the asset id passed"""
 
-        if asset_id.type_of() != TealType.uint64:
-            raise TealTypeError(asset_id.type_of(), TealType.uint64)
+        require_type(asset_id, TealType.uint64)
 
         @Subroutine(TealType.uint64, name="auth_holds_token")
         def _impl(sender: Expr) -> Expr:
@@ -68,8 +66,7 @@ class Authorize:
         """require that the sender of the app call has
         already opted-in to a given app id"""
 
-        if app_id.type_of() != TealType.uint64:
-            raise TealTypeError(app_id.type_of(), TealType.uint64)
+        require_type(app_id, TealType.uint64)
 
         @Subroutine(TealType.uint64, name="auth_opted_in")
         def _impl(sender: Expr) -> Expr:
@@ -92,8 +89,7 @@ def authorize(
             "Expected a single expression argument to authorize function"
         )
 
-    if allowed.type_of() != TealType.uint64:
-        raise TealTypeError(allowed.type_of(), TealType.uint64)
+    require_type(allowed, TealType.uint64)
 
     def decorator(
         fn: Callable[HandlerParams, HandlerReturn]

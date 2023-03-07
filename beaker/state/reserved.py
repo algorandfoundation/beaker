@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Generic, Literal, TypeAlias, TypeVar
 
-from pyteal import Expr, SubroutineFnWrapper, TealType, TealTypeError
-from pyteal.ast import abi
+from pyteal import Expr, SubroutineFnWrapper, TealType, abi
+from pyteal.types import require_type
 
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
@@ -77,8 +77,8 @@ class ReservedStateValue(Generic[ST], StateStorage, ABC):
 
     @key_gen.setter
     def key_gen(self, value: KeyGenerator) -> None:
-        if isinstance(value, SubroutineFnWrapper) and value.type_of() != TealType.bytes:
-            raise TealTypeError(value.type_of(), TealType.bytes)
+        if isinstance(value, SubroutineFnWrapper):
+            require_type(value, TealType.bytes)
         self._key_gen = value
 
     def __getitem__(self, key_seed: Expr | abi.BaseType) -> ST:

@@ -19,6 +19,7 @@ from pyteal import (
     TxnField,
     TxnType,
 )
+from pyteal.types import require_type
 
 from beaker.compilation import Program
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
@@ -196,12 +197,7 @@ class PrecompiledLogicSignatureTemplate:
             # Add expressions to encode the values and insert
             # them into the working buffer
             arg = kwargs[name]
-            if tv.is_bytes:
-                if arg.type_of() != TealType.bytes:
-                    raise TealTypeError(arg.type_of(), TealType.bytes)
-            else:
-                if arg.type_of() != TealType.uint64:
-                    raise TealTypeError(arg.type_of(), TealType.uint64)
+            require_type(arg, TealType.bytes if tv.is_bytes else TealType.uint64)
             populate_program += [
                 curr_val.store(Concat(EncodeUVarInt(Len(arg)), arg))
                 if tv.is_bytes

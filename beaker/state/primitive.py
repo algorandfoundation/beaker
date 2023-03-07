@@ -20,9 +20,9 @@ from pyteal import (
     TealInputError,
     TealSimpleBlock,
     TealType,
-    TealTypeError,
     Txn,
 )
+from pyteal.types import require_type
 
 __all__ = [
     "StateValue",
@@ -70,15 +70,14 @@ class StateValue(Expr, StateStorage):
         self.static = static
         self.descr = descr
 
-        if key is not None:
-            if isinstance(key, str):
-                key = Bytes(key)
-            elif key.type_of() != TealType.bytes:
-                raise TealTypeError(key.type_of(), TealType.bytes)
+        if isinstance(key, str):
+            key = Bytes(key)
+        elif key is not None:
+            require_type(key, TealType.bytes)
         self._key = key
 
-        if default is not None and default.type_of() != self.stack_type:
-            raise TealTypeError(default.type_of(), self.stack_type)
+        if default is not None:
+            require_type(default, self.stack_type)
         self.default = default
 
     def __set_name__(self, owner: type, name: str) -> None:
@@ -196,9 +195,7 @@ class StateValue(Expr, StateStorage):
             raise TealInputError(f"StateValue {self} is not integer type")
 
     def _check_match_type(self, val: Expr) -> None:
-        in_type = val.type_of()
-        if in_type != self.stack_type and in_type != TealType.anytype:
-            raise TealTypeError(in_type, self.stack_type)
+        require_type(val, self.stack_type)
 
 
 class GlobalStateValue(StateValue, GlobalStateStorage):
@@ -244,8 +241,7 @@ class GlobalStateValue(StateValue, GlobalStateStorage):
         return Seq(v := self.get_maybe(), If(v.hasValue(), v.value(), val))
 
     def get_external(self, app_id: Expr) -> MaybeValue:
-        if app_id.type_of() is not TealType.uint64:
-            raise TealTypeError(app_id, TealType.uint64)
+        require_type(app_id, TealType.uint64)
         return App.globalGetEx(app_id, self.key)
 
     def exists(self) -> Expr:
@@ -318,8 +314,7 @@ class LocalStateValue(StateValue, LocalStateStorage):
         return Seq(v := self.get_maybe(), If(v.hasValue(), v.value(), val))
 
     def get_external(self, app_id: Expr) -> MaybeValue:
-        if app_id.type_of() is not TealType.uint64:
-            raise TealTypeError(app_id, TealType.uint64)
+        require_type(app_id, TealType.uint64)
         return App.localGetEx(self.acct, app_id, self.key)
 
     def exists(self) -> Expr:

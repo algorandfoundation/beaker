@@ -9,9 +9,9 @@ from pyteal import (
     TealBlock,
     TealSimpleBlock,
     TealType,
-    TealTypeError,
     abi,
 )
+from pyteal.types import require_type
 
 
 class BoxList:
@@ -55,14 +55,10 @@ class BoxList:
     class Element(Expr):
         def __init__(self, name: Expr, element_size: Expr, idx: Expr):
             super().__init__()
-            if name.type_of() != TealType.bytes:
-                raise TealTypeError(name.type_of(), TealType.bytes)
 
-            if element_size.type_of() != TealType.uint64:
-                raise TealTypeError(element_size.type_of(), TealType.uint64)
-
-            if idx.type_of() != TealType.uint64:
-                raise TealTypeError(idx.type_of(), TealType.uint64)
+            require_type(name, TealType.bytes)
+            require_type(element_size, TealType.uint64)
+            require_type(idx, TealType.uint64)
 
             self.name = name
             self.element_size = element_size
