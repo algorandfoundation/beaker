@@ -2,10 +2,10 @@ from pyteal import (
     Assert,
     BoxDelete,
     BoxGet,
+    BoxLen,
     BoxPut,
     Concat,
     Expr,
-    Pop,
     Seq,
     TealType,
     TealTypeError,
@@ -49,15 +49,14 @@ class BoxMapping:
         """Container type for a specific box key and type"""
 
         def __init__(self, key: Expr, value_type: type[abi.BaseType]):
-            if key.type_of() != TealType.bytes:
-                raise TealTypeError(key.type_of(), TealType.bytes)
+            assert key.type_of() == TealType.bytes
 
             self.key = key
             self._value_type = value_type
 
         def exists(self) -> Expr:
             """check to see if a box with this key exists."""
-            return Seq(maybe := BoxGet(self.key), maybe.hasValue())
+            return Seq(maybe := BoxLen(self.key), maybe.hasValue())
 
         def store_into(self, val: abi.BaseType) -> Expr:
             """decode the bytes from this box into an abi type.
@@ -83,16 +82,13 @@ class BoxMapping:
                 case abi.BaseType():
                     if not isinstance(val, self._value_type):
                         raise TealTypeError(val.__class__, self._value_type)
-                    return Seq(
-                        # delete the old one
-                        Pop(BoxDelete(self.key)),
-                        # write the new one
-                        BoxPut(self.key, val.encode()),
-                    )
+                    return BoxPut(self.key, val.encode())
                 case Expr():
                     if val.type_of() != TealType.bytes:
                         raise TealTypeError(val.type_of(), TealType.bytes)
                     return BoxPut(self.key, val)
+                case _:
+                    raise TealTypeError(type(val), Expr | abi.BaseType)
 
         def delete(self) -> Expr:
             """delete the box at this key"""
@@ -103,10 +99,11 @@ class BoxMapping:
             case abi.BaseType():
                 if key.type_spec() != self._key_type_spec:
                     raise TealTypeError(key.type_spec(), self._key_type_spec)
-                return self.Element(self._prefix_key(key.encode()), self._value_type)
+                key = key.encode()
             case Expr():
                 if key.type_of() != TealType.bytes:
                     raise TealTypeError(key.type_of(), TealType.bytes)
-                return self.Element(self._prefix_key(key), self._value_type)
             case _:
                 raise TealTypeError(type(key), Expr | abi.BaseType)
+
+        return self.Element(self._prefix_key(key), self._value_type)

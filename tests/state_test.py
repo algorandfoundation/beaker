@@ -476,13 +476,13 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: 
         assert actual == expected
 
 
-def test_expr_impl_account() -> None:
+def test_expr_impl_local() -> None:
     asv = LocalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
-def test_expr_impl_app() -> None:
+def test_expr_impl_global() -> None:
     asv = GlobalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64

@@ -332,10 +332,6 @@ concat
 frame_bury 2
 frame_dig -2
 txnas Accounts
-box_del
-pop
-frame_dig -2
-txnas Accounts
 frame_dig 2
 box_put
 itxn_begin
@@ -399,10 +395,6 @@ frame_dig 1
 setbit
 concat
 frame_bury 0
-frame_dig -2
-txnas Accounts
-box_del
-pop
 frame_dig -2
 txnas Accounts
 frame_dig 0
