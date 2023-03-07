@@ -133,7 +133,7 @@ def test_authorize_bare_handler() -> None:
     cmt = "unauthorized"
     auth_only = Authorize.only(pt.Global.creator_address())
 
-    @app.delete(authorize=auth_only)
+    @app.delete(bare=True, authorize=auth_only)
     def deleter() -> pt.Expr:
         return pt.Approve()
 
@@ -232,7 +232,7 @@ def test_non_bare_clear_state() -> None:
     with pytest.raises(TypeError):
 
         @app.clear_state  # type: ignore
-        def clear_state(value: pt.abi.Uint64) -> pt.Expr:
+        def clear_state(value: pt.Expr) -> pt.Expr:
             return pt.Approve()
 
 
