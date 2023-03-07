@@ -1,6 +1,7 @@
 import copy
 import itertools
 import typing
+from dataclasses import dataclass
 
 import pyteal
 import pytest
@@ -12,6 +13,7 @@ from algosdk.atomic_transaction_composer import (
     abi,
 )
 from algosdk.encoding import decode_address
+from algosdk.source_map import SourceMap
 from algosdk.v2client.algod import AlgodClient
 
 from beaker import client, consts, sandbox
@@ -814,6 +816,38 @@ def _assert_cases(
     return all_cases if group_key == "all" else key_to_group[group_key]
 
 
+@dataclass
+class ProgramAssertion:
+    line: int
+    message: str
+
+
+def gather_asserts(program: str, src_map: SourceMap) -> dict[int, ProgramAssertion]:
+    asserts: dict[int, ProgramAssertion] = {}
+
+    program_lines = program.split("\n")
+    for idx, line in enumerate(program_lines):
+        # Take only the first chunk before spaces
+        line, *_ = line.split(" ")
+        if line != "assert":
+            continue
+
+        pcs = src_map.get_pcs_for_line(idx)
+        if pcs is None:
+            pc = 0
+        else:
+            pc = pcs[0]
+
+        # TODO: this will be wrong for multiline comments
+        line_before = program_lines[idx - 1]
+        if not line_before.startswith("//"):
+            continue
+
+        asserts[pc] = ProgramAssertion(idx, line_before.strip("/ "))
+
+    return asserts
+
+
 def test_approval_asserts(grouped_assert_cases: list[AssertTestCase]) -> None:
     """
     Confirms each logical grouping of assertions raises the expected error message.
@@ -833,7 +867,9 @@ def test_approval_assert_coverage(
     some asserts are _not_ tested.
     """
 
-    all_asserts = creator_app_client.approval.assertions
+    all_asserts = gather_asserts(
+        creator_app_client.approval.teal, creator_app_client.approval.source_map
+    )
 
     for msg, method, kwargs, app_client in all_assert_cases:
         with pytest.raises(LogicException, match=msg):
