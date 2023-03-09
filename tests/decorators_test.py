@@ -134,6 +134,20 @@ def test_external_authorize_opted_in() -> None:
         assert actual == expected
 
 
+def test_authorize_with_sub() -> None:
+    @pt.Subroutine(pt.TealType.uint64)
+    def my_auth(sender: pt.Expr) -> pt.Expr:
+        return sender == pt.Global.caller_app_address()
+
+    app = Application("")
+
+    @app.external(authorize=my_auth)
+    def foo() -> pt.Expr:
+        return pt.Approve()
+
+    app.build()
+
+
 def test_authorize_bare_handler() -> None:
     app = Application("")
     cmt = "unauthorized"
