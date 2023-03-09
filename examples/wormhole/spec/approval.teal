@@ -24,7 +24,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub portaltransfer_3
+callsub portaltransfer_2
 store 1
 bytec_1 // 0x151f7c75
 load 1
@@ -43,7 +43,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub lookup_2
+callsub lookup_1
 store 0
 bytec_1 // 0x151f7c75
 load 0
@@ -62,18 +62,11 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
-intc_1 // 1
-return
-
-// create
-create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // prefix_key_gen
-prefixkeygen_1:
+prefixkeygen_0:
 proto 1 1
 pushbytes 0x707269636573 // "prices"
 frame_dig -1
@@ -81,13 +74,13 @@ concat
 retsub
 
 // lookup
-lookup_2:
+lookup_1:
 proto 1 1
 bytec_0 // ""
 intc_0 // 0
 frame_dig -1
 itob
-callsub prefixkeygen_1
+callsub prefixkeygen_0
 app_global_get_ex
 store 3
 store 2
@@ -98,7 +91,7 @@ frame_bury 0
 retsub
 
 // portal_transfer
-portaltransfer_3:
+portaltransfer_2:
 proto 1 1
 bytec_0 // ""
 intc_0 // 0
@@ -230,7 +223,7 @@ concat
 frame_bury 23
 frame_dig 19
 itob
-callsub prefixkeygen_1
+callsub prefixkeygen_0
 frame_dig 23
 app_global_put
 frame_dig 18

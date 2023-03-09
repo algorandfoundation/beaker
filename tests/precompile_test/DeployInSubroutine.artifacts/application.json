@@ -1,0 +1,49 @@
+{
+    "hints": {
+        "deploy()uint64": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sNAp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDcwOTVkNzA4IC8vICJkZXBsb3koKXVpbnQ2NCIKPT0KYm56IG1haW5fbDMKZXJyCm1haW5fbDM6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CmNhbGxzdWIgZGVwbG95XzEKc3RvcmUgMApwdXNoYnl0ZXMgMHgxNTFmN2M3NSAvLyAweDE1MWY3Yzc1CmxvYWQgMAppdG9iCmNvbmNhdApsb2cKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDQ6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KYm56IG1haW5fbDYKZXJyCm1haW5fbDY6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGRlcGxveV9hcHAKZGVwbG95YXBwXzA6CnByb3RvIDAgMQppdHhuX2JlZ2luCnB1c2hpbnQgNiAvLyBhcHBsCml0eG5fZmllbGQgVHlwZUVudW0KcHVzaGJ5dGVzIDB4MDgyMDAxMDAzMTFiMjIxMjQwMDAwMTAwMzExOTIyMTI0MDAwMDEwMDMxMTgyMjEyNDQ4MTAxNDMgLy8gMHgwODIwMDEwMDMxMWIyMjEyNDAwMDAxMDAzMTE5MjIxMjQwMDAwMTAwMzExODIyMTI0NDgxMDE0MwppdHhuX2ZpZWxkIEFwcHJvdmFsUHJvZ3JhbQpwdXNoYnl0ZXMgMHgwODgxMDA0MyAvLyAweDA4ODEwMDQzCml0eG5fZmllbGQgQ2xlYXJTdGF0ZVByb2dyYW0KaXR4bl9zdWJtaXQKaXR4biBDcmVhdGVkQXBwbGljYXRpb25JRApyZXRzdWIKCi8vIGRlcGxveQpkZXBsb3lfMToKcHJvdG8gMCAxCmludGNfMCAvLyAwCmNhbGxzdWIgZGVwbG95YXBwXzAKZnJhbWVfYnVyeSAwCnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {},
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "DeployInSubroutine",
+        "methods": [
+            {
+                "name": "deploy",
+                "args": [],
+                "returns": {
+                    "type": "uint64"
+                }
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
+    }
+}

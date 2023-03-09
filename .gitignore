@@ -11,3 +11,5 @@ dist/*
 # Pyenv
 .python-version
 
+
+.DS_Store

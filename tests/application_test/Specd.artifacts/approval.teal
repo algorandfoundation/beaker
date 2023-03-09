@@ -1,0 +1,123 @@
+#pragma version 8
+intcblock 0 1
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l10
+txna ApplicationArgs 0
+pushbytes 0x5ba22a84 // "get_asset_id()uint64"
+==
+bnz main_l9
+txna ApplicationArgs 0
+pushbytes 0x739752ff // "annotated_meth(asset)void"
+==
+bnz main_l8
+txna ApplicationArgs 0
+pushbytes 0xef5cdf8c // "struct_meth((uint64,uint32))void"
+==
+bnz main_l7
+txna ApplicationArgs 0
+pushbytes 0x3483cdd8 // "default_global_state(uint64)void"
+==
+bnz main_l6
+err
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub defaultglobalstate_3
+intc_1 // 1
+return
+main_l7:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+callsub structmeth_2
+intc_1 // 1
+return
+main_l8:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+callsub annotatedmeth_1
+intc_1 // 1
+return
+main_l9:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub getassetid_0
+store 0
+pushbytes 0x151f7c75 // 0x151f7c75
+load 0
+itob
+concat
+log
+intc_1 // 1
+return
+main_l10:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l12
+err
+main_l12:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+intc_1 // 1
+return
+
+// get_asset_id
+getassetid_0:
+proto 0 1
+intc_0 // 0
+pushint 123 // 123
+frame_bury 0
+retsub
+
+// annotated_meth
+annotatedmeth_1:
+proto 1 0
+intc_1 // 1
+assert
+retsub
+
+// struct_meth
+structmeth_2:
+proto 1 0
+intc_1 // 1
+return
+
+// default_global_state
+defaultglobalstate_3:
+proto 1 0
+intc_1 // 1
+return

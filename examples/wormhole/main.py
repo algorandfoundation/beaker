@@ -1,12 +1,9 @@
 import json
+
 from algosdk.abi import ABIType
+
 from beaker import client, sandbox
-
-if __name__ == "__main__":
-    from contract import OracleDataCache  # type: ignore
-else:
-    from .contract import OracleDataCache
-
+from examples.wormhole.contract import OracleData, oracle_data_cache_app
 
 base_vaa = bytes.fromhex(
     "010000000001008049340af360a47103a962108cb57b9deebcc99e8e6ddeca1a"
@@ -20,13 +17,13 @@ base_vaa = bytes.fromhex(
 )
 
 # Get the codec to decode the stored value
-oracle_data_codec = ABIType.from_string(str(OracleDataCache.OracleData().type_spec()))
+oracle_data_codec = ABIType.from_string(str(OracleData().type_spec()))
 
 
-def demo():
+def demo() -> None:
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(),
-        OracleDataCache(),
+        oracle_data_cache_app,
         signer=sandbox.get_accounts().pop().signer,
     )
 
@@ -44,13 +41,14 @@ def demo():
         }
 
         app_client.call(
-            OracleDataCache.portal_transfer,
+            "portal_transfer",
             vaa=base_vaa + json.dumps(fauxracle_data).encode(),
         )
 
     # Get the current app state
-    app_state = app_client.get_application_state(raw=True)
-    for v in app_state.values():
+    global_state = app_client.get_global_state(raw=True)
+    for v in global_state.values():
+        assert isinstance(v, bytes)
         ts, price, confidence = oracle_data_codec.decode(v)
         print(f"ts: {ts}, price: {price}, confidence: {confidence}")
 

@@ -1,0 +1,62 @@
+{
+    "hints": {
+        "check(address,string,byte[64])void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMSAxMjggMjU1CmJ5dGVjYmxvY2sgMHggMHgwODgwMDAzNTAwMzYxYTAyMzUwMTM2MWEwMzM1MDIzNDAxNTcwMjAwMzQwMjM0MDA4NDQ0ODEwMTQzCnR4biBOdW1BcHBBcmdzCmludGNfMCAvLyAwCj09CmJueiBtYWluX2w0CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4YTVlNWMzZDEgLy8gImNoZWNrKGFkZHJlc3Msc3RyaW5nLGJ5dGVbNjRdKXZvaWQiCj09CmJueiBtYWluX2wzCmVycgptYWluX2wzOgp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCnN0b3JlIDAKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMgpzdG9yZSAxCnR4bmEgQXBwbGljYXRpb25BcmdzIDMKc3RvcmUgMgpsb2FkIDAKbG9hZCAxCmxvYWQgMgpjYWxsc3ViIGNoZWNrXzEKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDQ6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KYm56IG1haW5fbDYKZXJyCm1haW5fbDY6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGVuY29kZV91dmFyaW50X2ltcGwKZW5jb2RldXZhcmludGltcGxfMDoKcHJvdG8gMiAxCmZyYW1lX2RpZyAtMQpmcmFtZV9kaWcgLTIKaW50Y18yIC8vIDEyOAo+PQpibnogZW5jb2RldXZhcmludGltcGxfMF9sMgpmcmFtZV9kaWcgLTIKaW50Y18zIC8vIDI1NQomCml0b2IKZXh0cmFjdCA3IDEKYiBlbmNvZGV1dmFyaW50aW1wbF8wX2wzCmVuY29kZXV2YXJpbnRpbXBsXzBfbDI6CmZyYW1lX2RpZyAtMgpwdXNoaW50IDcgLy8gNwpzaHIKZnJhbWVfZGlnIC0yCmludGNfMyAvLyAyNTUKJgppbnRjXzIgLy8gMTI4CnwKaXRvYgpleHRyYWN0IDcgMQpjYWxsc3ViIGVuY29kZXV2YXJpbnRpbXBsXzAKZW5jb2RldXZhcmludGltcGxfMF9sMzoKY29uY2F0CnJldHN1YgoKLy8gY2hlY2sKY2hlY2tfMToKcHJvdG8gMyAwCnR4biBTZW5kZXIKcHVzaGJ5dGVzIDB4NTA3MjZmNjc3MjYxNmQgLy8gIlByb2dyYW0iCmludGNfMCAvLyAwCnN0b3JlIDMKaW50Y18wIC8vIDAKc3RvcmUgNApieXRlY18wIC8vICIiCnN0b3JlIDUKYnl0ZWNfMCAvLyAiIgpzdG9yZSA2CmZyYW1lX2RpZyAtMwpsZW4KYnl0ZWNfMCAvLyAiIgpjYWxsc3ViIGVuY29kZXV2YXJpbnRpbXBsXzAKZnJhbWVfZGlnIC0zCmNvbmNhdApzdG9yZSA1CmxvYWQgNgpieXRlY18xIC8vIDB4MDg4MDAwMzUwMDM2MWEwMjM1MDEzNjFhMDMzNTAyMzQwMTU3MDIwMDM0MDIzNDAwODQ0NDgxMDE0Mwpsb2FkIDMKcHVzaGludCAyIC8vIDIKc3Vic3RyaW5nMwpjb25jYXQKbG9hZCA1CmNvbmNhdApzdG9yZSA2CmxvYWQgNApsb2FkIDUKbGVuCisKaW50Y18xIC8vIDEKLQpzdG9yZSA0CnB1c2hpbnQgMiAvLyAyCmludGNfMSAvLyAxCisKc3RvcmUgMwpsb2FkIDYKYnl0ZWNfMSAvLyAweDA4ODAwMDM1MDAzNjFhMDIzNTAxMzYxYTAzMzUwMjM0MDE1NzAyMDAzNDAyMzQwMDg0NDQ4MTAxNDMKbG9hZCAzCmRpZyAxCmxlbgpzdWJzdHJpbmczCmNvbmNhdApzdG9yZSA2CmxvYWQgNgpjb25jYXQKc2hhNTEyXzI1Ngo9PQphc3NlcnQKcmV0c3Vi",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {},
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "SigCheckerApp",
+        "methods": [
+            {
+                "name": "check",
+                "args": [
+                    {
+                        "type": "address",
+                        "name": "signer_address"
+                    },
+                    {
+                        "type": "string",
+                        "name": "msg"
+                    },
+                    {
+                        "type": "byte[64]",
+                        "name": "sig"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
+    }
+}

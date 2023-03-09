@@ -1,22 +1,27 @@
-from pyteal import *
-from beaker import *
+from pyteal import Bytes, Concat, Expr, abi
 
-# Create a class, subclassing Application from beaker
-class HelloBeaker(Application):
-    # Add an external method with ABI method signature `hello(string)string`
-    @external
-    def hello(self, name: abi.String, *, output: abi.String):
-        # Set output to the result of `Hello, `+name
-        return output.set(Concat(Bytes("Hello, "), name.get()))
+from beaker import (
+    Application,
+    client,
+    sandbox,
+)
+
+hello_app = Application("HelloBeaker")
 
 
-def demo():
+@hello_app.external
+def hello(name: abi.String, *, output: abi.String) -> Expr:
+    # Set output to the result of `Hello, `+name
+    return output.set(Concat(Bytes("Hello, "), name.get()))
+
+
+def demo() -> None:
     # Create an Application client
     app_client = client.ApplicationClient(
         # Get sandbox algod client
         client=sandbox.get_algod_client(),
-        # Instantiate app with the program version (default is MAX_TEAL_VERSION)
-        app=HelloBeaker(version=8),
+        # Pass instance of app to client
+        app=hello_app,
         # Get acct from sandbox and pass the signer
         signer=sandbox.get_accounts().pop().signer,
     )
@@ -31,7 +36,7 @@ def demo():
     )
 
     # Call the `hello` method
-    result = app_client.call(HelloBeaker.hello, name="Beaker")
+    result = app_client.call(hello, name="Beaker")
     print(result.return_value)  # "Hello, Beaker"
 
 

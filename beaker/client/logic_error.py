@@ -27,7 +27,7 @@ def parse_logic_error(
     }
 
 
-class LogicException(Exception):
+class LogicException(Exception):  # noqa: N818
     def __init__(
         self,
         logic_error: Exception,

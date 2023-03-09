@@ -1,0 +1,64 @@
+#pragma version 8
+intcblock 0 1
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l4
+txna ApplicationArgs 0
+pushbytes 0x7095d708 // "deploy()uint64"
+==
+bnz main_l3
+err
+main_l3:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub deploy_1
+store 0
+pushbytes 0x151f7c75 // 0x151f7c75
+load 0
+itob
+concat
+log
+intc_1 // 1
+return
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l6
+err
+main_l6:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+intc_1 // 1
+return
+
+// deploy_app
+deployapp_0:
+proto 0 1
+itxn_begin
+pushint 6 // appl
+itxn_field TypeEnum
+pushbytes 0x08200100311b22124000010031192212400001003118221244810143 // 0x08200100311b22124000010031192212400001003118221244810143
+itxn_field ApprovalProgram
+pushbytes 0x08810043 // 0x08810043
+itxn_field ClearStateProgram
+itxn_submit
+itxn CreatedApplicationID
+retsub
+
+// deploy
+deploy_1:
+proto 0 1
+intc_0 // 0
+callsub deployapp_0
+frame_bury 0
+retsub

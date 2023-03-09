@@ -1,9 +1,9 @@
-from typing import Any
 from base64 import b64decode
+from typing import Any
 
 
 def str_or_hex(v: bytes) -> str:
-    decoded: str = ""
+    decoded: str
     try:
         decoded = v.decode("utf-8")
     except Exception:
@@ -13,7 +13,7 @@ def str_or_hex(v: bytes) -> str:
 
 
 def decode_state(
-    state: list[dict[str, Any]], raw: bool = False
+    state: list[dict[str, Any]], *, raw: bool = False
 ) -> dict[str | bytes, bytes | str | int | None]:
 
     decoded_state: dict[str | bytes, bytes | str | int | None] = {}
@@ -37,6 +37,8 @@ def decode_state(
                 val = sv["value"]["uint"]
             case 3:
                 val = None
+            case _:
+                raise NotImplementedError()
 
         decoded_state[key] = val
     return decoded_state

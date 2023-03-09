@@ -1,0 +1,79 @@
+{
+    "hints": {
+        "opt1(axfer,uint64)void": {
+            "call_config": {
+                "opt_in": "CALL"
+            }
+        },
+        "opt2(axfer,uint64)void": {
+            "call_config": {
+                "opt_in": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDEgMCA0CnR4biBOdW1BcHBBcmdzCmludGNfMSAvLyAwCj09CmJueiBtYWluX2w2CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4OTIxNDZhYTIgLy8gIm9wdDEoYXhmZXIsdWludDY0KXZvaWQiCj09CmJueiBtYWluX2w1CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4NGM5MjU3YzIgLy8gIm9wdDIoYXhmZXIsdWludDY0KXZvaWQiCj09CmJueiBtYWluX2w0CmVycgptYWluX2w0Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBPcHRJbgo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzEgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQpidG9pCnN0b3JlIDMKdHhuIEdyb3VwSW5kZXgKaW50Y18wIC8vIDEKLQpzdG9yZSAyCmxvYWQgMgpndHhucyBUeXBlRW51bQppbnRjXzIgLy8gYXhmZXIKPT0KYXNzZXJ0CmxvYWQgMgpsb2FkIDMKY2FsbHN1YiBvcHQyXzEKaW50Y18wIC8vIDEKcmV0dXJuCm1haW5fbDU6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE9wdEluCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMSAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmJ0b2kKc3RvcmUgMQp0eG4gR3JvdXBJbmRleAppbnRjXzAgLy8gMQotCnN0b3JlIDAKbG9hZCAwCmd0eG5zIFR5cGVFbnVtCmludGNfMiAvLyBheGZlcgo9PQphc3NlcnQKbG9hZCAwCmxvYWQgMQpjYWxsc3ViIG9wdDFfMAppbnRjXzAgLy8gMQpyZXR1cm4KbWFpbl9sNjoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzEgLy8gTm9PcAo9PQpibnogbWFpbl9sOAplcnIKbWFpbl9sODoKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18xIC8vIDAKPT0KYXNzZXJ0CmludGNfMCAvLyAxCnJldHVybgoKLy8gb3B0MQpvcHQxXzA6CnByb3RvIDIgMApmcmFtZV9kaWcgLTIKZ3R4bnMgQXNzZXRBbW91bnQKZnJhbWVfZGlnIC0xCj09CmFzc2VydApyZXRzdWIKCi8vIG9wdDIKb3B0Ml8xOgpwcm90byAyIDAKZnJhbWVfZGlnIC0yCmd0eG5zIEFzc2V0QW1vdW50CmZyYW1lX2RpZyAtMQo9PQphc3NlcnQKcmV0c3Vi",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {},
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "MultiOptIn",
+        "methods": [
+            {
+                "name": "opt1",
+                "args": [
+                    {
+                        "type": "axfer",
+                        "name": "txn"
+                    },
+                    {
+                        "type": "uint64",
+                        "name": "amount"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "opt2",
+                "args": [
+                    {
+                        "type": "axfer",
+                        "name": "txn"
+                    },
+                    {
+                        "type": "uint64",
+                        "name": "amount"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
+    }
+}

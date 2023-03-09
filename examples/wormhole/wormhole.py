@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from beaker import Application, external
 from pyteal import (
-    Reject,
-    abi,
     Expr,
-    Seq,
-    ScratchVar,
     Int,
+    ScratchVar,
+    Seq,
     Suffix,
+    abi,
 )
+
+from beaker import Application
 
 
 def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
@@ -22,7 +22,7 @@ Bytes32 = abi.StaticBytes[Literal[32]]
 
 
 class ContractTransferVAA:
-    def __init__(self):
+    def __init__(self) -> None:
         #: Version of VAA
         self.version = abi.Uint8()
         #: Which guardian set to be validated against
@@ -117,18 +117,32 @@ class ContractTransferVAA:
         return Seq(*ops)
 
 
-class WormholeTransfer(Application, ABC):
-    """Wormhole Payload3 Message handler
+class WormholeStrategy(ABC):
+    @abstractmethod
+    def handle_transfer(
+        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
+    ) -> Expr:
+        ...
+
+
+def wormhole_transfer(
+    app: Application,
+    strategy: WormholeStrategy,
+) -> None:
+    """Implement Wormhole Payload3 Message handler
 
     A Message transfer from another chain to Algorand  using the Wormhole protocol
     will cause this contract to have it's `portal_transfer` method called.
+
+    Args:
+        app: app to add to
+        strategy: app specific logic that needs to be done on transfer
     """
 
-    @external
-    def portal_transfer(
-        self, vaa: abi.DynamicBytes, *, output: abi.DynamicBytes
-    ) -> Expr:
-        """portal_transfer accepts a VAA containing information about the transfer and the payload.
+    @app.external
+    def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
+        """portal_transfer accepts a VAA containing information about the transfer
+        and the payload.
 
         Args:
             vaa: VAA encoded dynamic byte array
@@ -140,20 +154,5 @@ class WormholeTransfer(Application, ABC):
         """
         return Seq(
             (ctvaa := ContractTransferVAA()).decode(vaa.get()),
-            self.handle_transfer(ctvaa, output=output),
+            strategy.handle_transfer(ctvaa, output=output),
         )
-
-    @abstractmethod
-    def handle_transfer(
-        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
-    ) -> Expr:
-        """handle transfer should be overridden with app specific logic
-        needs to be done on transfer
-
-        Args:
-            ctvaa: The decoded ContractTransferVAA
-
-        Returns:
-            app specific byte array
-        """
-        return Reject()

@@ -1,66 +1,75 @@
 import base64
 from copy import copy
-from nacl.signing import SigningKey
+from typing import Literal
 
-from algosdk.encoding import decode_address
 from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
+    LogicSigTransactionSigner,
     TransactionWithSigner,
 )
+from algosdk.encoding import decode_address
+from algosdk.transaction import LogicSigAccount
+from nacl.signing import SigningKey
+from pyteal import Assert, Ed25519Verify_Bare, Expr, Int, Seq, TealType, Txn, abi
 
-from typing import Literal
-from pyteal import Assert, Ed25519Verify_Bare, Int, Seq, TealType, Txn, abi
 from beaker import (
     Application,
-    LogicSignature,
-    TemplateVariable,
+    LogicSignatureTemplate,
     client,
     consts,
-    external,
+    precompiled,
     sandbox,
 )
-from beaker.precompile import LSigPrecompile
+from beaker.precompile import PrecompiledLogicSignatureTemplate
 
 Signature = abi.StaticBytes[Literal[64]]
 
 
-class App(Application):
-    class SigChecker(LogicSignature):
-        # Simple program to check an ed25519 signature given a message and signature
-        user_addr = TemplateVariable(stack_type=TealType.bytes)
+def SigChecker() -> LogicSignatureTemplate:  # noqa: N802
+    # Simple program to check an ed25519 signature given a message and signature
 
-        def evaluate(self):
-            return Seq(
-                # Borrow the msg and sig from the abi call arguments
-                # TODO: this kinda stinks, what do?
-                (msg := abi.String()).decode(Txn.application_args[2]),
-                (sig := abi.make(Signature)).decode(Txn.application_args[3]),
-                # Assert that the sig matches
-                Assert(Ed25519Verify_Bare(msg.get(), sig.get(), self.user_addr)),
-                Int(1),
-            )
-
-    sig_checker = LSigPrecompile(SigChecker())
-
-    @external
-    def check(self, signer_address: abi.Address, msg: abi.String, sig: Signature):
-        return Assert(
-            Txn.sender() == self.sig_checker.logic.template_hash(signer_address.get())
+    def evaluate(user_addr: Expr) -> Expr:
+        return Seq(
+            # Borrow the msg and sig from the app call arguments
+            (msg := abi.String()).decode(Txn.application_args[2]),
+            (sig := abi.make(Signature)).decode(Txn.application_args[3]),
+            # Assert that the sig matches
+            Assert(Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
+            Int(1),
         )
+
+    return LogicSignatureTemplate(
+        evaluate,
+        runtime_template_variables={"user_addr": TealType.bytes},
+    )
+
+
+sig_checker = SigChecker()
+
+app = Application("SigCheckerApp")
+
+
+@app.external
+def check(signer_address: abi.Address, msg: abi.String, sig: Signature) -> Expr:
+    sig_checker_pc = precompiled(sig_checker)
+    # The lsig will take care of verifying the signature
+    # all we need to do is check that its been used to sign this transaction
+    return Assert(
+        Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
+    )
 
 
 def sign_msg(msg: str, sk: str) -> bytes:
     """utility function for signing arbitrary data"""
-    pk: list[int] = list(base64.b64decode(sk))
+    pk = list(base64.b64decode(sk))
     return SigningKey(bytes(pk[:32])).sign(msg.encode()).signature
 
 
-def demo():
+def demo() -> None:
     acct = sandbox.get_accounts().pop()
 
     # Create app client
-    app = App()
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(), app, signer=acct.signer
     )
@@ -68,12 +77,13 @@ def demo():
     # deploy app
     app_client.create()
 
-    # Write the populated template as binary
-    # with open("tmp.teal.tok", "wb") as f:
-    #     f.write(app.sig_checker.populate_template(decode_address(acct.address)))
-
     # Get the signer for the lsig from its populated precompile
-    lsig_signer = app.sig_checker.template_signer(decode_address(acct.address))
+    lsig_pc = PrecompiledLogicSignatureTemplate(sig_checker, app_client.client)
+    lsig_signer = LogicSigTransactionSigner(
+        LogicSigAccount(
+            lsig_pc.populate_template(user_addr=decode_address(acct.address))
+        )
+    )
     # Prepare a new client so it can sign calls
     lsig_client = app_client.prepare(signer=lsig_signer)
 
@@ -104,7 +114,7 @@ def demo():
     # Add the call to the `check` method to be signed by the populated template logic
     lsig_client.add_method_call(
         atc,
-        App.check,
+        check,
         suggested_params=free_sp,
         signer_address=acct.address,
         msg=msg,

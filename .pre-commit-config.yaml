@@ -9,15 +9,17 @@ repos:
         minimum_pre_commit_version: 2.9.2
         require_serial: true
         types_or: [ python, pyi ]
-      - id: flake8
-        name: flake8
-        description: '`flake8` is a command-line utility for enforcing style consistency across Python projects.'
-        entry: poetry run flake8
+      - id: ruff
+        name: ruff
+        description: "Run 'ruff' for extremely fast Python linting"
+        entry: poetry run ruff
         language: system
-        types: [ python ]
-        require_serial: true
-        # TODO: expand this coverage to examples!
-        files: '^(beaker|tests)/'
+        'types': [python]
+        args: [--fix]
+        require_serial: false
+        additional_dependencies: []
+        minimum_pre_commit_version: '0'
+        files: '^(beaker|tests|examples)/'
       - id: mypy
         name: mypy
         description: '`mypy` will check Python types for correctness'
@@ -27,5 +29,4 @@ repos:
         require_serial: true
         additional_dependencies: [ ]
         minimum_pre_commit_version: '2.9.2'
-        # TODO: expand this coverage to examples!
-        files: '^beaker/'
+        files: '^(beaker|tests|examples)/'

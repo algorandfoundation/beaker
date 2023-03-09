@@ -1,0 +1,104 @@
+{
+    "hints": {
+        "struct_meth((uint64,uint32))void": {
+            "structs": {
+                "thing": {
+                    "name": "Thing",
+                    "elements": [
+                        [
+                            "a",
+                            "uint64"
+                        ],
+                        [
+                            "b",
+                            "uint32"
+                        ]
+                    ]
+                }
+            },
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "default_global_state(uint64)void": {
+            "default_arguments": {
+                "value": {
+                    "source": "global-state",
+                    "data": "decl_global_val"
+                }
+            },
+            "call_config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sNgp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweGVmNWNkZjhjIC8vICJzdHJ1Y3RfbWV0aCgodWludDY0LHVpbnQzMikpdm9pZCIKPT0KYm56IG1haW5fbDUKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHgzNDgzY2RkOCAvLyAiZGVmYXVsdF9nbG9iYWxfc3RhdGUodWludDY0KXZvaWQiCj09CmJueiBtYWluX2w0CmVycgptYWluX2w0Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmJ0b2kKY2FsbHN1YiBkZWZhdWx0Z2xvYmFsc3RhdGVfMQppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sNToKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQpjYWxsc3ViIHN0cnVjdG1ldGhfMAppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sNjoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sOAplcnIKbWFpbl9sODoKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKPT0KYXNzZXJ0CmludGNfMSAvLyAxCnJldHVybgoKLy8gc3RydWN0X21ldGgKc3RydWN0bWV0aF8wOgpwcm90byAxIDAKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBkZWZhdWx0X2dsb2JhbF9zdGF0ZQpkZWZhdWx0Z2xvYmFsc3RhdGVfMToKcHJvdG8gMSAwCmludGNfMSAvLyAxCnJldHVybg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 1
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 1
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {
+                "decl_global_val": {
+                    "type": "uint64",
+                    "key": "decl_global_val",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        },
+        "local": {
+            "declared": {
+                "decl_local_val": {
+                    "type": "uint64",
+                    "key": "decl_local_val",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "PartialSpec",
+        "methods": [
+            {
+                "name": "struct_meth",
+                "args": [
+                    {
+                        "type": "(uint64,uint32)",
+                        "name": "thing"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "default_global_state",
+                "args": [
+                    {
+                        "type": "uint64",
+                        "name": "value"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
+    }
+}

@@ -1,13 +1,11 @@
-import pytest
 import pyteal as pt
-from beaker.state import (
-    ApplicationState,
-    AccountState,
-    ReservedAccountStateValue,
-    ReservedApplicationStateValue,
-    ApplicationStateValue,
-    AccountStateValue,
-    _get_default_for_type,
+import pytest
+
+from beaker import (
+    GlobalStateValue,
+    LocalStateValue,
+    ReservedGlobalStateValue,
+    ReservedLocalStateValue,
 )
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
@@ -25,6 +23,7 @@ ACCOUNT_VAL_TESTS = [
     (pt.Bytes("k"), pt.TealType.bytes, pt.Int(1), pt.Bytes("abc"), pt.TealTypeError),
     (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealTypeError),
     (None, pt.TealType.bytes, None, pt.Bytes("abc"), pt.TealInputError),
+    (pt.Bytes("k"), pt.TealType.anytype, pt.Int(1), pt.Int(1), ValueError),
 ]
 
 
@@ -55,11 +54,12 @@ RESERVED_ACCOUNT_VALUE_TESTS = [
     (pt.TealType.bytes, 1, None, pt.Bytes("abc"), pt.Int(1), pt.TealTypeError),
     (pt.TealType.uint64, 0, None, pt.Bytes("abc"), pt.Int(1), Exception),
     (pt.TealType.uint64, 17, None, pt.Bytes("abc"), pt.Int(1), Exception),
+    (pt.TealType.anytype, 1, None, pt.Bytes("abc"), pt.Int(1), ValueError),
 ]
 
 
 @pytest.mark.parametrize("key, stack_type, default, val, error", ACCOUNT_VAL_TESTS)
-def test_local_value(key, stack_type, default, val, error):
+def test_local_value(key, stack_type, default, val, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_lv_test(key, stack_type, default, val)
@@ -67,8 +67,8 @@ def test_local_value(key, stack_type, default, val, error):
         do_lv_test(key, stack_type, default, val)
 
 
-def do_lv_test(key, stack_type, default, val):
-    lv = AccountStateValue(stack_type=stack_type, key=key, default=default)
+def do_lv_test(key, stack_type, default, val):  # type: ignore
+    lv = LocalStateValue(stack_type=stack_type, key=key, default=default)
 
     assert lv.__str__() == f"AccountStateValue (Txn Sender) {key}"
 
@@ -78,7 +78,7 @@ def do_lv_test(key, stack_type, default, val):
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = _get_default_for_type(stack_type, default)
+    expected_default = lv.default_value
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -103,7 +103,7 @@ def do_lv_test(key, stack_type, default, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key),
@@ -142,7 +142,7 @@ def do_lv_test(key, stack_type, default, val):
 @pytest.mark.parametrize(
     "stack_type, max_keys, key_gen, key_seed, val, error", RESERVED_ACCOUNT_VALUE_TESTS
 )
-def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val)
@@ -150,8 +150,8 @@ def test_reserved_local_value(stack_type, max_keys, key_gen, key_seed, val, erro
         do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val)
 
 
-def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
-    dlv = ReservedAccountStateValue(
+def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: ignore
+    dlv = ReservedLocalStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 
@@ -169,7 +169,7 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = _get_default_for_type(stack_type, None)
+    expected_default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -189,7 +189,7 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key),
@@ -233,13 +233,14 @@ APPLICATION_VAL_TESTS = [
     (pt.Int(123), pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealTypeError),
     (pt.Bytes("k"), pt.TealType.bytes, None, pt.Bytes("abc"), True, pt.TealInputError),
     (None, pt.TealType.bytes, None, pt.Bytes("abc"), False, pt.TealInputError),
+    (pt.Bytes("k"), pt.TealType.anytype, pt.Int(1), pt.Int(1), False, ValueError),
 ]
 
 
 @pytest.mark.parametrize(
     "key, stack_type, default, val, static, error", APPLICATION_VAL_TESTS
 )
-def test_global_value(key, stack_type, default, val, static, error):
+def test_global_value(key, stack_type, default, val, static, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_gv_test(key, stack_type, default, val, static)
@@ -247,8 +248,8 @@ def test_global_value(key, stack_type, default, val, static, error):
         do_gv_test(key, stack_type, default, val, static)
 
 
-def do_gv_test(key, stack_type, default, val, static):
-    lv = ApplicationStateValue(
+def do_gv_test(key, stack_type, default, val, static):  # type: ignore
+    lv = GlobalStateValue(
         stack_type=stack_type, key=key, default=default, static=static
     )
 
@@ -268,7 +269,7 @@ def do_gv_test(key, stack_type, default, val, static):
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = _get_default_for_type(stack_type, default)
+    expected_default = lv.default_value
 
     if static:
         expected = pt.Seq(
@@ -319,7 +320,7 @@ def do_gv_test(key, stack_type, default, val, static):
         with pytest.raises(pt.TealInputError):
             lv.decrement()
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.globalGetEx(pt.Int(0), key), pt.If(v.hasValue(), v.value(), default)
@@ -374,6 +375,7 @@ RESERVED_APPLICATION_VALUE_TESTS = [
     (pt.TealType.bytes, 1, None, pt.Bytes("abc"), pt.Int(1), pt.TealTypeError),
     (pt.TealType.uint64, 0, None, pt.Bytes("abc"), pt.Int(1), Exception),
     (pt.TealType.uint64, 65, None, pt.Bytes("abc"), pt.Int(1), Exception),
+    (pt.TealType.anytype, 1, None, pt.Bytes("abc"), pt.Int(1), ValueError),
 ]
 
 
@@ -381,7 +383,7 @@ RESERVED_APPLICATION_VALUE_TESTS = [
     "stack_type, max_keys, key_gen, key_seed, val, error",
     RESERVED_APPLICATION_VALUE_TESTS,
 )
-def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, error):
+def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, error):  # type: ignore
     if error is not None:
         with pytest.raises(error):
             do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val)
@@ -389,8 +391,8 @@ def test_reserved_global_value(stack_type, max_keys, key_gen, key_seed, val, err
         do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val)
 
 
-def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
-    dlv = ReservedApplicationStateValue(
+def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: ignore
+    dlv = ReservedGlobalStateValue(
         stack_type=stack_type, max_keys=max_keys, key_gen=key_gen
     )
 
@@ -445,7 +447,7 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
         with pytest.raises(pt.TealInputError):
             lv.decrement()
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.globalGetEx(pt.Int(0), key), pt.If(v.hasValue(), v.value(), default)
@@ -473,41 +475,13 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):
         assert actual == expected
 
 
-def test_impl_expr():
-    asv = AccountStateValue(pt.TealType.uint64)
-    assert asv.has_return() is False
-    assert asv.type_of() == pt.TealType.uint64
-
-    asv = ApplicationStateValue(pt.TealType.uint64)
+def test_expr_impl_local() -> None:
+    asv = LocalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
-def test_application_state():
-    statevals = {
-        "a": ApplicationStateValue(pt.TealType.uint64),
-        "b": ApplicationStateValue(pt.TealType.bytes),
-    }
-    astate = ApplicationState(statevals)
-
-    assert astate.num_byte_slices == 1
-    assert astate.num_uints == 1
-
-    statevals["c"] = ReservedApplicationStateValue(pt.TealType.uint64, max_keys=64)
-    with pytest.raises(Exception):
-        ApplicationState(statevals)
-
-
-def test_account_state():
-    statevals = {
-        "a": AccountStateValue(pt.TealType.uint64),
-        "b": AccountStateValue(pt.TealType.bytes),
-    }
-    astate = AccountState(statevals)
-
-    assert astate.num_byte_slices == 1
-    assert astate.num_uints == 1
-
-    statevals["c"] = ReservedAccountStateValue(pt.TealType.uint64, max_keys=16)
-    with pytest.raises(Exception):
-        AccountState(statevals)
+def test_expr_impl_global() -> None:
+    asv = GlobalStateValue(pt.TealType.uint64)
+    assert asv.has_return() is False
+    assert asv.type_of() == pt.TealType.uint64

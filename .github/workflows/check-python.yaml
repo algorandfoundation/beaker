@@ -41,7 +41,7 @@ jobs:
       - name: Check linting with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
-          poetry run flake8
+          poetry run ruff .
 
       - name: Check types with mypy
         run: poetry run mypy

@@ -1,0 +1,146 @@
+{
+    "hints": {
+        "get_asset_id()uint64": {
+            "read_only": true,
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "annotated_meth(asset)void": {
+            "default_arguments": {
+                "aid": {
+                    "source": "abi-method",
+                    "data": {
+                        "name": "get_asset_id",
+                        "args": [],
+                        "returns": {
+                            "type": "uint64"
+                        }
+                    }
+                }
+            },
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "struct_meth((uint64,uint32))void": {
+            "structs": {
+                "thing": {
+                    "name": "Thing",
+                    "elements": [
+                        [
+                            "a",
+                            "uint64"
+                        ],
+                        [
+                            "b",
+                            "uint32"
+                        ]
+                    ]
+                }
+            },
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "default_global_state(uint64)void": {
+            "default_arguments": {
+                "value": {
+                    "source": "global-state",
+                    "data": "decl_global_val"
+                }
+            },
+            "call_config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sMTAKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHg1YmEyMmE4NCAvLyAiZ2V0X2Fzc2V0X2lkKCl1aW50NjQiCj09CmJueiBtYWluX2w5CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4NzM5NzUyZmYgLy8gImFubm90YXRlZF9tZXRoKGFzc2V0KXZvaWQiCj09CmJueiBtYWluX2w4CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4ZWY1Y2RmOGMgLy8gInN0cnVjdF9tZXRoKCh1aW50NjQsdWludDMyKSl2b2lkIgo9PQpibnogbWFpbl9sNwp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDM0ODNjZGQ4IC8vICJkZWZhdWx0X2dsb2JhbF9zdGF0ZSh1aW50NjQpdm9pZCIKPT0KYm56IG1haW5fbDYKZXJyCm1haW5fbDY6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CnR4bmEgQXBwbGljYXRpb25BcmdzIDEKYnRvaQpjYWxsc3ViIGRlZmF1bHRnbG9iYWxzdGF0ZV8zCmludGNfMSAvLyAxCnJldHVybgptYWluX2w3Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmNhbGxzdWIgc3RydWN0bWV0aF8yCmludGNfMSAvLyAxCnJldHVybgptYWluX2w4Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKY2FsbHN1YiBhbm5vdGF0ZWRtZXRoXzEKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDk6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CmNhbGxzdWIgZ2V0YXNzZXRpZF8wCnN0b3JlIDAKcHVzaGJ5dGVzIDB4MTUxZjdjNzUgLy8gMHgxNTFmN2M3NQpsb2FkIDAKaXRvYgpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxMDoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sMTIKZXJyCm1haW5fbDEyOgp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAo9PQphc3NlcnQKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBnZXRfYXNzZXRfaWQKZ2V0YXNzZXRpZF8wOgpwcm90byAwIDEKaW50Y18wIC8vIDAKcHVzaGludCAxMjMgLy8gMTIzCmZyYW1lX2J1cnkgMApyZXRzdWIKCi8vIGFubm90YXRlZF9tZXRoCmFubm90YXRlZG1ldGhfMToKcHJvdG8gMSAwCmludGNfMSAvLyAxCmFzc2VydApyZXRzdWIKCi8vIHN0cnVjdF9tZXRoCnN0cnVjdG1ldGhfMjoKcHJvdG8gMSAwCmludGNfMSAvLyAxCnJldHVybgoKLy8gZGVmYXVsdF9nbG9iYWxfc3RhdGUKZGVmYXVsdGdsb2JhbHN0YXRlXzM6CnByb3RvIDEgMAppbnRjXzEgLy8gMQpyZXR1cm4=",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 1
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 1
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {
+                "decl_global_val": {
+                    "type": "uint64",
+                    "key": "decl_global_val",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        },
+        "local": {
+            "declared": {
+                "decl_local_val": {
+                    "type": "uint64",
+                    "key": "decl_local_val",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "Specd",
+        "methods": [
+            {
+                "name": "get_asset_id",
+                "args": [],
+                "returns": {
+                    "type": "uint64"
+                }
+            },
+            {
+                "name": "annotated_meth",
+                "args": [
+                    {
+                        "type": "asset",
+                        "name": "aid"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "struct_meth",
+                "args": [
+                    {
+                        "type": "(uint64,uint32)",
+                        "name": "thing"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "default_global_state",
+                "args": [
+                    {
+                        "type": "uint64",
+                        "name": "value"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                }
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE"
+    }
+}

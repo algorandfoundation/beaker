@@ -1,0 +1,48 @@
+#pragma version 8
+intcblock 1
+txna ApplicationArgs 1
+store 0
+load 0
+callsub abitester_0
+store 1
+load 1
+load 0
+extract 2 0
+len
+callsub internaltester_1
+assert
+intc_0 // 1
+store 2
+pushint 2 // 2
+load 1
+callsub internalscratchtester_2
+assert
+intc_0 // 1
+return
+
+// abi_tester
+abitester_0:
+proto 1 1
+pushint 0 // 0
+frame_dig -1
+extract 2 0
+len
+frame_bury 0
+retsub
+
+// internal_tester
+internaltester_1:
+proto 2 1
+frame_dig -2
+frame_dig -1
+*
+retsub
+
+// internal_scratch_tester
+internalscratchtester_2:
+proto 2 1
+frame_dig -2
+loads
+frame_dig -1
+*
+retsub

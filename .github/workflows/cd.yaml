@@ -67,11 +67,14 @@ jobs:
           poetry run semantic-release \
             -v DEBUG \
             --prerelease \
+            --define=upload_to_repository=true \
             --define=branch=master \
             publish
           gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_USERNAME: __token__
+          REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
 
       - name: Create Continuous Deployment - Production
         if: steps.get_branch.outputs.branch == 'master' && inputs.production_release

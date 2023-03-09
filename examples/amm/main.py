@@ -1,15 +1,13 @@
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AtomicTransactionComposer,
     TransactionWithSigner,
 )
+
 from beaker import consts
-
-from beaker.sandbox import get_accounts, get_algod_client
 from beaker.client import ApplicationClient
-
-from .amm import ConstantProductAMM
-
+from beaker.sandbox import get_accounts, get_algod_client
+from examples.amm.amm import ConstantProductAMMState, amm_app, scale
 
 # Take first account from sandbox
 acct = get_accounts().pop()
@@ -19,10 +17,10 @@ addr, sk, signer = acct.address, acct.private_key, acct.signer
 client = get_algod_client()
 
 # Create an Application client containing both an algod client and my app
-app_client = ApplicationClient(client, ConstantProductAMM(), signer=acct.signer)
+app_client = ApplicationClient(client, amm_app, signer=acct.signer)
 
 
-def demo():
+def demo() -> None:
 
     # Create the applicatiion on chain, set the app id for the app client
     app_id, app_addr, txid = app_client.create()
@@ -44,7 +42,7 @@ def demo():
     sp.flat_fee = True
     sp.fee = consts.milli_algo * 4
     result = app_client.call(
-        ConstantProductAMM.bootstrap,
+        "bootstrap",
         seed=ptxn,
         a_asset=asset_a,
         b_asset=asset_b,
@@ -76,7 +74,7 @@ def demo():
     ###
     print("Funding")
     app_client.call(
-        ConstantProductAMM.mint,
+        "mint",
         a_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 10000, asset_a),
             signer=signer,
@@ -94,7 +92,7 @@ def demo():
     ###
     print("Minting")
     app_client.call(
-        ConstantProductAMM.mint,
+        "mint",
         a_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100000, asset_a),
             signer=signer,
@@ -112,7 +110,7 @@ def demo():
     ###
     print("Swapping A for B")
     app_client.call(
-        ConstantProductAMM.swap,
+        "swap",
         swap_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_a),
             signer=signer,
@@ -125,7 +123,7 @@ def demo():
     ###
     print("Swapping B for A")
     app_client.call(
-        ConstantProductAMM.swap,
+        "swap",
         swap_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 500, asset_b),
             signer=signer,
@@ -138,7 +136,7 @@ def demo():
     ###
     print("Burning")
     app_client.call(
-        ConstantProductAMM.burn,
+        "burn",
         pool_xfer=TransactionWithSigner(
             txn=transaction.AssetTransferTxn(addr, sp, app_addr, 100, pool_token),
             signer=signer,
@@ -147,12 +145,18 @@ def demo():
     print_balances(app_id, app_addr, addr, pool_token, asset_a, asset_b)
 
 
-def create_asset(addr, pk, unitname):
+def create_asset(addr: str, pk: str, unitname: str) -> int:
     # Get suggested params from network
     sp = client.suggested_params()
     # Create the transaction
     create_txn = transaction.AssetCreateTxn(
-        addr, sp, 1000000, 0, False, asset_name="asset", unit_name=unitname
+        addr,
+        sp,
+        1000000,
+        0,
+        default_frozen=False,
+        asset_name="asset",
+        unit_name=unitname,
     )
     # Ship it
     txid = client.send_transaction(create_txn.sign(pk))
@@ -161,7 +165,7 @@ def create_asset(addr, pk, unitname):
     return result["asset-index"]
 
 
-def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
+def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int) -> None:
 
     addrbal = client.account_info(addr)
     print("Participant: ")
@@ -183,12 +187,10 @@ def print_balances(app_id: int, app: str, addr: str, pool: int, a: int, b: int):
         if asset["asset-id"] == b:
             print("\tAssetB Balance {}".format(asset["amount"]))
 
-    state = app_client.get_application_state()
-    state_key = ConstantProductAMM.ratio.str_key()
+    state = app_client.get_global_state()
+    state_key = ConstantProductAMMState.ratio.str_key()
     if state_key in state:
-        print(
-            f"\tCurrent ratio a/b == {int(state[state_key]) / ConstantProductAMM._scale}"
-        )
+        print(f"\tCurrent ratio a/b == {int(state[state_key]) / scale}")
     else:
         print("\tNo ratio a/b")
 

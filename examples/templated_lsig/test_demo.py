@@ -1,11 +1,10 @@
-from examples.templated_lsig.main import demo, App
+from examples.templated_lsig.main import app, demo
 from tests.conftest import check_application_artifacts_output_stability
 
 
-def test_demo():
+def test_demo() -> None:
     demo()
 
 
-def test_output_stability():
-    app = App()
-    check_application_artifacts_output_stability(app)
+def test_output_stability() -> None:
+    check_application_artifacts_output_stability(app, dir_per_test_file=False)

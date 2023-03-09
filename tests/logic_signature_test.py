@@ -1,193 +1,128 @@
-import pytest
 import pyteal as pt
-from beaker.decorators import internal
-from beaker.logic_signature import LogicSignature, TemplateVariable
+import pytest
+
+from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
+from tests.conftest import check_lsig_output_stability
 
 
-def test_simple_logic_signature():
-    class Lsig(LogicSignature):
-        pass
-
-    lsig = Lsig()
-
-    assert len(lsig.template_variables) == 0
-    assert len(lsig.methods) == 0
-    assert len(lsig.attrs.keys()) == 2
-    assert len(lsig.program) > 0
-
-    assert "compile" in lsig.attrs
-    assert "evaluate" in lsig.attrs
-
-    assert lsig.evaluate() == pt.Reject()
-
-    # Cant call it from static context
-    with pytest.raises(TypeError):
-        Lsig.evaluate()
+def test_simple_logic_signature() -> None:
+    lsig = LogicSignature(pt.Reject())
+    assert lsig.program
+    check_lsig_output_stability(lsig)
 
 
-def test_evaluate_logic_signature():
-    class Lsig(LogicSignature):
-        def evaluate(self):
-            return pt.Approve()
-
-    lsig = Lsig()
-
-    assert len(lsig.template_variables) == 0
-    assert len(lsig.methods) == 0
-    assert len(lsig.attrs.keys()) == 2
-    assert len(lsig.program) > 0
-
-    assert "compile" in lsig.attrs
-    assert "evaluate" in lsig.attrs
-
-    assert lsig.evaluate() == pt.Approve()
-
-    # Cant call it from static context
-    with pytest.raises(TypeError):
-        Lsig.evaluate()
+def test_evaluate_logic_signature() -> None:
+    lsig = LogicSignature(pt.Approve())
+    assert lsig.program
+    check_lsig_output_stability(lsig)
 
 
-def test_handler_logic_signature():
-    class Lsig(LogicSignature):
-        def evaluate(self):
-            return pt.Seq(
-                (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                pt.Assert(self.checked(s)),
-                pt.Int(1),
-            )
-
-        @internal(pt.TealType.uint64)
-        def checked(self, s: pt.abi.String):
+def test_handler_logic_signature() -> None:
+    def evaluate() -> pt.Expr:
+        @pt.Subroutine(pt.TealType.uint64)
+        def checked(s: pt.abi.String) -> pt.Expr:
             return pt.Len(s.get()) > pt.Int(0)
 
-    lsig = Lsig()
+        return pt.Seq(
+            (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
+            pt.Assert(checked(s)),
+            pt.Int(1),
+        )
 
-    assert len(lsig.template_variables) == 0
-    assert len(lsig.methods) == 0
-    assert len(lsig.attrs.keys()) == 3
-    assert len(lsig.program) > 0
+    lsig = LogicSignature(evaluate)
 
-    assert "compile" in lsig.attrs
-    assert "evaluate" in lsig.attrs
+    assert lsig.program
 
-    # Should not fail
-    lsig.evaluate()
-    lsig.checked(pt.abi.String())
-
-    # Cant call it from static context
-    with pytest.raises(TypeError):
-        Lsig.evaluate()
-
-    with pytest.raises(TypeError):
-        Lsig.checked(pt.abi.String())
+    check_lsig_output_stability(lsig)
 
 
-def test_templated_logic_signature():
-    class Lsig(LogicSignature):
-        pubkey = TemplateVariable(pt.TealType.bytes)
+def test_templated_logic_signature() -> None:
+    def evaluate(pubkey: pt.Expr) -> pt.Expr:
+        return pt.Seq(
+            pt.Assert(pt.Len(pubkey)),
+            pt.Int(1),
+        )
 
-        def evaluate(self):
-            return pt.Seq(
-                pt.Assert(pt.Len(self.pubkey)),
-                pt.Int(1),
-            )
+    lsig = LogicSignatureTemplate(
+        evaluate, runtime_template_variables={"pubkey": pt.TealType.bytes}
+    )
 
-    lsig = Lsig()
+    assert len(lsig.runtime_template_variables) == 1
+    assert lsig.program
+    assert "pushbytes TMPL_PUBKEY" in lsig.program
 
-    assert len(lsig.template_variables) == 1
-    assert len(lsig.methods) == 0
-    assert len(lsig.attrs.keys()) == 3
-    assert len(lsig.program) > 0
-
-    assert "compile" in lsig.attrs
-    assert "evaluate" in lsig.attrs
-    assert "pubkey" in lsig.attrs
-
-    assert lsig.pubkey.get_name() == "TMPL_PUBKEY"
-
-    actual = lsig.pubkey._init_expr()
-    expected = pt.ScratchStore(pt.Int(1), pt.Tmpl.Bytes("TMPL_PUBKEY"))
-
-    with pt.TealComponent.Context.ignoreScratchSlotEquality():
-        assert actual == expected
-
-    # Should not fail
-    lsig.evaluate()
-
-    # Cant call it from static context
-    with pytest.raises(TypeError):
-        Lsig.evaluate()
+    check_lsig_output_stability(lsig)
 
 
-def test_different_methods_logic_signature():
-    class Lsig(LogicSignature):
-        def evaluate(self):
-            return pt.Seq(
-                (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
-                self.abi_tester(s, output=(o := pt.abi.Uint64())),
-                pt.Assert(self.internal_tester(o.get(), pt.Len(s.get()))),
-                (sv := pt.ScratchVar()).store(pt.Int(1)),
-                pt.Assert(self.internal_scratch_tester(sv, o.get())),
-                pt.Int(1),
-            )
+def test_different_methods_logic_signature() -> None:
+    @pt.ABIReturnSubroutine
+    def abi_tester(s: pt.abi.String, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(pt.Len(s.get()))
 
-        @internal(None)
-        def abi_tester(self, s: pt.abi.String, *, output: pt.abi.Uint64):
-            return output.set(pt.Len(s.get()))
+    @pt.Subroutine(pt.TealType.uint64)
+    def internal_tester(x: pt.Expr, y: pt.Expr) -> pt.Expr:
+        return x * y
 
-        @internal(pt.TealType.uint64)
-        def internal_tester(self, x: pt.Expr, y: pt.Expr) -> pt.Expr:
-            return x * y
+    @pt.Subroutine(pt.TealType.uint64)
+    def internal_scratch_tester(x: pt.ScratchVar, y: pt.Expr) -> pt.Expr:
+        return x.load() * y
 
-        @internal(pt.TealType.uint64)
-        def internal_scratch_tester(self, x: pt.ScratchVar, y: pt.Expr) -> pt.Expr:
-            return x.load() * y
+    @pt.ABIReturnSubroutine
+    def no_self_abi_tester(x: pt.abi.Uint64, y: pt.abi.Uint64) -> pt.Expr:
+        return x.get() * y.get()
 
-        @internal
-        def no_self_abi_tester(x: pt.abi.Uint64, y: pt.abi.Uint64) -> pt.Expr:  # type: ignore
-            return x.get() * y.get()
+    @pt.Subroutine(pt.TealType.uint64)
+    def no_self_internal_tester(x: pt.Expr, y: pt.Expr) -> pt.Expr:
+        return x * y
 
-        @internal(pt.TealType.uint64)
-        def no_self_internal_tester(x: pt.Expr, y: pt.Expr) -> pt.Expr:  # type: ignore
-            return x * y
+    lsig = LogicSignature(
+        pt.Seq(
+            (s := pt.abi.String()).decode(pt.Txn.application_args[1]),
+            (o := pt.abi.Uint64()).set(abi_tester(s)),
+            pt.Assert(internal_tester(o.get(), pt.Len(s.get()))),
+            (sv := pt.ScratchVar()).store(pt.Int(1)),
+            pt.Assert(internal_scratch_tester(sv, o.get())),
+            pt.Int(1),
+        )
+    )
 
-    lsig = Lsig()
+    assert lsig.program
 
-    assert len(lsig.template_variables) == 0
-    assert len(lsig.methods) == 2
-    assert len(lsig.attrs.keys()) == 7
-    assert len(lsig.program) > 0
-
-    assert "compile" in lsig.attrs
-    assert "evaluate" in lsig.attrs
-
-    # Should not fail
-    lsig.evaluate()
-    lsig.abi_tester(pt.abi.String(), output=pt.abi.Uint64())
-    lsig.internal_tester(pt.Int(1), pt.Int(1))
-    lsig.internal_scratch_tester(pt.ScratchVar(), pt.Int(1))
-    Lsig.no_self_abi_tester(pt.abi.Uint64(), pt.abi.Uint64())
-
-    lsig.no_self_internal_tester(pt.Int(1), pt.Int(1))
-    Lsig.no_self_internal_tester(pt.Int(1), pt.Int(1))
-
-    # Cant call it from bound context
-    with pytest.raises(TypeError):
-        lsig.no_self_abi_tester(pt.abi.Uint64(), pt.abi.Uint64())
+    check_lsig_output_stability(lsig)
 
 
-def test_lsig_template_ordering():
-    class Lsig(LogicSignature):
-        f = TemplateVariable(pt.TealType.uint64)
-        a = TemplateVariable(pt.TealType.uint64)
-        b = TemplateVariable(pt.TealType.uint64)
-        c = TemplateVariable(pt.TealType.uint64)
+def test_lsig_template_ordering() -> None:
+    lsig = LogicSignatureTemplate(
+        pt.Approve(),
+        runtime_template_variables={
+            "f": pt.TealType.uint64,
+            "a": pt.TealType.uint64,
+            "b": pt.TealType.uint64,
+            "c": pt.TealType.uint64,
+        },
+    )
+    assert [rtt_var.name for rtt_var in lsig.runtime_template_variables.values()] == [
+        "f",
+        "a",
+        "b",
+        "c",
+    ]
 
-        def evaluate(self):
-            return pt.Approve()
 
-    expected = ["f", "a", "b", "c"]
+def test_templated_logic_signature_bad_args() -> None:
+    with pytest.raises(ValueError, match="got unexpected arguments: bad_arg.$"):
+        LogicSignatureTemplate(
+            lambda good_arg, bad_arg: pt.Approve(),
+            runtime_template_variables={
+                "good_arg": pt.TealType.bytes,
+                "missing_arg": pt.TealType.uint64,
+            },
+        )
 
-    l = Lsig()
-    for idx, tv in enumerate(l.template_variables):
-        assert tv.name == expected[idx]
+
+def test_templated_logic_signature_no_rtt_vars() -> None:
+    with pytest.raises(
+        ValueError,
+        match="No runtime template variables supplied - use LogicSignature instead if that was intentional",
+    ):
+        LogicSignatureTemplate(lambda: pt.Approve(), runtime_template_variables={})

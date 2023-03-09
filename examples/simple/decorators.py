@@ -1,18 +1,20 @@
-from pyteal import *
-from beaker import *
+from pyteal import Expr, abi
+
+from beaker import Application, client, sandbox
+
+external_example_app = Application("ExternalExample")
 
 
-class ExternalExample(Application):
-    @create
-    def create(self, input: abi.String, *, output: abi.String):
-        return output.decode(input.encode())
+@external_example_app.create
+def create(input: abi.String, *, output: abi.String) -> Expr:
+    return output.decode(input.encode())
 
 
-def demo():
+def demo() -> None:
 
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(),
-        ExternalExample(),
+        external_example_app,
         signer=sandbox.get_accounts().pop().signer,
     )
     app_client.create(input="yo")

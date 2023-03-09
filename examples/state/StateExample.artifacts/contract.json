@@ -2,7 +2,7 @@
     "name": "StateExample",
     "methods": [
         {
-            "name": "write_acct_blob",
+            "name": "write_local_blob",
             "args": [
                 {
                     "type": "string",
@@ -14,14 +14,14 @@
             }
         },
         {
-            "name": "read_acct_blob",
+            "name": "read_local_blob",
             "args": [],
             "returns": {
                 "type": "byte[]"
             }
         },
         {
-            "name": "write_app_blob",
+            "name": "write_global_blob",
             "args": [
                 {
                     "type": "string",
@@ -33,14 +33,14 @@
             }
         },
         {
-            "name": "read_app_blob",
+            "name": "read_global_blob",
             "args": [],
             "returns": {
                 "type": "byte[]"
             }
         },
         {
-            "name": "set_app_state_val",
+            "name": "set_global_state_val",
             "args": [
                 {
                     "type": "string",
@@ -52,14 +52,14 @@
             }
         },
         {
-            "name": "get_app_state_val",
+            "name": "get_global_state_val",
             "args": [],
             "returns": {
                 "type": "string"
             }
         },
         {
-            "name": "set_reserved_app_state_val",
+            "name": "set_reserved_global_state_val",
             "args": [
                 {
                     "type": "uint8",
@@ -75,7 +75,7 @@
             }
         },
         {
-            "name": "get_reserved_app_state_val",
+            "name": "get_reserved_global_state_val",
             "args": [
                 {
                     "type": "uint8",
@@ -87,7 +87,7 @@
             }
         },
         {
-            "name": "set_account_state_val",
+            "name": "set_local_state_val",
             "args": [
                 {
                     "type": "uint64",
@@ -99,7 +99,7 @@
             }
         },
         {
-            "name": "incr_account_state_val",
+            "name": "incr_local_state_val",
             "args": [
                 {
                     "type": "uint64",
@@ -111,14 +111,14 @@
             }
         },
         {
-            "name": "get_account_state_val",
+            "name": "get_local_state_val",
             "args": [],
             "returns": {
                 "type": "uint64"
             }
         },
         {
-            "name": "set_reserved_account_state_val",
+            "name": "set_reserved_local_state_val",
             "args": [
                 {
                     "type": "uint8",
@@ -134,7 +134,7 @@
             }
         },
         {
-            "name": "get_reserved_account_state_val",
+            "name": "get_reserved_local_state_val",
             "args": [
                 {
                     "type": "uint8",

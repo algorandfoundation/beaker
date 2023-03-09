@@ -1,12 +1,10 @@
-from examples.state.main import demo
-from examples.structure.main import Structer
+from examples.structure.main import demo, structer_app
 from tests.conftest import check_application_artifacts_output_stability
 
 
-def test_demo():
+def test_demo() -> None:
     demo()
 
 
-def test_output_stability():
-    app = Structer()
-    check_application_artifacts_output_stability(app)
+def test_output_stability() -> None:
+    check_application_artifacts_output_stability(structer_app, dir_per_test_file=False)

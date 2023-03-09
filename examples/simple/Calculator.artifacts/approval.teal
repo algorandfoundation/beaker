@@ -39,7 +39,7 @@ btoi
 store 10
 load 9
 load 10
-callsub div_4
+callsub div_3
 store 11
 bytec_0 // 0x151f7c75
 load 11
@@ -65,7 +65,7 @@ btoi
 store 7
 load 6
 load 7
-callsub sub_3
+callsub sub_2
 store 8
 bytec_0 // 0x151f7c75
 load 8
@@ -91,7 +91,7 @@ btoi
 store 4
 load 3
 load 4
-callsub mul_2
+callsub mul_1
 store 5
 bytec_0 // 0x151f7c75
 load 5
@@ -117,7 +117,7 @@ btoi
 store 1
 load 0
 load 1
-callsub add_1
+callsub add_0
 store 2
 bytec_0 // 0x151f7c75
 load 2
@@ -137,18 +137,11 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
-intc_1 // 1
-return
-
-// create
-create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // add
-add_1:
+add_0:
 proto 2 1
 intc_0 // 0
 frame_dig -2
@@ -158,7 +151,7 @@ frame_bury 0
 retsub
 
 // mul
-mul_2:
+mul_1:
 proto 2 1
 intc_0 // 0
 frame_dig -2
@@ -168,7 +161,7 @@ frame_bury 0
 retsub
 
 // sub
-sub_3:
+sub_2:
 proto 2 1
 intc_0 // 0
 frame_dig -2
@@ -178,7 +171,7 @@ frame_bury 0
 retsub
 
 // div
-div_4:
+div_3:
 proto 2 1
 intc_0 // 0
 frame_dig -2

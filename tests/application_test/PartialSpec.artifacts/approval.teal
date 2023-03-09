@@ -1,0 +1,67 @@
+#pragma version 8
+intcblock 0 1
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0xef5cdf8c // "struct_meth((uint64,uint32))void"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0x3483cdd8 // "default_global_state(uint64)void"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub defaultglobalstate_1
+intc_1 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+callsub structmeth_0
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+intc_1 // 1
+return
+
+// struct_meth
+structmeth_0:
+proto 1 0
+intc_1 // 1
+return
+
+// default_global_state
+defaultglobalstate_1:
+proto 1 0
+intc_1 // 1
+return

@@ -1,60 +1,60 @@
 #pragma version 8
 intcblock 0 127 1
-bytecblock 0x151f7c75 0x 0x00 0x6465636c617265645f6170705f76616c7565 0x6465636c617265645f6163636f756e745f76616c7565 0x000102030405060708090a0b0c0d0e0f 0x000102
+bytecblock 0x151f7c75 0x 0x00 0x6465636c617265645f676c6f62616c5f76616c7565 0x6465636c617265645f6c6f63616c5f76616c7565 0x000102030405060708090a0b0c0d0e0f 0x000102
 txn NumAppArgs
 intc_0 // 0
 ==
 bnz main_l28
 txna ApplicationArgs 0
-pushbytes 0xaa6a1d79 // "write_acct_blob(string)void"
+pushbytes 0xa7362a68 // "write_local_blob(string)void"
 ==
 bnz main_l27
 txna ApplicationArgs 0
-pushbytes 0x5a234a90 // "read_acct_blob()byte[]"
+pushbytes 0x25155243 // "read_local_blob()byte[]"
 ==
 bnz main_l26
 txna ApplicationArgs 0
-pushbytes 0x3eb245fa // "write_app_blob(string)void"
+pushbytes 0x9fda8c4c // "write_global_blob(string)void"
 ==
 bnz main_l25
 txna ApplicationArgs 0
-pushbytes 0xd5c95f6c // "read_app_blob()byte[]"
+pushbytes 0x8fed2551 // "read_global_blob()byte[]"
 ==
 bnz main_l24
 txna ApplicationArgs 0
-pushbytes 0x29d9470f // "set_app_state_val(string)void"
+pushbytes 0xa3a24001 // "set_global_state_val(string)void"
 ==
 bnz main_l23
 txna ApplicationArgs 0
-pushbytes 0xf4c22566 // "get_app_state_val()string"
+pushbytes 0x5835fee6 // "get_global_state_val()string"
 ==
 bnz main_l22
 txna ApplicationArgs 0
-pushbytes 0x06bc8604 // "set_reserved_app_state_val(uint8,uint64)void"
+pushbytes 0x1615ef25 // "set_reserved_global_state_val(uint8,uint64)void"
 ==
 bnz main_l21
 txna ApplicationArgs 0
-pushbytes 0xe984e3c3 // "get_reserved_app_state_val(uint8)uint64"
+pushbytes 0xddfde386 // "get_reserved_global_state_val(uint8)uint64"
 ==
 bnz main_l20
 txna ApplicationArgs 0
-pushbytes 0xfe60b52a // "set_account_state_val(uint64)void"
+pushbytes 0x93aa0987 // "set_local_state_val(uint64)void"
 ==
 bnz main_l19
 txna ApplicationArgs 0
-pushbytes 0xb8dc9b59 // "incr_account_state_val(uint64)void"
+pushbytes 0x4df504d8 // "incr_local_state_val(uint64)void"
 ==
 bnz main_l18
 txna ApplicationArgs 0
-pushbytes 0x5a98f372 // "get_account_state_val()uint64"
+pushbytes 0x2abf6341 // "get_local_state_val()uint64"
 ==
 bnz main_l17
 txna ApplicationArgs 0
-pushbytes 0xe6e60ade // "set_reserved_account_state_val(uint8,string)void"
+pushbytes 0x568b3159 // "set_reserved_local_state_val(uint8,string)void"
 ==
 bnz main_l16
 txna ApplicationArgs 0
-pushbytes 0xcba3377e // "get_reserved_account_state_val(uint8)string"
+pushbytes 0xd3aa7675 // "get_reserved_local_state_val(uint8)string"
 ==
 bnz main_l15
 err
@@ -70,10 +70,10 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub getreservedaccountstateval_22
-store 29
+callsub getreservedlocalstateval_22
+store 9
 bytec_0 // 0x151f7c75
-load 29
+load 9
 concat
 log
 intc_2 // 1
@@ -90,12 +90,12 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 27
+store 7
 txna ApplicationArgs 2
-store 28
-load 27
-load 28
-callsub setreservedaccountstateval_21
+store 8
+load 7
+load 8
+callsub setreservedlocalstateval_21
 intc_2 // 1
 return
 main_l17:
@@ -107,10 +107,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getaccountstateval_20
-store 26
+callsub getlocalstateval_20
+store 6
 bytec_0 // 0x151f7c75
-load 26
+load 6
 itob
 concat
 log
@@ -127,7 +127,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub incraccountstateval_19
+callsub incrlocalstateval_19
 intc_2 // 1
 return
 main_l19:
@@ -141,7 +141,7 @@ intc_0 // 0
 assert
 txna ApplicationArgs 1
 btoi
-callsub setaccountstateval_18
+callsub setlocalstateval_18
 intc_2 // 1
 return
 main_l20:
@@ -156,10 +156,10 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub getreservedappstateval_17
-store 25
+callsub getreservedglobalstateval_17
+store 5
 bytec_0 // 0x151f7c75
-load 25
+load 5
 itob
 concat
 log
@@ -177,13 +177,13 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-store 23
+store 3
 txna ApplicationArgs 2
 btoi
-store 24
-load 23
-load 24
-callsub setreservedappstateval_16
+store 4
+load 3
+load 4
+callsub setreservedglobalstateval_16
 intc_2 // 1
 return
 main_l22:
@@ -195,10 +195,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getappstateval_15
-store 22
+callsub getglobalstateval_15
+store 2
 bytec_0 // 0x151f7c75
-load 22
+load 2
 concat
 log
 intc_2 // 1
@@ -213,7 +213,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub setappstateval_14
+callsub setglobalstateval_14
 intc_2 // 1
 return
 main_l24:
@@ -225,10 +225,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readappblob_13
-store 21
+callsub readglobalblob_13
+store 1
 bytec_0 // 0x151f7c75
-load 21
+load 1
 concat
 log
 intc_2 // 1
@@ -243,7 +243,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub writeappblob_12
+callsub writeglobalblob_12
 intc_2 // 1
 return
 main_l26:
@@ -255,10 +255,10 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readacctblob_11
-store 20
+callsub readlocalblob_11
+store 0
 bytec_0 // 0x151f7c75
-load 20
+load 0
 concat
 log
 intc_2 // 1
@@ -273,7 +273,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub writeacctblob_10
+callsub writelocalblob_10
 intc_2 // 1
 return
 main_l28:
@@ -291,7 +291,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub optin_7
+callsub optin_9
 intc_2 // 1
 return
 main_l32:
@@ -299,7 +299,7 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_6
+callsub create_8
 intc_2 // 1
 return
 
@@ -331,19 +331,19 @@ retsub
 readimpl_1:
 proto 2 1
 bytec_1 // ""
-store 17
+store 27
 frame_dig -2
 intc_1 // 127
 /
-store 16
+store 26
 readimpl_1_l1:
-load 16
+load 26
 frame_dig -1
 intc_1 // 127
 /
 <=
 bz readimpl_1_l9
-load 16
+load 26
 frame_dig -2
 intc_1 // 127
 /
@@ -351,8 +351,8 @@ intc_1 // 127
 bnz readimpl_1_l8
 intc_0 // 0
 readimpl_1_l4:
-store 18
-load 16
+store 28
+load 26
 frame_dig -1
 intc_1 // 127
 /
@@ -360,22 +360,22 @@ intc_1 // 127
 bnz readimpl_1_l7
 intc_1 // 127
 readimpl_1_l6:
-store 19
-load 17
+store 29
+load 27
 bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 16
+load 26
 intc_2 // 1
 extract3
 app_global_get
-load 18
-load 19
+load 28
+load 29
 substring3
 concat
-store 17
-load 16
+store 27
+load 26
 intc_2 // 1
 +
-store 16
+store 26
 b readimpl_1_l1
 readimpl_1_l7:
 frame_dig -1
@@ -388,20 +388,20 @@ intc_1 // 127
 %
 b readimpl_1_l4
 readimpl_1_l9:
-load 17
+load 27
 retsub
 
 // write_impl
 writeimpl_2:
 proto 2 0
 intc_0 // 0
-store 14
+store 24
 frame_dig -2
 intc_1 // 127
 /
-store 11
+store 21
 writeimpl_2_l1:
-load 11
+load 21
 frame_dig -2
 frame_dig -1
 len
@@ -410,7 +410,7 @@ intc_1 // 127
 /
 <=
 bz writeimpl_2_l12
-load 11
+load 21
 frame_dig -2
 intc_1 // 127
 /
@@ -418,8 +418,8 @@ intc_1 // 127
 bnz writeimpl_2_l11
 intc_0 // 0
 writeimpl_2_l4:
-store 12
-load 11
+store 22
+load 21
 frame_dig -2
 frame_dig -1
 len
@@ -430,60 +430,60 @@ intc_1 // 127
 bnz writeimpl_2_l10
 intc_1 // 127
 writeimpl_2_l6:
-store 13
+store 23
 bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 11
+load 21
 intc_2 // 1
 extract3
-load 13
+load 23
 intc_1 // 127
 !=
-load 12
+load 22
 intc_0 // 0
 !=
 ||
 bnz writeimpl_2_l9
 intc_1 // 127
-store 15
+store 25
 frame_dig -1
-load 14
+load 24
 intc_1 // 127
 extract3
 writeimpl_2_l8:
 app_global_put
-load 14
-load 15
+load 24
+load 25
 +
-store 14
-load 11
+store 24
+load 21
 intc_2 // 1
 +
-store 11
+store 21
 b writeimpl_2_l1
 writeimpl_2_l9:
-load 13
-load 12
+load 23
+load 22
 -
-store 15
+store 25
 bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 11
+load 21
 intc_2 // 1
 extract3
 app_global_get
 intc_0 // 0
-load 12
+load 22
 substring3
 frame_dig -1
-load 14
-load 15
+load 24
+load 25
 extract3
 concat
 bytec 5 // 0x000102030405060708090a0b0c0d0e0f
-load 11
+load 21
 intc_2 // 1
 extract3
 app_global_get
-load 13
+load 23
 intc_1 // 127
 substring3
 concat
@@ -528,19 +528,19 @@ retsub
 readimpl_4:
 proto 3 1
 bytec_1 // ""
-store 8
+store 18
 frame_dig -2
 intc_1 // 127
 /
-store 7
+store 17
 readimpl_4_l1:
-load 7
+load 17
 frame_dig -1
 intc_1 // 127
 /
 <=
 bz readimpl_4_l9
-load 7
+load 17
 frame_dig -2
 intc_1 // 127
 /
@@ -548,8 +548,8 @@ intc_1 // 127
 bnz readimpl_4_l8
 intc_0 // 0
 readimpl_4_l4:
-store 9
-load 7
+store 19
+load 17
 frame_dig -1
 intc_1 // 127
 /
@@ -557,23 +557,23 @@ intc_1 // 127
 bnz readimpl_4_l7
 intc_1 // 127
 readimpl_4_l6:
-store 10
-load 8
+store 20
+load 18
 frame_dig -3
 bytec 6 // 0x000102
-load 7
+load 17
 intc_2 // 1
 extract3
 app_local_get
-load 9
-load 10
+load 19
+load 20
 substring3
 concat
-store 8
-load 7
+store 18
+load 17
 intc_2 // 1
 +
-store 7
+store 17
 b readimpl_4_l1
 readimpl_4_l7:
 frame_dig -1
@@ -586,20 +586,20 @@ intc_1 // 127
 %
 b readimpl_4_l4
 readimpl_4_l9:
-load 8
+load 18
 retsub
 
 // write_impl
 writeimpl_5:
 proto 3 0
 intc_0 // 0
-store 5
+store 15
 frame_dig -2
 intc_1 // 127
 /
-store 2
+store 12
 writeimpl_5_l1:
-load 2
+load 12
 frame_dig -2
 frame_dig -1
 len
@@ -608,7 +608,7 @@ intc_1 // 127
 /
 <=
 bz writeimpl_5_l12
-load 2
+load 12
 frame_dig -2
 intc_1 // 127
 /
@@ -616,8 +616,8 @@ intc_1 // 127
 bnz writeimpl_5_l11
 intc_0 // 0
 writeimpl_5_l4:
-store 3
-load 2
+store 13
+load 12
 frame_dig -2
 frame_dig -1
 len
@@ -628,63 +628,63 @@ intc_1 // 127
 bnz writeimpl_5_l10
 intc_1 // 127
 writeimpl_5_l6:
-store 4
+store 14
 frame_dig -3
 bytec 6 // 0x000102
-load 2
+load 12
 intc_2 // 1
 extract3
-load 4
+load 14
 intc_1 // 127
 !=
-load 3
+load 13
 intc_0 // 0
 !=
 ||
 bnz writeimpl_5_l9
 intc_1 // 127
-store 6
+store 16
 frame_dig -1
-load 5
+load 15
 intc_1 // 127
 extract3
 writeimpl_5_l8:
 app_local_put
-load 5
-load 6
+load 15
+load 16
 +
-store 5
-load 2
+store 15
+load 12
 intc_2 // 1
 +
-store 2
+store 12
 b writeimpl_5_l1
 writeimpl_5_l9:
-load 4
-load 3
+load 14
+load 13
 -
-store 6
+store 16
 frame_dig -3
 bytec 6 // 0x000102
-load 2
+load 12
 intc_2 // 1
 extract3
 app_local_get
 intc_0 // 0
-load 3
+load 13
 substring3
 frame_dig -1
-load 5
-load 6
+load 15
+load 16
 extract3
 concat
 frame_dig -3
 bytec 6 // 0x000102
-load 2
+load 12
 intc_2 // 1
 extract3
 app_local_get
-load 4
+load 14
 intc_1 // 127
 substring3
 concat
@@ -705,52 +705,52 @@ b writeimpl_5_l4
 writeimpl_5_l12:
 retsub
 
+// prefix_key_gen
+prefixkeygen_6:
+proto 1 1
+pushbytes 0x72657365727665645f676c6f62616c5f76616c7565 // "reserved_global_value"
+frame_dig -1
+concat
+retsub
+
+// prefix_key_gen
+prefixkeygen_7:
+proto 1 1
+pushbytes 0x72657365727665645f6c6f63616c5f76616c7565 // "reserved_local_value"
+frame_dig -1
+concat
+retsub
+
 // create
-create_6:
+create_8:
 proto 0 0
 intc_0 // 0
-bytec_3 // "declared_app_value"
+bytec_3 // "declared_global_value"
 app_global_get_ex
-store 1
-store 0
-load 1
+store 11
+store 10
+load 11
 !
 assert
-bytec_3 // "declared_app_value"
+bytec_3 // "declared_global_value"
 pushbytes 0x41206465636c617265642073746174652076616c756520746861742069732070726f74656374656420776974682074686520607374617469636020666c6167 // "A declared state value that is protected with the `static` flag"
 app_global_put
 callsub zeroimpl_0
 retsub
 
 // opt_in
-optin_7:
+optin_9:
 proto 0 0
 txn Sender
-bytec 4 // "declared_account_value"
+bytec 4 // "declared_local_value"
 intc_2 // 1
 app_local_put
 txn Sender
 callsub zeroimpl_3
 retsub
 
-// prefix_key_gen
-prefixkeygen_8:
-proto 1 1
-pushbytes 0x72657365727665645f6170705f76616c7565 // "reserved_app_value"
-frame_dig -1
-concat
-retsub
-
-// prefix_key_gen
-prefixkeygen_9:
-proto 1 1
-pushbytes 0x72657365727665645f6163636f756e745f76616c7565 // "reserved_account_value"
-frame_dig -1
-concat
-retsub
-
-// write_acct_blob
-writeacctblob_10:
+// write_local_blob
+writelocalblob_10:
 proto 1 0
 txn Sender
 intc_0 // 0
@@ -759,8 +759,8 @@ extract 2 0
 callsub writeimpl_5
 retsub
 
-// read_acct_blob
-readacctblob_11:
+// read_local_blob
+readlocalblob_11:
 proto 0 1
 bytec_1 // ""
 txn Sender
@@ -779,8 +779,8 @@ concat
 frame_bury 0
 retsub
 
-// write_app_blob
-writeappblob_12:
+// write_global_blob
+writeglobalblob_12:
 proto 1 0
 intc_0 // 0
 frame_dig -1
@@ -788,8 +788,8 @@ extract 2 0
 callsub writeimpl_2
 retsub
 
-// read_app_blob
-readappblob_13:
+// read_global_blob
+readglobalblob_13:
 proto 0 1
 bytec_1 // ""
 intc_0 // 0
@@ -807,28 +807,28 @@ concat
 frame_bury 0
 retsub
 
-// set_app_state_val
-setappstateval_14:
+// set_global_state_val
+setglobalstateval_14:
 proto 1 0
 intc_0 // 0
-bytec_3 // "declared_app_value"
+bytec_3 // "declared_global_value"
 app_global_get_ex
 store 31
 store 30
 load 31
 !
 assert
-bytec_3 // "declared_app_value"
+bytec_3 // "declared_global_value"
 frame_dig -1
 extract 2 0
 app_global_put
 retsub
 
-// get_app_state_val
-getappstateval_15:
+// get_global_state_val
+getglobalstateval_15:
 proto 0 1
 bytec_1 // ""
-bytec_3 // "declared_app_value"
+bytec_3 // "declared_global_value"
 app_global_get
 frame_bury 0
 frame_dig 0
@@ -840,79 +840,79 @@ concat
 frame_bury 0
 retsub
 
-// set_reserved_app_state_val
-setreservedappstateval_16:
+// set_reserved_global_state_val
+setreservedglobalstateval_16:
 proto 2 0
 bytec_2 // 0x00
 intc_0 // 0
 frame_dig -2
 setbyte
-callsub prefixkeygen_8
+callsub prefixkeygen_6
 frame_dig -1
 app_global_put
 retsub
 
-// get_reserved_app_state_val
-getreservedappstateval_17:
+// get_reserved_global_state_val
+getreservedglobalstateval_17:
 proto 1 1
 intc_0 // 0
 bytec_2 // 0x00
 intc_0 // 0
 frame_dig -1
 setbyte
-callsub prefixkeygen_8
+callsub prefixkeygen_6
 app_global_get
 frame_bury 0
 retsub
 
-// set_account_state_val
-setaccountstateval_18:
+// set_local_state_val
+setlocalstateval_18:
 proto 1 0
 txn Sender
-bytec 4 // "declared_account_value"
+bytec 4 // "declared_local_value"
 frame_dig -1
 app_local_put
 retsub
 
-// incr_account_state_val
-incraccountstateval_19:
+// incr_local_state_val
+incrlocalstateval_19:
 proto 1 0
 txn Sender
-bytec 4 // "declared_account_value"
+bytec 4 // "declared_local_value"
 txn Sender
-bytec 4 // "declared_account_value"
+bytec 4 // "declared_local_value"
 app_local_get
 frame_dig -1
 +
 app_local_put
 retsub
 
-// get_account_state_val
-getaccountstateval_20:
+// get_local_state_val
+getlocalstateval_20:
 proto 0 1
 intc_0 // 0
 txn Sender
-bytec 4 // "declared_account_value"
+bytec 4 // "declared_local_value"
 app_local_get
 frame_bury 0
 retsub
 
-// set_reserved_account_state_val
-setreservedaccountstateval_21:
+// set_reserved_local_state_val
+setreservedlocalstateval_21:
 proto 2 0
 txn Sender
 bytec_2 // 0x00
 intc_0 // 0
 frame_dig -2
 setbyte
-callsub prefixkeygen_9
+callsub prefixkeygen_7
 frame_dig -1
 extract 2 0
 app_local_put
 retsub
 
-// get_reserved_account_state_val
-getreservedaccountstateval_22:
+// get_reserved_local_state_val
+getreservedlocalstateval_22:
 proto 1 1
 bytec_1 // ""
 txn Sender
@@ -920,7 +920,7 @@ bytec_2 // 0x00
 intc_0 // 0
 frame_dig -1
 setbyte
-callsub prefixkeygen_9
+callsub prefixkeygen_7
 app_local_get
 frame_bury 0
 frame_dig 0

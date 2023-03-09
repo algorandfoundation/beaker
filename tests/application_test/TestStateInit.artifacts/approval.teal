@@ -1,0 +1,113 @@
+#pragma version 8
+intcblock 0 127 1
+bytecblock 0x 0x627974655f76616c 0x75696e745f76616c
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l2
+err
+main_l2:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l6
+txn OnCompletion
+intc_2 // OptIn
+==
+bnz main_l5
+err
+main_l5:
+callsub optin_3
+intc_2 // 1
+return
+main_l6:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_2
+intc_2 // 1
+return
+
+// zero_impl
+zeroimpl_0:
+proto 0 0
+intc_1 // 127
+bzero
+pushint 4 // 4
+
+    zero_loop:
+        int 1
+        -               // ["00"*page_size, key-1]
+        dup2            // ["00"*page_size, key, "00"*page_size, key]
+        itob            // ["00"*page_size, key, "00"*page_size, itob(key)]
+        extract 7 1     // ["00"*page_size, key, "00"*page_size, itob(key)[-1]]
+        swap            // ["00"*page_size, key, itob(key)[-1], "00"*page_size]
+        app_global_put  // ["00"*page_size, key]  (removes top 2 elements)
+        dup             // ["00"*page_size, key-1, key-1]
+        bnz zero_loop   // start loop over if key-1>0
+        pop
+        pop             // take extra junk off the stack
+        retsub
+    callsub zero_loop
+            
+retsub
+
+// zero_impl
+zeroimpl_1:
+proto 1 0
+frame_dig -1
+pushbytes 0x00 // 0x00
+intc_1 // 127
+bzero
+app_local_put
+frame_dig -1
+pushbytes 0x01 // 0x01
+intc_1 // 127
+bzero
+app_local_put
+frame_dig -1
+pushbytes 0x02 // 0x02
+intc_1 // 127
+bzero
+app_local_put
+retsub
+
+// create
+create_2:
+proto 0 0
+callsub zeroimpl_0
+bytec_1 // "byte_val"
+bytec_0 // ""
+app_global_put
+bytec_2 // "uint_val"
+intc_0 // 0
+app_global_put
+retsub
+
+// opt_in
+optin_3:
+proto 0 0
+txn ApplicationID
+intc_0 // 0
+==
+bz optin_3_l2
+callsub zeroimpl_0
+bytec_1 // "byte_val"
+bytec_0 // ""
+app_global_put
+bytec_2 // "uint_val"
+intc_0 // 0
+app_global_put
+optin_3_l2:
+txn Sender
+pushbytes 0x627974655f6c6f63616c5f76616c // "byte_local_val"
+bytec_0 // ""
+app_local_put
+txn Sender
+callsub zeroimpl_1
+txn Sender
+pushbytes 0x75696e745f6c6f63616c5f76616c // "uint_local_val"
+intc_0 // 0
+app_local_put
+retsub

@@ -1,6 +1,6 @@
 {
     "hints": {
-        "place_order": {
+        "place_order(uint8,(string,uint16))void": {
             "structs": {
                 "order": {
                     "name": "Order",
@@ -15,9 +15,12 @@
                         ]
                     ]
                 }
+            },
+            "call_config": {
+                "no_op": "CALL"
             }
         },
-        "read_item": {
+        "read_item(uint8)(string,uint16)": {
             "read_only": true,
             "structs": {
                 "output": {
@@ -33,9 +36,12 @@
                         ]
                     ]
                 }
+            },
+            "call_config": {
+                "no_op": "CALL"
             }
         },
-        "increase_quantity": {
+        "increase_quantity(uint8)(string,uint16)": {
             "structs": {
                 "output": {
                     "name": "Order",
@@ -50,6 +56,9 @@
                         ]
                     ]
                 }
+            },
+            "call_config": {
+                "no_op": "CALL"
             }
         }
     },
@@ -57,7 +66,21 @@
         "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4MDAgMHggMHgxNTFmN2M3NQp0eG4gTnVtQXBwQXJncwppbnRjXzAgLy8gMAo9PQpibnogbWFpbl9sOAp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweGE0ZThkNzk1IC8vICJwbGFjZV9vcmRlcih1aW50OCwoc3RyaW5nLHVpbnQxNikpdm9pZCIKPT0KYm56IG1haW5fbDcKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHgzZmNhM2E0OSAvLyAicmVhZF9pdGVtKHVpbnQ4KShzdHJpbmcsdWludDE2KSIKPT0KYm56IG1haW5fbDYKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHhmNGIwNTdkOSAvLyAiaW5jcmVhc2VfcXVhbnRpdHkodWludDgpKHN0cmluZyx1aW50MTYpIgo9PQpibnogbWFpbl9sNQplcnIKbWFpbl9sNToKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQppbnRjXzAgLy8gMApnZXRieXRlCmNhbGxzdWIgaW5jcmVhc2VxdWFudGl0eV80CnN0b3JlIDMKYnl0ZWNfMiAvLyAweDE1MWY3Yzc1CmxvYWQgMwpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2w2Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKY2FsbHN1YiByZWFkaXRlbV8zCnN0b3JlIDIKYnl0ZWNfMiAvLyAweDE1MWY3Yzc1CmxvYWQgMgpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2w3Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmludGNfMCAvLyAwCmdldGJ5dGUKc3RvcmUgMAp0eG5hIEFwcGxpY2F0aW9uQXJncyAyCnN0b3JlIDEKbG9hZCAwCmxvYWQgMQpjYWxsc3ViIHBsYWNlb3JkZXJfMgppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sODoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sMTIKdHhuIE9uQ29tcGxldGlvbgppbnRjXzEgLy8gT3B0SW4KPT0KYm56IG1haW5fbDExCmVycgptYWluX2wxMToKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KYXNzZXJ0CmNhbGxzdWIgb3B0aW5fMQppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sMTI6CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CmFzc2VydApjYWxsc3ViIGNyZWF0ZV8wCmludGNfMSAvLyAxCnJldHVybgoKLy8gY3JlYXRlCmNyZWF0ZV8wOgpwcm90byAwIDAKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBvcHRfaW4Kb3B0aW5fMToKcHJvdG8gMCAwCnJldHN1YgoKLy8gcGxhY2Vfb3JkZXIKcGxhY2VvcmRlcl8yOgpwcm90byAyIDAKdHhuIFNlbmRlcgpieXRlY18wIC8vIDB4MDAKaW50Y18wIC8vIDAKZnJhbWVfZGlnIC0yCnNldGJ5dGUKZnJhbWVfZGlnIC0xCmFwcF9sb2NhbF9wdXQKcmV0c3ViCgovLyByZWFkX2l0ZW0KcmVhZGl0ZW1fMzoKcHJvdG8gMSAxCmJ5dGVjXzEgLy8gIiIKdHhuIFNlbmRlcgpieXRlY18wIC8vIDB4MDAKaW50Y18wIC8vIDAKZnJhbWVfZGlnIC0xCnNldGJ5dGUKYXBwX2xvY2FsX2dldApmcmFtZV9idXJ5IDAKcmV0c3ViCgovLyBpbmNyZWFzZV9xdWFudGl0eQppbmNyZWFzZXF1YW50aXR5XzQ6CnByb3RvIDEgMQpieXRlY18xIC8vICIiCmR1cAppbnRjXzAgLy8gMApieXRlY18xIC8vICIiCmludGNfMCAvLyAwCmR1cApieXRlY18xIC8vICIiCmR1cAp0eG4gU2VuZGVyCmJ5dGVjXzAgLy8gMHgwMAppbnRjXzAgLy8gMApmcmFtZV9kaWcgLTEKc2V0Ynl0ZQphcHBfbG9jYWxfZ2V0CmZyYW1lX2J1cnkgMQpmcmFtZV9kaWcgMQpwdXNoaW50IDIgLy8gMgpleHRyYWN0X3VpbnQxNgpmcmFtZV9idXJ5IDIKZnJhbWVfZGlnIDIKaW50Y18xIC8vIDEKKwpmcmFtZV9idXJ5IDIKZnJhbWVfZGlnIDIKcHVzaGludCA2NTUzNiAvLyA2NTUzNgo8CmFzc2VydApmcmFtZV9kaWcgMQpmcmFtZV9kaWcgMQppbnRjXzAgLy8gMApleHRyYWN0X3VpbnQxNgpkaWcgMQpsZW4Kc3Vic3RyaW5nMwpmcmFtZV9idXJ5IDMKZnJhbWVfZGlnIDMKZnJhbWVfYnVyeSA3CmZyYW1lX2RpZyA3CmZyYW1lX2J1cnkgNgpwdXNoaW50IDQgLy8gNApmcmFtZV9idXJ5IDQKZnJhbWVfZGlnIDQKaXRvYgpleHRyYWN0IDYgMApmcmFtZV9kaWcgMgppdG9iCmV4dHJhY3QgNiAwCmNvbmNhdApmcmFtZV9kaWcgNgpjb25jYXQKZnJhbWVfYnVyeSAxCnR4biBTZW5kZXIKYnl0ZWNfMCAvLyAweDAwCmludGNfMCAvLyAwCmZyYW1lX2RpZyAtMQpzZXRieXRlCmZyYW1lX2RpZyAxCmFwcF9sb2NhbF9wdXQKZnJhbWVfZGlnIDEKZnJhbWVfYnVyeSAwCnJldHN1Yg==",
         "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
     },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        },
+        "local": {
+            "num_byte_slices": 16,
+            "num_uints": 0
+        }
+    },
     "schema": {
+        "global": {
+            "declared": {},
+            "reserved": {}
+        },
         "local": {
             "declared": {},
             "reserved": {
@@ -67,10 +90,6 @@
                     "descr": ""
                 }
             }
-        },
-        "global": {
-            "declared": {},
-            "reserved": {}
         }
     },
     "contract": {
@@ -118,5 +137,9 @@
             }
         ],
         "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "CREATE",
+        "opt_in": "CALL"
     }
 }

@@ -1,0 +1,69 @@
+#pragma version 8
+intcblock 1 0
+txn NumAppArgs
+intc_1 // 0
+==
+bnz main_l4
+txna ApplicationArgs 0
+pushbytes 0x9da9b4b8 // "abi()void"
+==
+bnz main_l3
+err
+main_l3:
+callsub abi_0
+intc_0 // 1
+return
+main_l4:
+txn OnCompletion
+intc_1 // NoOp
+==
+bnz main_l14
+txn OnCompletion
+intc_0 // OptIn
+==
+bnz main_l13
+txn OnCompletion
+pushint 2 // CloseOut
+==
+bnz main_l12
+txn OnCompletion
+pushint 4 // UpdateApplication
+==
+bnz main_l11
+txn OnCompletion
+pushint 5 // DeleteApplication
+==
+bnz main_l10
+err
+main_l10:
+callsub bare_1
+intc_0 // 1
+return
+main_l11:
+callsub bare_1
+intc_0 // 1
+return
+main_l12:
+callsub bare_1
+intc_0 // 1
+return
+main_l13:
+callsub bare_1
+intc_0 // 1
+return
+main_l14:
+callsub bare_1
+intc_0 // 1
+return
+
+// abi
+abi_0:
+proto 0 0
+intc_0 // 1
+return
+
+// bare
+bare_1:
+proto 0 0
+intc_0 // 1
+return

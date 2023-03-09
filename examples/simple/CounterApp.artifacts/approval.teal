@@ -23,7 +23,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub decrement_4
+callsub decrement_1
 store 1
 bytec_1 // 0x151f7c75
 load 1
@@ -41,7 +41,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub increment_3
+callsub increment_0
 store 0
 bytec_1 // 0x151f7c75
 load 0
@@ -61,40 +61,16 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
 intc_1 // 1
 return
 
-// create
-create_0:
-proto 0 0
-bytec_0 // "counter"
-intc_0 // 0
-app_global_put
-retsub
-
-// auth_only
-authonly_1:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
-// auth_only
-authonly_2:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
 // increment
-increment_3:
+increment_0:
 proto 0 1
 intc_0 // 0
 txn Sender
-callsub authonly_1
+global CreatorAddress
+==
 // unauthorized
 assert
 bytec_0 // "counter"
@@ -109,11 +85,12 @@ frame_bury 0
 retsub
 
 // decrement
-decrement_4:
+decrement_1:
 proto 0 1
 intc_0 // 0
 txn Sender
-callsub authonly_2
+global CreatorAddress
+==
 // unauthorized
 assert
 bytec_0 // "counter"

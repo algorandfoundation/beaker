@@ -55,7 +55,7 @@ assert
 load 13
 load 14
 load 15
-callsub swap_7
+callsub swap_5
 intc_1 // 1
 return
 main_l8:
@@ -92,7 +92,7 @@ load 9
 load 10
 load 11
 load 12
-callsub burn_6
+callsub burn_4
 intc_1 // 1
 return
 main_l9:
@@ -139,7 +139,7 @@ load 5
 load 6
 load 7
 load 8
-callsub mint_5
+callsub mint_3
 intc_1 // 1
 return
 main_l10:
@@ -171,7 +171,7 @@ assert
 load 0
 load 1
 load 2
-callsub bootstrap_4
+callsub bootstrap_2
 store 3
 pushbytes 0x151f7c75 // 0x151f7c75
 load 3
@@ -192,7 +192,7 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub setgovernor_3
+callsub setgovernor_1
 intc_1 // 1
 return
 main_l12:
@@ -221,29 +221,13 @@ intc_0 // 0
 app_global_put
 retsub
 
-// auth_only
-authonly_1:
-proto 1 1
-frame_dig -1
-bytec_3 // "g"
-app_global_get
-==
-retsub
-
-// auth_only
-authonly_2:
-proto 1 1
-frame_dig -1
-bytec_3 // "g"
-app_global_get
-==
-retsub
-
 // set_governor
-setgovernor_3:
+setgovernor_1:
 proto 1 0
 txn Sender
-callsub authonly_1
+bytec_3 // "g"
+app_global_get
+==
 // unauthorized
 assert
 bytec_3 // "g"
@@ -253,11 +237,13 @@ app_global_put
 retsub
 
 // bootstrap
-bootstrap_4:
+bootstrap_2:
 proto 3 1
 intc_0 // 0
 txn Sender
-callsub authonly_2
+bytec_3 // "g"
+app_global_get
+==
 // unauthorized
 assert
 global GroupSize
@@ -321,21 +307,21 @@ bytec_0 // "a"
 app_global_get
 bytec_1 // "b"
 app_global_get
-callsub docreatepooltoken_14
+callsub docreatepooltoken_12
 app_global_put
 bytec_0 // "a"
 app_global_get
-callsub dooptin_13
+callsub dooptin_11
 bytec_1 // "b"
 app_global_get
-callsub dooptin_13
+callsub dooptin_11
 bytec_2 // "p"
 app_global_get
 frame_bury 0
 retsub
 
 // mint
-mint_5:
+mint_3:
 proto 5 0
 frame_dig -2
 txnas Assets
@@ -437,7 +423,7 @@ frame_dig -4
 gtxns AssetAmount
 ==
 &&
-bnz mint_5_l2
+bnz mint_3_l2
 intc 4 // 10000000000
 load 26
 -
@@ -453,15 +439,15 @@ frame_dig -5
 gtxns AssetAmount
 frame_dig -4
 gtxns AssetAmount
-callsub tokenstomint_8
-b mint_5_l3
-mint_5_l2:
+callsub tokenstomint_6
+b mint_3_l3
+mint_3_l2:
 frame_dig -5
 gtxns AssetAmount
 frame_dig -4
 gtxns AssetAmount
-callsub tokenstomintinitial_9
-mint_5_l3:
+callsub tokenstomintinitial_7
+mint_3_l3:
 store 32
 load 32
 intc_0 // 0
@@ -472,14 +458,14 @@ txn Sender
 bytec_2 // "p"
 app_global_get
 load 32
-callsub doaxfer_12
+callsub doaxfer_10
 bytec 4 // "r"
-callsub computeratio_15
+callsub computeratio_13
 app_global_put
 retsub
 
 // burn
-burn_6:
+burn_4:
 proto 4 0
 frame_dig -3
 txnas Assets
@@ -559,31 +545,31 @@ load 45
 load 41
 frame_dig -4
 gtxns AssetAmount
-callsub tokenstoburn_10
+callsub tokenstoburn_8
 store 46
 load 45
 load 43
 frame_dig -4
 gtxns AssetAmount
-callsub tokenstoburn_10
+callsub tokenstoburn_8
 store 47
 txn Sender
 bytec_0 // "a"
 app_global_get
 load 46
-callsub doaxfer_12
+callsub doaxfer_10
 txn Sender
 bytec_1 // "b"
 app_global_get
 load 47
-callsub doaxfer_12
+callsub doaxfer_10
 bytec 4 // "r"
-callsub computeratio_15
+callsub computeratio_13
 app_global_put
 retsub
 
 // swap
-swap_7:
+swap_5:
 proto 3 0
 frame_dig -2
 txnas Assets
@@ -636,10 +622,10 @@ gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
-bnz swap_7_l5
+bnz swap_5_l5
 bytec_0 // "a"
 app_global_get
-swap_7_l2:
+swap_5_l2:
 asset_holding_get AssetBalance
 store 51
 store 50
@@ -654,7 +640,7 @@ frame_dig -3
 gtxns AssetAmount
 -
 load 50
-callsub tokenstoswap_11
+callsub tokenstoswap_9
 store 52
 load 52
 intc_0 // 0
@@ -667,28 +653,28 @@ gtxns XferAsset
 bytec_0 // "a"
 app_global_get
 ==
-bnz swap_7_l4
+bnz swap_5_l4
 bytec_0 // "a"
 app_global_get
-b swap_7_l6
-swap_7_l4:
+b swap_5_l6
+swap_5_l4:
 bytec_1 // "b"
 app_global_get
-b swap_7_l6
-swap_7_l5:
+b swap_5_l6
+swap_5_l5:
 bytec_1 // "b"
 app_global_get
-b swap_7_l2
-swap_7_l6:
+b swap_5_l2
+swap_5_l6:
 load 52
-callsub doaxfer_12
+callsub doaxfer_10
 bytec 4 // "r"
-callsub computeratio_15
+callsub computeratio_13
 app_global_put
 retsub
 
 // tokens_to_mint
-tokenstomint_8:
+tokenstomint_6:
 proto 5 1
 frame_dig -2
 intc_2 // 1000
@@ -717,12 +703,12 @@ store 34
 load 33
 load 34
 <
-bnz tokenstomint_8_l2
+bnz tokenstomint_6_l2
 load 34
-b tokenstomint_8_l3
-tokenstomint_8_l2:
+b tokenstomint_6_l3
+tokenstomint_6_l2:
 load 33
-tokenstomint_8_l3:
+tokenstomint_6_l3:
 frame_dig -5
 mulw
 intc_0 // 0
@@ -736,7 +722,7 @@ assert
 retsub
 
 // tokens_to_mint_initial
-tokenstomintinitial_9:
+tokenstomintinitial_7:
 proto 2 1
 frame_dig -2
 frame_dig -1
@@ -747,7 +733,7 @@ intc_2 // 1000
 retsub
 
 // tokens_to_burn
-tokenstoburn_10:
+tokenstoburn_8:
 proto 3 1
 frame_dig -2
 frame_dig -1
@@ -763,7 +749,7 @@ assert
 retsub
 
 // tokens_to_swap
-tokenstoswap_11:
+tokenstoswap_9:
 proto 3 1
 frame_dig -3
 intc_2 // 1000
@@ -798,7 +784,7 @@ assert
 retsub
 
 // do_axfer
-doaxfer_12:
+doaxfer_10:
 proto 3 0
 itxn_begin
 intc_3 // axfer
@@ -815,16 +801,16 @@ itxn_submit
 retsub
 
 // do_opt_in
-dooptin_13:
+dooptin_11:
 proto 1 0
 global CurrentApplicationAddress
 frame_dig -1
 intc_0 // 0
-callsub doaxfer_12
+callsub doaxfer_10
 retsub
 
 // do_create_pool_token
-docreatepooltoken_14:
+docreatepooltoken_12:
 proto 2 1
 frame_dig -2
 asset_params_get AssetUnitName
@@ -866,7 +852,7 @@ itxn CreatedAssetID
 retsub
 
 // compute_ratio
-computeratio_15:
+computeratio_13:
 proto 0 1
 global CurrentApplicationAddress
 bytec_0 // "a"

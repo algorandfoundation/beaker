@@ -1,6 +1,8 @@
 Precompile
 ==========
 
+.. warning:: Out of date, needs to be updated to 1.0
+
 A Precompile as an attribute on a Beaker Application allows the contract to 
 have some program be included in the source of the applications programs.
 
@@ -20,13 +22,10 @@ This can be done in two ways:
 
 .. module:: beaker.precompile 
 
-.. autoclass:: AppPrecompile
+.. autoclass:: PrecompiledApplication
     :members:
 
-.. autoclass:: LSigPrecompile
-    :members:
-
-.. autoclass:: Precompile
+.. autoclass:: PrecompiledLogicSignature
     :members:
 
 .. autoclass:: PrecompileTemplateValue

@@ -1,20 +1,24 @@
+import pytest
+
 from beaker.client.api_providers import (
-    Network,
-    Sandbox,
-    AlgoNode,
     AlgoExplorer,
+    AlgoNode,
+    Network,
     PureStake,
+    Sandbox,
 )
 
+pytestmark = pytest.mark.network
 
-def test_sandbox():
+
+def test_sandbox() -> None:
     sb = Sandbox(Network.SandNet)
     sb.algod().suggested_params()
     # sandbox indexer off
     # sb.indexer().health()
 
 
-def test_algonode():
+def test_algonode() -> None:
     for network in Network:
         if network == Network.SandNet:
             continue
@@ -24,7 +28,7 @@ def test_algonode():
         an.indexer().health()
 
 
-def test_algoexplorer():
+def test_algoexplorer() -> None:
     for network in Network:
         if network == Network.SandNet:
             continue
@@ -35,7 +39,7 @@ def test_algoexplorer():
         ae.indexer().health()
 
 
-def test_purestake():
+def test_purestake() -> None:
     return
 
     api_key = "TODO"

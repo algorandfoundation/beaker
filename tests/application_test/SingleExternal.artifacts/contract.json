@@ -1,0 +1,13 @@
+{
+    "name": "SingleExternal",
+    "methods": [
+        {
+            "name": "handle",
+            "args": [],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

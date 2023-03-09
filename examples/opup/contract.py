@@ -1,39 +1,65 @@
 from typing import Literal
-from pyteal import abi, ScratchVar, Seq, Assert, Int, For, Sha256
-from beaker import sandbox
-from beaker.decorators import external
+
+from pyteal import (
+    Assert,
+    Expr,
+    For,
+    Int,
+    ScratchVar,
+    Seq,
+    Sha256,
+    abi,
+)
+
+from beaker import Application, sandbox
+from examples.opup.op_up import OpUpState, op_up_blueprint
+
+expensive_app = Application(
+    name="ExpensiveApp",
+    descr="Do expensive work to demonstrate implementing op_up blueprint",
+    state=OpUpState(),
+)
+
+# Create a callable method after passing the
+# instance of the app to have methods added
+call_opup = op_up_blueprint(expensive_app)
+
+
+@expensive_app.external
+def hash_it(
+    input: abi.String,
+    iters: abi.Uint64,
+    opup_app: abi.Application = expensive_app.state.opup_app_id,  # type: ignore[assignment]
+    *,
+    output: abi.StaticBytes[Literal[32]],
+) -> Expr:
+    return Seq(
+        Assert(opup_app.application_id() == expensive_app.state.opup_app_id),
+        Repeat(255, call_opup()),
+        (current := ScratchVar()).store(input.get()),
+        For(
+            (i := ScratchVar()).store(Int(0)),
+            i.load() < iters.get(),
+            i.store(i.load() + Int(1)),
+        ).Do(current.store(Sha256(current.load()))),
+        output.decode(current.load()),
+    )
+
+
+def Repeat(n: int, expr: Expr) -> Expr:  # noqa: N802
+    """internal method to issue transactions against the target app"""
+    if n < 0:
+        raise ValueError("n < 0")
+    elif n == 1:
+        return expr
+    else:
+        return For(
+            (i := ScratchVar()).store(Int(0)),
+            i.load() < Int(n),
+            i.store(i.load() + Int(1)),
+        ).Do(expr)
+
 
 if __name__ == "__main__":
-    from op_up import OpUp  # type: ignore
-else:
-    from .op_up import OpUp
-
-
-class ExpensiveApp(OpUp):
-    """Do expensive work to demonstrate inheriting from OpUp"""
-
-    @external
-    def hash_it(
-        self,
-        input: abi.String,
-        iters: abi.Uint64,
-        opup_app: abi.Application = OpUp.opup_app_id,
-        *,
-        output: abi.StaticBytes[Literal[32]],
-    ):
-        return Seq(
-            Assert(opup_app.application_id() == self.opup_app_id),
-            self.call_opup(Int(255)),
-            (current := ScratchVar()).store(input.get()),
-            For(
-                (i := ScratchVar()).store(Int(0)),
-                i.load() < iters.get(),
-                i.store(i.load() + Int(1)),
-            ).Do(current.store(Sha256(current.load()))),
-            output.decode(current.load()),
-        )
-
-
-if __name__ == "__main__":
-    a, c = ExpensiveApp().compile(sandbox.get_algod_client())
-    print(a, c)
+    compiled = expensive_app.build(sandbox.get_algod_client())
+    print(compiled.approval_program, compiled.clear_program)

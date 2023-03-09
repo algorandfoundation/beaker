@@ -1,0 +1,30 @@
+{
+    "name": "PartialSpec",
+    "methods": [
+        {
+            "name": "struct_meth",
+            "args": [
+                {
+                    "type": "(uint64,uint32)",
+                    "name": "thing"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "default_global_state",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "value"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

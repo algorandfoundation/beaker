@@ -47,6 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration.html">1.0 Migration Guide</a></li>
 </ul>
 
         </div>
@@ -74,9 +75,14 @@
            <div itemprop="articleBody">
              
   <h1>Source code for beaker.sandbox.kmd</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
+
 <span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="n">AccountTransactionSigner</span>
 <span class="kn">from</span> <span class="nn">algosdk.kmd</span> <span class="kn">import</span> <span class="n">KMDClient</span>
+<span class="kn">from</span> <span class="nn">algosdk.wallet</span> <span class="kn">import</span> <span class="n">Wallet</span>
 
 <span class="n">DEFAULT_KMD_ADDRESS</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:4002&quot;</span>
 <span class="n">DEFAULT_KMD_TOKEN</span> <span class="o">=</span> <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mi">64</span>
@@ -84,16 +90,33 @@
 <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="SandboxAccount"><a class="viewcode-back" href="../../../sandbox.html#beaker.sandbox.SandboxAccount">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">def</span> <span class="nf">get_client</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">KMDClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;creates a new kmd client using the default sandbox parameters&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="o">=</span><span class="n">DEFAULT_KMD_TOKEN</span><span class="p">,</span> <span class="n">kmd_address</span><span class="o">=</span><span class="n">DEFAULT_KMD_ADDRESS</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_sandbox_default_wallet</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Wallet</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;returns the default sandbox kmd wallet&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Wallet</span><span class="p">(</span>
+        <span class="n">wallet_name</span><span class="o">=</span><span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
+        <span class="n">wallet_pswd</span><span class="o">=</span><span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
+        <span class="n">kmd_client</span><span class="o">=</span><span class="n">get_client</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="SandboxAccount"><a class="viewcode-back" href="../../../sandbox.html#beaker.sandbox.SandboxAccount">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">SandboxAccount</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;SandboxAccount is a simple dataclass to hold a sandbox account details&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SandboxAccount is a simple dataclass to hold a sandbox account details&quot;&quot;&quot;</span>
 
     <span class="c1">#: The address of a sandbox account</span>
     <span class="n">address</span><span class="p">:</span> <span class="nb">str</span>
     <span class="c1">#: The base64 encoded private key of the account</span>
     <span class="n">private_key</span><span class="p">:</span> <span class="nb">str</span>
+
     <span class="c1">#: An AccountTransactionSigner that can be used as a TransactionSigner</span>
-    <span class="n">signer</span><span class="p">:</span> <span class="n">AccountTransactionSigner</span></div>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">signer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccountTransactionSigner</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_key</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">get_accounts</span><span class="p">(</span>
@@ -102,37 +125,17 @@
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SandboxAccount</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;gets all the accounts in the sandbox kmd, defaults to the `unencrypted-default-wallet` created on private networks automatically&quot;&quot;&quot;</span>
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;gets all the accounts in the sandbox kmd, defaults</span>
+<span class="sd">    to the `unencrypted-default-wallet` created on private networks automatically&quot;&quot;&quot;</span>
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
-    <span class="n">wallets</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">list_wallets</span><span class="p">()</span>
-
-    <span class="n">wallet_id</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">wallet</span> <span class="ow">in</span> <span class="n">wallets</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">wallet</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">wallet_name</span><span class="p">:</span>
-            <span class="n">wallet_id</span> <span class="o">=</span> <span class="n">wallet</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
-            <span class="k">break</span>
-
-    <span class="k">if</span> <span class="n">wallet_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Wallet not found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wallet_name</span><span class="p">))</span>
-
-    <span class="n">wallet_handle</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">init_wallet_handle</span><span class="p">(</span><span class="n">wallet_id</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">addresses</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">list_keys</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">)</span>
-        <span class="n">private_keys</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">kmd</span><span class="o">.</span><span class="n">export_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span> <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">addresses</span>
-        <span class="p">]</span>
-        <span class="n">kmd_accounts</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="k">with</span> <span class="n">wallet_handle_by_name</span><span class="p">(</span><span class="n">kmd</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span> <span class="k">as</span> <span class="n">wallet_handle</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
             <span class="n">SandboxAccount</span><span class="p">(</span>
-                <span class="n">addresses</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">private_keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">AccountTransactionSigner</span><span class="p">(</span><span class="n">private_keys</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">address</span><span class="o">=</span><span class="n">address</span><span class="p">,</span>
+                <span class="n">private_key</span><span class="o">=</span><span class="n">kmd</span><span class="o">.</span><span class="n">export_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">,</span> <span class="n">address</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">private_keys</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">kmd</span><span class="o">.</span><span class="n">list_keys</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">)</span>
         <span class="p">]</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">kmd</span><span class="o">.</span><span class="n">release_wallet_handle</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">kmd_accounts</span>
 
 
 <span class="k">def</span> <span class="nf">add_account</span><span class="p">(</span>
@@ -142,28 +145,10 @@
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Adds a new account to the sandbox kmd&quot;&quot;&quot;</span>
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds a new account to the sandbox kmd&quot;&quot;&quot;</span>
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
-    <span class="n">wallets</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">list_wallets</span><span class="p">()</span>
-
-    <span class="n">wallet_id</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">wallet</span> <span class="ow">in</span> <span class="n">wallets</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">wallet</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">wallet_name</span><span class="p">:</span>
-            <span class="n">wallet_id</span> <span class="o">=</span> <span class="n">wallet</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
-            <span class="k">break</span>
-
-    <span class="k">if</span> <span class="n">wallet_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Wallet not found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wallet_name</span><span class="p">))</span>
-
-    <span class="n">wallet_handle</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">init_wallet_handle</span><span class="p">(</span><span class="n">wallet_id</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">added</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">import_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">private_key</span><span class="p">)</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">kmd</span><span class="o">.</span><span class="n">release_wallet_handle</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">added</span>
+    <span class="k">with</span> <span class="n">wallet_handle_by_name</span><span class="p">(</span><span class="n">kmd</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span> <span class="k">as</span> <span class="n">wallet_handle</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kmd</span><span class="o">.</span><span class="n">import_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">private_key</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">delete_account</span><span class="p">(</span>
@@ -172,25 +157,28 @@
     <span class="n">kmd_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_TOKEN</span><span class="p">,</span>
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Deletes an existing account from the sandbox kmd&quot;&quot;&quot;</span>
-
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deletes an existing account from the sandbox kmd&quot;&quot;&quot;</span>
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">wallet_handle_by_name</span><span class="p">(</span><span class="n">kmd</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span> <span class="k">as</span> <span class="n">wallet_handle</span><span class="p">:</span>
+        <span class="n">kmd</span><span class="o">.</span><span class="n">delete_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+
+
+<span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">wallet_handle_by_name</span><span class="p">(</span>
+    <span class="n">kmd</span><span class="p">:</span> <span class="n">KMDClient</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+
     <span class="n">wallets</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">list_wallets</span><span class="p">()</span>
 
-    <span class="n">wallet_id</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">wallet</span> <span class="ow">in</span> <span class="n">wallets</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">wallet</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">wallet_name</span><span class="p">:</span>
-            <span class="n">wallet_id</span> <span class="o">=</span> <span class="n">wallet</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
-            <span class="k">break</span>
-
-    <span class="k">if</span> <span class="n">wallet_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Wallet not found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wallet_name</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">wallet_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wallets</span> <span class="k">if</span> <span class="n">w</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">wallet_name</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wallet not found: </span><span class="si">{</span><span class="n">wallet_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
 
     <span class="n">wallet_handle</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">init_wallet_handle</span><span class="p">(</span><span class="n">wallet_id</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span>
-
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">kmd</span><span class="o">.</span><span class="n">delete_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">wallet_password</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">wallet_handle</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">kmd</span><span class="o">.</span><span class="n">release_wallet_handle</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">)</span>
 </pre></div>

@@ -1,0 +1,131 @@
+#pragma version 8
+intcblock 0 1 128 255
+bytecblock 0x 0x0880003500361a023501361a0335023401570200340234008444810143
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l4
+txna ApplicationArgs 0
+pushbytes 0xa5e5c3d1 // "check(address,string,byte[64])void"
+==
+bnz main_l3
+err
+main_l3:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+store 0
+txna ApplicationArgs 2
+store 1
+txna ApplicationArgs 3
+store 2
+load 0
+load 1
+load 2
+callsub check_1
+intc_1 // 1
+return
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l6
+err
+main_l6:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+intc_1 // 1
+return
+
+// encode_uvarint_impl
+encodeuvarintimpl_0:
+proto 2 1
+frame_dig -1
+frame_dig -2
+intc_2 // 128
+>=
+bnz encodeuvarintimpl_0_l2
+frame_dig -2
+intc_3 // 255
+&
+itob
+extract 7 1
+b encodeuvarintimpl_0_l3
+encodeuvarintimpl_0_l2:
+frame_dig -2
+pushint 7 // 7
+shr
+frame_dig -2
+intc_3 // 255
+&
+intc_2 // 128
+|
+itob
+extract 7 1
+callsub encodeuvarintimpl_0
+encodeuvarintimpl_0_l3:
+concat
+retsub
+
+// check
+check_1:
+proto 3 0
+txn Sender
+pushbytes 0x50726f6772616d // "Program"
+intc_0 // 0
+store 3
+intc_0 // 0
+store 4
+bytec_0 // ""
+store 5
+bytec_0 // ""
+store 6
+frame_dig -3
+len
+bytec_0 // ""
+callsub encodeuvarintimpl_0
+frame_dig -3
+concat
+store 5
+load 6
+bytec_1 // 0x0880003500361a023501361a0335023401570200340234008444810143
+load 3
+pushint 2 // 2
+substring3
+concat
+load 5
+concat
+store 6
+load 4
+load 5
+len
++
+intc_1 // 1
+-
+store 4
+pushint 2 // 2
+intc_1 // 1
++
+store 3
+load 6
+bytec_1 // 0x0880003500361a023501361a0335023401570200340234008444810143
+load 3
+dig 1
+len
+substring3
+concat
+store 6
+load 6
+concat
+sha512_256
+==
+assert
+retsub

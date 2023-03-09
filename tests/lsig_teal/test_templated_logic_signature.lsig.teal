@@ -1,0 +1,6 @@
+#pragma version 8
+pushbytes TMPL_PUBKEY // TMPL_PUBKEY
+len
+assert
+pushint 1 // 1
+return
