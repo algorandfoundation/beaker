@@ -6,6 +6,7 @@ from pyteal import (
     BoxPut,
     Concat,
     Expr,
+    Pop,
     Seq,
     TealType,
     TealTypeError,
@@ -83,12 +84,16 @@ class BoxMapping:
                 case abi.BaseType():
                     if not isinstance(val, self._value_type):
                         raise TealTypeError(val.__class__, self._value_type)
-                    return BoxPut(self.key, val.encode())
+                    bytes_val = val.encode()
                 case Expr():
                     require_type(val, TealType.bytes)
-                    return BoxPut(self.key, val)
+                    bytes_val = val
                 case _:
                     raise TealTypeError(type(val), Expr | abi.BaseType)
+            return Seq(
+                Pop(BoxDelete(self.key)),
+                BoxPut(self.key, bytes_val),
+            )
 
         def delete(self) -> Expr:
             """delete the box at this key"""

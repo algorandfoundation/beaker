@@ -42,7 +42,9 @@ def test_mapping() -> None:
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    expected, _ = pt.BoxPut(pt.Txn.sender(), v.encode()).__teal__(options)
+    expected, _ = pt.Seq(
+        pt.Pop(pt.BoxDelete(pt.Txn.sender())), pt.BoxPut(pt.Txn.sender(), v.encode())
+    ).__teal__(options)
     actual, _ = item.set(v).__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
@@ -75,6 +77,38 @@ def test_mapping_with_prefix() -> None:
             pt.Assert(got.get() == pt.Int(value2)),
             pt.Assert(elem.delete()),
             pt.Assert(pt.Not(elem.exists())),
+        )
+
+    app_client = ApplicationClient(
+        sandbox.get_algod_client(), app, signer=sandbox.get_accounts()[0].signer
+    )
+    app_client.create()
+
+    app_client.fund(1 * consts.algo)
+
+    app_client.call(do_things, boxes=[(app_client.app_id, "m_a")])
+
+
+def test_mapping_with_set_resize() -> None:
+    m = BoxMapping(pt.abi.String, pt.abi.String, prefix=pt.Bytes("m_"))
+
+    app = Application("")
+
+    @app.external
+    def do_things() -> pt.Expr:
+        elem = m[pt.Bytes("a")]
+        value1 = "value"
+        value2 = "value_value"
+        return pt.Seq(
+            (put := pt.abi.String()).set(value1),
+            elem.set(put),
+            pt.Assert(elem.exists()),
+            elem.store_into(got := pt.abi.String()),
+            pt.Assert(got.get() == pt.Bytes(value1)),
+            put.set(value2),
+            elem.set(put.encode()),
+            got.decode(elem.get()),
+            pt.Assert(got.get() == pt.Bytes(value2)),
         )
 
     app_client = ApplicationClient(
