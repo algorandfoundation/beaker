@@ -1,24 +1,33 @@
 Precompile
 ==========
 
-.. warning:: Out of date, needs to be updated to 1.0
-
-A Precompile as an attribute on a Beaker Application allows the contract to 
-have some program be included in the source of the applications programs.
+A ``precompile`` is useful if you need the fully assembled binary representation of a TEAL program in the logic of another TEAL program.
 
 :ref:`One example <offload_compute_example>` of where it might be used is in offloading some compute into a LogicSignature
 which has a max budget of 20k ops compared with 700 ops in a single Application call. 
 
+By using the ``precompile`` in this way we can check the address to be sure that the LogicSig is the one we expect.
+
+
 :ref:`Another example <sub_app_example>` might be if you need to deploy some child Application and want to have the logic 
 locally as compiled bytes to create the app directly in program logic.
 
-When you include an ``AppPrecompile`` or ``LSigPrecompile`` in your Application as a class var, Beaker knows to prevent building the TEAL
-until the ``Precompiles`` it depends on are fully assembled. 
+By using the ``precompile`` in this way, we can deploy the Sub Application directly from our Parent app.
 
-This can be done in two ways: 
-    1) By passing the top level ``Application`` to an ``ApplicationClient`` and calling the ``build`` method, the top level ``Application`` will have its dependencies fully assembled recursively.
-    2) By calling ``compile`` method on the ``AppPrecompile`` or ``LSigPrecompile`` and passing an ``AlgodClient`` to assemble the dependencies.
+Usage
+-----
 
+In order to use a ``Precompile`` in a program, first wrap the ``LogicSignature`` or ``Application`` with the ``precompile`` method. This will ensure that the program is fully compiled once and only once and the binary versions of the assembled programs are available when it's time to build the containing Application or LogicSignature. 
+
+.. note::
+    The ``precompile`` function may _only_ be called inside a function.
+
+.. literalinclude:: ../../examples/nested_precompile/nested_application.py
+    :lines: 64-75
+
+
+Reference
+---------
 
 .. module:: beaker.precompile 
 
@@ -28,7 +37,7 @@ This can be done in two ways:
 .. autoclass:: PrecompiledLogicSignature
     :members:
 
-.. autoclass:: PrecompileTemplateValue
+.. autoclass:: PrecompiledLogicSignatureTemplate
     :members:
 
 Examples
@@ -39,8 +48,7 @@ Examples
 Using Precompile for offloading compute 
 
 .. literalinclude:: ../../examples/offload_compute/main.py
-    :lines: 18-39
-
+    :lines: 21-41
 
 .. _sub_app_example:
 

@@ -1,8 +1,6 @@
 Application Client
 ===================
 
-.. warning:: Out of date, needs to be updated to 1.0
-
 .. currentmodule:: beaker.client
 
 
@@ -10,33 +8,36 @@ Application Client
 
 The ``ApplicationClient`` provides a convenient way to interact with our ``Application``.
 
+.. literalinclude:: ../../examples/client/main.py
+    :lines: 67-70
+
+By passing an ``AlgodClient``, an instance of our ``Application`` and a ``TransactionSigner``, we can easily make calls to our application. 
+
 .. note::
     The ``ApplicationClient`` takes an ``AlgodClient`` as its first argument, the most common API providers are available in ``beaker.client.api_providers``
 
-:ref:`Full Example <app_client_example>`
 
-The main point of interaction with our application is done using ``call``.  
+If the application does not yet exist, the ``app_id`` argument can be omitted but the first interaction with the ``Application`` should be to ``create`` it. Once this is done, the ``app_id`` will be set for the lifetime of the ``ApplicationClient`` instance.
 
-If there is an application already deployed, the ``app_id`` can be passed during initialization. If no ``app_id`` is passed, it's set to 0 so any app calls will be interpreted by the network as an intention to create the application. Once the ``create`` method is called the app id is set internally to the newly deployed application id and follow up calls will use that id.
+.. literalinclude:: ../../examples/client/main.py
+    :lines: 73-73 
+
+The primary way to of interact with our application is done using the ``call`` method, passing the method we want to call and the arguments it expects as keyword arguments.  
+
+.. literalinclude:: ../../examples/client/main.py
+    :lines: 80-80
+
 
 If there are multiple signers or you want to re-use some suggested parameters, the ``prepare`` method may be called with the different arguments and a copy of the client is returned with the updated parameters.
 
+.. literalinclude:: ../../examples/client/main.py
+    :lines: 84-84
+
+
+:ref:`Full Example <app_client_example>`
+
 .. autoclass:: ApplicationClient
-
-    .. automethod:: call 
-    .. automethod:: add_method_call
-    .. automethod:: prepare
-    .. automethod:: create
-    .. automethod:: delete
-    .. automethod:: update 
-    .. automethod:: opt_in 
-    .. automethod:: close_out 
-    .. automethod:: clear_state 
-    .. automethod:: fund
-    .. automethod:: get_global_state
-    .. automethod:: get_application_account_info
-    .. automethod:: get_local_state
-
+    :members:
 
 .. _app_client_example:
 
