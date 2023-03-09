@@ -31,6 +31,11 @@ class Authorize:
     the `authorize` keyword of the `handle` decorator
     """
 
+    @classmethod
+    def only_creator(cls) -> Expr:
+        """require that the sender of the app call match exactly the address of the app's creator"""
+        return cls.only(Global.creator_address())
+
     @staticmethod
     def only(addr: Expr) -> Expr:
         """require that the sender of the app call match exactly the address passed"""

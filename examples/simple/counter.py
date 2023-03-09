@@ -1,4 +1,4 @@
-from pyteal import Expr, Global, Int, Seq, TealType, abi
+from pyteal import Expr, Int, Seq, TealType, abi
 
 from beaker import (
     Application,
@@ -19,10 +19,7 @@ class CounterState:
 counter_app = Application("CounterApp", state=CounterState())
 
 
-AuthorizeCreatorOnly = Authorize.only(Global.creator_address())
-
-
-@counter_app.external(authorize=AuthorizeCreatorOnly)
+@counter_app.external(authorize=Authorize.only_creator())
 def increment(*, output: abi.Uint64) -> Expr:
     """increment the counter"""
     return Seq(
@@ -31,7 +28,7 @@ def increment(*, output: abi.Uint64) -> Expr:
     )
 
 
-@counter_app.external(authorize=AuthorizeCreatorOnly)
+@counter_app.external(authorize=Authorize.only_creator())
 def decrement(*, output: abi.Uint64) -> Expr:
     """decrement the counter"""
     return Seq(

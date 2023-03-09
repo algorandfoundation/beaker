@@ -54,12 +54,12 @@ def create() -> pt.Expr:
     )
 
 
-@app.update(authorize=Authorize.only(pt.Global.creator_address()))
+@app.update(authorize=Authorize.only_creator())
 def update() -> pt.Expr:
     return pt.Approve()
 
 
-@app.delete(authorize=Authorize.only(pt.Global.creator_address()))
+@app.delete(authorize=Authorize.only_creator())
 def delete() -> pt.Expr:
     return pt.Approve()
 

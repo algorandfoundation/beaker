@@ -103,13 +103,13 @@ def check_in() -> Expr:
     return rsvp.state.checked_in.set(Int(1))
 
 
-@rsvp.external(authorize=Authorize.only(Global.creator_address()))
+@rsvp.external(authorize=Authorize.only_creator())
 def withdraw_external() -> Expr:
     """Let event creator to withdraw all funds in the contract"""
     return withdraw_funds()
 
 
-@rsvp.delete(bare=True, authorize=Authorize.only(Global.creator_address()))
+@rsvp.delete(bare=True, authorize=Authorize.only_creator())
 def delete() -> Expr:
     """Let event creator delete the contract. Withdraws remaining funds"""
     return If(
@@ -123,7 +123,7 @@ def delete() -> Expr:
 ################
 
 
-@rsvp.external(read_only=True, authorize=Authorize.only(Global.creator_address()))
+@rsvp.external(read_only=True, authorize=Authorize.only_creator())
 def read_rsvp(*, output: abi.Uint64) -> Expr:
     """Read amount of RSVP to the event. Only callable by Creator."""
     return output.set(rsvp.state.rsvp)

@@ -25,7 +25,17 @@ def test_external_read_only() -> None:
 
 
 def test_authorize_only() -> None:
-    auth_only = Authorize.only(pt.Global.creator_address())
+    auth_only = Authorize.only(pt.Global.current_application_address())
+
+    expr = pt.Txn.sender() == pt.Global.current_application_address()
+    expected = expr.__teal__(options)
+    actual = auth_only.__teal__(options)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_authorize_creator() -> None:
+    auth_only = Authorize.only_creator()
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
     expected = expr.__teal__(options)
@@ -37,7 +47,7 @@ def test_authorize_only() -> None:
 def test_external_authorize() -> None:
     app = Application("")
     cmt = "unauthorized"
-    auth_only = Authorize.only(pt.Global.creator_address())
+    auth_only = Authorize.only_creator()
 
     @app.external(authorize=auth_only)
     def creator_only() -> pt.Expr:
@@ -127,7 +137,7 @@ def test_external_authorize_opted_in() -> None:
 def test_authorize_bare_handler() -> None:
     app = Application("")
     cmt = "unauthorized"
-    auth_only = Authorize.only(pt.Global.creator_address())
+    auth_only = Authorize.only_creator()
 
     @app.delete(bare=True, authorize=auth_only)
     def deleter() -> pt.Expr:

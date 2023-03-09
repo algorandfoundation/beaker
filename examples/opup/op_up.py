@@ -5,7 +5,6 @@ from pyteal import (
     Approve,
     Assert,
     Expr,
-    Global,
     InnerTxn,
     InnerTxnBuilder,
     Int,
@@ -37,7 +36,7 @@ def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
         descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
     ).apply(unconditional_create_approval)
 
-    @target_app.external(authorize=Authorize.only(Global.creator_address()))
+    @target_app.external(authorize=Authorize.only_creator())
     def opup() -> Expr:
         return Approve()
 
