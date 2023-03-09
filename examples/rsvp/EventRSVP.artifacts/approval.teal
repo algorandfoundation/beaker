@@ -39,7 +39,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readprice_11
+callsub readprice_7
 store 2
 bytec_2 // 0x151f7c75
 load 2
@@ -57,7 +57,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readrsvp_10
+callsub readrsvp_6
 store 1
 bytec_2 // 0x151f7c75
 load 1
@@ -75,7 +75,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub withdrawexternal_6
+callsub withdrawexternal_4
 intc_1 // 1
 return
 main_l11:
@@ -87,7 +87,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub checkin_4
+callsub checkin_3
 intc_1 // 1
 return
 main_l12:
@@ -141,7 +141,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub delete_8
+callsub delete_5
 intc_1 // 1
 return
 main_l18:
@@ -149,7 +149,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub refund_12
+callsub refund_8
 intc_1 // 1
 return
 
@@ -222,19 +222,12 @@ intc_1 // 1
 app_global_put
 retsub
 
-// auth_opted_in
-authoptedin_3:
-proto 1 1
-frame_dig -1
-global CurrentApplicationID
-app_opted_in
-retsub
-
 // check_in
-checkin_4:
+checkin_3:
 proto 0 0
 txn Sender
-callsub authoptedin_3
+global CurrentApplicationID
+app_opted_in
 // unauthorized
 assert
 txn Sender
@@ -243,37 +236,23 @@ intc_1 // 1
 app_local_put
 retsub
 
-// auth_only
-authonly_5:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
 // withdraw_external
-withdrawexternal_6:
+withdrawexternal_4:
 proto 0 0
 txn Sender
-callsub authonly_5
+global CreatorAddress
+==
 // unauthorized
 assert
 callsub withdrawfunds_0
 retsub
 
-// auth_only
-authonly_7:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
 // delete
-delete_8:
+delete_5:
 proto 0 0
 txn Sender
-callsub authonly_7
+global CreatorAddress
+==
 // unauthorized
 assert
 global CurrentApplicationAddress
@@ -282,25 +261,18 @@ intc_3 // 100000
 intc_2 // 1000
 +
 >
-bz delete_8_l2
+bz delete_5_l2
 callsub withdrawfunds_0
-delete_8_l2:
-retsub
-
-// auth_only
-authonly_9:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
+delete_5_l2:
 retsub
 
 // read_rsvp
-readrsvp_10:
+readrsvp_6:
 proto 0 1
 intc_0 // 0
 txn Sender
-callsub authonly_9
+global CreatorAddress
+==
 // unauthorized
 assert
 bytec_0 // "rsvp"
@@ -309,7 +281,7 @@ frame_bury 0
 retsub
 
 // read_price
-readprice_11:
+readprice_7:
 proto 0 1
 intc_0 // 0
 bytec_1 // "price"
@@ -318,7 +290,7 @@ frame_bury 0
 retsub
 
 // refund
-refund_12:
+refund_8:
 proto 0 0
 itxn_begin
 intc_1 // pay

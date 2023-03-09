@@ -29,7 +29,7 @@ def test_authorize_only() -> None:
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
     expected = expr.__teal__(options)
-    actual = auth_only.subroutine.implementation(pt.Txn.sender()).__teal__(options)
+    actual = auth_only.__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
@@ -43,7 +43,7 @@ def test_external_authorize() -> None:
     def creator_only() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
+    expr = pt.Seq(pt.Assert(auth_only, comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = creator_only.subroutine.implementation().__teal__(options)
@@ -63,9 +63,7 @@ def test_authorize_holds_token() -> None:
     balance = pt.AssetHolding.balance(pt.Txn.sender(), asset_id)
     expr = pt.Seq(balance, pt.And(balance.hasValue(), balance.value() > pt.Int(0)))
     expected = expr.__teal__(options)
-    actual = auth_holds_token.subroutine.implementation(pt.Txn.sender()).__teal__(
-        options
-    )
+    actual = auth_holds_token.__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -81,9 +79,7 @@ def test_external_authorize_holds_token() -> None:
     def holds_token_only() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(
-        pt.Assert(auth_holds_token(pt.Txn.sender()), comment=cmt), pt.Approve()
-    )
+    expr = pt.Seq(pt.Assert(auth_holds_token, comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = holds_token_only.subroutine.implementation().__teal__(options)
@@ -103,7 +99,7 @@ def test_authorize_opted_in() -> None:
     expr = pt.App.optedIn(pt.Txn.sender(), app_id)
 
     expected = expr.__teal__(options)
-    actual = auth_opted_in.subroutine.implementation(pt.Txn.sender()).__teal__(options)
+    actual = auth_opted_in.__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -119,7 +115,7 @@ def test_external_authorize_opted_in() -> None:
     def opted_in_only() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender()), comment=cmt), pt.Approve())
+    expr = pt.Seq(pt.Assert(auth_opted_in, comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = opted_in_only.subroutine.implementation().__teal__(options)
@@ -137,7 +133,7 @@ def test_authorize_bare_handler() -> None:
     def deleter() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
+    expr = pt.Seq(pt.Assert(auth_only, comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = deleter.subroutine.implementation().__teal__(options)

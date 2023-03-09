@@ -11,7 +11,6 @@ from pyteal import (
     Global,
     Int,
     Seq,
-    Subroutine,
     SubroutineFnWrapper,
     TealInputError,
     TealType,
@@ -33,46 +32,28 @@ class Authorize:
     """
 
     @staticmethod
-    def only(addr: Expr) -> SubroutineFnWrapper:
+    def only(addr: Expr) -> Expr:
         """require that the sender of the app call match exactly the address passed"""
-
         require_type(addr, TealType.bytes)
-
-        @Subroutine(TealType.uint64, name="auth_only")
-        def _impl(sender: Expr) -> Expr:
-            return sender == addr
-
-        return _impl
+        return Txn.sender() == addr
 
     @staticmethod
-    def holds_token(asset_id: Expr) -> SubroutineFnWrapper:
+    def holds_token(asset_id: Expr) -> Expr:
         """require that the sender of the app call holds >0 of the asset id passed"""
-
         require_type(asset_id, TealType.uint64)
-
-        @Subroutine(TealType.uint64, name="auth_holds_token")
-        def _impl(sender: Expr) -> Expr:
-            return Seq(
-                bal := AssetHolding.balance(sender, asset_id),
-                And(bal.hasValue(), bal.value() > Int(0)),
-            )
-
-        return _impl
+        return Seq(
+            bal := AssetHolding.balance(Txn.sender(), asset_id),
+            And(bal.hasValue(), bal.value() > Int(0)),
+        )
 
     @staticmethod
     def opted_in(
         app_id: Expr = Global.current_application_id(),  # noqa: B008
-    ) -> SubroutineFnWrapper:
+    ) -> Expr:
         """require that the sender of the app call has
         already opted-in to a given app id"""
-
         require_type(app_id, TealType.uint64)
-
-        @Subroutine(TealType.uint64, name="auth_opted_in")
-        def _impl(sender: Expr) -> Expr:
-            return App.optedIn(sender, app_id)
-
-        return _impl
+        return App.optedIn(Txn.sender(), app_id)
 
 
 HandlerReturn = TypeVar("HandlerReturn", bound=Expr)
@@ -80,16 +61,21 @@ HandlerParams = ParamSpec("HandlerParams")
 
 
 def authorize(
-    allowed: SubroutineFnWrapper,
+    allowed: Expr | SubroutineFnWrapper,
 ) -> Callable[[Callable[HandlerParams, HandlerReturn]], Callable[HandlerParams, Expr]]:
-    auth_sub_args = allowed.subroutine.expected_arg_types
 
-    if len(auth_sub_args) != 1 or auth_sub_args[0] is not Expr:
-        raise TealInputError(
-            "Expected a single expression argument to authorize function"
-        )
+    if isinstance(allowed, SubroutineFnWrapper):
+        auth_sub_args = allowed.subroutine.expected_arg_types
 
-    require_type(allowed, TealType.uint64)
+        if len(auth_sub_args) != 1 or auth_sub_args[0] is not Expr:
+            raise TealInputError(
+                "Expected a single expression argument to authorize function"
+            )
+        require_type(allowed, TealType.uint64)
+        expr = allowed(Txn.sender())
+    else:
+        require_type(allowed, TealType.uint64)
+        expr = allowed
 
     def decorator(
         fn: Callable[HandlerParams, HandlerReturn]
@@ -97,7 +83,7 @@ def authorize(
         @wraps(fn)
         def wrapped(*args: HandlerParams.args, **kwargs: HandlerParams.kwargs) -> Expr:
             return Seq(
-                Assert(allowed(Txn.sender()), comment="unauthorized"),
+                Assert(expr, comment="unauthorized"),
                 fn(*args, **kwargs),
             )
 

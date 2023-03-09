@@ -27,7 +27,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getnick_8
+callsub getnick_6
 store 0
 pushbytes 0x151f7c75 // 0x151f7c75
 load 0
@@ -45,7 +45,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub setnick_7
+callsub setnick_5
 intc_1 // 1
 return
 main_l7:
@@ -58,7 +58,7 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-callsub setmanager_6
+callsub setmanager_4
 intc_1 // 1
 return
 main_l8:
@@ -84,7 +84,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub delete_4
+callsub delete_3
 intc_1 // 1
 return
 main_l14:
@@ -135,39 +135,25 @@ proto 0 0
 intc_1 // 1
 return
 
-// auth_only
-authonly_3:
-proto 1 1
-frame_dig -1
+// delete
+delete_3:
+proto 0 0
+txn Sender
 bytec_0 // "manager"
 app_global_get
 ==
-retsub
-
-// delete
-delete_4:
-proto 0 0
-txn Sender
-callsub authonly_3
 // unauthorized
 assert
 intc_1 // 1
 return
 
-// auth_only
-authonly_5:
-proto 1 1
-frame_dig -1
+// set_manager
+setmanager_4:
+proto 1 0
+txn Sender
 bytec_0 // "manager"
 app_global_get
 ==
-retsub
-
-// set_manager
-setmanager_6:
-proto 1 0
-txn Sender
-callsub authonly_5
 // unauthorized
 assert
 bytec_0 // "manager"
@@ -176,7 +162,7 @@ app_global_put
 retsub
 
 // set_nick
-setnick_7:
+setnick_5:
 proto 1 0
 txn Sender
 bytec_1 // "nickname"
@@ -186,7 +172,7 @@ app_local_put
 retsub
 
 // get_nick
-getnick_8:
+getnick_6:
 proto 0 1
 bytec_2 // ""
 txn Sender
