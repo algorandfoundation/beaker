@@ -6,7 +6,6 @@ from pyteal import (
     Int,
     Seq,
     TealType,
-    TxnField,
     abi,
 )
 
@@ -55,8 +54,9 @@ parent_app = Application("Parent").apply(unconditional_create_approval)
 @parent_app.external
 def create_child_1(*, output: abi.Uint64) -> Expr:
     """Create a new child app."""
+    c1_app_precompiled = precompiled(child1_app)
     return Seq(
-        InnerTxnBuilder.Execute(precompiled(child1_app).get_create_config()),
+        InnerTxnBuilder.Execute(c1_app_precompiled.get_create_config()),
         output.set(InnerTxn.created_application_id()),
     )
 
@@ -64,13 +64,9 @@ def create_child_1(*, output: abi.Uint64) -> Expr:
 @parent_app.external
 def create_child_2(*, output: abi.Uint64) -> Expr:
     """Create a new child app."""
+    c2_app_precompiled = precompiled(child2_app)
     return Seq(
-        InnerTxnBuilder.Execute(
-            {
-                **precompiled(child2_app).get_create_config(),
-                TxnField.global_num_uints: Int(1),  # override because..?
-            }
-        ),
+        InnerTxnBuilder.Execute(c2_app_precompiled.get_create_config()),
         output.set(InnerTxn.created_application_id()),
     )
 

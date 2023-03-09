@@ -67,7 +67,8 @@ class LogicSignatureTemplate:
         """initialize the logic signature and identify relevant attributes"""
         if not runtime_template_variables:
             raise ValueError(
-                "No runtime template variables supplied - use LogicSignature instead if that was intentional"
+                "No runtime template variables supplied - use LogicSignature instead "
+                "if that was intentional"
             )
 
         build_options = build_options or BuildOptions()
@@ -96,6 +97,7 @@ class LogicSignatureTemplate:
                 raise ValueError(
                     f"Logic signature template got unexpected arguments: {', '.join(invalid_args)}."
                 )
+
             forward_args = list(params.keys())
             logic = expr_or_func(
                 *[self.runtime_template_variables[name] for name in forward_args]

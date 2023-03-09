@@ -546,6 +546,23 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """
+        Add the method decorated to be handled during Application create
+
+        Args:
+            fn: The function being wrapped.
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+                interpreted as allowed if the output>0.
+            bare:
+            override:
+
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
+        """
+
         decorator = self.external(
             method_config={"no_op": CallConfig.CREATE},
             name=name,
@@ -625,6 +642,22 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """
+        Add the method decorated to be handled during Application deletion
+
+        Args:
+            fn: The function being wrapped.
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+                interpreted as allowed if the output>0.
+            bare:
+            override:
+
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
+        """
 
         decorator = self.external(
             method_config={"delete_application": CallConfig.CALL},
@@ -705,6 +738,22 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """
+        Add the method decorated to be handled during Application update
+
+        Args:
+            fn: The function being wrapped.
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+                interpreted as allowed if the output>0.
+            bare:
+            override:
+
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
+        """
         decorator = self.external(
             method_config={"update_application": CallConfig.CALL},
             name=name,
@@ -789,6 +838,22 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """
+        Add the method decorated to be handled during Application opt-in
+
+        Args:
+            fn: The function being wrapped.
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+                interpreted as allowed if the output>0.
+            bare:
+            override:
+
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
+        """
         decorator = self.external(
             method_config={
                 "opt_in": CallConfig.ALL if allow_create else CallConfig.CALL
@@ -870,6 +935,20 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """
+        Add the method decorated to be handled during Application close-out
+
+        Args:
+            fn: The function being wrapped.
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize:
+            bare:
+            override:
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
+        """
         decorator = self.external(
             method_config={"close_out": CallConfig.CALL},
             name=name,
@@ -963,6 +1042,24 @@ class Application(Generic[TState]):
         read_only: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """
+        Add the method decorated to be handled as an ABI method for the Application
+
+        Args:
+            fn: The function being wrapped.
+            method_config:  <TODO>
+            name: Name of ABI method. If not set, name of the python method will be used.
+                Useful for method overriding.
+            authorize: a subroutine with input of ``Txn.sender()`` and output uint64
+                interpreted as allowed if the output>0.
+            bare:
+            read_only: Mark a method as callable with no fee using dryrun or simulate
+            override:
+
+        Returns:
+            The original method with additional elements set in it's
+            :code:`__handler_config__` attribute
+        """
         if allow_call and allow_create:
             call_config = CallConfig.ALL
         elif allow_call:
@@ -1029,6 +1126,15 @@ class Application(Generic[TState]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> "Application[TState]":
+        """
+        Add additional functionality implemented in the blueprint to the application
+
+        Args:
+            blueprint: The method that accepts an application and optionally
+                other parameters.
+        Returns:
+            :code:`Application`
+        """
         func(self, *args, **kwargs)
         return self
 

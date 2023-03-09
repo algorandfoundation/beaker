@@ -1,6 +1,6 @@
 from pyteal import Expr, abi
 
-from beaker import Application, sandbox
+from beaker import Application
 from beaker.client import ApplicationClient
 
 calculator_app = Application("Calculator")
@@ -31,6 +31,8 @@ def div(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
 
 
 def demo() -> None:
+    from beaker import sandbox
+
     # Here we use `sandbox` but beaker.client.api_providers can also be used
     # with something like ``AlgoNode(Network.TestNet).algod()``
     algod_client = sandbox.get_algod_client()

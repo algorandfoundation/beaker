@@ -45,8 +45,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../precompile.html">Precompile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../decorators.html">Decorator Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../boxes.html">Boxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../migration.html">1.0 Migration Guide</a></li>
 </ul>
 
@@ -103,7 +104,7 @@
 
 
 <span class="c1"># TODO: refactor this to be more of an Expr builder so it becomes composable</span>
-<div class="viewcode-block" id="Authorize"><a class="viewcode-back" href="../../decorators.html#beaker.decorators.Authorize">[docs]</a><span class="k">class</span> <span class="nc">Authorize</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">Authorize</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Authorize contains methods that may be used as values to</span>
 <span class="sd">    the `authorize` keyword of the `handle` decorator</span>
@@ -152,7 +153,7 @@
         <span class="k">def</span> <span class="nf">_impl</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">App</span><span class="o">.</span><span class="n">optedIn</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">app_id</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">_impl</span></div></div>
+        <span class="k">return</span> <span class="n">_impl</span></div>
 
 
 <span class="n">HandlerReturn</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;HandlerReturn&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Expr</span><span class="p">)</span>

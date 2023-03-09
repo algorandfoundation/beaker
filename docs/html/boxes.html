@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boxes &mdash; Beaker  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="1.0 Migration Guide" href="migration.html" />
+    <link rel="prev" title="Testing" href="testing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Beaker
+            <img src="_static/beaker.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lsig.html">Logic Signatures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorator Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Boxes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#boxmapping">BoxMapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#boxlist">BoxList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#full-example">Full Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">1.0 Migration Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Beaker</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Boxes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/boxes.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="boxes">
+<span id="id1"></span><h1>Boxes<a class="headerlink" href="#boxes" title="Permalink to this heading"></a></h1>
+<p>Applications that need to maintain a large amount of state can use <code class="docutils literal notranslate"><span class="pre">Box</span></code> data storage.</p>
+<p><a class="reference internal" href="#box-example"><span class="std std-ref">Full Example</span></a></p>
+<p>While <code class="docutils literal notranslate"><span class="pre">PyTeal</span></code> provides the basic tools for working with boxes, <code class="docutils literal notranslate"><span class="pre">Beaker</span></code> provides a few handy abstractions for working with them.</p>
+<section id="boxmapping">
+<span id="mapping"></span><h2>BoxMapping<a class="headerlink" href="#boxmapping" title="Permalink to this heading"></a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">BoxMapping</span></code> provides a way to store data with a given key.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Care should be taken to ensure if multiple <code class="docutils literal notranslate"><span class="pre">BoxMapping</span></code> types are used, there is no overlap with keys. If there may be overlap, a <code class="docutils literal notranslate"><span class="pre">prefix</span></code> argument <em>MUST</em> be set in order to provide a unique namespace.</p>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.lib.storage.</span></span><span class="sig-name descname"><span class="pre">BoxMapping</span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping" title="Permalink to this definition"></a></dt>
+<dd><p>Mapping provides an abstraction to store some typed data in a box keyed with a typed key</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Element</span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element" title="Permalink to this definition"></a></dt>
+<dd><p>Container type for a specific box key and type</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.11)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><span class="pre">pyteal.abi.BaseType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element.delete" title="Permalink to this definition"></a></dt>
+<dd><p>delete the box at this key</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element.exists">
+<span class="sig-name descname"><span class="pre">exists</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element.exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element.exists" title="Permalink to this definition"></a></dt>
+<dd><p>check to see if a box with this key exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element.get" title="Permalink to this definition"></a></dt>
+<dd><p>get the bytes from this box.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pyteal.abi.BaseType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pyteal.Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element.set" title="Permalink to this definition"></a></dt>
+<dd><p>overwrites the contents of the box with the provided value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> – An instance of the type or an Expr that evaluates to bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.Element.store_into">
+<span class="sig-name descname"><span class="pre">store_into</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.Element.store_into"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.Element.store_into" title="Permalink to this definition"></a></dt>
+<dd><p>decode the bytes from this box into an abi type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> – An instance of the type to be populated with the bytes from the box</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxMapping.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.11)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><span class="pre">pyteal.abi.BaseType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.11)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><span class="pre">pyteal.abi.BaseType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Expr</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/lib/storage/box_mapping.html#BoxMapping.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxMapping.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize a Mapping object with details about storage</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key_type</strong> – The type that will be used for the key. This type <em>MUST</em> encode to a byte string of &lt; 64 bytes or it will fail at runtime.</p></li>
+<li><p><strong>value_type</strong> – The type to be stored in the box.</p></li>
+<li><p><strong>prefix</strong> (<em>Optional</em>) – An optional argument to prefix the key, providing a name space in order to avoid collisions with other mappings using the same keys</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="boxlist">
+<span id="listing"></span><h2>BoxList<a class="headerlink" href="#boxlist" title="Permalink to this heading"></a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">BoxList</span></code> provides a way to store some number of some _static_ abi type.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since the <code class="docutils literal notranslate"><span class="pre">BoxList</span></code> uses the size of the element to compute the offset into the box, the data type <em>MUST</em> be static.</p>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.lib.storage.</span></span><span class="sig-name descname"><span class="pre">BoxList</span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList" title="Permalink to this definition"></a></dt>
+<dd><p>List stores a list of static types in a box, named as the class attribute unless an overriding name is provided</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Element</span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element.get" title="Permalink to this definition"></a></dt>
+<dd><p>get the bytes for this element in the list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element.has_return">
+<span class="sig-name descname"><span class="pre">has_return</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element.has_return"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element.has_return" title="Permalink to this definition"></a></dt>
+<dd><p>Check if this expression always returns from the current subroutine or program.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element.set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element.set" title="Permalink to this definition"></a></dt>
+<dd><p>set the bytes for this element in the list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>index</strong> (<em>The value to write into the list at the given</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element.store_into">
+<span class="sig-name descname"><span class="pre">store_into</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element.store_into"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element.store_into" title="Permalink to this definition"></a></dt>
+<dd><p>decode the bytes from this list element into the instance of the type provided</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> – An instance of the type to decode into</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.Element.type_of">
+<span class="sig-name descname"><span class="pre">type_of</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TealType</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.Element.type_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.Element.type_of" title="Permalink to this definition"></a></dt>
+<dd><p>Get the return type of this expression.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.11)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><span class="pre">pyteal.abi.BaseType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.lib.storage.BoxList.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/lib/storage/box_list.html#BoxList.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.lib.storage.BoxList.create" title="Permalink to this definition"></a></dt>
+<dd><p>creates a box with the given name and with a size that will allow storage of the number of the element specified.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="full-example">
+<span id="box-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">typing</span>
+
+<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Assert</span><span class="p">,</span>
+    <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">Global</span><span class="p">,</span>
+    <span class="n">InnerTxn</span><span class="p">,</span>
+    <span class="n">InnerTxnBuilder</span><span class="p">,</span>
+    <span class="n">Int</span><span class="p">,</span>
+    <span class="n">Pop</span><span class="p">,</span>
+    <span class="n">Seq</span><span class="p">,</span>
+    <span class="n">Suffix</span><span class="p">,</span>
+    <span class="n">TealType</span><span class="p">,</span>
+    <span class="n">TxnField</span><span class="p">,</span>
+    <span class="n">TxnType</span><span class="p">,</span>
+    <span class="n">abi</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Application</span><span class="p">,</span>
+    <span class="n">Authorize</span><span class="p">,</span>
+    <span class="n">GlobalStateValue</span><span class="p">,</span>
+    <span class="n">consts</span><span class="p">,</span>
+    <span class="n">unconditional_create_approval</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">beaker.consts</span> <span class="kn">import</span> <span class="n">ASSET_MIN_BALANCE</span><span class="p">,</span> <span class="n">BOX_BYTE_MIN_BALANCE</span><span class="p">,</span> <span class="n">BOX_FLAT_MIN_BALANCE</span>
+<span class="kn">from</span> <span class="nn">beaker.lib.storage</span> <span class="kn">import</span> <span class="n">BoxList</span><span class="p">,</span> <span class="n">BoxMapping</span>
+
+
+<span class="c1"># NamedTuple we&#39;ll store in a box per member</span>
+<span class="k">class</span> <span class="nc">MembershipRecord</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Field</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">]</span>
+    <span class="n">voted</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Field</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">]</span>
+
+
+<span class="c1"># Custom type alias</span>
+<span class="n">Affirmation</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
+
+
+<span class="k">class</span> <span class="nc">MembershipClubState</span><span class="p">:</span>
+    <span class="n">membership_token</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span>
+        <span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
+        <span class="n">static</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;The asset that represents membership of this club&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># A Listing is a simple list, initialized with some _static_ data type and a length</span>
+    <span class="n">affirmations</span> <span class="o">=</span> <span class="n">BoxList</span><span class="p">(</span><span class="n">Affirmation</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_members</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">record_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">abi</span><span class="o">.</span><span class="n">BaseType</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record_type</span> <span class="o">=</span> <span class="n">record_type</span>
+        <span class="c1"># A Mapping will create a new box for every unique key,</span>
+        <span class="c1"># taking a data type for key and value</span>
+        <span class="c1"># Only static types can provide information about the max</span>
+        <span class="c1"># size (and thus min balance required) - dynamic types will fail at abi.size_of</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">membership_records</span> <span class="o">=</span> <span class="n">BoxMapping</span><span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="n">record_type</span><span class="p">)</span>
+
+        <span class="c1"># Math for determining min balance based on expected size of boxes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_members</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="n">max_members</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimum_balance</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span>
+            <span class="n">ASSET_MIN_BALANCE</span>  <span class="c1"># Cover min bal for member token</span>
+            <span class="o">+</span> <span class="p">(</span><span class="n">BOX_FLAT_MIN_BALANCE</span> <span class="o">+</span> <span class="p">(</span><span class="n">abi</span><span class="o">.</span><span class="n">size_of</span><span class="p">(</span><span class="n">record_type</span><span class="p">)</span> <span class="o">*</span> <span class="n">BOX_BYTE_MIN_BALANCE</span><span class="p">))</span>
+            <span class="o">*</span> <span class="n">max_members</span>  <span class="c1"># cover min bal for member record boxes we might create</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="n">BOX_FLAT_MIN_BALANCE</span>
+                <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">affirmations</span><span class="o">.</span><span class="n">box_size</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">BOX_BYTE_MIN_BALANCE</span><span class="p">)</span>
+            <span class="p">)</span>  <span class="c1"># cover min bal for affirmation box</span>
+        <span class="p">)</span>
+
+
+<span class="n">membership_club_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span>
+    <span class="s2">&quot;MembershipClub&quot;</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="n">MembershipClubState</span><span class="p">(</span><span class="n">max_members</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">record_type</span><span class="o">=</span><span class="n">MembershipRecord</span><span class="p">),</span>
+<span class="p">)</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+<span class="k">def</span> <span class="nf">bootstrap</span><span class="p">(</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">PaymentTransaction</span><span class="p">,</span>
+    <span class="n">token_name</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;create membership token and receive initial seed payment&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+        <span class="n">Assert</span><span class="p">(</span>
+            <span class="n">seed</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">receiver</span><span class="p">()</span> <span class="o">==</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;payment must be to app address&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">Assert</span><span class="p">(</span>
+            <span class="n">seed</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">amount</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">minimum_balance</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;payment must be for &gt;= </span><span class="si">{</span><span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">minimum_balance</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">Pop</span><span class="p">(</span><span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">affirmations</span><span class="o">.</span><span class="n">create</span><span class="p">()),</span>
+        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">AssetConfig</span><span class="p">,</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_name</span><span class="p">:</span> <span class="n">token_name</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_total</span><span class="p">:</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">max_members</span><span class="p">,</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_default_frozen</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_manager</span><span class="p">:</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_clawback</span><span class="p">:</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_freeze</span><span class="p">:</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">config_asset_reserve</span><span class="p">:</span> <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+                <span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">),</span>
+        <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_asset_id</span><span class="p">()),</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+<span class="k">def</span> <span class="nf">remove_member</span><span class="p">(</span><span class="n">member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Pop</span><span class="p">(</span><span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="p">]</span><span class="o">.</span><span class="n">delete</span><span class="p">())</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+<span class="k">def</span> <span class="nf">add_member</span><span class="p">(</span>
+    <span class="n">new_member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Account</span><span class="p">,</span>
+    <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">role</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">voted</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">consts</span><span class="o">.</span><span class="n">FALSE</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">mr</span> <span class="o">:=</span> <span class="n">MembershipRecord</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">voted</span><span class="p">),</span>
+        <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">new_member</span><span class="o">.</span><span class="n">address</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mr</span><span class="p">),</span>
+        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+            <span class="n">clawback_axfer</span><span class="p">(</span>
+                <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">,</span>
+                <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">new_member</span><span class="o">.</span><span class="n">address</span><span class="p">(),</span>
+                <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)},</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()))</span>
+<span class="k">def</span> <span class="nf">update_role</span><span class="p">(</span><span class="n">member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Account</span><span class="p">,</span> <span class="n">new_role</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">mr</span> <span class="o">:=</span> <span class="n">MembershipRecord</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+            <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="o">.</span><span class="n">address</span><span class="p">()]</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="p">),</span>
+        <span class="c1"># retain their voted status</span>
+        <span class="p">(</span><span class="n">voted</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">Bool</span><span class="p">())</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mr</span><span class="o">.</span><span class="n">voted</span><span class="p">),</span>
+        <span class="n">mr</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_role</span><span class="p">,</span> <span class="n">voted</span><span class="p">),</span>
+        <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="o">.</span><span class="n">address</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mr</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">get_membership_record</span><span class="p">(</span><span class="n">member</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">MembershipRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_records</span><span class="p">[</span><span class="n">member</span><span class="p">]</span><span class="o">.</span><span class="n">store_into</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span>
+    <span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">holds_token</span><span class="p">(</span><span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">set_affirmation</span><span class="p">(</span>
+    <span class="n">idx</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint16</span><span class="p">,</span>
+    <span class="n">affirmation</span><span class="p">:</span> <span class="n">Affirmation</span><span class="p">,</span>
+    <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">affirmations</span><span class="p">[</span><span class="n">idx</span><span class="o">.</span><span class="n">get</span><span class="p">()]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">affirmation</span><span class="p">)</span>
+
+
+<span class="nd">@membership_club_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span>
+    <span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">holds_token</span><span class="p">(</span><span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_affirmation</span><span class="p">(</span>
+    <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Affirmation</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+        <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">affirmations</span><span class="p">[</span>
+            <span class="n">Global</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">%</span> <span class="n">membership_club_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">affirmations</span><span class="o">.</span><span class="n">elements</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">MemberState</span><span class="p">:</span>
+    <span class="n">club_app_id</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+    <span class="n">last_affirmation</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+    <span class="n">membership_token</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+
+
+<span class="n">app_member_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;AppMember&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">MemberState</span><span class="p">())</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+    <span class="n">unconditional_create_approval</span>
+<span class="p">)</span>
+
+
+<span class="nd">@app_member_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span>
+    <span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bootstrap&quot;</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">app_member_bootstrap</span><span class="p">(</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">PaymentTransaction</span><span class="p">,</span>
+    <span class="n">app_id</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Application</span><span class="p">,</span>
+    <span class="n">membership_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+        <span class="c1"># Set app id</span>
+        <span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">club_app_id</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">app_id</span><span class="o">.</span><span class="n">application_id</span><span class="p">()),</span>
+        <span class="c1"># Set membership token</span>
+        <span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">membership_token</span><span class="o">.</span><span class="n">asset_id</span><span class="p">()),</span>
+        <span class="c1"># Opt in to membership token</span>
+        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+            <span class="n">axfer</span><span class="p">(</span>
+                <span class="n">membership_token</span><span class="o">.</span><span class="n">asset_id</span><span class="p">(),</span>
+                <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">Global</span><span class="o">.</span><span class="n">current_application_address</span><span class="p">(),</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="n">TxnField</span><span class="o">.</span><span class="n">fee</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)},</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@app_member_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;get_affirmation&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">app_member_get_affirmation</span><span class="p">(</span>
+    <span class="n">member_token</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Asset</span> <span class="o">=</span> <span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">membership_token</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">club_app</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Application</span> <span class="o">=</span> <span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">club_app_id</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">ExecuteMethodCall</span><span class="p">(</span>
+            <span class="n">app_id</span><span class="o">=</span><span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">club_app_id</span><span class="p">,</span>
+            <span class="n">method_signature</span><span class="o">=</span><span class="n">get_affirmation</span><span class="o">.</span><span class="n">method_signature</span><span class="p">(),</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">member_token</span><span class="p">],</span>
+        <span class="p">),</span>
+        <span class="n">app_member_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">last_affirmation</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Suffix</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">last_log</span><span class="p">(),</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">))),</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># Utility functions</span>
+<span class="k">def</span> <span class="nf">axfer</span><span class="p">(</span>
+    <span class="n">asset_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">amount</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">receiver</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Mapping</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]]:</span>
+    <span class="n">base</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">TxnField</span><span class="o">.</span><span class="n">type_enum</span><span class="p">:</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">AssetTransfer</span><span class="p">,</span>
+        <span class="n">TxnField</span><span class="o">.</span><span class="n">xfer_asset</span><span class="p">:</span> <span class="n">asset_id</span><span class="p">,</span>
+        <span class="n">TxnField</span><span class="o">.</span><span class="n">asset_amount</span><span class="p">:</span> <span class="n">amount</span><span class="p">,</span>
+        <span class="n">TxnField</span><span class="o">.</span><span class="n">asset_receiver</span><span class="p">:</span> <span class="n">receiver</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">base</span> <span class="o">|</span> <span class="p">(</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">{})</span>
+
+
+<span class="k">def</span> <span class="nf">clawback_axfer</span><span class="p">(</span>
+    <span class="n">asset_id</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">amount</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">receiver</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">clawback_addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TxnField</span><span class="p">,</span> <span class="n">Expr</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="n">axfer</span><span class="p">(</span>
+        <span class="n">asset_id</span><span class="p">,</span>
+        <span class="n">amount</span><span class="p">,</span>
+        <span class="n">receiver</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">{})</span> <span class="o">|</span> <span class="p">{</span><span class="n">TxnField</span><span class="o">.</span><span class="n">asset_sender</span><span class="p">:</span> <span class="n">clawback_addr</span><span class="p">},</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="testing.html" class="btn btn-neutral float-left" title="Testing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="migration.html" class="btn btn-neutral float-right" title="1.0 Migration Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Algorand.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

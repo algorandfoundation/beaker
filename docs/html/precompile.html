@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Decorators" href="decorators.html" />
+    <link rel="next" title="Decorator Parameters" href="decorators.html" />
     <link rel="prev" title="State" href="state.html" /> 
 </head>
 
@@ -48,11 +48,14 @@
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Precompile</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-beaker.precompile">Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorator Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="boxes.html">Boxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration.html">1.0 Migration Guide</a></li>
 </ul>
 
@@ -82,26 +85,27 @@
              
   <section id="precompile">
 <h1>Precompile<a class="headerlink" href="#precompile" title="Permalink to this heading"></a></h1>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Out of date, needs to be updated to 1.0</p>
-</div>
-<p>A Precompile as an attribute on a Beaker Application allows the contract to
-have some program be included in the source of the applications programs.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">precompile</span></code> is useful if you need the fully assembled binary representation of a TEAL program in the logic of another TEAL program.</p>
 <p><a class="reference internal" href="#offload-compute-example"><span class="std std-ref">One example</span></a> of where it might be used is in offloading some compute into a LogicSignature
 which has a max budget of 20k ops compared with 700 ops in a single Application call.</p>
+<p>By using the <code class="docutils literal notranslate"><span class="pre">precompile</span></code> in this way we can check the address to be sure that the LogicSig is the one we expect.</p>
 <p><a class="reference internal" href="#sub-app-example"><span class="std std-ref">Another example</span></a> might be if you need to deploy some child Application and want to have the logic
 locally as compiled bytes to create the app directly in program logic.</p>
-<p>When you include an <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> or <code class="docutils literal notranslate"><span class="pre">LSigPrecompile</span></code> in your Application as a class var, Beaker knows to prevent building the TEAL
-until the <code class="docutils literal notranslate"><span class="pre">Precompiles</span></code> it depends on are fully assembled.</p>
-<dl class="simple">
-<dt>This can be done in two ways:</dt><dd><ol class="arabic simple">
-<li><p>By passing the top level <code class="docutils literal notranslate"><span class="pre">Application</span></code> to an <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> and calling the <code class="docutils literal notranslate"><span class="pre">build</span></code> method, the top level <code class="docutils literal notranslate"><span class="pre">Application</span></code> will have its dependencies fully assembled recursively.</p></li>
-<li><p>By calling <code class="docutils literal notranslate"><span class="pre">compile</span></code> method on the <code class="docutils literal notranslate"><span class="pre">AppPrecompile</span></code> or <code class="docutils literal notranslate"><span class="pre">LSigPrecompile</span></code> and passing an <code class="docutils literal notranslate"><span class="pre">AlgodClient</span></code> to assemble the dependencies.</p></li>
-</ol>
-</dd>
-</dl>
-<span class="target" id="module-beaker.precompile"></span><dl class="py class">
+<p>By using the <code class="docutils literal notranslate"><span class="pre">precompile</span></code> in this way, we can deploy the Sub Application directly from our Parent app.</p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
+<p>In order to use a <code class="docutils literal notranslate"><span class="pre">Precompile</span></code> in a program, first wrap the <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> or <code class="docutils literal notranslate"><span class="pre">Application</span></code> with the <code class="docutils literal notranslate"><span class="pre">precompile</span></code> method. This will ensure that the program is fully compiled once and only once and the binary versions of the assembled programs are available when it’s time to build the containing Application or LogicSignature.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">precompile</span></code> function may _only_ be called inside a function.</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+</pre></div>
+</div>
+</section>
+<section id="module-beaker.precompile">
+<span id="reference"></span><h2>Reference<a class="headerlink" href="#module-beaker.precompile" title="Permalink to this heading"></a></h2>
+<dl class="py class">
 <dt class="sig sig-object py" id="beaker.precompile.PrecompiledApplication">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">PrecompiledApplication</span></span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompiledApplication"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompiledApplication" title="Permalink to this definition"></a></dt>
 <dd><p>AppPrecompile allows a smart contract to signal that some child Application
@@ -140,43 +144,47 @@ should be fully compiled prior to constructing its own program.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="beaker.precompile.PrecompileTemplateValue">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">PrecompileTemplateValue</span></span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompileTemplateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompileTemplateValue" title="Permalink to this definition"></a></dt>
-<dd><p>PrecompileTemplateValue(pc: int = 0, <a href="#id1"><span class="problematic" id="id2">*</span></a>, is_bytes: bool, line: int)</p>
+<dt class="sig sig-object py" id="beaker.precompile.PrecompiledLogicSignatureTemplate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.precompile.</span></span><span class="sig-name descname"><span class="pre">PrecompiledLogicSignatureTemplate</span></span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompiledLogicSignatureTemplate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompiledLogicSignatureTemplate" title="Permalink to this definition"></a></dt>
+<dd><p>LSigPrecompile allows a smart contract to signal that some child Logic Signature
+should be fully compiled prior to constructing its own program.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="beaker.precompile.PrecompileTemplateValue.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#beaker.precompile.PrecompileTemplateValue.__init__" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="beaker.precompile.PrecompiledLogicSignatureTemplate.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lsig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="lsig.html#beaker.logic_signature.LogicSignatureTemplate" title="beaker.logic_signature.LogicSignatureTemplate"><span class="pre">LogicSignatureTemplate</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AlgodClient</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompiledLogicSignatureTemplate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompiledLogicSignatureTemplate.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.precompile.PrecompileTemplateValue.is_bytes">
-<span class="sig-name descname"><span class="pre">is_bytes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></em><a class="headerlink" href="#beaker.precompile.PrecompileTemplateValue.is_bytes" title="Permalink to this definition"></a></dt>
-<dd><p>Whether or not this variable is bytes (if false, its uint64)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.PrecompiledLogicSignatureTemplate.address">
+<span class="sig-name descname"><span class="pre">address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompiledLogicSignatureTemplate.address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompiledLogicSignatureTemplate.address" title="Permalink to this definition"></a></dt>
+<dd><p>returns an expression that will generate the expected
+hash given some set of values that should be included in the logic itself</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.precompile.PrecompileTemplateValue.line">
-<span class="sig-name descname"><span class="pre">line</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#beaker.precompile.PrecompileTemplateValue.line" title="Permalink to this definition"></a></dt>
-<dd><p>The line number in the source TEAL this variable is present</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.PrecompiledLogicSignatureTemplate.populate_template">
+<span class="sig-name descname"><span class="pre">populate_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.11)"><span class="pre">bytes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.11)"><span class="pre">bytes</span></a></span></span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompiledLogicSignatureTemplate.populate_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompiledLogicSignatureTemplate.populate_template" title="Permalink to this definition"></a></dt>
+<dd><p>populate_template returns the bytes resulting from patching the set of
+arguments passed into the blank binary</p>
+<p>The args passed should be of the same type and in the same order as the
+template values declared.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="beaker.precompile.PrecompileTemplateValue.pc">
-<span class="sig-name descname"><span class="pre">pc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#beaker.precompile.PrecompileTemplateValue.pc" title="Permalink to this definition"></a></dt>
-<dd><p>The pc of the variable in the assembled bytecode</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beaker.precompile.PrecompiledLogicSignatureTemplate.populate_template_expr">
+<span class="sig-name descname"><span class="pre">populate_template_expr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Expr</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Expr</span></span></span><a class="reference internal" href="_modules/beaker/precompile.html#PrecompiledLogicSignatureTemplate.populate_template_expr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.precompile.PrecompiledLogicSignatureTemplate.populate_template_expr" title="Permalink to this definition"></a></dt>
+<dd><p>populate_template_expr returns the Expr that will patch a
+blank binary given a set of arguments.</p>
+<p>It is called by <code class="docutils literal notranslate"><span class="pre">address</span></code> to return an Expr that
+can be used to compare with a sender given some arguments.</p>
 </dd></dl>
 
 </dd></dl>
 
+</section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p id="offload-compute-example">Using Precompile for offloading compute</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignature</span>
-<span class="kn">from</span> <span class="nn">examples.offload_compute.lsig</span> <span class="kn">import</span> <span class="n">EthEcdsaVerify</span><span class="p">,</span> <span class="n">HashValue</span><span class="p">,</span> <span class="n">Signature</span>
-
-<span class="n">eth_checker</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;EthChecker&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
-
-<span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
 
 
 <span class="nd">@eth_checker</span><span class="o">.</span><span class="n">external</span>
@@ -193,6 +201,10 @@ should be fully compiled prior to constructing its own program.</p>
         <span class="c1"># here so we can use it to make sure we&#39;ve been called</span>
         <span class="c1"># with the correct lsig</span>
         <span class="n">Assert</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">verifier</span><span class="o">.</span><span class="n">address</span><span class="p">()),</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;lsig validated&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
 </pre></div>
 </div>
 <p id="sub-app-example">Using Precompile for a child Application</p>
@@ -204,7 +216,6 @@ should be fully compiled prior to constructing its own program.</p>
     <span class="n">Int</span><span class="p">,</span>
     <span class="n">Seq</span><span class="p">,</span>
     <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">TxnField</span><span class="p">,</span>
     <span class="n">abi</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -253,8 +264,9 @@ should be fully compiled prior to constructing its own program.</p>
 <span class="nd">@parent_app</span><span class="o">.</span><span class="n">external</span>
 <span class="k">def</span> <span class="nf">create_child_1</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
+    <span class="n">c1_app_precompiled</span> <span class="o">=</span> <span class="n">precompiled</span><span class="p">(</span><span class="n">child1_app</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child1_app</span><span class="p">)</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
+        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">c1_app_precompiled</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
         <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
     <span class="p">)</span>
 
@@ -262,13 +274,9 @@ should be fully compiled prior to constructing its own program.</p>
 <span class="nd">@parent_app</span><span class="o">.</span><span class="n">external</span>
 <span class="k">def</span> <span class="nf">create_child_2</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
+    <span class="n">c2_app_precompiled</span> <span class="o">=</span> <span class="n">precompiled</span><span class="p">(</span><span class="n">child2_app</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="o">**</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child2_app</span><span class="p">)</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">(),</span>
-                <span class="n">TxnField</span><span class="o">.</span><span class="n">global_num_uints</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># override because..?</span>
-            <span class="p">}</span>
-        <span class="p">),</span>
+        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">c2_app_precompiled</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
         <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
     <span class="p">)</span>
 
@@ -293,7 +301,7 @@ should be fully compiled prior to constructing its own program.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="state.html" class="btn btn-neutral float-left" title="State" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="decorators.html" class="btn btn-neutral float-right" title="Decorators" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="decorators.html" class="btn btn-neutral float-right" title="Decorator Parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
