@@ -24,7 +24,7 @@ You may install from Pip
 
 .. code-block:: console
 
-    (.venv)$ pip install beaker-pyteal 
+    (.venv)$ pip install beaker-pyteal==1.0.0b1
 
 Or from github directly
 

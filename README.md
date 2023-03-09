@@ -27,37 +27,39 @@ With Beaker, we build a class that represents our entire application including s
 from pyteal import *
 from beaker import *
 
-# Create a class, subclassing Application from beaker
-class HelloBeaker(Application):
-    # Add an external method with ABI method signature `hello(string)string`
-    @external
-    def hello(self, name: abi.String, *, output: abi.String):
-        # Set output to the result of `Hello, `+name
-        return output.set(Concat(Bytes("Hello, "), name.get()))
+
+hello_app = Application("HelloBeaker")
 
 
-# Create an Application client
-app_client = client.ApplicationClient(
-    # Get sandbox algod client
-    client=sandbox.get_algod_client(),
-    # Instantiate app with the program version (default is MAX_TEAL_VERSION)
-    app=HelloBeaker(version=8),
-    # Get acct from sandbox and pass the signer
-    signer=sandbox.get_accounts().pop().signer,
-)
+@hello_app.external
+def hello(name: abi.String, *, output: abi.String) -> Expr:
+    # Set output to the result of `Hello, `+name
+    return output.set(Concat(Bytes("Hello, "), name.get()))
 
-# Deploy the app on-chain
-app_id, app_addr, txid = app_client.create()
-print(
-    f"""Deployed app in txid {txid}
-    App ID: {app_id} 
-    Address: {app_addr} 
-"""
-)
 
-# Call the `hello` method
-result = app_client.call(HelloBeaker.hello, name="Beaker")
-print(result.return_value)  # "Hello, Beaker"
+def demo() -> None:
+    # Create an Application client
+    app_client = client.ApplicationClient(
+        # Get sandbox algod client
+        client=sandbox.get_algod_client(),
+        # Pass instance of app to client
+        app=hello_app,
+        # Get acct from sandbox and pass the signer
+        signer=sandbox.get_accounts().pop().signer,
+    )
+
+    # Deploy the app on-chain
+    app_id, app_addr, txid = app_client.create()
+    print(
+        f"""Deployed app in txid {txid}
+        App ID: {app_id} 
+        Address: {app_addr} 
+    """
+    )
+
+    # Call the `hello` method
+    result = app_client.call(hello, name="Beaker")
+    print(result.return_value)  # "Hello, Beaker"
 
 ```
 
@@ -67,7 +69,7 @@ print(result.return_value)  # "Hello, Beaker"
 
 You can install from pip:
 
-`pip install beaker-pyteal`
+`pip install beaker-pyteal==1.0.0b1`
 
 Or from github directly (no promises on stability): 
 
