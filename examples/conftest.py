@@ -10,9 +10,9 @@ def reset_pyteal() -> Iterator[None]:
     from pyteal.ast.scratch import NUM_SLOTS, ScratchSlot
     from pyteal.ast.subroutine import SubroutineDefinition, SubroutineEval
 
-    yield  # let the test run
-
     # reset globals
     SubroutineEval._current_proto = None
     SubroutineDefinition.nextSubroutineId = 0
     ScratchSlot.nextSlotId = NUM_SLOTS
+
+    yield  # let the test run
