@@ -74,7 +74,7 @@ membership_club_app = Application(
 )
 
 
-@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+@membership_club_app.external(authorize=Authorize.only_creator())
 def bootstrap(
     seed: abi.PaymentTransaction,
     token_name: abi.String,
@@ -110,12 +110,12 @@ def bootstrap(
     )
 
 
-@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+@membership_club_app.external(authorize=Authorize.only_creator())
 def remove_member(member: abi.Address) -> Expr:
     return Pop(membership_club_app.state.membership_records[member].delete())
 
 
-@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+@membership_club_app.external(authorize=Authorize.only_creator())
 def add_member(
     new_member: abi.Account,
     membership_token: abi.Asset = membership_club_app.state.membership_token,  # type: ignore[assignment]
@@ -137,7 +137,7 @@ def add_member(
     )
 
 
-@membership_club_app.external(authorize=Authorize.only(Global.creator_address()))
+@membership_club_app.external(authorize=Authorize.only_creator())
 def update_role(member: abi.Account, new_role: abi.Uint8) -> Expr:
     return Seq(
         (mr := MembershipRecord()).decode(
@@ -192,9 +192,7 @@ app_member_app = Application("AppMember", state=MemberState()).apply(
 )
 
 
-@app_member_app.external(
-    authorize=Authorize.only(Global.creator_address()), name="bootstrap"
-)
+@app_member_app.external(authorize=Authorize.only_creator(), name="bootstrap")
 def app_member_bootstrap(
     seed: abi.PaymentTransaction,
     app_id: abi.Application,

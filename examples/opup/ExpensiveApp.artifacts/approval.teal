@@ -24,21 +24,21 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-store 7
+store 2
 txna ApplicationArgs 2
 btoi
-store 8
+store 3
 txna ApplicationArgs 3
 intc_0 // 0
 getbyte
-store 9
-load 7
-load 8
-load 9
+store 4
+load 2
+load 3
+load 4
 callsub hashit_2
-store 10
+store 5
 bytec_1 // 0x151f7c75
-load 10
+load 5
 concat
 log
 intc_1 // 1
@@ -55,17 +55,17 @@ assert
 txn GroupIndex
 intc_1 // 1
 -
-store 5
-load 5
+store 0
+load 0
 gtxns TypeEnum
 intc_1 // pay
 ==
 assert
-load 5
+load 0
 callsub opupbootstrap_0
-store 6
+store 1
 bytec_1 // 0x151f7c75
-load 6
+load 1
 itob
 concat
 log
@@ -106,7 +106,7 @@ proto 0 0
 itxn_begin
 intc_2 // appl
 itxn_field TypeEnum
-pushbytes 0x0820020001311b221240001d361a0080044c6bea7212400001003119221231182213104488002223433119221240000100311822124488000223438a000023438a01018bff320912898a0000310088ffef442343 // 0x0820020001311b221240001d361a0080044c6bea7212400001003119221231182213104488002223433119221240000100311822124488000223438a000023438a01018bff320912898a0000310088ffef442343
+pushbytes 0x0820020001311b221240001d361a0080044c6bea7212400001003119221231182213104488001923433119221240000100311822124488000223438a000023438a00003100320912442343 // 0x0820020001311b221240001d361a0080044c6bea7212400001003119221231182213104488001923433119221240000100311822124488000223438a000023438a00003100320912442343
 itxn_field ApprovalProgram
 pushbytes 0x08810043 // 0x08810043
 itxn_field ClearStateProgram
@@ -116,9 +116,9 @@ itxn_submit
 intc_0 // 0
 bytec_0 // "ouaid"
 app_global_get_ex
-store 1
-store 0
-load 1
+store 7
+store 6
+load 7
 !
 assert
 bytec_0 // "ouaid"
@@ -137,29 +137,29 @@ app_global_get
 ==
 assert
 intc_0 // 0
-store 2
+store 8
 hashit_2_l1:
-load 2
+load 8
 pushint 255 // 255
 <
 bnz hashit_2_l5
 frame_dig -3
 extract 2 0
-store 3
+store 9
 intc_0 // 0
-store 4
+store 10
 hashit_2_l3:
-load 4
+load 10
 frame_dig -2
 <
 bz hashit_2_l6
-load 3
+load 9
 sha256
-store 3
-load 4
+store 9
+load 10
 intc_1 // 1
 +
-store 4
+store 10
 b hashit_2_l3
 hashit_2_l5:
 itxn_begin
@@ -173,12 +173,12 @@ itxn_field ApplicationArgs
 intc_0 // 0
 itxn_field Fee
 itxn_submit
-load 2
+load 8
 intc_1 // 1
 +
-store 2
+store 8
 b hashit_2_l1
 hashit_2_l6:
-load 3
+load 9
 frame_bury 0
 retsub

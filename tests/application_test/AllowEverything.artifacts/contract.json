@@ -1,0 +1,13 @@
+{
+    "name": "AllowEverything",
+    "methods": [
+        {
+            "name": "abi",
+            "args": [],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

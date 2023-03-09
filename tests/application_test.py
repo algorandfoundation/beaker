@@ -1,8 +1,10 @@
+import re
 from collections.abc import Callable
+from pathlib import Path
 
 import pyteal as pt
 import pytest
-from Cryptodome.Hash import SHA512
+from _pytest.monkeypatch import MonkeyPatch
 from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
 from typing_extensions import assert_type
 
@@ -43,6 +45,34 @@ def test_single_external() -> None:
     @app.external
     def handle() -> pt.Expr:
         return pt.Assert(pt.Int(1))
+
+    check_application_artifacts_output_stability(app)
+
+
+def test_method_config_allow_everything() -> None:
+    from beaker.application import MethodConfigDict
+
+    app = Application("AllowEverything")
+
+    actions: MethodConfigDict = {
+        "no_op": pt.CallConfig.ALL,
+        "opt_in": pt.CallConfig.ALL,
+        "close_out": pt.CallConfig.ALL,
+        "update_application": pt.CallConfig.ALL,
+        "delete_application": pt.CallConfig.ALL,
+    }
+
+    @app.external(method_config=actions)
+    def abi() -> pt.Expr:
+        return pt.Approve()
+
+    @app.external(bare=True, method_config=actions)
+    def bare() -> pt.Expr:
+        return pt.Approve()
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
 
     check_application_artifacts_output_stability(app)
 
@@ -171,6 +201,115 @@ def test_application_external_override_true() -> None:
     ), "Expected contract method to match method spec"
 
 
+def test_deregister_abi_by_signature() -> None:
+    app = Application("")
+
+    @app.external
+    def handle(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(42)
+
+    assert app.abi_externals
+    app.deregister_abi_method("handle()uint64")
+    assert not app.abi_externals
+
+
+def test_deregister_abi_by_reference() -> None:
+    app = Application("")
+
+    @app.external
+    def handle(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(42)
+
+    assert app.abi_externals
+    app.deregister_abi_method(handle)
+    assert not app.abi_externals
+
+
+def test_deregister_bare_by_action_name() -> None:
+    app = Application("")
+
+    @app.opt_in(bare=True)
+    def opt_in() -> pt.Expr:
+        return pt.Approve()
+
+    assert app.bare_actions
+    app.deregister_bare_method("opt_in")
+    assert not app.bare_actions
+
+
+def test_deregister_bare_by_reference() -> None:
+    app = Application("")
+
+    @app.opt_in(bare=True)
+    def opt_in() -> pt.Expr:
+        return pt.Approve()
+
+    assert app.bare_actions
+    app.deregister_bare_method(opt_in)
+    assert not app.bare_actions
+
+
+def test_deregister_clear_state_by_action_name() -> None:
+    app = Application("")
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
+
+    assert app._clear_state_method
+    app.deregister_bare_method("clear_state")
+    assert not app._clear_state_method
+
+
+def test_deregister_clear_state_by_reference() -> None:
+    app = Application("")
+
+    @app.clear_state
+    def clear_state() -> pt.Expr:
+        return pt.Approve()
+
+    assert app._clear_state_method
+    app.deregister_bare_method(clear_state)
+    assert not app._clear_state_method
+
+
+def test_deregister_clear_state_not_found() -> None:
+    app = Application("")
+
+    with pytest.raises(KeyError):
+        app.deregister_bare_method("clear_state")
+
+
+def test_deregister_opt_in_not_found() -> None:
+    app = Application("")
+
+    with pytest.raises(KeyError):
+        app.deregister_bare_method("opt_in")
+
+
+def test_deregister_bare_method_not_found() -> None:
+    @pt.Subroutine(pt.TealType.uint64)
+    def foo() -> pt.Expr:
+        return pt.Int(1)
+
+    app = Application("")
+    with pytest.raises(LookupError, match='Not a registered bare method: "foo"'):
+        app.deregister_bare_method(foo)
+
+
+def test_deregister_abi_method_not_found() -> None:
+    @pt.ABIReturnSubroutine
+    def foo(x: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(x.get())
+
+    app = Application("")
+    with pytest.raises(KeyError):
+        app.deregister_abi_method(foo)
+
+    with pytest.raises(KeyError):
+        app.deregister_abi_method(foo.method_signature())
+
+
 def test_application_external_override_false() -> None:
     app = Application("ExternalOverrideFalse")
 
@@ -282,8 +421,6 @@ def test_application_bare_override_none(
 
 
 def test_state_init() -> None:
-    from pyteal import abi
-
     class MyState:
         # global
         blob = GlobalStateBlob(keys=4, descr="blob_description")
@@ -318,7 +455,7 @@ def test_state_init() -> None:
             descr="uint_local_dynamic_description",
         )
         # box
-        lst = BoxList(value_type=abi.Uint32, elements=5, name="lst_description")
+        lst = BoxList(value_type=pt.abi.Uint32, elements=5, name="lst_description")
         # not-state
         not_a_state_var = pt.Int(1)
 
@@ -368,8 +505,6 @@ def test_default_param_state() -> None:
     ), "Expected the hint to match the method spec"
 
 
-#
-#
 def test_default_param_const() -> None:
     const_val = 123
 
@@ -580,36 +715,198 @@ def test_closure_vars() -> None:
     assert "first" not in i2_approval_program
 
 
-def hashy(sig: str) -> bytes:
-    chksum = SHA512.new(truncate="256")
-    chksum.update(sig.encode())
-    return chksum.digest()[:4]
-
-
-def test_abi_method_details() -> None:
-    app = Application("ABIApp")
-
-    @app.external
-    def meth() -> pt.Expr:
-        return pt.Assert(pt.Int(1))
-
-    expected_sig = "meth()void"
-    expected_selector = hashy(expected_sig)
-
-    method_spec = meth.method_spec()
-    assert method_spec.get_signature() == expected_sig
-    assert method_spec.get_selector() == expected_selector
-
-
 def test_multi_optin() -> None:
     test = Application("MultiOptIn")
 
-    @test.external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    @test.opt_in
     def opt1(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64) -> pt.Expr:
         return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
-    @test.external(method_config=pt.MethodConfig(opt_in=pt.CallConfig.CALL))
+    @test.opt_in
     def opt2(txn: pt.abi.AssetTransferTransaction, amount: pt.abi.Uint64) -> pt.Expr:
         return pt.Seq(pt.Assert(txn.get().asset_amount() == amount.get()))
 
-    test.build()
+    check_application_artifacts_output_stability(test)
+
+
+def test_bare_no_op_no_create() -> None:
+    app = Application("")
+
+    @app.no_op(bare=True)
+    def method() -> pt.Expr:
+        return pt.Approve()
+
+    with pytest.raises(
+        Exception,
+        match="either handle CallConfig.CREATE in the no_op bare method, or add an ABI method that handles create",
+    ):
+        app.build()
+
+
+def test_initialise_another_apps_global_state() -> None:
+    class State1:
+        uint_val = GlobalStateValue(stack_type=pt.TealType.uint64)
+
+    class State2:
+        bytes_val = GlobalStateValue(stack_type=pt.TealType.bytes)
+
+    app1 = Application("App1", state=State1())
+    app2 = Application("App2", state=State2())
+
+    @app2.create
+    def create() -> pt.Expr:
+        return app1.initialize_global_state()
+
+    with pytest.warns(
+        match="Accessing state of Application App1 during compilation of Application App2"
+    ):
+        app2.build()
+
+
+def test_initialise_another_apps_local_state() -> None:
+    class State1:
+        uint_val = LocalStateValue(stack_type=pt.TealType.uint64)
+
+    class State2:
+        bytes_val = LocalStateValue(stack_type=pt.TealType.bytes)
+
+    app1 = Application("App1", state=State1())
+    app2 = Application("App2", state=State2())
+
+    @app2.opt_in
+    def opt_in() -> pt.Expr:
+        return app1.initialize_local_state()
+
+    with pytest.warns(
+        match="Accessing state of Application App1 during compilation of Application App2"
+    ):
+        app2.build()
+
+
+def test_default_arg_external_requires_read_only() -> None:
+    app = Application("")
+
+    @app.external
+    def roll_dice(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(4)  # chosen by fair dice roll. guaranteed to be random
+
+    with pytest.raises(
+        ValueError,
+        match="Only ABI methods with read_only=True should be used as default arguments to other ABI methods",
+    ):
+
+        @app.external
+        def rng(
+            seed: pt.abi.Uint64 = roll_dice,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(seed.get())
+
+
+def test_default_arg_external_only_allows_current_app() -> None:
+    other_app = Application("Other")
+
+    @other_app.external(read_only=True)
+    def other_app_ro(*, output: pt.abi.String) -> pt.Expr:
+        return output.set("other")
+
+    app = Application("App")
+
+    @app.external(read_only=True)
+    def this_app_ro(*, output: pt.abi.String) -> pt.Expr:
+        return output.set("self")
+
+    with pytest.raises(KeyError, match=re.escape("other_app_ro()string")):
+
+        @app.external
+        def method(
+            ident: pt.abi.String = other_app_ro,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(ident.length())
+
+    with pytest.raises(
+        ValueError, match="Can not use another app's method as a default value"
+    ):
+        (external_ref,) = other_app.abi_externals.values()
+
+        @app.external
+        def sneaky_method(
+            ident: pt.abi.String = external_ref,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(ident.length())
+
+
+def test_default_arg_unknown_type() -> None:
+    app = Application("")
+
+    with pytest.raises(
+        TypeError,
+        match="Unexpected type for a default argument to ABI method: <class 'float'>",
+    ):
+
+        @app.external
+        def method(
+            value: pt.abi.Uint64 = 123.456,  # type: ignore[assignment]
+            *,
+            output: pt.abi.Uint64,
+        ) -> pt.Expr:
+            return output.set(value.get())
+
+
+def test_application_subclass_warning() -> None:
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            "Subclassing beaker.Application is deprecated, "
+            "please see the migration guide at: https://algorand-devrel.github.io/beaker/html/migration.html"
+        ),
+    ):
+
+        class MyApp(Application):
+            pass
+
+
+def test_app_spec_export_defaults_to_cwd(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    app = Application("App")
+    app_spec_output_path = tmp_path / "application.json"
+    assert not app_spec_output_path.exists()
+    with monkeypatch.context():
+        monkeypatch.chdir(tmp_path)
+        app.build().export()
+    assert app_spec_output_path.is_file()
+
+
+def test_app_state_variance() -> None:
+    class BaseStateX:
+        uint_val = GlobalStateValue(pt.TealType.uint64)
+
+    def blueprint_x(x: Application[BaseStateX]) -> None:
+        assert_type(x.state.uint_val, GlobalStateValue)
+
+    class BaseStateY:
+        bytes_val = LocalStateValue(pt.TealType.bytes)
+
+    def blueprint_y(y: Application[BaseStateY]) -> None:
+        assert_type(y.state.bytes_val, LocalStateValue)
+
+    def blueprint_any_state(z: Application) -> None:
+        assert z
+
+    class MyState(BaseStateX, BaseStateY):
+        blob = GlobalStateBlob(keys=1)
+
+    app = (
+        Application("App", state=MyState())
+        .apply(blueprint_x)
+        .apply(blueprint_y)
+        .apply(blueprint_any_state)
+    )
+    assert_type(app, Application[MyState])
+    assert_type(app.state.blob, GlobalStateBlob)

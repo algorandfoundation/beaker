@@ -1,0 +1,38 @@
+{
+    "name": "MultiOptIn",
+    "methods": [
+        {
+            "name": "opt1",
+            "args": [
+                {
+                    "type": "axfer",
+                    "name": "txn"
+                },
+                {
+                    "type": "uint64",
+                    "name": "amount"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "opt2",
+            "args": [
+                {
+                    "type": "axfer",
+                    "name": "txn"
+                },
+                {
+                    "type": "uint64",
+                    "name": "amount"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            }
+        }
+    ],
+    "networks": {}
+}

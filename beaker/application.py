@@ -1,11 +1,11 @@
 import dataclasses
 import inspect
-import typing
 import warnings
 from collections.abc import Callable, Iterator, MutableMapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import (
+    TYPE_CHECKING,
     Concatenate,
     Generic,
     Literal,
@@ -41,14 +41,14 @@ from beaker.build_options import BuildOptions
 from beaker.decorators import authorize as authorize_decorator
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
+    PrecompileContextError,
     PrecompiledApplication,
     PrecompiledLogicSignature,
     PrecompiledLogicSignatureTemplate,
 )
 from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
-from beaker.state.primitive import GlobalStateValue, LocalStateValue
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from algosdk.v2client.algod import AlgodClient
 
 __all__ = [
@@ -185,17 +185,21 @@ class Application(Generic[TState]):
         value: "Application | LogicSignature | LogicSignatureTemplate",
         /,
     ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+        if value is self:
+            raise PrecompileContextError("Attempted to precompile current Application")
         try:
             ctx = _ctx.get()
         except LookupError as err:
-            raise LookupError(
-                "precompiled(...) should be called inside a function"
+            raise PrecompileContextError(
+                "precompiled must be called within a function used by an Application"
             ) from err
         if ctx.app is not self:
-            raise ValueError("precompiled() used in another apps context")
+            raise PrecompileContextError(
+                f'Application.precompiled called for app "{self.name}" inside of a function of app "{ctx.app.name}"'
+            )
         if ctx.client is None:
-            raise ValueError(
-                "beaker.precompiled(...) requires use of a client when calling Application.build(...)"
+            raise PrecompileContextError(
+                "Precompilation requires use of a client when calling Application.build"
             )
         client = ctx.client
         match value:
@@ -218,7 +222,9 @@ class Application(Generic[TState]):
                     lambda: PrecompiledLogicSignatureTemplate(lsig_template, client),
                 )
             case _:
-                raise TypeError("TODO write error message")
+                raise TypeError(
+                    f"Expected an Application, LogicSignature, or LogicSignatureTemplate, but got a {type(value)}"
+                )
 
     def _register_abi_external(
         self,
@@ -274,7 +280,7 @@ class Application(Generic[TState]):
             else:
                 if override is False:
                     raise ValueError(
-                        f"override=False, but bare external for {for_action} already exists."
+                        f"override=False, but bare external for {for_action} already exists"
                     )
                 assert isinstance(existing_action.action, SubroutineFnWrapper)
                 self.deregister_bare_method(existing_action.action)
@@ -290,8 +296,17 @@ class Application(Generic[TState]):
         /,
     ) -> None:
         if isinstance(action_name_or_reference, SubroutineFnWrapper):
-            method = action_name_or_reference
-            _remove_first_match(self.bare_actions, lambda _, v: v.action is method)
+            if action_name_or_reference is self._clear_state_method:
+                self._clear_state_method = None
+            else:
+                for k, v in self.bare_actions.items():
+                    if v.action is action_name_or_reference:
+                        del self.bare_actions[k]
+                        break
+                else:
+                    raise LookupError(
+                        f'Not a registered bare method: "{action_name_or_reference.name()}"'
+                    )
         else:
             if action_name_or_reference == "clear_state":
                 if self._clear_state_method is None:
@@ -319,7 +334,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         read_only: bool = False,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -333,7 +348,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         read_only: bool = False,
         override: bool | None = False,
@@ -348,7 +363,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -362,7 +377,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool,
         read_only: bool = False,
         override: bool | None = False,
@@ -376,7 +391,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
@@ -396,8 +411,7 @@ class Application(Generic[TState]):
             override:
 
         Returns:
-            The original method with additional elements set in it's
-            :code:`__handler_config__` attribute
+            An ABIReturnSubroutine or SubroutineFnWrapper
         """
 
         if bare:
@@ -478,7 +492,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -490,7 +504,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -503,7 +517,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -516,7 +530,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -528,7 +542,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -574,7 +588,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -586,7 +600,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -599,7 +613,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -612,7 +626,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -624,7 +638,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -670,7 +684,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -682,7 +696,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -695,7 +709,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -708,7 +722,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -720,7 +734,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -766,7 +780,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -779,7 +793,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -793,7 +807,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -807,7 +821,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -820,7 +834,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -867,7 +881,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -879,7 +893,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -892,7 +906,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -905,7 +919,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -917,7 +931,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -962,7 +976,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         read_only: bool = False,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -977,7 +991,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         read_only: bool = False,
         override: bool | None = False,
@@ -993,7 +1007,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -1008,7 +1022,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool,
         read_only: bool = False,
         override: bool | None = False,
@@ -1023,7 +1037,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: SubroutineFnWrapper | None = None,
+        authorize: Expr | SubroutineFnWrapper | None = None,
         bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
@@ -1098,9 +1112,9 @@ class Application(Generic[TState]):
                     "TODO betterify this message!!"
                 )
             if override is True and self._clear_state_method is None:
-                raise ValueError("override=True but no clear_state defined")
+                raise ValueError("override=True, but no clear_state defined")
             elif override is False and self._clear_state_method is not None:
-                raise ValueError("override=False but clear_state already defined")
+                raise ValueError("override=False, but clear_state already defined")
             self._clear_state_method = sub
             return sub
 
@@ -1264,6 +1278,11 @@ class Application(Generic[TState]):
                     # note that we don't need to check the type here - if it's invalid,
                     # then _default_argument_from_resolver will raise an appropriate error
                     to_resolve = param.default
+                    if isinstance(to_resolve, ABIExternal):
+                        if to_resolve not in self.abi_externals.values():
+                            raise ValueError(
+                                "Can not use another app's method as a default value"
+                            )
                 # add the default value resolution data to the hints
                 hints.default_arguments[name] = _default_argument_from_resolver(
                     to_resolve
@@ -1291,6 +1310,7 @@ class Application(Generic[TState]):
 def _default_argument_from_resolver(
     resolver: Expr | ABIExternal | int | bytes | str,
 ) -> DefaultArgumentDict:
+    from beaker.state.primitive import GlobalStateValue, LocalStateValue
 
     match resolver:
         # Native types
@@ -1353,11 +1373,9 @@ def precompiled(
     try:
         ctx_app: Application = this_app()
     except LookupError as err:
-        raise LookupError(
-            "beaker.precompiled(...) should be called inside a function"
+        raise PrecompileContextError(
+            "precompiled must be called within a function used by an Application"
         ) from err
-    if value is ctx_app:
-        raise ValueError("Attempted to precompile the current application")
     return ctx_app.precompiled(value)
 
 
@@ -1391,15 +1409,6 @@ def unconditional_opt_in_approval(
 
 TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
-
-
-def _remove_first_match(
-    m: MutableMapping[TKey, TValue], predicate: Callable[[TKey, TValue], bool]
-) -> None:
-    for k, v in m.items():
-        if predicate(k, v):
-            del m[k]
-            break
 
 
 def _lazy_setdefault(

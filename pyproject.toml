@@ -56,10 +56,21 @@ markers = [
     "network: marks tests as slow network tests (deselect with '-m \"not network\"')",
 ]
 
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: not covered",
+    "if TYPE_CHECKING:",
+    "@overload",
+    "@typing.overload",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+]
+
 [tool.ruff]
 select = ["E", "F", "ANN", "UP", "N", "C", "B", "YTT", "W", "FBT", "Q", "RUF", "I"]
 ignore = [
     "ANN101", # missing type for self parameter
+    "ANN102", # missing type for cls parameter
     "E501", # line too long - black takes care of this for us
 ]
 # Exclude a variety of commonly ignored directories.

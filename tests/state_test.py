@@ -1,14 +1,12 @@
 import pyteal as pt
 import pytest
 
-from beaker.state import (
+from beaker import (
     GlobalStateValue,
     LocalStateValue,
     ReservedGlobalStateValue,
     ReservedLocalStateValue,
 )
-from beaker.state._aggregate import GlobalStateAggregate, LocalStateAggregate
-from beaker.state.primitive import _get_default_for_type
 
 options = pt.CompileOptions(mode=pt.Mode.Application, version=6)
 
@@ -80,7 +78,7 @@ def do_lv_test(key, stack_type, default, val):  # type: ignore
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = _get_default_for_type(stack_type, default)
+    expected_default = lv.default_value
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -105,7 +103,7 @@ def do_lv_test(key, stack_type, default, val):  # type: ignore
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key),
@@ -171,7 +169,7 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: 
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = _get_default_for_type(stack_type, None)
+    expected_default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     expected = pt.App.localPut(pt.Txn.sender(), key, expected_default).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -191,7 +189,7 @@ def do_reserved_lv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: 
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.localGetEx(pt.Txn.sender(), pt.Int(0), key),
@@ -271,7 +269,7 @@ def do_gv_test(key, stack_type, default, val, static):  # type: ignore
         assert actual == expected
 
     actual = lv.set_default().__teal__(options)
-    expected_default = _get_default_for_type(stack_type, default)
+    expected_default = lv.default_value
 
     if static:
         expected = pt.Seq(
@@ -322,7 +320,7 @@ def do_gv_test(key, stack_type, default, val, static):  # type: ignore
         with pytest.raises(pt.TealInputError):
             lv.decrement()
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.globalGetEx(pt.Int(0), key), pt.If(v.hasValue(), v.value(), default)
@@ -449,7 +447,7 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: 
         with pytest.raises(pt.TealInputError):
             lv.decrement()
 
-    default = _get_default_for_type(stack_type=stack_type, default=None)
+    default = pt.Bytes("") if stack_type == pt.TealType.bytes else pt.Int(0)
     actual = lv.get_else(default).__teal__(options)
     expected = pt.Seq(
         v := pt.App.globalGetEx(pt.Int(0), key), pt.If(v.hasValue(), v.value(), default)
@@ -477,91 +475,13 @@ def do_reserved_gv_test(stack_type, max_keys, key_gen, key_seed, val):  # type: 
         assert actual == expected
 
 
-def test_expr_impl_account() -> None:
+def test_expr_impl_local() -> None:
     asv = LocalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
 
 
-def test_expr_impl_app() -> None:
+def test_expr_impl_global() -> None:
     asv = GlobalStateValue(pt.TealType.uint64)
     assert asv.has_return() is False
     assert asv.type_of() == pt.TealType.uint64
-
-
-def test_application_state_type() -> None:
-    class BaseState:
-        a = GlobalStateValue(pt.TealType.uint64)
-
-    class MyState(BaseState):
-        b = GlobalStateValue(pt.TealType.bytes)
-
-    astate = GlobalStateAggregate(MyState)
-
-    assert astate.schema.num_byte_slices == 1
-    assert astate.schema.num_uints == 1
-
-    class MyBigState(MyState):
-        c = ReservedGlobalStateValue(pt.TealType.uint64, max_keys=64)
-
-    with pytest.raises(Exception):
-        GlobalStateAggregate(MyBigState)
-
-
-def test_application_state_instance() -> None:
-    class BaseState:
-        a = GlobalStateValue(pt.TealType.uint64)
-
-    class MyState(BaseState):
-        def __init__(self) -> None:
-            self.b = GlobalStateValue(pt.TealType.bytes, key="b")
-
-    astate = GlobalStateAggregate(MyState())
-
-    assert astate.schema.num_byte_slices == 1
-    assert astate.schema.num_uints == 1
-
-    class MyBigState(MyState):
-        c = ReservedGlobalStateValue(pt.TealType.uint64, max_keys=64)
-
-    with pytest.raises(Exception):
-        GlobalStateAggregate(MyBigState())
-
-
-def test_local_state_type() -> None:
-    class BaseState:
-        a = LocalStateValue(pt.TealType.uint64)
-
-    class MyState(BaseState):
-        b = LocalStateValue(pt.TealType.bytes)
-
-    astate = LocalStateAggregate(MyState)
-
-    assert astate.schema.num_byte_slices == 1
-    assert astate.schema.num_uints == 1
-
-    class MyBigState(MyState):
-        c = ReservedLocalStateValue(pt.TealType.uint64, max_keys=16)
-
-    with pytest.raises(Exception):
-        LocalStateAggregate(MyBigState)
-
-
-def test_local_state_instance() -> None:
-    class BaseState:
-        a = LocalStateValue(pt.TealType.uint64)
-
-    class MyState(BaseState):
-        def __init__(self) -> None:
-            self.b = LocalStateValue(pt.TealType.bytes, key="b")
-
-    astate = LocalStateAggregate(MyState())
-
-    assert astate.schema.num_byte_slices == 1
-    assert astate.schema.num_uints == 1
-
-    class MyBigState(MyState):
-        c = ReservedLocalStateValue(pt.TealType.uint64, max_keys=16)
-
-    with pytest.raises(Exception):
-        LocalStateAggregate(MyBigState())

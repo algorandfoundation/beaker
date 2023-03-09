@@ -1,7 +1,8 @@
 import pyteal as pt
 import pytest
 
-from beaker.application import Application
+from beaker import Application, consts, sandbox
+from beaker.client import ApplicationClient
 from beaker.lib.storage import BoxMapping
 
 options = pt.CompileOptions(version=pt.MAX_TEAL_VERSION, mode=pt.Mode.Application)
@@ -51,6 +52,95 @@ def test_mapping() -> None:
 
     with pytest.raises(pt.TealTypeError):
         item.set(pt.abi.String())
+
+
+def test_mapping_with_prefix() -> None:
+    m = BoxMapping(pt.abi.String, pt.abi.Uint64, prefix=pt.Bytes("m_"))
+
+    app = Application("")
+
+    @app.external
+    def do_things() -> pt.Expr:
+        elem = m[pt.Bytes("a")]
+        value1 = 123
+        value2 = 234
+        return pt.Seq(
+            pt.Assert(pt.Not(elem.exists())),
+            (put := pt.abi.Uint64()).set(value1),
+            elem.set(put),
+            pt.Assert(elem.exists()),
+            elem.store_into(got := pt.abi.Uint64()),
+            pt.Assert(got.get() == pt.Int(value1)),
+            put.set(value2),
+            elem.set(put.encode()),
+            got.decode(elem.get()),
+            pt.Assert(got.get() == pt.Int(value2)),
+            pt.Assert(elem.delete()),
+            pt.Assert(pt.Not(elem.exists())),
+        )
+
+    app_client = ApplicationClient(
+        sandbox.get_algod_client(), app, signer=sandbox.get_accounts()[0].signer
+    )
+    app_client.create()
+
+    app_client.fund(1 * consts.algo)
+
+    app_client.call(do_things, boxes=[(app_client.app_id, "m_a")])
+
+
+def test_mapping_with_set_resize() -> None:
+    m = BoxMapping(pt.abi.String, pt.abi.String, prefix=pt.Bytes("m_"))
+
+    app = Application("")
+
+    @app.external
+    def do_things() -> pt.Expr:
+        elem = m[pt.Bytes("a")]
+        value1 = "value"
+        value2 = "value_value"
+        return pt.Seq(
+            (put := pt.abi.String()).set(value1),
+            elem.set(put),
+            pt.Assert(elem.exists()),
+            elem.store_into(got := pt.abi.String()),
+            pt.Assert(got.get() == pt.Bytes(value1)),
+            put.set(value2),
+            elem.set(put.encode()),
+            got.decode(elem.get()),
+            pt.Assert(got.get() == pt.Bytes(value2)),
+        )
+
+    app_client = ApplicationClient(
+        sandbox.get_algod_client(), app, signer=sandbox.get_accounts()[0].signer
+    )
+    app_client.create()
+
+    app_client.fund(1 * consts.algo)
+
+    app_client.call(do_things, boxes=[(app_client.app_id, "m_a")])
+
+
+def test_mapping_with_bad_prefix() -> None:
+    with pytest.raises(pt.TealTypeError):
+        BoxMapping(pt.abi.String, pt.abi.Uint64, prefix=pt.Int(1))
+
+
+def test_mapping_set_value_bad_type() -> None:
+    m = BoxMapping(pt.abi.String, pt.abi.Uint64)
+    elem = m[pt.Bytes("key")]
+    with pytest.raises(pt.TealTypeError):
+        elem.set(pt.abi.Uint16().set(123))
+
+    with pytest.raises(pt.TealTypeError):
+        elem.set(b"123")  # type: ignore
+
+
+def test_mapping_get_key_bad_type() -> None:
+    m = BoxMapping(pt.abi.String, pt.abi.Uint64)
+
+    with pytest.raises(pt.TealTypeError):
+        m[b"123"].exists()  # type: ignore
 
 
 def test_app_mapping() -> None:

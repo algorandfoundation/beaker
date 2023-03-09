@@ -19,6 +19,7 @@ from pyteal import (
     TxnField,
     TxnType,
 )
+from pyteal.types import require_type
 
 from beaker.compilation import Program
 from beaker.consts import PROGRAM_DOMAIN_SEPARATOR, num_extra_program_pages
@@ -38,6 +39,7 @@ __all__ = [
     "PrecompiledApplication",
     "PrecompiledLogicSignature",
     "PrecompiledLogicSignatureTemplate",
+    "PrecompileContextError",
 ]
 
 
@@ -65,19 +67,20 @@ class PrecompiledApplication:
         result: dict[TxnField, Expr | list[Expr]] = {
             TxnField.type_enum: TxnType.ApplicationCall,
         }
+        extra_pages = num_extra_program_pages(
+            self.approval_program.raw_binary, self.clear_program.raw_binary
+        )
         approval_pages = self.approval_program.pages
         clear_pages = self.clear_program.pages
-        if len(approval_pages) == 1 and len(clear_pages) == 1:
+        if extra_pages == 0:
+            assert len(approval_pages) == 1
+            assert len(clear_pages) == 1
             result[TxnField.approval_program] = approval_pages[0]
             result[TxnField.clear_state_program] = clear_pages[0]
         else:
             result[TxnField.approval_program_pages] = approval_pages
             result[TxnField.clear_state_program_pages] = clear_pages
-            result[TxnField.extra_program_pages] = Int(
-                num_extra_program_pages(
-                    self.approval_program.raw_binary, self.clear_program.raw_binary
-                )
-            )
+            result[TxnField.extra_program_pages] = Int(extra_pages)
 
         if l_nbs := self._local_schema.num_byte_slices:
             result[TxnField.local_num_byte_slices] = Int(l_nbs)
@@ -194,6 +197,7 @@ class PrecompiledLogicSignatureTemplate:
             # Add expressions to encode the values and insert
             # them into the working buffer
             arg = kwargs[name]
+            require_type(arg, TealType.bytes if tv.is_bytes else TealType.uint64)
             populate_program += [
                 curr_val.store(Concat(EncodeUVarInt(Len(arg)), arg))
                 if tv.is_bytes
@@ -268,6 +272,10 @@ class PrecompiledLogicSignatureTemplate:
             offset += len(curr_val) - 1
 
         return bytes(populated_binary)
+
+
+class PrecompileContextError(Exception):
+    pass
 
 
 def _py_encode_uvarint(integer: int) -> bytes:

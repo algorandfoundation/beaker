@@ -33,7 +33,7 @@ getbyte
 store 4
 load 3
 load 4
-callsub getaffirmation_3
+callsub getaffirmation_2
 intc_1 // 1
 return
 main_l5:
@@ -65,7 +65,7 @@ assert
 load 0
 load 1
 load 2
-callsub bootstrap_2
+callsub bootstrap_1
 intc_1 // 1
 return
 main_l6:
@@ -89,19 +89,12 @@ proto 0 0
 intc_1 // 1
 return
 
-// auth_only
-authonly_1:
-proto 1 1
-frame_dig -1
-global CreatorAddress
-==
-retsub
-
 // bootstrap
-bootstrap_2:
+bootstrap_1:
 proto 3 0
 txn Sender
-callsub authonly_1
+global CreatorAddress
+==
 // unauthorized
 assert
 bytec_0 // "club_app_id"
@@ -128,7 +121,7 @@ itxn_submit
 retsub
 
 // get_affirmation
-getaffirmation_3:
+getaffirmation_2:
 proto 2 0
 itxn_begin
 pushint 6 // appl

@@ -1,0 +1,100 @@
+#pragma version 8
+intcblock 1 0 4
+txn NumAppArgs
+intc_1 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0x92146aa2 // "opt1(axfer,uint64)void"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0x4c9257c2 // "opt2(axfer,uint64)void"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // OptIn
+==
+txn ApplicationID
+intc_1 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 3
+txn GroupIndex
+intc_0 // 1
+-
+store 2
+load 2
+gtxns TypeEnum
+intc_2 // axfer
+==
+assert
+load 2
+load 3
+callsub opt2_1
+intc_0 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // OptIn
+==
+txn ApplicationID
+intc_1 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 1
+txn GroupIndex
+intc_0 // 1
+-
+store 0
+load 0
+gtxns TypeEnum
+intc_2 // axfer
+==
+assert
+load 0
+load 1
+callsub opt1_0
+intc_0 // 1
+return
+main_l6:
+txn OnCompletion
+intc_1 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_1 // 0
+==
+assert
+intc_0 // 1
+return
+
+// opt1
+opt1_0:
+proto 2 0
+frame_dig -2
+gtxns AssetAmount
+frame_dig -1
+==
+assert
+retsub
+
+// opt2
+opt2_1:
+proto 2 0
+frame_dig -2
+gtxns AssetAmount
+frame_dig -1
+==
+assert
+retsub

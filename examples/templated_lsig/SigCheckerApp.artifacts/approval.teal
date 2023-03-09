@@ -20,14 +20,14 @@ intc_0 // 0
 &&
 assert
 txna ApplicationArgs 1
-store 4
+store 0
 txna ApplicationArgs 2
-store 5
+store 1
 txna ApplicationArgs 3
-store 6
-load 4
-load 5
-load 6
+store 2
+load 0
+load 1
+load 2
 callsub check_1
 intc_1 // 1
 return
@@ -81,49 +81,49 @@ proto 3 0
 txn Sender
 pushbytes 0x50726f6772616d // "Program"
 intc_0 // 0
-store 0
-intc_0 // 0
-store 1
-bytec_0 // ""
-store 2
-bytec_0 // ""
 store 3
+intc_0 // 0
+store 4
+bytec_0 // ""
+store 5
+bytec_0 // ""
+store 6
 frame_dig -3
 len
 bytec_0 // ""
 callsub encodeuvarintimpl_0
 frame_dig -3
 concat
-store 2
-load 3
+store 5
+load 6
 bytec_1 // 0x0880003500361a023501361a0335023401570200340234008444810143
-load 0
+load 3
 pushint 2 // 2
 substring3
 concat
-load 2
+load 5
 concat
-store 3
-load 1
-load 2
+store 6
+load 4
+load 5
 len
 +
 intc_1 // 1
 -
-store 1
+store 4
 pushint 2 // 2
 intc_1 // 1
 +
-store 0
-load 3
+store 3
+load 6
 bytec_1 // 0x0880003500361a023501361a0335023401570200340234008444810143
-load 0
+load 3
 dig 1
 len
 substring3
 concat
-store 3
-load 3
+store 6
+load 6
 concat
 sha512_256
 ==

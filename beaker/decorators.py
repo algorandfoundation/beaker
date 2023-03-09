@@ -11,13 +11,12 @@ from pyteal import (
     Global,
     Int,
     Seq,
-    Subroutine,
     SubroutineFnWrapper,
     TealInputError,
     TealType,
-    TealTypeError,
     Txn,
 )
+from pyteal.types import require_type
 
 __all__ = [
     "Authorize",
@@ -32,50 +31,34 @@ class Authorize:
     the `authorize` keyword of the `handle` decorator
     """
 
+    @classmethod
+    def only_creator(cls) -> Expr:
+        """require that the sender of the app call match exactly the address of the app's creator"""
+        return cls.only(Global.creator_address())
+
     @staticmethod
-    def only(addr: Expr) -> SubroutineFnWrapper:
+    def only(addr: Expr) -> Expr:
         """require that the sender of the app call match exactly the address passed"""
-
-        if addr.type_of() != TealType.bytes:
-            raise TealTypeError(addr.type_of(), TealType.bytes)
-
-        @Subroutine(TealType.uint64, name="auth_only")
-        def _impl(sender: Expr) -> Expr:
-            return sender == addr
-
-        return _impl
+        require_type(addr, TealType.bytes)
+        return Txn.sender() == addr
 
     @staticmethod
-    def holds_token(asset_id: Expr) -> SubroutineFnWrapper:
+    def holds_token(asset_id: Expr) -> Expr:
         """require that the sender of the app call holds >0 of the asset id passed"""
-
-        if asset_id.type_of() != TealType.uint64:
-            raise TealTypeError(asset_id.type_of(), TealType.uint64)
-
-        @Subroutine(TealType.uint64, name="auth_holds_token")
-        def _impl(sender: Expr) -> Expr:
-            return Seq(
-                bal := AssetHolding.balance(sender, asset_id),
-                And(bal.hasValue(), bal.value() > Int(0)),
-            )
-
-        return _impl
+        require_type(asset_id, TealType.uint64)
+        return Seq(
+            bal := AssetHolding.balance(Txn.sender(), asset_id),
+            And(bal.hasValue(), bal.value() > Int(0)),
+        )
 
     @staticmethod
     def opted_in(
         app_id: Expr = Global.current_application_id(),  # noqa: B008
-    ) -> SubroutineFnWrapper:
+    ) -> Expr:
         """require that the sender of the app call has
         already opted-in to a given app id"""
-
-        if app_id.type_of() != TealType.uint64:
-            raise TealTypeError(app_id.type_of(), TealType.uint64)
-
-        @Subroutine(TealType.uint64, name="auth_opted_in")
-        def _impl(sender: Expr) -> Expr:
-            return App.optedIn(sender, app_id)
-
-        return _impl
+        require_type(app_id, TealType.uint64)
+        return App.optedIn(Txn.sender(), app_id)
 
 
 HandlerReturn = TypeVar("HandlerReturn", bound=Expr)
@@ -83,17 +66,21 @@ HandlerParams = ParamSpec("HandlerParams")
 
 
 def authorize(
-    allowed: SubroutineFnWrapper,
+    allowed: Expr | SubroutineFnWrapper,
 ) -> Callable[[Callable[HandlerParams, HandlerReturn]], Callable[HandlerParams, Expr]]:
-    auth_sub_args = allowed.subroutine.expected_arg_types
 
-    if len(auth_sub_args) != 1 or auth_sub_args[0] is not Expr:
-        raise TealInputError(
-            "Expected a single expression argument to authorize function"
-        )
+    if isinstance(allowed, SubroutineFnWrapper):
+        auth_sub_args = allowed.subroutine.expected_arg_types
 
-    if allowed.type_of() != TealType.uint64:
-        raise TealTypeError(allowed.type_of(), TealType.uint64)
+        if len(auth_sub_args) != 1 or auth_sub_args[0] is not Expr:
+            raise TealInputError(
+                "Expected a single expression argument to authorize function"
+            )
+        require_type(allowed, TealType.uint64)
+        expr = allowed(Txn.sender())
+    else:
+        require_type(allowed, TealType.uint64)
+        expr = allowed
 
     def decorator(
         fn: Callable[HandlerParams, HandlerReturn]
@@ -101,7 +88,7 @@ def authorize(
         @wraps(fn)
         def wrapped(*args: HandlerParams.args, **kwargs: HandlerParams.kwargs) -> Expr:
             return Seq(
-                Assert(allowed(Txn.sender()), comment="unauthorized"),
+                Assert(expr, comment="unauthorized"),
                 fn(*args, **kwargs),
             )
 
