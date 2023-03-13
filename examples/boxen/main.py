@@ -3,14 +3,10 @@ from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.encoding import decode_address, encode_address
 from algosdk.transaction import AssetOptInTxn, PaymentTxn
 
-from beaker import client, consts, sandbox
-from examples.boxen.application import (
-    MembershipRecord,
-    app_member_app,
-    membership_club_app,
-)
+import beaker
+from examples.boxen import app_member, membership_club
 
-record_codec = ABIType.from_string(str(MembershipRecord().type_spec()))
+record_codec = ABIType.from_string(str(membership_club.MembershipRecord().type_spec()))
 
 
 affirmations = [
@@ -27,7 +23,7 @@ affirmations = [
 ]
 
 
-def print_boxes(app_client: client.ApplicationClient) -> None:
+def print_boxes(app_client: beaker.client.ApplicationClient) -> None:
     boxes = app_client.get_box_names()
     print(f"{len(boxes)} boxes found")
     for box_name in boxes:
@@ -40,12 +36,12 @@ def print_boxes(app_client: client.ApplicationClient) -> None:
 
 
 def demo() -> None:
-    accts = sandbox.get_accounts()
+    accts = beaker.sandbox.get_accounts()
     acct = accts.pop()
     member_acct = accts.pop()
 
-    app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), membership_club_app, signer=acct.signer
+    app_client = beaker.client.ApplicationClient(
+        beaker.sandbox.get_algod_client(), membership_club.app, signer=acct.signer
     )
     print("Creating app")
     app_client.create()
@@ -61,10 +57,10 @@ def demo() -> None:
         acct.address,
         sp,
         app_client.app_addr,
-        membership_club_app.state.minimum_balance.value,
+        membership_club.app.state.minimum_balance.value,
     )
     result = app_client.call(
-        "bootstrap",
+        membership_club.bootstrap,
         seed=TransactionWithSigner(ptxn, acct.signer),
         token_name="fight club",
         boxes=[(app_client.app_id, "affirmations")] * 8,
@@ -85,7 +81,7 @@ def demo() -> None:
 
     # Add member account as member
     app_client.call(
-        "add_member",
+        membership_club.add_member,
         new_member=member_acct.address,
         suggested_params=sp,
         boxes=[(app_client.app_id, decode_address(member_acct.address))],
@@ -94,7 +90,7 @@ def demo() -> None:
 
     # read the membership record box
     result = app_client.call(
-        "get_membership_record",
+        membership_club.get_membership_record,
         member=member_acct.address,
         boxes=[(app_client.app_id, decode_address(member_acct.address))],
     )
@@ -103,7 +99,7 @@ def demo() -> None:
 
     # Update the members role
     app_client.call(
-        "update_role",
+        membership_club.update_role,
         member=member_acct.address,
         new_role=3,
         boxes=[(app_client.app_id, decode_address(member_acct.address))],
@@ -111,7 +107,7 @@ def demo() -> None:
 
     # reread the membership record box
     result = app_client.call(
-        "get_membership_record",
+        membership_club.get_membership_record,
         member=member_acct.address,
         boxes=[(app_client.app_id, decode_address(member_acct.address))],
     )
@@ -122,7 +118,7 @@ def demo() -> None:
     member_client = app_client.prepare(signer=member_acct.signer)
     for idx, aff in enumerate(affirmations):
         result = member_client.call(
-            "set_affirmation",
+            membership_club.set_affirmation,
             idx=idx,
             affirmation=aff.ljust(64, " ").encode(),
             boxes=[(app_client.app_id, "affirmations")],
@@ -130,14 +126,14 @@ def demo() -> None:
 
     # Get the affirmation from the app, passing box ref holding affirmations
     result = member_client.call(
-        "get_affirmation",
+        membership_club.get_affirmation,
         boxes=[(app_client.app_id, "affirmations")],
     )
     print(bytes(result.return_value).decode("utf-8").strip())
 
     # Remove the member we'd just added
     app_client.call(
-        "remove_member",
+        membership_club.remove_member,
         boxes=[(app_client.app_id, decode_address(member_acct.address))],
         member=member_acct.address,
     )
@@ -149,8 +145,8 @@ def demo() -> None:
 
     # Create App we'll use to be a member of club
     print("Creating app member")
-    app_member_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app_member_app, signer=app_client.signer
+    app_member_client = beaker.client.ApplicationClient(
+        beaker.sandbox.get_algod_client(), app_member.app, signer=app_client.signer
     )
     _, app_member_addr, _ = app_member_client.create()
 
@@ -159,10 +155,10 @@ def demo() -> None:
     sp = app_member_client.get_suggested_params()
     sp.flat_fee = True
     sp.fee = 2000
-    ptxn = PaymentTxn(app_client.sender, sp, app_member_addr, consts.algo * 1)
+    ptxn = PaymentTxn(app_client.sender, sp, app_member_addr, beaker.consts.algo * 1)
     assert app_client.signer is not None
     app_member_client.call(
-        "bootstrap",
+        app_member.bootstrap,
         seed=TransactionWithSigner(ptxn, app_client.signer),
         app_id=app_client.app_id,
         membership_token=membership_token,
@@ -170,7 +166,7 @@ def demo() -> None:
 
     # Add app to club using the member_club client
     app_client.call(
-        "add_member",
+        membership_club.add_member,
         new_member=app_member_addr,
         suggested_params=sp,
         boxes=[(app_client.app_id, decode_address(app_member_addr))],
@@ -178,7 +174,7 @@ def demo() -> None:
 
     # Call method to get a new affirmation
     app_member_client.call(
-        "get_affirmation", boxes=[(app_client.app_id, "affirmations")]
+        app_member.get_affirmation, boxes=[(app_client.app_id, "affirmations")]
     )
 
     # Read the affirmation out of the AppMembers app state

@@ -11,7 +11,7 @@ def test_authorize_only() -> None:
 
     expr = pt.Txn.sender() == pt.Global.current_application_address()
     expected = expr.__teal__(options)
-    actual = auth_only.__teal__(options)
+    actual = auth_only(pt.Txn.sender()).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
@@ -21,7 +21,7 @@ def test_authorize_creator() -> None:
 
     expr = pt.Txn.sender() == pt.Global.creator_address()
     expected = expr.__teal__(options)
-    actual = auth_only.__teal__(options)
+    actual = auth_only(pt.Txn.sender()).__teal__(options)
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
@@ -35,7 +35,7 @@ def test_external_authorize() -> None:
     def creator_only() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_only, comment=cmt), pt.Approve())
+    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = creator_only.subroutine.implementation().__teal__(options)
@@ -55,7 +55,7 @@ def test_authorize_holds_token() -> None:
     balance = pt.AssetHolding.balance(pt.Txn.sender(), asset_id)
     expr = pt.Seq(balance, pt.And(balance.hasValue(), balance.value() > pt.Int(0)))
     expected = expr.__teal__(options)
-    actual = auth_holds_token.__teal__(options)
+    actual = auth_holds_token(pt.Txn.sender()).__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -71,12 +71,14 @@ def test_external_authorize_holds_token() -> None:
     def holds_token_only() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_holds_token, comment=cmt), pt.Approve())
+    expr = pt.Seq(
+        pt.Assert(auth_holds_token(pt.Txn.sender()), comment=cmt), pt.Approve()
+    )
 
     expected = expr.__teal__(options)
     actual = holds_token_only.subroutine.implementation().__teal__(options)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
 
@@ -91,7 +93,7 @@ def test_authorize_opted_in() -> None:
     expr = pt.App.optedIn(pt.Txn.sender(), app_id)
 
     expected = expr.__teal__(options)
-    actual = auth_opted_in.__teal__(options)
+    actual = auth_opted_in(pt.Txn.sender()).__teal__(options)
 
     with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
@@ -107,7 +109,7 @@ def test_external_authorize_opted_in() -> None:
     def opted_in_only() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_opted_in, comment=cmt), pt.Approve())
+    expr = pt.Seq(pt.Assert(auth_opted_in(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = opted_in_only.subroutine.implementation().__teal__(options)
@@ -131,15 +133,15 @@ def test_authorize_with_sub() -> None:
 
 
 def test_authorize_bare_handler() -> None:
-    app = Application("")
+    app1 = Application("")
     cmt = "unauthorized"
     auth_only = Authorize.only_creator()
 
-    @app.delete(bare=True, authorize=auth_only)
+    @app1.delete(bare=True, authorize=auth_only)
     def deleter() -> pt.Expr:
         return pt.Approve()
 
-    expr = pt.Seq(pt.Assert(auth_only, comment=cmt), pt.Approve())
+    expr = pt.Seq(pt.Assert(auth_only(pt.Txn.sender()), comment=cmt), pt.Approve())
 
     expected = expr.__teal__(options)
     actual = deleter.subroutine.implementation().__teal__(options)
@@ -149,22 +151,28 @@ def test_authorize_bare_handler() -> None:
     with pytest.raises(pt.TealTypeError):
         Authorize.opted_in(pt.Bytes("abc"))
 
+    @pt.Subroutine(pt.TealType.uint64)
+    def thing1(a: pt.Expr, b: pt.Expr) -> pt.Expr:
+        return pt.Int(1)
+
+    app2 = Application("")
+
+    @app2.external(authorize=thing1)
+    def other_thing() -> pt.Expr:
+        return pt.Approve()
+
     with pytest.raises(pt.TealInputError):
+        app2.build()
 
-        @pt.Subroutine(pt.TealType.uint64)
-        def thing(a: pt.Expr, b: pt.Expr) -> pt.Expr:
-            return pt.Int(1)
+    app3 = Application("")
 
-        @app.external(authorize=thing)
-        def other_thing() -> pt.Expr:
-            return pt.Approve()
+    @pt.Subroutine(pt.TealType.bytes)
+    def thing2(x: pt.Expr) -> pt.Expr:
+        return pt.Bytes("fail")
+
+    @app3.external(authorize=thing2)
+    def other_other_thing() -> pt.Expr:
+        return pt.Approve()
 
     with pytest.raises(pt.TealTypeError):
-
-        @pt.Subroutine(pt.TealType.bytes)
-        def thing(x: pt.Expr) -> pt.Expr:
-            return pt.Bytes("fail")
-
-        @app.external(authorize=thing)
-        def other_other_thing() -> pt.Expr:
-            return pt.Approve()
+        app3.build()
