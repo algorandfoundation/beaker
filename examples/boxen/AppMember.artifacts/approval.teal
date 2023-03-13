@@ -33,7 +33,7 @@ getbyte
 store 4
 load 3
 load 4
-callsub getaffirmation_2
+callsub getaffirmation_1
 intc_1 // 1
 return
 main_l5:
@@ -65,7 +65,7 @@ assert
 load 0
 load 1
 load 2
-callsub bootstrap_1
+callsub bootstrap_0
 intc_1 // 1
 return
 main_l6:
@@ -79,18 +79,11 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
-intc_1 // 1
-return
-
-// create
-create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // bootstrap
-bootstrap_1:
+bootstrap_0:
 proto 3 0
 txn Sender
 global CreatorAddress
@@ -121,7 +114,7 @@ itxn_submit
 retsub
 
 // get_affirmation
-getaffirmation_2:
+getaffirmation_1:
 proto 2 0
 itxn_begin
 pushint 6 // appl

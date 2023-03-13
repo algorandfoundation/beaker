@@ -38,6 +38,7 @@ from beaker.application_specification import (
     MethodHints,
 )
 from beaker.build_options import BuildOptions
+from beaker.decorators import AuthCallable
 from beaker.decorators import authorize as authorize_decorator
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
 from beaker.precompile import (
@@ -334,7 +335,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         read_only: bool = False,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -348,7 +349,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         read_only: bool = False,
         override: bool | None = False,
@@ -363,7 +364,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -377,7 +378,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         read_only: bool = False,
         override: bool | None = False,
@@ -391,7 +392,7 @@ class Application(Generic[TState]):
         *,
         method_config: MethodConfig | MethodConfigDict | None = None,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
@@ -492,7 +493,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -504,7 +505,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -517,7 +518,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -530,7 +531,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -542,7 +543,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -571,7 +572,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -583,7 +584,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -596,7 +597,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -609,7 +610,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -621,7 +622,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -651,7 +652,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -663,7 +664,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -676,7 +677,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -689,7 +690,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -701,7 +702,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -731,7 +732,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -744,7 +745,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -758,7 +759,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -772,7 +773,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -785,7 +786,7 @@ class Application(Generic[TState]):
         *,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -816,7 +817,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
         ...
@@ -828,7 +829,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -841,7 +842,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -854,7 +855,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
     ) -> DecoratorFuncType:
@@ -866,7 +867,7 @@ class Application(Generic[TState]):
         /,
         *,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
@@ -897,7 +898,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         read_only: bool = False,
         override: bool | None = False,
     ) -> ABIDecoratorFuncType:
@@ -912,7 +913,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         read_only: bool = False,
         override: bool | None = False,
@@ -928,7 +929,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
     ) -> BareDecoratorFuncType:
@@ -943,7 +944,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         read_only: bool = False,
         override: bool | None = False,
@@ -958,7 +959,7 @@ class Application(Generic[TState]):
         allow_call: bool = True,
         allow_create: bool = False,
         name: str | None = None,
-        authorize: Expr | SubroutineFnWrapper | None = None,
+        authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         read_only: bool = False,
         override: bool | None = False,
