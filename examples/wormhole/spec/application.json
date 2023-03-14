@@ -92,7 +92,7 @@
             }
         ],
         "networks": {},
-        "desc": "\n    Stores price feed in application state keyed by timestamp\n    "
+        "desc": "Stores price feed in application state keyed by timestamp"
     },
     "bare_call_config": {
         "no_op": "CREATE"

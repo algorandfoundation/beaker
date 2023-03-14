@@ -1,70 +1,63 @@
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from pyteal import (
-    Expr,
-    Int,
-    ScratchVar,
-    Seq,
-    Suffix,
-    abi,
-)
+import pyteal as pt
 
-from beaker import Application
+import beaker
 
 
-def read_next(vaa: Expr, offset: int, t: abi.BaseType) -> tuple[int, Expr]:
+def read_next(vaa: pt.Expr, offset: int, t: pt.abi.BaseType) -> tuple[int, pt.Expr]:
     size = t.type_spec().byte_length_static()
-    return offset + size, t.decode(vaa, start_index=Int(offset), length=Int(size))
+    return offset + size, t.decode(vaa, start_index=pt.Int(offset), length=pt.Int(size))
 
 
-Bytes32 = abi.StaticBytes[Literal[32]]
+Bytes32 = pt.abi.StaticBytes[Literal[32]]
 
 
 class ContractTransferVAA:
     def __init__(self) -> None:
         #: Version of VAA
-        self.version = abi.Uint8()
+        self.version = pt.abi.Uint8()
         #: Which guardian set to be validated against
-        self.index = abi.Uint32()
+        self.index = pt.abi.Uint32()
         #: How many signatures
-        self.siglen = abi.Uint8()
+        self.siglen = pt.abi.Uint8()
         #: TS of message
-        self.timestamp = abi.Uint32()
+        self.timestamp = pt.abi.Uint32()
         #: Uniquifying
-        self.nonce = abi.Uint32()
+        self.nonce = pt.abi.Uint32()
         #: The Id of the chain where the message originated
-        self.chain = abi.Uint16()
+        self.chain = pt.abi.Uint16()
         #: The address of the contract that emitted this message on the origin chain
-        self.emitter = abi.Address()
+        self.emitter = pt.abi.Address()
         #: Unique integer representing the index, used for dedupe/ordering
-        self.sequence = abi.Uint64()
+        self.sequence = pt.abi.Uint64()
 
-        self.consistency = abi.Uint8()  # ?
+        self.consistency = pt.abi.Uint8()  # ?
 
         #: Type of message
-        self.type = abi.Uint8()
+        self.type = pt.abi.Uint8()
         #: amount of transfer
-        self.amount = abi.make(Bytes32)
+        self.amount = pt.abi.make(Bytes32)
         #: asset transferred
-        self.contract = abi.make(Bytes32)
+        self.contract = pt.abi.make(Bytes32)
         #: Id of the chain the token originated
-        self.from_chain = abi.Uint16()
+        self.from_chain = pt.abi.Uint16()
         #: Receiver of the token transfer
-        self.to_address = abi.Address()
+        self.to_address = pt.abi.Address()
         #: Id of the chain where the token transfer should be redeemed
-        self.to_chain = abi.Uint16()
+        self.to_chain = pt.abi.Uint16()
         #: Amount to pay relayer
-        self.fee = abi.make(Bytes32)
+        self.fee = pt.abi.make(Bytes32)
         #: Address that sent the transfer
-        self.from_address = abi.Address()
+        self.from_address = pt.abi.Address()
 
         #: Arbitrary byte payload
-        self.payload = abi.DynamicBytes()
+        self.payload = pt.abi.DynamicBytes()
 
-    def decode(self, vaa: Expr) -> Expr:
+    def decode(self, vaa: pt.Expr) -> pt.Expr:
         offset = 0
-        ops: list[Expr] = []
+        ops: list[pt.Expr] = []
 
         offset, e = read_next(vaa, offset, self.version)
         ops.append(e)
@@ -78,8 +71,8 @@ class ContractTransferVAA:
         # Increase offset to skip over sigs && digest
         # since these should be checked by the wormhole core contract
         ops.append(
-            (digest_vaa := ScratchVar()).store(
-                Suffix(vaa, Int(offset) + (self.siglen.get() * Int(66)))
+            (digest_vaa := pt.ScratchVar()).store(
+                pt.Suffix(vaa, pt.Int(offset) + (self.siglen.get() * pt.Int(66)))
             )
         )
 
@@ -112,21 +105,21 @@ class ContractTransferVAA:
         offset, e = read_next(digest_vaa.load(), offset, self.from_address)
         ops.append(e)
         # Rest is payload
-        ops.append(self.payload.set(Suffix(digest_vaa.load(), Int(offset))))
+        ops.append(self.payload.set(pt.Suffix(digest_vaa.load(), pt.Int(offset))))
 
-        return Seq(*ops)
+        return pt.Seq(*ops)
 
 
 class WormholeStrategy(ABC):
     @abstractmethod
     def handle_transfer(
-        self, ctvaa: ContractTransferVAA, *, output: abi.DynamicBytes
-    ) -> Expr:
+        self, ctvaa: ContractTransferVAA, *, output: pt.abi.DynamicBytes
+    ) -> pt.Expr:
         ...
 
 
 def wormhole_transfer(
-    app: Application,
+    app: beaker.Application,
     strategy: WormholeStrategy,
 ) -> None:
     """Implement Wormhole Payload3 Message handler
@@ -140,7 +133,9 @@ def wormhole_transfer(
     """
 
     @app.external
-    def portal_transfer(vaa: abi.DynamicBytes, *, output: abi.DynamicBytes) -> Expr:
+    def portal_transfer(
+        vaa: pt.abi.DynamicBytes, *, output: pt.abi.DynamicBytes
+    ) -> pt.Expr:
         """portal_transfer accepts a VAA containing information about the transfer
         and the payload.
 
@@ -152,7 +147,7 @@ def wormhole_transfer(
 
         To allow a more flexible interface we publicize that we output generic bytes
         """
-        return Seq(
+        return pt.Seq(
             (ctvaa := ContractTransferVAA()).decode(vaa.get()),
             strategy.handle_transfer(ctvaa, output=output),
         )
