@@ -19,7 +19,7 @@ def lsig_validate(user_addr: pt.Expr) -> pt.Expr:
     )
 
 
-sig_checker = beaker.LogicSignatureTemplate(
+lsig = beaker.LogicSignatureTemplate(
     lsig_validate,
     runtime_template_variables={"user_addr": pt.TealType.bytes},
 )
@@ -32,7 +32,7 @@ app = beaker.Application("SigCheckerApp")
 def check(
     signer_address: pt.abi.Address, msg: pt.abi.String, sig: Signature
 ) -> pt.Expr:
-    sig_checker_pc = beaker.precompiled(sig_checker)
+    sig_checker_pc = beaker.precompiled(lsig)
     # The lsig will take care of verifying the signature
     # all we need to do is check that its been used to sign this transaction
     return pt.Assert(
