@@ -16,7 +16,7 @@ def op_up_blueprint(app: beaker.Application[OpUpState]) -> Callable[[], pt.Expr]
     target_app = beaker.Application(
         name="TargetApp",
         descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
-    ).apply(beaker.unconditional_create_approval)
+    )
 
     @target_app.external(authorize=beaker.Authorize.only_creator())
     def opup() -> pt.Expr:
