@@ -2,7 +2,6 @@ import base64
 import random
 
 import pyteal as pt
-from algosdk import v2client
 
 from beaker import (
     Application,
@@ -157,10 +156,8 @@ def decode_budget(tx_info: dict) -> int:
     return decode_int(tx_info["logs"][0])
 
 
-def get_box(
-    app_id: int, name: bytes, algod_client: v2client.algod.AlgodClient
-) -> list[int]:
-    box_contents = algod_client.application_box_by_name(app_id, name)
+def get_box(app_client: client.ApplicationClient, name: bytes) -> list[int]:
+    box_contents = app_client.client.application_box_by_name(app_client.app_id, name)
 
     vals = []
     data = base64.b64decode(box_contents["value"])
@@ -186,7 +183,7 @@ def demo() -> None:
     boxes = [(app_client.app_id, BOX_NAME)] * 4
 
     # Make App Create box
-    result = app_client.call(
+    app_client.call(
         box_create_test,
         boxes=boxes,
     )
@@ -210,7 +207,7 @@ def demo() -> None:
     print(f"Budget left after each insert: {budgets}")
 
     # Get contents of box
-    box = get_box(app_client.app_id, BOX_NAME.encode(), app_client.client)
+    box = get_box(app_client, BOX_NAME.encode())
     # Make sure its sorted
     assert box == sorted(box)
 
