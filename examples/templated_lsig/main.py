@@ -1,45 +1,40 @@
 from typing import Literal
 
-from pyteal import Assert, Ed25519Verify_Bare, Expr, Int, Seq, TealType, Txn, abi
+import pyteal as pt
 
-from beaker import (
-    Application,
-    LogicSignatureTemplate,
-    precompiled,
-)
+import beaker
 
-Signature = abi.StaticBytes[Literal[64]]
+Signature = pt.abi.StaticBytes[Literal[64]]
 
 
-def SigChecker() -> LogicSignatureTemplate:  # noqa: N802
-    # Simple program to check an ed25519 signature given a message and signature
-
-    def evaluate(user_addr: Expr) -> Expr:
-        return Seq(
-            # Borrow the msg and sig from the app call arguments
-            (msg := abi.String()).decode(Txn.application_args[2]),
-            (sig := abi.make(Signature)).decode(Txn.application_args[3]),
-            # Assert that the sig matches
-            Assert(Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
-            Int(1),
-        )
-
-    return LogicSignatureTemplate(
-        evaluate,
-        runtime_template_variables={"user_addr": TealType.bytes},
+def lsig_validate(user_addr: pt.Expr) -> pt.Expr:
+    """Simple program to check an ed25519 signature given a message and signature"""
+    return pt.Seq(
+        # Borrow the msg and sig from the app call arguments
+        (msg := pt.abi.String()).decode(pt.Txn.application_args[2]),
+        (sig := pt.abi.make(Signature)).decode(pt.Txn.application_args[3]),
+        # Assert that the sig matches
+        pt.Assert(pt.Ed25519Verify_Bare(msg.get(), sig.get(), user_addr)),
+        pt.Int(1),
     )
 
 
-sig_checker = SigChecker()
+sig_checker = beaker.LogicSignatureTemplate(
+    lsig_validate,
+    runtime_template_variables={"user_addr": pt.TealType.bytes},
+)
 
-app = Application("SigCheckerApp")
+
+app = beaker.Application("SigCheckerApp")
 
 
 @app.external
-def check(signer_address: abi.Address, msg: abi.String, sig: Signature) -> Expr:
-    sig_checker_pc = precompiled(sig_checker)
+def check(
+    signer_address: pt.abi.Address, msg: pt.abi.String, sig: Signature
+) -> pt.Expr:
+    sig_checker_pc = beaker.precompiled(sig_checker)
     # The lsig will take care of verifying the signature
     # all we need to do is check that its been used to sign this transaction
-    return Assert(
-        Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
+    return pt.Assert(
+        pt.Txn.sender() == sig_checker_pc.address(user_addr=signer_address.get())
     )
