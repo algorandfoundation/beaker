@@ -4,7 +4,7 @@ from algosdk.abi import ABIType
 
 from beaker import client, sandbox
 
-from examples.wormhole.contract import OracleData, oracle_data_cache_app
+from examples.wormhole import oracle
 
 base_vaa = bytes.fromhex(
     "010000000001008049340af360a47103a962108cb57b9deebcc99e8e6ddeca1a"
@@ -18,13 +18,13 @@ base_vaa = bytes.fromhex(
 )
 
 # Get the codec to decode the stored value
-oracle_data_codec = ABIType.from_string(str(OracleData().type_spec()))
+oracle_data_codec = ABIType.from_string(str(oracle.OracleData().type_spec()))
 
 
 def main() -> None:
     app_client = client.ApplicationClient(
         sandbox.get_algod_client(),
-        oracle_data_cache_app,
+        oracle.app,
         signer=sandbox.get_accounts().pop().signer,
     )
 

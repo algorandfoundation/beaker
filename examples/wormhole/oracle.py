@@ -2,11 +2,7 @@ import pyteal as pt
 
 import beaker
 
-from examples.wormhole.wormhole import (
-    ContractTransferVAA,
-    WormholeStrategy,
-    wormhole_transfer,
-)
+from examples.wormhole import wormhole
 
 
 class OracleData(pt.abi.NamedTuple):
@@ -15,26 +11,26 @@ class OracleData(pt.abi.NamedTuple):
     confidence: pt.abi.Field[pt.abi.Uint64]
 
 
-class OracleState:
+class State:
     prices = beaker.ReservedGlobalStateValue(stack_type=pt.TealType.bytes, max_keys=64)
 
 
-oracle_data_cache_app = beaker.Application(
+app = beaker.Application(
     "OracleDataCache",
     descr="Stores price feed in application state keyed by timestamp",
-    state=OracleState(),
+    state=State(),
 )
 
 
-@oracle_data_cache_app.external
+@app.external
 def lookup(ts: pt.abi.Uint64, *, output: OracleData) -> pt.Expr:
-    return output.decode(oracle_data_cache_app.state.prices[ts].get_must())
+    return output.decode(app.state.prices[ts].get_must())
 
 
-class MyStrategy(WormholeStrategy):
+class MyStrategy(wormhole.WormholeStrategy):
     def handle_transfer(
         self,
-        ctvaa: ContractTransferVAA,
+        ctvaa: wormhole.ContractTransferVAA,
         *,
         output: pt.abi.DynamicBytes,
     ) -> pt.Expr:
@@ -59,10 +55,10 @@ class MyStrategy(WormholeStrategy):
             # Construct named tuple for storage
             (od := pt.abi.make(OracleData)).set(timestamp, price, confidence),
             # Write to app state
-            oracle_data_cache_app.state.prices[timestamp].set(od.encode()),
+            app.state.prices[timestamp].set(od.encode()),
             # echo the payload
             output.set(ctvaa.payload),
         )
 
 
-oracle_data_cache_app.apply(wormhole_transfer, strategy=MyStrategy())
+app.apply(wormhole.wormhole_transfer, strategy=MyStrategy())
