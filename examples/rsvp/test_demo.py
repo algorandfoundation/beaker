@@ -1,7 +1,6 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.rsvp import contract as rsvp
-from examples.rsvp import demo
+from examples.rsvp import demo, rsvp
 
 
 def test_demo() -> None:
