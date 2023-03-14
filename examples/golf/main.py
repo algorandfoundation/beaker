@@ -32,7 +32,6 @@ from beaker import (
     client,
     consts,
     sandbox,
-    unconditional_create_approval,
 )
 from beaker.lib.math import Max
 
@@ -57,7 +56,7 @@ sorted_ints_app = Application(
     "SortedIntegers",
     build_options=BuildOptions(avm_version=8),
     state=SortedIntegersState(),
-).apply(unconditional_create_approval)
+)
 
 
 @sorted_ints_app.external
