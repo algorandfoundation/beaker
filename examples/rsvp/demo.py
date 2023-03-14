@@ -5,7 +5,7 @@ from algosdk.error import AlgodHTTPError
 from beaker import consts, sandbox
 from beaker.client import ApplicationClient
 
-from examples.rsvp import contract as rsvp
+from examples.rsvp import rsvp
 
 
 def main() -> None:
