@@ -1,6 +1,6 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.golf.main import demo, sorted_ints_app
+from examples.golf.main import app, demo
 
 
 def test_demo() -> None:
@@ -8,6 +8,4 @@ def test_demo() -> None:
 
 
 def test_output_stability() -> None:
-    check_application_artifacts_output_stability(
-        sorted_ints_app, dir_per_test_file=False
-    )
+    check_application_artifacts_output_stability(app, dir_per_test_file=False)
