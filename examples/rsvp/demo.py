@@ -5,11 +5,10 @@ from algosdk.error import AlgodHTTPError
 from beaker import consts, sandbox
 from beaker.client import ApplicationClient
 
-from examples.rsvp.contract import check_in, read_price, read_rsvp, withdraw_external
-from examples.rsvp.contract import rsvp as app
+from examples.rsvp import contract as rsvp
 
 
-def demo() -> None:
+def main() -> None:
     client = sandbox.get_algod_client()
     accts = sandbox.get_accounts()
 
@@ -18,7 +17,7 @@ def demo() -> None:
     guest_acct2 = accts.pop()
 
     # Create an Application client for event creator containing both an algod client and my app
-    app_client = ApplicationClient(client, app, signer=creator_acct.signer)
+    app_client = ApplicationClient(client, rsvp.app, signer=creator_acct.signer)
 
     print("### CREATE AND INITIALIZE CONTRACT ### \n")
     sp = client.suggested_params()
@@ -26,7 +25,7 @@ def demo() -> None:
     app_id, app_addr, txid = app_client.create(event_price=1 * consts.algo)
     print(f"Created App with id: {app_id} and address addr: {app_addr} in tx: {txid}")
 
-    event_price = app_client.call(read_price)
+    event_price = app_client.call(rsvp.read_price)
     print(f"Event price is set to {event_price.return_value} microAlgos")
 
     # Fund the contract for minimum balance
@@ -56,14 +55,14 @@ def demo() -> None:
 
     # Check in to the event
     print("Guest 1 checking in to the Event...")
-    app_client_guest1.call(check_in)
+    app_client_guest1.call(rsvp.check_in)
     acct_state = app_client_guest1.get_local_state()
     checked_in_val = acct_state["checked_in"]
     assert isinstance(checked_in_val, int)
     print(f"checked_in should be 1 and the state is {checked_in_val}")
 
     # See How many RSVPed
-    result = app_client.call(read_rsvp)
+    result = app_client.call(rsvp.read_rsvp)
     print(f"The number of people RSVPed should be 1 and it is {result.return_value}\n")
 
     # Guest 2 Scenario
@@ -87,7 +86,7 @@ def demo() -> None:
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos")
 
     # See How many RSVPed
-    result = app_client.call(read_rsvp)
+    result = app_client.call(rsvp.read_rsvp)
     print(f"The number of people RSVPed should be 2 and it is {result.return_value}\n")
 
     # Cancel RSVP to the event
@@ -100,7 +99,7 @@ def demo() -> None:
         print(f"Succesfully closed_out: {e}")
 
     # See How many RSVPed
-    result = app_client.call(read_rsvp)
+    result = app_client.call(rsvp.read_rsvp)
     print(f"The number of people RSVPed should be 1 and it is {result.return_value}")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")
 
@@ -110,7 +109,7 @@ def demo() -> None:
 
     # Withdraw funds and close event RSVP
     print("Event creator withdrawing funds...")
-    app_client.call(withdraw_external)
+    app_client.call(rsvp.withdraw_external)
     print("Event creator successfully withdrew remaining balance.")
     print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")
 
@@ -120,4 +119,4 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    demo()
+    main()

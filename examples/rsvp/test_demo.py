@@ -1,12 +1,12 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.rsvp.contract import rsvp
-from examples.rsvp.demo import demo
+from examples.rsvp import contract as rsvp
+from examples.rsvp import demo
 
 
 def test_demo() -> None:
-    demo()
+    demo.main()
 
 
 def test_output_stability() -> None:
-    check_application_artifacts_output_stability(app=rsvp, dir_per_test_file=False)
+    check_application_artifacts_output_stability(app=rsvp.app, dir_per_test_file=False)
