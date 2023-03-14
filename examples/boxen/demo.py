@@ -36,7 +36,7 @@ def print_boxes(app_client: beaker.client.ApplicationClient) -> None:
             print(f"\t{encode_address(box_name)} => {membership_record} ")
 
 
-def demo() -> None:
+def main() -> None:
     accts = beaker.sandbox.get_accounts()
     acct = accts.pop()
     member_acct = accts.pop()
@@ -186,4 +186,4 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    demo()
+    main()
