@@ -2,7 +2,6 @@ from base64 import b64decode, b64encode
 from typing import Any
 
 import algosdk.error
-import pyteal
 import pyteal as pt
 import pytest
 from algosdk.account import generate_account
@@ -41,7 +40,7 @@ class AppState:
 app = Application(
     "App",
     state=AppState(),
-    build_options=BuildOptions(avm_version=pyteal.MAX_PROGRAM_VERSION),
+    build_options=BuildOptions(avm_version=pt.MAX_PROGRAM_VERSION),
 )
 
 
