@@ -1,15 +1,11 @@
 import pyteal as pt
 
-from beaker import (
-    Application,
-    BuildOptions,
-    GlobalStateValue,
-)
+import beaker
 from beaker.lib.math import Max
 
 
 class SortedIntegersState:
-    elements = GlobalStateValue(
+    elements = beaker.GlobalStateValue(
         stack_type=pt.TealType.uint64,
         default=pt.Int(0),
         descr="The number of elements in the array",
@@ -24,9 +20,9 @@ BOX_NAME_EXPR = pt.Bytes(BOX_NAME)
 BOX_SIZE_EXPR = pt.Int(BOX_SIZE)
 MAX_INTS_EXPR = pt.Int(MAX_INTS)
 
-app = Application(
+app = beaker.Application(
     "SortedIntegers",
-    build_options=BuildOptions(avm_version=8),
+    build_options=beaker.BuildOptions(avm_version=8),
     state=SortedIntegersState(),
 )
 
