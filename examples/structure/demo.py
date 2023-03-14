@@ -5,8 +5,7 @@ from beaker import client, sandbox
 from examples.structure import structer
 
 
-def demo() -> None:
-
+def main() -> None:
     # Create a codec from the python sdk
     order_codec = ABIType.from_string(str(structer.Order().type_spec()))
 
@@ -63,4 +62,4 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    demo()
+    main()

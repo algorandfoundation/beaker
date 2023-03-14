@@ -4,7 +4,7 @@ from examples.structure import demo, structer
 
 
 def test_demo() -> None:
-    demo.demo()
+    demo.main()
 
 
 def test_output_stability() -> None:
