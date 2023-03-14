@@ -1,12 +1,12 @@
 #pragma version 8
 intcblock 1
 bytecblock 0x72737670
-callsub refund_0
+callsub clearstate_0
 intc_0 // 1
 return
 
-// refund
-refund_0:
+// clear_state
+clearstate_0:
 proto 0 0
 itxn_begin
 intc_0 // pay
