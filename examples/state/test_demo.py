@@ -1,10 +1,10 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.state import contract, main
+from examples.state import contract, demo
 
 
 def test_demo() -> None:
-    main.demo()
+    demo.main()
 
 
 def test_output_stability() -> None:
