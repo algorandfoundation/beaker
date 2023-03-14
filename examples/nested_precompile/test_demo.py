@@ -1,14 +1,14 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.nested_precompile.main import demo
-from examples.nested_precompile.nested_application import grand_parent_app
+from examples.nested_precompile import demo
+from examples.nested_precompile.smart_contracts import grandparent
 
 
 def test_demo() -> None:
-    demo()
+    demo.main()
 
 
 def test_output_stability() -> None:
     check_application_artifacts_output_stability(
-        grand_parent_app, dir_per_test_file=False
+        grandparent.app, dir_per_test_file=False
     )
