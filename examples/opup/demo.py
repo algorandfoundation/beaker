@@ -9,21 +9,21 @@ from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_accounts, get_algod_client
 
-from examples.opup.contract import expensive_app, hash_it
-
-client = get_algod_client()
-
-acct = get_accounts().pop()
+from examples.opup import contract
 
 
-def demo() -> None:
+def main() -> None:
+    client = get_algod_client()
+
+    acct = get_accounts().pop()
+
     # Create an Application client containing both an algod client and my app
     sp = client.suggested_params()
     # we need to cover 255 inner transactions + ours
     sp.flat_fee = True
     sp.fee = 256 * milli_algo
     app_client = ApplicationClient(
-        client, expensive_app, signer=acct.signer, suggested_params=sp
+        client, contract.app, signer=acct.signer, suggested_params=sp
     )
 
     # Create the applicatiion on chain, set the app id for the app client
@@ -45,7 +45,7 @@ def demo() -> None:
     # app_client.add_method_call(atc, app.hash_it, input=input, iters=iters)
     # result = atc.execute(client, 4)
 
-    result = app_client.call(hash_it, input=input, iters=iters)
+    result = app_client.call(contract.hash_it, input=input, iters=iters)
     result_hash = bytes(result.return_value)
 
     local_hash = input.encode()
@@ -60,4 +60,4 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    demo()
+    main()

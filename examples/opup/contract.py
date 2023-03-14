@@ -1,21 +1,12 @@
 from typing import Literal
 
-from pyteal import (
-    Assert,
-    Expr,
-    For,
-    Int,
-    ScratchVar,
-    Seq,
-    Sha256,
-    abi,
-)
+import pyteal as pt
 
-from beaker import Application, sandbox
+import beaker
 
 from examples.opup.op_up import OpUpState, op_up_blueprint
 
-expensive_app = Application(
+app = beaker.Application(
     name="ExpensiveApp",
     descr="Do expensive work to demonstrate implementing op_up blueprint",
     state=OpUpState(),
@@ -23,44 +14,39 @@ expensive_app = Application(
 
 # Create a callable method after passing the
 # instance of the app to have methods added
-call_opup = op_up_blueprint(expensive_app)
+call_opup = op_up_blueprint(app)
 
 
-@expensive_app.external
+@app.external
 def hash_it(
-    input: abi.String,
-    iters: abi.Uint64,
-    opup_app: abi.Application = expensive_app.state.opup_app_id,  # type: ignore[assignment]
+    input: pt.abi.String,
+    iters: pt.abi.Uint64,
+    opup_app: pt.abi.Application = app.state.opup_app_id,  # type: ignore[assignment]
     *,
-    output: abi.StaticBytes[Literal[32]],
-) -> Expr:
-    return Seq(
-        Assert(opup_app.application_id() == expensive_app.state.opup_app_id),
+    output: pt.abi.StaticBytes[Literal[32]],
+) -> pt.Expr:
+    return pt.Seq(
+        pt.Assert(opup_app.application_id() == app.state.opup_app_id),
         Repeat(255, call_opup()),
-        (current := ScratchVar()).store(input.get()),
-        For(
-            (i := ScratchVar()).store(Int(0)),
+        (current := pt.ScratchVar()).store(input.get()),
+        pt.For(
+            (i := pt.ScratchVar()).store(pt.Int(0)),
             i.load() < iters.get(),
-            i.store(i.load() + Int(1)),
-        ).Do(current.store(Sha256(current.load()))),
+            i.store(i.load() + pt.Int(1)),
+        ).Do(current.store(pt.Sha256(current.load()))),
         output.decode(current.load()),
     )
 
 
-def Repeat(n: int, expr: Expr) -> Expr:  # noqa: N802
+def Repeat(n: int, expr: pt.Expr) -> pt.Expr:  # noqa: N802
     """internal method to issue transactions against the target app"""
     if n < 0:
         raise ValueError("n < 0")
     elif n == 1:
         return expr
     else:
-        return For(
-            (i := ScratchVar()).store(Int(0)),
-            i.load() < Int(n),
-            i.store(i.load() + Int(1)),
+        return pt.For(
+            (i := pt.ScratchVar()).store(pt.Int(0)),
+            i.load() < pt.Int(n),
+            i.store(i.load() + pt.Int(1)),
         ).Do(expr)
-
-
-if __name__ == "__main__":
-    compiled = expensive_app.build(sandbox.get_algod_client())
-    print(compiled.approval_program, compiled.clear_program)

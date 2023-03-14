@@ -1,83 +1,67 @@
 from collections.abc import Callable
-from typing import Final
 
-from pyteal import (
-    Approve,
-    Assert,
-    Expr,
-    InnerTxn,
-    InnerTxnBuilder,
-    Int,
-    Seq,
-    Subroutine,
-    TealType,
-    TxnField,
-    abi,
-)
+import pyteal as pt
 
-from beaker import (
-    Application,
-    Authorize,
-    GlobalStateValue,
-    precompiled,
-    unconditional_create_approval,
-)
-from beaker.consts import Algos
+import beaker
 
 
 class OpUpState:
     #: The id of the app created during `bootstrap`
-    opup_app_id = GlobalStateValue(stack_type=TealType.uint64, key="ouaid", static=True)
+    opup_app_id = beaker.GlobalStateValue(
+        stack_type=pt.TealType.uint64, key="ouaid", static=True
+    )
 
 
-def op_up_blueprint(app: Application[OpUpState]) -> Callable[[], Expr]:
-    target_app = Application(
+def op_up_blueprint(app: beaker.Application[OpUpState]) -> Callable[[], pt.Expr]:
+    target_app = beaker.Application(
         name="TargetApp",
         descr="""Simple app that allows the creator to call `opup` in order to increase its opcode budget""",
-    ).apply(unconditional_create_approval)
+    ).apply(beaker.unconditional_create_approval)
 
-    @target_app.external(authorize=Authorize.only_creator())
-    def opup() -> Expr:
-        return Approve()
+    @target_app.external(authorize=beaker.Authorize.only_creator())
+    def opup() -> pt.Expr:
+        return pt.Approve()
 
     #: The minimum balance required for this class
-    min_balance: Final[Expr] = Algos(0.1)
+    min_balance = beaker.consts.Algos(0.1)
 
     @app.external
-    def opup_bootstrap(ptxn: abi.PaymentTransaction, *, output: abi.Uint64) -> Expr:
+    def opup_bootstrap(
+        ptxn: pt.abi.PaymentTransaction, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
         """initialize opup with bootstrap to create a target app"""
-        return Seq(
-            Assert(ptxn.get().amount() >= min_balance),
+        return pt.Seq(
+            pt.Assert(ptxn.get().amount() >= min_balance),
             create_opup(),
             output.set(app.state.opup_app_id),
         )
 
-    @Subroutine(TealType.none)
-    def create_opup() -> Expr:
+    @pt.Subroutine(pt.TealType.none)
+    def create_opup() -> pt.Expr:
         """internal method to create the target application"""
         #: The app to be created to receiver opup requests
-        target = precompiled(target_app)
+        target = beaker.precompiled(target_app)
 
-        return Seq(
-            InnerTxnBuilder.Begin(),
-            InnerTxnBuilder.SetFields(
+        return pt.Seq(
+            pt.InnerTxnBuilder.Begin(),
+            pt.InnerTxnBuilder.SetFields(
                 {
                     **target.get_create_config(),
-                    TxnField.fee: Int(0),
+                    pt.TxnField.fee: pt.Int(0),
                 }
             ),
-            InnerTxnBuilder.Submit(),
-            app.state.opup_app_id.set(InnerTxn.created_application_id()),
+            pt.InnerTxnBuilder.Submit(),
+            app.state.opup_app_id.set(pt.InnerTxn.created_application_id()),
         )
 
     # No decorator, inline it
-    def call_opup() -> Expr:
+    def call_opup() -> pt.Expr:
         """internal method to just return the method call to our target app"""
-        return InnerTxnBuilder.ExecuteMethodCall(
+        return pt.InnerTxnBuilder.ExecuteMethodCall(
             app_id=app.state.opup_app_id,
             method_signature=opup.method_signature(),
             args=[],
-            extra_fields={TxnField.fee: Int(0)},
+            extra_fields={pt.TxnField.fee: pt.Int(0)},
         )
 
     return call_opup
