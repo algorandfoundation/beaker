@@ -1,15 +1,9 @@
-from abc import ABC, abstractmethod
+import abc
 from typing import Literal
 
 import pyteal as pt
 
 import beaker
-
-
-def read_next(vaa: pt.Expr, offset: int, t: pt.abi.BaseType) -> tuple[int, pt.Expr]:
-    size = t.type_spec().byte_length_static()
-    return offset + size, t.decode(vaa, start_index=pt.Int(offset), length=pt.Int(size))
-
 
 Bytes32 = pt.abi.StaticBytes[Literal[32]]
 
@@ -59,13 +53,13 @@ class ContractTransferVAA:
         offset = 0
         ops: list[pt.Expr] = []
 
-        offset, e = read_next(vaa, offset, self.version)
+        offset, e = _read_next(vaa, offset, self.version)
         ops.append(e)
 
-        offset, e = read_next(vaa, offset, self.index)
+        offset, e = _read_next(vaa, offset, self.index)
         ops.append(e)
 
-        offset, e = read_next(vaa, offset, self.siglen)
+        offset, e = _read_next(vaa, offset, self.siglen)
         ops.append(e)
 
         # Increase offset to skip over sigs && digest
@@ -78,31 +72,31 @@ class ContractTransferVAA:
 
         # Reset the offset now that we have const length elements
         offset = 0
-        offset, e = read_next(digest_vaa.load(), offset, self.timestamp)
+        offset, e = _read_next(digest_vaa.load(), offset, self.timestamp)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.nonce)
+        offset, e = _read_next(digest_vaa.load(), offset, self.nonce)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.chain)
+        offset, e = _read_next(digest_vaa.load(), offset, self.chain)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.emitter)
+        offset, e = _read_next(digest_vaa.load(), offset, self.emitter)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.sequence)
+        offset, e = _read_next(digest_vaa.load(), offset, self.sequence)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.consistency)
+        offset, e = _read_next(digest_vaa.load(), offset, self.consistency)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.type)
+        offset, e = _read_next(digest_vaa.load(), offset, self.type)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.amount)
+        offset, e = _read_next(digest_vaa.load(), offset, self.amount)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.contract)
+        offset, e = _read_next(digest_vaa.load(), offset, self.contract)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.from_chain)
+        offset, e = _read_next(digest_vaa.load(), offset, self.from_chain)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.to_address)
+        offset, e = _read_next(digest_vaa.load(), offset, self.to_address)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.to_chain)
+        offset, e = _read_next(digest_vaa.load(), offset, self.to_chain)
         ops.append(e)
-        offset, e = read_next(digest_vaa.load(), offset, self.from_address)
+        offset, e = _read_next(digest_vaa.load(), offset, self.from_address)
         ops.append(e)
         # Rest is payload
         ops.append(self.payload.set(pt.Suffix(digest_vaa.load(), pt.Int(offset))))
@@ -110,8 +104,13 @@ class ContractTransferVAA:
         return pt.Seq(*ops)
 
 
-class WormholeStrategy(ABC):
-    @abstractmethod
+def _read_next(vaa: pt.Expr, offset: int, t: pt.abi.BaseType) -> tuple[int, pt.Expr]:
+    size = t.type_spec().byte_length_static()
+    return offset + size, t.decode(vaa, start_index=pt.Int(offset), length=pt.Int(size))
+
+
+class WormholeStrategy(abc.ABC):
+    @abc.abstractmethod
     def handle_transfer(
         self, ctvaa: ContractTransferVAA, *, output: pt.abi.DynamicBytes
     ) -> pt.Expr:
