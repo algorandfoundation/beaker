@@ -4,6 +4,7 @@ import pytest
 import beaker as bkr
 from beaker.lib.storage.blob import blob_page_size
 from beaker.lib.storage.local_blob import LocalBlob
+
 from tests.helpers import UnitTestingApp, assert_output
 
 

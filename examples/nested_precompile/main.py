@@ -1,4 +1,5 @@
 from beaker import client, consts, sandbox
+
 from examples.nested_precompile.nested_application import (
     child1_app,
     child2_app,

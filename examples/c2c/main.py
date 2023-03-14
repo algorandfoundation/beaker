@@ -1,6 +1,7 @@
 import pyteal as pt
 
 import beaker
+
 from examples.c2c import sub
 
 app = beaker.Application(

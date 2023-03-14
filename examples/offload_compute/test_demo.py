@@ -1,5 +1,6 @@
-from examples.offload_compute.main import demo, eth_checker
 from tests.conftest import check_application_artifacts_output_stability
+
+from examples.offload_compute.main import demo, eth_checker
 
 
 def test_demo() -> None:

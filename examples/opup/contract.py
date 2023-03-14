@@ -12,6 +12,7 @@ from pyteal import (
 )
 
 from beaker import Application, sandbox
+
 from examples.opup.op_up import OpUpState, op_up_blueprint
 
 expensive_app = Application(

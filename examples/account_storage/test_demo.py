@@ -1,5 +1,6 @@
-from examples.account_storage import demo, disk_hungry
 from tests.conftest import check_application_artifacts_output_stability
+
+from examples.account_storage import demo, disk_hungry
 
 
 def test_demo() -> None:

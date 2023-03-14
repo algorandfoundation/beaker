@@ -3,6 +3,7 @@ import math as pymath
 import pyteal as pt
 
 from beaker.lib import math
+
 from tests.helpers import UnitTestingApp, assert_output
 
 

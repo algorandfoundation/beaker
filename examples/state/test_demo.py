@@ -1,6 +1,7 @@
+from tests.conftest import check_application_artifacts_output_stability
+
 from examples.state.contract import app
 from examples.state.main import demo
-from tests.conftest import check_application_artifacts_output_stability
 
 
 def test_demo() -> None:

@@ -4,6 +4,7 @@ from algosdk.error import AlgodHTTPError
 
 from beaker import consts, sandbox
 from beaker.client import ApplicationClient
+
 from examples.rsvp.contract import check_in, read_price, read_rsvp, withdraw_external
 from examples.rsvp.contract import rsvp as app
 
