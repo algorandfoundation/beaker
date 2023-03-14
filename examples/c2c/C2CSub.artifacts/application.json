@@ -92,7 +92,7 @@
             }
         ],
         "networks": {},
-        "desc": "Sub application who's only purpose is to opt into then close out of an asset"
+        "desc": "Sub application whose only purpose is to opt into then close out of an asset"
     },
     "bare_call_config": {
         "no_op": "CREATE",
