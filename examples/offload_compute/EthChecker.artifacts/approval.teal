@@ -24,7 +24,7 @@ txna ApplicationArgs 2
 store 1
 load 0
 load 1
-callsub checkethsig_1
+callsub checkethsig_0
 store 2
 pushbytes 0x151f7c75 // 0x151f7c75
 load 2
@@ -43,18 +43,11 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
-intc_1 // 1
-return
-
-// create
-create_0:
-proto 0 0
 intc_1 // 1
 return
 
 // check_eth_sig
-checkethsig_1:
+checkethsig_0:
 proto 2 1
 pushbytes 0x // ""
 txn Sender
