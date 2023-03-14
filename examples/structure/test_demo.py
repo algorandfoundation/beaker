@@ -1,12 +1,11 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.structure.demo import demo
-from examples.structure.structer import structer_app
+from examples.structure import demo, structer
 
 
 def test_demo() -> None:
-    demo()
+    demo.demo()
 
 
 def test_output_stability() -> None:
-    check_application_artifacts_output_stability(structer_app, dir_per_test_file=False)
+    check_application_artifacts_output_stability(structer.app, dir_per_test_file=False)

@@ -1,60 +1,55 @@
-from pyteal import Expr, Int, Seq, TealType, abi
+import pyteal as pt
 
-from beaker import (
-    Application,
-    ReservedLocalStateValue,
-    unconditional_create_approval,
-    unconditional_opt_in_approval,
-)
+import beaker
 
 
 # Our custom Struct
-class Order(abi.NamedTuple):
-    item: abi.Field[abi.String]
-    quantity: abi.Field[abi.Uint16]
+class Order(pt.abi.NamedTuple):
+    item: pt.abi.Field[pt.abi.String]
+    quantity: pt.abi.Field[pt.abi.Uint16]
 
 
 class StructerState:
-    orders = ReservedLocalStateValue(
-        stack_type=TealType.bytes,
+    orders = beaker.ReservedLocalStateValue(
+        stack_type=pt.TealType.bytes,
         max_keys=16,
         prefix="",
     )
 
 
-structer_app = (
-    Application("Structer", state=StructerState())
-    .apply(unconditional_create_approval)
-    .apply(unconditional_opt_in_approval, initialize_local_state=True)
+app = (
+    beaker.Application("Structer", state=StructerState())
+    .apply(beaker.unconditional_create_approval)
+    .apply(beaker.unconditional_opt_in_approval, initialize_local_state=True)
 )
 
 
-@structer_app.external
-def place_order(order_number: abi.Uint8, order: Order) -> Expr:
-    return structer_app.state.orders[order_number].set(order.encode())
+@app.external
+def place_order(order_number: pt.abi.Uint8, order: Order) -> pt.Expr:
+    return app.state.orders[order_number].set(order.encode())
 
 
-@structer_app.external(read_only=True)
-def read_item(order_number: abi.Uint8, *, output: Order) -> Expr:
-    return output.decode(structer_app.state.orders[order_number])
+@app.external(read_only=True)
+def read_item(order_number: pt.abi.Uint8, *, output: Order) -> pt.Expr:
+    return output.decode(app.state.orders[order_number])
 
 
-@structer_app.external
-def increase_quantity(order_number: abi.Uint8, *, output: Order) -> Expr:
-    return Seq(
+@app.external
+def increase_quantity(order_number: pt.abi.Uint8, *, output: Order) -> pt.Expr:
+    return pt.Seq(
         # Read the order from state
-        (new_order := Order()).decode(structer_app.state.orders[order_number]),
+        (new_order := Order()).decode(app.state.orders[order_number]),
         # Select out in the quantity attribute, its a TupleElement type
         # so needs to be stored somewhere
-        (quant := abi.Uint16()).set(new_order.quantity),
+        (quant := pt.abi.Uint16()).set(new_order.quantity),
         # Add 1 to quantity
-        quant.set(quant.get() + Int(1)),
-        (item := abi.String()).set(new_order.item),
+        quant.set(quant.get() + pt.Int(1)),
+        (item := pt.abi.String()).set(new_order.item),
         # We've gotta set all of the fields at the same time, but we can
         # borrow the item we already know about
         new_order.set(item, quant),
         # Write the new order to state
-        structer_app.state.orders[order_number].set(new_order.encode()),
+        app.state.orders[order_number].set(new_order.encode()),
         # Write new order to caller
         output.decode(new_order.encode()),
     )
