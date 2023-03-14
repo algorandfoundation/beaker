@@ -4,6 +4,7 @@ from algosdk.encoding import decode_address, encode_address
 from algosdk.transaction import AssetOptInTxn, PaymentTxn
 
 import beaker
+
 from examples.boxen import app_member, membership_club
 
 record_codec = ABIType.from_string(str(membership_club.MembershipRecord().type_spec()))

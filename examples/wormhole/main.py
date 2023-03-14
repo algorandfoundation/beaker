@@ -3,6 +3,7 @@ import json
 from algosdk.abi import ABIType
 
 from beaker import client, sandbox
+
 from examples.wormhole.contract import OracleData, oracle_data_cache_app
 
 base_vaa = bytes.fromhex(

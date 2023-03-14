@@ -16,6 +16,7 @@ from beaker import (
     unconditional_create_approval,
 )
 from beaker.precompile import PrecompiledLogicSignature
+
 from examples.offload_compute.lsig import EthEcdsaVerify, HashValue, Signature
 
 eth_checker = Application("EthChecker").apply(unconditional_create_approval)

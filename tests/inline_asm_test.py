@@ -1,6 +1,7 @@
 import pyteal as pt
 
 from beaker.lib.inline import InlineAssembly
+
 from tests.helpers import UnitTestingApp, assert_output
 
 

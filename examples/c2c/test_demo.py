@@ -1,8 +1,10 @@
 import pytest
 
 import beaker
-from examples.c2c import demo, main, sub
+
 from tests.conftest import check_application_artifacts_output_stability
+
+from examples.c2c import demo, main, sub
 
 
 def test_demo() -> None:

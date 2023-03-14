@@ -9,6 +9,7 @@ from algosdk.atomic_transaction_composer import (
 )
 
 import beaker
+
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
 from examples.account_storage import disk_hungry

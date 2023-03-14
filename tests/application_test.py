@@ -21,6 +21,7 @@ from beaker import (
 )
 from beaker.application_specification import ApplicationSpecification
 from beaker.lib.storage import BoxList
+
 from tests.conftest import check_application_artifacts_output_stability
 
 

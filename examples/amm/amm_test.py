@@ -19,6 +19,10 @@ from algosdk.v2client.algod import AlgodClient
 from beaker import client, consts, sandbox
 from beaker.client.application_client import ApplicationClient
 from beaker.client.logic_error import LogicException
+
+from tests import helpers
+from tests.conftest import check_application_artifacts_output_stability
+
 from examples.amm.amm import (
     ConstantProductAMMErrors,
     amm_app,
@@ -26,8 +30,6 @@ from examples.amm.amm import (
     scale,
 )
 from examples.amm.main import demo
-from tests import helpers
-from tests.conftest import check_application_artifacts_output_stability
 
 accts = sandbox.get_accounts()
 algod_client: AlgodClient = sandbox.get_algod_client()

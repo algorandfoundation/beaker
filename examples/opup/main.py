@@ -8,6 +8,7 @@ from algosdk.atomic_transaction_composer import (
 from beaker.client import ApplicationClient
 from beaker.consts import milli_algo
 from beaker.sandbox import get_accounts, get_algod_client
+
 from examples.opup.contract import expensive_app, hash_it
 
 client = get_algod_client()

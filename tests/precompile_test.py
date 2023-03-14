@@ -23,6 +23,7 @@ from beaker.precompile import (
     _py_encode_uvarint,
 )
 from beaker.sandbox import get_accounts, get_algod_client
+
 from tests.conftest import check_application_artifacts_output_stability
 
 

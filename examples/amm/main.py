@@ -7,6 +7,7 @@ from algosdk.atomic_transaction_composer import (
 from beaker import consts
 from beaker.client import ApplicationClient
 from beaker.sandbox import get_accounts, get_algod_client
+
 from examples.amm.amm import ConstantProductAMMState, amm_app, scale
 
 # Take first account from sandbox

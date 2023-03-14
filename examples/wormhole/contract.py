@@ -4,6 +4,7 @@ from beaker import (
     Application,
     ReservedGlobalStateValue,
 )
+
 from examples.wormhole.wormhole import (
     ContractTransferVAA,
     WormholeStrategy,

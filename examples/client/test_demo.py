@@ -1,5 +1,6 @@
-from examples.client.main import demo, my_app
 from tests.conftest import check_application_artifacts_output_stability
+
+from examples.client.main import demo, my_app
 
 
 def test_demo() -> None:

@@ -2,6 +2,7 @@ import pyteal as pt
 import pytest
 
 from beaker.logic_signature import LogicSignature, LogicSignatureTemplate
+
 from tests.conftest import check_lsig_output_stability
 
 
