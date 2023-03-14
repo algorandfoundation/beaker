@@ -2,25 +2,19 @@ from algosdk.abi import ABIType
 
 from beaker import client, sandbox
 
-from examples.structure.structer import (
-    Order,
-    increase_quantity,
-    place_order,
-    read_item,
-    structer_app,
-)
+from examples.structure import structer
 
 
 def demo() -> None:
 
     # Create a codec from the python sdk
-    order_codec = ABIType.from_string(str(Order().type_spec()))
+    order_codec = ABIType.from_string(str(structer.Order().type_spec()))
 
     acct = sandbox.get_accounts().pop()
 
     # Create an Application client containing both an algod client and my app
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), structer_app, signer=acct.signer
+        sandbox.get_algod_client(), structer.app, signer=acct.signer
     )
 
     # Create the applicatiion on chain, set the app id for the app client
@@ -34,7 +28,7 @@ def demo() -> None:
     # according to the type spec
     order_number = 12
     order = {"quantity": 8, "item": "cubes"}
-    app_client.call(place_order, order_number=order_number, order=order)
+    app_client.call(structer.place_order, order_number=order_number, order=order)
 
     # Get the order from the state field
     state_key = order_number.to_bytes(1, "big")
@@ -48,12 +42,12 @@ def demo() -> None:
     )
 
     # Or we could call the read-only method, passing the order number
-    result = app_client.call(read_item, order_number=order_number)
+    result = app_client.call(structer.read_item, order_number=order_number)
     abi_decoded = order_codec.decode(result.raw_value)
     print(f"Decoded result: {abi_decoded}")
 
     # Update the order to increase the quantity
-    result = app_client.call(increase_quantity, order_number=order_number)
+    result = app_client.call(structer.increase_quantity, order_number=order_number)
     increased_decoded = order_codec.decode(result.raw_value)
     print(
         "Let's add 1 to the struct, update state, and "
