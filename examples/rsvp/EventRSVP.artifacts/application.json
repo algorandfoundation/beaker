@@ -133,7 +133,7 @@
                 "returns": {
                     "type": "uint64"
                 },
-                "desc": "Read amount of RSVP to the event. Only callable by Creator."
+                "desc": "Read amount of RSVP to the event."
             }
         ],
         "networks": {}
