@@ -19,7 +19,7 @@ class StructerState:
 
 app = (
     beaker.Application("Structer", state=StructerState())
-    .apply(beaker.unconditional_create_approval)
+    # allow opt-in and initialise local/account state
     .apply(beaker.unconditional_opt_in_approval, initialize_local_state=True)
 )
 
