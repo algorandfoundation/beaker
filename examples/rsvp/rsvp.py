@@ -13,24 +13,6 @@ MIN_BAL = pt.Int(100000)
 FEE = pt.Int(1000)
 
 
-@pt.Subroutine(pt.TealType.none)
-def withdraw_funds() -> pt.Expr:
-    """Helper method that withdraws funds in the RSVP contract"""
-    rsvp_bal = pt.Balance(pt.Global.current_application_address())
-    return pt.Seq(
-        pt.Assert(
-            rsvp_bal > (MIN_BAL + FEE),
-        ),
-        pt.InnerTxnBuilder.Execute(
-            {
-                pt.TxnField.type_enum: pt.TxnType.Payment,
-                pt.TxnField.receiver: pt.Txn.sender(),
-                pt.TxnField.amount: rsvp_bal - (MIN_BAL + FEE),
-            }
-        ),
-    )
-
-
 class EventRSVPState:
     price = beaker.GlobalStateValue(
         stack_type=pt.TealType.uint64,
@@ -98,6 +80,24 @@ def delete() -> pt.Expr:
     )
 
 
+@pt.Subroutine(pt.TealType.none)
+def withdraw_funds() -> pt.Expr:
+    """Helper method that withdraws funds in the RSVP contract"""
+    rsvp_bal = pt.Balance(pt.Global.current_application_address())
+    return pt.Seq(
+        pt.Assert(
+            rsvp_bal > (MIN_BAL + FEE),
+        ),
+        pt.InnerTxnBuilder.Execute(
+            {
+                pt.TxnField.type_enum: pt.TxnType.Payment,
+                pt.TxnField.receiver: pt.Txn.sender(),
+                pt.TxnField.amount: rsvp_bal - (MIN_BAL + FEE),
+            }
+        ),
+    )
+
+
 ################
 # Read Methods #
 ################
@@ -115,6 +115,16 @@ def read_price(*, output: pt.abi.Uint64) -> pt.Expr:
     return output.set(app.state.price)
 
 
+@app.close_out(bare=True)
+def refund() -> pt.Expr:
+    return _do_refund()
+
+
+@app.clear_state
+def clear_state() -> pt.Expr:
+    return _do_refund()
+
+
 def _do_refund() -> pt.Expr:
     """Refunds event payment to guests"""
     return pt.Seq(
@@ -129,13 +139,3 @@ def _do_refund() -> pt.Expr:
         pt.InnerTxnBuilder.Submit(),
         app.state.rsvp.decrement(),
     )
-
-
-@app.close_out(bare=True, name="refund")
-def refund() -> pt.Expr:
-    return _do_refund()
-
-
-@app.clear_state(name="refund")
-def clear_state() -> pt.Expr:
-    return _do_refund()
