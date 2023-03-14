@@ -54,7 +54,7 @@
         }
     },
     "contract": {
-        "name": "ClientExample",
+        "name": "Nicknames",
         "methods": [
             {
                 "name": "set_manager",
