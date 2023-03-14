@@ -1,50 +1,20 @@
-from typing import Final
+import pyteal as pt
 
-from pyteal import (
-    And,
-    Assert,
-    AssetHolding,
-    AssetParam,
-    Bytes,
-    Concat,
-    Expr,
-    Global,
-    If,
-    InnerTxn,
-    InnerTxnBuilder,
-    Int,
-    Or,
-    ScratchVar,
-    Seq,
-    Sqrt,
-    Subroutine,
-    TealType,
-    Txn,
-    TxnField,
-    TxnType,
-    WideRatio,
-    abi,
-    pragma,
-)
-
-from beaker import (
-    Application,
-    Authorize,
-    GlobalStateValue,
-    consts,
-    unconditional_create_approval,
-)
+import beaker
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
-pragma(compiler_version="^0.23.0")
+pt.pragma(compiler_version="^0.23.0")
 
 
-def commented_assert(conditions: list[tuple[Expr, str]]) -> list[Expr]:
-    return [Assert(cond, comment=cmt) for cond, cmt in conditions]
+def commented_assert(conditions: list[tuple[pt.Expr, str]]) -> list[pt.Expr]:
+    return [pt.Assert(cond, comment=cmt) for cond, cmt in conditions]
 
 
-class ConstantProductAMMErrors:
+##############
+# Constants
+##############
+class Errors:
     GroupSizeNot2 = "group size not 2"
     ReceiverNotAppAddr = "receiver not app address"
     AmountLessThanMinimum = "amount minimum not met"
@@ -57,75 +27,74 @@ class ConstantProductAMMErrors:
     SendAmountTooLow = "outgoing amount too low"
 
 
+# Total supply of the pool tokens
+TOTAL_SUPPLY = int(1e10)
+TOTAL_SUPPLY_EXPR = pt.Int(TOTAL_SUPPLY)
+# scale helps with precision when doing computation for
+# the number of tokens to transfer
+SCALE = 1000
+SCALE_EXPR = pt.Int(SCALE)
+# Fee for swaps, 5 represents 0.5% ((fee / scale)*100)
+FEE = 5
+FEE_EXPR = pt.Int(FEE)
+
+
 class ConstantProductAMMState:
-    asset_a = GlobalStateValue(
-        stack_type=TealType.uint64,
+    asset_a = beaker.GlobalStateValue(
+        stack_type=pt.TealType.uint64,
         key="a",
         static=True,
         descr="The asset id of asset A",
     )
-    asset_b = GlobalStateValue(
-        stack_type=TealType.uint64,
+    asset_b = beaker.GlobalStateValue(
+        stack_type=pt.TealType.uint64,
         key="b",
         static=True,
         descr="The asset id of asset B",
     )
-    governor = GlobalStateValue(
-        stack_type=TealType.bytes,
+    governor = beaker.GlobalStateValue(
+        stack_type=pt.TealType.bytes,
         key="g",
-        default=Global.creator_address(),
+        default=pt.Global.creator_address(),
         descr="The current governor of this contract, allowed to do admin type actions",
     )
-    pool_token = GlobalStateValue(
-        stack_type=TealType.uint64,
+    pool_token = beaker.GlobalStateValue(
+        stack_type=pt.TealType.uint64,
         key="p",
         static=True,
         descr="The asset id of the Pool Token, "
         "used to track share of pool the holder may recover",
     )
-    ratio = GlobalStateValue(
-        stack_type=TealType.uint64,
+    ratio = beaker.GlobalStateValue(
+        stack_type=pt.TealType.uint64,
         key="r",
         descr="The ratio between assets (A/B)*Scale",
     )
 
 
-amm_app = Application("ConstantProductAMM", state=ConstantProductAMMState())
-
-# On create, init app state
-amm_app.apply(unconditional_create_approval, initialize_global_state=True)
-##############
-# Constants
-##############
-
-# Total supply of the pool tokens
-total_supply: Final[int] = int(1e10)
-total_supply_expr: Final[Int] = Int(total_supply)
-# scale helps with precision when doing computation for
-# the number of tokens to transfer
-scale: Final[int] = 1000
-scale_expr: Final[Int] = Int(scale)
-# Fee for swaps, 5 represents 0.5% ((fee / scale)*100)
-fee: Final[int] = 5
-fee_expr: Final[Int] = Int(fee)
+app = (
+    beaker.Application("ConstantProductAMM", state=ConstantProductAMMState())
+    # On create, init app state
+    .apply(beaker.unconditional_create_approval, initialize_global_state=True)
+)
 
 
 # Only the account set in global_state.governor may call this method
-@amm_app.external(authorize=Authorize.only(amm_app.state.governor))
-def set_governor(new_governor: abi.Account) -> Expr:
+@app.external(authorize=beaker.Authorize.only(app.state.governor))
+def set_governor(new_governor: pt.abi.Account) -> pt.Expr:
     """sets the governor of the contract, may only be called by the current governor"""
-    return amm_app.state.governor.set(new_governor.address())
+    return app.state.governor.set(new_governor.address())
 
 
 # Only the account set in global_state.governor may call this method
-@amm_app.external(authorize=Authorize.only(amm_app.state.governor))
+@app.external(authorize=beaker.Authorize.only(app.state.governor))
 def bootstrap(
-    seed: abi.PaymentTransaction,
-    a_asset: abi.Asset,
-    b_asset: abi.Asset,
+    seed: pt.abi.PaymentTransaction,
+    a_asset: pt.abi.Asset,
+    b_asset: pt.abi.Asset,
     *,
-    output: abi.Uint64,
-) -> Expr:
+    output: pt.abi.Uint64,
+) -> pt.Expr:
     """bootstraps the contract by opting into the assets and creating the pool token.
 
     Note this method will fail if it is attempted more than once on the same contract
@@ -143,34 +112,34 @@ def bootstrap(
     """
 
     well_formed_bootstrap = [
-        (Global.group_size() == Int(2), ConstantProductAMMErrors.GroupSizeNot2),
+        (pt.Global.group_size() == pt.Int(2), Errors.GroupSizeNot2),
         (
-            seed.get().receiver() == Global.current_application_address(),
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
+            seed.get().receiver() == pt.Global.current_application_address(),
+            Errors.ReceiverNotAppAddr,
         ),
         (
-            seed.get().amount() >= consts.Algos(0.3),
-            ConstantProductAMMErrors.AmountLessThanMinimum,
+            seed.get().amount() >= beaker.consts.Algos(0.3),
+            Errors.AmountLessThanMinimum,
         ),
         (
             a_asset.asset_id() < b_asset.asset_id(),
-            ConstantProductAMMErrors.AssetIdsIncorrect,
+            Errors.AssetIdsIncorrect,
         ),
     ]
 
-    return Seq(
+    return pt.Seq(
         *commented_assert(well_formed_bootstrap),
-        amm_app.state.asset_a.set(a_asset.asset_id()),
-        amm_app.state.asset_b.set(b_asset.asset_id()),
-        amm_app.state.pool_token.set(
+        app.state.asset_a.set(a_asset.asset_id()),
+        app.state.asset_b.set(b_asset.asset_id()),
+        app.state.pool_token.set(
             do_create_pool_token(
-                amm_app.state.asset_a,
-                amm_app.state.asset_b,
+                app.state.asset_a,
+                app.state.asset_b,
             ),
         ),
-        do_opt_in(amm_app.state.asset_a),
-        do_opt_in(amm_app.state.asset_b),
-        output.set(amm_app.state.pool_token),
+        do_opt_in(app.state.asset_a),
+        do_opt_in(app.state.asset_b),
+        output.set(app.state.pool_token),
     )
 
 
@@ -179,14 +148,14 @@ def bootstrap(
 ##############
 
 
-@amm_app.external
+@app.external
 def mint(
-    a_xfer: abi.AssetTransferTransaction,
-    b_xfer: abi.AssetTransferTransaction,
-    pool_asset: abi.Asset = amm_app.state.pool_token,  # type: ignore[assignment]
-    a_asset: abi.Asset = amm_app.state.asset_a,  # type: ignore[assignment]
-    b_asset: abi.Asset = amm_app.state.asset_b,  # type: ignore[assignment]
-) -> Expr:
+    a_xfer: pt.abi.AssetTransferTransaction,
+    b_xfer: pt.abi.AssetTransferTransaction,
+    pool_asset: pt.abi.Asset = app.state.pool_token,  # type: ignore[assignment]
+    a_asset: pt.abi.Asset = app.state.asset_a,  # type: ignore[assignment]
+    b_asset: pt.abi.Asset = app.state.asset_b,  # type: ignore[assignment]
+) -> pt.Expr:
     """mint pool tokens given some amount of asset A and asset B.
 
     Given some amount of Asset A and Asset B in the transfers, mint some number of pool
@@ -205,71 +174,73 @@ def mint(
 
     well_formed_mint = [
         (
-            a_asset.asset_id() == amm_app.state.asset_a,
-            ConstantProductAMMErrors.AssetAIncorrect,
+            a_asset.asset_id() == app.state.asset_a,
+            Errors.AssetAIncorrect,
         ),
         (
-            b_asset.asset_id() == amm_app.state.asset_b,
-            ConstantProductAMMErrors.AssetBIncorrect,
+            b_asset.asset_id() == app.state.asset_b,
+            Errors.AssetBIncorrect,
         ),
         (
-            pool_asset.asset_id() == amm_app.state.pool_token,
-            ConstantProductAMMErrors.AssetPoolIncorrect,
+            pool_asset.asset_id() == app.state.pool_token,
+            Errors.AssetPoolIncorrect,
         ),
         (
-            And(
-                a_xfer.get().sender() == Txn.sender(),
-                b_xfer.get().sender() == Txn.sender(),
+            pt.And(
+                a_xfer.get().sender() == pt.Txn.sender(),
+                b_xfer.get().sender() == pt.Txn.sender(),
             ),
-            ConstantProductAMMErrors.SenderInvalid,
+            Errors.SenderInvalid,
         ),
     ]
 
     valid_asset_a_xfer = [
         (
-            a_xfer.get().asset_receiver() == Global.current_application_address(),
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
+            a_xfer.get().asset_receiver() == pt.Global.current_application_address(),
+            Errors.ReceiverNotAppAddr,
         ),
         (
-            a_xfer.get().xfer_asset() == amm_app.state.asset_a,
-            ConstantProductAMMErrors.AssetAIncorrect,
+            a_xfer.get().xfer_asset() == app.state.asset_a,
+            Errors.AssetAIncorrect,
         ),
         (
-            a_xfer.get().asset_amount() > Int(0),
-            ConstantProductAMMErrors.AmountLessThanMinimum,
+            a_xfer.get().asset_amount() > pt.Int(0),
+            Errors.AmountLessThanMinimum,
         ),
     ]
 
     valid_asset_b_xfer = [
         (
-            b_xfer.get().asset_receiver() == Global.current_application_address(),
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
+            b_xfer.get().asset_receiver() == pt.Global.current_application_address(),
+            Errors.ReceiverNotAppAddr,
         ),
         (
-            b_xfer.get().xfer_asset() == amm_app.state.asset_b,
-            ConstantProductAMMErrors.AssetBIncorrect,
+            b_xfer.get().xfer_asset() == app.state.asset_b,
+            Errors.AssetBIncorrect,
         ),
         (
-            b_xfer.get().asset_amount() > Int(0),
-            ConstantProductAMMErrors.AmountLessThanMinimum,
+            b_xfer.get().asset_amount() > pt.Int(0),
+            Errors.AmountLessThanMinimum,
         ),
     ]
 
-    return Seq(
+    return pt.Seq(
         # Check that the transaction is constructed correctly
         *commented_assert(well_formed_mint + valid_asset_a_xfer + valid_asset_b_xfer),
         # Check that we have these things
-        pool_bal := pool_asset.holding(Global.current_application_address()).balance(),
-        a_bal := a_asset.holding(Global.current_application_address()).balance(),
-        b_bal := b_asset.holding(Global.current_application_address()).balance(),
-        Assert(
+        pool_bal := pool_asset.holding(
+            pt.Global.current_application_address()
+        ).balance(),
+        a_bal := a_asset.holding(pt.Global.current_application_address()).balance(),
+        b_bal := b_asset.holding(pt.Global.current_application_address()).balance(),
+        pt.Assert(
             pool_bal.hasValue(),
             a_bal.hasValue(),
             b_bal.hasValue(),
         ),
-        (to_mint := ScratchVar()).store(
-            If(
-                And(
+        (to_mint := pt.ScratchVar()).store(
+            pt.If(
+                pt.And(
                     a_bal.value() == a_xfer.get().asset_amount(),
                     b_bal.value() == b_xfer.get().asset_amount(),
                 ),
@@ -280,7 +251,7 @@ def mint(
                 ),
                 # Normal mint
                 tokens_to_mint(
-                    total_supply_expr - pool_bal.value(),
+                    TOTAL_SUPPLY_EXPR - pool_bal.value(),
                     a_bal.value() - a_xfer.get().asset_amount(),
                     b_bal.value() - b_xfer.get().asset_amount(),
                     a_xfer.get().asset_amount(),
@@ -288,23 +259,23 @@ def mint(
                 ),
             )
         ),
-        Assert(
-            to_mint.load() > Int(0),
-            comment=ConstantProductAMMErrors.SendAmountTooLow,
+        pt.Assert(
+            to_mint.load() > pt.Int(0),
+            comment=Errors.SendAmountTooLow,
         ),
         # mint tokens
-        do_axfer(Txn.sender(), amm_app.state.pool_token, to_mint.load()),
-        amm_app.state.ratio.set(compute_ratio()),
+        do_axfer(pt.Txn.sender(), app.state.pool_token, to_mint.load()),
+        app.state.ratio.set(compute_ratio()),
     )
 
 
-@amm_app.external
+@app.external
 def burn(
-    pool_xfer: abi.AssetTransferTransaction,
-    pool_asset: abi.Asset = amm_app.state.pool_token,  # type: ignore[assignment]
-    a_asset: abi.Asset = amm_app.state.asset_a,  # type: ignore[assignment]
-    b_asset: abi.Asset = amm_app.state.asset_b,  # type: ignore[assignment]
-) -> Expr:
+    pool_xfer: pt.abi.AssetTransferTransaction,
+    pool_asset: pt.abi.Asset = app.state.pool_token,  # type: ignore[assignment]
+    a_asset: pt.abi.Asset = app.state.asset_a,  # type: ignore[assignment]
+    b_asset: pt.abi.Asset = app.state.asset_b,  # type: ignore[assignment]
+) -> pt.Expr:
     """burn pool tokens to get back some amount of asset A and asset B
 
     Args:
@@ -317,61 +288,63 @@ def burn(
 
     well_formed_burn = [
         (
-            pool_asset.asset_id() == amm_app.state.pool_token,
-            ConstantProductAMMErrors.AssetPoolIncorrect,
+            pool_asset.asset_id() == app.state.pool_token,
+            Errors.AssetPoolIncorrect,
         ),
         (
-            a_asset.asset_id() == amm_app.state.asset_a,
-            ConstantProductAMMErrors.AssetAIncorrect,
+            a_asset.asset_id() == app.state.asset_a,
+            Errors.AssetAIncorrect,
         ),
         (
-            b_asset.asset_id() == amm_app.state.asset_b,
-            ConstantProductAMMErrors.AssetBIncorrect,
+            b_asset.asset_id() == app.state.asset_b,
+            Errors.AssetBIncorrect,
         ),
     ]
 
     valid_pool_xfer = [
         (
-            pool_xfer.get().asset_receiver() == Global.current_application_address(),
-            ConstantProductAMMErrors.ReceiverNotAppAddr,
+            pool_xfer.get().asset_receiver() == pt.Global.current_application_address(),
+            Errors.ReceiverNotAppAddr,
         ),
         (
-            pool_xfer.get().asset_amount() > Int(0),
-            ConstantProductAMMErrors.AmountLessThanMinimum,
+            pool_xfer.get().asset_amount() > pt.Int(0),
+            Errors.AmountLessThanMinimum,
         ),
         (
-            pool_xfer.get().xfer_asset() == amm_app.state.pool_token,
-            ConstantProductAMMErrors.AssetPoolIncorrect,
+            pool_xfer.get().xfer_asset() == app.state.pool_token,
+            Errors.AssetPoolIncorrect,
         ),
         (
-            pool_xfer.get().sender() == Txn.sender(),
-            ConstantProductAMMErrors.SenderInvalid,
+            pool_xfer.get().sender() == pt.Txn.sender(),
+            Errors.SenderInvalid,
         ),
     ]
 
-    return Seq(
+    return pt.Seq(
         *commented_assert(well_formed_burn + valid_pool_xfer),
-        pool_bal := pool_asset.holding(Global.current_application_address()).balance(),
-        a_bal := a_asset.holding(Global.current_application_address()).balance(),
-        b_bal := b_asset.holding(Global.current_application_address()).balance(),
-        Assert(
+        pool_bal := pool_asset.holding(
+            pt.Global.current_application_address()
+        ).balance(),
+        a_bal := a_asset.holding(pt.Global.current_application_address()).balance(),
+        b_bal := b_asset.holding(pt.Global.current_application_address()).balance(),
+        pt.Assert(
             pool_bal.hasValue(),
             a_bal.hasValue(),
             b_bal.hasValue(),
         ),
         # Get the total number of tokens issued
         # !important: this happens prior to receiving the current axfer of pool tokens
-        (issued := ScratchVar()).store(
-            total_supply_expr - (pool_bal.value() - pool_xfer.get().asset_amount())
+        (issued := pt.ScratchVar()).store(
+            TOTAL_SUPPLY_EXPR - (pool_bal.value() - pool_xfer.get().asset_amount())
         ),
-        (a_amt := ScratchVar()).store(
+        (a_amt := pt.ScratchVar()).store(
             tokens_to_burn(
                 issued.load(),
                 a_bal.value(),
                 pool_xfer.get().asset_amount(),
             )
         ),
-        (b_amt := ScratchVar()).store(
+        (b_amt := pt.ScratchVar()).store(
             tokens_to_burn(
                 issued.load(),
                 b_bal.value(),
@@ -380,26 +353,26 @@ def burn(
         ),
         # Send back commensurate amt of a
         do_axfer(
-            Txn.sender(),
-            amm_app.state.asset_a,
+            pt.Txn.sender(),
+            app.state.asset_a,
             a_amt.load(),
         ),
         # Send back commensurate amt of b
         do_axfer(
-            Txn.sender(),
-            amm_app.state.asset_b,
+            pt.Txn.sender(),
+            app.state.asset_b,
             b_amt.load(),
         ),
-        amm_app.state.ratio.set(compute_ratio()),
+        app.state.ratio.set(compute_ratio()),
     )
 
 
-@amm_app.external
+@app.external
 def swap(
-    swap_xfer: abi.AssetTransferTransaction,
-    a_asset: abi.Asset = amm_app.state.asset_a,  # type: ignore[assignment]
-    b_asset: abi.Asset = amm_app.state.asset_b,  # type: ignore[assignment]
-) -> Expr:
+    swap_xfer: pt.abi.AssetTransferTransaction,
+    a_asset: pt.abi.Asset = app.state.asset_a,  # type: ignore[assignment]
+    b_asset: pt.abi.Asset = app.state.asset_b,  # type: ignore[assignment]
+) -> pt.Expr:
     """Swap some amount of either asset A or asset B for the other
 
     Args:
@@ -409,65 +382,69 @@ def swap(
     """
     well_formed_swap = [
         (
-            a_asset.asset_id() == amm_app.state.asset_a,
-            ConstantProductAMMErrors.AssetAIncorrect,
+            a_asset.asset_id() == app.state.asset_a,
+            Errors.AssetAIncorrect,
         ),
         (
-            b_asset.asset_id() == amm_app.state.asset_b,
-            ConstantProductAMMErrors.AssetBIncorrect,
+            b_asset.asset_id() == app.state.asset_b,
+            Errors.AssetBIncorrect,
         ),
     ]
 
     valid_swap_xfer = [
         (
-            Or(
-                swap_xfer.get().xfer_asset() == amm_app.state.asset_a,
-                swap_xfer.get().xfer_asset() == amm_app.state.asset_b,
+            pt.Or(
+                swap_xfer.get().xfer_asset() == app.state.asset_a,
+                swap_xfer.get().xfer_asset() == app.state.asset_b,
             ),
-            ConstantProductAMMErrors.AssetIdsIncorrect,
+            Errors.AssetIdsIncorrect,
         ),
         (
-            swap_xfer.get().asset_amount() > Int(0),
-            ConstantProductAMMErrors.AmountLessThanMinimum,
+            swap_xfer.get().asset_amount() > pt.Int(0),
+            Errors.AmountLessThanMinimum,
         ),
         (
-            swap_xfer.get().sender() == Txn.sender(),
-            ConstantProductAMMErrors.SenderInvalid,
+            swap_xfer.get().sender() == pt.Txn.sender(),
+            Errors.SenderInvalid,
         ),
     ]
 
-    out_id = If(
-        swap_xfer.get().xfer_asset() == amm_app.state.asset_a,
-        amm_app.state.asset_b,
-        amm_app.state.asset_a,
+    out_id = pt.If(
+        swap_xfer.get().xfer_asset() == app.state.asset_a,
+        app.state.asset_b,
+        app.state.asset_a,
     )
     in_id = swap_xfer.get().xfer_asset()
 
-    return Seq(
+    return pt.Seq(
         *commented_assert(well_formed_swap + valid_swap_xfer),
-        in_sup := AssetHolding.balance(Global.current_application_address(), in_id),
-        out_sup := AssetHolding.balance(Global.current_application_address(), out_id),
-        Assert(
+        in_sup := pt.AssetHolding.balance(
+            pt.Global.current_application_address(), in_id
+        ),
+        out_sup := pt.AssetHolding.balance(
+            pt.Global.current_application_address(), out_id
+        ),
+        pt.Assert(
             in_sup.hasValue(),
             out_sup.hasValue(),
         ),
-        (to_swap := ScratchVar()).store(
+        (to_swap := pt.ScratchVar()).store(
             tokens_to_swap(
                 swap_xfer.get().asset_amount(),
                 in_sup.value() - swap_xfer.get().asset_amount(),
                 out_sup.value(),
             )
         ),
-        Assert(
-            to_swap.load() > Int(0),
-            comment=ConstantProductAMMErrors.SendAmountTooLow,
+        pt.Assert(
+            to_swap.load() > pt.Int(0),
+            comment=Errors.SendAmountTooLow,
         ),
         do_axfer(
-            Txn.sender(),
+            pt.Txn.sender(),
             out_id,
             to_swap.load(),
         ),
-        amm_app.state.ratio.set(compute_ratio()),
+        app.state.ratio.set(compute_ratio()),
     )
 
 
@@ -489,39 +466,49 @@ def swap(
 #   if mishandled, could cause the balance of the contract to be drained.
 
 
-@Subroutine(TealType.uint64)
+@pt.Subroutine(pt.TealType.uint64)
 def tokens_to_mint(
-    issued: Expr, a_supply: Expr, b_supply: Expr, a_amount: Expr, b_amount: Expr
-) -> Expr:
-    return Seq(
-        (a_rat := ScratchVar()).store(WideRatio([a_amount, scale_expr], [a_supply])),
-        (b_rat := ScratchVar()).store(WideRatio([b_amount, scale_expr], [b_supply])),
-        WideRatio(
+    issued: pt.Expr,
+    a_supply: pt.Expr,
+    b_supply: pt.Expr,
+    a_amount: pt.Expr,
+    b_amount: pt.Expr,
+) -> pt.Expr:
+    return pt.Seq(
+        (a_rat := pt.ScratchVar()).store(
+            pt.WideRatio([a_amount, SCALE_EXPR], [a_supply])
+        ),
+        (b_rat := pt.ScratchVar()).store(
+            pt.WideRatio([b_amount, SCALE_EXPR], [b_supply])
+        ),
+        pt.WideRatio(
             [
-                If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()),
+                pt.If(a_rat.load() < b_rat.load(), a_rat.load(), b_rat.load()),
                 issued,
             ],
-            [scale_expr],
+            [SCALE_EXPR],
         ),
     )
 
 
-@Subroutine(TealType.uint64)
-def tokens_to_mint_initial(a_amount: Expr, b_amount: Expr) -> Expr:
-    return Sqrt(a_amount * b_amount) - scale_expr
+@pt.Subroutine(pt.TealType.uint64)
+def tokens_to_mint_initial(a_amount: pt.Expr, b_amount: pt.Expr) -> pt.Expr:
+    return pt.Sqrt(a_amount * b_amount) - SCALE_EXPR
 
 
-@Subroutine(TealType.uint64)
-def tokens_to_burn(issued: Expr, supply: Expr, amount: Expr) -> Expr:
-    return WideRatio([supply, amount], [issued])
+@pt.Subroutine(pt.TealType.uint64)
+def tokens_to_burn(issued: pt.Expr, supply: pt.Expr, amount: pt.Expr) -> pt.Expr:
+    return pt.WideRatio([supply, amount], [issued])
 
 
-@Subroutine(TealType.uint64)
-def tokens_to_swap(in_amount: Expr, in_supply: Expr, out_supply: Expr) -> Expr:
-    factor = scale_expr - fee_expr
-    return WideRatio(
+@pt.Subroutine(pt.TealType.uint64)
+def tokens_to_swap(
+    in_amount: pt.Expr, in_supply: pt.Expr, out_supply: pt.Expr
+) -> pt.Expr:
+    factor = SCALE_EXPR - FEE_EXPR
+    return pt.WideRatio(
         [in_amount, factor, out_supply],
-        [(in_supply * scale_expr) + (in_amount * factor)],
+        [(in_supply * SCALE_EXPR) + (in_amount * factor)],
     )
 
 
@@ -530,65 +517,65 @@ def tokens_to_swap(in_amount: Expr, in_supply: Expr, out_supply: Expr) -> Expr:
 ##############
 
 
-@Subroutine(TealType.none)
-def do_axfer(rx: Expr, aid: Expr, amt: Expr) -> Expr:
-    return InnerTxnBuilder.Execute(
+@pt.Subroutine(pt.TealType.none)
+def do_axfer(rx: pt.Expr, aid: pt.Expr, amt: pt.Expr) -> pt.Expr:
+    return pt.InnerTxnBuilder.Execute(
         {
-            TxnField.type_enum: TxnType.AssetTransfer,
-            TxnField.xfer_asset: aid,
-            TxnField.asset_amount: amt,
-            TxnField.asset_receiver: rx,
-            TxnField.fee: Int(0),
+            pt.TxnField.type_enum: pt.TxnType.AssetTransfer,
+            pt.TxnField.xfer_asset: aid,
+            pt.TxnField.asset_amount: amt,
+            pt.TxnField.asset_receiver: rx,
+            pt.TxnField.fee: pt.Int(0),
         }
     )
 
 
-@Subroutine(TealType.none)
-def do_opt_in(aid: Expr) -> Expr:
-    return do_axfer(Global.current_application_address(), aid, Int(0))
+@pt.Subroutine(pt.TealType.none)
+def do_opt_in(aid: pt.Expr) -> pt.Expr:
+    return do_axfer(pt.Global.current_application_address(), aid, pt.Int(0))
 
 
-@Subroutine(TealType.uint64)
-def do_create_pool_token(a: Expr, b: Expr) -> Expr:
-    return Seq(
-        una := AssetParam.unitName(a),
-        unb := AssetParam.unitName(b),
-        Assert(
+@pt.Subroutine(pt.TealType.uint64)
+def do_create_pool_token(a: pt.Expr, b: pt.Expr) -> pt.Expr:
+    return pt.Seq(
+        una := pt.AssetParam.unitName(a),
+        unb := pt.AssetParam.unitName(b),
+        pt.Assert(
             una.hasValue(),
             unb.hasValue(),
         ),
-        InnerTxnBuilder.Execute(
+        pt.InnerTxnBuilder.Execute(
             {
-                TxnField.type_enum: TxnType.AssetConfig,
-                TxnField.config_asset_name: Concat(
-                    Bytes("DPT-"), una.value(), Bytes("-"), unb.value()
+                pt.TxnField.type_enum: pt.TxnType.AssetConfig,
+                pt.TxnField.config_asset_name: pt.Concat(
+                    pt.Bytes("DPT-"), una.value(), pt.Bytes("-"), unb.value()
                 ),
-                TxnField.config_asset_unit_name: Bytes("dpt"),
-                TxnField.config_asset_total: total_supply_expr,
-                TxnField.config_asset_decimals: Int(3),
-                TxnField.config_asset_manager: Global.current_application_address(),
-                TxnField.config_asset_reserve: Global.current_application_address(),
-                TxnField.fee: Int(0),
+                pt.TxnField.config_asset_unit_name: pt.Bytes("dpt"),
+                pt.TxnField.config_asset_total: TOTAL_SUPPLY_EXPR,
+                pt.TxnField.config_asset_decimals: pt.Int(3),
+                pt.TxnField.config_asset_manager: pt.Global.current_application_address(),
+                pt.TxnField.config_asset_reserve: pt.Global.current_application_address(),
+                pt.TxnField.fee: pt.Int(0),
             }
         ),
-        InnerTxn.created_asset_id(),
+        pt.InnerTxn.created_asset_id(),
     )
 
 
-@Subroutine(TealType.uint64)
-def compute_ratio() -> Expr:
-    return Seq(
-        bal_a := AssetHolding.balance(
-            Global.current_application_address(),
-            amm_app.state.asset_a,
+@pt.Subroutine(pt.TealType.uint64)
+def compute_ratio() -> pt.Expr:
+    return pt.Seq(
+        bal_a := pt.AssetHolding.balance(
+            pt.Global.current_application_address(),
+            app.state.asset_a,
         ),
-        bal_b := AssetHolding.balance(
-            Global.current_application_address(),
-            amm_app.state.asset_b,
+        bal_b := pt.AssetHolding.balance(
+            pt.Global.current_application_address(),
+            app.state.asset_b,
         ),
-        Assert(
+        pt.Assert(
             bal_a.hasValue(),
             bal_b.hasValue(),
         ),
-        WideRatio([bal_a.value(), scale_expr], [bal_b.value()]),
+        pt.WideRatio([bal_a.value(), SCALE_EXPR], [bal_b.value()]),
     )

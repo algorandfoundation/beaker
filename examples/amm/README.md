@@ -79,7 +79,7 @@ Make sure [algokit](https://github.com/algorandfoundation/algokit-cli) is instal
 
 Install python requirements `poetry install`
 
-Run the demo `poetry run python main.py`
+Run the demo `poetry run python demo.py`
 
 ## Thank You
 
