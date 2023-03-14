@@ -14,7 +14,7 @@ from nacl.signing import SigningKey
 from beaker import client, consts, sandbox
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
-from examples.templated_lsig.main import app, check, sig_checker
+from examples.templated_lsig import sig_checker
 
 
 def sign_msg(msg: str, sk: str) -> bytes:
@@ -28,14 +28,14 @@ def main() -> None:
 
     # Create app client
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), app, signer=acct.signer
+        sandbox.get_algod_client(), sig_checker.app, signer=acct.signer
     )
 
     # deploy app
     app_client.create()
 
     # Get the signer for the lsig from its populated precompile
-    lsig_pc = PrecompiledLogicSignatureTemplate(sig_checker, app_client.client)
+    lsig_pc = PrecompiledLogicSignatureTemplate(sig_checker.lsig, app_client.client)
     lsig_signer = LogicSigTransactionSigner(
         LogicSigAccount(
             lsig_pc.populate_template(user_addr=decode_address(acct.address))
@@ -71,7 +71,7 @@ def main() -> None:
     # Add the call to the `check` method to be signed by the populated template logic
     lsig_client.add_method_call(
         atc,
-        check,
+        sig_checker.check,
         suggested_params=free_sp,
         signer_address=acct.address,
         msg=msg,
