@@ -2,7 +2,7 @@ from algosdk.abi import ABIType
 
 from beaker import client, sandbox
 
-from examples.structure.main import (
+from examples.structure.structer import (
     Order,
     increase_quantity,
     place_order,
