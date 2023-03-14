@@ -1,12 +1,11 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.state.contract import app
-from examples.state.main import demo
+from examples.state import contract, main
 
 
 def test_demo() -> None:
-    demo()
+    main.demo()
 
 
 def test_output_stability() -> None:
-    check_application_artifacts_output_stability(app, dir_per_test_file=False)
+    check_application_artifacts_output_stability(contract.app, dir_per_test_file=False)
