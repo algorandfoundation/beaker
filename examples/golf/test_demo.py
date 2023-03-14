@@ -1,6 +1,6 @@
 from tests.conftest import check_application_artifacts_output_stability
 
-from examples.golf.main import app, demo
+from examples.golf.sorted_integers import app, demo
 
 
 def test_demo() -> None:
