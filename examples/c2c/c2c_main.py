@@ -2,7 +2,7 @@ import pyteal as pt
 
 import beaker
 
-from examples.c2c import sub
+from examples.c2c import c2c_sub
 
 app = beaker.Application(
     "C2CMain",
@@ -13,14 +13,14 @@ app = beaker.Application(
 @app.external
 def create_sub(*, output: pt.abi.Uint64) -> pt.Expr:
     # Create sub app to be precompiled before allowing TEAL generation
-    sub_app_pc = beaker.precompiled(sub.app)
+    sub_app_pc = beaker.precompiled(c2c_sub.app)
 
     return pt.Seq(
         pt.InnerTxnBuilder.Execute(sub_app_pc.get_create_config()),
         # return the app id of the newly created app
         output.set(pt.InnerTxn.created_application_id()),
         # Try to read the global state
-        sv := sub.app.state.asv.get_external(output.get()),
+        sv := c2c_sub.app.state.asv.get_external(output.get()),
         pt.Log(sv.value()),
         # Opt in to the new app for funsies
         pt.InnerTxnBuilder.Execute(
@@ -31,9 +31,9 @@ def create_sub(*, output: pt.abi.Uint64) -> pt.Expr:
             }
         ),
         # Try to read the local state
-        sv := sub.app.state.acsv[pt.Global.current_application_address()].get_external(
-            output.get()
-        ),
+        sv := c2c_sub.app.state.acsv[
+            pt.Global.current_application_address()
+        ].get_external(output.get()),
         pt.Log(sv.value()),
     )
 
@@ -67,7 +67,7 @@ def trigger_return(app_id: pt.Expr, asset_id: pt.Expr) -> pt.Expr:
         pt.InnerTxnBuilder.Begin(),
         pt.InnerTxnBuilder.MethodCall(
             app_id=app_id,
-            method_signature=sub.return_asset.method_signature(),
+            method_signature=c2c_sub.return_asset.method_signature(),
             args=[asset_id, pt.Global.current_application_address()],
         ),
         pt.InnerTxnBuilder.Submit(),
@@ -99,7 +99,7 @@ def trigger_opt_in_and_xfer(
         pt.InnerTxnBuilder.Begin(),
         pt.InnerTxnBuilder.MethodCall(
             app_id=app_id,
-            method_signature=sub.opt_in_to_asset.method_signature(),
+            method_signature=c2c_sub.opt_in_to_asset.method_signature(),
             args=[asset_id],
         ),
         pt.InnerTxnBuilder.Next(),
