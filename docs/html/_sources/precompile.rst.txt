@@ -22,8 +22,9 @@ In order to use a ``Precompile`` in a program, first wrap the ``LogicSignature``
 .. note::
     The ``precompile`` function may _only_ be called inside a function.
 
-.. literalinclude:: ../../examples/nested_precompile/nested_application.py
-    :lines: 64-75
+.. literalinclude:: ../../examples/nested_precompile/smart_contracts/parent.py
+    :lines: 10-17 
+    :emphasize-lines: 4
 
 
 Reference
@@ -47,11 +48,12 @@ Examples
 
 Using Precompile for offloading compute 
 
-.. literalinclude:: ../../examples/offload_compute/main.py
-    :lines: 21-41
+.. literalinclude:: ../../examples/offload_compute/eth_checker.py
+    :emphasize-lines: 98
 
 .. _sub_app_example:
 
 Using Precompile for a child Application 
 
-.. literalinclude:: ../../examples/nested_precompile/nested_application.py
+.. literalinclude:: ../../examples/nested_precompile/smart_contracts/parent.py
+    :emphasize-lines: 13,23

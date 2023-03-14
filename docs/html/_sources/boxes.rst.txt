@@ -11,6 +11,12 @@ Applications that need to maintain a large amount of state can use ``Box`` data 
 
 While ``PyTeal`` provides the basic tools for working with boxes, ``Beaker`` provides a few handy abstractions for working with them.
 
+.. note::
+     
+    Beaker provides helpful abstractions but these are **NOT** required to be used. The standard PyTeal `Box <https://pyteal.readthedocs.io/en/stable/state.html#box-storage>`_ expressions can be used to interact with boxes outside the helpers provided by Beaker.
+
+
+
 .. _mapping:
 
 
@@ -43,5 +49,5 @@ A ``BoxList`` provides a way to store some number of some _static_ abi type.
 Full Example
 ------------
 
-.. literalinclude:: ../../examples/boxen/application.py
+.. literalinclude:: ../../examples/boxen/membership_club.py
 

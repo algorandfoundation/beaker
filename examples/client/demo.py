@@ -17,7 +17,9 @@ def main() -> None:
     )
 
     # Create the app on-chain (uses signer1)
-    app_client1.create()
+    app_id, app_addr, txid = app_client1.create()
+    print(f"Created app with id {app_id} and address {app_addr} in transaction {txid}")
+
     print(f"Current app state: {app_client1.get_global_state()}")
     # Fund the app account with 1 algo
     app_client1.fund(1 * consts.algo)

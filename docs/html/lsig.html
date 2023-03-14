@@ -85,49 +85,29 @@
 <span id="logic-signatures"></span><h1>Logic Signatures<a class="headerlink" href="#module-beaker.logic_signature" title="Permalink to this heading"></a></h1>
 <p>This is the class that should be initialized to provide a LogicSignature.</p>
 <p>A <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> is intialized with either a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogicSignature</span><span class="p">:</span>  <span class="c1"># noqa: N802</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This Lsig has a single method  `eth_ecdsa_validate` that takes two application arguments:</span>
-<span class="sd">      hash, signature</span>
-<span class="sd">    and returns the validity of the signature given the hash</span>
-<span class="sd">    as written in OpenZeppelin https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-</span>
-<span class="sd">    (65-byte signatures only)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-            <span class="n">Assert</span><span class="p">(</span>
-                <span class="c1"># Don&#39;t let it be rekeyed</span>
-                <span class="n">Txn</span><span class="o">.</span><span class="n">rekey_to</span><span class="p">()</span> <span class="o">==</span> <span class="n">Global</span><span class="o">.</span><span class="n">zero_address</span><span class="p">(),</span>
-                <span class="c1"># Don&#39;t take a fee from me</span>
-                <span class="n">Txn</span><span class="o">.</span><span class="n">fee</span><span class="p">()</span> <span class="o">==</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-                <span class="c1"># Make sure I&#39;ve signed an app call</span>
-                <span class="n">Txn</span><span class="o">.</span><span class="n">type_enum</span><span class="p">()</span> <span class="o">==</span> <span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
-                <span class="c1"># Make sure I have the args I expect [method_selector, hash_value, signature]</span>
-                <span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">==</span> <span class="n">Int</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
-            <span class="p">),</span>
-            <span class="n">eth_ecdsa_validate</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
-        <span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">(</span>
+    <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span>
+            <span class="c1"># Don&#39;t let it be rekeyed</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">rekey_to</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Global</span><span class="o">.</span><span class="n">zero_address</span><span class="p">(),</span>
+            <span class="c1"># Don&#39;t take a fee from me</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">fee</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="c1"># Make sure I&#39;ve signed an app call</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">type_enum</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+            <span class="c1"># Make sure I have the args I expect [method_selector, hash_value, signature]</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">eth_ecdsa_validate</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+    <span class="p">),</span>
+    <span class="n">build_options</span><span class="o">=</span><span class="n">beaker</span><span class="o">.</span><span class="n">BuildOptions</span><span class="p">(</span><span class="n">avm_version</span><span class="o">=</span><span class="mi">6</span><span class="p">),</span>
+<span class="p">)</span>
 </pre></div>
 </div>
-<p>A <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code> is initialized by passing a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> _and_ a dictionary of template variables that should be provided at runtime.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>  <span class="c1"># noqa: N802</span>
-    <span class="c1"># Simple program to check an ed25519 signature given a message and signature</span>
-
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">user_addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-            <span class="c1"># Borrow the msg and sig from the app call arguments</span>
-            <span class="p">(</span><span class="n">msg</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
-            <span class="p">(</span><span class="n">sig</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">Signature</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
-            <span class="c1"># Assert that the sig matches</span>
-            <span class="n">Assert</span><span class="p">(</span><span class="n">Ed25519Verify_Bare</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">sig</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">user_addr</span><span class="p">)),</span>
-            <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">LogicSignatureTemplate</span><span class="p">(</span>
-        <span class="n">evaluate</span><span class="p">,</span>
-        <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_addr&quot;</span><span class="p">:</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">},</span>
-    <span class="p">)</span>
+<p>A <code class="docutils literal notranslate"><span class="pre">LogicSignatureTemplate</span></code> is initialized by passing a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> <strong>and</strong> a dictionary of template variables that should be provided at runtime.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lsig</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignatureTemplate</span><span class="p">(</span>
+    <span class="n">lsig_validate</span><span class="p">,</span>
+<span class="hll">    <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_addr&quot;</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">},</span>
+</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py class">
@@ -181,136 +161,46 @@ need some hardcoded well defined behavior.</p>
 
 <section id="logic-signature-example">
 <span id="lsig-example"></span><h2>Logic Signature Example<a class="headerlink" href="#logic-signature-example" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">base64</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
 
-<span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">transaction</span>
-<span class="kn">from</span> <span class="nn">algosdk.atomic_transaction_composer</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AtomicTransactionComposer</span><span class="p">,</span>
-    <span class="n">LogicSigTransactionSigner</span><span class="p">,</span>
-    <span class="n">TransactionWithSigner</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">algosdk.encoding</span> <span class="kn">import</span> <span class="n">decode_address</span>
-<span class="kn">from</span> <span class="nn">algosdk.transaction</span> <span class="kn">import</span> <span class="n">LogicSigAccount</span>
-<span class="kn">from</span> <span class="nn">nacl.signing</span> <span class="kn">import</span> <span class="n">SigningKey</span>
-<span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">Assert</span><span class="p">,</span> <span class="n">Ed25519Verify_Bare</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Seq</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">Txn</span><span class="p">,</span> <span class="n">abi</span>
+<span class="kn">import</span> <span class="nn">pyteal</span> <span class="k">as</span> <span class="nn">pt</span>
 
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Application</span><span class="p">,</span>
-    <span class="n">LogicSignatureTemplate</span><span class="p">,</span>
-    <span class="n">client</span><span class="p">,</span>
-    <span class="n">consts</span><span class="p">,</span>
-    <span class="n">precompiled</span><span class="p">,</span>
-    <span class="n">sandbox</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">beaker.precompile</span> <span class="kn">import</span> <span class="n">PrecompiledLogicSignatureTemplate</span>
+<span class="kn">import</span> <span class="nn">beaker</span>
 
-<span class="n">Signature</span> <span class="o">=</span> <span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
+<span class="n">Signature</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">64</span><span class="p">]]</span>
 
 
-<span class="k">def</span> <span class="nf">SigChecker</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogicSignatureTemplate</span><span class="p">:</span>  <span class="c1"># noqa: N802</span>
-    <span class="c1"># Simple program to check an ed25519 signature given a message and signature</span>
-
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">user_addr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-            <span class="c1"># Borrow the msg and sig from the app call arguments</span>
-            <span class="p">(</span><span class="n">msg</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
-            <span class="p">(</span><span class="n">sig</span> <span class="o">:=</span> <span class="n">abi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">Signature</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
-            <span class="c1"># Assert that the sig matches</span>
-            <span class="n">Assert</span><span class="p">(</span><span class="n">Ed25519Verify_Bare</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">sig</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">user_addr</span><span class="p">)),</span>
-            <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">LogicSignatureTemplate</span><span class="p">(</span>
-        <span class="n">evaluate</span><span class="p">,</span>
-        <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_addr&quot;</span><span class="p">:</span> <span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">},</span>
+<span class="k">def</span> <span class="nf">lsig_validate</span><span class="p">(</span><span class="n">user_addr</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple program to check an ed25519 signature given a message and signature&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="c1"># Borrow the msg and sig from the app call arguments</span>
+        <span class="p">(</span><span class="n">msg</span> <span class="o">:=</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+        <span class="p">(</span><span class="n">sig</span> <span class="o">:=</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">Signature</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
+        <span class="c1"># Assert that the sig matches</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Ed25519Verify_Bare</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">sig</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">user_addr</span><span class="p">)),</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
     <span class="p">)</span>
 
 
-<span class="n">sig_checker</span> <span class="o">=</span> <span class="n">SigChecker</span><span class="p">()</span>
+<span class="n">lsig</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignatureTemplate</span><span class="p">(</span>
+    <span class="n">lsig_validate</span><span class="p">,</span>
+    <span class="n">runtime_template_variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_addr&quot;</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">},</span>
+<span class="p">)</span>
 
-<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;SigCheckerApp&quot;</span><span class="p">)</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;SigCheckerApp&quot;</span><span class="p">)</span>
 
 
 <span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">signer_address</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="n">sig_checker_pc</span> <span class="o">=</span> <span class="n">precompiled</span><span class="p">(</span><span class="n">sig_checker</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">check</span><span class="p">(</span>
+    <span class="n">signer_address</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+    <span class="n">sig_checker_pc</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">lsig</span><span class="p">)</span>
     <span class="c1"># The lsig will take care of verifying the signature</span>
     <span class="c1"># all we need to do is check that its been used to sign this transaction</span>
-    <span class="k">return</span> <span class="n">Assert</span><span class="p">(</span>
-        <span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">sig_checker_pc</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">user_addr</span><span class="o">=</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">sig_checker_pc</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">user_addr</span><span class="o">=</span><span class="n">signer_address</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
     <span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">sign_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sk</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;utility function for signing arbitrary data&quot;&quot;&quot;</span>
-    <span class="n">pk</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">sk</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">SigningKey</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">pk</span><span class="p">[:</span><span class="mi">32</span><span class="p">]))</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">signature</span>
-
-
-<span class="k">def</span> <span class="nf">demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">acct</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-
-    <span class="c1"># Create app client</span>
-    <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span>
-    <span class="p">)</span>
-
-    <span class="c1"># deploy app</span>
-    <span class="n">app_client</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
-
-    <span class="c1"># Get the signer for the lsig from its populated precompile</span>
-    <span class="n">lsig_pc</span> <span class="o">=</span> <span class="n">PrecompiledLogicSignatureTemplate</span><span class="p">(</span><span class="n">sig_checker</span><span class="p">,</span> <span class="n">app_client</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
-    <span class="n">lsig_signer</span> <span class="o">=</span> <span class="n">LogicSigTransactionSigner</span><span class="p">(</span>
-        <span class="n">LogicSigAccount</span><span class="p">(</span>
-            <span class="n">lsig_pc</span><span class="o">.</span><span class="n">populate_template</span><span class="p">(</span><span class="n">user_addr</span><span class="o">=</span><span class="n">decode_address</span><span class="p">(</span><span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">))</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-    <span class="c1"># Prepare a new client so it can sign calls</span>
-    <span class="n">lsig_client</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">signer</span><span class="o">=</span><span class="n">lsig_signer</span><span class="p">)</span>
-
-    <span class="n">atc</span> <span class="o">=</span> <span class="n">AtomicTransactionComposer</span><span class="p">()</span>
-
-    <span class="c1"># Create a dummy transaction to cover fees (still cheaper than multiple app calls)</span>
-    <span class="n">sp</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">suggested_params</span><span class="p">()</span>
-    <span class="n">covering_sp</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
-    <span class="n">covering_sp</span><span class="o">.</span><span class="n">flat_fee</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">covering_sp</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">consts</span><span class="o">.</span><span class="n">milli_algo</span>
-    <span class="n">atc</span><span class="o">.</span><span class="n">add_transaction</span><span class="p">(</span>
-        <span class="n">TransactionWithSigner</span><span class="p">(</span>
-            <span class="n">txn</span><span class="o">=</span><span class="n">transaction</span><span class="o">.</span><span class="n">PaymentTxn</span><span class="p">(</span><span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">covering_sp</span><span class="p">,</span> <span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="n">signer</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Message to sign</span>
-    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Sign me please&quot;</span>
-    <span class="c1"># Signature</span>
-    <span class="n">sig</span> <span class="o">=</span> <span class="n">sign_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">acct</span><span class="o">.</span><span class="n">signer</span><span class="o">.</span><span class="n">private_key</span><span class="p">)</span>
-
-    <span class="c1"># Since we dont fund this account, just set its fees to 0</span>
-    <span class="n">free_sp</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
-    <span class="n">free_sp</span><span class="o">.</span><span class="n">flat_fee</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">free_sp</span><span class="o">.</span><span class="n">fee</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="c1"># Add the call to the `check` method to be signed by the populated template logic</span>
-    <span class="n">lsig_client</span><span class="o">.</span><span class="n">add_method_call</span><span class="p">(</span>
-        <span class="n">atc</span><span class="p">,</span>
-        <span class="n">check</span><span class="p">,</span>
-        <span class="n">suggested_params</span><span class="o">=</span><span class="n">free_sp</span><span class="p">,</span>
-        <span class="n">signer_address</span><span class="o">=</span><span class="n">acct</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
-        <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span>
-        <span class="n">sig</span><span class="o">=</span><span class="n">sig</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># run it</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">atc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">app_client</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Confirmed in round </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">confirmed_round</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">demo</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>

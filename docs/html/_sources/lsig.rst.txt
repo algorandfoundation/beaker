@@ -7,14 +7,15 @@ This is the class that should be initialized to provide a LogicSignature.
 
 A ``LogicSignature`` is intialized with either a PyTeal ``Expr`` or a function that returns an ``Expr``.
 
-.. literalinclude:: ../../examples/offload_compute/lsig.py
-    :lines: 30-52
+.. literalinclude:: ../../examples/offload_compute/eth_checker.py
+    :lines: 59-74
 
-A ``LogicSignatureTemplate`` is initialized by passing a PyTeal ``Expr`` or a function that returns an ``Expr`` _and_ a dictionary of template variables that should be provided at runtime.
+A ``LogicSignatureTemplate`` is initialized by passing a PyTeal ``Expr`` or a function that returns an ``Expr`` **and** a dictionary of template variables that should be provided at runtime.
 
 
-.. literalinclude:: ../../examples/templated_lsig/main.py
-    :lines: 29-45
+.. literalinclude:: ../../examples/templated_lsig/sig_checker.py
+    :lines: 22-25
+    :emphasize-lines: 3
 
 
 .. autoclass:: LogicSignature
@@ -31,4 +32,4 @@ A ``LogicSignatureTemplate`` is initialized by passing a PyTeal ``Expr`` or a fu
 Logic Signature Example
 -----------------------
 
-.. literalinclude:: ../../examples/templated_lsig/main.py
+.. literalinclude:: ../../examples/templated_lsig/sig_checker.py

@@ -99,17 +99,13 @@ locally as compiled bytes to create the app directly in program logic.</p>
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">precompile</span></code> function may _only_ be called inside a function.</p>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@parent_app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">create_child_2</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+<span class="k">def</span> <span class="nf">create_child_1</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="o">**</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child2_app</span><span class="p">)</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">(),</span>
-                <span class="n">TxnField</span><span class="o">.</span><span class="n">global_num_uints</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># override because..?</span>
-            <span class="p">}</span>
-        <span class="p">),</span>
-        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+<span class="hll">    <span class="n">child1_pc</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child1</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+</span>    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">child1_pc</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
     <span class="p">)</span>
 </pre></div>
 </div>
@@ -195,116 +191,146 @@ can be used to compare with a sender given some arguments.</p>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p id="offload-compute-example">Using Precompile for offloading compute</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">eth_checker</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;EthChecker&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
 
-<span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">EthEcdsaVerify</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">pyteal</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="kn">import</span> <span class="nn">beaker</span>
 
 
-<span class="nd">@eth_checker</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">check_eth_sig</span><span class="p">(</span><span class="nb">hash</span><span class="p">:</span> <span class="n">HashValue</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="nd">@pt</span><span class="o">.</span><span class="n">Subroutine</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">eth_ecdsa_validate</span><span class="p">(</span><span class="n">hash_value</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a 1/0 for valid signature given hash</span>
+
+<span class="sd">    Equivalent of OpenZeppelin ECDSA.recover for long 65-byte Ethereum signatures</span>
+<span class="sd">    https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-</span>
+<span class="sd">    Short 64-byte Ethereum signatures require some changes to the code</span>
+
+
+<span class="sd">    [1] https://github.com/OpenZeppelin/openzeppelin-contracts/blob/5fbf494511fd522b931f7f92e2df87d671ea8b0b/contracts/utils/cryptography/ECDSA.sol#L153</span>
+
+
+<span class="sd">    Note: Unless compatibility with Ethereum or another system is necessary,</span>
+<span class="sd">    we highly recommend using ed25519_verify instead of ecdsa on Algorand</span>
+
+<span class="sd">    WARNING: This code has NOT been audited</span>
+<span class="sd">    DO NOT USE IN PRODUCTION</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">Extract</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">Extract</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+
+    <span class="c1"># The recovery ID is shifted by 27 on Ethereum</span>
+    <span class="c1"># For non-Ethereum signatures, remove the -27 on the line below</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">Btoi</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Extract</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span> <span class="o">-</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">27</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Len</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">65</span><span class="p">),</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Len</span><span class="p">(</span><span class="n">hash_value</span><span class="p">)</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+            <span class="c1"># The following two asserts are to prevent malleability like in [1]</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">BytesLe</span><span class="p">(</span>
+                <span class="n">s</span><span class="p">,</span>
+                <span class="n">pt</span><span class="o">.</span><span class="n">Bytes</span><span class="p">(</span>
+                    <span class="s2">&quot;base16&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0&quot;</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">v</span> <span class="o">&lt;=</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">EcdsaVerify</span><span class="p">(</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">EcdsaCurve</span><span class="o">.</span><span class="n">Secp256k1</span><span class="p">,</span>
+            <span class="n">hash_value</span><span class="p">,</span>
+            <span class="n">r</span><span class="p">,</span>
+            <span class="n">s</span><span class="p">,</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">EcdsaRecover</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">EcdsaCurve</span><span class="o">.</span><span class="n">Secp256k1</span><span class="p">,</span> <span class="n">hash_value</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">(</span>
+    <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span>
+            <span class="c1"># Don&#39;t let it be rekeyed</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">rekey_to</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Global</span><span class="o">.</span><span class="n">zero_address</span><span class="p">(),</span>
+            <span class="c1"># Don&#39;t take a fee from me</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">fee</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="c1"># Make sure I&#39;ve signed an app call</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">type_enum</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">TxnType</span><span class="o">.</span><span class="n">ApplicationCall</span><span class="p">,</span>
+            <span class="c1"># Make sure I have the args I expect [method_selector, hash_value, signature]</span>
+            <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">==</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">eth_ecdsa_validate</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">application_args</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+    <span class="p">),</span>
+    <span class="n">build_options</span><span class="o">=</span><span class="n">beaker</span><span class="o">.</span><span class="n">BuildOptions</span><span class="p">(</span><span class="n">avm_version</span><span class="o">=</span><span class="mi">6</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This LogicSignature takes two application arguments:</span>
+<span class="sd">  hash, signature</span>
+<span class="sd">and returns the validity of the signature given the hash</span>
+<span class="sd">as written in OpenZeppelin https://docs.openzeppelin.com/contracts/2.x/api/cryptography#ECDSA-recover-bytes32-bytes-</span>
+<span class="sd">(65-byte signatures only)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;EthChecker&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+<span class="k">def</span> <span class="nf">check_eth_sig</span><span class="p">(</span>
+    <span class="nb">hash</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">32</span><span class="p">]],</span>
+    <span class="n">signature</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">StaticBytes</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="mi">65</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">String</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
     <span class="c1"># The lsig that will be responsible for validating the</span>
     <span class="c1"># incoming signature against the incoming hash</span>
     <span class="c1"># When passed to Precompile, it flags the init of the Application</span>
     <span class="c1"># to prevent building approval/clear programs until the precompile is</span>
     <span class="c1"># compiled so we have access to compiled information (its address for instance)</span>
-    <span class="n">verifier</span> <span class="o">=</span> <span class="n">precompiled</span><span class="p">(</span><span class="n">verify_lsig</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
+<span class="hll">    <span class="n">verifier</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">verify_lsig</span><span class="p">)</span>
+</span>
+    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
         <span class="c1"># The precompiled lsig should have its address and binary available</span>
         <span class="c1"># here so we can use it to make sure we&#39;ve been called</span>
         <span class="c1"># with the correct lsig</span>
-        <span class="n">Assert</span><span class="p">(</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">verifier</span><span class="o">.</span><span class="n">address</span><span class="p">()),</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Txn</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span> <span class="o">==</span> <span class="n">verifier</span><span class="o">.</span><span class="n">address</span><span class="p">()),</span>
         <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;lsig validated&quot;</span><span class="p">),</span>
     <span class="p">)</span>
 </pre></div>
 </div>
 <p id="sub-app-example">Using Precompile for a child Application</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Approve</span><span class="p">,</span>
-    <span class="n">Expr</span><span class="p">,</span>
-    <span class="n">InnerTxn</span><span class="p">,</span>
-    <span class="n">InnerTxnBuilder</span><span class="p">,</span>
-    <span class="n">Int</span><span class="p">,</span>
-    <span class="n">Seq</span><span class="p">,</span>
-    <span class="n">TealType</span><span class="p">,</span>
-    <span class="n">TxnField</span><span class="p">,</span>
-    <span class="n">abi</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyteal</span> <span class="k">as</span> <span class="nn">pt</span>
 
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Application</span><span class="p">,</span>
-    <span class="n">GlobalStateValue</span><span class="p">,</span>
-    <span class="n">LogicSignature</span><span class="p">,</span>
-    <span class="n">precompiled</span><span class="p">,</span>
-    <span class="n">unconditional_create_approval</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">beaker</span>
+
+<span class="kn">from</span> <span class="nn">examples.nested_precompile.smart_contracts</span> <span class="kn">import</span> <span class="n">child1</span><span class="p">,</span> <span class="n">child2</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Parent&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Child1State</span><span class="p">:</span>
-    <span class="n">counter</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span>
-        <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-    <span class="p">)</span>
-
-
-<span class="n">child1_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Child1&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">Child1State</span><span class="p">())</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-    <span class="n">unconditional_create_approval</span><span class="p">,</span> <span class="n">initialize_global_state</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-
-<span class="nd">@child1_app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">increment_counter</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Increment the counter global state.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">child1_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">increment</span><span class="p">(),</span>
-        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">child1_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">get</span><span class="p">()),</span>
-    <span class="p">)</span>
-
-
-<span class="n">child2_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Child2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
-<span class="n">lsig</span> <span class="o">=</span> <span class="n">LogicSignature</span><span class="p">(</span><span class="n">Approve</span><span class="p">())</span>
-
-
-<span class="nd">@child2_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">get_lsig_addr</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">precompiled</span><span class="p">(</span><span class="n">lsig</span><span class="p">)</span><span class="o">.</span><span class="n">address</span><span class="p">())</span>
-
-
-<span class="n">parent_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Parent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
-
-
-<span class="nd">@parent_app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">create_child_1</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+<span class="k">def</span> <span class="nf">create_child_1</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child1_app</span><span class="p">)</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
-        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+<span class="hll">    <span class="n">child1_pc</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child1</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+</span>    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">child1_pc</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
     <span class="p">)</span>
 
 
-<span class="nd">@parent_app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">create_child_2</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+<span class="k">def</span> <span class="nf">create_child_2</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new child app.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
+<span class="hll">    <span class="n">child2_pc</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child2</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+</span>    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
+        <span class="n">pt</span><span class="o">.</span><span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="o">**</span><span class="n">precompiled</span><span class="p">(</span><span class="n">child2_app</span><span class="p">)</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">(),</span>
-                <span class="n">TxnField</span><span class="o">.</span><span class="n">global_num_uints</span><span class="p">:</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># override because..?</span>
+                <span class="o">**</span><span class="n">child2_pc</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">(),</span>
+                <span class="n">pt</span><span class="o">.</span><span class="n">TxnField</span><span class="o">.</span><span class="n">global_num_uints</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># override because..?</span>
             <span class="p">}</span>
         <span class="p">),</span>
-        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
-    <span class="p">)</span>
-
-
-<span class="n">grand_parent_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Grandparent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">)</span>
-
-
-<span class="nd">@grand_parent_app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">create_parent</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new parent app.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Seq</span><span class="p">(</span>
-        <span class="n">InnerTxnBuilder</span><span class="o">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">precompiled</span><span class="p">(</span><span class="n">parent_app</span><span class="p">)</span><span class="o">.</span><span class="n">get_create_config</span><span class="p">()),</span>
-        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">InnerTxn</span><span class="o">.</span><span class="n">created_application_id</span><span class="p">()),</span>
     <span class="p">)</span>
 </pre></div>
 </div>

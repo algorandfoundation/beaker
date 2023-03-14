@@ -86,7 +86,7 @@
 <p id="id1">The <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> provides a convenient way to interact with our <code class="docutils literal notranslate"><span class="pre">Application</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create Application client</span>
     <span class="n">app_client1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">my_app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">nicknames</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span>
     <span class="p">)</span>
 </pre></div>
 </div>
@@ -95,12 +95,20 @@
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> takes an <code class="docutils literal notranslate"><span class="pre">AlgodClient</span></code> as its first argument, the most common API providers are available in <code class="docutils literal notranslate"><span class="pre">beaker.client.api_providers</span></code></p>
 </div>
-<p>If the application does not yet exist, the <code class="docutils literal notranslate"><span class="pre">app_id</span></code> argument can be omitted but the first interaction with the <code class="docutils literal notranslate"><span class="pre">Application</span></code> should be to <code class="docutils literal notranslate"><span class="pre">create</span></code> it. Once this is done, the <code class="docutils literal notranslate"><span class="pre">app_id</span></code> will be set for the lifetime of the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> instance.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client1</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+<p>If the application does not yet exist, the <code class="docutils literal notranslate"><span class="pre">app_id</span></code> argument can be omitted but the first interaction with the <code class="docutils literal notranslate"><span class="pre">Application</span></code> should be to <code class="docutils literal notranslate"><span class="pre">create</span></code> it.
+Once this is done, the <code class="docutils literal notranslate"><span class="pre">app_id</span></code> will be set for the lifetime of the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> instance.</p>
+<p>If the application <strong>does</strong> exist, the app_id can be provided directly</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a new client that just sets the app id we wish to interact with</span>
+    <span class="n">app_client3</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span>
+        <span class="n">app</span><span class="o">=</span><span class="n">nicknames</span><span class="o">.</span><span class="n">app</span><span class="p">,</span>
+        <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
+<span class="hll">        <span class="n">app_id</span><span class="o">=</span><span class="n">app_client1</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
+</span>    <span class="p">)</span>
 </pre></div>
 </div>
 <p>The primary way to of interact with our application is done using the <code class="docutils literal notranslate"><span class="pre">call</span></code> method, passing the method we want to call and the arguments it expects as keyword arguments.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>If there are multiple signers or you want to re-use some suggested parameters, the <code class="docutils literal notranslate"><span class="pre">prepare</span></code> method may be called with the different arguments and a copy of the client is returned with the updated parameters.</p>
@@ -198,66 +206,13 @@
 
 <section id="full-example">
 <span id="app-client-example"></span><h2>Full Example<a class="headerlink" href="#full-example" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyteal</span> <span class="kn">import</span> <span class="n">ABIReturnSubroutine</span><span class="p">,</span> <span class="n">Approve</span><span class="p">,</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">Global</span><span class="p">,</span> <span class="n">TealType</span><span class="p">,</span> <span class="n">abi</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="n">client</span><span class="p">,</span> <span class="n">consts</span><span class="p">,</span> <span class="n">sandbox</span>
+<span class="kn">from</span> <span class="nn">beaker.client</span> <span class="kn">import</span> <span class="n">ApplicationClient</span><span class="p">,</span> <span class="n">LogicException</span>
 
-<span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Application</span><span class="p">,</span>
-    <span class="n">Authorize</span><span class="p">,</span>
-    <span class="n">GlobalStateValue</span><span class="p">,</span>
-    <span class="n">LocalStateValue</span><span class="p">,</span>
-    <span class="n">client</span><span class="p">,</span>
-    <span class="n">consts</span><span class="p">,</span>
-    <span class="n">sandbox</span><span class="p">,</span>
-    <span class="n">unconditional_create_approval</span><span class="p">,</span>
-    <span class="n">unconditional_opt_in_approval</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">beaker.client.application_client</span> <span class="kn">import</span> <span class="n">ApplicationClient</span>
-<span class="kn">from</span> <span class="nn">beaker.client.logic_error</span> <span class="kn">import</span> <span class="n">LogicException</span>
+<span class="kn">from</span> <span class="nn">examples.client</span> <span class="kn">import</span> <span class="n">nicknames</span>
 
 
-<span class="k">class</span> <span class="nc">ClientExampleState</span><span class="p">:</span>
-    <span class="n">manager</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span>
-        <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Global</span><span class="o">.</span><span class="n">creator_address</span><span class="p">()</span>
-    <span class="p">)</span>
-
-    <span class="n">nickname</span> <span class="o">=</span> <span class="n">LocalStateValue</span><span class="p">(</span>
-        <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span> <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;what this user prefers to be called&quot;</span>
-    <span class="p">)</span>
-
-
-<span class="n">my_app</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;ClientExample&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">ClientExampleState</span><span class="p">())</span>
-    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_create_approval</span><span class="p">,</span> <span class="n">initialize_global_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unconditional_opt_in_approval</span><span class="p">,</span> <span class="n">initialize_local_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="p">)</span>
-
-
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">close_out</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">close_out</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
-
-
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">bare</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">manager</span><span class="p">))</span>
-<span class="k">def</span> <span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">Approve</span><span class="p">()</span>
-
-
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">authorize</span><span class="o">=</span><span class="n">Authorize</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">manager</span><span class="p">))</span>
-<span class="k">def</span> <span class="nf">set_manager</span><span class="p">(</span><span class="n">new_manager</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Address</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">new_manager</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
-
-
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">external</span>
-<span class="k">def</span> <span class="nf">set_nick</span><span class="p">(</span><span class="n">nick</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">nick</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
-
-
-<span class="nd">@my_app</span><span class="o">.</span><span class="n">external</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">get_nick</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">String</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">my_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nickname</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="c1"># Set up accounts we&#39;ll use</span>
     <span class="n">accts</span> <span class="o">=</span> <span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span>
 
@@ -266,18 +221,20 @@
 
     <span class="c1"># Create Application client</span>
     <span class="n">app_client1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">my_app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span> <span class="n">app</span><span class="o">=</span><span class="n">nicknames</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span>
     <span class="p">)</span>
 
     <span class="c1"># Create the app on-chain (uses signer1)</span>
-    <span class="n">app_client1</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="n">app_id</span><span class="p">,</span> <span class="n">app_addr</span><span class="p">,</span> <span class="n">txid</span> <span class="o">=</span> <span class="n">app_client1</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created app with id </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> and address </span><span class="si">{</span><span class="n">app_addr</span><span class="si">}</span><span class="s2"> in transaction </span><span class="si">{</span><span class="n">txid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_global_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="c1"># Fund the app account with 1 algo</span>
     <span class="n">app_client1</span><span class="o">.</span><span class="n">fund</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="n">consts</span><span class="o">.</span><span class="n">algo</span><span class="p">)</span>
 
     <span class="c1"># Try calling set nickname from both accounts after opting in</span>
     <span class="n">app_client1</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
-    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_global_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="c1"># Create copies of the app client with specific signer, _after_ we&#39;ve created and set the app id</span>
@@ -286,12 +243,12 @@
 
     <span class="c1"># Try calling without opting in</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
+        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">LogicException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="n">app_client2</span><span class="o">.</span><span class="n">opt_in</span><span class="p">()</span>
-    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
+    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_nick</span><span class="p">,</span> <span class="n">nick</span><span class="o">=</span><span class="s2">&quot;second&quot;</span><span class="p">)</span>
 
     <span class="c1"># Get the local state for each account</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_local_state</span><span class="p">())</span>
@@ -300,28 +257,26 @@
     <span class="c1"># Get the global state</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_global_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">ABIReturnSubroutine</span><span class="p">)</span>
-
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+        <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shouldn&#39;t get here&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">LogicException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed as expected, only addr1 should be authorized to set the manager&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Have addr1 set the manager to addr2</span>
-    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="n">app_client1</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct2</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_global_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_global_state</span><span class="p">())</span>
     <span class="c1"># and back</span>
-    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="n">app_client2</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">nicknames</span><span class="o">.</span><span class="n">set_manager</span><span class="p">,</span> <span class="n">new_manager</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current app state: </span><span class="si">{</span><span class="n">app_client1</span><span class="o">.</span><span class="n">get_global_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Create a new client that just sets the app id we wish to interact with</span>
     <span class="n">app_client3</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span>
         <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span>
-        <span class="n">app</span><span class="o">=</span><span class="n">my_app</span><span class="p">,</span>
+        <span class="n">app</span><span class="o">=</span><span class="n">nicknames</span><span class="o">.</span><span class="n">app</span><span class="p">,</span>
         <span class="n">signer</span><span class="o">=</span><span class="n">acct1</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
         <span class="n">app_id</span><span class="o">=</span><span class="n">app_client1</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
     <span class="p">)</span>
@@ -335,7 +290,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">demo</span><span class="p">()</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>

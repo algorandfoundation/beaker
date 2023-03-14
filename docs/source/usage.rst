@@ -139,7 +139,8 @@ In the ``OpUp`` example, there is a method handler ``hash_it`` which specifies t
     The default argument shown below is _not_ a valid type, it's only used as a hint to the compiler. If you're using mypy or similar, a type ignore directive should be used to stop it from complaining. 
 
 .. literalinclude:: ../../examples/opup/contract.py
-    :lines: 29-36
+    :lines: 20-36
+    :emphasize-lines: 5
 
 
 This value should not change frequently, if at all, but is still required to be passed by the caller so we may **use** it in our logic, namely to execute an application call against it. 
@@ -172,7 +173,8 @@ Often an app developer needs to have the assembled binary of a program available
 In the ``OpUp`` example, the ``ExpensiveApp`` needs to create an application to use as the target app for op budget increase calls.
 
 .. literalinclude:: ../../examples/opup/op_up.py
-    :lines: 55-71
+    :lines: 39-55
+    :emphasize-lines: 5
 
 The inclusion of a ``precompile`` prevents building the TEAL for the containing Application until the ``precompile`` been fully compiled to assembled binary but we can still reference it in our Application.
 
@@ -180,10 +182,12 @@ Another situations where a ``precompile`` is useful is when validating the logic
 
 In the ``offload_compute`` example, we check to make sure that the address of the signer is the ``LogicSignature`` we're expecting so that we're sure it is doing "the right thing".
 
-.. literalinclude:: ../../examples/offload_compute/main.py
-    :lines: 21-41
+.. literalinclude:: ../../examples/offload_compute/eth_checker.py
+    :lines: 86-106
+    :emphasize-lines: 19 
 
 Additionally, if the ``LogicSignature`` needs one or more ``TemplateVariables`` the ``LogicSignatureTemplate`` is used and functions similarly, by passing the named template arguments to the call to get the ``address``.
 
-.. literalinclude:: ../../examples/templated_lsig/main.py
-    :lines: 29-60
+.. literalinclude:: ../../examples/templated_lsig/sig_checker.py
+    :lines: 31-40
+    :emphasize-lines: 9
