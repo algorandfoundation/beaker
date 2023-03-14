@@ -3,8 +3,7 @@ from beaker import client, sandbox
 from examples.state import contract
 
 
-def demo() -> None:
-
+def main() -> None:
     accts = sandbox.get_accounts()
 
     acct = accts.pop()
@@ -62,4 +61,4 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    demo()
+    main()
