@@ -1064,16 +1064,24 @@ class Application(Generic[TState]):
                 hints[abi_external.method.method_signature()] = abi_external.hints
 
             # Compile approval and clear programs
-            approval_program, clear_program, contract = router.compile_program(
+            compile_results = router.compile(
                 version=self.build_options.avm_version,
                 assemble_constants=self.build_options.assemble_constants,
                 optimize=self.build_options.optimize_options,
+                with_sourcemaps=True,
+                pcs_in_sourcemap=bool(client),
+                algod_client=client,
+                annotate_teal=True,
+                annotate_teal_headers=True,
+                annotate_teal_concise=False,
             )
 
         return ApplicationSpecification(
-            approval_program=approval_program,
-            clear_program=clear_program,
-            contract=contract,
+            approval_program=compile_results.approval_teal,
+            approval_sourcemap=compile_results.approval_sourcemap,
+            clear_program=compile_results.clear_teal,
+            clear_sourcemap=compile_results.clear_sourcemap,
+            contract=compile_results.abi_contract,
             hints=hints,
             schema={
                 "global": self._global_state.dictify(),
