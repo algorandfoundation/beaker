@@ -5,8 +5,8 @@ Beaker
 Beaker is a smart contract development framework for [PyTeal](https://github.com/algorand/pyteal).
 
 
-With Beaker, we build a class that represents our entire application including state and routing.
 
+&nbsp;
 
 &nbsp;
 
@@ -16,9 +16,9 @@ With Beaker, we build a class that represents our entire application including s
 
 ## WARNING
 
- :warning: *Mostly Untested - Expect Breaking Changes*  :warning:
+ :warning: *Mostly Untested - Expect Breaking Changes* :warning:
 
- **Please file issues or prs and get any contracts audited**
+ **Please report bugs and get any contracts audited**
 
 ## Hello, Beaker
 
@@ -64,11 +64,11 @@ print(result.return_value)  # "Hello, Beaker"
 
 ## Install
 
-    Beaker currently requires Python >= 3.10
+    Beaker requires Python >= 3.10
 
 You can install from pip:
 
-`pip install beaker-pyteal==1.0.0b1`
+`pip install beaker-pyteal==1.0.0b2`
 
 Or from github directly (no promises on stability): 
 
@@ -76,15 +76,19 @@ Or from github directly (no promises on stability):
 
 # Dev Environment 
 
-Requires a local [sandbox](https://github.com/algorand/sandbox) with latest stable tag minimum.
+Requires a local network running to compile and test contracts.
+
+Install [AlgoKit](https://github.com/algorandfoundation/algokit-cli#install)
+
+and start it 
 
 ```sh
-$ git clone git@github.com:algorand/sandbox.git
-$ cd sandbox
-$ sandbox up source
+$ algokit localnet start 
+$ algokit localnet status
 ```
 
 ## Front End 
+
 
 See [Beaker TS](https://github.com/algorand-devrel/beaker-ts) to generate a front end client for a Beaker App.
 
@@ -97,5 +101,3 @@ You can run tests from the root of the project using `pytest`
 [Examples](/examples/)
 
 [Docs](https://beaker.algo.xyz)
-
-*Please feel free to file issues/prs*
