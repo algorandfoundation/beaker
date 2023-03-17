@@ -30,7 +30,7 @@ class BuildOptions:
     """ """
     annotate_teal_headers: bool = False
     """ """
-    annotate_teal_consice: bool = False
+    annotate_teal_concise: bool = False
     """ """
 
     @property

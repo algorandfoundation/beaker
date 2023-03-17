@@ -1073,14 +1073,25 @@ class Application(Generic[TState]):
                 pcs_in_sourcemap=bool(client),
                 annotate_teal=self.build_options.annotate_teal,
                 annotate_teal_headers=self.build_options.annotate_teal_headers,
-                annotate_teal_concise=self.build_options.annotate_teal_consice,
+                annotate_teal_concise=self.build_options.annotate_teal_concise,
             )
 
+        approval_prog: str = compile_results.approval_teal
+        clear_prog: str = compile_results.clear_teal
+
+        if compile_results.approval_sourcemap is not None:
+            approval_sm = compile_results.approval_sourcemap
+            if approval_sm.annotated_teal is not None:
+                approval_prog = approval_sm.annotated_teal
+
+        if compile_results.clear_sourcemap is not None:
+            clear_sm = compile_results.clear_sourcemap
+            if clear_sm.annotated_teal is not None:
+                clear_prog = clear_sm.annotated_teal
+
         return ApplicationSpecification(
-            approval_program=compile_results.approval_teal,
-            approval_sourcemap=compile_results.approval_sourcemap,
-            clear_program=compile_results.clear_teal,
-            clear_sourcemap=compile_results.clear_sourcemap,
+            approval_program=approval_prog,
+            clear_program=clear_prog,
             contract=compile_results.abi_contract,
             hints=hints,
             schema={

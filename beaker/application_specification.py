@@ -7,7 +7,7 @@ from typing import Any, Literal, TypeAlias, TypedDict
 from algosdk.abi import Contract
 from algosdk.abi.method import MethodDict
 from algosdk.transaction import StateSchema
-from pyteal import CallConfig, MethodConfig, PyTealSourceMap
+from pyteal import CallConfig, MethodConfig
 
 __all__ = [
     "DefaultArgumentDict",
@@ -118,9 +118,7 @@ def _decode_state_schema(data: dict[str, int]) -> StateSchema:
 @dataclasses.dataclass(kw_only=True)
 class ApplicationSpecification:
     approval_program: str
-    approval_sourcemap: PyTealSourceMap | None
     clear_program: str
-    clear_sourcemap: PyTealSourceMap | None
     contract: Contract
     hints: dict[str, MethodHints]
     schema: StateDict
@@ -152,9 +150,7 @@ class ApplicationSpecification:
         json_spec = json.loads(application_spec)
         return ApplicationSpecification(
             approval_program=_decode_source(json_spec["source"]["approval"]),
-            approval_sourcemap=None,
             clear_program=_decode_source(json_spec["source"]["clear"]),
-            clear_sourcemap=None,
             schema=json_spec["schema"],
             global_state_schema=_decode_state_schema(json_spec["state"]["global"]),
             local_state_schema=_decode_state_schema(json_spec["state"]["local"]),
