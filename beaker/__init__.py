@@ -1,7 +1,3 @@
-from feature_gates import FeatureGates
-
-FeatureGates.set_sourcemap_enabled(True)  # noqa: FBT003
-
 from . import client, consts, lib, sandbox
 from .application import (
     Application,

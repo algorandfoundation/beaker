@@ -24,6 +24,15 @@ class BuildOptions:
         the compiled program's size. Enabling this option requires a minimum AVM version of 3.
         Defaults to True."""
 
+    with_sourcemaps: bool = False
+    """ """
+    annotate_teal: bool = False
+    """ """
+    annotate_teal_headers: bool = False
+    """ """
+    annotate_teal_consice: bool = False
+    """ """
+
     @property
     def optimize_options(self) -> OptimizeOptions:
         return OptimizeOptions(

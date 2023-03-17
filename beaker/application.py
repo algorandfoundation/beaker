@@ -1065,15 +1065,15 @@ class Application(Generic[TState]):
 
             # Compile approval and clear programs
             compile_results = router.compile(
+                algod_client=client,
                 version=self.build_options.avm_version,
                 assemble_constants=self.build_options.assemble_constants,
                 optimize=self.build_options.optimize_options,
-                with_sourcemaps=True,
+                with_sourcemaps=self.build_options.with_sourcemaps,
                 pcs_in_sourcemap=bool(client),
-                algod_client=client,
-                annotate_teal=True,
-                annotate_teal_headers=True,
-                annotate_teal_concise=False,
+                annotate_teal=self.build_options.annotate_teal,
+                annotate_teal_headers=self.build_options.annotate_teal_headers,
+                annotate_teal_concise=self.build_options.annotate_teal_consice,
             )
 
         return ApplicationSpecification(
