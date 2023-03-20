@@ -17,7 +17,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pyteal = "^0.24.0" 
+pyteal = "~0.24.0"
 py-algorand-sdk = ">=2.0.0"
 
 [tool.poetry.group.dev.dependencies]

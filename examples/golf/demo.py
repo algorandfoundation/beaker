@@ -21,7 +21,7 @@ def get_box(app_client: client.ApplicationClient, name: bytes) -> list[int]:
     box_contents = app_client.client.application_box_by_name(app_client.app_id, name)
 
     vals = []
-    data = base64.b64decode(box_contents["value"])
+    data = base64.b64decode(box_contents["value"])  # type: ignore
     for idx in range(len(data) // 8):
         vals.append(int.from_bytes(data[idx * 8 : (idx + 1) * 8], "big"))
 

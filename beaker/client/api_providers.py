@@ -22,7 +22,9 @@ class APIProvider:
     def __init__(self, network: Network):
         self.network = network
 
-    def algod(self, token: str = "") -> AlgodClient:
+    def algod(
+        self, token: str = "", headers: dict[str, str] | None = None
+    ) -> AlgodClient:
         """return an algod client based on the provider used and network it was initialized with"""
         if self.network not in self.algod_hosts:
             raise Exception(f"Unrecognized network: {self.network}")
@@ -80,9 +82,14 @@ class PureStake(APIProvider):
 
     # Purestake requires a different header, so we override the
     # existing methods but re-use them to generate the client
-    def algod(self, token: str = "") -> AlgodClient:
-        algod_client = super().algod()
-        algod_client.headers = {self.token_header: token}
+    def algod(
+        self, token: str = "", headers: dict[str, str] | None = None
+    ) -> AlgodClient:
+        _headers = {self.token_header: token}
+        if headers is not None:
+            _headers |= headers
+
+        algod_client = super().algod("", _headers)
         return algod_client
 
     def indexer(self, token: str = "") -> IndexerClient:
@@ -99,9 +106,11 @@ class Sandbox(APIProvider):
 
     # purposely doesn't check which network because it may
     # be set up to use mainnet/testnet
-    def algod(self, token: str = default_token) -> AlgodClient:
+    def algod(
+        self, token: str = default_token, headers: dict[str, str] | None = None
+    ) -> AlgodClient:
         address = f"{self.default_host}:{self.default_algod_port}"
-        return AlgodClient(token, address)
+        return AlgodClient(token, address, headers)
 
     def indexer(self, token: str = default_token) -> IndexerClient:
         address = f"{self.default_host}:{self.default_indexer_port}"

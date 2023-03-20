@@ -54,7 +54,7 @@ def main() -> None:
     def print_balances() -> None:
         addrbal = client.account_info(addr)
         print("Participant: ")
-        for asset in addrbal["assets"]:
+        for asset in addrbal["assets"]:  # type: ignore
             if asset["asset-id"] == pool_token:
                 print("\tPool Balance {}".format(asset["amount"]))
             if asset["asset-id"] == asset_a:
@@ -64,7 +64,7 @@ def main() -> None:
 
         appbal = client.account_info(app_addr)
         print("App: ")
-        for asset in appbal["assets"]:
+        for asset in appbal["assets"]:  # type: ignore
             if asset["asset-id"] == pool_token:
                 print("\tPool Balance {}".format(asset["amount"]))
             if asset["asset-id"] == asset_a:

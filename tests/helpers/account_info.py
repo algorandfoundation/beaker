@@ -1,11 +1,14 @@
-from typing import Any
+from typing import Any, cast
 
 from algosdk.v2client.algod import AlgodClient
 
 
 def get_balances(client: AlgodClient, accts: list[str]) -> dict[str, dict[int, int]]:
     """get the balances for all the accounts in the list passed"""
-    return {acct: balances(client.account_info(acct)) for acct in accts}
+    return {
+        acct: balances(cast(dict[str, Any], client.account_info(acct)))
+        for acct in accts
+    }
 
 
 def get_deltas(

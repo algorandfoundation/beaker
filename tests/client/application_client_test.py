@@ -1,5 +1,5 @@
 from base64 import b64decode, b64encode
-from typing import Any
+from typing import Any, cast
 
 import algosdk.error
 import pyteal as pt
@@ -199,12 +199,15 @@ def test_app_prepare(sb_accts: SandboxAccounts) -> None:
     ), "We should have overwritten the app id in the new version"
 
 
-def expect_dict(actual: dict[str, Any], expected: dict[str, Any]) -> None:
-    for k, v in expected.items():
-        if type(v) is dict:
-            expect_dict(actual[k], v)
-        else:
-            assert actual[k] == v, f"for field {k}, expected {v} got {actual[k]}"
+def expect_dict(actual: dict[str, Any] | bytes, expected: dict[str, Any]) -> None:
+    if type(actual) is bytes:
+        raise AssertionError("Got bytes?")
+    elif type(actual) is dict:
+        for k, v in expected.items():
+            if type(v) is dict:
+                expect_dict(actual[k], v)
+            else:
+                assert actual[k] == v, f"for field {k}, expected {v} got {actual[k]}"
 
 
 def test_create(sb_accts: SandboxAccounts) -> None:
@@ -220,7 +223,7 @@ def test_create(sb_accts: SandboxAccounts) -> None:
     assert ac.app_addr == app_addr
 
     result_tx = client.pending_transaction_info(tx_id)
-    assert result_tx["confirmed-round"] > 0
+    assert result_tx["confirmed-round"] > 0  # type: ignore
     expect_dict(
         result_tx,
         {
@@ -581,7 +584,7 @@ def test_override_app_create(sb_accts: SandboxAccounts) -> None:
     app_id, _, txid = ac.create(x=val)
     assert app_id > 0
 
-    txinfo = client.pending_transaction_info(txid)
+    txinfo = cast(dict[str, Any], client.pending_transaction_info(txid))
     assert txinfo["application-index"] == app_id
 
     retlog = b64decode(txinfo["logs"][0])
