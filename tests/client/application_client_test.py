@@ -200,14 +200,14 @@ def test_app_prepare(sb_accts: SandboxAccounts) -> None:
 
 
 def expect_dict(actual: dict[str, Any] | bytes, expected: dict[str, Any]) -> None:
-    if type(actual) is bytes:
-        raise AssertionError("Got bytes?")
-    elif type(actual) is dict:
+    if type(actual) is dict:
         for k, v in expected.items():
             if type(v) is dict:
                 expect_dict(actual[k], v)
             else:
                 assert actual[k] == v, f"for field {k}, expected {v} got {actual[k]}"
+    else:
+        raise AssertionError(f"Expected dict, got {type(actual)}")
 
 
 def test_create(sb_accts: SandboxAccounts) -> None:
