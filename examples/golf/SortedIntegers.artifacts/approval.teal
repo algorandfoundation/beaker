@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 1 8 4096
-bytecblock 0x656c656d656e7473 0x736f727465645f696e7473
+bytecblock 0x656c656d656e7473 0x736f727465645f696e7473 0x
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -23,7 +23,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub boxcreatetest_3
+callsub boxcreatetestcaster_1
 intc_1 // 1
 return
 main_l5:
@@ -35,14 +35,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-btoi
-callsub addint_1
-store 0
-pushbytes 0x151f7c75 // 0x151f7c75
-load 0
-concat
-log
+callsub addintcaster_0
 intc_1 // 1
 return
 main_l6:
@@ -59,28 +52,51 @@ assert
 intc_1 // 1
 return
 
+// add_int_caster
+addintcaster_0:
+proto 0 0
+bytec_2 // ""
+intc_0 // 0
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+frame_dig 1
+callsub addint_3
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
+// box_create_test_caster
+boxcreatetestcaster_1:
+proto 0 0
+callsub boxcreatetest_5
+retsub
+
 // max
-max_0:
+max_2:
 proto 2 1
 frame_dig -2
 frame_dig -1
 >
-bnz max_0_l2
+bnz max_2_l2
 frame_dig -1
-b max_0_l3
-max_0_l2:
+b max_2_l3
+max_2_l2:
 frame_dig -2
-max_0_l3:
+max_2_l3:
 retsub
 
 // add_int
-addint_1:
+addint_3:
 proto 1 1
-pushbytes 0x // ""
+bytec_2 // ""
 bytec_1 // "sorted_ints"
 box_get
-store 2
 store 1
+store 0
 intc_0 // 0
 intc_1 // 1
 ||
@@ -89,34 +105,34 @@ bytec_0 // "elements"
 app_global_get
 intc_0 // 0
 ==
-bnz addint_1_l2
+bnz addint_3_l2
 frame_dig -1
-load 1
+load 0
 intc_0 // 0
 bytec_0 // "elements"
 app_global_get
 intc_1 // 1
 -
-callsub binarysearch_2
+callsub binarysearch_4
 intc_2 // 8
 *
-b addint_1_l3
-addint_1_l2:
+b addint_3_l3
+addint_3_l2:
 intc_0 // 0
-addint_1_l3:
-store 3
+addint_3_l3:
+store 2
 bytec_1 // "sorted_ints"
-load 1
+load 0
 intc_0 // 0
-load 3
+load 2
 extract3
 frame_dig -1
 itob
 concat
-load 1
-load 3
+load 0
+load 2
 intc_3 // 4096
-load 3
+load 2
 -
 intc_2 // 8
 -
@@ -146,73 +162,73 @@ frame_bury 0
 retsub
 
 // binary_search
-binarysearch_2:
+binarysearch_4:
 proto 4 1
 frame_dig -2
 frame_dig -1
 >
-bnz binarysearch_2_l11
+bnz binarysearch_4_l11
 frame_dig -2
 frame_dig -1
 ==
-bnz binarysearch_2_l7
+bnz binarysearch_4_l7
 frame_dig -2
 frame_dig -1
 +
 pushint 2 // 2
 /
-store 4
+store 3
 frame_dig -3
-load 4
+load 3
 intc_2 // 8
 *
 extract_uint64
-store 5
-load 5
+store 4
+load 4
 frame_dig -4
 <
-bnz binarysearch_2_l6
-load 5
+bnz binarysearch_4_l6
+load 4
 frame_dig -4
 >
-bnz binarysearch_2_l5
-load 4
-b binarysearch_2_l12
-binarysearch_2_l5:
+bnz binarysearch_4_l5
+load 3
+b binarysearch_4_l12
+binarysearch_4_l5:
 frame_dig -4
 frame_dig -3
 frame_dig -2
 intc_1 // 1
-load 4
-callsub max_0
+load 3
+callsub max_2
 intc_1 // 1
 -
+load 3
+cover 4
 load 4
 cover 4
-load 5
-cover 4
-callsub binarysearch_2
+callsub binarysearch_4
 cover 2
-store 5
 store 4
-b binarysearch_2_l12
-binarysearch_2_l6:
+store 3
+b binarysearch_4_l12
+binarysearch_4_l6:
 frame_dig -4
 frame_dig -3
-load 4
+load 3
 intc_1 // 1
 +
 frame_dig -1
+load 3
+cover 4
 load 4
 cover 4
-load 5
-cover 4
-callsub binarysearch_2
+callsub binarysearch_4
 cover 2
-store 5
 store 4
-b binarysearch_2_l12
-binarysearch_2_l7:
+store 3
+b binarysearch_4_l12
+binarysearch_4_l7:
 frame_dig -2
 frame_dig -3
 frame_dig -2
@@ -221,22 +237,22 @@ intc_2 // 8
 extract_uint64
 frame_dig -4
 >
-bnz binarysearch_2_l10
+bnz binarysearch_4_l10
 intc_1 // 1
-binarysearch_2_l9:
+binarysearch_4_l9:
 +
 retsub
-binarysearch_2_l10:
+binarysearch_4_l10:
 intc_0 // 0
-b binarysearch_2_l9
-binarysearch_2_l11:
+b binarysearch_4_l9
+binarysearch_4_l11:
 frame_dig -2
 retsub
-binarysearch_2_l12:
+binarysearch_4_l12:
 retsub
 
 // box_create_test
-boxcreatetest_3:
+boxcreatetest_5:
 proto 0 0
 bytec_1 // "sorted_ints"
 intc_3 // 4096

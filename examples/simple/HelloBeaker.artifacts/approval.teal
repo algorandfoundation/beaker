@@ -1,5 +1,6 @@
 #pragma version 8
 intcblock 0 1
+bytecblock 0x
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -18,13 +19,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-callsub hello_0
-store 0
-pushbytes 0x151f7c75 // 0x151f7c75
-load 0
-concat
-log
+callsub hellocaster_0
 intc_1 // 1
 return
 main_l4:
@@ -41,10 +36,26 @@ assert
 intc_1 // 1
 return
 
+// hello_caster
+hellocaster_0:
+proto 0 0
+bytec_0 // ""
+dup
+txna ApplicationArgs 1
+frame_bury 1
+frame_dig 1
+callsub hello_1
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
 // hello
-hello_0:
+hello_1:
 proto 1 1
-pushbytes 0x // ""
+bytec_0 // ""
 pushbytes 0x48656c6c6f2c20 // "Hello, "
 frame_dig -1
 extract 2 0

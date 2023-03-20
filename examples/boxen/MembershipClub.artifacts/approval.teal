@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 1 64
-bytecblock 0x6d656d626572736869705f746f6b656e 0x 0x00 0x151f7c75 0x61666669726d6174696f6e73
+bytecblock 0x 0x6d656d626572736869705f746f6b656e 0x00 0x151f7c75 0x61666669726d6174696f6e73
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -43,17 +43,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-store 13
-load 13
-callsub getaffirmation_6
-store 14
-bytec_3 // 0x151f7c75
-load 14
-concat
-log
+callsub getaffirmationcaster_6
 intc_1 // 1
 return
 main_l10:
@@ -65,20 +55,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-extract_uint16
-store 10
-txna ApplicationArgs 2
-store 11
-txna ApplicationArgs 3
-intc_0 // 0
-getbyte
-store 12
-load 10
-load 11
-load 12
-callsub setaffirmation_5
+callsub setaffirmationcaster_5
 intc_1 // 1
 return
 main_l11:
@@ -90,15 +67,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-store 8
-load 8
-callsub getmembershiprecord_4
-store 9
-bytec_3 // 0x151f7c75
-load 9
-concat
-log
+callsub getmembershiprecordcaster_4
 intc_1 // 1
 return
 main_l12:
@@ -110,17 +79,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-store 6
-txna ApplicationArgs 2
-intc_0 // 0
-getbyte
-store 7
-load 6
-load 7
-callsub updaterole_3
+callsub updaterolecaster_3
 intc_1 // 1
 return
 main_l13:
@@ -132,17 +91,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-store 4
-txna ApplicationArgs 2
-intc_0 // 0
-getbyte
-store 5
-load 4
-load 5
-callsub addmember_2
+callsub addmembercaster_2
 intc_1 // 1
 return
 main_l14:
@@ -154,10 +103,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-store 3
-load 3
-callsub removemember_1
+callsub removemembercaster_1
 intc_1 // 1
 return
 main_l15:
@@ -169,26 +115,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-store 1
-txn GroupIndex
-intc_1 // 1
--
-store 0
-load 0
-gtxns TypeEnum
-intc_1 // pay
-==
-assert
-load 0
-load 1
-callsub bootstrap_0
-store 2
-bytec_3 // 0x151f7c75
-load 2
-itob
-concat
-log
+callsub bootstrapcaster_0
 intc_1 // 1
 return
 main_l16:
@@ -205,8 +132,138 @@ assert
 intc_1 // 1
 return
 
+// bootstrap_caster
+bootstrapcaster_0:
+proto 0 0
+intc_0 // 0
+dup
+bytec_0 // ""
+txna ApplicationArgs 1
+frame_bury 2
+txn GroupIndex
+intc_1 // 1
+-
+frame_bury 1
+frame_dig 1
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+frame_dig 1
+frame_dig 2
+callsub bootstrap_7
+frame_bury 0
+bytec_3 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// remove_member_caster
+removemembercaster_1:
+proto 0 0
+bytec_0 // ""
+txna ApplicationArgs 1
+frame_bury 0
+frame_dig 0
+callsub removemember_8
+retsub
+
+// add_member_caster
+addmembercaster_2:
+proto 0 0
+intc_0 // 0
+dup
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 0
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+frame_bury 1
+frame_dig 0
+frame_dig 1
+callsub addmember_9
+retsub
+
+// update_role_caster
+updaterolecaster_3:
+proto 0 0
+intc_0 // 0
+dup
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 0
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+frame_bury 1
+frame_dig 0
+frame_dig 1
+callsub updaterole_10
+retsub
+
+// get_membership_record_caster
+getmembershiprecordcaster_4:
+proto 0 0
+bytec_0 // ""
+dup
+txna ApplicationArgs 1
+frame_bury 1
+frame_dig 1
+callsub getmembershiprecord_11
+frame_bury 0
+bytec_3 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
+// set_affirmation_caster
+setaffirmationcaster_5:
+proto 0 0
+intc_0 // 0
+bytec_0 // ""
+intc_0 // 0
+txna ApplicationArgs 1
+intc_0 // 0
+extract_uint16
+frame_bury 0
+txna ApplicationArgs 2
+frame_bury 1
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+frame_bury 2
+frame_dig 0
+frame_dig 1
+frame_dig 2
+callsub setaffirmation_12
+retsub
+
+// get_affirmation_caster
+getaffirmationcaster_6:
+proto 0 0
+bytec_0 // ""
+intc_0 // 0
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 1
+frame_dig 1
+callsub getaffirmation_13
+frame_bury 0
+bytec_3 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
 // bootstrap
-bootstrap_0:
+bootstrap_7:
 proto 2 1
 intc_0 // 0
 txn Sender
@@ -252,23 +309,23 @@ intc_0 // 0
 itxn_field Fee
 itxn_submit
 intc_0 // 0
-bytec_0 // "membership_token"
+bytec_1 // "membership_token"
 app_global_get_ex
-store 16
-store 15
-load 16
+store 1
+store 0
+load 1
 !
 assert
-bytec_0 // "membership_token"
+bytec_1 // "membership_token"
 itxn CreatedAssetID
 app_global_put
-bytec_0 // "membership_token"
+bytec_1 // "membership_token"
 app_global_get
 frame_bury 0
 retsub
 
 // remove_member
-removemember_1:
+removemember_8:
 proto 1 0
 txn Sender
 global CreatorAddress
@@ -281,14 +338,14 @@ pop
 retsub
 
 // add_member
-addmember_2:
+addmember_9:
 proto 2 0
 intc_0 // 0
 dup
-bytec_1 // ""
+bytec_0 // ""
 intc_0 // 0
 dup
-bytec_1 // ""
+bytec_0 // ""
 dup
 txn Sender
 global CreatorAddress
@@ -326,7 +383,7 @@ box_put
 itxn_begin
 pushint 4 // axfer
 itxn_field TypeEnum
-bytec_0 // "membership_token"
+bytec_1 // "membership_token"
 app_global_get
 itxn_field XferAsset
 intc_1 // 1
@@ -342,12 +399,12 @@ itxn_submit
 retsub
 
 // update_role
-updaterole_3:
+updaterole_10:
 proto 2 0
-bytec_1 // ""
+bytec_0 // ""
 intc_0 // 0
 dupn 2
-bytec_1 // ""
+bytec_0 // ""
 dup
 txn Sender
 global CreatorAddress
@@ -357,11 +414,11 @@ assert
 frame_dig -2
 txnas Accounts
 box_get
-store 18
-store 17
-load 18
+store 3
+store 2
+load 3
 assert
-load 17
+load 2
 frame_bury 0
 frame_dig 0
 pushint 8 // 8
@@ -388,30 +445,30 @@ box_put
 retsub
 
 // get_membership_record
-getmembershiprecord_4:
+getmembershiprecord_11:
 proto 1 1
-bytec_1 // ""
+bytec_0 // ""
 frame_dig -1
 box_get
-store 20
-store 19
-load 20
+store 5
+store 4
+load 5
 assert
-load 19
+load 4
 frame_bury 0
 retsub
 
 // set_affirmation
-setaffirmation_5:
+setaffirmation_12:
 proto 3 0
 txn Sender
-bytec_0 // "membership_token"
+bytec_1 // "membership_token"
 app_global_get
 asset_holding_get AssetBalance
-store 22
-store 21
-load 22
-load 21
+store 7
+store 6
+load 7
+load 6
 intc_0 // 0
 >
 &&
@@ -426,17 +483,17 @@ box_replace
 retsub
 
 // get_affirmation
-getaffirmation_6:
+getaffirmation_13:
 proto 1 1
-bytec_1 // ""
+bytec_0 // ""
 txn Sender
-bytec_0 // "membership_token"
+bytec_1 // "membership_token"
 app_global_get
 asset_holding_get AssetBalance
-store 24
-store 23
-load 24
-load 23
+store 9
+store 8
+load 9
+load 8
 intc_0 // 0
 >
 &&

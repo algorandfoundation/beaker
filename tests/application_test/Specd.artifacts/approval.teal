@@ -30,9 +30,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-btoi
-callsub defaultglobalstate_3
+callsub defaultglobalstatecaster_7
 intc_1 // 1
 return
 main_l7:
@@ -44,8 +42,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-callsub structmeth_2
+callsub structmethcaster_6
 intc_1 // 1
 return
 main_l8:
@@ -57,10 +54,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-callsub annotatedmeth_1
+callsub annotatedmethcaster_5
 intc_1 // 1
 return
 main_l9:
@@ -72,13 +66,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getassetid_0
-store 0
-pushbytes 0x151f7c75 // 0x151f7c75
-load 0
-itob
-concat
-log
+callsub getassetidcaster_4
 intc_1 // 1
 return
 main_l10:
@@ -121,3 +109,49 @@ defaultglobalstate_3:
 proto 1 0
 intc_1 // 1
 return
+
+// get_asset_id_caster
+getassetidcaster_4:
+proto 0 0
+intc_0 // 0
+callsub getassetid_0
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// annotated_meth_caster
+annotatedmethcaster_5:
+proto 0 0
+intc_0 // 0
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 0
+frame_dig 0
+callsub annotatedmeth_1
+retsub
+
+// struct_meth_caster
+structmethcaster_6:
+proto 0 0
+pushbytes 0x // ""
+txna ApplicationArgs 1
+frame_bury 0
+frame_dig 0
+callsub structmeth_2
+retsub
+
+// default_global_state_caster
+defaultglobalstatecaster_7:
+proto 0 0
+intc_0 // 0
+txna ApplicationArgs 1
+btoi
+frame_bury 0
+frame_dig 0
+callsub defaultglobalstate_3
+retsub

@@ -18,7 +18,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub handle_0
+callsub handlecaster_1
 intc_1 // 1
 return
 main_l4:
@@ -40,4 +40,10 @@ handle_0:
 proto 0 0
 intc_1 // 1
 assert
+retsub
+
+// handle_caster
+handlecaster_1:
+proto 0 0
+callsub handle_0
 retsub
