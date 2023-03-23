@@ -72,6 +72,7 @@ ignore = [
     "ANN101", # missing type for self parameter
     "ANN102", # missing type for cls parameter
     "E501", # line too long - black takes care of this for us
+    "E402", # module level import not at top of file 
 ]
 # Exclude a variety of commonly ignored directories.
 exclude = [
