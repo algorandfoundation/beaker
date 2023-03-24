@@ -293,7 +293,7 @@ has changed.</p>
 
 <span class="n">app</span> <span class="o">=</span> <span class="n">MyApp</span><span class="p">()</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ClientApplication</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
 <span class="n">client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">MyApp</span><span class="o">.</span><span class="n">do_something</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -305,7 +305,7 @@ has changed.</p>
     <span class="o">...</span>
 
 <span class="n">app_spec</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
-<span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ClientApplication</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app_spec</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span><span class="n">client</span><span class="o">=...</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app_spec</span><span class="p">)</span>
 
 <span class="c1"># if in the same code base the method can be referenced directly OR,</span>
 <span class="n">client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">do_something</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
