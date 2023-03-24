@@ -4,6 +4,7 @@ from typing import Any
 import algosdk.error
 import pyteal as pt
 import pytest
+from algokit_utils import CallConfig, LogicError, MethodHints
 from algosdk.account import generate_account
 from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
@@ -22,9 +23,8 @@ from beaker import (
     GlobalStateValue,
     LocalStateValue,
 )
-from beaker.application import _default_argument_from_resolver
+from beaker.application import ABIExternal, _default_argument_from_resolver
 from beaker.client.application_client import ApplicationClient
-from beaker.client.logic_error import LogicException
 from beaker.sandbox import get_accounts, get_algod_client
 
 
@@ -33,8 +33,10 @@ class AppState:
     global_state_val_byte = GlobalStateValue(
         pt.TealType.bytes, default=pt.Bytes("test")
     )
-    acct_state_val_int = LocalStateValue(pt.TealType.uint64, default=pt.Int(1))
-    acct_state_val_byte = LocalStateValue(pt.TealType.bytes, default=pt.Bytes("test"))
+    acct_state_val_int = LocalStateValue(pt.TealType.uint64, default=pt.Int(2))
+    acct_state_val_byte = LocalStateValue(
+        pt.TealType.bytes, default=pt.Bytes("local-test")
+    )
 
 
 app = Application(
@@ -161,7 +163,7 @@ def test_app_prepare(sb_accts: SandboxAccounts) -> None:
     sks = [acct[0] for acct in accts]
 
     msig_acct = Multisig(1, 3, addrs)
-    msts = MultisigTransactionSigner(msig_acct, sks[0])
+    msts = MultisigTransactionSigner(msig_acct, sks)
 
     ac_with_msig = ac_with_signer.prepare(signer=msts)
     assert ac_with_msig.signer == msts, "Should have the same signer"
@@ -268,7 +270,7 @@ def test_create(sb_accts: SandboxAccounts) -> None:
         },
     )
 
-    with pytest.raises(LogicException):
+    with pytest.raises(LogicError):
         ac.create(note="failmeplz")
 
 
@@ -296,7 +298,7 @@ def test_update(sb_accts: SandboxAccounts) -> None:
         },
     )
 
-    with pytest.raises(LogicException):
+    with pytest.raises(LogicError):
         addr, pk, signer2 = sb_accts[1]
         ac2 = ac.prepare(signer=signer2)
         ac2.update()
@@ -325,7 +327,7 @@ def test_delete(sb_accts: SandboxAccounts) -> None:
         },
     )
 
-    with pytest.raises(LogicException):
+    with pytest.raises(LogicError):
         ac = ApplicationClient(client, app, signer=signer)
         app_id, _, _ = ac.create()
 
@@ -360,7 +362,7 @@ def test_opt_in(sb_accts: SandboxAccounts) -> None:
         },
     )
 
-    with pytest.raises(LogicException):
+    with pytest.raises(LogicError):
         _, _, newer_signer = sb_accts[2]
         newer_ac = ac.prepare(signer=newer_signer)
         newer_ac.opt_in(note="failmeplz")
@@ -394,7 +396,7 @@ def test_close_out(sb_accts: SandboxAccounts) -> None:
         },
     )
 
-    with pytest.raises(LogicException):
+    with pytest.raises(LogicError):
         _, _, newer_signer = sb_accts[2]
         newer_ac = ac.prepare(signer=newer_signer)
         newer_ac.opt_in()
@@ -529,35 +531,64 @@ def test_fund(sb_accts: SandboxAccounts) -> None:
     assert info["amount"] == fund_amt, "Expected balance to equal fund_amt"
 
 
-def test_resolve(sb_accts: SandboxAccounts) -> None:
+def test_default_argument() -> None:
+    int_default_argument = {"source": "constant", "data": 1}
+    assert _default_argument_from_resolver(pt.Int(1)) == int_default_argument
 
-    addr, pk, signer = sb_accts[0]
+    string_default_argument = {"source": "constant", "data": "stringy"}
+    assert (
+        _default_argument_from_resolver(pt.Bytes("stringy")) == string_default_argument
+    )
 
-    client = get_algod_client()
-    ac = ApplicationClient(client, app, signer=signer)
+    global_state_int_default_argument = {
+        "source": "global-state",
+        "data": "global_state_val_int",
+    }
+    assert (
+        _default_argument_from_resolver(app.state.global_state_val_int)
+        == global_state_int_default_argument
+    )
 
-    ac.create()
-    ac.opt_in()
+    global_state_byte_default_argument = {
+        "source": "global-state",
+        "data": "global_state_val_byte",
+    }
+    assert (
+        _default_argument_from_resolver(app.state.global_state_val_byte)
+        == global_state_byte_default_argument
+    )
 
-    assert ac.resolve(_default_argument_from_resolver(pt.Int(1))) == 1
-    assert ac.resolve(_default_argument_from_resolver(pt.Bytes("stringy"))) == "stringy"
+    local_state_int_default_argument = {
+        "source": "local-state",
+        "data": "acct_state_val_int",
+    }
     assert (
-        ac.resolve(_default_argument_from_resolver(app.state.global_state_val_int)) == 1
+        _default_argument_from_resolver(app.state.acct_state_val_int)
+        == local_state_int_default_argument
     )
+
+    local_state_byte_default_argument = {
+        "source": "local-state",
+        "data": "acct_state_val_byte",
+    }
     assert (
-        ac.resolve(_default_argument_from_resolver(app.state.global_state_val_byte))
-        == b"test"
+        _default_argument_from_resolver(app.state.acct_state_val_byte)
+        == local_state_byte_default_argument
     )
+
+    method_default_argument = {
+        "source": "abi-method",
+        "data": {"name": "dummy", "args": [], "returns": {"type": "string"}},
+    }
     assert (
-        ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_int)) == 1
-    )
-    assert (
-        ac.resolve(_default_argument_from_resolver(app.state.acct_state_val_byte))
-        == b"test"
-    )
-    assert (
-        ac.resolve({"source": "abi-method", "data": dummy.method_spec().dictify()})
-        == "deadbeef"
+        _default_argument_from_resolver(
+            ABIExternal(
+                actions={"no_op": CallConfig.CALL},
+                method=dummy,
+                hints=MethodHints(read_only=True),
+            )
+        )
+        == method_default_argument
     )
 
 
@@ -574,7 +605,6 @@ def test_override_app_create(sb_accts: SandboxAccounts) -> None:
 
     client = get_algod_client()
     ac = ApplicationClient(client, sc, signer=signer)
-    assert ac.on_create
 
     val = 2
 
@@ -608,7 +638,6 @@ def test_abi_update(sb_accts: SandboxAccounts) -> None:
 
     client = get_algod_client()
     app_client = ApplicationClient(client, specification, signer=signer)
-    assert app_client.on_update
 
     app_id, _, _ = app_client.create()
 
@@ -644,7 +673,6 @@ def test_abi_opt_in(sb_accts: SandboxAccounts) -> None:
 
     client = get_algod_client()
     app_client = ApplicationClient(client, specification, signer=signer)
-    assert app_client.on_opt_in
 
     app_id, _, _ = app_client.create()
 
@@ -675,7 +703,6 @@ def test_abi_delete(sb_accts: SandboxAccounts) -> None:
 
     client = get_algod_client()
     app_client = ApplicationClient(client, specification, signer=signer)
-    assert app_client.on_delete
 
     app_client.create()
 
@@ -706,7 +733,6 @@ def test_abi_close_out(sb_accts: SandboxAccounts) -> None:
 
     client = get_algod_client()
     app_client = ApplicationClient(client, specification, signer=signer)
-    assert app_client.on_close_out
 
     app_client.create()
     app_client.opt_in()

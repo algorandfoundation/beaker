@@ -91,9 +91,9 @@
         "networks": {}
     },
     "bare_call_config": {
-        "no_op": "CREATE",
-        "opt_in": "CALL",
         "close_out": "CALL",
-        "delete_application": "CALL"
+        "delete_application": "CALL",
+        "no_op": "CREATE",
+        "opt_in": "CALL"
     }
 }

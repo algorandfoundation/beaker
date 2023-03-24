@@ -19,6 +19,7 @@ packages = [
 python = "^3.10"
 pyteal = "~0.23.0"
 py-algorand-sdk = ">=2.0.0"
+algokit-utils = { git = "https://github.com/algorandfoundation/algokit-utils-py", rev = "4a5c6ed15b136780ad0b8964eb0dbece55306ff9"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"

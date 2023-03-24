@@ -112,7 +112,7 @@ def test_external_method_config(config: pt.CallConfig) -> None:
         return pt.Approve()
 
     app_spec = app.build()
-    assert app_spec.hints["external()void"].call_config.no_op == config
+    assert app_spec.hints["external()void"].call_config["no_op"].value == config.value
 
 
 def test_local_state_resolvable() -> None:

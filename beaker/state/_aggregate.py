@@ -1,10 +1,10 @@
 from functools import cached_property
 from typing import Any, Generic, TypeVar
 
+from algokit_utils import AppSpecStateDict
 from algosdk.transaction import StateSchema
 from pyteal import Expr, Seq, TealType
 
-from beaker.application_specification import AppSpecStateDict
 from beaker.consts import MAX_GLOBAL_STATE, MAX_LOCAL_STATE
 from beaker.state._abc import (
     AppSpecSchemaFragment,

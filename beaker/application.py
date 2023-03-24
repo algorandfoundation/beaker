@@ -16,12 +16,19 @@ from typing import (
     overload,
 )
 
+from algokit_utils import (
+    ApplicationSpecification,
+    CallConfig,
+    DefaultArgumentDict,
+    MethodHints,
+    OnCompleteActionName,
+)
+from algokit_utils import MethodConfigDict as AlgokitMethodConfigDict
 from pyteal import (
     ABIReturnSubroutine,
     Approve,
     BareCallActions,
     Bytes,
-    CallConfig,
     Expr,
     Int,
     MethodConfig,
@@ -31,12 +38,8 @@ from pyteal import (
     TealType,
     Txn,
 )
+from pyteal import CallConfig as PyTealCallConfig
 
-from beaker.application_specification import (
-    ApplicationSpecification,
-    DefaultArgumentDict,
-    MethodHints,
-)
 from beaker.build_options import BuildOptions
 from beaker.decorators import AuthCallable
 from beaker.decorators import authorize as authorize_decorator
@@ -60,15 +63,7 @@ __all__ = [
     "unconditional_opt_in_approval",
 ]
 
-OnCompleteActionName = Literal[
-    "no_op",
-    "opt_in",
-    "close_out",
-    "update_application",
-    "delete_application",
-]
-
-MethodConfigDict: TypeAlias = dict[OnCompleteActionName, CallConfig]
+MethodConfigDict: TypeAlias = dict[OnCompleteActionName, CallConfig | PyTealCallConfig]
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -80,7 +75,7 @@ HandlerFunc = Callable[..., Expr]
 
 @dataclasses.dataclass
 class ABIExternal:
-    actions: MethodConfigDict
+    actions: AlgokitMethodConfigDict
     method: ABIReturnSubroutine
     hints: MethodHints
 
@@ -236,7 +231,7 @@ class Application(Generic[TState]):
         self,
         method: ABIReturnSubroutine,
         *,
-        actions: MethodConfigDict,
+        actions: AlgokitMethodConfigDict,
         hints: MethodHints,
         override: bool | None,
     ) -> None:
@@ -274,7 +269,7 @@ class Application(Generic[TState]):
         self,
         sub: SubroutineFnWrapper,
         *,
-        actions: MethodConfigDict,
+        actions: AlgokitMethodConfigDict,
         override: bool | None,
     ) -> None:
         assert all(cc != CallConfig.NEVER for cc in actions.values())
@@ -291,7 +286,7 @@ class Application(Generic[TState]):
                 assert isinstance(existing_action.action, SubroutineFnWrapper)
                 self.deregister_bare_method(existing_action.action)
             self.bare_actions[for_action] = OnCompleteAction(
-                action=sub, call_config=call_config
+                action=sub, call_config=PyTealCallConfig(call_config.value)
             )
 
     def deregister_bare_method(
@@ -426,18 +421,22 @@ class Application(Generic[TState]):
             if read_only:
                 raise ValueError("read_only=True has no effect on bare methods")
 
-        actions: MethodConfigDict
+        actions: AlgokitMethodConfigDict
         match method_config:
             case None:
                 actions = {"no_op": CallConfig.CALL}
             case MethodConfig():
                 actions = {
-                    cast(OnCompleteActionName, key): value
+                    cast(OnCompleteActionName, key): CallConfig(value.value)
                     for key, value in method_config.__dict__.items()
-                    if value != CallConfig.NEVER
+                    if value.value != CallConfig.NEVER.value
                 }
             case _:
-                actions = method_config
+                actions = {
+                    key: CallConfig(value.value)
+                    for key, value in method_config.items()
+                    if value.value != CallConfig.NEVER.value
+                }
 
         if bare:
 
@@ -1120,7 +1119,13 @@ class Application(Generic[TState]):
                 router.add_method_handler(
                     method_call=abi_external.method,
                     method_config=MethodConfig(
-                        **cast(dict[str, CallConfig], abi_external.actions)
+                        **cast(
+                            dict[str, PyTealCallConfig],
+                            {
+                                k: PyTealCallConfig(v.value)
+                                for k, v in abi_external.actions.items()
+                            },
+                        )
                     ),
                 )
                 hints[abi_external.method.method_signature()] = abi_external.hints
@@ -1143,8 +1148,13 @@ class Application(Generic[TState]):
             },
             global_state_schema=self._global_state.schema,
             local_state_schema=self._local_state.schema,
-            bare_call_config=MethodConfig(
-                **{k: v.call_config for k, v in bare_calls.asdict().items()}
+            bare_call_config=cast(
+                AlgokitMethodConfigDict,
+                {
+                    k: CallConfig(v.call_config.value)
+                    for k, v in bare_calls.asdict().items()
+                    if v.call_config.value != CallConfig.NEVER.value
+                },
             ),
         )
 
@@ -1172,7 +1182,7 @@ class Application(Generic[TState]):
                     f"either handle CallConfig.CREATE in the no_op bare method, or add an ABI method that handles create."
                 )
             bare_calls["no_op"] = OnCompleteAction(
-                action=Approve(), call_config=CallConfig.CREATE
+                action=Approve(), call_config=PyTealCallConfig.CREATE
             )
         return BareCallActions(**bare_calls)
 
@@ -1211,7 +1221,7 @@ class Application(Generic[TState]):
         fn: HandlerFunc,
         *,
         read_only: bool,
-        actions: dict[OnCompleteActionName, CallConfig],
+        actions: AlgokitMethodConfigDict,
     ) -> MethodHints:
         from pyteal.ast import abi
 
@@ -1220,7 +1230,10 @@ class Application(Generic[TState]):
 
         hints = MethodHints(
             read_only=read_only,
-            call_config=MethodConfig(**{str(k): v for k, v in actions.items()}),
+            call_config=cast(
+                AlgokitMethodConfigDict,
+                {k: CallConfig(v.value) for k, v in actions.items()},
+            ),
         )
 
         for name, param in params.items():

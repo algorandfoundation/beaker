@@ -2,11 +2,11 @@
     "hints": {
         "abi()void": {
             "call_config": {
+                "close_out": "ALL",
+                "delete_application": "ALL",
                 "no_op": "ALL",
                 "opt_in": "ALL",
-                "close_out": "ALL",
-                "update_application": "ALL",
-                "delete_application": "ALL"
+                "update_application": "ALL"
             }
         }
     },
@@ -48,10 +48,10 @@
         "networks": {}
     },
     "bare_call_config": {
+        "close_out": "ALL",
+        "delete_application": "ALL",
         "no_op": "ALL",
         "opt_in": "ALL",
-        "close_out": "ALL",
-        "update_application": "ALL",
-        "delete_application": "ALL"
+        "update_application": "ALL"
     }
 }

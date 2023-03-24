@@ -153,7 +153,7 @@ def assert_output(
                 for x in range(opups):
                     app_client.add_method_call(atc, "opup", note=str(x).encode())
 
-                results = app_client._execute_atc(atc, wait_rounds=2)
+                results = app_client.execute_atc(atc)
 
                 assert results.abi_results[0].return_value == output
             else:

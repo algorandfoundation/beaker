@@ -21,10 +21,10 @@ def main() -> None:
         algod_client, eth_checker.app, signer=acct.signer
     )
 
-    # Now we should have the approval program available
-    assert app_client.approval.teal is not None
-
     app_client.create()
+
+    # Now we should have the approval program available
+    assert app_client.approval and app_client.approval.teal is not None
 
     # Create a new app client with the lsig signer
     lsig_pc = PrecompiledLogicSignature(eth_checker.verify_lsig, algod_client)

@@ -1,5 +1,7 @@
+from algokit_utils import LogicError
+
 from beaker import client, consts, sandbox
-from beaker.client import ApplicationClient, LogicException
+from beaker.client import ApplicationClient
 
 from examples.client import nicknames
 
@@ -36,7 +38,7 @@ def main() -> None:
     # Try calling without opting in
     try:
         app_client2.call(nicknames.set_nick, nick="second")
-    except LogicException as e:
+    except LogicError as e:
         print(f"\n{e}\n")
 
     app_client2.opt_in()
@@ -52,7 +54,7 @@ def main() -> None:
     try:
         app_client2.call(nicknames.set_manager, new_manager=acct2.address)
         print("Shouldn't get here")
-    except LogicException as e:
+    except LogicError as e:
         print("Failed as expected, only addr1 should be authorized to set the manager")
         print(f"\n{e}\n")
 

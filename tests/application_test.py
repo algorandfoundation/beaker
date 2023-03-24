@@ -5,6 +5,7 @@ from pathlib import Path
 import pyteal as pt
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
+from algokit_utils import ApplicationSpecification
 from pyteal.ast.abi import AssetTransferTransaction, PaymentTransaction
 from typing_extensions import assert_type
 
@@ -19,7 +20,6 @@ from beaker import (
     ReservedLocalStateValue,
     unconditional_create_approval,
 )
-from beaker.application_specification import ApplicationSpecification
 from beaker.lib.storage import BoxList
 
 from tests.conftest import check_application_artifacts_output_stability

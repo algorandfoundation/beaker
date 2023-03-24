@@ -57,7 +57,7 @@ def create_and_opt_in_account(
     )
 
     # Run it
-    app_client._execute_atc(atc)
+    app_client.execute_atc(atc)
 
     return lsig_address
 

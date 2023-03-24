@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import pyteal as pt
 import pytest
+from algokit_utils import LogicError
 from algosdk import transaction
 from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
@@ -852,7 +853,7 @@ def test_approval_asserts(grouped_assert_cases: list[AssertTestCase]) -> None:
     Confirms each logical grouping of assertions raises the expected error message.
     """
     for msg, method, kwargs, app_client in grouped_assert_cases:
-        with pytest.raises(client.LogicException, match=msg):
+        with pytest.raises(LogicError, match=msg):
             app_client.call(method, **kwargs)
 
 
@@ -867,15 +868,16 @@ def test_approval_assert_coverage(
     some asserts are _not_ tested.
     """
 
+    assert creator_app_client.approval
     all_asserts = gather_asserts(
         creator_app_client.approval.teal, creator_app_client.approval.source_map
     )
 
     for msg, method, kwargs, app_client in all_assert_cases:
-        with pytest.raises(client.LogicException, match=msg):
+        with pytest.raises(LogicError, match=msg):
             try:
                 app_client.call(method, **kwargs)
-            except client.LogicException as e:
+            except LogicError as e:
                 if e.pc in all_asserts:
                     del all_asserts[e.pc]
                 raise e
