@@ -199,7 +199,7 @@ For example, in ``0.x``:
 
    app = MyApp()
 
-   client = beaker.client.ClientApplication(client=..., app=app)
+   client = beaker.client.ApplicationClient(client=..., app=app)
    client.call(MyApp.do_something, x=42)
 
 becomes the following in ``1.0``:
@@ -213,7 +213,7 @@ becomes the following in ``1.0``:
         ...
 
     app_spec = app.build()
-    client = beaker.client.ClientApplication(client=..., app=app_spec)
+    client = beaker.client.ApplicationClient(client=..., app=app_spec)
 
     # if in the same code base the method can be referenced directly OR,
     client.call(do_something, x=42)
