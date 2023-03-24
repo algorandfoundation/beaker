@@ -157,7 +157,8 @@ class Application(Generic[TState]):
 
     def __init_subclass__(cls) -> None:
         warnings.warn(
-            "Subclassing beaker.Application is deprecated, please see the migration guide at: https://algorand-devrel.github.io/beaker/html/migration.html",
+            "Subclassing beaker.Application is deprecated, please see the migration guide at: "
+            "https://algorand-devrel.github.io/beaker/html/migration.html",
             DeprecationWarning,
         )
 
@@ -1101,7 +1102,8 @@ class Application(Generic[TState]):
         Note: .
 
         Args:
-            client (optional): An Algod client that is required if there are any ``precompiled`` so they can be fully compiled.
+            client (optional): An Algod client that is required if there are any ``precompiled`` so they can be fully
+            compiled.
         """
 
         with _set_ctx(app=self, client=client):
@@ -1179,7 +1181,8 @@ class Application(Generic[TState]):
                 raise Exception(
                     f"Application {self.name} has no methods that can be invoked to create the contract, "
                     f"but does have a NoOp bare method, so one couldn't be inserted. In order to deploy the contract, "
-                    f"either handle CallConfig.CREATE in the no_op bare method, or add an ABI method that handles create."
+                    f"either handle CallConfig.CREATE in the no_op bare method, "
+                    f"or add an ABI method that handles create."
                 )
             bare_calls["no_op"] = OnCompleteAction(
                 action=Approve(), call_config=PyTealCallConfig.CREATE
