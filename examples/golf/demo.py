@@ -19,9 +19,10 @@ def decode_budget(tx_info: dict) -> int:
 
 def get_box(app_client: client.ApplicationClient, name: bytes) -> list[int]:
     box_contents = app_client.client.application_box_by_name(app_client.app_id, name)
+    assert isinstance(box_contents, dict)
 
     vals = []
-    data = base64.b64decode(box_contents["value"])  # type: ignore
+    data = base64.b64decode(box_contents["value"])
     for idx in range(len(data) // 8):
         vals.append(int.from_bytes(data[idx * 8 : (idx + 1) * 8], "big"))
 

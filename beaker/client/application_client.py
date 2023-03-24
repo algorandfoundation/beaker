@@ -153,7 +153,8 @@ class ApplicationClient:
         create_txid = create_result.tx_ids[0]
 
         result = self.client.pending_transaction_info(create_txid)
-        app_id = result["application-index"]  # type: ignore
+        assert isinstance(result, dict)
+        app_id = result["application-index"]
         app_addr = get_application_address(app_id)
 
         self.app_id = app_id
@@ -431,7 +432,7 @@ class ApplicationClient:
         # If its a read-only method, use dryrun (TODO: swap with simulate later?)
         if hints.read_only:
             dr_req = transaction.create_dryrun(self.client, atc.gather_signatures())  # type: ignore[arg-type]
-            dr_result = self.client.dryrun(dr_req)  # type: ignore[arg-type]
+            dr_result = self.client.dryrun(dr_req.dictify())
             for txn in dr_result["txns"]:
                 if "app-call-messages" in txn:
                     if "REJECT" in txn["app-call-messages"]:
@@ -594,7 +595,7 @@ class ApplicationClient:
             global_schema=global_schema,
             approval_program=approval_program,
             clear_program=clear_program,
-            extra_pages=extra_pages,  # type: ignore
+            extra_pages=extra_pages if extra_pages is not None else 0,
             accounts=accounts,
             foreign_apps=foreign_apps,
             foreign_assets=foreign_assets,
@@ -659,10 +660,11 @@ class ApplicationClient:
     ) -> dict[bytes | str, bytes | str | int]:
         """gets the global state info for the app id set"""
         global_state = self.client.application_info(self.app_id)
+        assert isinstance(global_state, dict)
         return cast(
             dict[bytes | str, bytes | str | int],
             decode_state(
-                global_state.get("params", {}).get("global-state", {}), raw=raw  # type: ignore
+                global_state.get("params", {}).get("global-state", {}), raw=raw
             ),
         )
 
@@ -676,28 +678,34 @@ class ApplicationClient:
             account = self.get_sender()
 
         acct_state = self.client.account_application_info(account, self.app_id)
+        assert isinstance(acct_state, dict)
         if (
             "app-local-state" not in acct_state
-            or "key-value" not in acct_state["app-local-state"]  # type: ignore
+            or "key-value" not in acct_state["app-local-state"]
         ):
             return {}
 
         return cast(
             dict[str | bytes, bytes | str | int],
-            decode_state(acct_state["app-local-state"]["key-value"], raw=raw),  # type: ignore
+            decode_state(acct_state["app-local-state"]["key-value"], raw=raw),
         )
 
     def get_application_account_info(self) -> dict[str, Any]:
         """gets the account info for the application account"""
-        return self.client.account_info(self.app_addr)  # type: ignore
+        assert self.app_addr is not None, "app_addr not set"
+        result = self.client.account_info(self.app_addr)
+        assert isinstance(result, dict)
+        return result
 
     def get_box_names(self) -> list[bytes]:
         box_resp = self.client.application_boxes(self.app_id)
-        return [b64decode(box["name"]) for box in box_resp["boxes"]]  # type: ignore
+        assert isinstance(box_resp, dict)
+        return [b64decode(box["name"]) for box in box_resp["boxes"]]
 
     def get_box_contents(self, name: bytes) -> bytes:
         contents = self.client.application_box_by_name(self.app_id, name)
-        return b64decode(contents["value"])  # type: ignore
+        assert isinstance(contents, dict)
+        return b64decode(contents["value"])
 
     def resolve(self, to_resolve: DefaultArgumentDict) -> Any:  # noqa: ANN401
         match to_resolve:

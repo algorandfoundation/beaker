@@ -336,11 +336,13 @@ def test_app_bootstrap(
 
     # Check pool token params
     token_info = creator_app_client.client.asset_info(pool_token)
-    assert token_info["params"]["name"] == "DPT-A-B"  # type: ignore
-    assert token_info["params"]["total"] == TOTAL_POOL_TOKENS  # type: ignore
-    assert token_info["params"]["reserve"] == app_addr  # type: ignore
-    assert token_info["params"]["manager"] == app_addr  # type: ignore
-    assert token_info["params"]["creator"] == app_addr  # type: ignore
+    assert isinstance(token_info, dict)
+
+    assert token_info["params"]["name"] == "DPT-A-B"
+    assert token_info["params"]["total"] == TOTAL_POOL_TOKENS
+    assert token_info["params"]["reserve"] == app_addr
+    assert token_info["params"]["manager"] == app_addr
+    assert token_info["params"]["creator"] == app_addr
 
     # Make sure we're opted in
     ai = creator_app_client.get_application_account_info()

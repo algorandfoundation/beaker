@@ -223,7 +223,8 @@ def test_create(sb_accts: SandboxAccounts) -> None:
     assert ac.app_addr == app_addr
 
     result_tx = client.pending_transaction_info(tx_id)
-    assert result_tx["confirmed-round"] > 0  # type: ignore
+    assert isinstance(result_tx, dict)
+    assert result_tx["confirmed-round"] > 0
     expect_dict(
         result_tx,
         {

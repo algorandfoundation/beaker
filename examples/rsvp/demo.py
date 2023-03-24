@@ -30,7 +30,9 @@ def main() -> None:
 
     # Fund the contract for minimum balance
     app_client.fund(100 * consts.milli_algo)
-    print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")  # type: ignore
+    app_info = client.account_info(app_addr)
+    assert isinstance(app_info, dict)
+    print(f"RSVP Balance: {app_info.get('amount')} microAlgos \n")
 
     # Guest 1
     print("### GUEST 1 SCENARIO ###\n")
@@ -51,7 +53,9 @@ def main() -> None:
     checked_in_val = acct_state["checked_in"]
     assert isinstance(checked_in_val, int)
     print(f"Only RSVPed so checked_in should be 0 and the state is {checked_in_val}")
-    print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")  # type: ignore
+    acct_info = client.account_info(app_addr)
+    assert isinstance(acct_info, dict)
+    print(f"RSVP Balance: {acct_info.get('amount')} microAlgos \n")
 
     # Check in to the event
     print("Guest 1 checking in to the Event...")
@@ -83,7 +87,9 @@ def main() -> None:
     checked_in_val = acct_state["checked_in"]
     assert isinstance(checked_in_val, int)
     print(f"Only RSVPed so checked_in should be 0 and the state is {checked_in_val}")
-    print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos")  # type: ignore
+    app_info = client.account_info(app_addr)
+    assert isinstance(app_info, dict)
+    print(f"RSVP Balance: {app_info.get('amount')} microAlgos")
 
     # See How many RSVPed
     result = app_client.call(rsvp.read_rsvp)
@@ -101,7 +107,9 @@ def main() -> None:
     # See How many RSVPed
     result = app_client.call(rsvp.read_rsvp)
     print(f"The number of people RSVPed should be 1 and it is {result.return_value}")
-    print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")  # type: ignore
+    acct_info = client.account_info(app_addr)
+    assert isinstance(acct_info, dict)
+    print(f"RSVP Balance: {acct_info.get('amount')} microAlgos \n")
 
     # Withdraw and Delete Scenario
 
@@ -111,7 +119,9 @@ def main() -> None:
     print("Event creator withdrawing funds...")
     app_client.call(rsvp.withdraw_external)
     print("Event creator successfully withdrew remaining balance.")
-    print(f"RSVP Balance: {client.account_info(app_addr).get('amount')} microAlgos \n")  # type: ignore
+    app_info = client.account_info(app_addr)
+    assert isinstance(app_info, dict)
+    print(f"RSVP Balance: {app_info.get('amount')} microAlgos \n")
 
     print("Event creator deleting rsvp contract...")
     app_client.delete()
