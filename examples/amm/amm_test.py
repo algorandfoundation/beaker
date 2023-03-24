@@ -337,6 +337,7 @@ def test_app_bootstrap(
 
     # Check pool token params
     token_info = creator_app_client.client.asset_info(pool_token)
+    assert isinstance(token_info, dict)
     assert token_info["params"]["name"] == "DPT-A-B"
     assert token_info["params"]["total"] == TOTAL_POOL_TOKENS
     assert token_info["params"]["reserve"] == app_addr

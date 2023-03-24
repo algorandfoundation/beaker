@@ -222,6 +222,7 @@ def test_create(sb_accts: SandboxAccounts) -> None:
     assert ac.app_addr == app_addr
 
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     assert result_tx["confirmed-round"] > 0
     expect_dict(
         result_tx,
@@ -253,6 +254,7 @@ def test_create(sb_accts: SandboxAccounts) -> None:
     assert new_ac.app_addr == app_addr
 
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -284,6 +286,7 @@ def test_update(sb_accts: SandboxAccounts) -> None:
 
     tx_id = ac.update()
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -313,6 +316,7 @@ def test_delete(sb_accts: SandboxAccounts) -> None:
 
     tx_id = ac.delete()
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -348,6 +352,7 @@ def test_opt_in(sb_accts: SandboxAccounts) -> None:
     new_ac = ac.prepare(signer=new_signer)
     tx_id = new_ac.opt_in()
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -382,6 +387,7 @@ def test_close_out(sb_accts: SandboxAccounts) -> None:
 
     tx_id = new_ac.close_out()
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -416,6 +422,7 @@ def test_clear_state(sb_accts: SandboxAccounts) -> None:
 
     tx_id = new_ac.clear_state()
     result_tx = client.pending_transaction_info(tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -457,6 +464,7 @@ def test_call(sb_accts: SandboxAccounts) -> None:
     ).decode("utf-8")
 
     result_tx = client.pending_transaction_info(result.tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -501,6 +509,7 @@ def test_add_method_call(sb_accts: SandboxAccounts) -> None:
     ).decode("utf-8")
 
     result_tx = client.pending_transaction_info(result.tx_id)
+    assert isinstance(result_tx, dict)
     expect_dict(
         result_tx,
         {
@@ -612,6 +621,7 @@ def test_override_app_create(sb_accts: SandboxAccounts) -> None:
     assert app_id > 0
 
     txinfo = client.pending_transaction_info(txid)
+    assert isinstance(txinfo, dict)
     assert txinfo["application-index"] == app_id
 
     retlog = b64decode(txinfo["logs"][0])

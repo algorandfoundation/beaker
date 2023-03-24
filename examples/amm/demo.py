@@ -53,6 +53,8 @@ def main() -> None:
 
     def print_balances() -> None:
         addrbal = client.account_info(addr)
+        assert isinstance(addrbal, dict)
+
         print("Participant: ")
         for asset in addrbal["assets"]:
             if asset["asset-id"] == pool_token:
@@ -63,6 +65,7 @@ def main() -> None:
                 print("\tAssetB Balance {}".format(asset["amount"]))
 
         appbal = client.account_info(app_addr)
+        assert isinstance(appbal, dict)
         print("App: ")
         for asset in appbal["assets"]:
             if asset["asset-id"] == pool_token:
