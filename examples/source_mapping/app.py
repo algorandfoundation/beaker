@@ -1,4 +1,4 @@
-from feature_gates import FeatureGates
+from feature_gates import FeatureGates  # type: ignore[import]
 
 FeatureGates.set_sourcemap_enabled(True)  # noqa: FBT003
 
