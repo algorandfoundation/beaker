@@ -1,7 +1,9 @@
-Decorator Parameters
-=====================
+Decorators
+==========
 
-Beaker Application decorators accept parameters that apply configurations to the methods they decorate.
+Beaker Application decorators are used to add method handlers to the Application.
+
+They optionally accept parameters that apply configurations to the methods they decorate.
 
 
 .. module:: beaker.decorators
@@ -13,9 +15,7 @@ Authorization
 
 Often, we would like to restrict the accounts that may call certain methods. 
 
-
-
-Lets add a parameter to the external to allow only the app creator to call this method.
+Let's add a parameter to the ``external`` decorator to prevent anyone but the app creator to call this method.
 
 .. code-block:: python
 
@@ -32,7 +32,7 @@ Lets add a parameter to the external to allow only the app creator to call this 
 
 The ``authorize`` parameter may be any Subroutine that accepts a sender as its argument and returns an integer interpreted as true/false.  
 
-Now lets write a new method to allow any account that is opted in to call it:
+Now let's write a new method to allow any account that is opted in to call it:
 
 .. code-block:: python
     
@@ -44,7 +44,7 @@ Now lets write a new method to allow any account that is opted in to call it:
     def vote(approve: abi.Bool):
         # ...
 
-This authorize check will cause the contract call to fail if the sender has not opted in to the app. Another app id may also be passed in case you want to check if the Sender is opted in to a different application.
+This value passed to ``authorize`` will cause the contract call to fail if the sender has not opted in to the app. Another app ID may be passed in case you want to check if the sender is opted in to a different application.
 
 The pre-defined Authorized checks are: 
 
@@ -97,22 +97,12 @@ See `ARC22 <https://arc.algorand.foundation/ARCs/arc-0022>`_ for more details.
 On Complete
 -----------
 
-If a method expects the ``ApplicationCallTransaction`` to have a certain  ``OnComplete`` other than ``NoOp``, one of the other ``OnComplete`` decorators may be used instead of ``external`` with a method config set.
+If a method expects the ``ApplicationCallTransaction`` to have a certain ``OnComplete`` other than ``NoOp``, one of the other ``OnComplete`` decorators may be used instead of ``external`` with a method config set.
 
 .. module:: beaker.application
 .. autoclass:: Application
     :noindex:
     :special-members:
-    :members: external, create, delete, update, opt_in, close_out, clear_state
+    :members: create, delete, update, opt_in, close_out, clear_state
 
-The `ARC4 <https://arc.algorand.foundation/ARCs/arc-0022>`_ spec allows applications to define externals for ``bare`` methods, that is, methods with no application arguments. 
-
-Routing for ``bare`` methods is based on the transaction's ``OnComplete`` and whether or not it's a create transaction, not based on the method selector as non-bare methods.
-
-The same handlers described above will also work for ``bare`` method calls but multiple ``OnComplete`` values can be handled with the ``bare_external`` decorator.
-
-
-Multiple Bare externals
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-If a method requires handling multiple ``OnComplete`` actions, use ``Application.external`` with the parameter ``bare=True``
+The `ARC4 <https://arc.algorand.foundation/ARCs/arc-0004>`_ spec allows applications to define handlers for ``bare`` methods, that is, methods with no application arguments.  The routing for these methods is based only on the ``OnComplete`` value of the transaction rather than the method selector of the method being invoked.

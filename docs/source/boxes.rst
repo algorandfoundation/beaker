@@ -7,13 +7,15 @@ Boxes
 
 Applications that need to maintain a large amount of state can use ``Box`` data storage.
 
+See the `Parameters Table <https://developer.algorand.org/docs/get-details/parameter_tables/>_` for protocol level limits on Boxes.
+
 :ref:`Full Example <box_example>`
 
 While ``PyTeal`` provides the basic tools for working with boxes, ``Beaker`` provides a few handy abstractions for working with them.
 
 .. note::
      
-    Beaker provides helpful abstractions but these are **NOT** required to be used. The standard PyTeal `Box <https://pyteal.readthedocs.io/en/stable/state.html#box-storage>`_ expressions can be used to interact with boxes outside the helpers provided by Beaker.
+    Beaker provides helpful abstractions, but these are **NOT** required to be used. The standard PyTeal `Box <https://pyteal.readthedocs.io/en/stable/state.html#box-storage>`_ expressions can be used to interact with boxes outside the helpers provided by Beaker.
 
 
 

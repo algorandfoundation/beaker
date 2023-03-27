@@ -60,11 +60,10 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    import json
 
-    calc = calculator_app.build()
-    print(calc.approval_program)
-    print(calc.clear_program)
-    print(json.dumps(calc.contract.dictify()))
+    calc_app_spec = calculator_app.build()
+    print(calc_app_spec.approval_program)
+    print(calc_app_spec.clear_program)
+    print(calc_app_spec.to_json())
 
     demo()

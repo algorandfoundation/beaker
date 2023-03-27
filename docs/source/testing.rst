@@ -29,11 +29,3 @@ See the ``examples/amm/amm_test.py`` for usage example.
 .. autofunction:: get_balances
 
 .. autofunction:: get_deltas
-
-
-.. _state_checking:
-
-State Checking
---------------
-
-TODO :)

@@ -92,28 +92,28 @@
 <span id="id1"></span><h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this heading"></a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This tutorial assumes you’ve already installed the <a class="reference external" href="https://github.com/algorand/sandbox">sandbox</a> and have it running.</p>
+<p>This tutorial assumes you’ve already got a local <code class="docutils literal notranslate"><span class="pre">algod</span></code> node running from either <cite>Algokit &lt;https://github.com/algorandfoundation/algokit-cli&gt;_</cite> or the <a class="reference external" href="https://github.com/algorand/sandbox">sandbox</a>.</p>
 </div>
-<p>Lets write a simple calculator app.  <a class="reference external" href="https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py">Full source here</a>.</p>
+<p>Let’s write a simple calculator app.  <a class="reference external" href="https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py">Full source here</a>.</p>
 <p>First, create an instance of the <code class="docutils literal notranslate"><span class="pre">Application</span></code> class to represent our application.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">calculator_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;Calculator&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This is a full application, though it doesn’t do much.</p>
-<p>Build it and take a look at some of the resulting fields.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">calc</span> <span class="o">=</span> <span class="n">calculator_app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">approval_program</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">clear_program</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">dictify</span><span class="p">()))</span>
+<p>Build it and take a look at the resulting application spec.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">calc_app_spec</span> <span class="o">=</span> <span class="n">calculator_app</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">calc_app_spec</span><span class="o">.</span><span class="n">approval_program</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">calc_app_spec</span><span class="o">.</span><span class="n">clear_program</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">calc_app_spec</span><span class="o">.</span><span class="n">to_json</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>Nice!  This is already enough to provide the TEAL programs and ABI specification.</p>
+<p>Great! This is already enough to provide the TEAL programs and ABI specification.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">Application.export</span></code> method can be used to write the <code class="docutils literal notranslate"><span class="pre">approval.teal</span></code>, <code class="docutils literal notranslate"><span class="pre">clear.teal</span></code>, <code class="docutils literal notranslate"><span class="pre">contract.json</span></code>, and <code class="docutils literal notranslate"><span class="pre">application.json</span></code> to the local file system.</p>
 </div>
-<p>Lets add some methods to be handled by an incoming <a class="reference external" href="https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction">ApplicationCallTransaction</a>.
-We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine">PyTeal ABI</a> method with with the``external`` decorator.</p>
+<p>Let’s now add some methods to be handled by an incoming <a class="reference external" href="https://developer.algorand.org/docs/get-details/transactions/transactions/#application-call-transaction">ApplicationCallTransaction</a>.
+We can do this by tagging a <a class="reference external" href="https://pyteal.readthedocs.io/en/stable/api.html#pyteal.ABIReturnSubroutine">PyTeal ABI</a> method with the <code class="docutils literal notranslate"><span class="pre">external</span></code> decorator.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@calculator_app</span><span class="o">.</span><span class="n">external</span>
 <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a and b, return the result&quot;&quot;&quot;</span>
@@ -139,8 +139,11 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">&#64;Application.external</span></code> decorator adds an ABI method to our application and includes it in the routing logic for handling an ABI call.</p>
-<p>The python method __must__ return an <code class="docutils literal notranslate"><span class="pre">Expr</span></code> of some kind, invoked when the external is called.</p>
-<p>Lets now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The python method <strong>must</strong> return a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code>, to be invoked when the external method is called.</p>
+</div>
+<p>Let’s now deploy and call our contract using an <a class="reference internal" href="application_client.html#id1"><span class="std std-ref">ApplicationClient</span></a>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="c1"># Here we use `sandbox` but beaker.client.api_providers can also be used</span>
     <span class="c1"># with something like ``AlgoNode(Network.TestNet).algod()``</span>
@@ -161,7 +164,7 @@ We can do this by tagging a <a class="reference external" href="https://pyteal.r
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;add result: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">return_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Thats it!</p>
+<p>That’s it!</p>
 <p>To summarize, we:</p>
 <blockquote>
 <div><ul>
@@ -191,12 +194,12 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 </dl>
 </li>
 <li><dl>
-<dt>Called the method we defined</dt><dd><p>Using <code class="docutils literal notranslate"><span class="pre">app_client.call</span></code>, passing the method defined in our class and args the method specified (by name).</p>
+<dt>Called the method we defined</dt><dd><p>Using <code class="docutils literal notranslate"><span class="pre">app_client.call</span></code>, passing the method defined in our class and args the method specified as keyword arguments.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The args passed must match the type of the method (i.e. don’t pass a string when it wants an int).</p>
+<p>The args passed must match the types of those specified in of the method (i.e. don’t pass a string when it wants an int).</p>
 </div>
-<p>The result contains the parsed <code class="docutils literal notranslate"><span class="pre">return_value</span></code> which is a python native type that mirrors the return type of the ABI method.</p>
+<p>The result contains the parsed <code class="docutils literal notranslate"><span class="pre">return_value</span></code> which is a python native type that reflects the return type of the ABI method.</p>
 </dd>
 </dl>
 </li>
@@ -205,14 +208,14 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 </section>
 <section id="decorators">
 <span id="use-decorators"></span><h2>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading"></a></h2>
-<p>Above, we used the decorator <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> to mark a method as being exposed in the ABI and available to be called from off-chain.</p>
+<p>Above, we used the decorator <code class="docutils literal notranslate"><span class="pre">&#64;app.external</span></code> to mark a method as being exposed in the ABI and available to be called from off-chain.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">&#64;external</span></code> decorator can take parameters to change how it may be called or what accounts may call it.</p>
-<p>It is also possible to use one of the <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> decorators (e.g. <code class="docutils literal notranslate"><span class="pre">create</span></code>, <code class="docutils literal notranslate"><span class="pre">opt_in</span></code>, etc…) to specify a single <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> type the contract expects.</p>
+<p>It is also possible to use one of the <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> decorators (e.g. <code class="docutils literal notranslate"><span class="pre">update</span></code>, <code class="docutils literal notranslate"><span class="pre">delete</span></code>, <code class="docutils literal notranslate"><span class="pre">opt_in</span></code>, etc…) to specify a single <code class="docutils literal notranslate"><span class="pre">OnComplete</span></code> type the contract expects.</p>
 </section>
 <section id="state-management">
 <span id="manage-state"></span><h2>State Management<a class="headerlink" href="#state-management" title="Permalink to this heading"></a></h2>
-<p>Beaker provides a way to define state in terms of a class which encapsulates the state configuration. This provides a convenient way to organize and reference state values.</p>
-<p>Lets write a new app, adding Global State to our Application.</p>
+<p>Beaker provides a way to define state using a class which encapsulates the state configuration. This provides a convenient way to organize and reference state values.</p>
+<p>Let’s write a new app, adding Global State to our Application.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CounterState</span><span class="p">:</span>
     <span class="n">counter</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span>
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
@@ -250,7 +253,7 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 <section id="code-reuse">
 <span id="id2"></span><h2>Code Reuse<a class="headerlink" href="#code-reuse" title="Permalink to this heading"></a></h2>
 <p>What about extending our Application with some functionality that already exists? For example, what if we wanted to provide the correct interface for a specific ARC?</p>
-<p>We can use a <code class="docutils literal notranslate"><span class="pre">blueprint</span></code> to include things like method handlers to our application!</p>
+<p>We can use the <code class="docutils literal notranslate"><span class="pre">blueprint</span></code> pattern to include things like method handlers to our application!</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># A blueprint that adds a method named `add` to the external</span>
 <span class="c1"># methods of the Application passed</span>
 <span class="k">def</span> <span class="nf">add_blueprint</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -272,19 +275,19 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 <span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleWithArgs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">add_n_blueprint</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Here we add a method handler for an abi method to our application in two ways.</p>
+<p>Here we add a method handler for an ABI method to our application in two ways.</p>
 <p>If no arguments are needed for the blueprint method, we can pass it to <code class="docutils literal notranslate"><span class="pre">apply</span></code> and the blueprint method will be called with our <code class="docutils literal notranslate"><span class="pre">Application</span></code> as the argument.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleNoArgs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">add_blueprint</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>If the blueprint requires some arguments to customize its behavior, we can pass the additional arguments the blueprint expects:</p>
+<p>If the blueprint requires some arguments to customize it’s behavior, we can pass the additional arguments the blueprint expects:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;BlueprintExampleWithArgs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">add_n_blueprint</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="parameter-default-values">
 <span id="parameter-default"></span><h2>Parameter Default Values<a class="headerlink" href="#parameter-default-values" title="Permalink to this heading"></a></h2>
-<p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example, there is a method handler <code class="docutils literal notranslate"><span class="pre">hash_it</span></code> which specifies the argument <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> should be the ID of the application that we use to increase our budget via inner app calls.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example, there is a method handler, <code class="docutils literal notranslate"><span class="pre">hash_it</span></code>, which specifies the argument <code class="docutils literal notranslate"><span class="pre">opup_app</span></code> should be the ID of the application that we use to increase our budget via inner app calls.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The default argument shown below is _not_ a valid type, it’s only used as a hint to the compiler. If you’re using mypy or similar, a type ignore directive should be used to stop it from complaining.</p>
@@ -308,25 +311,25 @@ The constructor may also be passed an <code class="docutils literal notranslate"
         <span class="p">)</span><span class="o">.</span><span class="n">Do</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">Sha256</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">load</span><span class="p">()))),</span>
 </pre></div>
 </div>
-<p>This value should not change frequently, if at all, but is still required to be passed by the caller so we may <strong>use</strong> it in our logic, namely to execute an application call against it.</p>
-<p>By specifying the default value of the argument in the method signature, we can communicate to the caller, through the hints of the Application Spec, what the value <strong>should</strong> be.</p>
+<p>This value should not change frequently, if at all, but is still required to be passed by the caller, so we may <strong>use</strong> it in our logic.</p>
+<p>By specifying the default value of the argument in the method signature, we can communicate to the caller, through the hints of the Application Specification, what the value <strong>should</strong> be.</p>
 <p>Options for default arguments are:</p>
 <ul class="simple">
 <li><p>A constant: one of <code class="docutils literal notranslate"><span class="pre">bytes</span> <span class="pre">|</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">Bytes</span> <span class="pre">|</span> <span class="pre">Int</span></code></p></li>
-<li><p>State Values: one of <code class="docutils literal notranslate"><span class="pre">ApplicationStateValue</span> <span class="pre">|</span> <span class="pre">AccountStateValue</span></code></p></li>
-<li><p>A read-only ABI method: a method defined to produce some more complex value than a state value or constant would be able to produce.</p></li>
+<li><p>State Values: one of <code class="docutils literal notranslate"><span class="pre">GlobalStateValue</span> <span class="pre">|</span> <span class="pre">LocalStateValue</span></code></p></li>
+<li><p>A <strong>read-only</strong> ABI method: a method defined to produce some more complex value than a state value or constant would be able to produce.</p></li>
 </ul>
-<p>The result of specifying the default value here is that we can call the method, omitting the <cite>opup_app</cite> argument:</p>
+<p>The result of specifying the default value here, is that we can call the method without specifying the <cite>opup_app</cite> argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app_client</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">hash_it</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;hashme&quot;</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>When invoked, the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> consults the method definition to check that all the expected arguments are passed.
-If it finds that an argument is not passed, it will check the hints for a default argument for the method that may be used directly (constant) or resolved (need to look it up on chain or call method).
-Upon finding a resolvable it will look up the state value, call the method. The resulting value is passed in for argument to the application call.</p>
+<p>When invoked, the <code class="docutils literal notranslate"><span class="pre">ApplicationClient</span></code> consults the Application Specification to check that all the expected arguments are passed.</p>
+<p>If it finds that an argument the method expects is not passed, it will check the hints for a default value for the argument of the method that may be used directly (constant) or resolved (need to look it up on chain or call method).</p>
+<p>Upon finding a default value that needs to be resolved, it will look up the state value or call the method. The resulting value is passed in for argument to the application call.</p>
 </section>
 <section id="precompiles">
 <h2>Precompiles<a class="headerlink" href="#precompiles" title="Permalink to this heading"></a></h2>
-<p>Often an app developer needs to have the assembled binary of a program available at contract runtime. One way to get this binary is to use the <code class="docutils literal notranslate"><span class="pre">precompile</span></code> feature.</p>
+<p>Often an app developer needs to have the fully assembled binary of a program available at contract runtime. One way to get this binary is to use the <code class="docutils literal notranslate"><span class="pre">precompile</span></code> feature.</p>
 <p>In the <code class="docutils literal notranslate"><span class="pre">OpUp</span></code> example, the <code class="docutils literal notranslate"><span class="pre">ExpensiveApp</span></code> needs to create an application to use as the target app for op budget increase calls.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="nd">@pt</span><span class="o">.</span><span class="n">Subroutine</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">TealType</span><span class="o">.</span><span class="n">none</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">create_opup</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pt</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
@@ -347,7 +350,6 @@ Upon finding a resolvable it will look up the state value, call the method. The 
         <span class="p">)</span>
 </pre></div>
 </div>
-<p>The inclusion of a <code class="docutils literal notranslate"><span class="pre">precompile</span></code> prevents building the TEAL for the containing Application until the <code class="docutils literal notranslate"><span class="pre">precompile</span></code> been fully compiled to assembled binary but we can still reference it in our Application.</p>
 <p>Another situations where a <code class="docutils literal notranslate"><span class="pre">precompile</span></code> is useful is when validating the logic of a <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code>.</p>
 <p>In the <code class="docutils literal notranslate"><span class="pre">offload_compute</span></code> example, we check to make sure that the address of the signer is the <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> we’re expecting so that we’re sure it is doing “the right thing”.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
