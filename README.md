@@ -68,7 +68,7 @@ print(result.return_value)  # "Hello, Beaker"
 
 You can install from pip:
 
-`pip install beaker-pyteal==1.0.0b2`
+`pip install beaker-pyteal`
 
 Or from github directly (no promises on stability): 
 
