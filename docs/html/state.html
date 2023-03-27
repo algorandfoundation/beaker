@@ -47,6 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">State</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#state-declaration">State Declaration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#global-state">Global State</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#global-state-value">Global State Value</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#reserved-global-state-value">Reserved Global State Value</a></li>
@@ -95,8 +96,9 @@
              
   <section id="state">
 <h1>State<a class="headerlink" href="#state" title="Permalink to this heading"></a></h1>
-<p>Applications that need to maintain state can declare the state they need as part of the Application.</p>
+<p>Applications that need to maintain state can declare the state they need by passing an instance of a class where the State values have been defined as attributes.</p>
 <p>See the <a class="reference external" href="https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract">developer docs</a> for details.</p>
+<p>See the <cite>Parameters Table &lt;https://developer.algorand.org/docs/get-details/parameter_tables/&gt;_</cite> for protocol level limits on State.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">static</span></code> option on state values is enforced only when using the methods provided by the objects described here.
@@ -108,18 +110,31 @@ It is still possible to overwrite or delete the values using the accessors provi
 For example if <code class="docutils literal notranslate"><span class="pre">ReservedLocalStateValue</span></code> tries to write to key <code class="docutils literal notranslate"><span class="pre">0x00</span></code> and a blob is already using that key, bad things will happen.</p>
 </div>
 <p>For documentation on box storage please see the <a class="reference internal" href="boxes.html#boxes"><span class="std std-ref">Boxes</span></a> page</p>
-<p><a class="reference internal" href="#state-example"><span class="std std-ref">Full Example</span></a></p>
-<section id="global-state">
-<span id="id1"></span><h2>Global State<a class="headerlink" href="#global-state" title="Permalink to this heading"></a></h2>
-<p>Global State holds the stateful values for the Application.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">GlobalStateStorage</span></code> class is produced automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code>, there is no need to create it directly.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="beaker.state.GlobalStateStorage">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">GlobalStateStorage</span></span><a class="reference internal" href="_modules/beaker/state/_abc.html#GlobalStateStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.GlobalStateStorage" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<section id="state-declaration">
+<span id="id1"></span><h2>State Declaration<a class="headerlink" href="#state-declaration" title="Permalink to this heading"></a></h2>
+<p>State is declared by passing an instance of a class where the State values have been defined as attributes.</p>
+<p>Declaration of state:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DemoState</span><span class="p">:</span>
+    <span class="n">global_state_value</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+    <span class="n">local_state_value</span> <span class="o">=</span> <span class="n">LocalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
 
+<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;StatefulApp&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">DemoState</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Usage in app logic:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ...</span>
+<span class="c1"># Set the value in the `global_state_value` we declared</span>
+<span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">global_state_value</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">123</span><span class="p">))</span>
+<span class="c1"># ...</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#state-example"><span class="std std-ref">Full Example</span></a></p>
+</section>
+<section id="global-state">
+<span id="id2"></span><h2>Global State<a class="headerlink" href="#global-state" title="Permalink to this heading"></a></h2>
+<p>Global State holds the stateful values for the Application.</p>
 <section id="global-state-value">
-<span id="id2"></span><h3>Global State Value<a class="headerlink" href="#global-state-value" title="Permalink to this heading"></a></h3>
+<span id="id3"></span><h3>Global State Value<a class="headerlink" href="#global-state-value" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.GlobalStateValue">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">GlobalStateValue</span></span><a class="reference internal" href="_modules/beaker/state/primitive.html#GlobalStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.GlobalStateValue" title="Permalink to this definition"></a></dt>
@@ -200,7 +215,7 @@ For example if <code class="docutils literal notranslate"><span class="pre">Rese
 
 </section>
 <section id="reserved-global-state-value">
-<span id="id3"></span><h3>Reserved Global State Value<a class="headerlink" href="#reserved-global-state-value" title="Permalink to this heading"></a></h3>
+<span id="id4"></span><h3>Reserved Global State Value<a class="headerlink" href="#reserved-global-state-value" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.ReservedGlobalStateValue">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">ReservedGlobalStateValue</span></span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedGlobalStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedGlobalStateValue" title="Permalink to this definition"></a></dt>
@@ -252,14 +267,14 @@ For example if <code class="docutils literal notranslate"><span class="pre">Rese
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.ReservedGlobalStateValue.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~collections.abc.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr],</span> <span class="pre">~pyteal.SubroutineFnWrapper]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedGlobalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedGlobalStateValue.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~pyteal.SubroutineFnWrapper,</span> <span class="pre">~collections.abc.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedGlobalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedGlobalStateValue.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="global-state-blob">
-<span id="id4"></span><h3>Global State Blob<a class="headerlink" href="#global-state-blob" title="Permalink to this heading"></a></h3>
+<span id="id5"></span><h3>Global State Blob<a class="headerlink" href="#global-state-blob" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.GlobalStateBlob">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">GlobalStateBlob</span></span><a class="reference internal" href="_modules/beaker/state/blob.html#GlobalStateBlob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.GlobalStateBlob" title="Permalink to this definition"></a></dt>
@@ -332,17 +347,10 @@ For example if <code class="docutils literal notranslate"><span class="pre">Rese
 </section>
 </section>
 <section id="local-state">
-<span id="id5"></span><h2>Local State<a class="headerlink" href="#local-state" title="Permalink to this heading"></a></h2>
-<p>If your application requires storage of state at the Account level, declare the state values at the <code class="docutils literal notranslate"><span class="pre">class</span></code> level and the Application class will detect them on initialization.
-Algorand refers to Account state as <cite>Local State</cite></p>
-<p>The <code class="docutils literal notranslate"><span class="pre">LocalStateStorage</span></code> class is produced automatically by the <code class="docutils literal notranslate"><span class="pre">Application</span></code>, there is no need to create it directly.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="beaker.state.LocalStateStorage">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">LocalStateStorage</span></span><a class="reference internal" href="_modules/beaker/state/_abc.html#LocalStateStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.LocalStateStorage" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
+<span id="id6"></span><h2>Local State<a class="headerlink" href="#local-state" title="Permalink to this heading"></a></h2>
+<p>If your application requires storage of state at the Account level, the state values can be declared in the same was as Global State above.</p>
 <section id="localstatevalue">
-<span id="account-state-value"></span><h3>LocalStateValue<a class="headerlink" href="#localstatevalue" title="Permalink to this heading"></a></h3>
+<h3>LocalStateValue<a class="headerlink" href="#localstatevalue" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.LocalStateValue">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">LocalStateValue</span></span><a class="reference internal" href="_modules/beaker/state/primitive.html#LocalStateValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.LocalStateValue" title="Permalink to this definition"></a></dt>
@@ -480,14 +488,14 @@ Algorand refers to Account state as <cite>Local State</cite></p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="beaker.state.ReservedLocalStateValue.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~collections.abc.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr],</span> <span class="pre">~pyteal.SubroutineFnWrapper]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedLocalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedLocalStateValue.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stack_type:</span> <span class="pre">~typing.Literal[&lt;TealType.bytes:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;TealType.uint64:</span> <span class="pre">0&gt;],</span> <span class="pre">max_keys:</span> <span class="pre">int,</span> <span class="pre">key_gen:</span> <span class="pre">~typing.Optional[~typing.Union[~pyteal.SubroutineFnWrapper,</span> <span class="pre">~collections.abc.Callable[[~pyteal.Expr],</span> <span class="pre">~pyteal.Expr]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">descr:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">*,</span> <span class="pre">prefix:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beaker/state/reserved.html#ReservedLocalStateValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.ReservedLocalStateValue.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="local-state-blob">
-<span id="id6"></span><h3>Local State Blob<a class="headerlink" href="#local-state-blob" title="Permalink to this heading"></a></h3>
+<span id="id7"></span><h3>Local State Blob<a class="headerlink" href="#local-state-blob" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="beaker.state.LocalStateBlob">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">beaker.state.</span></span><span class="sig-name descname"><span class="pre">LocalStateBlob</span></span><a class="reference internal" href="_modules/beaker/state/blob.html#LocalStateBlob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#beaker.state.LocalStateBlob" title="Permalink to this definition"></a></dt>

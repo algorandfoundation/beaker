@@ -3,9 +3,11 @@ State
 
 .. currentmodule:: beaker.state
 
-Applications that need to maintain state can declare the state they need as part of the Application. 
+Applications that need to maintain state can declare the state they need by passing an instance of a class where the State values have been defined as attributes. 
 
 See the `developer docs <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract>`_ for details.
+
+See the `Parameters Table <https://developer.algorand.org/docs/get-details/parameter_tables/>_` for protocol level limits on State.
 
 .. warning::
     The ``static`` option on state values is enforced only when using the methods provided by the objects described here. 
@@ -19,19 +21,44 @@ See the `developer docs <https://developer.algorand.org/docs/get-details/dapps/s
 
 For documentation on box storage please see the :ref:`Boxes <Boxes>` page
 
+.. _state_declaration:
+
+State Declaration
+------------------
+
+State is declared by passing an instance of a class where the State values have been defined as attributes.
+
+Declaration of state:
+
+.. code-block:: python
+
+    class DemoState:
+        global_state_value = GlobalStateValue(TealType.uint64)
+        local_state_value = LocalStateValue(TealType.bytes)
+
+    app = Application("StatefulApp", state=DemoState())
+
+
+Usage in app logic:
+
+.. code-block:: python
+
+    # ...
+    # Set the value in the `global_state_value` we declared
+    app.state.global_state_value.set(Int(123))
+    # ...
+    
+
+
 :ref:`Full Example <state_example>`
 
 .. _global_state:
 
 Global State
------------------
+------------
 
 Global State holds the stateful values for the Application. 
 
-The ``GlobalStateStorage`` class is produced automatically by the ``Application``, there is no need to create it directly.
-
-.. autoclass:: GlobalStateStorage
-    :members:
 
 .. _global_state_value:
 
@@ -63,20 +90,12 @@ Global State Blob
 .. _local_state:
 
 Local State
--------------
+------------
 
-If your application requires storage of state at the Account level, declare the state values at the ``class`` level and the Application class will detect them on initialization. 
-Algorand refers to Account state as `Local State`
-
-The ``LocalStateStorage`` class is produced automatically by the ``Application``, there is no need to create it directly.
-
-.. autoclass:: LocalStateStorage
-    :members:
-
-.. _account_state_value:
+If your application requires storage of state at the Account level, the state values can be declared in the same was as Global State above. 
 
 LocalStateValue
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. autoclass:: LocalStateValue
     :members:
@@ -85,7 +104,7 @@ LocalStateValue
 .. _reserved_local_state_value:
 
 ReservedLocalStateValue
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: ReservedLocalStateValue
     :members:

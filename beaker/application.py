@@ -110,6 +110,10 @@ def _set_ctx(app: "Application", client: "AlgodClient | None") -> Iterator[None]
 
 
 class Application(Generic[TState]):
+    """A class representing an Application."""
+
+    # TODO: more
+
     @overload
     def __init__(
         self: "Application[None]",
@@ -139,7 +143,6 @@ class Application(Generic[TState]):
         descr: str | None = None,
         build_options: BuildOptions | None = None,
     ):
-        """<TODO>"""
         self._state: TState = state
         self.name = name
         self.descr = descr
@@ -186,6 +189,8 @@ class Application(Generic[TState]):
         value: "Application | LogicSignature | LogicSignatureTemplate",
         /,
     ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+        """Precompile an Application or LogicSignature for use in the logic of the application."""
+
         if value is self:
             raise PrecompileContextError("Attempted to precompile current Application")
         try:
@@ -402,7 +407,7 @@ class Application(Generic[TState]):
 
         Args:
             fn: The function being wrapped.
-            method_config:  <TODO>
+            method_config: A MethodConfig or MethodConfigDict that defines the OnComplete fields that are valid for this method
             name: Name of ABI method. If not set, name of the python method will be used.
                 Useful for method overriding.
             authorize: a subroutine with input of ``Txn.sender()`` and output uint64
@@ -547,6 +552,7 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """Mark a method as one that should be callable during application create."""
         decorator = self.external(
             method_config={"no_op": CallConfig.CREATE},
             name=name,
@@ -626,6 +632,14 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """Mark a method as one that should be callable during application delete.
+
+        Args:
+            name: The name of the method. If not provided, the name of the method will be used.
+            authorize: A function that will be called to authorize the method. If not provided, the method will not be authorized.
+            bare: If True, the router will only consider the OnComplete of the app call transaction to do routing.
+            override: If True, the method will override any existing method with the same name.
+        """
 
         decorator = self.external(
             method_config={"delete_application": CallConfig.CALL},
@@ -706,6 +720,14 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """Mark a method as one that should be callable during application update.
+
+        Args:
+            name: The name of the method. If not provided, the name of the method will be used.
+            authorize: A function that will be called to authorize the method. If not provided, the method will not be authorized.
+            bare: If True, the router will only consider the OnComplete of the app call transaction to do routing.
+            override: If True, the method will override any existing method with the same name.
+        """
         decorator = self.external(
             method_config={"update_application": CallConfig.CALL},
             name=name,
@@ -790,6 +812,15 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """Mark a method as one that should be callable during application opt-in.
+
+        Args:
+            allow_create: If True, the method will be callable even if the application does not exist.
+            name: The name of the method. If not provided, the name of the method will be used.
+            authorize: A function that will be called to authorize the method. If not provided, the method will not be authorized.
+            bare: If True, the router will only consider the OnComplete of the app call transaction to do routing.
+            override: If True, the method will override any existing method with the same name.
+        """
         decorator = self.external(
             method_config={
                 "opt_in": CallConfig.ALL if allow_create else CallConfig.CALL
@@ -871,6 +902,14 @@ class Application(Generic[TState]):
         bare: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """Mark a method as one that should be callable during application close-out.
+
+        Args:
+            name: The name of the method. If not provided, the name of the method will be used.
+            authorize: A function that will be called to authorize the method. If not provided, the method will not be authorized.
+            bare: If True, the router will only consider the OnComplete of the app call transaction to do routing.
+            override: If True, the method will override any existing method with the same name.
+        """
         decorator = self.external(
             method_config={"close_out": CallConfig.CALL},
             name=name,
@@ -964,6 +1003,17 @@ class Application(Generic[TState]):
         read_only: bool = False,
         override: bool | None = False,
     ) -> ABIReturnSubroutine | DecoratorFuncType:
+        """Mark a method as one that should be callable during application no-op.
+
+        Args:
+            allow_call: If True, the method will be callable during application no-op after creation.
+            allow_create: If True, the method will be callable during application create.
+            name: The name of the method. If not provided, the name of the method will be used.
+            authorize: A function that will be called to authorize the method. If not provided, the method will not be authorized.
+            bare: If True, the router will only consider the OnComplete of the app call transaction to do routing.
+            override: If True, the method will override any existing method with the same name.
+        """
+
         if allow_call and allow_create:
             call_config = CallConfig.ALL
         elif allow_call:
@@ -1008,6 +1058,13 @@ class Application(Generic[TState]):
         name: str | None = None,
         override: bool | None = False,
     ) -> SubroutineFnWrapper | Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
+        """Mark a method as one that should be callable during application clear-state.
+
+        Args:
+            name: The name of the method. If not provided, the name of the method will be used.
+            override: If True, the method will override any existing method with the same name.
+        """
+
         def decorator(fun: Callable[[], Expr]) -> SubroutineFnWrapper:
             sub = SubroutineFnWrapper(fun, TealType.none, name=name)
             if sub.subroutine.argument_count():
@@ -1030,6 +1087,11 @@ class Application(Generic[TState]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> "Application[TState]":
+        """Apply a ``blueprint`` function to the application
+
+        Args:
+            func: the blueprint function to apply to the application
+        """
         func(self, *args, **kwargs)
         return self
 

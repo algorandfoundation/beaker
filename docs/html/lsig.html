@@ -83,8 +83,8 @@
              
   <section id="module-beaker.logic_signature">
 <span id="logic-signatures"></span><h1>Logic Signatures<a class="headerlink" href="#module-beaker.logic_signature" title="Permalink to this heading"></a></h1>
-<p>This is the class that should be initialized to provide a LogicSignature.</p>
-<p>A <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> is intialized with either a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code>.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> (or <code class="docutils literal notranslate"><span class="pre">Smart</span> <span class="pre">Signature</span></code>) acts as a signature that is verified by a smart contract instead of a public key see <a class="reference external" href="https://developer.algorand.org/docs/">Algorand docs</a> for more information.</p>
+<p>A Beaker <code class="docutils literal notranslate"><span class="pre">LogicSignature</span></code> is initialized with either a PyTeal <code class="docutils literal notranslate"><span class="pre">Expr</span></code> or a function that returns an <code class="docutils literal notranslate"><span class="pre">Expr</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">verify_lsig</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LogicSignature</span><span class="p">(</span>
     <span class="n">pt</span><span class="o">.</span><span class="n">Seq</span><span class="p">(</span>
         <span class="n">pt</span><span class="o">.</span><span class="n">Assert</span><span class="p">(</span>

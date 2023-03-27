@@ -3,21 +3,26 @@ Precompile
 
 A ``precompile`` is useful if you need the fully assembled binary representation of a TEAL program in the logic of another TEAL program.
 
-:ref:`One example <offload_compute_example>` of where it might be used is in offloading some compute into a LogicSignature
-which has a max budget of 20k ops compared with 700 ops in a single Application call. 
+:ref:`One example <offload_compute_example>` of where it might be used, is in offloading some compute into a LogicSignature, 
+which has a max opcode budget of 20k ops compared with 700 ops in a single Application call. 
 
-By using the ``precompile`` in this way we can check the address to be sure that the LogicSig is the one we expect.
+By using the ``precompile`` in this way we can check offload the more expensive computation to the ``LogicSignature`` and preserve the app calls opcode budget for other work. 
 
+.. note::
+    When we do this, we need to be careful that the ``LogicSignature`` is the one we expect by checking its address, which is the hash of the program logic.
 
 :ref:`Another example <sub_app_example>` might be if you need to deploy some child Application and want to have the logic 
-locally as compiled bytes to create the app directly in program logic.
+locally in the program as compiled bytes so the "parent app" can create the "child app" directly in program logic.
 
 By using the ``precompile`` in this way, we can deploy the Sub Application directly from our Parent app.
+
+.. note::
+    When we do this, the compiled program will take up more space in our "parent app" contract, so some consideration of the trade offs between program size and convenience may be necessary.
 
 Usage
 -----
 
-In order to use a ``Precompile`` in a program, first wrap the ``LogicSignature`` or ``Application`` with the ``precompile`` method. This will ensure that the program is fully compiled once and only once and the binary versions of the assembled programs are available when it's time to build the containing Application or LogicSignature. 
+In order to use a ``Precompile`` in a program, first wrap the ``LogicSignature`` or ``Application`` with the ``precompile`` method. This will ensure that the program is fully compiled once and only once and the binary versions of the assembled programs are available when it's time to build the containing ``Application`` or ``LogicSignature``. 
 
 .. note::
     The ``precompile`` function may _only_ be called inside a function.
