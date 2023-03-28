@@ -138,23 +138,18 @@ files = [
 
 [[package]]
 name = "algokit-utils"
-version = "0.1.3"
+version = "0.2.0b1"
 description = "Utilities for Algorand development for use by AlgoKit"
 category = "main"
 optional = false
-python-versions = "^3.10"
-files = []
-develop = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "algokit_utils-0.2.0b1-py3-none-any.whl", hash = "sha256:18dc04bd9cbd1ecd403b9a0b5b47afbf259156894c716d217b3619412a1a549c"},
+]
 
 [package.dependencies]
-py-algorand-sdk = "^2.0.0"
-pyteal = "^0.23.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/algorandfoundation/algokit-utils-py"
-reference = "4a5c6ed15b136780ad0b8964eb0dbece55306ff9"
-resolved_reference = "4a5c6ed15b136780ad0b8964eb0dbece55306ff9"
+py-algorand-sdk = ">=2.0.0,<3.0.0"
+pyteal = ">=0.23.0,<0.24.0"
 
 [[package]]
 name = "async-timeout"
@@ -2518,4 +2513,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9b89ebae051ee53e57d4262dd36a9af91ea395330f3d93a816cf7c6667d7b3e7"
+content-hash = "58ac6f5c6877c8cb463a631b3dbb642d36871099d935af0385c8ba376b267a5e"
