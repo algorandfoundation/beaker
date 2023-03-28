@@ -1,7 +1,7 @@
 import pyteal as pt
 import pytest
+from algokit_utils import LogicError
 
-import beaker as bkr
 from beaker.lib.strings import Atoi, EncodeUVarInt, Head, Itoa, Prefix, Suffix, Tail
 
 from tests.helpers import (
@@ -20,7 +20,7 @@ def test_atoi() -> None:
 def test_atoi_invalid() -> None:
     ut = UnitTestingApp(pt.Itob(Atoi(pt.Bytes("abc"))))
     output = [returned_int_as_bytes(int(123))]
-    with pytest.raises(bkr.client.LogicException):
+    with pytest.raises(LogicError):
         assert_output(ut, [], output)
 
 
@@ -39,7 +39,7 @@ def test_head() -> None:
 def test_head_empty() -> None:
     ut = UnitTestingApp(Tail(pt.Bytes("")))
 
-    with pytest.raises(bkr.client.LogicException):
+    with pytest.raises(LogicError):
         assert_output(ut, [], [None])
 
 
@@ -51,7 +51,7 @@ def test_tail() -> None:
 
 def test_tail_empty() -> None:
     ut = UnitTestingApp(Tail(pt.Bytes("")))
-    with pytest.raises(bkr.client.LogicException):
+    with pytest.raises(LogicError):
         assert_output(ut, [], [None])
 
 
@@ -63,7 +63,7 @@ def test_suffix() -> None:
 
 def test_suffix_past_length() -> None:
     ut = UnitTestingApp(Suffix(pt.Bytes("deadbeef"), pt.Int(9)))
-    with pytest.raises(bkr.client.LogicException):
+    with pytest.raises(LogicError):
         assert_output(ut, [], [None])
 
 
@@ -75,7 +75,7 @@ def test_prefix() -> None:
 
 def test_prefix_past_length() -> None:
     ut = UnitTestingApp(Prefix(pt.Bytes("deadbeef"), pt.Int(9)))
-    with pytest.raises(bkr.client.LogicException):
+    with pytest.raises(LogicError):
         assert_output(ut, [], [None])
 
 

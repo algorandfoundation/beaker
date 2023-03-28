@@ -5,7 +5,12 @@ from algosdk.v2client.algod import AlgodClient
 
 def get_balances(client: AlgodClient, accts: list[str]) -> dict[str, dict[int, int]]:
     """get the balances for all the accounts in the list passed"""
-    return {acct: balances(client.account_info(acct)) for acct in accts}
+    result = {}
+    for acct in accts:
+        acct_info = client.account_info(acct)
+        assert isinstance(acct_info, dict)
+        result[acct] = balances(acct_info)
+    return result
 
 
 def get_deltas(

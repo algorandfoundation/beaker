@@ -1,3 +1,5 @@
+from algokit_utils import LogicError
+
 from beaker import client, sandbox
 
 from examples.state import contract
@@ -33,7 +35,7 @@ def main() -> None:
 
     try:
         app_client.call(contract.set_global_state_val, v="Expect fail")
-    except client.LogicException as e:
+    except LogicError as e:
         print(f"Task failed successfully: {e}")
     result = app_client.call(contract.get_global_state_val)
     print(f"Set/get app state result: {result.return_value}")

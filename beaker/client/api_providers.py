@@ -82,7 +82,7 @@ class PureStake(APIProvider):
     # existing methods but re-use them to generate the client
     def algod(self, token: str = "") -> AlgodClient:
         algod_client = super().algod()
-        algod_client.headers = {self.token_header: token}
+        algod_client.headers = {self.token_header: token}  # type: ignore[misc]
         return algod_client
 
     def indexer(self, token: str = "") -> IndexerClient:

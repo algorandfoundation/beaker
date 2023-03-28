@@ -1,3 +1,4 @@
+from algokit_utils import LogicError
 from pyteal import Expr, Int, Seq, TealType, abi
 
 from beaker import (
@@ -6,7 +7,7 @@ from beaker import (
     GlobalStateValue,
     sandbox,
 )
-from beaker.client import ApplicationClient, LogicException
+from beaker.client import ApplicationClient
 
 
 class CounterState:
@@ -65,7 +66,7 @@ def demo() -> None:
         other_acct = accts.pop()
         other_client = app_client.prepare(signer=other_acct.signer)
         other_client.call(increment)
-    except LogicException as e:
+    except LogicError as e:
         print(e)
         print("App call failed as expected.")
 
