@@ -64,8 +64,6 @@ class ApplicationClient:
             suggested_params=suggested_params,
         )
 
-    # TODO: setters
-
     @property
     def client(self) -> AlgodClient:
         return self._app_client.algod_client
@@ -73,6 +71,10 @@ class ApplicationClient:
     @property
     def app_id(self) -> int:
         return self._app_client.app_id
+
+    @app_id.setter
+    def app_id(self, value: int) -> None:
+        self._app_client.app_id = value
 
     @property
     def app_addr(self) -> str | None:
@@ -82,13 +84,25 @@ class ApplicationClient:
     def sender(self) -> str | None:
         return self._app_client.sender
 
+    @sender.setter
+    def sender(self, value: str) -> None:
+        self._app_client.sender = value
+
     @property
     def signer(self) -> TransactionSigner | None:
         return self._app_client.signer
 
+    @signer.setter
+    def signer(self, value: TransactionSigner) -> None:
+        self._app_client.signer = value
+
     @property
     def suggested_params(self) -> transaction.SuggestedParams | None:
         return self._app_client.suggested_params
+
+    @suggested_params.setter
+    def suggested_params(self, value: transaction.SuggestedParams | None) -> None:
+        self._app_client.suggested_params = value
 
     @property
     def approval(self) -> Program | None:
@@ -274,7 +288,7 @@ class ApplicationClient:
     ) -> AtomicTransactionComposer:
         self._app_client.add_method_call(
             atc,
-            _convert_method(method),
+            method,
             abi_args=kwargs,
             parameters=CommonCallParameters(
                 sender=sender,
@@ -304,11 +318,6 @@ class ApplicationClient:
         signer: TransactionSigner | None = None,
         suggested_params: transaction.SuggestedParams | None = None,
         on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
-        local_schema: transaction.StateSchema | None = None,
-        global_schema: transaction.StateSchema | None = None,
-        approval_program: bytes | None = None,
-        clear_program: bytes | None = None,
-        extra_pages: int | None = None,
         accounts: list[str] | None = None,
         foreign_apps: list[int] | None = None,
         foreign_assets: list[int] | None = None,
@@ -321,9 +330,21 @@ class ApplicationClient:
     ) -> ABIResult:
         if not atc:
             atc = AtomicTransactionComposer()
+        deprecated_arguments = [
+            kwargs.pop("local_schema", None),
+            kwargs.pop("global_schema", None),
+            kwargs.pop("approval_program", None),
+            kwargs.pop("clear_program", None),
+            kwargs.pop("extra_pages", None),
+        ]
+        if any(deprecated_arguments):
+            raise Exception(
+                "Can't create an application using call, either create an application from "
+                "the client app_spec using create() or use add_method_call() instead."
+            )
         self._app_client.compose_call(
             atc,
-            call_abi_method=_convert_method(method),
+            call_abi_method=method,
             transaction_parameters=OnCompleteCallParameters(
                 on_complete=on_complete,
                 sender=sender,
@@ -413,12 +434,6 @@ class ApplicationClient:
             signer=signer, sender=sender, app_id=app_id
         )
         return copy
-
-
-def _convert_method(method: Method | str | ABIReturnSubroutine) -> Method | str:
-    if isinstance(method, ABIReturnSubroutine):
-        return method.method_spec()
-    return method
 
 
 def _extract_kwargs(

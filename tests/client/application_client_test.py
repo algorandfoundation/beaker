@@ -102,6 +102,30 @@ def sb_accts() -> SandboxAccounts:
     return [(acct.address, acct.private_key, acct.signer) for acct in get_accounts()]
 
 
+@pytest.mark.parametrize(
+    "deprecated_arg",
+    [
+        "local_schema",
+        "global_schema",
+        "approval_program",
+        "clear_program",
+        "extra_pages",
+    ],
+)
+def test_app_client_call_deprecated(deprecated_arg: str) -> None:
+    client = get_algod_client()
+    ac = ApplicationClient(client, app)
+    with pytest.raises(Exception) as ex:
+        args: dict[str, Any] = {deprecated_arg: True}
+        ac.call(dummy, **args)
+
+    assert (
+        str(ex.value)
+        == "Can't create an application using call, either create an application from the "
+        "client app_spec using create() or use add_method_call() instead."
+    )
+
+
 def test_app_client_create() -> None:
     client = get_algod_client()
     ac = ApplicationClient(client, app)
