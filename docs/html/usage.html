@@ -56,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorator Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="boxes.html">Boxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration.html">1.0 Migration Guide</a></li>
@@ -216,7 +216,8 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 <span id="manage-state"></span><h2>State Management<a class="headerlink" href="#state-management" title="Permalink to this heading"></a></h2>
 <p>Beaker provides a way to define state using a class which encapsulates the state configuration. This provides a convenient way to organize and reference state values.</p>
 <p>Let’s write a new app, adding Global State to our Application.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CounterState</span><span class="p">:</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="k">class</span> <span class="nc">CounterState</span><span class="p">:</span>
     <span class="n">counter</span> <span class="o">=</span> <span class="n">GlobalStateValue</span><span class="p">(</span>
         <span class="n">stack_type</span><span class="o">=</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
         <span class="n">descr</span><span class="o">=</span><span class="s2">&quot;A counter for showing how to use application state&quot;</span><span class="p">,</span>
@@ -242,7 +243,6 @@ The constructor may also be passed an <code class="docutils literal notranslate"
         <span class="n">counter_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">counter_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">counter</span> <span class="o">-</span> <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
         <span class="n">output</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">counter_app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
     <span class="p">)</span>
-
 
 </pre></div>
 </div>
