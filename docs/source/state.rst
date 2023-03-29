@@ -7,7 +7,7 @@ Applications that need to maintain state can declare the state they need by pass
 
 See the `developer docs <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#modifying-state-in-smart-contract>`_ for details.
 
-See the `Parameters Table <https://developer.algorand.org/docs/get-details/parameter_tables/>_` for protocol level limits on State.
+See the `Parameters Table <https://developer.algorand.org/docs/get-details/parameter_tables/>`_ for protocol level limits on State.
 
 .. warning::
     The ``static`` option on state values is enforced only when using the methods provided by the objects described here. 
