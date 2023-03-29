@@ -7,7 +7,7 @@ Boxes
 
 Applications that need to maintain a large amount of state can use ``Box`` data storage.
 
-See the `Parameters Table <https://developer.algorand.org/docs/get-details/parameter_tables/>_` for protocol level limits on Boxes.
+See the `Parameters Table <https://developer.algorand.org/docs/get-details/parameter_tables/>`_ for protocol level limits on Boxes.
 
 :ref:`Full Example <box_example>`
 

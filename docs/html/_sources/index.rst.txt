@@ -62,7 +62,6 @@ See full examples `here <https://github.com/algorand-devrel/beaker/tree/master/e
     state
     precompile
     decorators
-    testing
     boxes
     migration
 

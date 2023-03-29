@@ -7,7 +7,7 @@ Tutorial
 ---------
 
 .. note::
-    This tutorial assumes you've already got a local ``algod`` node running from either `Algokit <https://github.com/algorandfoundation/algokit-cli>_` or the `sandbox <https://github.com/algorand/sandbox>`_. 
+    This tutorial assumes you've already got a local ``algod`` node running from either `Algokit <https://github.com/algorandfoundation/algokit-cli>`_ or the `sandbox <https://github.com/algorand/sandbox>`_. 
 
 
 Let's write a simple calculator app.  `Full source here <https://github.com/algorand-devrel/beaker/blob/master/examples/simple/calculator.py>`_.
