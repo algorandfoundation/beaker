@@ -1,7 +1,7 @@
 #pragma version 8
-intcblock 1 0
+intcblock 0 1
 txn NumAppArgs
-intc_1 // 0
+intc_0 // 0
 ==
 bnz main_l6
 txna ApplicationArgs 0
@@ -15,70 +15,84 @@ bnz main_l4
 err
 main_l4:
 txn OnCompletion
-intc_1 // NoOp
+intc_0 // NoOp
 ==
 txn ApplicationID
-intc_1 // 0
+intc_0 // 0
 !=
 &&
 assert
-txn GroupIndex
-intc_0 // 1
--
-store 1
-load 1
-gtxns TypeEnum
-pushint 4 // axfer
-==
-assert
-load 1
-callsub handle_1
-intc_0 // 1
+callsub handlecaster_3
+intc_1 // 1
 return
 main_l5:
 txn OnCompletion
-intc_1 // NoOp
+intc_0 // NoOp
 ==
 txn ApplicationID
-intc_1 // 0
+intc_0 // 0
 !=
 &&
 assert
-txn GroupIndex
-intc_0 // 1
--
-store 0
-load 0
-gtxns TypeEnum
-intc_0 // pay
-==
-assert
-load 0
-callsub handle_0
-intc_0 // 1
+callsub handlecaster_2
+intc_1 // 1
 return
 main_l6:
 txn OnCompletion
-intc_1 // NoOp
+intc_0 // NoOp
 ==
 bnz main_l8
 err
 main_l8:
 txn ApplicationID
-intc_1 // 0
+intc_0 // 0
 ==
 assert
-intc_0 // 1
+intc_1 // 1
 return
 
 // handle
 handle_0:
 proto 1 0
-intc_0 // 1
+intc_1 // 1
 return
 
 // handle
 handle_1:
 proto 1 0
-intc_0 // 1
+intc_1 // 1
 return
+
+// handle_caster
+handlecaster_2:
+proto 0 0
+intc_0 // 0
+txn GroupIndex
+intc_1 // 1
+-
+frame_bury 0
+frame_dig 0
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+frame_dig 0
+callsub handle_0
+retsub
+
+// handle_caster
+handlecaster_3:
+proto 0 0
+intc_0 // 0
+txn GroupIndex
+intc_1 // 1
+-
+frame_bury 0
+frame_dig 0
+gtxns TypeEnum
+pushint 4 // axfer
+==
+assert
+frame_dig 0
+callsub handle_1
+retsub

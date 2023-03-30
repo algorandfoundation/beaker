@@ -1,5 +1,6 @@
 #pragma version 8
 intcblock 0
+bytecblock 0x
 txna ApplicationArgs 0
 pushbytes 0x97f1fc11 // "create(string)string"
 ==
@@ -14,20 +15,30 @@ intc_0 // 0
 ==
 &&
 assert
-txna ApplicationArgs 1
-callsub create_0
-store 0
-pushbytes 0x151f7c75 // 0x151f7c75
-load 0
-concat
-log
+callsub createcaster_0
 pushint 1 // 1
 return
 
+// create_caster
+createcaster_0:
+proto 0 0
+bytec_0 // ""
+dup
+txna ApplicationArgs 1
+frame_bury 1
+frame_dig 1
+callsub create_1
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
 // create
-create_0:
+create_1:
 proto 1 1
-pushbytes 0x // ""
+bytec_0 // ""
 frame_dig -1
 frame_bury 0
 retsub

@@ -23,13 +23,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub decrement_1
-store 1
-bytec_1 // 0x151f7c75
-load 1
-itob
-concat
-log
+callsub decrementcaster_1
 intc_1 // 1
 return
 main_l5:
@@ -41,13 +35,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub increment_0
-store 0
-bytec_1 // 0x151f7c75
-load 0
-itob
-concat
-log
+callsub incrementcaster_0
 intc_1 // 1
 return
 main_l6:
@@ -64,8 +52,34 @@ assert
 intc_1 // 1
 return
 
+// increment_caster
+incrementcaster_0:
+proto 0 0
+intc_0 // 0
+callsub increment_2
+frame_bury 0
+bytec_1 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// decrement_caster
+decrementcaster_1:
+proto 0 0
+intc_0 // 0
+callsub decrement_3
+frame_bury 0
+bytec_1 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
 // increment
-increment_0:
+increment_2:
 proto 0 1
 intc_0 // 0
 txn Sender
@@ -85,7 +99,7 @@ frame_bury 0
 retsub
 
 // decrement
-decrement_1:
+decrement_3:
 proto 0 1
 intc_0 // 0
 txn Sender
