@@ -1,10 +1,6 @@
 from pyteal import Expr, Int, Sqrt, abi
 
-from beaker import (
-    Application,
-    client,
-    sandbox,
-)
+from beaker import Application
 
 
 # A blueprint that adds a method named `add` to the external
@@ -25,7 +21,7 @@ def add_n_blueprint(app: Application, n: int) -> None:
         return output.set(a.get() + Int(n))
 
 
-app = Application("BlueprintExampleWithArgs").apply(add_n_blueprint, n=2)
+app = Application("BlueprintExampleWithArgs").apply(add_n_blueprint, n=1)
 
 
 # A blueprint that adds a method named `div` to the external
@@ -69,30 +65,3 @@ def sqrt_blueprint(app: Application) -> None:
 extended_app = Application("ExtendAppWithBlueprints")
 # include the handlers from our calculator blueprint
 extended_app.apply(calculator_blueprint)
-
-
-def demo() -> None:
-    app_client = client.ApplicationClient(
-        client=sandbox.get_algod_client(),
-        app=extended_app,
-        signer=sandbox.get_accounts().pop().signer,
-    )
-
-    # Deploy the app on-chain
-    app_client.create()
-
-    # Call the `sum` method we added with the blueprint
-    result = app_client.call("add", a=1, b=2)
-    print(result.return_value)  # 3
-
-    # Call the `div` method we added with the blueprint
-    result = app_client.call("div", a=6, b=2)
-    print(result.return_value)  # 3
-
-    # Call the `sqrt` method we added with the blueprint
-    # result = app_client.call("sqrt", a=9)
-    # print(result.return_value)  # 3
-
-
-if __name__ == "__main__":
-    demo()
