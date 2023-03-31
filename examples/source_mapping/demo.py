@@ -10,7 +10,7 @@ def main() -> None:
     app_spec = source_mapped_app.build(ac)
 
     # write out programs to disk
-    app_spec.export("SourceMap.artifacts")
+    # app_spec.export("SourceMapped.artifacts")
 
     app_client = client.ApplicationClient(client=ac, app=app_spec, signer=acct.signer)
     # deploy app
