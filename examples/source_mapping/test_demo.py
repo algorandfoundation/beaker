@@ -5,10 +5,10 @@ from tests.conftest import check_application_artifacts_output_stability
 
 class SourceMapEnabled:
     def __enter__(self) -> None:
-        FeatureGates.set_sourcemap_enabled(True)  # noqa: FBT003
+        FeatureGates.set_sourcemap_enabled(gate=True)
 
     def __exit__(self, *args: object) -> None:
-        FeatureGates.set_sourcemap_enabled(False)  # noqa: FBT003
+        FeatureGates.set_sourcemap_enabled(gate=False)
 
 
 def test_demo() -> None:
