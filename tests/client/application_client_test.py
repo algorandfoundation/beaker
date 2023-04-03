@@ -5,15 +5,22 @@ import algosdk.error
 import pyteal as pt
 import pytest
 from algokit_utils import CallConfig, LogicError, MethodHints
+from algosdk import transaction
 from algosdk.account import generate_account
 from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
     AtomicTransactionComposer,
     LogicSigTransactionSigner,
     MultisigTransactionSigner,
+    TransactionSigner,
 )
 from algosdk.logic import get_application_address
-from algosdk.transaction import LogicSigAccount, Multisig, OnComplete
+from algosdk.transaction import (
+    GenericSignedTransaction,
+    LogicSigAccount,
+    Multisig,
+    OnComplete,
+)
 
 import beaker
 from beaker import (
@@ -781,3 +788,16 @@ def test_abi_close_out(sb_accts: SandboxAccounts) -> None:
     )
 
     app_client.close_out(x=do_close_out)
+
+
+def test_custom_transaction_signer() -> None:
+    class CustomSigner(TransactionSigner):
+        def sign_transactions(
+            self, txn_group: list[transaction.Transaction], indexes: list[int]
+        ) -> list[GenericSignedTransaction]:
+            return []
+
+    ac = ApplicationClient(get_algod_client(), app, signer=CustomSigner()).prepare(
+        sender="a sender"
+    )
+    assert ac.sender == "a sender"
