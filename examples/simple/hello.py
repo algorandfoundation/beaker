@@ -1,4 +1,4 @@
-from pyteal import Bytes, Concat, Expr, abi
+import pyteal as pt
 
 from beaker import (
     Application,
@@ -10,9 +10,9 @@ hello_app = Application("HelloBeaker")
 
 
 @hello_app.external
-def hello(name: abi.String, *, output: abi.String) -> Expr:
+def hello(name: pt.abi.String, *, output: pt.abi.String) -> pt.Expr:
     # Set output to the result of `Hello, `+name
-    return output.set(Concat(Bytes("Hello, "), name.get()))
+    return output.set(pt.Concat(pt.Bytes("Hello, "), name.get()))
 
 
 def demo() -> None:
