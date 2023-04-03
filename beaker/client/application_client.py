@@ -112,6 +112,10 @@ class ApplicationClient:
     def clear(self) -> Program | None:
         return self._app_client.clear
 
+    @property
+    def algokit_app_client(self) -> AlgokitApplicationClient:
+        return self._app_client
+
     def get_sender(
         self, sender: str | None = None, signer: TransactionSigner | None = None
     ) -> str:
