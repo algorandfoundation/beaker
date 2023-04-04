@@ -5,7 +5,6 @@ import algosdk.error
 import pyteal as pt
 import pytest
 from algokit_utils import CallConfig, LogicError, MethodHints
-from algosdk import transaction
 from algosdk.account import generate_account
 from algosdk.atomic_transaction_composer import (
     AccountTransactionSigner,
@@ -20,6 +19,7 @@ from algosdk.transaction import (
     LogicSigAccount,
     Multisig,
     OnComplete,
+    Transaction,
 )
 
 import beaker
@@ -793,7 +793,7 @@ def test_abi_close_out(sb_accts: SandboxAccounts) -> None:
 def test_custom_transaction_signer() -> None:
     class CustomSigner(TransactionSigner):
         def sign_transactions(
-            self, txn_group: list[transaction.Transaction], indexes: list[int]
+            self, txn_group: list[Transaction], indexes: list[int]
         ) -> list[GenericSignedTransaction]:
             return []
 
