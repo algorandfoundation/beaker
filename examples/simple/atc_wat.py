@@ -34,7 +34,7 @@ def main() -> None:
     app_b_client = beaker.client.ApplicationClient(algod, app_b, signer=acct.signer)
     app_b_client.create()
 
-    def doesnt_work() -> None:
+    def works_but_weird() -> None:
         atc = AtomicTransactionComposer()
         atc = app_a_client.add_method_call(
             atc,
@@ -50,14 +50,14 @@ def main() -> None:
             ),
         )
 
+        other_atc = AtomicTransactionComposer()
+        other_atc.add_transaction(atc.txn_list[0])
         result = app_b_client.call(
-            meth2,
-            app=app_a_client.app_id,
-            method_1_txn=None,  # what can go here??? reference to previous txn in atc?
+            meth2, app=app_a_client.app_id, method_1_txn=atc.txn_list[1], atc=other_atc
         )
-        print(result.return_value)
+        print(result.tx_info)
 
-    def works() -> None:
+    def works_but_sad() -> None:
         atc = AtomicTransactionComposer()
         atc.add_transaction(
             TransactionWithSigner(
@@ -93,8 +93,8 @@ def main() -> None:
         result = atc.execute(algod, 4)
         print(result)
 
-    doesnt_work()
-    # works()
+    works_but_weird()
+    # works_but_sad()
 
 
 if __name__ == "__main__":
