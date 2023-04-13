@@ -88,6 +88,7 @@
     <span class="n">CreateCallParameters</span><span class="p">,</span>
     <span class="n">OnCompleteCallParameters</span><span class="p">,</span>
     <span class="n">Program</span><span class="p">,</span>
+    <span class="n">get_sender_from_signer</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">algosdk</span> <span class="kn">import</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">algosdk.abi</span> <span class="kn">import</span> <span class="n">Method</span>
@@ -132,6 +133,8 @@
                 <span class="n">app_spec</span> <span class="o">=</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected app type: </span><span class="si">{</span><span class="n">app</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># algokit client does not get sender from signer on init, do so here to keep original beaker client behaviour</span>
+        <span class="n">sender</span> <span class="o">=</span> <span class="n">sender</span> <span class="ow">or</span> <span class="n">get_sender_from_signer</span><span class="p">(</span><span class="n">signer</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span> <span class="o">=</span> <span class="n">AlgokitApplicationClient</span><span class="p">(</span>
             <span class="n">client</span><span class="p">,</span>
             <span class="n">app_spec</span><span class="p">,</span>
@@ -189,14 +192,18 @@
     <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Program</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">clear</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">algokit_app_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlgokitApplicationClient</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span>
+
     <span class="k">def</span> <span class="nf">get_sender</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">signer</span><span class="p">,</span> <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">_resolve_signer_sender</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">resolve_signer_sender</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="n">sender</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sender</span>
 
     <span class="k">def</span> <span class="nf">get_signer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signer</span><span class="p">:</span> <span class="n">TransactionSigner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionSigner</span><span class="p">:</span>
-        <span class="n">signer</span><span class="p">,</span> <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">_resolve_signer_sender</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">signer</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">resolve_signer_sender</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="s2">&quot;ignored&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">signer</span>
 
     <span class="k">def</span> <span class="nf">get_suggested_params</span><span class="p">(</span>
@@ -497,8 +504,7 @@
         <span class="n">app_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ApplicationClient&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;makes a copy of the current ApplicationClient and the fields passed&quot;&quot;&quot;</span>
-        <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signer</span><span class="p">(</span><span class="n">signer</span><span class="p">)</span>
-        <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">signer</span><span class="p">)</span>
+        <span class="n">signer</span><span class="p">,</span> <span class="n">sender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">get_signer_sender</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="n">sender</span><span class="p">)</span>
         <span class="n">copy</span> <span class="o">=</span> <span class="n">ApplicationClient</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">app_spec</span><span class="p">,</span>
@@ -507,6 +513,7 @@
             <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span>
             <span class="n">suggested_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">suggested_params</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># also make a copy of inner client so any cached programs are retained</span>
         <span class="n">copy</span><span class="o">.</span><span class="n">_app_client</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">_app_client</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
             <span class="n">signer</span><span class="o">=</span><span class="n">signer</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">sender</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="n">app_id</span>
         <span class="p">)</span>

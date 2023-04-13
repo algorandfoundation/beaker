@@ -43,6 +43,7 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#tutorial">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#application-structure">Application structure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#decorators">Decorators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#state-management">State Management</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#code-reuse">Code Reuse</a></li>
@@ -205,6 +206,38 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 </ul>
 </div></blockquote>
 </section>
+<section id="application-structure">
+<span id="id2"></span><h2>Application structure<a class="headerlink" href="#application-structure" title="Permalink to this heading"></a></h2>
+<p>The recommended way to structure a beaker application is to have one smart contract per file.
+This then makes it simpler for any other code to build or interact with the app by importing the module.</p>
+<p>For example with a smart contract in a file named <code class="docutils literal notranslate"><span class="pre">my_smart_contract.py</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyState</span><span class="p">:</span>
+    <span class="n">global_state_value</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">GlobalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+    <span class="n">local_state_value</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">LocalStateValue</span><span class="p">(</span><span class="n">TealType</span><span class="o">.</span><span class="n">bytes</span><span class="p">)</span>
+
+<span class="n">state</span> <span class="o">=</span> <span class="n">MyState</span><span class="p">()</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">beaker</span><span class="o">.</span><span class="n">Application</span><span class="p">(</span><span class="s2">&quot;MySmartContract&quot;</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">external</span>
+<span class="k">def</span> <span class="nf">my_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">abi</span><span class="o">.</span><span class="n">Uint64</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pyteal</span><span class="o">.</span><span class="n">Expr</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>You can then import that smart contract as a module, and interact with it’s components.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">my_smart_contract</span>
+
+<span class="n">my_smart_contract</span><span class="o">.</span><span class="n">app</span> <span class="c1"># reference the app</span>
+
+<span class="n">my_smart_contract</span><span class="o">.</span><span class="n">my_method</span> <span class="c1"># reference a method</span>
+
+<span class="n">my_smart_contract</span><span class="o">.</span><span class="n">my_method</span><span class="o">.</span><span class="n">get_method_signature</span><span class="p">()</span> <span class="c1"># get ABI signature of my_method</span>
+
+<span class="n">my_smart_contract</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span> <span class="c1"># to reference the state, OR</span>
+
+<span class="n">my_smart_contract</span><span class="o">.</span><span class="n">state</span> <span class="c1"># if the app state was assigned to a global variable</span>
+</pre></div>
+</div>
+</section>
 <section id="decorators">
 <span id="use-decorators"></span><h2>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading"></a></h2>
 <p>Above, we used the decorator <code class="docutils literal notranslate"><span class="pre">&#64;app.external</span></code> to mark a method as being exposed in the ABI and available to be called from off-chain.</p>
@@ -250,7 +283,7 @@ The constructor may also be passed an <code class="docutils literal notranslate"
 <p>For more example usage see the example <a class="reference internal" href="state.html#state-example"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="code-reuse">
-<span id="id2"></span><h2>Code Reuse<a class="headerlink" href="#code-reuse" title="Permalink to this heading"></a></h2>
+<span id="id3"></span><h2>Code Reuse<a class="headerlink" href="#code-reuse" title="Permalink to this heading"></a></h2>
 <p>What about extending our Application with some functionality that already exists? For example, what if we wanted to provide the correct interface for a specific ARC?</p>
 <p>We can use the <code class="docutils literal notranslate"><span class="pre">blueprint</span></code> pattern to include things like method handlers to our application!</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># A blueprint that adds a method named `add` to the external</span>
