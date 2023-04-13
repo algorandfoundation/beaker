@@ -74,6 +74,47 @@ To summarize, we:
 
     The result contains the parsed ``return_value`` which is a python native type that reflects the return type of the ABI method.
 
+.. _application_structure:
+
+Application structure
+---------------------
+
+The recommended way to structure a beaker application is to have one smart contract per file.
+This then makes it simpler for any other code to build or interact with the app by importing the module.
+
+For example with a smart contract in a file named ``my_smart_contract.py``
+
+.. code-block:: python
+    
+    class MyState:
+        global_state_value = beaker.GlobalStateValue(TealType.uint64)
+        local_state_value = beaker.LocalStateValue(TealType.bytes)
+
+    state = MyState()
+    app = beaker.Application("MySmartContract", state=state)
+
+    @app.external
+    def my_method(self, x: pyteal.abi.Uint64, *, output: pyteal.abi.Uint64) -> pyteal.Expr
+        ...
+
+
+You can then import that smart contract as a module, and interact with it's components.
+
+.. code-block:: python    
+    
+    import my_smart_contract
+
+    my_smart_contract.app # reference the app
+    
+    my_smart_contract.my_method # reference a method
+
+    my_smart_contract.my_method.get_method_signature() # get ABI signature of my_method
+
+    my_smart_contract.app.state # to reference the state, OR 
+    
+    my_smart_contract.state # if the app state was assigned to a global variable
+
+
 .. _use_decorators: 
 
 Decorators
