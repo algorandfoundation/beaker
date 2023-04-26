@@ -23,17 +23,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-store 0
-txna ApplicationArgs 2
-intc_0 // 0
-getbyte
-store 1
-load 0
-load 1
-callsub returnasset_3
+callsub returnassetcaster_1
 intc_1 // 1
 return
 main_l5:
@@ -45,10 +35,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-callsub optintoasset_2
+callsub optintoassetcaster_0
 intc_1 // 1
 return
 main_l6:
@@ -66,7 +53,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub optin_1
+callsub optin_3
 intc_1 // 1
 return
 main_l10:
@@ -74,12 +61,42 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
+callsub create_2
 intc_1 // 1
 return
 
+// opt_in_to_asset_caster
+optintoassetcaster_0:
+proto 0 0
+intc_0 // 0
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 0
+frame_dig 0
+callsub optintoasset_4
+retsub
+
+// return_asset_caster
+returnassetcaster_1:
+proto 0 0
+intc_0 // 0
+dup
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 0
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+frame_bury 1
+frame_dig 0
+frame_dig 1
+callsub returnasset_5
+retsub
+
 // create
-create_0:
+create_2:
 proto 0 0
 bytec_0 // "asv"
 bytec_0 // "asv"
@@ -87,7 +104,7 @@ app_global_put
 retsub
 
 // opt_in
-optin_1:
+optin_3:
 proto 0 0
 txn Sender
 bytec_1 // "acsv"
@@ -96,7 +113,7 @@ app_local_put
 retsub
 
 // opt_in_to_asset
-optintoasset_2:
+optintoasset_4:
 proto 1 0
 itxn_begin
 intc_2 // axfer
@@ -114,7 +131,7 @@ itxn_submit
 retsub
 
 // return_asset
-returnasset_3:
+returnasset_5:
 proto 2 0
 itxn_begin
 intc_2 // axfer

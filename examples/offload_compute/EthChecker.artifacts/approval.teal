@@ -1,5 +1,6 @@
 #pragma version 8
 intcblock 0 1
+bytecblock 0x
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -18,18 +19,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-store 0
-txna ApplicationArgs 2
-store 1
-load 0
-load 1
-callsub checkethsig_0
-store 2
-pushbytes 0x151f7c75 // 0x151f7c75
-load 2
-concat
-log
+callsub checkethsigcaster_0
 intc_1 // 1
 return
 main_l4:
@@ -46,10 +36,29 @@ assert
 intc_1 // 1
 return
 
+// check_eth_sig_caster
+checkethsigcaster_0:
+proto 0 0
+bytec_0 // ""
+dupn 2
+txna ApplicationArgs 1
+frame_bury 1
+txna ApplicationArgs 2
+frame_bury 2
+frame_dig 1
+frame_dig 2
+callsub checkethsig_1
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
 // check_eth_sig
-checkethsig_0:
+checkethsig_1:
 proto 2 1
-pushbytes 0x // ""
+bytec_0 // ""
 txn Sender
 pushbytes 0xcf633b5492a134c71d3cfbae02b2c52433979312ca04b17bbeb8c6e6dac5c8c9 // Z5RTWVESUE2MOHJ47OXAFMWFEQZZPEYSZICLC656XDDONWWFZDEVU4WXDE
 ==

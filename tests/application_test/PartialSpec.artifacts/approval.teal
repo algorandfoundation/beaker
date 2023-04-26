@@ -22,9 +22,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-btoi
-callsub defaultglobalstate_1
+callsub defaultglobalstatecaster_3
 intc_1 // 1
 return
 main_l5:
@@ -36,8 +34,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-callsub structmeth_0
+callsub structmethcaster_2
 intc_1 // 1
 return
 main_l6:
@@ -65,3 +62,24 @@ defaultglobalstate_1:
 proto 1 0
 intc_1 // 1
 return
+
+// struct_meth_caster
+structmethcaster_2:
+proto 0 0
+pushbytes 0x // ""
+txna ApplicationArgs 1
+frame_bury 0
+frame_dig 0
+callsub structmeth_0
+retsub
+
+// default_global_state_caster
+defaultglobalstatecaster_3:
+proto 0 0
+intc_0 // 0
+txna ApplicationArgs 1
+btoi
+frame_bury 0
+frame_dig 0
+callsub defaultglobalstate_1
+retsub

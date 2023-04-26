@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 1
-bytecblock 0x6d616e61676572 0x6e69636b6e616d65 0x
+bytecblock 0x 0x6d616e61676572 0x6e69636b6e616d65
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -27,12 +27,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub getnick_6
-store 0
-pushbytes 0x151f7c75 // 0x151f7c75
-load 0
-concat
-log
+callsub getnickcaster_2
 intc_1 // 1
 return
 main_l6:
@@ -44,8 +39,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-callsub setnick_5
+callsub setnickcaster_1
 intc_1 // 1
 return
 main_l7:
@@ -57,8 +51,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-callsub setmanager_4
+callsub setmanagercaster_0
 intc_1 // 1
 return
 main_l8:
@@ -84,7 +77,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub delete_3
+callsub delete_6
 intc_1 // 1
 return
 main_l14:
@@ -92,7 +85,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub closeout_2
+callsub closeout_5
 intc_1 // 1
 return
 main_l15:
@@ -100,7 +93,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub optin_1
+callsub optin_4
 intc_1 // 1
 return
 main_l16:
@@ -108,38 +101,70 @@ txn ApplicationID
 intc_0 // 0
 ==
 assert
-callsub create_0
+callsub create_3
 intc_1 // 1
 return
 
-// create
-create_0:
+// set_manager_caster
+setmanagercaster_0:
 proto 0 0
-bytec_0 // "manager"
+bytec_0 // ""
+txna ApplicationArgs 1
+frame_bury 0
+frame_dig 0
+callsub setmanager_7
+retsub
+
+// set_nick_caster
+setnickcaster_1:
+proto 0 0
+bytec_0 // ""
+txna ApplicationArgs 1
+frame_bury 0
+frame_dig 0
+callsub setnick_8
+retsub
+
+// get_nick_caster
+getnickcaster_2:
+proto 0 0
+bytec_0 // ""
+callsub getnick_9
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+concat
+log
+retsub
+
+// create
+create_3:
+proto 0 0
+bytec_1 // "manager"
 global CreatorAddress
 app_global_put
 retsub
 
 // opt_in
-optin_1:
+optin_4:
 proto 0 0
 txn Sender
-bytec_1 // "nickname"
-bytec_2 // ""
+bytec_2 // "nickname"
+bytec_0 // ""
 app_local_put
 retsub
 
 // close_out
-closeout_2:
+closeout_5:
 proto 0 0
 intc_1 // 1
 return
 
 // delete
-delete_3:
+delete_6:
 proto 0 0
 txn Sender
-bytec_0 // "manager"
+bytec_1 // "manager"
 app_global_get
 ==
 // unauthorized
@@ -148,35 +173,35 @@ intc_1 // 1
 return
 
 // set_manager
-setmanager_4:
+setmanager_7:
 proto 1 0
 txn Sender
-bytec_0 // "manager"
+bytec_1 // "manager"
 app_global_get
 ==
 // unauthorized
 assert
-bytec_0 // "manager"
+bytec_1 // "manager"
 frame_dig -1
 app_global_put
 retsub
 
 // set_nick
-setnick_5:
+setnick_8:
 proto 1 0
 txn Sender
-bytec_1 // "nickname"
+bytec_2 // "nickname"
 frame_dig -1
 extract 2 0
 app_local_put
 retsub
 
 // get_nick
-getnick_6:
+getnick_9:
 proto 0 1
-bytec_2 // ""
+bytec_0 // ""
 txn Sender
-bytec_1 // "nickname"
+bytec_2 // "nickname"
 app_local_get
 frame_bury 0
 frame_dig 0

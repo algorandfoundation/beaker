@@ -24,6 +24,19 @@ class BuildOptions:
         the compiled program's size. Enabling this option requires a minimum AVM version of 3.
         Defaults to True."""
 
+    with_sourcemaps: bool = False
+    """When `True`, the compiler will produce a source map that associates
+        each line of the generated TEAL program back to the original PyTeal source code. Defaults to `False`.  """
+    annotate_teal: bool = False
+    """When `True`, the compiler will produce a TEAL program with comments
+        that describe the PyTeal source code that generated each line of the program. Defaults to `False`."""
+    annotate_teal_headers: bool = False
+    """When `True` along with `annotate_teal` being `True`, a header
+        line with column names will be added at the top of the annotated teal. Defaults to `False`."""
+    annotate_teal_concise: bool = False
+    """When `True` along with `annotate_teal` being `True`, the compiler
+        will provide fewer columns in the annotated teal. Defaults to `False`."""
+
     @property
     def optimize_options(self) -> OptimizeOptions:
         return OptimizeOptions(

@@ -10,7 +10,7 @@ pushbytes 0x9da9b4b8 // "abi()void"
 bnz main_l3
 err
 main_l3:
-callsub abi_0
+callsub abicaster_2
 intc_0 // 1
 return
 main_l4:
@@ -67,3 +67,9 @@ bare_1:
 proto 0 0
 intc_0 // 1
 return
+
+// abi_caster
+abicaster_2:
+proto 0 0
+callsub abi_0
+retsub

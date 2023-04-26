@@ -1,4 +1,4 @@
-from pyteal import Expr, abi
+import pyteal as pt
 
 from beaker import Application, client, sandbox
 
@@ -6,7 +6,7 @@ external_example_app = Application("ExternalExample")
 
 
 @external_example_app.create
-def create(input: abi.String, *, output: abi.String) -> Expr:
+def create(input: pt.abi.String, *, output: pt.abi.String) -> pt.Expr:
     return output.decode(input.encode())
 
 

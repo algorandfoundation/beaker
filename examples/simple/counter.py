@@ -1,5 +1,5 @@
+import pyteal as pt
 from algokit_utils import LogicError
-from pyteal import Expr, Int, Seq, TealType, abi
 
 from beaker import (
     Application,
@@ -12,7 +12,7 @@ from beaker.client import ApplicationClient
 
 class CounterState:
     counter = GlobalStateValue(
-        stack_type=TealType.uint64,
+        stack_type=pt.TealType.uint64,
         descr="A counter for showing how to use application state",
     )
 
@@ -21,19 +21,19 @@ counter_app = Application("CounterApp", state=CounterState())
 
 
 @counter_app.external(authorize=Authorize.only_creator())
-def increment(*, output: abi.Uint64) -> Expr:
+def increment(*, output: pt.abi.Uint64) -> pt.Expr:
     """increment the counter"""
-    return Seq(
-        counter_app.state.counter.set(counter_app.state.counter + Int(1)),
+    return pt.Seq(
+        counter_app.state.counter.set(counter_app.state.counter + pt.Int(1)),
         output.set(counter_app.state.counter),
     )
 
 
 @counter_app.external(authorize=Authorize.only_creator())
-def decrement(*, output: abi.Uint64) -> Expr:
+def decrement(*, output: pt.abi.Uint64) -> pt.Expr:
     """decrement the counter"""
-    return Seq(
-        counter_app.state.counter.set(counter_app.state.counter - Int(1)),
+    return pt.Seq(
+        counter_app.state.counter.set(counter_app.state.counter - pt.Int(1)),
         output.set(counter_app.state.counter),
     )
 

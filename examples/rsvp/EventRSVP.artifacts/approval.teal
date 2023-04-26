@@ -39,13 +39,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readprice_7
-store 2
-bytec_2 // 0x151f7c75
-load 2
-itob
-concat
-log
+callsub readpricecaster_5
 intc_1 // 1
 return
 main_l9:
@@ -57,13 +51,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub readrsvp_6
-store 1
-bytec_2 // 0x151f7c75
-load 1
-itob
-concat
-log
+callsub readrsvpcaster_4
 intc_1 // 1
 return
 main_l10:
@@ -75,7 +63,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub withdrawexternal_3
+callsub withdrawexternalcaster_3
 intc_1 // 1
 return
 main_l11:
@@ -87,7 +75,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub checkin_2
+callsub checkincaster_2
 intc_1 // 1
 return
 main_l12:
@@ -99,17 +87,7 @@ intc_0 // 0
 !=
 &&
 assert
-txn GroupIndex
-intc_1 // 1
--
-store 0
-load 0
-gtxns TypeEnum
-intc_1 // pay
-==
-assert
-load 0
-callsub dorsvp_1
+callsub dorsvpcaster_1
 intc_1 // 1
 return
 main_l13:
@@ -121,9 +99,7 @@ intc_0 // 0
 ==
 &&
 assert
-txna ApplicationArgs 1
-btoi
-callsub create_0
+callsub createcaster_0
 intc_1 // 1
 return
 main_l14:
@@ -141,7 +117,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub delete_4
+callsub delete_10
 intc_1 // 1
 return
 main_l18:
@@ -149,12 +125,78 @@ txn ApplicationID
 intc_0 // 0
 !=
 assert
-callsub refund_8
+callsub refund_14
 intc_1 // 1
 return
 
+// create_caster
+createcaster_0:
+proto 0 0
+intc_0 // 0
+txna ApplicationArgs 1
+btoi
+frame_bury 0
+frame_dig 0
+callsub create_6
+retsub
+
+// do_rsvp_caster
+dorsvpcaster_1:
+proto 0 0
+intc_0 // 0
+txn GroupIndex
+intc_1 // 1
+-
+frame_bury 0
+frame_dig 0
+gtxns TypeEnum
+intc_1 // pay
+==
+assert
+frame_dig 0
+callsub dorsvp_7
+retsub
+
+// check_in_caster
+checkincaster_2:
+proto 0 0
+callsub checkin_8
+retsub
+
+// withdraw_external_caster
+withdrawexternalcaster_3:
+proto 0 0
+callsub withdrawexternal_9
+retsub
+
+// read_rsvp_caster
+readrsvpcaster_4:
+proto 0 0
+intc_0 // 0
+callsub readrsvp_12
+frame_bury 0
+bytec_2 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// read_price_caster
+readpricecaster_5:
+proto 0 0
+intc_0 // 0
+callsub readprice_13
+frame_bury 0
+bytec_2 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
 // create
-create_0:
+create_6:
 proto 1 0
 bytec_1 // "price"
 pushint 1000000 // 1000000
@@ -168,7 +210,7 @@ app_global_put
 retsub
 
 // do_rsvp
-dorsvp_1:
+dorsvp_7:
 proto 1 0
 global GroupSize
 pushint 2 // 2
@@ -198,7 +240,7 @@ app_global_put
 retsub
 
 // check_in
-checkin_2:
+checkin_8:
 proto 0 0
 txn Sender
 global CurrentApplicationID
@@ -212,18 +254,18 @@ app_local_put
 retsub
 
 // withdraw_external
-withdrawexternal_3:
+withdrawexternal_9:
 proto 0 0
 txn Sender
 global CreatorAddress
 ==
 // unauthorized
 assert
-callsub withdrawfunds_5
+callsub withdrawfunds_11
 retsub
 
 // delete
-delete_4:
+delete_10:
 proto 0 0
 txn Sender
 global CreatorAddress
@@ -236,13 +278,13 @@ intc_3 // 100000
 intc_2 // 1000
 +
 >
-bz delete_4_l2
-callsub withdrawfunds_5
-delete_4_l2:
+bz delete_10_l2
+callsub withdrawfunds_11
+delete_10_l2:
 retsub
 
 // withdraw_funds
-withdrawfunds_5:
+withdrawfunds_11:
 proto 0 0
 global CurrentApplicationAddress
 balance
@@ -267,7 +309,7 @@ itxn_submit
 retsub
 
 // read_rsvp
-readrsvp_6:
+readrsvp_12:
 proto 0 1
 intc_0 // 0
 txn Sender
@@ -281,7 +323,7 @@ frame_bury 0
 retsub
 
 // read_price
-readprice_7:
+readprice_13:
 proto 0 1
 intc_0 // 0
 bytec_1 // "price"
@@ -290,7 +332,7 @@ frame_bury 0
 retsub
 
 // refund
-refund_8:
+refund_14:
 proto 0 0
 itxn_begin
 intc_1 // pay
