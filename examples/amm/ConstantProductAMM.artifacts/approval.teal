@@ -436,16 +436,19 @@ intc_0 // 0
 assert
 global CurrentApplicationAddress
 frame_dig -3
+txnas Assets
 asset_holding_get AssetBalance
 store 11
 store 10
 global CurrentApplicationAddress
 frame_dig -2
+txnas Assets
 asset_holding_get AssetBalance
 store 13
 store 12
 global CurrentApplicationAddress
 frame_dig -1
+txnas Assets
 asset_holding_get AssetBalance
 store 15
 store 14
@@ -556,16 +559,19 @@ txn Sender
 assert
 global CurrentApplicationAddress
 frame_dig -3
+txnas Assets
 asset_holding_get AssetBalance
 store 24
 store 23
 global CurrentApplicationAddress
 frame_dig -2
+txnas Assets
 asset_holding_get AssetBalance
 store 26
 store 25
 global CurrentApplicationAddress
 frame_dig -1
+txnas Assets
 asset_holding_get AssetBalance
 store 28
 store 27
