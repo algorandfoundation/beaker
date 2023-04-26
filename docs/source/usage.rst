@@ -154,20 +154,20 @@ What about extending our Application with some functionality that already exists
 
 We can use the ``blueprint`` pattern to include things like method handlers to our application! 
 
-.. literalinclude:: ../../examples/blueprint/main.py
-    :lines: 10-28
+.. literalinclude:: ../../examples/blueprint/app.py
+    :lines: 6-11
 
 Here we add a method handler for an ABI method to our application in two ways.
 
 If no arguments are needed for the blueprint method, we can pass it to ``apply`` and the blueprint method will be called with our ``Application`` as the argument.
 
-.. literalinclude:: ../../examples/blueprint/main.py
-    :lines: 18-18
+.. literalinclude:: ../../examples/blueprint/app.py
+    :lines: 14-14
 
 If the blueprint requires some arguments to customize it's behavior, we can pass the additional arguments the blueprint expects:
 
-.. literalinclude:: ../../examples/blueprint/main.py
-    :lines: 28-28
+.. literalinclude:: ../../examples/blueprint/app.py
+    :lines: 16-24
 
 
 .. _parameter_default:

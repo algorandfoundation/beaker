@@ -1209,17 +1209,36 @@
                 <span class="p">)</span>
                 <span class="n">hints</span><span class="p">[</span><span class="n">abi_external</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">method_signature</span><span class="p">()]</span> <span class="o">=</span> <span class="n">abi_external</span><span class="o">.</span><span class="n">hints</span>
 
-            <span class="c1"># Compile approval and clear programs</span>
-            <span class="n">approval_program</span><span class="p">,</span> <span class="n">clear_program</span><span class="p">,</span> <span class="n">contract</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">compile_program</span><span class="p">(</span>
+                <span class="c1"># Compile approval and clear programs</span>
+            <span class="n">compile_results</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                <span class="n">algod_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
                 <span class="n">version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">avm_version</span><span class="p">,</span>
                 <span class="n">assemble_constants</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">assemble_constants</span><span class="p">,</span>
                 <span class="n">optimize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">optimize_options</span><span class="p">,</span>
+                <span class="n">with_sourcemaps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">with_sourcemaps</span><span class="p">,</span>
+                <span class="n">pcs_in_sourcemap</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">client</span><span class="p">),</span>
+                <span class="n">annotate_teal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">annotate_teal</span><span class="p">,</span>
+                <span class="n">annotate_teal_headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">annotate_teal_headers</span><span class="p">,</span>
+                <span class="n">annotate_teal_concise</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">build_options</span><span class="o">.</span><span class="n">annotate_teal_concise</span><span class="p">,</span>
             <span class="p">)</span>
 
+            <span class="n">approval_prog</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compile_results</span><span class="o">.</span><span class="n">approval_teal</span>
+            <span class="n">clear_prog</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compile_results</span><span class="o">.</span><span class="n">clear_teal</span>
+
+            <span class="k">if</span> <span class="n">compile_results</span><span class="o">.</span><span class="n">approval_sourcemap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">approval_sm</span> <span class="o">=</span> <span class="n">compile_results</span><span class="o">.</span><span class="n">approval_sourcemap</span>
+                <span class="k">if</span> <span class="n">approval_sm</span><span class="o">.</span><span class="n">annotated_teal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">approval_prog</span> <span class="o">=</span> <span class="n">approval_sm</span><span class="o">.</span><span class="n">annotated_teal</span>
+
+            <span class="k">if</span> <span class="n">compile_results</span><span class="o">.</span><span class="n">clear_sourcemap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">clear_sm</span> <span class="o">=</span> <span class="n">compile_results</span><span class="o">.</span><span class="n">clear_sourcemap</span>
+                <span class="k">if</span> <span class="n">clear_sm</span><span class="o">.</span><span class="n">annotated_teal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">clear_prog</span> <span class="o">=</span> <span class="n">clear_sm</span><span class="o">.</span><span class="n">annotated_teal</span>
+
         <span class="k">return</span> <span class="n">ApplicationSpecification</span><span class="p">(</span>
-            <span class="n">approval_program</span><span class="o">=</span><span class="n">approval_program</span><span class="p">,</span>
-            <span class="n">clear_program</span><span class="o">=</span><span class="n">clear_program</span><span class="p">,</span>
-            <span class="n">contract</span><span class="o">=</span><span class="n">contract</span><span class="p">,</span>
+            <span class="n">approval_program</span><span class="o">=</span><span class="n">approval_prog</span><span class="p">,</span>
+            <span class="n">clear_program</span><span class="o">=</span><span class="n">clear_prog</span><span class="p">,</span>
+            <span class="n">contract</span><span class="o">=</span><span class="n">compile_results</span><span class="o">.</span><span class="n">abi_contract</span><span class="p">,</span>
             <span class="n">hints</span><span class="o">=</span><span class="n">hints</span><span class="p">,</span>
             <span class="n">schema</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_state</span><span class="o">.</span><span class="n">dictify</span><span class="p">(),</span>
