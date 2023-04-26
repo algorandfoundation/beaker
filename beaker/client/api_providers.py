@@ -22,17 +22,21 @@ class APIProvider:
     def __init__(self, network: Network):
         self.network = network
 
-    def algod(self, token: str = "") -> AlgodClient:
+    def algod(
+        self, token: str = "", headers: dict[str, str] | None = None
+    ) -> AlgodClient:
         """return an algod client based on the provider used and network it was initialized with"""
         if self.network not in self.algod_hosts:
             raise Exception(f"Unrecognized network: {self.network}")
-        return AlgodClient(token, self.algod_hosts[self.network])
+        return AlgodClient(token, self.algod_hosts[self.network], headers)
 
-    def indexer(self, token: str = "") -> IndexerClient:
+    def indexer(
+        self, token: str = "", headers: dict[str, str] | None = None
+    ) -> IndexerClient:
         """return an indexer client based on the provider used and network it was initialized with"""
         if self.network not in self.indexer_hosts:
             raise Exception(f"Unrecognized network: {self.network}")
-        return IndexerClient(token, self.indexer_hosts[self.network])
+        return IndexerClient(token, self.indexer_hosts[self.network], headers)
 
 
 class AlgoNode(APIProvider):
@@ -80,14 +84,22 @@ class PureStake(APIProvider):
 
     # Purestake requires a different header, so we override the
     # existing methods but re-use them to generate the client
-    def algod(self, token: str = "") -> AlgodClient:
-        algod_client = super().algod()
-        algod_client.headers = {self.token_header: token}  # type: ignore[misc]
+    def algod(
+        self, token: str = "", headers: dict[str, str] | None = None
+    ) -> AlgodClient:
+        _headers = {self.token_header: token}
+        if headers is not None:
+            _headers |= headers
+        algod_client = super().algod(token, _headers)
         return algod_client
 
-    def indexer(self, token: str = "") -> IndexerClient:
-        indexer_client = super().indexer()
-        indexer_client.headers = {self.token_header: token}
+    def indexer(
+        self, token: str = "", headers: dict[str, str] | None = None
+    ) -> IndexerClient:
+        _headers = {self.token_header: token}
+        if headers is not None:
+            _headers |= headers
+        indexer_client = super().indexer(token, _headers)
         return indexer_client
 
 
@@ -99,10 +111,14 @@ class Sandbox(APIProvider):
 
     # purposely doesn't check which network because it may
     # be set up to use mainnet/testnet
-    def algod(self, token: str = default_token) -> AlgodClient:
+    def algod(
+        self, token: str = default_token, headers: dict[str, str] | None = None
+    ) -> AlgodClient:
         address = f"{self.default_host}:{self.default_algod_port}"
-        return AlgodClient(token, address)
+        return AlgodClient(token, address, headers)
 
-    def indexer(self, token: str = default_token) -> IndexerClient:
+    def indexer(
+        self, token: str = default_token, headers: dict[str, str] | None = None
+    ) -> IndexerClient:
         address = f"{self.default_host}:{self.default_indexer_port}"
-        return IndexerClient(token, address)
+        return IndexerClient(token, address, headers)

@@ -18,13 +18,7 @@ intc_0 // 0
 !=
 &&
 assert
-callsub deploy_1
-store 0
-pushbytes 0x151f7c75 // 0x151f7c75
-load 0
-itob
-concat
-log
+callsub deploycaster_2
 intc_1 // 1
 return
 main_l4:
@@ -61,4 +55,17 @@ proto 0 1
 intc_0 // 0
 callsub deployapp_0
 frame_bury 0
+retsub
+
+// deploy_caster
+deploycaster_2:
+proto 0 0
+intc_0 // 0
+callsub deploy_1
+frame_bury 0
+pushbytes 0x151f7c75 // 0x151f7c75
+frame_dig 0
+itob
+concat
+log
 retsub

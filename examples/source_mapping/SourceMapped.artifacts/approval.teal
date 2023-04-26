@@ -1,0 +1,79 @@
+// GENERATED TEAL                                   //    PC     PYTEAL PATH                     LINE    PYTEAL
+#pragma version 8                                   //    (0)    tests/conftest.py               36      app.build(algod_client)
+intcblock 0 1 10                                    //    (1)
+txn NumAppArgs                                      //    (6)
+intc_0 // 0                                         //    (8)
+==                                                  //    (9)
+bnz main_l4                                         //    (10)
+txna ApplicationArgs 0                              //    (13)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"  //    (16)
+==                                                  //    (22)
+bnz main_l3                                         //    (23)
+err                                                 //    (26)   tests/conftest.py               36      app.build(algod_client)
+main_l3:                                            //           examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+txn OnCompletion                                    //    (27)   tests/conftest.py               36      app.build(algod_client)
+intc_0 // NoOp                                      //    (29)
+==                                                  //    (30)
+txn ApplicationID                                   //    (31)
+intc_0 // 0                                         //    (33)
+!=                                                  //    (34)
+&&                                                  //    (35)
+assert                                              //    (36)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+callsub addcaster_0                                 //    (37)
+intc_1 // 1                                         //    (40)
+return                                              //    (41)
+main_l4:                                            //           tests/conftest.py               36      app.build(algod_client)
+txn OnCompletion                                    //    (42)
+intc_0 // NoOp                                      //    (44)
+==                                                  //    (45)
+bnz main_l6                                         //    (46)
+err                                                 //    (49)
+main_l6:                                            //
+txn ApplicationID                                   //    (50)
+intc_0 // 0                                         //    (52)
+==                                                  //    (53)
+assert                                              //    (54)
+intc_1 // 1                                         //    (55)
+return                                              //    (56)
+                                                    //
+// add_caster                                       //
+addcaster_0:                                        //
+proto 0 0                                           //    (57)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+intc_0 // 0                                         //    (60)   tests/conftest.py               36      app.build(algod_client)
+dupn 2                                              //    (61)
+txna ApplicationArgs 1                              //    (63)
+btoi                                                //    (66)
+frame_bury 1                                        //    (67)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+txna ApplicationArgs 2                              //    (69)   tests/conftest.py               36      app.build(algod_client)
+btoi                                                //    (72)
+frame_bury 2                                        //    (73)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+frame_dig 1                                         //    (75)
+frame_dig 2                                         //    (77)
+callsub add_1                                       //    (79)   tests/conftest.py               36      app.build(algod_client)
+frame_bury 0                                        //    (82)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+pushbytes 0x151f7c75 // 0x151f7c75                  //    (84)   tests/conftest.py               36      app.build(algod_client)
+frame_dig 0                                         //    (90)   examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+itob                                                //    (92)
+concat                                              //    (93)
+log                                                 //    (94)
+retsub                                              //    (95)   tests/conftest.py               36      app.build(algod_client)
+                                                    //           examples/source_mapping/app.py  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+// add                                              //
+add_1:                                              //
+proto 2 1                                           //    (96)
+intc_0 // 0                                         //    (99)   tests/conftest.py               36      app.build(algod_client)
+frame_dig -2                                        //    (100)  examples/source_mapping/app.py  21      a.get()
+intc_2 // 10                                        //    (102)                                          pt.Int(10)
+>                                                   //    (103)                                          a.get() > pt.Int(10)
+// a must be > 10                                   //           tests/conftest.py               36      app.build(algod_client)
+assert                                              //    (104)  examples/source_mapping/app.py  21      pt.Assert(a.get() > pt.Int(10), comment='a must be > 10')
+frame_dig -1                                        //    (105)                                  22      b.get()
+intc_2 // 10                                        //    (107)                                          pt.Int(10)
+<                                                   //    (108)                                          b.get() < pt.Int(10)
+// b must be < 10                                   //           tests/conftest.py               36      app.build(algod_client)
+assert                                              //    (109)  examples/source_mapping/app.py  22      pt.Assert(b.get() < pt.Int(10), comment='b must be < 10')
+frame_dig -2                                        //    (110)                                  23      a.get()
+frame_dig -1                                        //    (112)                                          b.get()
++                                                   //    (114)                                          a.get() + b.get()
+frame_bury 0                                        //    (115)                                          output.set(a.get() + b.get())
+retsub                                              //    (117)                                  19      def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:

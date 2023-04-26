@@ -1,4 +1,4 @@
-from pyteal import Expr, abi
+import pyteal as pt
 
 from beaker import Application, sandbox
 from beaker.client import ApplicationClient
@@ -7,25 +7,25 @@ calculator_app = Application("Calculator")
 
 
 @calculator_app.external
-def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
     """Add a and b, return the result"""
     return output.set(a.get() + b.get())
 
 
 @calculator_app.external
-def mul(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
     """Multiply a and b, return the result"""
     return output.set(a.get() * b.get())
 
 
 @calculator_app.external
-def sub(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
     """Subtract b from a, return the result"""
     return output.set(a.get() - b.get())
 
 
 @calculator_app.external
-def div(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
     """Divide a by b, return the result"""
     return output.set(a.get() / b.get())
 

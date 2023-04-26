@@ -1,7 +1,7 @@
 #pragma version 8
-intcblock 1 0 4
+intcblock 0 1 4
 txn NumAppArgs
-intc_1 // 0
+intc_0 // 0
 ==
 bnz main_l6
 txna ApplicationArgs 0
@@ -15,68 +15,40 @@ bnz main_l4
 err
 main_l4:
 txn OnCompletion
-intc_0 // OptIn
+intc_1 // OptIn
 ==
 txn ApplicationID
-intc_1 // 0
+intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-btoi
-store 3
-txn GroupIndex
-intc_0 // 1
--
-store 2
-load 2
-gtxns TypeEnum
-intc_2 // axfer
-==
-assert
-load 2
-load 3
-callsub opt2_1
-intc_0 // 1
+callsub opt2caster_3
+intc_1 // 1
 return
 main_l5:
 txn OnCompletion
-intc_0 // OptIn
+intc_1 // OptIn
 ==
 txn ApplicationID
-intc_1 // 0
+intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-btoi
-store 1
-txn GroupIndex
-intc_0 // 1
--
-store 0
-load 0
-gtxns TypeEnum
-intc_2 // axfer
-==
-assert
-load 0
-load 1
-callsub opt1_0
-intc_0 // 1
+callsub opt1caster_2
+intc_1 // 1
 return
 main_l6:
 txn OnCompletion
-intc_1 // NoOp
+intc_0 // NoOp
 ==
 bnz main_l8
 err
 main_l8:
 txn ApplicationID
-intc_1 // 0
+intc_0 // 0
 ==
 assert
-intc_0 // 1
+intc_1 // 1
 return
 
 // opt1
@@ -97,4 +69,48 @@ gtxns AssetAmount
 frame_dig -1
 ==
 assert
+retsub
+
+// opt1_caster
+opt1caster_2:
+proto 0 0
+intc_0 // 0
+dup
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txn GroupIndex
+intc_1 // 1
+-
+frame_bury 0
+frame_dig 0
+gtxns TypeEnum
+intc_2 // axfer
+==
+assert
+frame_dig 0
+frame_dig 1
+callsub opt1_0
+retsub
+
+// opt2_caster
+opt2caster_3:
+proto 0 0
+intc_0 // 0
+dup
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txn GroupIndex
+intc_1 // 1
+-
+frame_bury 0
+frame_dig 0
+gtxns TypeEnum
+intc_2 // axfer
+==
+assert
+frame_dig 0
+frame_dig 1
+callsub opt2_1
 retsub

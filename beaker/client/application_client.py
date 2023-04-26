@@ -11,6 +11,7 @@ from algokit_utils import (
     CreateCallParameters,
     OnCompleteCallParameters,
     Program,
+    get_sender_from_signer,
 )
 from algosdk import transaction
 from algosdk.abi import Method
@@ -55,6 +56,8 @@ class ApplicationClient:
                 app_spec = ApplicationSpecification.from_json(app)
             case _:
                 raise Exception(f"Unexpected app type: {app}")
+        # algokit client does not get sender from signer on init, do so here to keep original beaker client behaviour
+        sender = sender or get_sender_from_signer(signer)
         self._app_client = AlgokitApplicationClient(
             client,
             app_spec,
@@ -112,14 +115,18 @@ class ApplicationClient:
     def clear(self) -> Program | None:
         return self._app_client.clear
 
+    @property
+    def algokit_app_client(self) -> AlgokitApplicationClient:
+        return self._app_client
+
     def get_sender(
         self, sender: str | None = None, signer: TransactionSigner | None = None
     ) -> str:
-        signer, sender = self._app_client._resolve_signer_sender(signer, sender)
+        _, sender = self._app_client.resolve_signer_sender(signer, sender)
         return sender
 
     def get_signer(self, signer: TransactionSigner | None = None) -> TransactionSigner:
-        signer, sender = self._app_client._resolve_signer_sender(signer, None)
+        signer, _ = self._app_client.resolve_signer_sender(signer, "ignored")
         return signer
 
     def get_suggested_params(
@@ -420,8 +427,7 @@ class ApplicationClient:
         app_id: int | None = None,
     ) -> "ApplicationClient":
         """makes a copy of the current ApplicationClient and the fields passed"""
-        signer = self.get_signer(signer)
-        sender = self.get_sender(sender, signer)
+        signer, sender = self._app_client.get_signer_sender(signer, sender)
         copy = ApplicationClient(
             self.client,
             self._app_client.app_spec,
@@ -430,6 +436,7 @@ class ApplicationClient:
             sender=sender,
             suggested_params=self.suggested_params,
         )
+        # also make a copy of inner client so any cached programs are retained
         copy._app_client = copy._app_client.prepare(
             signer=signer, sender=sender, app_id=app_id
         )
