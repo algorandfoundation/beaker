@@ -279,9 +279,9 @@ global CurrentApplicationAddress
 assert
 frame_dig -2
 gtxns Amount
-pushint 3658500 // 3658500
+pushint 16458500 // 16458500
 >=
-// payment must be for >= 3658500
+// payment must be for >= 16458500
 assert
 bytec 4 // "affirmations"
 pushint 640 // 640
