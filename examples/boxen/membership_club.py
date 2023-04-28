@@ -47,6 +47,7 @@ class MembershipClubState:
             + (
                 BOX_FLAT_MIN_BALANCE
                 + (pt.abi.size_of(record_type) * BOX_BYTE_MIN_BALANCE)
+                + (pt.abi.size_of(pt.abi.Address) * BOX_BYTE_MIN_BALANCE)
             )
             * max_members  # cover min bal for member record boxes we might create
             + (
