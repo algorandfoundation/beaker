@@ -1,0 +1,140 @@
+{
+    "hints": {
+        "delete()void": {
+            "call_config": {
+                "delete_application": "CALL"
+            }
+        },
+        "create()void": {
+            "call_config": {
+                "no_op": "CREATE"
+            }
+        },
+        "verify_leaf(byte[],byte[33][3])void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "append_leaf(byte[],byte[33][3])void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        },
+        "update_leaf(byte[],byte[],byte[33][3])void": {
+            "call_config": {
+                "no_op": "CALL"
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDgKaW50Y2Jsb2NrIDAgMSAzIDMzCmJ5dGVjYmxvY2sgMHggMHg3MjZmNmY3NCAweDczNjk3YTY1CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4MjQzNzhkM2MgLy8gImRlbGV0ZSgpdm9pZCIKPT0KYm56IG1haW5fbDEwCnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4NGM1YzYxYmEgLy8gImNyZWF0ZSgpdm9pZCIKPT0KYm56IG1haW5fbDkKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHg1ZTQxZDAxNCAvLyAidmVyaWZ5X2xlYWYoYnl0ZVtdLGJ5dGVbMzNdWzNdKXZvaWQiCj09CmJueiBtYWluX2w4CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4NDZlODA0YzIgLy8gImFwcGVuZF9sZWFmKGJ5dGVbXSxieXRlWzMzXVszXSl2b2lkIgo9PQpibnogbWFpbl9sNwp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweGY0MjIyOTBlIC8vICJ1cGRhdGVfbGVhZihieXRlW10sYnl0ZVtdLGJ5dGVbMzNdWzNdKXZvaWQiCj09CmJueiBtYWluX2w2CmVycgptYWluX2w2Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydApjYWxsc3ViIHVwZGF0ZWxlYWZjYXN0ZXJfNAppbnRjXzEgLy8gMQpyZXR1cm4KbWFpbl9sNzoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKY2FsbHN1YiBhcHBlbmRsZWFmY2FzdGVyXzMKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDg6CnR4biBPbkNvbXBsZXRpb24KaW50Y18wIC8vIE5vT3AKPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CmNhbGxzdWIgdmVyaWZ5bGVhZmNhc3Rlcl8yCmludGNfMSAvLyAxCnJldHVybgptYWluX2w5Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCj09CiYmCmFzc2VydApjYWxsc3ViIGNyZWF0ZWNhc3Rlcl8xCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxMDoKdHhuIE9uQ29tcGxldGlvbgpwdXNoaW50IDUgLy8gRGVsZXRlQXBwbGljYXRpb24KPT0KdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KJiYKYXNzZXJ0CmNhbGxzdWIgZGVsZXRlY2FzdGVyXzAKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBkZWxldGVfY2FzdGVyCmRlbGV0ZWNhc3Rlcl8wOgpwcm90byAwIDAKY2FsbHN1YiBkZWxldGVfOQpyZXRzdWIKCi8vIGNyZWF0ZV9jYXN0ZXIKY3JlYXRlY2FzdGVyXzE6CnByb3RvIDAgMApjYWxsc3ViIGNyZWF0ZV8xMApyZXRzdWIKCi8vIHZlcmlmeV9sZWFmX2Nhc3Rlcgp2ZXJpZnlsZWFmY2FzdGVyXzI6CnByb3RvIDAgMApieXRlY18wIC8vICIiCmR1cAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmZyYW1lX2J1cnkgMAp0eG5hIEFwcGxpY2F0aW9uQXJncyAyCmZyYW1lX2J1cnkgMQpmcmFtZV9kaWcgMApmcmFtZV9kaWcgMQpjYWxsc3ViIHZlcmlmeWxlYWZfMTEKcmV0c3ViCgovLyBhcHBlbmRfbGVhZl9jYXN0ZXIKYXBwZW5kbGVhZmNhc3Rlcl8zOgpwcm90byAwIDAKYnl0ZWNfMCAvLyAiIgpkdXAKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQpmcmFtZV9idXJ5IDAKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMgpmcmFtZV9idXJ5IDEKZnJhbWVfZGlnIDAKZnJhbWVfZGlnIDEKY2FsbHN1YiBhcHBlbmRsZWFmXzEyCnJldHN1YgoKLy8gdXBkYXRlX2xlYWZfY2FzdGVyCnVwZGF0ZWxlYWZjYXN0ZXJfNDoKcHJvdG8gMCAwCmJ5dGVjXzAgLy8gIiIKZHVwbiAyCnR4bmEgQXBwbGljYXRpb25BcmdzIDEKZnJhbWVfYnVyeSAwCnR4bmEgQXBwbGljYXRpb25BcmdzIDIKZnJhbWVfYnVyeSAxCnR4bmEgQXBwbGljYXRpb25BcmdzIDMKZnJhbWVfYnVyeSAyCmZyYW1lX2RpZyAwCmZyYW1lX2RpZyAxCmZyYW1lX2RpZyAyCmNhbGxzdWIgdXBkYXRlbGVhZl8xMwpyZXRzdWIKCi8vIGhhc2hfY29uY2F0Cmhhc2hjb25jYXRfNToKcHJvdG8gMiAxCmZyYW1lX2RpZyAtMgpmcmFtZV9kaWcgLTEKY29uY2F0CnNoYTI1NgpyZXRzdWIKCi8vIGlzX3JpZ2h0X3NpYmxpbmcKaXNyaWdodHNpYmxpbmdfNjoKcHJvdG8gMSAxCmZyYW1lX2RpZyAtMQppbnRjXzAgLy8gMApnZXRieXRlCnB1c2hpbnQgMTcwIC8vIDE3MAo9PQpyZXRzdWIKCi8vIGNhbGNfcm9vdApjYWxjcm9vdF83Ogpwcm90byAyIDEKYnl0ZWNfMCAvLyAiIgpmcmFtZV9kaWcgLTIKc3RvcmUgMgppbnRjXzAgLy8gMApzdG9yZSAzCmNhbGNyb290XzdfbDE6CmxvYWQgMwppbnRjXzIgLy8gMwo8CmJ6IGNhbGNyb290XzdfbDYKZnJhbWVfZGlnIC0xCmludGNfMyAvLyAzMwpsb2FkIDMKKgppbnRjXzMgLy8gMzMKZXh0cmFjdDMKZnJhbWVfYnVyeSAwCmZyYW1lX2RpZyAwCmNhbGxzdWIgaXNyaWdodHNpYmxpbmdfNgpibnogY2FsY3Jvb3RfN19sNQpmcmFtZV9kaWcgMApleHRyYWN0IDEgMzIKbG9hZCAyCmNhbGxzdWIgaGFzaGNvbmNhdF81CmNhbGNyb290XzdfbDQ6CnN0b3JlIDIKbG9hZCAzCmludGNfMSAvLyAxCisKc3RvcmUgMwpiIGNhbGNyb290XzdfbDEKY2FsY3Jvb3RfN19sNToKbG9hZCAyCmZyYW1lX2RpZyAwCmV4dHJhY3QgMSAzMgpjYWxsc3ViIGhhc2hjb25jYXRfNQpiIGNhbGNyb290XzdfbDQKY2FsY3Jvb3RfN19sNjoKbG9hZCAyCmZyYW1lX2J1cnkgMApyZXRzdWIKCi8vIGNhbGNfaW5pdF9yb290CmNhbGNpbml0cm9vdF84Ogpwcm90byAwIDEKYnl0ZWNfMCAvLyAiIgpzaGEyNTYKc3RvcmUgMQppbnRjXzAgLy8gMApzdG9yZSAwCmNhbGNpbml0cm9vdF84X2wxOgpsb2FkIDAKaW50Y18yIC8vIDMKPApieiBjYWxjaW5pdHJvb3RfOF9sMwpsb2FkIDEKbG9hZCAxCmNvbmNhdApzaGEyNTYKc3RvcmUgMQpsb2FkIDAKaW50Y18xIC8vIDEKKwpzdG9yZSAwCmIgY2FsY2luaXRyb290XzhfbDEKY2FsY2luaXRyb290XzhfbDM6CmxvYWQgMQpyZXRzdWIKCi8vIGRlbGV0ZQpkZWxldGVfOToKcHJvdG8gMCAwCnR4biBTZW5kZXIKZ2xvYmFsIENyZWF0b3JBZGRyZXNzCj09Ci8vIHVuYXV0aG9yaXplZAphc3NlcnQKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBjcmVhdGUKY3JlYXRlXzEwOgpwcm90byAwIDAKYnl0ZWNfMSAvLyAicm9vdCIKY2FsbHN1YiBjYWxjaW5pdHJvb3RfOAphcHBfZ2xvYmFsX3B1dApieXRlY18yIC8vICJzaXplIgppbnRjXzAgLy8gMAphcHBfZ2xvYmFsX3B1dApyZXRzdWIKCi8vIHZlcmlmeV9sZWFmCnZlcmlmeWxlYWZfMTE6CnByb3RvIDIgMApieXRlY18xIC8vICJyb290IgphcHBfZ2xvYmFsX2dldApmcmFtZV9kaWcgLTIKZXh0cmFjdCAyIDAKc2hhMjU2CmZyYW1lX2RpZyAtMQpjYWxsc3ViIGNhbGNyb290XzcKPT0KYXNzZXJ0CnJldHN1YgoKLy8gYXBwZW5kX2xlYWYKYXBwZW5kbGVhZl8xMjoKcHJvdG8gMiAwCmZyYW1lX2RpZyAtMgpieXRlY18wIC8vICIiCiE9CmFzc2VydApieXRlY18xIC8vICJyb290IgphcHBfZ2xvYmFsX2dldApieXRlY18wIC8vICIiCnNoYTI1NgpmcmFtZV9kaWcgLTEKY2FsbHN1YiBjYWxjcm9vdF83Cj09CmFzc2VydApieXRlY18xIC8vICJyb290IgpmcmFtZV9kaWcgLTIKZXh0cmFjdCAyIDAKc2hhMjU2CmZyYW1lX2RpZyAtMQpjYWxsc3ViIGNhbGNyb290XzcKYXBwX2dsb2JhbF9wdXQKYnl0ZWNfMiAvLyAic2l6ZSIKYnl0ZWNfMiAvLyAic2l6ZSIKYXBwX2dsb2JhbF9nZXQKaW50Y18xIC8vIDEKKwphcHBfZ2xvYmFsX3B1dApyZXRzdWIKCi8vIHVwZGF0ZV9sZWFmCnVwZGF0ZWxlYWZfMTM6CnByb3RvIDMgMApmcmFtZV9kaWcgLTIKZXh0cmFjdCAyIDAKYnl0ZWNfMCAvLyAiIgohPQphc3NlcnQKYnl0ZWNfMSAvLyAicm9vdCIKYXBwX2dsb2JhbF9nZXQKZnJhbWVfZGlnIC0zCmV4dHJhY3QgMiAwCnNoYTI1NgpmcmFtZV9kaWcgLTEKY2FsbHN1YiBjYWxjcm9vdF83Cj09CmFzc2VydApieXRlY18xIC8vICJyb290IgpmcmFtZV9kaWcgLTIKZXh0cmFjdCAyIDAKc2hhMjU2CmZyYW1lX2RpZyAtMQpjYWxsc3ViIGNhbGNyb290XzcKYXBwX2dsb2JhbF9wdXQKcmV0c3Vi",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDgKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 1,
+            "num_uints": 1
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {
+                "root": {
+                    "type": "bytes",
+                    "key": "root",
+                    "descr": ""
+                },
+                "size": {
+                    "type": "uint64",
+                    "key": "size",
+                    "descr": ""
+                }
+            },
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "MerkleTree",
+        "methods": [
+            {
+                "name": "delete",
+                "args": [],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "create",
+                "args": [],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "verify_leaf",
+                "args": [
+                    {
+                        "type": "byte[]",
+                        "name": "data"
+                    },
+                    {
+                        "type": "byte[33][3]",
+                        "name": "path"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                },
+                "desc": "Calculate the expected root hash from the input\nand compare it to the actual stored root hash"
+            },
+            {
+                "name": "append_leaf",
+                "args": [
+                    {
+                        "type": "byte[]",
+                        "name": "data"
+                    },
+                    {
+                        "type": "byte[33][3]",
+                        "name": "path"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                },
+                "desc": "Append a new leaf to the tree"
+            },
+            {
+                "name": "update_leaf",
+                "args": [
+                    {
+                        "type": "byte[]",
+                        "name": "old_data"
+                    },
+                    {
+                        "type": "byte[]",
+                        "name": "new_data"
+                    },
+                    {
+                        "type": "byte[33][3]",
+                        "name": "path"
+                    }
+                ],
+                "returns": {
+                    "type": "void"
+                },
+                "desc": "Update the value of an existing leaf in the tree"
+            }
+        ],
+        "networks": {}
+    },
+    "bare_call_config": {}
+}
