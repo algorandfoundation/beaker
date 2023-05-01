@@ -1,0 +1,75 @@
+{
+    "name": "MerkleTree",
+    "methods": [
+        {
+            "name": "delete",
+            "args": [],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "create",
+            "args": [],
+            "returns": {
+                "type": "void"
+            }
+        },
+        {
+            "name": "verify_leaf",
+            "args": [
+                {
+                    "type": "byte[]",
+                    "name": "data"
+                },
+                {
+                    "type": "byte[33][3]",
+                    "name": "path"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Calculate the expected root hash from the input\nand compare it to the actual stored root hash"
+        },
+        {
+            "name": "append_leaf",
+            "args": [
+                {
+                    "type": "byte[]",
+                    "name": "data"
+                },
+                {
+                    "type": "byte[33][3]",
+                    "name": "path"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Append a new leaf to the tree"
+        },
+        {
+            "name": "update_leaf",
+            "args": [
+                {
+                    "type": "byte[]",
+                    "name": "old_data"
+                },
+                {
+                    "type": "byte[]",
+                    "name": "new_data"
+                },
+                {
+                    "type": "byte[33][3]",
+                    "name": "path"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Update the value of an existing leaf in the tree"
+        }
+    ],
+    "networks": {}
+}
