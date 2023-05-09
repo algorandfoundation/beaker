@@ -1,15 +1,6 @@
 from ..localnet.kmd import (
-    get_client,
-    get_localnet_default_wallet,
     LocalAccount,
-    get_accounts,
-    add_account,
-    delete_account,
-    wallet_handle_by_name,
-    DEFAULT_KMD_ADDRESS,
-    DEFAULT_KMD_TOKEN,
-    DEFAULT_KMD_WALLET_NAME,
-    DEFAULT_KMD_WALLET_PASSWORD,
+    get_localnet_default_wallet,
 )
 
 get_sandbox_default_wallet = get_localnet_default_wallet
