@@ -1,30 +1,30 @@
-Sandbox
+Localnet
 ===========
 
-Beaker provides helper methods to work with a local `sandbox  <https://github.com/algorand/sandbox>`_.
+Beaker provides helper methods to work with a `algokit  <https://github.com/algorandfoundation/algokit-cli>`_ localnet.
 
 
-.. _sandbox_accounts:
+.. _localnet_accounts:
 
-Sandbox Accounts
+Local Accounts
 --------------------
 
-.. autoclass:: beaker.sandbox.SandboxAccount
+.. autoclass:: beaker.localnet.LocalAccount
     :members:
 
-.. automethod:: beaker.sandbox.get_accounts
+.. automethod:: beaker.localnet.get_accounts
 
-.. automethod:: beaker.sandbox.add_account
+.. automethod:: beaker.localnet.add_account
 
 
 Algod Client
 --------------
 
-.. automethod:: beaker.sandbox.get_algod_client
+.. automethod:: beaker.localnet.get_algod_client
 
 
 Indexer Client
 ---------------
 
-.. automethod:: beaker.sandbox.get_indexer_client
+.. automethod:: beaker.localnet.get_indexer_client
 

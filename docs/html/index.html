@@ -44,7 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="lsig.html">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Localnet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
@@ -106,7 +106,7 @@
 <span class="kn">from</span> <span class="nn">beaker</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Application</span><span class="p">,</span>
     <span class="n">client</span><span class="p">,</span>
-    <span class="n">sandbox</span><span class="p">,</span>
+    <span class="n">localnet</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">hello_app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="s2">&quot;HelloBeaker&quot;</span><span class="p">)</span>
@@ -121,12 +121,12 @@
 <span class="k">def</span> <span class="nf">demo</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="c1"># Create an Application client</span>
     <span class="n">app_client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ApplicationClient</span><span class="p">(</span>
-        <span class="c1"># Get sandbox algod client</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span>
+        <span class="c1"># Get localnet algod client</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">localnet</span><span class="o">.</span><span class="n">get_algod_client</span><span class="p">(),</span>
         <span class="c1"># Pass instance of app to client</span>
         <span class="n">app</span><span class="o">=</span><span class="n">hello_app</span><span class="p">,</span>
-        <span class="c1"># Get acct from sandbox and pass the signer</span>
-        <span class="n">signer</span><span class="o">=</span><span class="n">sandbox</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
+        <span class="c1"># Get acct from localnet and pass the signer</span>
+        <span class="n">signer</span><span class="o">=</span><span class="n">localnet</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="o">.</span><span class="n">signer</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Deploy the app on-chain</span>

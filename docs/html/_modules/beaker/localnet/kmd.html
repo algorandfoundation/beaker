@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>beaker.sandbox.kmd &mdash; Beaker  documentation</title>
+  <title>beaker.localnet.kmd &mdash; Beaker  documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
@@ -42,7 +42,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../lsig.html">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../application_client.html">Application Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../sandbox.html">Sandbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sandbox.html">Localnet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../decorators.html">Decorators</a></li>
@@ -65,7 +65,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>beaker.sandbox.kmd</li>
+      <li>beaker.localnet.kmd</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -74,7 +74,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for beaker.sandbox.kmd</h1><div class="highlight"><pre>
+  <h1>Source code for beaker.localnet.kmd</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
@@ -91,12 +91,12 @@
 
 
 <span class="k">def</span> <span class="nf">get_client</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">KMDClient</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;creates a new kmd client using the default sandbox parameters&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;creates a new kmd client using the default localnet parameters&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="o">=</span><span class="n">DEFAULT_KMD_TOKEN</span><span class="p">,</span> <span class="n">kmd_address</span><span class="o">=</span><span class="n">DEFAULT_KMD_ADDRESS</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">get_sandbox_default_wallet</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Wallet</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;returns the default sandbox kmd wallet&quot;&quot;&quot;</span>
+<span class="k">def</span> <span class="nf">get_localnet_default_wallet</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Wallet</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;returns the default localnet kmd wallet&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">Wallet</span><span class="p">(</span>
         <span class="n">wallet_name</span><span class="o">=</span><span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
         <span class="n">wallet_pswd</span><span class="o">=</span><span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
@@ -104,11 +104,11 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="SandboxAccount"><a class="viewcode-back" href="../../../sandbox.html#beaker.sandbox.SandboxAccount">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">SandboxAccount</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SandboxAccount is a simple dataclass to hold a sandbox account details&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="LocalAccount"><a class="viewcode-back" href="../../../sandbox.html#beaker.localnet.LocalAccount">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">LocalAccount</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;LocalAccount is a simple dataclass to hold a localnet account details&quot;&quot;&quot;</span>
 
-    <span class="c1">#: The address of a sandbox account</span>
+    <span class="c1">#: The address of a localnet account</span>
     <span class="n">address</span><span class="p">:</span> <span class="nb">str</span>
     <span class="c1">#: The base64 encoded private key of the account</span>
     <span class="n">private_key</span><span class="p">:</span> <span class="nb">str</span>
@@ -124,13 +124,13 @@
     <span class="n">kmd_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_TOKEN</span><span class="p">,</span>
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SandboxAccount</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;gets all the accounts in the sandbox kmd, defaults</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LocalAccount</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;gets all the accounts in the localnet kmd, defaults</span>
 <span class="sd">    to the `unencrypted-default-wallet` created on private networks automatically&quot;&quot;&quot;</span>
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">wallet_handle_by_name</span><span class="p">(</span><span class="n">kmd</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span> <span class="k">as</span> <span class="n">wallet_handle</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="n">SandboxAccount</span><span class="p">(</span>
+            <span class="n">LocalAccount</span><span class="p">(</span>
                 <span class="n">address</span><span class="o">=</span><span class="n">address</span><span class="p">,</span>
                 <span class="n">private_key</span><span class="o">=</span><span class="n">kmd</span><span class="o">.</span><span class="n">export_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">,</span> <span class="n">address</span><span class="p">),</span>
             <span class="p">)</span>
@@ -145,7 +145,7 @@
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds a new account to the sandbox kmd&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds a new account to the localnet kmd&quot;&quot;&quot;</span>
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">wallet_handle_by_name</span><span class="p">(</span><span class="n">kmd</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span> <span class="k">as</span> <span class="n">wallet_handle</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">kmd</span><span class="o">.</span><span class="n">import_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">private_key</span><span class="p">)</span>
@@ -158,7 +158,7 @@
     <span class="n">wallet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_NAME</span><span class="p">,</span>
     <span class="n">wallet_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KMD_WALLET_PASSWORD</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deletes an existing account from the sandbox kmd&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deletes an existing account from the localnet kmd&quot;&quot;&quot;</span>
     <span class="n">kmd</span> <span class="o">=</span> <span class="n">KMDClient</span><span class="p">(</span><span class="n">kmd_token</span><span class="p">,</span> <span class="n">kmd_address</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">wallet_handle_by_name</span><span class="p">(</span><span class="n">kmd</span><span class="p">,</span> <span class="n">wallet_name</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span> <span class="k">as</span> <span class="n">wallet_handle</span><span class="p">:</span>
         <span class="n">kmd</span><span class="o">.</span><span class="n">delete_key</span><span class="p">(</span><span class="n">wallet_handle</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
@@ -174,7 +174,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">wallet_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wallets</span> <span class="k">if</span> <span class="n">w</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">wallet_name</span><span class="p">))</span>
     <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wallet not found: </span><span class="si">{</span><span class="n">wallet_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wallet not found: </span><span class="si">{</span><span class="n">wallet_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>
 
     <span class="n">wallet_handle</span> <span class="o">=</span> <span class="n">kmd</span><span class="o">.</span><span class="n">init_wallet_handle</span><span class="p">(</span><span class="n">wallet_id</span><span class="p">,</span> <span class="n">wallet_password</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
