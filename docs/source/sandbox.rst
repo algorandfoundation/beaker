@@ -1,7 +1,7 @@
 Localnet
 ===========
 
-Beaker provides helper methods to work with a `algokit  <https://github.com/algorandfoundation/algokit-cli>`_ localnet.
+Beaker provides helper methods to work with an `algokit <https://github.com/algorandfoundation/algokit-cli>`_ localnet or with a local `sandbox <https://github.com/algorand/sandbox>`_ network.
 
 
 .. _localnet_accounts:
