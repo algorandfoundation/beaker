@@ -1,4 +1,4 @@
-from beaker import client, consts, sandbox
+from beaker import client, consts, localnet
 
 from examples.nested_precompile.smart_contracts import (
     child1,
@@ -9,12 +9,12 @@ from examples.nested_precompile.smart_contracts import (
 
 
 def main() -> None:
-    accts = sandbox.get_accounts()
+    accts = localnet.get_accounts()
     acct = accts.pop()
 
     # Create grandparent app and fund it
     app_client_grandparent = client.ApplicationClient(
-        sandbox.get_algod_client(), grandparent.app, signer=acct.signer
+        localnet.get_algod_client(), grandparent.app, signer=acct.signer
     )
     grandparent_app_id, _, _ = app_client_grandparent.create()
     print(f"Created grandparent app: {grandparent_app_id}")
@@ -27,7 +27,7 @@ def main() -> None:
 
     # Create parent app client
     app_client_parent = client.ApplicationClient(
-        sandbox.get_algod_client(),
+        localnet.get_algod_client(),
         parent.app,
         signer=acct.signer,
         app_id=parent_app_id,
@@ -42,7 +42,7 @@ def main() -> None:
 
     # Create child_1 app client
     app_client_child = client.ApplicationClient(
-        sandbox.get_algod_client(),
+        localnet.get_algod_client(),
         child1.app,
         signer=acct.signer,
         app_id=child_app_id,
@@ -62,7 +62,7 @@ def main() -> None:
 
     # Create child_2 app client
     app_client_child = client.ApplicationClient(
-        sandbox.get_algod_client(),
+        localnet.get_algod_client(),
         child2.app,
         signer=acct.signer,
         app_id=child_app_id,

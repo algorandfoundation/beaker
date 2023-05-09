@@ -37,12 +37,12 @@ def print_boxes(app_client: beaker.client.ApplicationClient) -> None:
 
 
 def main() -> None:
-    accts = beaker.sandbox.get_accounts()
+    accts = beaker.localnet.get_accounts()
     acct = accts.pop()
     member_acct = accts.pop()
 
     app_client = beaker.client.ApplicationClient(
-        beaker.sandbox.get_algod_client(), membership_club.app, signer=acct.signer
+        beaker.localnet.get_algod_client(), membership_club.app, signer=acct.signer
     )
     print("Creating app")
     app_client.create()
@@ -147,7 +147,7 @@ def main() -> None:
     # Create App we'll use to be a member of club
     print("Creating app member")
     app_member_client = beaker.client.ApplicationClient(
-        beaker.sandbox.get_algod_client(), app_member.app, signer=app_client.signer
+        beaker.localnet.get_algod_client(), app_member.app, signer=app_client.signer
     )
     _, app_member_addr, _ = app_member_client.create()
 

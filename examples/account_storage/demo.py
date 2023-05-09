@@ -65,9 +65,9 @@ def create_and_opt_in_account(
 def main() -> None:
     # Create app client
     app_client = beaker.client.ApplicationClient(
-        client=beaker.sandbox.get_algod_client(),
+        client=beaker.localnet.get_algod_client(),
         app=disk_hungry.app,
-        signer=beaker.sandbox.get_accounts().pop().signer,
+        signer=beaker.localnet.get_accounts().pop().signer,
     )
 
     # Deploy the app

@@ -4,9 +4,9 @@ from examples.c2c import c2c_main
 
 
 def main() -> None:
-    accts = beaker.sandbox.get_accounts()
+    accts = beaker.localnet.get_accounts()
     acct = accts.pop()
-    algod_client = beaker.sandbox.get_algod_client()
+    algod_client = beaker.localnet.get_algod_client()
 
     # Create main app and fund it
     app_client = beaker.client.ApplicationClient(

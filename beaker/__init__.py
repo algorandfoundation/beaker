@@ -1,4 +1,4 @@
-from . import client, consts, lib, sandbox
+from . import client, consts, lib, localnet
 from .application import (
     Application,
     precompiled,
@@ -38,7 +38,7 @@ __all__ = [
     "lib",
     "precompiled",
     "prefix_key_gen",
-    "sandbox",
+    "localnet",
     "this_app",
     "unconditional_create_approval",
     "unconditional_opt_in_approval",

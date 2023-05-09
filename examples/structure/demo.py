@@ -1,6 +1,6 @@
 from algosdk.abi import ABIType
 
-from beaker import client, sandbox
+from beaker import client, localnet
 
 from examples.structure import structer
 
@@ -9,11 +9,11 @@ def main() -> None:
     # Create a codec from the python sdk
     order_codec = ABIType.from_string(str(structer.Order().type_spec()))
 
-    acct = sandbox.get_accounts().pop()
+    acct = localnet.get_accounts().pop()
 
     # Create an Application client containing both an algod client and my app
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), structer.app, signer=acct.signer
+        localnet.get_algod_client(), structer.app, signer=acct.signer
     )
 
     # Create the applicatiion on chain, set the app id for the app client

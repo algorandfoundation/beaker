@@ -6,8 +6,8 @@ from examples.merkle_tree.offchain_merkle import MerkleTree
 
 
 def main() -> None:
-    accts = beaker.sandbox.get_accounts()
-    algod = beaker.sandbox.get_algod_client()
+    accts = beaker.localnet.get_accounts()
+    algod = beaker.localnet.get_algod_client()
 
     app_client = beaker.client.ApplicationClient(algod, app, signer=accts[0].signer)
     app_client.create()

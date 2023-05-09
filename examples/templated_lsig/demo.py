@@ -11,7 +11,7 @@ from algosdk.encoding import decode_address
 from algosdk.transaction import LogicSigAccount
 from nacl.signing import SigningKey
 
-from beaker import client, consts, sandbox
+from beaker import client, consts, localnet
 from beaker.precompile import PrecompiledLogicSignatureTemplate
 
 from examples.templated_lsig import sig_checker
@@ -24,11 +24,11 @@ def sign_msg(msg: str, sk: str) -> bytes:
 
 
 def main() -> None:
-    acct = sandbox.get_accounts().pop()
+    acct = localnet.get_accounts().pop()
 
     # Create app client
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), sig_checker.app, signer=acct.signer
+        localnet.get_algod_client(), sig_checker.app, signer=acct.signer
     )
 
     # deploy app

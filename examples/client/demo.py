@@ -1,6 +1,6 @@
 from algokit_utils import LogicError
 
-from beaker import client, consts, sandbox
+from beaker import client, consts, localnet
 from beaker.client import ApplicationClient
 
 from examples.client import nicknames
@@ -8,14 +8,14 @@ from examples.client import nicknames
 
 def main() -> None:
     # Set up accounts we'll use
-    accts = sandbox.get_accounts()
+    accts = localnet.get_accounts()
 
     acct1 = accts.pop()
     acct2 = accts.pop()
 
     # Create Application client
     app_client1 = client.ApplicationClient(
-        client=sandbox.get_algod_client(), app=nicknames.app, signer=acct1.signer
+        client=localnet.get_algod_client(), app=nicknames.app, signer=acct1.signer
     )
 
     # Create the app on-chain (uses signer1)
@@ -69,7 +69,7 @@ def main() -> None:
 
     # Create a new client that just sets the app id we wish to interact with
     app_client3 = ApplicationClient(
-        client=sandbox.get_algod_client(),
+        client=localnet.get_algod_client(),
         app=nicknames.app,
         signer=acct1.signer,
         app_id=app_client1.app_id,

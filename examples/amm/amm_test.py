@@ -16,15 +16,15 @@ from algosdk.atomic_transaction_composer import (
 from algosdk.encoding import decode_address
 from algosdk.source_map import SourceMap
 
-from beaker import client, consts, sandbox
+from beaker import client, consts, localnet
 
 from tests import helpers
 from tests.conftest import check_application_artifacts_output_stability
 
 from examples.amm import amm, demo
 
-accts = sandbox.get_accounts()
-algod_client = sandbox.get_algod_client()
+accts = localnet.get_accounts()
+algod_client = localnet.get_algod_client()
 
 TOTAL_POOL_TOKENS = 10000000000
 TOTAL_ASSET_TOKENS = 10000000000

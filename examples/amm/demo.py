@@ -7,17 +7,17 @@ from algosdk.v2client.algod import AlgodClient
 
 from beaker import consts
 from beaker.client import ApplicationClient
-from beaker.sandbox import get_accounts, get_algod_client
+from beaker.localnet import get_accounts, get_algod_client
 
 from examples.amm import amm
 
 
 def main() -> None:
-    # Take first account from sandbox
+    # Take first account from localnet
     acct = get_accounts().pop()
     addr, sk, signer = acct.address, acct.private_key, acct.signer
 
-    # get sandbox client
+    # get localnet client
     client = get_algod_client()
 
     # Create an Application client containing both an algod client and my app

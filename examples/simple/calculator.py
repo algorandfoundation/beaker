@@ -1,6 +1,6 @@
 import pyteal as pt
 
-from beaker import Application, sandbox
+from beaker import Application, localnet
 from beaker.client import ApplicationClient
 
 calculator_app = Application("Calculator")
@@ -31,11 +31,11 @@ def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr
 
 
 def demo() -> None:
-    # Here we use `sandbox` but beaker.client.api_providers can also be used
+    # Here we use `localnet` but beaker.client.api_providers can also be used
     # with something like ``AlgoNode(Network.TestNet).algod()``
-    algod_client = sandbox.get_algod_client()
+    algod_client = localnet.get_algod_client()
 
-    acct = sandbox.get_accounts().pop()
+    acct = localnet.get_accounts().pop()
 
     # Create an Application client containing both an algod client and app
     app_client = ApplicationClient(

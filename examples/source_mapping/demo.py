@@ -1,11 +1,11 @@
-from beaker import client, sandbox
+from beaker import client, localnet
 
 from examples.source_mapping.app import add, source_mapped_app
 
 
 def main() -> None:
-    ac = sandbox.get_algod_client()
-    acct = sandbox.get_accounts().pop()
+    ac = localnet.get_algod_client()
+    acct = localnet.get_accounts().pop()
 
     app_spec = source_mapped_app.build(ac)
 
