@@ -1,5 +1,7 @@
 Localnet
 ===========
+.. note::
+    This module has the exact same funtionality as ``beaker.sandbox``, which will eventually be deprecated. They are currently interchangeable.
 
 Beaker provides helper methods to work with an `algokit <https://github.com/algorandfoundation/algokit-cli>`_ localnet or with a local `sandbox <https://github.com/algorand/sandbox>`_ network.
 
