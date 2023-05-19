@@ -42,7 +42,7 @@
 <li class="toctree-l1"><a class="reference internal" href="application.html">Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="lsig.html">Logic Signatures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="application_client.html">Application Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Sandbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sandbox.html">Localnet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
 <li class="toctree-l1"><a class="reference internal" href="precompile.html">Precompile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
@@ -116,6 +116,8 @@
 </li>
         <li><a href="boxes.html#beaker.lib.storage.BoxMapping.Element.__init__">(beaker.lib.storage.BoxMapping.Element method)</a>
 </li>
+        <li><a href="sandbox.html#beaker.localnet.LocalAccount.__init__">(beaker.localnet.LocalAccount method)</a>
+</li>
         <li><a href="lsig.html#beaker.logic_signature.LogicSignature.__init__">(beaker.logic_signature.LogicSignature method)</a>
 </li>
         <li><a href="lsig.html#beaker.logic_signature.LogicSignatureTemplate.__init__">(beaker.logic_signature.LogicSignatureTemplate method)</a>
@@ -127,8 +129,6 @@
         <li><a href="precompile.html#beaker.precompile.PrecompiledLogicSignature.__init__">(beaker.precompile.PrecompiledLogicSignature method)</a>
 </li>
         <li><a href="precompile.html#beaker.precompile.PrecompiledLogicSignatureTemplate.__init__">(beaker.precompile.PrecompiledLogicSignatureTemplate method)</a>
-</li>
-        <li><a href="sandbox.html#beaker.sandbox.SandboxAccount.__init__">(beaker.sandbox.SandboxAccount method)</a>
 </li>
         <li><a href="state.html#beaker.state.GlobalStateBlob.__init__">(beaker.state.GlobalStateBlob method)</a>
 </li>
@@ -147,9 +147,9 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sandbox.html#beaker.sandbox.add_account">add_account() (beaker.sandbox method)</a>
+      <li><a href="sandbox.html#beaker.localnet.add_account">add_account() (beaker.localnet method)</a>
 </li>
-      <li><a href="sandbox.html#beaker.sandbox.SandboxAccount.address">address (beaker.sandbox.SandboxAccount attribute)</a>
+      <li><a href="sandbox.html#beaker.localnet.LocalAccount.address">address (beaker.localnet.LocalAccount attribute)</a>
 </li>
       <li><a href="precompile.html#beaker.precompile.PrecompiledLogicSignature.address">address() (beaker.precompile.PrecompiledLogicSignature method)</a>
 
@@ -324,9 +324,9 @@
         <li><a href="state.html#beaker.state.LocalStateValue.get">(beaker.state.LocalStateValue method)</a>
 </li>
       </ul></li>
-      <li><a href="sandbox.html#beaker.sandbox.get_accounts">get_accounts() (beaker.sandbox method)</a>
+      <li><a href="sandbox.html#beaker.localnet.get_accounts">get_accounts() (beaker.localnet method)</a>
 </li>
-      <li><a href="sandbox.html#beaker.sandbox.get_algod_client">get_algod_client() (beaker.sandbox method)</a>
+      <li><a href="sandbox.html#beaker.localnet.get_algod_client">get_algod_client() (beaker.localnet method)</a>
 </li>
       <li><a href="application_client.html#beaker.client.ApplicationClient.get_application_account_info">get_application_account_info() (beaker.client.ApplicationClient method)</a>
 </li>
@@ -340,7 +340,7 @@
         <li><a href="state.html#beaker.state.LocalStateValue.get_else">(beaker.state.LocalStateValue method)</a>
 </li>
       </ul></li>
-      <li><a href="sandbox.html#beaker.sandbox.get_indexer_client">get_indexer_client() (beaker.sandbox method)</a>
+      <li><a href="sandbox.html#beaker.localnet.get_indexer_client">get_indexer_client() (beaker.localnet method)</a>
 </li>
       <li><a href="state.html#beaker.state.GlobalStateValue.get_maybe">get_maybe() (beaker.state.GlobalStateValue method)</a>
 
@@ -408,12 +408,14 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="state.html#beaker.state.LocalStateBlob">LocalStateBlob (class in beaker.state)</a>
+      <li><a href="sandbox.html#beaker.localnet.LocalAccount">LocalAccount (class in beaker.localnet)</a>
 </li>
-      <li><a href="state.html#beaker.state.LocalStateValue">LocalStateValue (class in beaker.state)</a>
+      <li><a href="state.html#beaker.state.LocalStateBlob">LocalStateBlob (class in beaker.state)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="state.html#beaker.state.LocalStateValue">LocalStateValue (class in beaker.state)</a>
+</li>
       <li><a href="lsig.html#beaker.logic_signature.LogicSignature">LogicSignature (class in beaker.logic_signature)</a>
 </li>
       <li><a href="lsig.html#beaker.logic_signature.LogicSignatureTemplate">LogicSignatureTemplate (class in beaker.logic_signature)</a>
@@ -493,7 +495,7 @@
 </li>
       <li><a href="application_client.html#beaker.client.ApplicationClient.prepare">prepare() (beaker.client.ApplicationClient method)</a>
 </li>
-      <li><a href="sandbox.html#beaker.sandbox.SandboxAccount.private_key">private_key (beaker.sandbox.SandboxAccount attribute)</a>
+      <li><a href="sandbox.html#beaker.localnet.LocalAccount.private_key">private_key (beaker.localnet.LocalAccount attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -527,8 +529,6 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sandbox.html#beaker.sandbox.SandboxAccount">SandboxAccount (class in beaker.sandbox)</a>
-</li>
       <li><a href="boxes.html#beaker.lib.storage.BoxList.Element.set">set() (beaker.lib.storage.BoxList.Element method)</a>
 
       <ul>

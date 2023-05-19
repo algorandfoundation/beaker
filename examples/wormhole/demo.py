@@ -2,7 +2,7 @@ import json
 
 from algosdk.abi import ABIType
 
-from beaker import client, sandbox
+from beaker import client, localnet
 
 from examples.wormhole import oracle
 
@@ -23,9 +23,9 @@ oracle_data_codec = ABIType.from_string(str(oracle.OracleData().type_spec()))
 
 def main() -> None:
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(),
+        localnet.get_algod_client(),
         oracle.app,
-        signer=sandbox.get_accounts().pop().signer,
+        signer=localnet.get_accounts().pop().signer,
     )
 
     # Deploy the app on chain

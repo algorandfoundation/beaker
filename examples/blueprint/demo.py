@@ -1,13 +1,13 @@
-from beaker import client, sandbox
+from beaker import client, localnet
 
 from examples.blueprint import app
 
 
 def main() -> None:
     app_client = client.ApplicationClient(
-        client=sandbox.get_algod_client(),
+        client=localnet.get_algod_client(),
         app=app.extended_app,
-        signer=sandbox.get_accounts().pop().signer,
+        signer=localnet.get_accounts().pop().signer,
     )
 
     # Deploy the app on-chain

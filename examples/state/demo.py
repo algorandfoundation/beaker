@@ -1,16 +1,16 @@
 from algokit_utils import LogicError
 
-from beaker import client, sandbox
+from beaker import client, localnet
 
 from examples.state import contract
 
 
 def main() -> None:
-    accts = sandbox.get_accounts()
+    accts = localnet.get_accounts()
 
     acct = accts.pop()
 
-    algod_client = sandbox.get_algod_client()
+    algod_client = localnet.get_algod_client()
 
     app_client = client.ApplicationClient(
         algod_client, contract.app, signer=acct.signer

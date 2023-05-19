@@ -3,7 +3,7 @@ import pyteal as pt
 from beaker import (
     Application,
     client,
-    sandbox,
+    localnet,
 )
 
 hello_app = Application("HelloBeaker")
@@ -18,12 +18,12 @@ def hello(name: pt.abi.String, *, output: pt.abi.String) -> pt.Expr:
 def demo() -> None:
     # Create an Application client
     app_client = client.ApplicationClient(
-        # Get sandbox algod client
-        client=sandbox.get_algod_client(),
+        # Get localnet algod client
+        client=localnet.get_algod_client(),
         # Pass instance of app to client
         app=hello_app,
-        # Get acct from sandbox and pass the signer
-        signer=sandbox.get_accounts().pop().signer,
+        # Get acct from localnet and pass the signer
+        signer=localnet.get_accounts().pop().signer,
     )
 
     # Deploy the app on-chain

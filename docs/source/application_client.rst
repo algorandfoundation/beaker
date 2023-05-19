@@ -14,7 +14,7 @@ The ``ApplicationClient`` provides a convenient way to interact with our ``Appli
 By passing an ``AlgodClient``, an instance of our ``Application`` and a ``TransactionSigner``, we can easily make calls to our application. 
 
 .. note::
-    The ``AlgodClient`` passed to the ``ApplicationClient`` is always one pointing to the local sandbox in examples. This is not a requirement, it can be connected to any ``Algod`` node and the most common API providers are available in ``beaker.client.api_providers``
+    The ``AlgodClient`` passed to the ``ApplicationClient`` is always one pointing to the localnet in examples. This is not a requirement, it can be connected to any ``Algod`` node and the most common API providers are available in ``beaker.client.api_providers``
 
 
 If the application does not yet exist, the ``app_id`` argument can be omitted but the first interaction with the ``Application`` should be to ``create`` it. 

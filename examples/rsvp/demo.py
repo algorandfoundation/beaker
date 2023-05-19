@@ -2,15 +2,15 @@ from algosdk import transaction
 from algosdk.atomic_transaction_composer import TransactionWithSigner
 from algosdk.error import AlgodHTTPError
 
-from beaker import consts, sandbox
+from beaker import consts, localnet
 from beaker.client import ApplicationClient
 
 from examples.rsvp import rsvp
 
 
 def main() -> None:
-    client = sandbox.get_algod_client()
-    accts = sandbox.get_accounts()
+    client = localnet.get_algod_client()
+    accts = localnet.get_accounts()
 
     creator_acct = accts.pop()
     guest_acct1 = accts.pop()

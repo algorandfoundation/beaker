@@ -1,7 +1,7 @@
 import base64
 import random
 
-from beaker import client, consts, sandbox
+from beaker import client, consts, localnet
 
 from examples.golf import sorted_integers
 
@@ -30,10 +30,10 @@ def get_box(app_client: client.ApplicationClient, name: bytes) -> list[int]:
 
 
 def main() -> None:
-    acct = sandbox.get_accounts().pop()
+    acct = localnet.get_accounts().pop()
 
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(), sorted_integers.app, signer=acct.signer
+        localnet.get_algod_client(), sorted_integers.app, signer=acct.signer
     )
 
     # Create && fund app acct

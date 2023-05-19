@@ -1,6 +1,6 @@
 import pyteal as pt
 
-from beaker import Application, client, sandbox
+from beaker import Application, client, localnet
 
 external_example_app = Application("ExternalExample")
 
@@ -13,9 +13,9 @@ def create(input: pt.abi.String, *, output: pt.abi.String) -> pt.Expr:
 def demo() -> None:
 
     app_client = client.ApplicationClient(
-        sandbox.get_algod_client(),
+        localnet.get_algod_client(),
         external_example_app,
-        signer=sandbox.get_accounts().pop().signer,
+        signer=localnet.get_accounts().pop().signer,
     )
     app_client.create(input="yo")
     # print(result.return_value)

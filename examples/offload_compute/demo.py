@@ -13,8 +13,8 @@ from examples.offload_compute import eth_checker
 
 
 def main() -> None:
-    algod_client = beaker.sandbox.get_algod_client()
-    acct = beaker.sandbox.get_accounts().pop()
+    algod_client = beaker.localnet.get_algod_client()
+    acct = beaker.localnet.get_accounts().pop()
 
     # Create app client
     app_client = beaker.client.ApplicationClient(

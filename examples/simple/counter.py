@@ -5,7 +5,7 @@ from beaker import (
     Application,
     Authorize,
     GlobalStateValue,
-    sandbox,
+    localnet,
 )
 from beaker.client import ApplicationClient
 
@@ -39,9 +39,9 @@ def decrement(*, output: pt.abi.Uint64) -> pt.Expr:
 
 
 def demo() -> None:
-    client = sandbox.get_algod_client()
+    client = localnet.get_algod_client()
 
-    accts = sandbox.get_accounts()
+    accts = localnet.get_accounts()
     acct = accts.pop()
 
     # Create an Application client containing both an algod client and my app
