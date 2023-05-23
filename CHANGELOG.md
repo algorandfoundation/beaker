@@ -2,6 +2,15 @@
 
 <!--next-version-placeholder-->
 
+## v1.0.1 (2023-05-23)
+### Fix
+* Resolves issue when using ApplicationClient.prepare with a custom TransactionSigner, resolves #213 ([#229](https://github.com/algorand-devrel/beaker/issues/229)) ([`55bd4fc`](https://github.com/algorand-devrel/beaker/commit/55bd4fc2fad4b01d3c64ad71de5bef6d48139cdd))
+
+### Documentation
+* Rebuild docs ([`e172afe`](https://github.com/algorand-devrel/beaker/commit/e172afead01f569cb314bdcaee1583b1f24ad05a))
+* Add section to usage docs about how to structure an application ([#230](https://github.com/algorand-devrel/beaker/issues/230)) ([`9fa92c2`](https://github.com/algorand-devrel/beaker/commit/9fa92c29ed6244eb40dec7899e3c492b2d6028b2))
+* Fix some links and remove testing page as it is no longer part of beaker lib ([#223](https://github.com/algorand-devrel/beaker/issues/223)) ([`2443f4f`](https://github.com/algorand-devrel/beaker/commit/2443f4f03a8f76f4e08705d7a7c8e8d12de99f13))
+
 ## v1.0.0 (2023-03-28)
 ### Feature
 * Add algokit-utils library and convert application client ([#218](https://github.com/algorand-devrel/beaker/issues/218)) ([`2731447`](https://github.com/algorand-devrel/beaker/commit/2731447ad077187ff23f28338d61b6e8c4645a4e))
