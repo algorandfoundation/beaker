@@ -1,7 +1,6 @@
 import pytest
 
 from beaker.client.api_providers import (
-    AlgoExplorer,
     AlgoNode,
     Network,
     PureStake,
@@ -26,17 +25,6 @@ def test_algonode() -> None:
         an = AlgoNode(network)
         an.algod().suggested_params()
         an.indexer().health()
-
-
-def test_algoexplorer() -> None:
-    for network in Network:
-        if network == Network.SandNet:
-            continue
-
-        print(f"trying {network}")
-        ae = AlgoExplorer(network)
-        # ae.algod().suggested_params()
-        ae.indexer().health()
 
 
 def test_purestake() -> None:
