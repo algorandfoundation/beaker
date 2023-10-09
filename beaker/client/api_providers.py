@@ -53,20 +53,6 @@ class AlgoNode(APIProvider):
     }
 
 
-class AlgoExplorer(APIProvider):
-    algod_hosts = {
-        Network.MainNet: "https://node.algoexplorerapi.io",
-        Network.TestNet: "https://node.testnet.algoexplorerapi.io",
-        Network.BetaNet: "https://node.betanet.algoexplorerapi.io",
-    }
-
-    indexer_hosts = {
-        Network.MainNet: "https://algoindexer.algoexplorerapi.io",
-        Network.TestNet: "https://algoindexer.testnet.algoexplorerapi.io",
-        Network.BetaNet: "https://algoindexer.betanet.algoexplorerapi.io",
-    }
-
-
 class PureStake(APIProvider):
     algod_hosts = {
         Network.MainNet: "https://mainnet-algorand.api.purestake.io/ps1",

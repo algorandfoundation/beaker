@@ -8,23 +8,19 @@ readme = "README.md"
 homepage = "https://beaker.algo.xyz"
 repository = "https://github.com/algorand-devrel/beaker"
 keywords = ["pyteal", "algorand"]
-classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
-]
-packages = [
-    { include = "beaker" },
-]
+classifiers = ["Development Status :: 5 - Production/Stable"]
+packages = [{ include = "beaker" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 pyteal = "^0.24"
 py-algorand-sdk = ">=2.0.0"
-algokit-utils = "^1.0.2"
+algokit-utils = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
 mypy = "^1.0.0"
-black = {extras = ["d"], version = "^22.12.0"}
+black = { extras = ["d"], version = "^22.12.0" }
 pytest-cov = "^4.0.0"
 pre-commit = "^2.20.0"
 python-semantic-release = "^7.32.2"
@@ -68,11 +64,25 @@ exclude_lines = [
 ]
 
 [tool.ruff]
-select = ["E", "F", "ANN", "UP", "N", "C", "B", "YTT", "W", "FBT", "Q", "RUF", "I"]
+select = [
+    "E",
+    "F",
+    "ANN",
+    "UP",
+    "N",
+    "C",
+    "B",
+    "YTT",
+    "W",
+    "FBT",
+    "Q",
+    "RUF",
+    "I",
+]
 ignore = [
     "ANN101", # missing type for self parameter
     "ANN102", # missing type for cls parameter
-    "E501", # line too long - black takes care of this for us
+    "E501",   # line too long - black takes care of this for us
 ]
 # Exclude a variety of commonly ignored directories.
 exclude = [
