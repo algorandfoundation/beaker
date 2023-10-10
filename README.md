@@ -4,18 +4,13 @@ Beaker
 
 Beaker is a smart contract development framework for [PyTeal](https://github.com/algorand/pyteal).
 
-
-
 &nbsp;
 
 &nbsp;
 
 &nbsp;
-
-
 
 ## Hello, Beaker
-
 
 ```py
 from pyteal import *
@@ -45,8 +40,8 @@ app_client = client.ApplicationClient(
 app_id, app_addr, txid = app_client.create()
 print(
     f"""Deployed app in txid {txid}
-    App ID: {app_id} 
-    Address: {app_addr} 
+    App ID: {app_id}
+    Address: {app_addr}
 """
 )
 
@@ -64,25 +59,24 @@ You can install from pip:
 
 `pip install beaker-pyteal`
 
-Or from github directly (no promises on stability): 
+Or from github directly (no promises on stability):
 
 `pip install git+https://github.com/algorand-devrel/beaker`
 
-# Dev Environment 
+# Dev Environment
 
 Requires a local network running to compile and test contracts.
 
 Install [AlgoKit](https://github.com/algorandfoundation/algokit-cli#install)
 
-and start it 
+and start it
 
 ```sh
-$ algokit localnet start 
+$ algokit localnet start
 $ algokit localnet status
 ```
 
-## Front End 
-
+## Front End
 
 See [Beaker TS](https://github.com/algorand-devrel/beaker-ts) to generate a front end client for a Beaker App.
 
