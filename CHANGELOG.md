@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.1.1 (2023-10-10)
+
+### Documentation
+
+* Re trigger pypi release ([#245](https://github.com/algorand-devrel/beaker/issues/245)) ([`86fafeb`](https://github.com/algorand-devrel/beaker/commit/86fafebcef504fd9af4bbaabefb7c032b3c692d8))
+
 ## v1.1.0 (2023-10-09)
 
 ### Feature
