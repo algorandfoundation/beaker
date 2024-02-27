@@ -1,4 +1,4 @@
-from feature_gates import FeatureGates  # type: ignore[import]
+from feature_gates import FeatureGates  # type: ignore[import-untyped]
 
 from tests.conftest import check_application_artifacts_output_stability
 
