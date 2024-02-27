@@ -135,12 +135,12 @@ files = [
 
 [[package]]
 name = "algokit-utils"
-version = "2.0.0"
+version = "2.2.1"
 description = "Utilities for Algorand development for use by AlgoKit"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "algokit_utils-2.0.0-py3-none-any.whl", hash = "sha256:f06ac0341e547c8bb2ba540f9b71dfc113ee59e5e94dcc70b62e5908b8714adb"},
+    {file = "algokit_utils-2.2.1-py3-none-any.whl", hash = "sha256:5d669211500e3ae9d29a93ec9b2cc174a3b4aca48b345f475ee8ba955df5f555"},
 ]
 
 [package.dependencies]
@@ -2709,4 +2709,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "e6204aef4483042e56e4ca135d09ca5d5e8c96e544b70448040e9e4925d6081f"
+content-hash = "acfb2a957b1b7ec443cdbf7bcbde69201efe8fcd3116bfd54f8620110b9c712e"
