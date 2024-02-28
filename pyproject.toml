@@ -14,8 +14,8 @@ packages = [{ include = "beaker" }]
 [tool.poetry.dependencies]
 python = "^3.10"
 pyteal = "^0.24"
-py-algorand-sdk = ">=2.0.0"
-algokit-utils = "^2.0.0"
+py-algorand-sdk = ">=2.5.0"
+algokit-utils = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
@@ -104,7 +104,7 @@ target-version = "py310"
 
 [tool.ruff.per-file-ignores]
 "tests/state_test.py" = ["ANN001", "ANN201", "ANN401"]
-"beaker/lib/*.py" = ["N802"]  # lowercase function names
+"beaker/lib/*.py" = ["N802"]                           # lowercase function names
 
 [tool.ruff.flake8-annotations]
 mypy-init-return = true
