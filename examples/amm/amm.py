@@ -4,7 +4,7 @@ import beaker
 
 # WARNING: This code is provided for example only. Do NOT deploy to mainnet.
 
-pt.pragma(compiler_version="^0.24.0")
+pt.pragma(compiler_version="^0.26.1")
 
 
 def commented_assert(conditions: list[tuple[pt.Expr, str]]) -> list[pt.Expr]:

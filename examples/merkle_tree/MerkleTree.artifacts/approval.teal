@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 intcblock 0 1 3 33
 bytecblock 0x 0x726f6f74 0x73697a65
 txna ApplicationArgs 0

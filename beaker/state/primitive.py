@@ -111,8 +111,7 @@ class StateValue(Expr, StateStorage):
         return self.get().__teal__(options)
 
     @abstractmethod
-    def __str__(self) -> str:
-        ...
+    def __str__(self) -> str: ...
 
     def str_key(self) -> str:
         """returns the string held by the key Bytes object"""

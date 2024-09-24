@@ -1,4 +1,4 @@
 // GENERATED TEAL    //    PC    PYTEAL PATH        LINE    PYTEAL
-#pragma version 8    //    (0)   tests/conftest.py  36      app.build(algod_client)
+#pragma version 10   //    (0)   tests/conftest.py  36      app.build(algod_client)
 pushint 0 // 0       //    (1)
 return               //    (3)

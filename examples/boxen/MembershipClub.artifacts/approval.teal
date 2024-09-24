@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 intcblock 0 1 64
 bytecblock 0x 0x6d656d626572736869705f746f6b656e 0x00 0x151f7c75 0x61666669726d6174696f6e73
 txn NumAppArgs

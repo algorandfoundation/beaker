@@ -13,6 +13,7 @@ def add_blueprint(app: Application) -> None:
 
 app = Application("BlueprintExampleNoArgs").apply(add_blueprint)
 
+
 # A blueprint that adds a method named `addN` to the external
 # methods of the Application passed
 def add_n_blueprint(app: Application, n: int) -> None:

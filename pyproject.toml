@@ -13,20 +13,20 @@ packages = [{ include = "beaker" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pyteal = "^0.24"
+pyteal = "^0.26.1"
 py-algorand-sdk = ">=2.5.0"
 algokit-utils = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
 mypy = "^1.0.0"
-black = { extras = ["d"], version = "^22.12.0" }
 pytest-cov = "^4.0.0"
 pre-commit = "^2.20.0"
 python-semantic-release = "^7.32.2"
 pip-audit = "^2.4.12"
 pytest-xdist = "^3.1.0"
 ruff = "^0.0.252"
+black = "^24.8.0"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "~5.0.2"

@@ -686,9 +686,11 @@ def _assert_cases(
                     wrong_receiver(mint(), key),
                 ),
                 (
-                    amm.Errors.AssetAIncorrect
-                    if key == "a_xfer"
-                    else amm.Errors.AssetBIncorrect,
+                    (
+                        amm.Errors.AssetAIncorrect
+                        if key == "a_xfer"
+                        else amm.Errors.AssetBIncorrect
+                    ),
                     override_axfer_asset(
                         mint(), key, b_asset if key == "a_xfer" else a_asset
                     ),

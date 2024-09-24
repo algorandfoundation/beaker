@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 intcblock 1 0
 txn NumAppArgs
 intc_1 // 0

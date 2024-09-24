@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 intcblock 0 1
 txn NumAppArgs
 intc_0 // 0
@@ -41,9 +41,9 @@ proto 0 1
 itxn_begin
 pushint 6 // appl
 itxn_field TypeEnum
-pushbytes 0x08200100311b22124000010031192212400001003118221244810143 // 0x08200100311b22124000010031192212400001003118221244810143
+pushbytes 0x0a200100311b22124000010031192212400001003118221244810143 // 0x0a200100311b22124000010031192212400001003118221244810143
 itxn_field ApprovalProgram
-pushbytes 0x08810043 // 0x08810043
+pushbytes 0x0a810043 // 0x0a810043
 itxn_field ClearStateProgram
 itxn_submit
 itxn CreatedApplicationID

@@ -12,6 +12,7 @@ key_sig = beaker.LogicSignatureTemplate(
     build_options=beaker.BuildOptions(avm_version=8),
 )
 
+
 # App that needs lots of storage so we use the local storage of
 # unique lsig accounts that have been rekeyed to the app address.
 # This allows us to use the local storage of the unique accounts

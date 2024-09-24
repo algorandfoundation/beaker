@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 pushbytes TMPL_PUBKEY // TMPL_PUBKEY
 len
 assert

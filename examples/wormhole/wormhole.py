@@ -113,8 +113,7 @@ class WormholeStrategy(abc.ABC):
     @abc.abstractmethod
     def handle_transfer(
         self, ctvaa: ContractTransferVAA, *, output: pt.abi.DynamicBytes
-    ) -> pt.Expr:
-        ...
+    ) -> pt.Expr: ...
 
 
 def wormhole_transfer(

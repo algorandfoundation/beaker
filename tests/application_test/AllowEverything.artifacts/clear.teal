@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 intcblock 1
 callsub clearstate_0
 intc_0 // 1
