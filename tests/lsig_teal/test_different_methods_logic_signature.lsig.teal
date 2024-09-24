@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 intcblock 1
 txna ApplicationArgs 1
 store 0

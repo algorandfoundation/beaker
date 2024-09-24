@@ -1,5 +1,5 @@
 // GENERATED TEAL                                   //    PC     PYTEAL PATH                     LINE    PYTEAL
-#pragma version 8                                   //    (0)    tests/conftest.py               36      app.build(algod_client)
+#pragma version 10                                  //    (0)    tests/conftest.py               36      app.build(algod_client)
 intcblock 0 1 10                                    //    (1)
 txn NumAppArgs                                      //    (6)
 intc_0 // 0                                         //    (8)

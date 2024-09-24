@@ -1,4 +1,4 @@
-#pragma version 8
+#pragma version 10
 txna ApplicationArgs 1
 callsub checked_0
 assert
