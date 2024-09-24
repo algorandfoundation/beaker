@@ -199,9 +199,11 @@ class PrecompiledLogicSignatureTemplate:
             arg = kwargs[name]
             require_type(arg, TealType.bytes if tv.is_bytes else TealType.uint64)
             populate_program += [
-                curr_val.store(Concat(EncodeUVarInt(Len(arg)), arg))
-                if tv.is_bytes
-                else curr_val.store(EncodeUVarInt(arg)),
+                (
+                    curr_val.store(Concat(EncodeUVarInt(Len(arg)), arg))
+                    if tv.is_bytes
+                    else curr_val.store(EncodeUVarInt(arg))
+                ),
                 buff.store(
                     Concat(
                         buff.load(),

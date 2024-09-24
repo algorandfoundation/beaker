@@ -94,8 +94,7 @@ class ReservedStateValue(Generic[ST], StateStorage, ABC):
         return self._get_state_for_key(key)
 
     @abstractmethod
-    def _get_state_for_key(self, key: Expr) -> ST:
-        ...
+    def _get_state_for_key(self, key: Expr) -> ST: ...
 
     def num_keys(self) -> int:
         return self.max_keys

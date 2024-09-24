@@ -11,28 +11,23 @@ class AppSpecSchemaFragment(NamedTuple):
 
 class StateStorage(ABC):
     @abstractmethod
-    def app_spec_json(self) -> AppSpecSchemaFragment | None:
-        ...
+    def app_spec_json(self) -> AppSpecSchemaFragment | None: ...
 
     @abstractmethod
-    def num_keys(self) -> int:
-        ...
+    def num_keys(self) -> int: ...
 
     @abstractmethod
-    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]:
-        ...
+    def value_type(self) -> Literal[TealType.bytes, TealType.uint64]: ...
 
 
 class GlobalStateStorage(StateStorage):
     @abstractmethod
-    def initialize(self) -> Expr | None:
-        ...
+    def initialize(self) -> Expr | None: ...
 
 
 class LocalStateStorage(StateStorage):
     @abstractmethod
-    def initialize(self, acct: Expr) -> Expr | None:
-        ...
+    def initialize(self, acct: Expr) -> Expr | None: ...
 
 
 # class BoxStorage(ABC):

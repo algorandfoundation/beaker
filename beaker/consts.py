@@ -14,6 +14,7 @@ Algo: Final[Int] = Int(algo)
 #: Used for runtime algo calculations `Txn.fee()==MilliAlgo`
 MilliAlgo: Final[Int] = Int(milli_algo)
 
+
 #: Used for shorthand for Int(10*algo) like Algos(10)
 def Algos(v: int | float) -> Int:  # noqa: N802
     return Int(int(v * algo))

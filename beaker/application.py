@@ -116,8 +116,7 @@ class Application(Generic[TState]):
         *,
         descr: str | None = None,
         build_options: BuildOptions | None = None,
-    ):
-        ...
+    ): ...
 
     @overload
     def __init__(
@@ -127,8 +126,7 @@ class Application(Generic[TState]):
         state: TState,
         descr: str | None = None,
         build_options: BuildOptions | None = None,
-    ):
-        ...
+    ): ...
 
     def __init__(
         self,
@@ -167,24 +165,25 @@ class Application(Generic[TState]):
         return self._state
 
     @overload
-    def precompiled(self, value: "Application", /) -> PrecompiledApplication:
-        ...
+    def precompiled(self, value: "Application", /) -> PrecompiledApplication: ...
 
     @overload
-    def precompiled(self, value: LogicSignature, /) -> PrecompiledLogicSignature:
-        ...
+    def precompiled(self, value: LogicSignature, /) -> PrecompiledLogicSignature: ...
 
     @overload
     def precompiled(
         self, value: LogicSignatureTemplate, /
-    ) -> PrecompiledLogicSignatureTemplate:
-        ...
+    ) -> PrecompiledLogicSignatureTemplate: ...
 
     def precompiled(
         self,
         value: "Application | LogicSignature | LogicSignatureTemplate",
         /,
-    ) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+    ) -> (
+        PrecompiledApplication
+        | PrecompiledLogicSignature
+        | PrecompiledLogicSignatureTemplate
+    ):
         """Precompile an Application or LogicSignature for use in the logic of the application."""
 
         if value is self:
@@ -292,9 +291,9 @@ class Application(Generic[TState]):
 
     def deregister_bare_method(
         self,
-        action_name_or_reference: OnCompleteActionName
-        | Literal["clear_state"]
-        | SubroutineFnWrapper,
+        action_name_or_reference: (
+            OnCompleteActionName | Literal["clear_state"] | SubroutineFnWrapper
+        ),
         /,
     ) -> None:
         if isinstance(action_name_or_reference, SubroutineFnWrapper):
@@ -325,8 +324,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -339,8 +337,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -354,8 +351,7 @@ class Application(Generic[TState]):
         bare: Literal[False],
         read_only: bool = False,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -368,8 +364,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -383,8 +378,7 @@ class Application(Generic[TState]):
         bare: bool,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def external(
         self,
@@ -488,8 +482,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -500,8 +493,7 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -513,8 +505,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -526,8 +517,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -539,8 +529,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def create(
         self,
@@ -568,8 +557,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -580,8 +568,7 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -593,8 +580,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -606,8 +592,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -619,8 +604,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def delete(
         self,
@@ -656,8 +640,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -668,8 +651,7 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -681,8 +663,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -694,8 +675,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -707,8 +687,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def update(
         self,
@@ -743,8 +722,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -756,8 +734,7 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -770,8 +747,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -784,8 +760,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -798,8 +773,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool = False,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def opt_in(
         self,
@@ -838,8 +812,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -850,8 +823,7 @@ class Application(Generic[TState]):
         name: str | None = None,
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -863,8 +835,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[False],
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -876,8 +847,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -889,8 +859,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: bool,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def close_out(
         self,
@@ -925,8 +894,7 @@ class Application(Generic[TState]):
         self,
         fn: HandlerFunc,
         /,
-    ) -> ABIReturnSubroutine:
-        ...
+    ) -> ABIReturnSubroutine: ...
 
     # case 2: bare arg omitted
     @overload
@@ -940,8 +908,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 3: bare=False
     @overload
@@ -956,8 +923,7 @@ class Application(Generic[TState]):
         bare: Literal[False],
         read_only: bool = False,
         override: bool | None = False,
-    ) -> ABIDecoratorFuncType:
-        ...
+    ) -> ABIDecoratorFuncType: ...
 
     # case 4: bare=True
     @overload
@@ -971,8 +937,7 @@ class Application(Generic[TState]):
         authorize: AuthCallable | SubroutineFnWrapper | None = None,
         bare: Literal[True],
         override: bool | None = False,
-    ) -> BareDecoratorFuncType:
-        ...
+    ) -> BareDecoratorFuncType: ...
 
     # case 5: bare is a variable
     @overload
@@ -987,8 +952,7 @@ class Application(Generic[TState]):
         bare: bool,
         read_only: bool = False,
         override: bool | None = False,
-    ) -> DecoratorFuncType:
-        ...
+    ) -> DecoratorFuncType: ...
 
     def no_op(
         self,
@@ -1037,8 +1001,7 @@ class Application(Generic[TState]):
         self,
         fn: Callable[[], Expr],
         /,
-    ) -> SubroutineFnWrapper:
-        ...
+    ) -> SubroutineFnWrapper: ...
 
     @overload
     def clear_state(
@@ -1047,8 +1010,7 @@ class Application(Generic[TState]):
         *,
         name: str | None = None,
         override: bool | None = False,
-    ) -> Callable[[Callable[[], Expr]], SubroutineFnWrapper]:
-        ...
+    ) -> Callable[[Callable[[], Expr]], SubroutineFnWrapper]: ...
 
     def clear_state(
         self,
@@ -1344,24 +1306,27 @@ def this_app() -> Application[TState]:
 
 
 @overload
-def precompiled(value: Application, /) -> PrecompiledApplication:
-    ...
+def precompiled(value: Application, /) -> PrecompiledApplication: ...
 
 
 @overload
-def precompiled(value: LogicSignature, /) -> PrecompiledLogicSignature:
-    ...
+def precompiled(value: LogicSignature, /) -> PrecompiledLogicSignature: ...
 
 
 @overload
-def precompiled(value: LogicSignatureTemplate, /) -> PrecompiledLogicSignatureTemplate:
-    ...
+def precompiled(
+    value: LogicSignatureTemplate, /
+) -> PrecompiledLogicSignatureTemplate: ...
 
 
 def precompiled(
     value: Application | LogicSignature | LogicSignatureTemplate,
     /,
-) -> PrecompiledApplication | PrecompiledLogicSignature | PrecompiledLogicSignatureTemplate:
+) -> (
+    PrecompiledApplication
+    | PrecompiledLogicSignature
+    | PrecompiledLogicSignatureTemplate
+):
     try:
         ctx_app: Application = this_app()
     except LookupError as err:

@@ -1,4 +1,5 @@
 """Module containing helper functions for testing PyTeal Utils."""
+
 from typing import Any
 
 import pyteal as pt
@@ -26,7 +27,6 @@ def unit_test_app_blueprint(
     /,
     expr_to_test: pt.Expr | None = None,
 ) -> Application:
-
     """Base unit testable application.
 
     There are 2 ways to use this class
