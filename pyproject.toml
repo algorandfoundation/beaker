@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beaker-pyteal"
-version = "1.0.1"
+version = "1.1.1"
 description = "A Framework for building PyTeal Applications"
 license = "MIT"
 authors = ["Ben Guidarelli <ben@algorand.com>"]
@@ -8,23 +8,19 @@ readme = "README.md"
 homepage = "https://beaker.algo.xyz"
 repository = "https://github.com/algorand-devrel/beaker"
 keywords = ["pyteal", "algorand"]
-classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
-]
-packages = [
-    { include = "beaker" },
-]
+classifiers = ["Development Status :: 5 - Production/Stable"]
+packages = [{ include = "beaker" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 pyteal = "^0.26.1"
-py-algorand-sdk = ">=2.0.0"
-algokit-utils = "^1.0.2"
+py-algorand-sdk = ">=2.5.0"
+algokit-utils = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
 mypy = "^1.0.0"
-black = {extras = ["d"], version = "^22.12.0"}
+black = { extras = ["d"], version = "^22.12.0" }
 pytest-cov = "^4.0.0"
 pre-commit = "^2.20.0"
 python-semantic-release = "^7.32.2"
@@ -68,11 +64,25 @@ exclude_lines = [
 ]
 
 [tool.ruff]
-select = ["E", "F", "ANN", "UP", "N", "C", "B", "YTT", "W", "FBT", "Q", "RUF", "I"]
+select = [
+    "E",
+    "F",
+    "ANN",
+    "UP",
+    "N",
+    "C",
+    "B",
+    "YTT",
+    "W",
+    "FBT",
+    "Q",
+    "RUF",
+    "I",
+]
 ignore = [
     "ANN101", # missing type for self parameter
     "ANN102", # missing type for cls parameter
-    "E501", # line too long - black takes care of this for us
+    "E501",   # line too long - black takes care of this for us
 ]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -94,7 +104,7 @@ target-version = "py310"
 
 [tool.ruff.per-file-ignores]
 "tests/state_test.py" = ["ANN001", "ANN201", "ANN401"]
-"beaker/lib/*.py" = ["N802"]  # lowercase function names
+"beaker/lib/*.py" = ["N802"]                           # lowercase function names
 
 [tool.ruff.flake8-annotations]
 mypy-init-return = true

@@ -2,6 +2,18 @@
 
 <!--next-version-placeholder-->
 
+## v1.1.1 (2023-10-10)
+
+### Documentation
+
+* Re trigger pypi release ([#245](https://github.com/algorand-devrel/beaker/issues/245)) ([`86fafeb`](https://github.com/algorand-devrel/beaker/commit/86fafebcef504fd9af4bbaabefb7c032b3c692d8))
+
+## v1.1.0 (2023-10-09)
+
+### Feature
+
+* Bumping algokit utils, pyteal; removing algoexplorer as api provider ([`c1295b4`](https://github.com/algorand-devrel/beaker/commit/c1295b468150c92cd8be867786101e02f41efefe))
+
 ## v1.0.1 (2023-05-23)
 ### Fix
 * Resolves issue when using ApplicationClient.prepare with a custom TransactionSigner, resolves #213 ([#229](https://github.com/algorand-devrel/beaker/issues/229)) ([`55bd4fc`](https://github.com/algorand-devrel/beaker/commit/55bd4fc2fad4b01d3c64ad71de5bef6d48139cdd))
