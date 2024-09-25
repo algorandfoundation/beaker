@@ -19,6 +19,12 @@ permissions:
   packages: read
 
 jobs:
+  - uses: actions/create-github-app-token@v1
+    id: app-token
+    with:
+      app-id: ${{ secrets.BOT_ID }}
+      private-key: ${{ secrets.BOT_SK }}
+
   ci-check-python:
     name: Check Python
     uses: ./.github/workflows/check-python.yaml
@@ -39,7 +45,7 @@ jobs:
           # Fetch entire repository history so we can determine version number from it
           fetch-depth: 0
           # use release token for production_release, standard token otherwise
-          token: ${{ inputs.production_release && secrets.RELEASE_GH_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Install poetry
         run: pipx install poetry
@@ -72,7 +78,7 @@ jobs:
             publish
           gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
 
@@ -87,6 +93,6 @@ jobs:
             --define=patch_without_tag=true \
             publish
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
