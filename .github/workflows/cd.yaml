@@ -19,12 +19,6 @@ permissions:
   packages: read
 
 jobs:
-  - uses: actions/create-github-app-token@v1
-    id: app-token
-    with:
-      app-id: ${{ secrets.BOT_ID }}
-      private-key: ${{ secrets.BOT_SK }}
-
   ci-check-python:
     name: Check Python
     uses: ./.github/workflows/check-python.yaml
@@ -40,6 +34,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.BOT_ID }}
+          private-key: ${{ secrets.BOT_SK }}
+
       - uses: actions/checkout@v3
         with:
           # Fetch entire repository history so we can determine version number from it
@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
         id: get_branch
-        
+
       - name: Set Git user as GitHub actions
         run: git config --global user.email "actions@github.com" && git config --global user.name "github-actions"
 
