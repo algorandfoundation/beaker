@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beaker-pyteal"
-version = "1.1.1"
+version = "1.1.2"
 description = "A Framework for building PyTeal Applications"
 license = "MIT"
 authors = ["Ben Guidarelli <ben@algorand.com>"]
