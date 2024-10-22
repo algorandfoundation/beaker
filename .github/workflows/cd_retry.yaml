@@ -1,0 +1,97 @@
+name: Retry Continuous Delivery of Python package
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_release:
+        description: "Production release?"
+        type: boolean
+        required: true
+        default: true
+
+concurrency: release
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  ci-check-python:
+    name: Check Python
+    uses: ./.github/workflows/check-python.yaml
+
+  ci-build-python:
+    name: Build Python
+    uses: ./.github/workflows/build-python.yaml
+    needs: ci-check-python
+
+  release:
+    name: Release Library
+    needs: ci-build-python
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.BOT_ID }}
+          private-key: ${{ secrets.BOT_SK }}
+
+      - uses: actions/checkout@v3
+        with:
+          # Fetch entire repository history so we can determine version number from it
+          fetch-depth: 0
+          # use release token for production_release, standard token otherwise
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Get branch name
+        shell: bash
+        run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+        id: get_branch
+
+      - name: Set Git user as GitHub actions
+        run: git config --global user.email "actions@github.com" && git config --global user.name "github-actions"
+
+      - name: Create Continuous Deployment - Beta (non-prod)
+        if: "${{ steps.get_branch.outputs.branch == 'master' && !inputs.production_release && !contains(github.event.head_commit.message, 'skip-checks: true') }}"
+        run: |
+          poetry run semantic-release \
+            -v DEBUG \
+            --prerelease \
+            --define=upload_to_repository=true \
+            --define=branch=master \
+            --retry \
+            publish
+          gh release edit --prerelease "$(poetry run semantic-release print-version --current)"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY_USERNAME: __token__
+          REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
+
+      - name: Create Continuous Deployment - Production
+        if: steps.get_branch.outputs.branch == 'master' && inputs.production_release
+        run: |
+          poetry run semantic-release \
+            -v DEBUG \
+            --define=version_source="commit" \
+            --define=branch=master \
+            --define=upload_to_repository=true \
+            --define=patch_without_tag=true \
+            --retry \
+            publish
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY_USERNAME: __token__
+          REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_KEY }}
